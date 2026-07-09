@@ -1,0 +1,31 @@
+# Archivos de sistema operativo
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+
+# Configuración sensible local
+.env
+.env.local
+
+# Assets descargables (se restauran desde CDN)
+assets/css/bootstrap.min.css
+assets/css/bootstrap-icons.css
+assets/js/bootstrap.bundle.min.js
+
+# Base de datos (dumps manuales aparte)
+*.sql
+*.dump
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cache PHP
+cache/
+
+# Node (si existe)
+node_modules/
