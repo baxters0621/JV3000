@@ -56,7 +56,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         <div class="nav-item nav-facturacion <?php echo ($archivo_actual === 'salidas.php') ? 'active' : ''; ?>">
             <a href="<?php echo $prefijo; ?>modules/salidas.php" class="nav-link">
                 <i class="bi bi-receipt"></i>
-                <span>Ventas / Salidas</span>
+                <span>Ventas</span>
             </a>
         </div>
         <?php endif; ?>
