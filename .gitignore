@@ -9,6 +9,9 @@ Thumbs.db
 .env
 .env.local
 
+# Configuración con credenciales
+includes/config.php
+
 # Assets descargables (se restauran desde CDN)
 assets/css/bootstrap.min.css
 assets/css/bootstrap-icons.css
