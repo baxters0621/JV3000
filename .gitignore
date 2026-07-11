@@ -17,9 +17,11 @@ assets/css/bootstrap.min.css
 assets/css/bootstrap-icons.css
 assets/js/bootstrap.bundle.min.js
 
-# Base de datos (dumps manuales aparte)
-*.sql
+# Base de datos — excluir dumps automáticos pero incluir esquema oficial
 *.dump
+db/*.sql
+!db/schema.sql
+!db/seed.sql
 
 # IDE / Editor
 .vscode/
