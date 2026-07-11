@@ -12,11 +12,6 @@ Thumbs.db
 # Configuración con credenciales
 includes/config.php
 
-# Assets descargables (se restauran desde CDN)
-assets/css/bootstrap.min.css
-assets/css/bootstrap-icons.css
-assets/js/bootstrap.bundle.min.js
-
 # Base de datos — excluir dumps automáticos pero incluir esquema oficial
 *.dump
 db/*.sql
