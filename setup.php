@@ -4,15 +4,24 @@ ini_set('display_errors', '1');
 
 $step = $_GET['step'] ?? '1';
 $error = '';
+$delete_msg = false;
 
-// Si ya está instalado, redirigir a login
+// Si ya está instalado, contar uso y redirigir o autoeliminar
 try {
     $tmp = new mysqli('localhost', 'jv3000_app', 'JV3000_S3gur0!', 'jv3000_db');
     if (!$tmp->connect_error) {
         $res = $tmp->query("SELECT 1 FROM usuarios LIMIT 1");
         if ($res && $res->num_rows > 0) {
-            header('Location: login.php');
-            exit;
+            $tmp->query("INSERT INTO configuracion (clave, valor, descripcion) VALUES ('setup_usos','0','Contador de usos del instalador') ON DUPLICATE KEY UPDATE valor = CAST(CAST(valor AS UNSIGNED) + 1 AS CHAR)");
+            $r = $tmp->query("SELECT CAST(valor AS UNSIGNED) AS usos FROM configuracion WHERE clave = 'setup_usos'");
+            $usos = $r ? (int)$r->fetch_assoc()['usos'] : 0;
+            if ($usos >= 3) {
+                @unlink(__FILE__);
+                $delete_msg = true;
+            } elseif ($step !== 'completado') {
+                header('Location: login.php');
+                exit;
+            }
         }
     }
     $tmp->close();
@@ -143,6 +152,7 @@ if ($step === '3' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param('sssss', $admin_user, $admin_email, $pass_hash, $pregunta, $resp_hash);
             $stmt->execute();
             $stmt->close();
+            $db->query("INSERT INTO configuracion (clave, valor, descripcion) VALUES ('setup_usos','0','Contador de usos del instalador') ON DUPLICATE KEY UPDATE valor = CAST(CAST(valor AS UNSIGNED) + 1 AS CHAR)");
             $db->close();
 
             header("Location: ?step=completado");
@@ -182,15 +192,23 @@ small{color:#64748b;font-size:.7rem;display:block;margin-top:-12px;margin-bottom
 </style>
 </head>
 <body>
- <div class="card">
+  <div class="card">
 
-<?php if ($step === 'completado'): ?>
+<?php if ($delete_msg): ?>
+  <div class="icon">🗑️</div>
+  <h1>INSTALADOR ELIMINADO</h1>
+  <p>El instalador se ha autoeliminado después de 3 usos por seguridad.</p>
+  <p style="margin-top:8px;">El sistema sigue funcionando con normalidad.</p>
+  <a href="login.php" class="btn">IR AL INICIO DE SESIÓN</a>
+  <div class="warn" style="margin-top:20px;">✅ Ya no es necesario eliminar nada manualmente.</div>
+
+<?php elseif ($step === 'completado'): ?>
   <div class="icon">✅</div>
   <h1>INSTALACIÓN COMPLETA</h1>
   <p>Base de datos y administrador creados correctamente.</p>
   <p style="margin-top:8px;">Ya puedes iniciar sesión.</p>
   <a href="login.php" class="btn">IR AL INICIO DE SESIÓN</a>
-  <div class="warn">⚠️ Por seguridad, elimina el archivo <strong>setup.php</strong> después de la instalación.</div>
+  <div class="warn">⚠️ El instalador se autoeliminará después de 3 usos totales.</div>
 
 <?php elseif ($step === '3' || $step === 'error_admin'): ?>
   <div class="step">PASO 2 DE 2</div>
