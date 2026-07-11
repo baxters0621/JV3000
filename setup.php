@@ -60,6 +60,56 @@ if ($step === '2' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $mysqli->query("FLUSH PRIVILEGES");
         $mysqli->close();
 
+        // Crear includes/config.php automáticamente
+        $configPath = __DIR__ . '/includes/config.php';
+        $configContent = <<<'PHP'
+<?php
+
+// === CONSTANTES GLOBALES (usadas por init.php y módulos) ===
+define('DB_HOST', 'localhost');
+define('DB_USER', 'jv3000_app');
+define('DB_PASS', 'JV3000_S3gur0!');
+define('DB_NAME', 'jv3000_db');
+define('APP_NAME', 'JV3000 C.A.');
+define('VERSION', '3.0.0');
+define('BASE_ASSETS', (basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules') ? '../assets/' : 'assets/');
+
+// === LEGACY: mantener compatibilidad con módulos no migrados ===
+if (!defined('INIT_LOADED')) {
+    if (session_status() === PHP_SESSION_NONE) {
+        ini_set('session.cookie_lifetime', 0);
+        ini_set('session.gc_maxlifetime', 0);
+        session_start();
+    }
+
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+
+    $host = DB_HOST;
+    $user = DB_USER;
+    $pass = DB_PASS;
+    $db   = DB_NAME;
+
+    $conn = mysqli_connect($host, $user, $pass, $db);
+    if (!$conn) {
+        die("<div style='background:#020617; color:#f87171; font-family:sans-serif; text-align:center; padding:100px; height:100vh;'>
+                <div style='max-width:600px; margin:auto; border:1px solid rgba(248,113,113,0.3); padding:40px; border-radius:20px; background:#0f172a;'>
+                    <h2 style='color:#ef4444; text-transform:uppercase; letter-spacing:2px;'>&#x26A0;&#xFE0F;<br>Error de Enlace de Datos</h2>
+                    <p style='color:#94a3b8; margin-top:20px; font-size:18px;'>El motor <b>JV3000 C.A.</b> no puede conectar con MySQL.</p>
+                    <div style='background:#1e293b; padding:15px; border-radius:10px; color:#38bdf8; font-family:monospace; margin-top:20px; border:1px solid #334155;'>" . mysqli_connect_error() . "</div>
+                    <p style='color:#64748b; margin-top:20px; font-size:14px;'>Verifica que XAMPP/MariaDB est&eacute; corriendo.</p>
+                </div>
+            </div>");
+    }
+
+    mysqli_set_charset($conn, "utf8mb4");
+    date_default_timezone_set('America/Caracas');
+
+    include_once __DIR__ . '/helpers.php';
+}
+PHP;
+        file_put_contents($configPath, $configContent);
+
         header("Location: ?step=3");
         exit;
     } catch (Exception $e) {
