@@ -21,7 +21,12 @@ $productos = $db->fetchAll(
 $esAdmin = Security::esAdmin();
 $id_eliminar = intval($_GET['eliminar'] ?? 0);
 
-if ($id_eliminar && $esAdmin) {
+if ($id_eliminar) {
+    if (!$esAdmin) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SOLO EL ADMINISTRADOR PUEDE DESACTIVAR PRODUCTOS.'];
+        header('Location: productos.php');
+        exit;
+    }
     $db->execute("UPDATE productos SET status = 'Inactivo' WHERE id_producto = ?", [$id_eliminar]);
     registrarAuditoria('eliminar', 'Producto desactivado del inventario');
     $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'PRODUCTO DESACTIVADO DEL INVENTARIO.'];
@@ -48,10 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 }
 
 // Re-query after potential edit/delete
-$total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos")['total'] ?? 0;
+$total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE status = 'Activo'")['total'] ?? 0;
 $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 $productos = $db->fetchAll(
-    "SELECT p.*, c.nombre as nombre_cat FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
+    "SELECT p.*, c.nombre as nombre_cat FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria WHERE p.status = 'Activo' ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
 );
 ?>

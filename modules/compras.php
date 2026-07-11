@@ -168,7 +168,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
 }
 
 // --- Delete handler ---
-if (isset($_GET['eliminar']) && $esAdmin) {
+if (isset($_GET['eliminar'])) {
+    if (!$esAdmin) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SOLO EL ADMINISTRADOR PUEDE ANULAR COMPRAS.'];
+        header('Location: compras.php');
+        exit;
+    }
     $id_compra = intval($_GET['eliminar']);
     $compra = $db->fetchOne("SELECT id_producto, cantidad FROM compras WHERE id_compra = ?", [$id_compra]);
     if ($compra) {
