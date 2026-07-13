@@ -779,53 +779,59 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
         const datosVentas = <?php echo json_encode($grafico_ventas); ?>;
         const datosProductos = <?php echo json_encode($grafico_productos); ?>;
 
-        // Gráfico de Ventas (Línea)
-        new Chart(chartVentasCtx, {
-            type: 'line',
-            data: {
-                labels: datosVentas.map(d => d.fecha.slice(5)),
-                datasets: [{
-                    label: 'Ventas $',
-                    data: datosVentas.map(d => d.total),
-                    borderColor: '#22c55e',
-                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
-                }
-            }
-        });
+        let chartVentas = null;
+        let chartProductos = null;
 
-        // Gráfico de Productos (Barras)
-        new Chart(chartProductosCtx, {
-            type: 'bar',
-            data: {
-                labels: datosProductos.map(d => d.producto.substring(0, 15)),
-                datasets: [{
-                    label: 'Cantidad',
-                    data: datosProductos.map(d => d.cantidad),
-                    backgroundColor: datosProductos.map(d => d.color),
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+        function renderCharts(vData, pData) {
+            if (chartVentas) chartVentas.destroy();
+            if (chartProductos) chartProductos.destroy();
+
+            chartVentas = new Chart(chartVentasCtx, {
+                type: 'line',
+                data: {
+                    labels: vData.map(d => d.fecha.slice(5)),
+                    datasets: [{
+                        label: 'Ventas $',
+                        data: vData.map(d => d.total),
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
                 }
-            }
-        });
+            });
+
+            chartProductos = new Chart(chartProductosCtx, {
+                type: 'bar',
+                data: {
+                    labels: pData.map(d => d.producto.substring(0, 15)),
+                    datasets: [{
+                        label: 'Cantidad',
+                        data: pData.map(d => d.cantidad),
+                        backgroundColor: pData.map(d => d.color),
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        renderCharts(datosVentas, datosProductos);
 
         // Actualización en tiempo real del dashboard
         function actualizarDashboard() {
@@ -850,6 +856,8 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
                                 htmlCriticos += `<tr><td>${c.producto}</td><td>${c.stock}</td><td><span class="stock-badge ${c.estado}">${badge}</span></td></tr>`;
                             });
                             document.getElementById('tabla-criticos').innerHTML = htmlCriticos;
+
+                            if (data.grafico_ventas) renderCharts(data.grafico_ventas, data.grafico_productos);
                         }
                     } catch(e) {
                         console.error('Dashboard refresh error:', e);
@@ -858,8 +866,35 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
                 .catch(error => console.warn('Dashboard sync error:', error));
         }
 
-        // Actualizar cada 30 segundos
-        setInterval(actualizarDashboard, 30000);
+        // Auto-actualización inteligente
+        var intervaloDash = null;
+
+        function iniciarDashboard() {
+            if (intervaloDash) return;
+            actualizarDashboard();
+            intervaloDash = setInterval(actualizarDashboard, 15000);
+        }
+
+        function detenerDashboard() {
+            if (intervaloDash) {
+                clearInterval(intervaloDash);
+                intervaloDash = null;
+            }
+        }
+
+        // Solo actualiza si la pestaña está visible
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                detenerDashboard();
+            } else {
+                iniciarDashboard();
+            }
+        });
+
+        // Detener al salir de la página
+        window.addEventListener('beforeunload', detenerDashboard);
+
+        iniciarDashboard();
     </script>
 </body>
 

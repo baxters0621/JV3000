@@ -2,7 +2,6 @@
 require_once __DIR__ . '/init.php';
 
 $db = Database::getInstance();
-$preguntas_opciones = getPreguntasRespuestas();
 
 if (isset($_SESSION['id_usuario'])) {
     header("Location: index.php");
@@ -57,9 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
                 $respuesta = trim($_POST['rec_respuesta'] ?? '');
                 $preg_user = $_SESSION['rec_pregunta'] ?? '';
-                $opciones = $preguntas_opciones[$preg_user] ?? [];
-                if (!in_array($respuesta, $opciones)) {
-                    $error = "RESPUESTA INVÁLIDA.";
+                if (!validarRespuestaSeguridad($respuesta)) {
+                    $error = "RESPUESTA INVÁLIDA. DEBE CONTENER AL MENOS UNA LETRA.";
                 } else {
                     $row = $db->fetchOne("SELECT respuesta_seguridad FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
                     if ($row && password_verify($respuesta, $row['respuesta_seguridad'])) {
@@ -220,9 +218,7 @@ if ($step == 4) {
                 <input type="hidden" name="rec_action" value="responder">
                 <div class="small text-jv-muted mb-2">Usuario: <strong class="text-white"><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
                 <div class="rec-question"><i class="bi bi-question-circle me-2"></i><?php echo htmlspecialchars($_SESSION['rec_pregunta'] ?? ''); ?></div>
-                <select name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required autofocus>
-                    <option value="">Seleccione una respuesta...</option>
-                </select>
+                <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required autofocus placeholder="Tu respuesta personalizada" autocomplete="off">
                 <button type="submit" class="rec-btn"><i class="bi bi-shield-check me-2"></i>VERIFICAR</button>
                 <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Intentar con otro correo</a>
             </form>
@@ -254,23 +250,5 @@ if ($step == 4) {
     </div>
 
     <script src="assets/js/bootstrap.bundle.min.js?v=2"></script>
-    <script>
-    const preguntasData = <?php echo json_encode($preguntas_opciones, JSON_UNESCAPED_UNICODE); ?>;
-    var step2 = document.getElementById('rec-step-pregunta');
-    if (step2 && step2.classList.contains('active')) {
-        var select = document.getElementById('rec-resp');
-        if (select) {
-            var pregunta = '<?php echo isset($_SESSION["rec_pregunta"]) ? addslashes($_SESSION["rec_pregunta"]) : ""; ?>';
-            var opts = preguntasData[pregunta] || [];
-            select.innerHTML = '<option value="">Seleccione una respuesta...</option>';
-            opts.forEach(function(r) {
-                var opt = document.createElement('option');
-                opt.value = r;
-                opt.textContent = r;
-                select.appendChild(opt);
-            });
-        }
-    }
-    </script>
 </body>
 </html>

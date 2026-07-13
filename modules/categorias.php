@@ -16,7 +16,14 @@ if (isset($_POST['accion_categoria'])) {
     $alerta_reorden = 1;
     $clasificacion_abc = strtoupper(trim($_POST['clasificacion_abc'] ?? ''));
     if (!in_array($clasificacion_abc, ['A', 'B', 'C', ''])) $clasificacion_abc = '';
-    $tipo_manejo = $_POST['tipo_manejo'] ?? 'normal';
+    $tipo_manejo = in_array($_POST['tipo_manejo'] ?? '', ['normal', 'perecedero', 'congelado', 'peligroso', 'controlado', 'granel']) ? $_POST['tipo_manejo'] : 'normal';
+    $status = in_array($status, ['Activo', 'Inactivo']) ? $status : 'Activo';
+
+    if (empty($nombre)) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'EL NOMBRE DE LA CATEGORÍA ES OBLIGATORIO.'];
+        header("Location: categorias.php");
+        exit();
+    }
 
     if ($accion == "registrar") {
         $dup = $db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?)", [$nombre]);
@@ -76,8 +83,10 @@ if (isset($_POST['accion_categoria'])) {
             exit();
         }
 
+        $existente = $db->fetchOne("SELECT codigo FROM categorias WHERE id_categoria = ?", [$id_cat]);
+        $codigo_final = $existente['codigo'] ?? $codigo;
         $db->execute("UPDATE categorias SET nombre=?, codigo=?, descripcion=?, stock_minimo=?, stock_maximo=?, alerta_reorden=?, clasificacion_abc=?, tipo_manejo=?, status=? WHERE id_categoria=?", 
-            [$nombre, $codigo, $descripcion, $stock_minimo, $stock_maximo, $alerta_reorden, $clasificacion_abc, $tipo_manejo, $status, $id_cat]);
+            [$nombre, $codigo_final, $descripcion, $stock_minimo, $stock_maximo, $alerta_reorden, $clasificacion_abc, $tipo_manejo, $status, $id_cat]);
         registrarAuditoria('editar', 'Categoría modificada');
         $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'CATEGORÍA ACTUALIZADA CORRECTAMENTE.'];
         header("Location: categorias.php");
@@ -204,7 +213,7 @@ foreach ($nulls as $n) {
             <?php if (isset($_SESSION['flash_msg'])): ?>
                 <div class="alert-jv alert-jv-<?php echo $_SESSION['flash_msg']['tipo']; ?> mb-3 px-3 py-2">
                     <i class="bi bi-<?php echo $_SESSION['flash_msg']['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
-                    <?php echo $_SESSION['flash_msg']['texto']; ?>
+                    <?php echo htmlspecialchars($_SESSION['flash_msg']['texto']); ?>
                 </div>
                 <?php unset($_SESSION['flash_msg']); ?>
             <?php endif; ?>

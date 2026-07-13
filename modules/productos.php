@@ -14,7 +14,7 @@ $total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE 
 $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 
 $productos = $db->fetchAll(
-    "SELECT p.*, c.nombre as nombre_cat FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria WHERE p.status = 'Activo' ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
+    "SELECT p.*, c.nombre as nombre_cat, c.stock_maximo FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria WHERE p.status = 'Activo' ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
 );
 
@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 $total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos")['total'] ?? 0;
 $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 $productos = $db->fetchAll(
-    "SELECT p.*, c.nombre as nombre_cat FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
+    "SELECT p.*, c.nombre as nombre_cat, c.stock_maximo FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
 );
 ?>
@@ -75,6 +75,7 @@ $productos = $db->fetchAll(
         .badge-jv { padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; }
         .badge-success { background: rgba(34,197,94,0.18); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
         .badge-danger { background: rgba(239,68,68,0.18); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+        .badge-info { background: rgba(34,211,238,0.18); color: #22d3ee; border: 1px solid rgba(34,211,238,0.4); }
         .alert-jv { border-left: 4px solid; border-radius: 8px; padding: 14px 20px !important; font-size: 0.9rem; }
         .alert-jv-success { border-left-color: #22c55e; background: rgba(34,197,94,0.1); }
         .alert-jv-danger { border-left-color: #ef4444; background: rgba(239,68,68,0.1); }
@@ -83,7 +84,6 @@ $productos = $db->fetchAll(
         .buscador-wrapper i { font-size: 1.15rem !important; }
         .card-jv-table { border-top: 4px solid #22d3ee; border-radius: var(--jv-radius) !important; overflow: hidden; }
         .codigo-badge { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 6px; padding: 3px 10px; font-size: 0.8rem; font-weight: 700; color: #22d3ee; font-family: 'Courier New', monospace; display: inline-block; }
-        .stock-badge { min-width: 44px; text-align: center; font-weight: 900; font-size: 0.85rem; }
     </style>
 </head>
 
@@ -106,7 +106,7 @@ $productos = $db->fetchAll(
             <?php if (isset($_SESSION['flash_msg'])): ?>
                 <div class="alert-jv alert-jv-<?php echo $_SESSION['flash_msg']['tipo']; ?> mb-3 px-3 py-2">
                     <i class="bi bi-<?php echo $_SESSION['flash_msg']['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
-                    <?php echo $_SESSION['flash_msg']['texto']; ?>
+                    <?php echo htmlspecialchars($_SESSION['flash_msg']['texto']); ?>
                 </div>
                 <?php unset($_SESSION['flash_msg']); ?>
             <?php endif; ?>
@@ -124,8 +124,8 @@ $productos = $db->fetchAll(
                                 <th style="width: 26%;">PRODUCTO</th>
                                 <th style="width: 15%;">CATEGORÍA</th>
                                 <th style="width: 12%;" class="text-center">STOCK</th>
-                                <th style="width: 12%;">P. VENTA</th>
-                                <th style="width: 10%;">VENCE</th>
+                                <th style="width: 12%;">PRECIO VENTA</th>
+                                <th style="width: 10%;" class="text-center">VENCE</th>
                                 <th style="width: 9%;" class="text-center">ESTADO</th>
                                 <?php if ($esAdmin): ?>
                                 <th style="width: 10%;" class="text-center">ACCIONES</th>
@@ -135,9 +135,16 @@ $productos = $db->fetchAll(
                         <tbody id="tablaProductos">
                             <?php if (!empty($productos)): ?>
                                 <?php foreach ($productos as $row):
-                                    $is_low = ($row['stock_actual'] <= $row['stock_minimo']);
+                                    $stk = intval($row['stock_actual']);
+                                    $min = intval($row['stock_minimo']);
+                                    $max = intval($row['stock_maximo'] ?? 100);
+                                    if ($stk == 0) { $stk_cls = 'danger'; $stk_lbl = 'AGOTADO'; $stk_pct = 0; }
+                                    elseif ($stk <= $min) { $stk_cls = 'danger'; $stk_lbl = 'BAJO'; $stk_pct = max(5, ($stk / $max) * 100); }
+                                    elseif ($stk >= $max) { $stk_cls = 'info'; $stk_lbl = 'COMPLETO'; $stk_pct = 100; }
+                                    else { $pct = ($stk / $max) * 100; $stk_cls = 'success'; $stk_lbl = 'OK'; $stk_pct = $pct; }
+                                    $bar_color = $stk_cls == 'danger' ? '#ef4444' : ($stk_cls == 'info' ? '#22d3ee' : '#4ade80');
                                 ?>
-                                    <tr data-id="<?php echo $row['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($row['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre_producto'])); ?>" data-stock="<?php echo $row['stock_actual']; ?>" data-minimo="<?php echo $row['stock_minimo']; ?>" data-pvp="<?php echo $row['precio_venta']; ?>" data-costo="<?php echo $row['precio_costo']; ?>" data-status="<?php echo $row['status']; ?>" data-venc="<?php echo $row['fecha_vencimiento'] ?? ''; ?>">
+                                    <tr data-id="<?php echo $row['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($row['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre_producto'])); ?>" data-stock="<?php echo $row['stock_actual']; ?>" data-minimo="<?php echo $row['stock_minimo']; ?>" data-max="<?php echo $max; ?>" data-pvp="<?php echo $row['precio_venta']; ?>" data-costo="<?php echo $row['precio_costo']; ?>" data-status="<?php echo $row['status']; ?>" data-venc="<?php echo $row['fecha_vencimiento'] ?? ''; ?>">
                                         <td>
                                             <span class="codigo-badge"><?php echo htmlspecialchars($row['sku']); ?></span>
                                         </td>
@@ -147,18 +154,22 @@ $productos = $db->fetchAll(
                                         <td>
                                             <span class="prod-cat"><?php echo htmlspecialchars($row['nombre_cat'] ?? 'Sin categoría'); ?></span>
                                         </td>
-                                        <td class="text-center">
-                                            <span class="stock-badge badge-jv <?php echo $is_low ? 'badge-danger' : 'badge-success'; ?>">
-                                                <?php echo $row['stock_actual']; ?>
-                                            </span>
-                                            <?php if ($is_low): ?>
-                                                <span class="d-block mt-1" style="font-size: 0.6rem; color: #f87171; font-weight: 700;">MÍN</span>
-                                            <?php endif; ?>
+                                        <td class="text-center" style="min-width:110px;">
+                                            <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                                                <span style="font-size:1.2rem;font-weight:900;color:#f1f5f9;line-height:1;"><?php echo $stk; ?></span>
+                                                <span class="badge-jv badge-<?php echo $stk_cls; ?>" style="font-size:0.6rem;padding:2px 8px;"><?php echo $stk_lbl; ?></span>
+                                            </div>
+                                            <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin:0 auto;max-width:100px;">
+                                                <div style="height:100%;width:<?php echo $stk_pct; ?>%;background:<?php echo $bar_color; ?>;border-radius:3px;transition:width 0.3s;"></div>
+                                            </div>
+                                            <div style="font-size:0.6rem;color:#94a3b8;font-weight:600;margin-top:2px;">
+                                                Mín: <?php echo $min; ?> · Máx: <?php echo $max; ?>
+                                            </div>
                                         </td>
                                         <td>
                                             <span class="prod-precio">$<?php echo number_format($row['precio_venta'], 2); ?></span>
                                         </td>
-                                        <td class="prod-cat">
+                                        <td class="text-center">
                                             <?php
                                             $venc = $row['fecha_vencimiento'] ?? '';
                                             if ($venc) {
@@ -177,12 +188,9 @@ $productos = $db->fetchAll(
                                                 $vc = 'badge-secondary'; $vt = 'S/V'; $vi = 'dash-circle'; $vd = '';
                                             }
                                             ?>
-                                            <span class="badge-jv <?php echo $vc; ?>">
-                                                <i class="bi bi-<?php echo $vi; ?>"></i> <?php echo $vt; ?>
+                                            <span class="badge-jv <?php echo $vc; ?>" style="white-space:nowrap;">
+                                                <i class="bi bi-<?php echo $vi; ?>"></i> <?php echo $vd ? "$vd" : $vt; ?>
                                             </span>
-                                            <?php if ($vd): ?>
-                                            <span class="d-block mt-1" style="font-size:.72rem;color:#cbd5e1;font-weight:600;"><?php echo $vd; ?></span>
-                                            <?php endif; ?>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>">
@@ -302,7 +310,7 @@ $productos = $db->fetchAll(
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">FECHA VENCIMIENTO</label>
+                                <label class="small fw-bold text-secondary mb-1">VENCIMIENTO</label>
                                 <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento">
                             </div>
                         </div>

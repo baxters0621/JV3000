@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_producto']) &&
 
 // --- Compra POST handler ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
-    $tipo_entrada = trim($_POST['tipo_entrada'] ?? 'Compra a proveedor');
+    $tipo_entrada = in_array(trim($_POST['tipo_entrada'] ?? ''), ['Compra a proveedor', 'Ajuste', 'Donación']) ? trim($_POST['tipo_entrada']) : 'Compra a proveedor';
     $es_proveedor = $tipo_entrada === 'Compra a proveedor';
     $es_ajuste = $tipo_entrada === 'Ajuste';
     $es_donacion = $tipo_entrada === 'Donación';
@@ -72,6 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
         exit;
     }
     $nro_factura = trim($_POST['nro_factura'] ?? '');
+    if ($es_proveedor && empty($nro_factura)) {
+        $_SESSION['error'] = 'EL NÚMERO DE FACTURA ES OBLIGATORIO.';
+        header('Location: compras.php');
+        exit;
+    }
+    if ($es_proveedor && $db->fetchOne("SELECT id_compra FROM compras WHERE nro_factura = ? AND status = 'Activa'", [$nro_factura])) {
+        $_SESSION['error'] = 'EL NÚMERO DE FACTURA YA EXISTE EN EL SISTEMA.';
+        header('Location: compras.php');
+        exit;
+    }
     $nro_control = $es_proveedor ? trim($_POST['nro_control'] ?? '') : null;
     if ($es_proveedor && !preg_match('/^\d{2}-\d{8}$/', $nro_control)) {
         $_SESSION['error'] = 'NRO. CONTROL INVÁLIDO. Formato: 00-00000000';
@@ -156,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
             $db->commit();
         } catch (Exception $e) {
             $db->rollback();
-            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR: ' . $e->getMessage()];
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR AL PROCESAR LA ENTRADA. VERIFICA LOS DATOS E INTENTA DE NUEVO.'];
             header('Location: compras.php');
             exit;
         }
@@ -420,7 +430,7 @@ unset($_SESSION['flash_msg']);
             <?php if ($flash): ?>
                 <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3 px-3 py-2">
                     <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
-                    <?php echo $flash['texto']; ?>
+                    <?php echo htmlspecialchars($flash['texto']); ?>
                 </div>
             <?php endif; ?>
 

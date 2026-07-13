@@ -46,7 +46,8 @@ $acciones_disponibles = ['crear', 'editar', 'eliminar', 'anular', 'login', 'logo
 $accion_nombres = ['login' => 'Inicio de Sesión', 'logout' => 'Sesión Cerrada', 'crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar', 'anular' => 'Anular'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['limpiar'])) {
-    $eliminados = $db->execute("DELETE FROM auditoria");
+    $db->execute("DELETE FROM auditoria");
+    $eliminados = $db->getConnection()->affected_rows;
     registrarAuditoria('eliminar', "Historial de auditoría limpiado ($eliminados registro(s))");
     $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => "SE ELIMINARON $eliminados REGISTRO(S) DE AUDITORÍA."];
     header('Location: auditoria.php');
@@ -124,7 +125,7 @@ unset($_SESSION['flash_msg']);
 <div class="container-fluid px-4 py-4 pagina-aud">
 
     <?php if ($flash): ?>
-        <div class="alert alert-<?php echo $flash['tipo'] === 'success' ? 'success' : 'danger'; ?> flash-auto" style="background:rgba(<?php echo $flash['tipo'] === 'success' ? '34,197,94' : '239,68,68'; ?>,0.12);border:none;color:<?php echo $flash['tipo'] === 'success' ? '#4ade80' : '#f87171'; ?>;border-radius:var(--jv-radius);padding:12px 18px;font-size:.85rem;font-weight:600;">
+        <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?>" style="padding:12px 18px;font-size:.85rem;font-weight:600;">
             <?php echo htmlspecialchars($flash['texto']); ?>
         </div>
     <?php endif; ?>
@@ -237,6 +238,7 @@ unset($_SESSION['flash_msg']);
 </div>
 </div>
 <script src="../assets/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/sweetalert2.all.min.js"></script>
 <script>
 function confirmarLimpieza(e) {
     e.preventDefault();
@@ -252,11 +254,20 @@ function confirmarLimpieza(e) {
         cancelButtonText: 'CANCELAR'
     }).then(r => { if (r.isConfirmed) f.submit(); });
 }
-document.querySelectorAll('.flash-auto').forEach(el => {
-    setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 4000);
-});
+(function() {
+    var alerts = document.querySelectorAll('.alert-jv');
+    for (var i = 0; i < alerts.length; i++) {
+        (function(a) {
+            setTimeout(function() {
+                a.style.transition = 'opacity 0.6s';
+                a.style.opacity = '0';
+                setTimeout(function() { a.remove(); }, 600);
+            }, 4000);
+        })(alerts[i]);
+    }
+})();
 const mainWrapper = document.getElementById('mainWrapper');
-const observer = new MutationObserver(() => {
+const observer = new MutationObserver(function() {
     if (document.body.classList.contains('sidebar-open')) mainWrapper.classList.add('sidebar-open');
     else mainWrapper.classList.remove('sidebar-open');
 });

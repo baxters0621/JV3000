@@ -18,11 +18,7 @@ if (isset($_GET['store'])) {
     $cliente      = mb_strtoupper(trim($_POST['cliente'] ?? 'VENTA GENERAL'));
     $rif_cliente  = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));
     $fecha_salida = $_POST['fecha_salida'] ?? date('Y-m-d');
-    $nro_control  = mb_strtoupper(trim($_POST['nro_control'] ?? ''));
-    if ($nro_control !== '' && !preg_match('/^\d{2}-\d{8}$/', $nro_control)) {
-        echo json_encode(['ok'=>false,'error'=>'NRO. CONTROL INVÁLIDO. Formato: 00-00000000']);
-        exit();
-    }
+    $nro_control  = generarControlNumero();
     $observaciones = trim(($_POST['descripcion_motivo'] ?? '') . ' | ' . ($_POST['observaciones'] ?? ''));
     $observaciones = trim(preg_replace('/^\s*\|\s*$/', '', $observaciones));
     $id_usuario   = $_SESSION['id_usuario'];

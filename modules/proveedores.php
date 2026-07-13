@@ -17,9 +17,20 @@ if (isset($_POST['accion_proveedor'])) {
     $limite_credito_raw = str_replace(',', '', trim($_POST['limite_credito'] ?? ''));
     $limite_credito = !empty($limite_credito_raw) ? min(999999999.99, max(0, floatval($limite_credito_raw))) : null;
     $dias_credito = !empty($_POST['dias_credito']) ? min(360, max(0, intval($_POST['dias_credito']))) : 0;
-    $condiciones_pago = $_POST['condiciones_pago'] ?? 'Contado';
-    $moneda = $_POST['moneda'] ?? 'USD';
-    $status = $_POST['status'] ?? 'Activo';
+    $condiciones_pago = in_array($_POST['condiciones_pago'] ?? '', ['Contado', 'Credito']) ? $_POST['condiciones_pago'] : 'Contado';
+    $moneda = in_array($_POST['moneda'] ?? '', ['USD', 'EUR', 'VES']) ? $_POST['moneda'] : 'USD';
+    $status = in_array($status, ['Activo', 'Inactivo']) ? $status : 'Activo';
+
+    if (empty($nombre_empresa)) {
+        $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'EL NOMBRE DE LA EMPRESA ES OBLIGATORIO.'];
+        header("Location: proveedores.php");
+        exit();
+    }
+    if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'FORMATO DE CORREO ELECTRÓNICO INVÁLIDO.'];
+        header("Location: proveedores.php");
+        exit();
+    }
 
     if ($accion == "registrar") {
         if (!validarRIF($rif)) {
@@ -38,6 +49,10 @@ if (isset($_POST['accion_proveedor'])) {
         }
         if ($db->fetchOne("SELECT id_proveedor FROM proveedores WHERE LOWER(nombre_empresa) = LOWER(?)", [$nombre_empresa])) {
             $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'YA EXISTE UN PROVEEDOR CON ESE NOMBRE DE EMPRESA.']; header("Location: proveedores.php");
+            exit();
+        }
+        if (!empty($email) && $db->fetchOne("SELECT id_proveedor FROM proveedores WHERE LOWER(email) = LOWER(?)", [$email])) {
+            $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'EL CORREO ELECTRÓNICO YA PERTENECE A OTRO PROVEEDOR.']; header("Location: proveedores.php");
             exit();
         }
         $db->insert('proveedores', [
@@ -80,6 +95,10 @@ if (isset($_POST['accion_proveedor'])) {
             $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'YA EXISTE UN PROVEEDOR CON ESE NOMBRE DE EMPRESA.']; header("Location: proveedores.php");
             exit();
         }
+        if (!empty($email) && $db->fetchOne("SELECT id_proveedor FROM proveedores WHERE LOWER(email) = LOWER(?) AND id_proveedor != ?", [$email, $id_proveedor])) {
+            $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'EL CORREO ELECTRÓNICO YA PERTENECE A OTRO PROVEEDOR.']; header("Location: proveedores.php");
+            exit();
+        }
         $db->execute(
             "UPDATE proveedores SET rif=?, nombre_empresa=?, contacto=?, telefono=?, lead_time=?, limite_credito=?, dias_credito=?, condiciones_pago=?, moneda=?, status=?, email=?, direccion=? WHERE id_proveedor=?",
             [$rif, $nombre_empresa, $contacto_nombre, $telefono_contacto, $lead_time, $limite_credito, $dias_credito, $condiciones_pago, $moneda, $status, $email, $direccion, $id_proveedor]
@@ -104,7 +123,7 @@ $proveedores = $db->fetchAll("SELECT * FROM proveedores WHERE status = 'Activo' 
 
 $total_prov = count($proveedores);
 $activos_prov = $db->fetchOne("SELECT COUNT(*) as t FROM proveedores WHERE status='Activo'")['t'];
-$limite_credito_total = $db->fetchOne("SELECT COALESCE(SUM(limite_credito),0) as t FROM proveedores WHERE limite_credito > 0")['t'];
+$limite_credito_total = $db->fetchOne("SELECT COALESCE(SUM(limite_credito),0) as t FROM proveedores WHERE limite_credito > 0 AND status = 'Activo'")['t'];
 
 // Flash messages via session
 $flash = null;
@@ -355,7 +374,7 @@ unset($_SESSION['flash_msg']);
 
         <?php if ($flash): ?>
             <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4">
-                <i class="bi bi-shield-check me-2"></i><?php echo $flash['texto']; ?>
+                <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($flash['texto']); ?>
             </div>
         <?php endif; ?>
 

@@ -65,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
         $reg_respuesta = trim($_POST['reg_respuesta'] ?? '');
         if ($reg_pregunta === '' || $reg_respuesta === '') {
             $error = "DEBE SELECCIONAR UNA PREGUNTA DE SEGURIDAD Y SU RESPUESTA.";
-        } elseif (!in_array($reg_respuesta, $preguntas_opciones[$reg_pregunta] ?? [])) {
-            $error = "RESPUESTA INVÁLIDA PARA ESA PREGUNTA.";
+        } elseif (!validarRespuestaSeguridad($reg_respuesta)) {
+            $error = "RESPUESTA INVÁLIDA. DEBE CONTENER AL MENOS UNA LETRA.";
         } else {
             $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) OR LOWER(correo) = LOWER(?)", [$new_user, $new_email]);
             if ($dup) {
@@ -486,9 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                 <label class="form-label" style="margin-top:10px;">Respuesta</label>
                 <div class="field-group">
                     <i class="field-icon bi bi-shield-lock"></i>
-                    <select name="reg_respuesta" id="r-resp" class="field-input" required onchange="validarReg()">
-                        <option value="">Seleccione una respuesta...</option>
-                    </select>
+                    <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required oninput="validarReg()" placeholder="Tu respuesta personalizada" autocomplete="off">
                 </div>
 
             </div>
@@ -579,20 +577,7 @@ function validarReg() {
     btn.disabled = !(uOk && (s >= 3) && pMatch && preg !== '' && resp !== '');
 }
 
-const preguntasData = <?php echo json_encode($preguntas_opciones, JSON_UNESCAPED_UNICODE); ?>;
-
 document.getElementById('r-preg').addEventListener('change', function() {
-    var select = document.getElementById('r-resp');
-    var val = this.value;
-    select.innerHTML = '<option value="">Seleccione una respuesta...</option>';
-    if (val && preguntasData[val]) {
-        preguntasData[val].forEach(function(r) {
-            var opt = document.createElement('option');
-            opt.value = r;
-            opt.textContent = r;
-            select.appendChild(opt);
-        });
-    }
     validarReg();
 });
 </script>

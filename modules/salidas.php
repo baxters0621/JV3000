@@ -71,11 +71,19 @@ if (isset($_GET['confirm'])) {
 
 // ── POST desde modal ──
 if (isset($_POST['accion_salida'])) {
-    $accion = $_POST['accion_salida'];
+    $accion = in_array($_POST['accion_salida'] ?? '', ['registrar', 'editar']) ? $_POST['accion_salida'] : '';
     $id_producto = intval($_POST['id_producto']);
     $cantidad = intval($_POST['cantidad'] ?? 0);
     $id_tipo_mov = intval($_POST['id_tipo_mov']);
 
+    if (!$accion) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ACCIÓN INVÁLIDA.'];
+        header("Location: salidas.php"); exit();
+    }
+    if ($id_producto <= 0) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SELECCIONE UN PRODUCTO.'];
+        header("Location: salidas.php"); exit();
+    }
     if ($cantidad <= 0) {
         $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'LA CANTIDAD DEBE SER MAYOR A CERO.'];
         header("Location: salidas.php"); exit();
@@ -96,11 +104,7 @@ if (isset($_POST['accion_salida'])) {
     }
 
     $nro_fac_man = 'PENDIENTE';
-    $nro_control = mb_strtoupper(trim($_POST['nro_control'] ?? ''));
-    if ($nro_control !== '' && !preg_match('/^\d{2}-\d{8}$/', $nro_control)) {
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'NRO. CONTROL INVÁLIDO. Formato: 00-00000000'];
-        header("Location: salidas.php"); exit();
-    }
+    $nro_control = generarControlNumero();
     $rif_cliente = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));
     $cliente = mb_strtoupper(trim($_POST['cliente'] ?? 'VENTA GENERAL'));
     $fecha_salida = $_POST['fecha_salida'] ?? date('Y-m-d');
@@ -315,7 +319,7 @@ unset($_SESSION['flash_msg']);
 
         <?php if ($flash): ?>
         <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4">
-            <i class="bi bi-shield-check me-2"></i><?php echo $flash['texto']; ?>
+            <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($flash['texto']); ?>
         </div>
         <?php endif; ?>
 
@@ -466,8 +470,8 @@ unset($_SESSION['flash_msg']);
                                 <input type="text" name="rif_cliente" id="s_rif" class="input-jv" placeholder="Opcional. Ej: J-12345678-0">
                             </div>
                             <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">NRO. CONTROL (SENIAT)</label>
-                                <input type="text" name="nro_control" id="s_control" class="input-jv" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11">
+                                <label class="small fw-bold text-secondary mb-2">NRO. CONTROL</label>
+                                <input type="text" class="input-jv" value="Generado automáticamente" disabled style="color:#94a3b8;">
                             </div>
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">OBSERVACIONES</label>
@@ -511,7 +515,7 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_cliente').value = '';
             document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = '');
             document.getElementById('s_rif').value = '';
-            document.getElementById('s_control').value = '';
+            // nro_control se genera automáticamente
             document.getElementById('s_obs').value = '';
             document.getElementById('s_fecha').value = new Date().toISOString().slice(0,10);
             document.getElementById('s_desc_motivo') && (document.getElementById('s_desc_motivo').value = '');
@@ -532,7 +536,7 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_cant').value = data.cantidad;
             document.getElementById('s_precio').value = parseFloat(data.precio_venta).toFixed(2);
             document.getElementById('s_tipo').value = data.id_tipo_mov;
-            document.getElementById('s_control').value = data.nro_control || '';
+            // nro_control se genera automáticamente al registrar
             document.getElementById('s_obs').value = data.observaciones;
             toggleCampos();
             modalS.show();

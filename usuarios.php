@@ -55,9 +55,8 @@ if (isset($_POST['accion_usuario'])) {
         $pregunta = trim($_POST['pregunta_seguridad'] ?? '');
         $respuesta = trim($_POST['respuesta_seguridad'] ?? '');
         if ($pregunta !== '' && $respuesta !== '') {
-            $opciones = getPreguntasRespuestas()[$pregunta] ?? [];
-            if (!in_array($respuesta, $opciones)) {
-                $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'LA RESPUESTA NO ES VÁLIDA PARA ESA PREGUNTA.'];
+            if (!validarRespuestaSeguridad($respuesta)) {
+                $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'RESPUESTA INVÁLIDA. DEBE CONTENER AL MENOS UNA LETRA.'];
                 header("Location: usuarios.php"); exit();
             }
             $resp_hash = password_hash($respuesta, PASSWORD_BCRYPT);
@@ -88,8 +87,6 @@ if (isset($_GET['toggle_status'])) {
 }
 
 $usuarios = $db->fetchAll("SELECT id_usuario, usuario, correo, rol, status, COALESCE(aprobado, 1) as aprobado, pregunta_seguridad FROM usuarios ORDER BY usuario ASC");
-
-$preguntas_opciones = getPreguntasRespuestas();
 
 $total_users = $db->fetchOne("SELECT COUNT(*) as t FROM usuarios")['t'];
 $activos = $db->fetchOne("SELECT COUNT(*) as t FROM usuarios WHERE status='Activo'")['t'];
@@ -258,7 +255,7 @@ unset($_SESSION['flash_msg']);
 
         <?php if ($flash): ?>
             <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4">
-                <i class="bi bi-shield-check me-2"></i><?php echo $flash['texto']; ?>
+                <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($flash['texto']); ?>
             </div>
         <?php endif; ?>
 
@@ -457,9 +454,7 @@ unset($_SESSION['flash_msg']);
                                 <option value="Color favorito">Color favorito</option>
                             </select>
                             <small class="text-jv-muted mt-1 d-block" style="font-size:.7rem;">Selecciona una pregunta o déjalo vacío para mantener la actual.</small>
-                            <select name="respuesta_seguridad" id="u_resp" class="input-jv mt-2">
-                                <option value="">Dejar en blanco para no cambiar</option>
-                            </select>
+                            <input type="text" name="respuesta_seguridad" id="u_resp" class="input-jv mt-2" placeholder="Tu respuesta personalizada" autocomplete="off">
                         </div>
 
                         <button type="submit" id="btn-user-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase" disabled>
@@ -565,33 +560,12 @@ unset($_SESSION['flash_msg']);
             const selectPreg = document.getElementById('u_preg');
             if (selectPreg) {
                 selectPreg.value = data.pregunta_seguridad || '';
-                llenarRespuestas(selectPreg.value);
             }
-            const selectResp = document.getElementById('u_resp');
-            if (selectResp) selectResp.value = '';
+            const inputResp = document.getElementById('u_resp');
+            if (inputResp) inputResp.value = '';
 
             modalU.show();
         }
-
-        const preguntasData = <?php echo json_encode($preguntas_opciones, JSON_UNESCAPED_UNICODE); ?>;
-
-        function llenarRespuestas(pregunta) {
-            var select = document.getElementById('u_resp');
-            if (!select) return;
-            select.innerHTML = '<option value="">Dejar en blanco para no cambiar</option>';
-            if (pregunta && preguntasData[pregunta]) {
-                preguntasData[pregunta].forEach(function(r) {
-                    var opt = document.createElement('option');
-                    opt.value = r;
-                    opt.textContent = r;
-                    select.appendChild(opt);
-                });
-            }
-        }
-
-        document.getElementById('u_preg').addEventListener('change', function() {
-            llenarRespuestas(this.value);
-        });
 
         function confirmarToggle(id, nombre, accion) {
             const esSuspender = (accion === 'suspender');
