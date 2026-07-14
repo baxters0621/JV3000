@@ -438,38 +438,43 @@ foreach ($res_top as $row) {
         }
     });
     new Chart(document.getElementById('chartTop'), {
-        type: 'bar',
+        type: 'doughnut',
         data: {
             labels: <?php echo json_encode($top_prod_nombres); ?>,
             datasets: [{
-                label: 'Unidades',
                 data: <?php echo json_encode($top_prod_cant); ?>,
                 backgroundColor: <?php echo json_encode($top_prod_colores); ?>,
-                borderRadius: 6,
-                borderSkipped: false
+                borderWidth: 0, hoverOffset: 12
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            indexAxis: 'y',
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        color: '#94a3b8',
+                        usePointStyle: true,
+                        padding: 10,
+                        font: { size: 10, weight: 'bold' },
+                        boxWidth: 12,
+                        boxHeight: 12
+                    }
+                },
                 tooltip: {
                     callbacks: {
                         label: function(ctx) {
                             const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            if (total === 0) return '0 unidades';
+                            if (total === 0) return ctx.label + ': 0';
                             const pct = ((ctx.parsed / total) * 100).toFixed(1);
-                            return ctx.parsed + ' uds (' + pct + '%)';
+                            return ctx.label + ': ' + ctx.parsed + ' uds (' + pct + '%)';
                         }
                     }
                 }
             },
-            scales: {
-                x: { beginAtZero: true, grid: { display: true }, ticks: { color: '#94a3b8', stepSize: 1 } },
-                y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } }
-            }
+            cutout: '62%'
         }
     });
 
