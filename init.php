@@ -19,7 +19,7 @@ set_error_handler(function ($severity, $msg, $file, $line) {
     throw new ErrorException($msg, 0, $severity, $file, $line);
 });
 
-// --- 3. Marcar que venimos de init.php (config.php salta lógica legacy) ---
+// --- 3. Marcar que venimos de init.php ---
 define('INIT_LOADED', true);
 
 // --- 4. Cargar constantes ---

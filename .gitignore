@@ -27,5 +27,8 @@ assets/js/bootstrap.bundle.min.js
 # Cache PHP
 cache/
 
+# Capturas de pantalla
+Captura.PNG
+
 # Node (si existe)
 node_modules/
