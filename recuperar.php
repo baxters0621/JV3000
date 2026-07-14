@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $respuesta = trim($_POST['rec_respuesta'] ?? '');
                 $preg_user = $_SESSION['rec_pregunta'] ?? '';
                 if (!validarRespuestaSeguridad($respuesta)) {
-                    $error = "RESPUESTA INVÁLIDA. DEBE CONTENER AL MENOS UNA LETRA.";
+                    $error = "RESPUESTA INVÁLIDA. MÍN 3 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
                 } else {
                     $row = $db->fetchOne("SELECT respuesta_seguridad FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
                     if ($row && password_verify($respuesta, $row['respuesta_seguridad'])) {

@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
         if ($reg_pregunta === '' || $reg_respuesta === '') {
             $error = "DEBE SELECCIONAR UNA PREGUNTA DE SEGURIDAD Y SU RESPUESTA.";
         } elseif (!validarRespuestaSeguridad($reg_respuesta)) {
-            $error = "RESPUESTA INVÁLIDA. DEBE CONTENER AL MENOS UNA LETRA.";
+            $error = "RESPUESTA INVÁLIDA. MÍN 3 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
         } else {
             $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) OR LOWER(correo) = LOWER(?)", [$new_user, $new_email]);
             if ($dup) {
@@ -535,6 +535,17 @@ function validarReg() {
     var pHint = document.getElementById('r-pass-hint');
     var meter = document.getElementById('r-meter');
 
+    var resp = document.getElementById('r-resp').value.trim();
+    var respOk = false;
+    if (resp.length >= 3 && resp.length <= 100 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/([bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ])\1{3,}/.test(resp) && !/asdf|qwerty|zxcv|1234|abcd/i.test(resp)) {
+        respOk = true;
+        document.getElementById('r-resp').style.borderColor = 'var(--jv-success)';
+    } else if (resp.length > 0) {
+        document.getElementById('r-resp').style.borderColor = 'var(--jv-danger)';
+    } else {
+        document.getElementById('r-resp').style.borderColor = '';
+    }
+
     var uOk = u.length >= 4 && /^[a-zA-Z0-9_]+$/.test(u);
 
     if (u.length > 0) {
@@ -574,7 +585,7 @@ function validarReg() {
         matchHint.className = 'reg-match';
         matchHint.textContent = '';
     }
-    btn.disabled = !(uOk && (s >= 3) && pMatch && preg !== '' && resp !== '');
+    btn.disabled = !(uOk && (s >= 3) && pMatch && preg !== '' && respOk);
 }
 
 document.getElementById('r-preg').addEventListener('change', function() {

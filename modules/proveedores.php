@@ -19,7 +19,7 @@ if (isset($_POST['accion_proveedor'])) {
     $dias_credito = !empty($_POST['dias_credito']) ? min(360, max(0, intval($_POST['dias_credito']))) : 0;
     $condiciones_pago = in_array($_POST['condiciones_pago'] ?? '', ['Contado', 'Credito']) ? $_POST['condiciones_pago'] : 'Contado';
     $moneda = in_array($_POST['moneda'] ?? '', ['USD', 'EUR', 'VES']) ? $_POST['moneda'] : 'USD';
-    $status = in_array($status, ['Activo', 'Inactivo']) ? $status : 'Activo';
+    $status = in_array($_POST['status'] ?? '', ['Activo', 'Inactivo']) ? $_POST['status'] : 'Activo';
 
     if (empty($nombre_empresa)) {
         $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'EL NOMBRE DE LA EMPRESA ES OBLIGATORIO.'];

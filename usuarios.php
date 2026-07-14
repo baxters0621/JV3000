@@ -56,7 +56,7 @@ if (isset($_POST['accion_usuario'])) {
         $respuesta = trim($_POST['respuesta_seguridad'] ?? '');
         if ($pregunta !== '' && $respuesta !== '') {
             if (!validarRespuestaSeguridad($respuesta)) {
-                $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'RESPUESTA INVÁLIDA. DEBE CONTENER AL MENOS UNA LETRA.'];
+                $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'RESPUESTA INVÁLIDA. MÍN 3 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).'];
                 header("Location: usuarios.php"); exit();
             }
             $resp_hash = password_hash($respuesta, PASSWORD_BCRYPT);

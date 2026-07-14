@@ -151,6 +151,14 @@ function getPreguntasRespuestas(): array
 function validarRespuestaSeguridad(string $respuesta): bool
 {
     $r = trim($respuesta);
-    return $r !== '' && preg_match('/[a-zA-Z]/', $r);
+    if (strlen($r) < 3 || strlen($r) > 100) return false;
+    if (!preg_match('/[a-zA-Z]/', $r)) return false;
+    if (!preg_match('/[aeiouAEIOU]/', $r)) return false;
+    if (preg_match('/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{5,}/', $r)) return false;
+    $patrones = ['/asdf/i', '/qwerty/i', '/zxcv/i', '/1234/', '/abcd/i'];
+    foreach ($patrones as $p) {
+        if (preg_match($p, $r)) return false;
+    }
+    return true;
 }
 }
