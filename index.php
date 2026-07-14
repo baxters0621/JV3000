@@ -817,15 +817,17 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
                         label: 'Cantidad',
                         data: pData.map(d => d.cantidad),
                         backgroundColor: pData.map(d => d.color),
-                        borderRadius: 8
+                        borderRadius: 6,
+                        borderSkipped: false
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
+                    indexAxis: 'y',
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                        x: { beginAtZero: true, grid: { display: true }, ticks: { color: '#94a3b8', stepSize: 1 } },
+                        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } }
                     }
                 }
             });
