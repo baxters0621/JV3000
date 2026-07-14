@@ -30,7 +30,26 @@ require_once __DIR__ . '/includes/Database.php';
 require_once __DIR__ . '/includes/Security.php';
 require_once __DIR__ . '/includes/helpers.php';
 
-// --- 6. Conectar base de datos ---
+// --- 6. Auto-instalador: crear BD si no existe ---
+$conn_no_db = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+if ($conn_no_db) {
+    $db_check = mysqli_query($conn_no_db, "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '" . DB_NAME . "'");
+    if ($db_check && mysqli_num_rows($db_check) == 0) {
+        $sql_path = __DIR__ . '/db/jv3000_portable_v2.sql';
+        if (file_exists($sql_path)) {
+            $sql_content = file_get_contents($sql_path);
+            if (!empty($sql_content)) {
+                mysqli_multi_query($conn_no_db, $sql_content);
+                do {
+                    if ($res = mysqli_store_result($conn_no_db)) { mysqli_free_result($res); }
+                } while (mysqli_next_result($conn_no_db));
+            }
+        }
+    }
+    mysqli_close($conn_no_db);
+}
+
+// --- 7. Conectar base de datos ---
 try {
     Database::getInstance()->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 } catch (Throwable $e) {
@@ -43,7 +62,7 @@ try {
          </div>");
 }
 
-// --- 6. Validación de sesión (salvo páginas públicas) ---
+// --- 8. Validación de sesión (salvo páginas públicas) ---
 $publicPages = ['login.php', 'recuperar.php', 'logout.php'];
 $currentScript = basename($_SERVER['SCRIPT_NAME']);
 
@@ -51,7 +70,7 @@ if (!in_array($currentScript, $publicPages)) {
     Security::validateSession();
 }
 
-// --- 6b. Tab session marker (prevents reused session after tab close) ---
+// --- 8b. Tab session marker (prevents reused session after tab close) ---
 if (isset($_SESSION['id_usuario'])) {
     if (!isset($_SESSION['tab_marker'])) {
         $_SESSION['tab_marker'] = bin2hex(random_bytes(16));
@@ -63,15 +82,15 @@ if (isset($_SESSION['id_usuario'])) {
     }
 }
 
-// --- 7. Sanitización global de inputs ---
+// --- 9. Sanitización global de inputs ---
 Security::sanitizeGlobals();
 
-// --- 8. Validación CSRF en peticiones POST ---
+// --- 10. Validación CSRF en peticiones POST ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Security::validateCSRF();
 }
 
-// --- 9. Manejador global de excepciones ---
+// --- 11. Manejador global de excepciones ---
 set_exception_handler(function (Throwable $e) {
     $db = Database::getInstance();
     if ($db->inTransaction()) {
@@ -94,5 +113,5 @@ set_exception_handler(function (Throwable $e) {
     exit;
 });
 
-// --- 10. Variable global $db para compatibilidad con helpers legacy ---
+// --- 12. Variable global $db para compatibilidad con helpers legacy ---
 $db = Database::getInstance();
