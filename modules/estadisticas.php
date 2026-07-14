@@ -513,7 +513,7 @@ foreach ($res_top as $row) {
             .catch(() => {});
     }
 
-    setInterval(refreshKPIs, 30000);
+    setInterval(refreshKPIs, 60000);
     </script>
     <script>
     const mainWrapper = document.getElementById('mainWrapper');

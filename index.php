@@ -872,7 +872,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
         function iniciarDashboard() {
             if (intervaloDash) return;
             actualizarDashboard();
-            intervaloDash = setInterval(actualizarDashboard, 15000);
+            intervaloDash = setInterval(actualizarDashboard, 45000);
         }
 
         function detenerDashboard() {
