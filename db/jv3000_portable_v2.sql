@@ -199,38 +199,6 @@ INSERT INTO `productos` (`sku`,`nombre_producto`,`precio_venta`,`precio_costo`,`
 ('PROD-015','CABLE BUJIA SET','14.00','8.00','40','10','6');
 
 
-CREATE TABLE `movimientos` (
-  `numero_movimiento` int(11) NOT NULL AUTO_INCREMENT,
-  `id_tipo_mov` int(11) NOT NULL,
-  `id_usuario` int(11) NOT NULL,
-  `id_proveedor` int(11) DEFAULT NULL,
-  `referencia` varchar(100) DEFAULT NULL,
-  `fecha` timestamp NOT NULL DEFAULT current_timestamp(),
-  `observaciones` text DEFAULT NULL,
-  PRIMARY KEY (`numero_movimiento`),
-  KEY `fk_mov_tipo` (`id_tipo_mov`),
-  KEY `fk_mov_user` (`id_usuario`),
-  CONSTRAINT `fk_mov_tipo` FOREIGN KEY (`id_tipo_mov`) REFERENCES `tipos_movimientos` (`id_tipo_mov`),
-  CONSTRAINT `fk_mov_user` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
-CREATE TABLE `ordenes_compra` (
-  `id_oc` int(11) NOT NULL AUTO_INCREMENT,
-  `numero_oc` varchar(20) DEFAULT NULL,
-  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
-  `id_proveedor` int(11) DEFAULT NULL,
-  `estado` enum('Pendiente','Aprobada','Recibida','Cancelada') DEFAULT 'Pendiente',
-  `total` decimal(12,2) DEFAULT 0.00,
-  `id_usuario` int(11) DEFAULT NULL,
-  `observaciones` text DEFAULT NULL,
-  PRIMARY KEY (`id_oc`),
-  UNIQUE KEY `numero_oc` (`numero_oc`),
-  KEY `id_proveedor` (`id_proveedor`),
-  CONSTRAINT `ordenes_compra_ibfk_1` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
 CREATE TABLE `compras` (
   `id_compra` int(11) NOT NULL AUTO_INCREMENT,
   `nro_factura` varchar(50) NOT NULL,
@@ -268,50 +236,6 @@ INSERT INTO `compras` (`nro_factura`,`id_proveedor`,`id_producto`,`cantidad`,`pr
 ('FAC-004','4','14','40','2.00','Compra a proveedor','1','2026-06-08 00:00:00','01-00000008','Credito','30','80.00'),
 ('FAC-005','3','4','15','12.00','Compra a proveedor','1','2026-06-10 00:00:00','01-00000009','Credito','30','180.00'),
 ('FAC-005','3','6','10','7.00','Compra a proveedor','1','2026-06-10 00:00:00','01-00000010','Credito','30','70.00');
-
-
--- ===========================================
--- NIVEL 3: Tablas de Detalle
--- ===========================================
-
-CREATE TABLE `detalle_compras` (
-  `id_detalle_compra` int(11) NOT NULL AUTO_INCREMENT,
-  `id_compra` int(11) NOT NULL,
-  `id_producto` int(11) NOT NULL,
-  `cantidad` int(11) NOT NULL,
-  `precio_compra` decimal(10,2) NOT NULL,
-  `fecha_vencimiento` date DEFAULT NULL,
-  PRIMARY KEY (`id_detalle_compra`),
-  KEY `fk_detc_comp` (`id_compra`),
-  CONSTRAINT `fk_detc_comp` FOREIGN KEY (`id_compra`) REFERENCES `compras` (`id_compra`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
-CREATE TABLE `detalle_movimientos` (
-  `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
-  `numero_movimiento` int(11) NOT NULL,
-  `id_producto` int(11) NOT NULL,
-  `cantidad` int(11) NOT NULL,
-  `stock_restante` int(11) NOT NULL,
-  `precio_unitario` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`id_detalle`),
-  KEY `fk_detm_mov` (`numero_movimiento`),
-  CONSTRAINT `fk_detm_mov` FOREIGN KEY (`numero_movimiento`) REFERENCES `movimientos` (`numero_movimiento`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
-CREATE TABLE `detalle_orden_compra` (
-  `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
-  `id_oc` int(11) NOT NULL,
-  `id_producto` int(11) NOT NULL,
-  `cantidad` int(11) NOT NULL,
-  `precio_unitario` decimal(10,2) DEFAULT 0.00,
-  PRIMARY KEY (`id_detalle`),
-  KEY `id_oc` (`id_oc`),
-  KEY `id_producto` (`id_producto`),
-  CONSTRAINT `detalle_orden_compra_ibfk_1` FOREIGN KEY (`id_oc`) REFERENCES `ordenes_compra` (`id_oc`) ON DELETE CASCADE,
-  CONSTRAINT `detalle_orden_compra_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 CREATE TABLE `salidas` (
