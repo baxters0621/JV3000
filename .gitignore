@@ -8,7 +8,6 @@ Thumbs.db
 # Configuración sensible local
 .env
 .env.local
-includes/config.php
 
 # Assets descargables (se restauran desde CDN)
 assets/css/bootstrap.min.css
