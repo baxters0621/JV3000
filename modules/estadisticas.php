@@ -438,43 +438,38 @@ foreach ($res_top as $row) {
         }
     });
     new Chart(document.getElementById('chartTop'), {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels: <?php echo json_encode($top_prod_nombres); ?>,
             datasets: [{
+                label: 'Unidades',
                 data: <?php echo json_encode($top_prod_cant); ?>,
                 backgroundColor: <?php echo json_encode($top_prod_colores); ?>,
-                borderWidth: 0, hoverOffset: 12
+                borderRadius: 6,
+                borderSkipped: false
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            indexAxis: 'y',
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        color: '#94a3b8',
-                        usePointStyle: true,
-                        padding: 10,
-                        font: { size: 10, weight: 'bold' },
-                        boxWidth: 12,
-                        boxHeight: 12
-                    }
-                },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
                         label: function(ctx) {
                             const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            if (total === 0) return ctx.label + ': 0';
+                            if (total === 0) return '0 unidades';
                             const pct = ((ctx.parsed / total) * 100).toFixed(1);
-                            return ctx.label + ': ' + ctx.parsed + ' uds (' + pct + '%)';
+                            return ctx.parsed + ' uds (' + pct + '%)';
                         }
                     }
                 }
             },
-            cutout: '62%'
+            scales: {
+                x: { beginAtZero: true, grid: { display: true }, ticks: { color: '#94a3b8', stepSize: 1 } },
+                y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } }
+            }
         }
     });
 
