@@ -497,8 +497,8 @@ unset($_SESSION['flash_msg']);
                         <thead>
                             <tr>
                                 <th style="min-width:100px;">Factura</th>
-                                <th style="min-width:110px;">Control</th>
-                                <th>Tipo</th>
+                                <th style="min-width:120px;">Nro. Control</th>
+                                <th>Tipo de Entrada</th>
                                 <th>Proveedor</th>
                                 <th class="text-center" style="width:70px;">Cant</th>
                                 <th style="width:100px;">Total</th>
@@ -511,7 +511,7 @@ unset($_SESSION['flash_msg']);
                             <?php if (count($compras) > 0): foreach ($compras as $row): ?>
                                 <tr>
                                     <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
-                                    <td class="text-muted"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
+                                    <td style="color:#cbd5e1;font-weight:600;font-family:monospace;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
                                     <td><span class="badge-jv <?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'bi bi-box-seam' : 'bi bi-arrow-down-circle'; ?> me-1"></i><?php echo htmlspecialchars($row['tipo_entrada']); ?></span></td>
                                     <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
                                     <td class="text-center"><span class="cant-badge">+<?php echo $row['cantidad']; ?></span></td>
