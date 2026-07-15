@@ -107,16 +107,7 @@ if (isset($_GET['toggle_status'])) {
     exit();
 }
 
-if (isset($_GET['delete'])) {
-    $id_target = intval($_GET['delete']);
-    $db->execute("UPDATE categorias SET status = 'Inactivo' WHERE id_categoria = ?", [$id_target]);
-    registrarAuditoria('eliminar', 'Categoría desactivada');
-    $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'CATEGORÍA DESACTIVADA CORRECTAMENTE.'];
-    header("Location: categorias.php");
-    exit();
-}
-
-$categorias = $db->fetchAll("SELECT * FROM categorias WHERE status = 'Activo' ORDER BY nombre ASC");
+$categorias = $db->fetchAll("SELECT * FROM categorias ORDER BY nombre ASC");
 
 $nulls = $db->fetchAll("SELECT id_categoria FROM categorias WHERE codigo IS NULL OR codigo = '' ORDER BY id_categoria");
 foreach ($nulls as $n) {
@@ -157,8 +148,6 @@ foreach ($nulls as $n) {
         .btn-action-toggle:hover { border-color: #fbbf24; background: rgba(245,158,11,0.3); transform: scale(1.12); }
         .btn-action-reactivate { border: 1px solid rgba(34,197,94,0.4); background: rgba(34,197,94,0.12); }
         .btn-action-reactivate:hover { border-color: #4ade80; background: rgba(34,197,94,0.3); transform: scale(1.12); }
-        .btn-action-delete { border: 1px solid rgba(239,68,68,0.35); background: rgba(239,68,68,0.1); }
-        .btn-action-delete:hover { border-color: #ef4444; background: rgba(239,68,68,0.25); transform: scale(1.12); }
         /* Badges */
         .badge-jv { padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; }
         .badge-success { background: rgba(34,197,94,0.18); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
@@ -279,10 +268,7 @@ foreach ($nulls as $n) {
                                                     <i class="bi bi-eye-fill" style="color: #4ade80; font-size: 0.85rem;"></i>
                                                 </button>
                                             <?php endif; ?>
-                                            <span class="actions-divider"></span>
-                                            <button class="btn-action btn-action-delete btn btn-sm border-0 ms-1" onclick="confirmarEliminar(<?php echo $row['id_categoria']; ?>, '<?php echo htmlspecialchars($row['nombre']); ?>')" title="Eliminar">
-                                                <i class="bi bi-trash3" style="color: #ef4444; font-size: 0.85rem;"></i>
-                                            </button>
+
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -412,23 +398,6 @@ foreach ($nulls as $n) {
                 document.getElementById('cat_manejo').value = data.tipo_manejo || 'normal';
                 document.getElementById('cat_nombre').focus();
                 modalC.show();
-            }
-
-            function confirmarEliminar(id, nombre) {
-                Swal.fire({
-                    title: '¿DESACTIVAR CATEGORÍA?',
-                    text: `Se desactivará '${nombre}'`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ef4444',
-                    cancelButtonColor: '#1e293b',
-                    confirmButtonText: 'SÍ, DESACTIVAR',
-                    cancelButtonText: 'CANCELAR',
-                    background: '#0f172a',
-                    color: '#ffffff'
-                }).then((result) => {
-                    if (result.isConfirmed) window.location.href = `categorias.php?delete=${id}`;
-                });
             }
 
             function confirmarToggle(id, nombre, accion) {
