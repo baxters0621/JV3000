@@ -74,7 +74,7 @@ $productos = $db->fetchAll(
         .table-jv tbody tr:hover td:first-child { border-left-color: #22d3ee; }
         .table-jv tbody td:first-child { border-left: 3px solid transparent; transition: border-color 0.2s ease; }
         .prod-nombre { font-size: 1rem; font-weight: 800; color: #f1f5f9; }
-        .prod-cat { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+        .prod-cat { font-size: 0.8rem; color: #22d3ee; font-weight: 700; }
         .prod-prov { font-size: 0.8rem; color: #fbbf24; font-weight: 700; }
         .prod-precio { font-weight: 800; color: #22d3ee; font-size: 0.9rem; }
         .badge-jv { padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; }

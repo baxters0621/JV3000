@@ -119,7 +119,7 @@ foreach ($nulls as $n) {
         .table-jv tbody tr:hover td:first-child { border-left-color: #22d3ee; }
         .table-jv tbody td:first-child { border-left: 3px solid transparent; transition: border-color 0.2s ease; }
         /* Nombre categoria */
-        .cat-nombre { font-size: 1rem; font-weight: 800; color: #22d3ee; }
+        .cat-nombre { font-size: 1rem; font-weight: 800; color: #f1f5f9; }
         .cat-desc { font-size: 0.8rem; color: #94a3b8; }
         /* Botones accion grandes */
         .btn-action { transition: all 0.2s ease; border-radius: 10px; min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
