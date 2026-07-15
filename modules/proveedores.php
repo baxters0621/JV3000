@@ -86,7 +86,7 @@ if (isset($_POST['accion_proveedor'])) {
             header("Location: proveedores.php");
             exit();
         }
-        $id_proveedor = intval($_POST['id_proveedor']);
+        $id_proveedor = intval($_POST['id_proveedor'] ?? 0);
         if ($db->fetchOne("SELECT id_proveedor FROM proveedores WHERE LOWER(rif) = LOWER(?) AND id_proveedor != ?", [$rif, $id_proveedor])) {
             $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'EL RIF YA PERTENECE A OTRO PROVEEDOR.']; header("Location: proveedores.php");
             exit();

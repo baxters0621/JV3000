@@ -7,9 +7,9 @@ $csrf_token = Security::generateToken();
 
 if (isset($_POST['accion_categoria'])) {
     $accion = $_POST['accion_categoria'];
-    $nombre = mb_strtoupper(trim($_POST['nombre']));
+    $nombre = mb_strtoupper(trim($_POST['nombre'] ?? ''));
     $codigo = trim($_POST['codigo'] ?? '');
-    $descripcion = trim($_POST['descripcion']);
+    $descripcion = trim($_POST['descripcion'] ?? '');
     $status = $_POST['status'] ?? 'Activo';
     $stock_minimo = max(0, min(500, intval($_POST['stock_minimo'] ?? 5)));
     $stock_maximo = max(0, min(500, intval($_POST['stock_maximo'] ?? 100)));
@@ -68,7 +68,7 @@ if (isset($_POST['accion_categoria'])) {
     }
 
     if ($accion == "editar") {
-        $id_cat = intval($_POST['id_categoria']);
+        $id_cat = intval($_POST['id_categoria'] ?? 0);
 
         $dup = $db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?) AND id_categoria != ?", [$nombre, $id_cat]);
         if ($dup) {

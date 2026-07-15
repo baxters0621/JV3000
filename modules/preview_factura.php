@@ -11,9 +11,9 @@ $iva_pct = getConfig('iva_porcentaje', '16');
 if (isset($_GET['store'])) {
     header('Content-Type: application/json');
 
-    $id_producto  = intval($_POST['id_producto']);
+    $id_producto  = intval($_POST['id_producto'] ?? 0);
     $cantidad     = intval($_POST['cantidad'] ?? 0);
-    $id_tipo_mov  = intval($_POST['id_tipo_mov']);
+    $id_tipo_mov  = intval($_POST['id_tipo_mov'] ?? 0);
     $precio_venta = floatval($_POST['precio_venta'] ?? 0);
     $cliente      = mb_strtoupper(trim($_POST['cliente'] ?? 'VENTA GENERAL'));
     $rif_cliente  = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));

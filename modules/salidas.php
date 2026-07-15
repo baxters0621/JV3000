@@ -72,9 +72,9 @@ if (isset($_GET['confirm'])) {
 // ── POST desde modal ──
 if (isset($_POST['accion_salida'])) {
     $accion = in_array($_POST['accion_salida'] ?? '', ['registrar', 'editar']) ? $_POST['accion_salida'] : '';
-    $id_producto = intval($_POST['id_producto']);
+    $id_producto = intval($_POST['id_producto'] ?? 0);
     $cantidad = intval($_POST['cantidad'] ?? 0);
-    $id_tipo_mov = intval($_POST['id_tipo_mov']);
+    $id_tipo_mov = intval($_POST['id_tipo_mov'] ?? 0);
 
     if (!$accion) {
         $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ACCIÓN INVÁLIDA.'];
@@ -143,7 +143,7 @@ if (isset($_POST['accion_salida'])) {
     }
 
     if ($accion === 'editar') {
-        $id_salida = intval($_POST['id_salida']);
+        $id_salida = intval($_POST['id_salida'] ?? 0);
         $ant = $db->fetchOne("SELECT cantidad, id_producto, nro_factura_manual FROM salidas WHERE id_salida = ?", [$id_salida]);
 
         if (!$ant) {
