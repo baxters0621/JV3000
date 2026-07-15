@@ -23,11 +23,19 @@ $fechas = [];
 $ventas_data = [];
 $compras_data = [];
 
+$ventas_7d_raw = $db->fetchAll("SELECT DATE(fecha_salida) as fecha, COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND id_tipo_mov = 1 AND status = 'Activa' GROUP BY DATE(fecha_salida)");
+$compras_7d_raw = $db->fetchAll("SELECT DATE(fecha_compra) as fecha, COALESCE(SUM(cantidad * precio_costo), 0) as total FROM compras WHERE fecha_compra >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND status = 'Activa' GROUP BY DATE(fecha_compra)");
+
+$ventas_idx = [];
+foreach ($ventas_7d_raw as $r) { $ventas_idx[$r['fecha']] = $r['total']; }
+$compras_idx = [];
+foreach ($compras_7d_raw as $r) { $compras_idx[$r['fecha']] = $r['total']; }
+
 for ($i = 6; $i >= 0; $i--) {
     $f = date('Y-m-d', strtotime("-$i days"));
     $fechas[] = date('d/m', strtotime($f));
-    $ventas_data[] = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE DATE(fecha_salida) = ? AND id_tipo_mov = 1 AND status = 'Activa'", [$f])['total'] ?? 0;
-    $compras_data[] = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_costo), 0) as total FROM compras WHERE DATE(fecha_compra) = ? AND status = 'Activa'", [$f])['total'] ?? 0;
+    $ventas_data[] = $ventas_idx[$f] ?? 0;
+    $compras_data[] = $compras_idx[$f] ?? 0;
 }
 
 // === Costo de lo vendido (últimos 7 días) ===

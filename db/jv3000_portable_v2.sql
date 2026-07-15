@@ -270,4 +270,18 @@ INSERT INTO `salidas` (`nro_factura_manual`,`nro_control`,`id_producto`,`cantida
 ('FAC-005','02-64370291','9','25','5.50','CONCESIONARIO AUTOMUNDO','J-99887766-1','1','1','2026-06-14 00:00:00','Venta de prueba'),
 ('FAC-006','02-24136937','1','2','12.00','CLIENTE FIEL','','3','1','2026-06-14 00:00:00','Regalía');
 
+-- ===========================================
+-- INDICES ADICIONALES PARA RENDIMIENTO
+-- ===========================================
+
+ALTER TABLE `productos` ADD INDEX `idx_prod_status` (`status`);
+
+ALTER TABLE `compras` ADD INDEX `idx_comp_status` (`status`);
+ALTER TABLE `compras` ADD INDEX `idx_comp_fecha` (`fecha_compra`);
+ALTER TABLE `compras` ADD INDEX `idx_comp_producto` (`id_producto`);
+
+ALTER TABLE `salidas` ADD INDEX `idx_sal_status` (`status`);
+ALTER TABLE `salidas` ADD INDEX `idx_sal_fecha` (`fecha_salida`);
+ALTER TABLE `salidas` ADD INDEX `idx_sal_fecha_status_tipo` (`fecha_salida`, `status`, `id_tipo_mov`);
+
 -- === FIN VERSION 2.0 ===
