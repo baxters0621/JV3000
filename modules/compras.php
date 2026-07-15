@@ -215,10 +215,13 @@ $sql_compras = "
     LEFT JOIN proveedores pr ON c.id_proveedor = pr.id_proveedor
     WHERE c.status = 'Activa'
 ";
+$params = [];
+if ($filtro_proveedor > 0) {
+    $sql_compras .= " AND c.id_proveedor = ?";
+    $params[] = $filtro_proveedor;
+}
 $sql_compras .= " ORDER BY c.fecha_compra DESC, c.id_compra DESC LIMIT 100";
-$compras = $filtro_proveedor > 0
-    ? $db->fetchAll($sql_compras . " AND c.id_proveedor = ?", [$filtro_proveedor])
-    : $db->fetchAll($sql_compras);
+$compras = $db->fetchAll($sql_compras, $params);
 
 $productos = $db->fetchAll("SELECT id_producto, nombre_producto, stock_actual, precio_costo FROM productos WHERE status = 'Activo' ORDER BY nombre_producto");
 $proveedores = $db->fetchAll("SELECT id_proveedor, nombre_empresa, rif, condiciones_pago, dias_credito FROM proveedores WHERE status = 'Activo' ORDER BY nombre_empresa");
