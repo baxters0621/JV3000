@@ -67,29 +67,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
 
     $id_proveedor = $es_proveedor ? intval($_POST['id_proveedor'] ?? 0) : null;
     if ($es_proveedor && $id_proveedor <= 0) {
-        $_SESSION['error'] = 'SELECCIONE UN PROVEEDOR PARA COMPRA A PROVEEDOR.';
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SELECCIONE UN PROVEEDOR PARA COMPRA A PROVEEDOR.'];
         header('Location: compras.php');
         exit;
     }
     $nro_factura = trim($_POST['nro_factura'] ?? '');
     if ($es_proveedor && empty($nro_factura)) {
-        $_SESSION['error'] = 'EL NÚMERO DE FACTURA ES OBLIGATORIO.';
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'EL NÚMERO DE FACTURA ES OBLIGATORIO.'];
         header('Location: compras.php');
         exit;
     }
     if ($es_proveedor && $db->fetchOne("SELECT id_compra FROM compras WHERE nro_factura = ? AND status = 'Activa'", [$nro_factura])) {
-        $_SESSION['error'] = 'EL NÚMERO DE FACTURA YA EXISTE EN EL SISTEMA.';
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'EL NÚMERO DE FACTURA YA EXISTE EN EL SISTEMA.'];
         header('Location: compras.php');
         exit;
     }
     $nro_control = $es_proveedor ? trim($_POST['nro_control'] ?? '') : null;
     if ($es_proveedor && !preg_match('/^\d{2}-\d{8}$/', $nro_control)) {
-        $_SESSION['error'] = 'NRO. CONTROL INVÁLIDO. Formato: 00-00000000';
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'NRO. CONTROL INVÁLIDO. Formato: 00-00000000'];
         header('Location: compras.php');
         exit;
     }
     $fecha_compra = $_POST['fecha_compra'] ?? date('Y-m-d');
-    $motivo = $es_proveedor ? '' : ($_POST['motivo'] ?? '');
+    $motivo = $es_proveedor ? '' : trim($_POST['motivo'] ?? '');
+    if (!$es_proveedor && empty($motivo)) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'LA DESCRIPCIÓN/MOTIVO ES OBLIGATORIO PARA AJUSTE O DONACIÓN.'];
+        header('Location: compras.php');
+        exit;
+    }
     $observaciones = $motivo ?: ($_POST['observaciones'] ?? '');
 
     $condiciones_pago = 'Contado';
@@ -109,8 +114,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
     $productos = is_array($productos_raw) ? $productos_raw : [];
     $exitos = 0;
 
-    if (!empty($productos)) {
-        $db->begin();
+    if (empty($productos)) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'DEBE AGREGAR AL MENOS UN PRODUCTO A LA ENTRADA.'];
+        header('Location: compras.php');
+        exit;
+    }
+
+    $db->begin();
         try {
             $id_usuario_sesion = intval($_SESSION['id_usuario'] ?? 0);
 
@@ -170,7 +180,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
             header('Location: compras.php');
             exit;
         }
-    }
 
     $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => $exitos > 0 ? "ENTRADA REGISTRADA: $exitos producto(s)." : 'Error al guardar: verifica los datos e intenta de nuevo.'];
     header('Location: compras.php');
@@ -687,7 +696,7 @@ unset($_SESSION['flash_msg']);
 
                     <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid rgba(16,185,129,0.1);">
                         <button type="button" class="btn btn-jv-danger" style="padding:10px 24px;font-size:.85rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                        <button type="submit" class="btn btn-jv-success" id="btnGuardar" disabled style="padding:10px 24px;font-size:.85rem;" onclick="this.disabled=true;this.innerHTML='<span class=\'spinner-border spinner-border-sm me-1\'></span> GUARDANDO...';this.form.submit()"><i class="bi bi-check-lg me-1"></i> Guardar</button>
+                        <button type="submit" class="btn btn-jv-success" id="btnGuardar" disabled style="padding:10px 24px;font-size:.85rem;" onclick="return validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar</button>
                     </div>
                 </form>
             </div>
@@ -895,6 +904,28 @@ unset($_SESSION['flash_msg']);
         document.getElementById('totalCosto').textContent = '$' + suma.toFixed(2);
         document.getElementById('btnGuardar').disabled = productos.length === 0;
         document.getElementById('productosData').value = JSON.stringify(productos);
+    }
+
+    function validarFormulario(btn) {
+        const tipo = document.querySelector('select[name="tipo_entrada"]').value;
+        const errores = [];
+        if (tipo === 'Compra a proveedor') {
+            if (!document.getElementById('selProveedor').value) errores.push('SELECCIONE UN PROVEEDOR');
+            if (!document.querySelector('input[name="nro_factura"]').value.trim()) errores.push('NRO. FACTURA ES OBLIGATORIO');
+            const ctrl = document.querySelector('input[name="nro_control"]').value.trim();
+            if (!/^\d{2}-\d{8}$/.test(ctrl)) errores.push('NRO. CONTROL INVÁLIDO (00-00000000)');
+        } else {
+            if (!document.querySelector('textarea[name="motivo"]').value.trim()) errores.push('DESCRIPCIÓN/MOTIVO ES OBLIGATORIO');
+        }
+        if (productos.length === 0) errores.push('AGREGUE AL MENOS UN PRODUCTO');
+        if (errores.length > 0) {
+            Swal.fire({ title: 'CAMPOS REQUERIDOS', html: errores.join('<br>'), icon: 'warning', background: '#0f172a', color: '#fff', confirmButtonColor: '#10b981' });
+            return false;
+        }
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
+        btn.form.submit();
+        return false;
     }
 
     function filtrar() {
