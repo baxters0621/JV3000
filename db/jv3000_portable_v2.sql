@@ -24,9 +24,10 @@ CREATE TABLE `configuracion` (
 INSERT INTO `configuracion` (`clave`,`valor`,`descripcion`) VALUES
 ('iva_porcentaje','16','Porcentaje de IVA aplicado a las ventas'),
 ('empresa_nombre','JV3000 C.A.','Nombre de la empresa'),
-('empresa_rif','J-30000000-7','RIF de la empresa'),
-('empresa_telefono','(0212) 555-3000','Teléfono de la empresa'),
-('empresa_direccion','Zona Industrial, Galpón 5, Caracas','Dirección de la empresa');
+('empresa_rif','J-50287309-0','RIF de la empresa'),
+('empresa_telefono','+58 0414-4014690','Teléfono de la empresa'),
+('empresa_direccion','Calle Guzman Blanco, Edif. El Surtidor Local 2, Valencia, Edo. Carabobo','Dirección de la empresa'),
+('empresa_email','jv3000ca@gmail.com','Correo de la empresa');
 
 
 CREATE TABLE `login_intentos` (

@@ -96,6 +96,7 @@ $empresa = getConfig('empresa_nombre', 'JV3000');
 $rif_emp  = getConfig('empresa_rif', 'J-00000000-0');
 $tel_emp  = getConfig('empresa_telefono', '');
 $dir_emp  = getConfig('empresa_direccion', '');
+$email_emp = getConfig('empresa_email', '');
 
 $badge_color = '#dc2626';
 $badge_label = $tipo_mov;
@@ -274,6 +275,7 @@ table td:nth-child(3) { text-align:center; }
             <p>RIF: <?php echo htmlspecialchars($rif_emp); ?></p>
             <p><?php echo htmlspecialchars($dir_emp ?: ' '); ?></p>
             <p><?php echo htmlspecialchars($tel_emp ?: ' '); ?></p>
+            <p><?php echo htmlspecialchars($email_emp ?: ' '); ?></p>
         </div>
         <div class="doc-type">
             <h1>NOTA DE ENTREGA</h1>
