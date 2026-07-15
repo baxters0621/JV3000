@@ -382,6 +382,24 @@ unset($_SESSION['flash_msg']);
         font-weight:700;font-size:.8rem;
     }
 
+    /* ── Badges de tipo y condiciones ── */
+    .pagina-compras .badge-jv {
+        padding: 5px 16px;
+        font-size: 0.72rem;
+        line-height: 1.5;
+        white-space: nowrap;
+    }
+    .pagina-compras .badge-success {
+        background: rgba(16,185,129,0.15);
+        color: #6ee7b7;
+        border-color: rgba(16,185,129,0.35);
+    }
+    .pagina-compras .badge-warning {
+        background: rgba(245,158,11,0.15);
+        color: #fbbf24;
+        border-color: rgba(245,158,11,0.35);
+    }
+
     /* ── Alert overrides ── */
     .alert-jv { border-left:4px solid; border-radius:8px; padding:14px 20px !important; font-size:.9rem; }
     .alert-jv-success { border-left-color:#22c55e; background:rgba(34,197,94,0.1); }
@@ -485,11 +503,11 @@ unset($_SESSION['flash_msg']);
                                 <tr>
                                     <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
                                     <td style="color:#94a3b8;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
-                                    <td><span class="badge-jv <?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'badge-success' : 'badge-warning'; ?>"><?php echo htmlspecialchars($row['tipo_entrada']); ?></span></td>
+                                    <td><span class="badge-jv <?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'bi bi-box-seam' : 'bi bi-arrow-down-circle'; ?> me-1"></i><?php echo htmlspecialchars($row['tipo_entrada']); ?></span></td>
                                     <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
                                     <td class="text-center"><span class="cant-badge">+<?php echo $row['cantidad']; ?></span></td>
                                     <td class="fw-bold" style="color:#34d399;">$<?php echo number_format($row['total'], 2); ?></td>
-                                    <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
+                                    <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
                                     <td style="color:#e2e8f0;font-weight:600;font-size:.82rem;"><?php echo date('d/m/Y', strtotime($row['fecha_compra'])); ?></td>
                                     <td class="text-center">
                                         <?php if ($esAdmin): ?>
