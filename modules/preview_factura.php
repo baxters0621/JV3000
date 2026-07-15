@@ -274,8 +274,8 @@ table td:nth-child(3) { text-align:center; }
             <div class="issuer-name"><?php echo htmlspecialchars($empresa); ?></div>
             <p>RIF: <?php echo htmlspecialchars($rif_emp); ?></p>
             <p><?php echo htmlspecialchars($dir_emp ?: ' '); ?></p>
-            <p><?php echo htmlspecialchars($tel_emp ?: ' '); ?></p>
-            <p><?php echo htmlspecialchars($email_emp ?: ' '); ?></p>
+            <p>TLF: <?php echo htmlspecialchars($tel_emp ?: ' '); ?></p>
+            <p>Correo: <?php echo htmlspecialchars($email_emp ?: ' '); ?></p>
         </div>
         <div class="doc-type">
             <h1>NOTA DE ENTREGA</h1>
