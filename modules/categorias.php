@@ -270,6 +270,7 @@ foreach ($nulls as $n) {
                         <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                         <input type="hidden" name="accion_categoria" id="cat_accion" value="registrar">
                         <input type="hidden" name="id_categoria" id="cat_id_edit">
+                        <input type="hidden" name="status" id="cat_status" value="Activo">
 
                         <div class="px-4 py-3" style="border-bottom: 1px solid rgba(56, 189, 248, 0.15);">
                             <div class="d-flex justify-content-between align-items-center">
@@ -343,6 +344,7 @@ foreach ($nulls as $n) {
             function nuevaCat() {
                 document.getElementById('cat_accion').value = "registrar";
                 document.getElementById('cat_id_edit').value = "";
+                document.getElementById('cat_status').value = "Activo";
                 document.getElementById('modalTitle').innerHTML = '<i class="bi bi-tag-fill me-2"></i>NUEVA CATEGORÍA';
                 document.getElementById('cat_nombre').value = "";
                 document.getElementById('cat_desc').value = "";
@@ -355,6 +357,7 @@ foreach ($nulls as $n) {
             function editarCat(data) {
                 document.getElementById('cat_accion').value = "editar";
                 document.getElementById('cat_id_edit').value = data.id_categoria;
+                document.getElementById('cat_status').value = data.status || 'Activo';
                 document.getElementById('modalTitle').innerHTML = '<i class="bi bi-tag-fill me-2"></i>EDITAR CATEGORÍA';
                 document.getElementById('cat_nombre').value = data.nombre;
                 document.getElementById('cat_desc').value = data.descripcion || '';
