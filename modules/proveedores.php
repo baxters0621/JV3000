@@ -7,6 +7,17 @@ $csrf_token = Security::generateToken();
 
 if (isset($_POST['accion_proveedor'])) {
     $accion = $_POST['accion_proveedor'];
+
+    if ($accion == "eliminar") {
+        Security::soloAdmin();
+        $id_proveedor = intval($_POST['id_proveedor'] ?? 0);
+        $db->execute("UPDATE proveedores SET status = 'Inactivo' WHERE id_proveedor = ?", [$id_proveedor]);
+        registrarAuditoria('eliminar', 'Proveedor desactivado');
+        $_SESSION['flash_msg'] = ['tipo'=>'success','texto'=>'PROVEEDOR DESACTIVADO.'];
+        header("Location: proveedores.php");
+        exit();
+    }
+
     $rif = mb_strtoupper(trim($_POST['rif'] ?? ''));
     $nombre_empresa = mb_strtoupper(trim($_POST['nombre_empresa'] ?? ''));
     $telefono_contacto = trim($_POST['telefono'] ?? '');
@@ -105,15 +116,6 @@ if (isset($_POST['accion_proveedor'])) {
         );
         registrarAuditoria('editar', 'Proveedor modificado');
         $_SESSION['flash_msg'] = ['tipo'=>'success','texto'=>'DATOS ACTUALIZADOS CORRECTAMENTE.'];
-        header("Location: proveedores.php");
-        exit();
-    }
-    if ($accion == "eliminar") {
-        Security::soloAdmin();
-        $id_proveedor = intval($_POST['id_proveedor'] ?? 0);
-        $db->execute("UPDATE proveedores SET status = 'Inactivo' WHERE id_proveedor = ?", [$id_proveedor]);
-        registrarAuditoria('eliminar', 'Proveedor desactivado');
-        $_SESSION['flash_msg'] = ['tipo'=>'success','texto'=>'PROVEEDOR DESACTIVADO.'];
         header("Location: proveedores.php");
         exit();
     }
