@@ -227,6 +227,16 @@ foreach ($nulls as $n) {
                         <tbody id="tablaCategorias">
                             <?php if (!empty($categorias)): ?>
                                 <?php foreach ($categorias as $row): ?>
+                                    <?php
+                                        $c_min = intval($row['stock_minimo']);
+                                        $c_max = intval($row['stock_maximo']);
+                                        if ($c_max <= 0) $c_max = 100;
+                                        $c_pct = ($c_min / $c_max) * 100;
+                                        if ($c_pct >= 80) { $c_cls = 'danger'; $c_lbl = 'ALTO'; }
+                                        elseif ($c_pct >= 50) { $c_cls = 'warning'; $c_lbl = 'MEDIO'; }
+                                        else { $c_cls = 'success'; $c_lbl = 'BAJO'; }
+                                        $c_bar = $c_cls == 'danger' ? '#ef4444' : ($c_cls == 'warning' ? '#f59e0b' : '#4ade80');
+                                    ?>
                                     <tr data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre'])); ?>" data-codigo="<?php echo strtolower(htmlspecialchars($row['codigo'] ?? '')); ?>">
                                         <td>
                                             <i class="bi bi-folder2-open me-2" style="color: #22d3ee; font-size: 1rem;"></i>
@@ -245,8 +255,17 @@ foreach ($nulls as $n) {
                                                 <span class="text-muted">-</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-center">
-                                            <span class="stock-text"><?php echo $row['stock_minimo']; ?> / <?php echo $row['stock_maximo']; ?></span>
+                                        <td class="text-center" style="min-width:110px;">
+                                            <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                                                <span style="font-size:1.15rem;font-weight:900;color:#f1f5f9;line-height:1;"><?php echo $c_min; ?></span>
+                                                <span class="badge-jv badge-<?php echo $c_cls; ?>" style="font-size:0.6rem;padding:2px 8px;"><?php echo $c_lbl; ?></span>
+                                            </div>
+                                            <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin:0 auto;max-width:100px;">
+                                                <div style="height:100%;width:<?php echo $c_pct; ?>%;background:<?php echo $c_bar; ?>;border-radius:3px;transition:width 0.3s;"></div>
+                                            </div>
+                                            <div style="font-size:0.6rem;color:#94a3b8;font-weight:600;margin-top:2px;">
+                                                Máx: <?php echo $c_max; ?>
+                                            </div>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>">
