@@ -467,7 +467,8 @@ unset($_SESSION['flash_msg']);
                             <summary>📋 OPCIONES AVANZADAS</summary>
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">RIF / CÉDULA</label>
-                                <input type="text" name="rif_cliente" id="s_rif" class="input-jv" placeholder="Opcional. Ej: J-12345678-0">
+                                <input type="text" name="rif_cliente" id="s_rif" class="input-jv" maxlength="13" placeholder="Ej: V-12345678 o J-12345678-0" oninput="validarRIFInput(this)">
+                                <div id="s-rif-msg" class="small mt-1" style="min-height:18px;"></div>
                             </div>
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">NRO. CONTROL</label>
@@ -515,6 +516,8 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_cliente').value = '';
             document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = '');
             document.getElementById('s_rif').value = '';
+            var m = document.getElementById('s-rif-msg'); if (m) m.innerHTML = '';
+            var ri = document.getElementById('s_rif'); if (ri) ri.style.borderColor = '';
             // nro_control se genera automáticamente
             document.getElementById('s_obs').value = '';
             document.getElementById('s_fecha').value = new Date().toISOString().slice(0,10);
@@ -533,6 +536,7 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_cliente').value = data.cliente;
             document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = data.cliente);
             document.getElementById('s_rif').value = data.rif_cliente;
+            validarRIFInput(document.getElementById('s_rif'));
             document.getElementById('s_cant').value = data.cantidad;
             document.getElementById('s_precio').value = parseFloat(data.precio_venta).toFixed(2);
             document.getElementById('s_tipo').value = data.id_tipo_mov;
@@ -542,7 +546,20 @@ unset($_SESSION['flash_msg']);
             modalS.show();
         }
 
-        function enviarPreview() {
+        function validarRIFInput(el) {
+            var v = el.value.toUpperCase().replace(/[^VJEPG\d-]/g, '');
+            var msg = document.getElementById('s-rif-msg');
+            if (v === '') { msg.innerHTML = ''; el.style.borderColor = ''; el.value = v; return; }
+            var valido = /^[VJGPE]-\d{7,9}(?:-\d)?$/.test(v);
+            if (valido) {
+                msg.innerHTML = '<span style="color:#22c55e;">✓ Válido</span>';
+                el.style.borderColor = '#22c55e';
+            } else {
+                msg.innerHTML = '<span style="color:#ef4444;">Formato: V-12345678 o J-12345678-0</span>';
+                el.style.borderColor = '#ef4444';
+            }
+            el.value = v;
+        }
             const btn = document.getElementById('btnPreview');
             btn.disabled = true; btn.innerHTML = '⏳ PROCESANDO...';
 
