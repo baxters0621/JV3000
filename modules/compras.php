@@ -636,11 +636,11 @@ unset($_SESSION['flash_msg']);
                             </div>
                             <div class="col-md-2">
                                 <label class="small fw-bold text-secondary mb-1">Cant</label>
-                                <input type="number" class="input-jv" id="inputCant" value="1" min="1">
+                                <input type="number" class="input-jv" id="inputCant" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
                             </div>
                             <div class="col-md-2">
                                 <label class="small fw-bold text-secondary mb-1">Precio $</label>
-                                <input type="number" class="input-jv" id="inputPrecio" step="0.01" min="0" max="1000000" placeholder="0.00" oninput="if(this.value>1000000)this.value=1000000;if(this.value<0)this.value=0">
+                                <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" placeholder="0.00" oninput="formatearPrecioCompra(this)">
                             </div>
                             <div class="col-md-3">
                                 <button type="button" class="btn-jv-primary w-100" style="padding:12px;" onclick="agregarProducto()">
@@ -832,10 +832,24 @@ unset($_SESSION['flash_msg']);
         }
     });
 
+    function formatearPrecioCompra(el) {
+        var raw = el.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+        var parts = raw.split('.');
+        var entero = parts[0].replace(/^0+/, '') || '0';
+        var decimales = parts[1] ? parts[1].slice(0,2) : '';
+        var formateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        if (decimales) formateado += '.' + decimales;
+        var num = parseFloat(entero + '.' + (decimales || '0'));
+        if (num > 999999.99) { entero = '999999'; decimales = '99'; formateado = '999,999.99'; }
+        el.value = formateado;
+    }
+
     function agregarProducto() {
         const sel = document.getElementById('selProducto');
+        const precEl = document.getElementById('inputPrecio');
+        precEl.value = precEl.value.replace(/,/g, '');
         const cant = parseInt(document.getElementById('inputCant').value) || 0;
-        const precio = parseFloat(document.getElementById('inputPrecio').value) || 0;
+        const precio = parseFloat(precEl.value) || 0;
         const tipoSel = document.querySelector('select[name="tipo_entrada"]');
         const esDonacion = tipoSel && tipoSel.value === 'Donación';
 
@@ -870,8 +884,8 @@ unset($_SESSION['flash_msg']);
                 tr.innerHTML = '<td style="padding:8px 10px;color:#64748b;text-align:center;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">' + (i + 1) + '</td>' +
                     '<td style="padding:8px 10px;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">' + p.nombre + '</td>' +
                     '<td style="padding:8px 10px;font-size:.85rem;text-align:center;border-bottom:1px solid rgba(16,185,129,0.07);">' + p.cantidad + '</td>' +
-                    '<td style="padding:8px 10px;font-size:.85rem;text-align:right;color:#94a3b8;border-bottom:1px solid rgba(16,185,129,0.07);">$' + p.precio.toFixed(2) + '</td>' +
-                    '<td style="padding:8px 10px;font-size:.85rem;text-align:right;color:#06b6d4;font-weight:700;border-bottom:1px solid rgba(16,185,129,0.07);">$' + p.total.toFixed(2) + '</td>' +
+                    '<td style="padding:8px 10px;font-size:.85rem;text-align:right;color:#94a3b8;border-bottom:1px solid rgba(16,185,129,0.07);">$' + p.precio.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</td>' +
+                    '<td style="padding:8px 10px;font-size:.85rem;text-align:right;color:#06b6d4;font-weight:700;border-bottom:1px solid rgba(16,185,129,0.07);">$' + p.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</td>' +
                     '<td style="padding:8px 10px;border-bottom:1px solid rgba(16,185,129,0.07);"><button type="button" class="btn btn-sm border-0" style="padding:0;color:#ef4444;font-size:.8rem;line-height:1;" onclick="quitarProducto(' + i + ')"><i class="bi bi-x-circle"></i></button></td>';
                 body.appendChild(tr);
             });
