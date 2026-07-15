@@ -486,7 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                 <label class="form-label" style="margin-top:10px;">Respuesta</label>
                 <div class="field-group">
                     <i class="field-icon bi bi-shield-lock"></i>
-                    <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required oninput="validarReg()" placeholder="Tu respuesta personalizada" autocomplete="off">
+                    <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required maxlength="50" oninput="validarReg()" placeholder="Tu respuesta personalizada" autocomplete="off">
                 </div>
 
             </div>
@@ -537,7 +537,7 @@ function validarReg() {
 
     var resp = document.getElementById('r-resp').value.trim();
     var respOk = false;
-    if (resp.length >= 3 && resp.length <= 100 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/([bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ])\1{3,}/.test(resp) && !/asdf|qwerty|zxcv|1234|abcd/i.test(resp)) {
+    if (resp.length >= 3 && resp.length <= 50 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp)) {
         respOk = true;
         document.getElementById('r-resp').style.borderColor = 'var(--jv-success)';
     } else if (resp.length > 0) {

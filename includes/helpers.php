@@ -151,11 +151,13 @@ function getPreguntasRespuestas(): array
 function validarRespuestaSeguridad(string $respuesta): bool
 {
     $r = trim($respuesta);
-    if (strlen($r) < 3 || strlen($r) > 100) return false;
+    if (strlen($r) < 3 || strlen($r) > 50) return false;
     if (!preg_match('/[a-zA-Z]/', $r)) return false;
     if (!preg_match('/[aeiouAEIOU]/', $r)) return false;
-    if (preg_match('/[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{5,}/', $r)) return false;
-    $patrones = ['/asdf/i', '/qwerty/i', '/zxcv/i', '/1234/', '/abcd/i'];
+    if (preg_match('/(.)\1{3,}/', $r)) return false;
+    if (preg_match('/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn|jklmno|klmnop|lmnopq|mnopqr|nopqrs|opqrst|pqrstu|qrstuv|rstuvw|stuvwx|tuvwxy|uvwxyz/i', $r)) return false;
+    if (preg_match('/0123|1234|2345|3456|4567|5678|6789/', $r)) return false;
+    $patrones = ['/asdf/i', '/qwerty/i', '/zxcv/i', '/abcd/i'];
     foreach ($patrones as $p) {
         if (preg_match($p, $r)) return false;
     }

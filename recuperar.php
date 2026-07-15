@@ -218,7 +218,7 @@ if ($step == 4) {
                 <input type="hidden" name="rec_action" value="responder">
                 <div class="small text-jv-muted mb-2">Usuario: <strong class="text-white"><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
                 <div class="rec-question"><i class="bi bi-question-circle me-2"></i><?php echo htmlspecialchars($_SESSION['rec_pregunta'] ?? ''); ?></div>
-                <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required autofocus placeholder="Tu respuesta personalizada" autocomplete="off">
+                <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required maxlength="50" autofocus placeholder="Tu respuesta personalizada" autocomplete="off">
                 <button type="submit" class="rec-btn"><i class="bi bi-shield-check me-2"></i>VERIFICAR</button>
                 <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Intentar con otro correo</a>
             </form>

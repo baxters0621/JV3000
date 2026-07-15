@@ -454,7 +454,7 @@ unset($_SESSION['flash_msg']);
                                 <option value="Color favorito">Color favorito</option>
                             </select>
                             <small class="text-jv-muted mt-1 d-block" style="font-size:.7rem;">Selecciona una pregunta o déjalo vacío para mantener la actual.</small>
-                            <input type="text" name="respuesta_seguridad" id="u_resp" class="input-jv mt-2" placeholder="Tu respuesta personalizada" autocomplete="off">
+                            <input type="text" name="respuesta_seguridad" id="u_resp" class="input-jv mt-2" maxlength="50" placeholder="Tu respuesta personalizada" autocomplete="off">
                         </div>
 
                         <button type="submit" id="btn-user-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase" disabled>
