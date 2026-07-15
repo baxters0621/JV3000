@@ -7,8 +7,8 @@ $csrf_token = Security::generateToken();
 
 if (isset($_POST['accion_proveedor'])) {
     $accion = $_POST['accion_proveedor'];
-    $rif = mb_strtoupper(trim($_POST['rif']));
-    $nombre_empresa = mb_strtoupper(trim($_POST['nombre_empresa']));
+    $rif = mb_strtoupper(trim($_POST['rif'] ?? ''));
+    $nombre_empresa = mb_strtoupper(trim($_POST['nombre_empresa'] ?? ''));
     $telefono_contacto = trim($_POST['telefono'] ?? '');
     $contacto_nombre = trim($_POST['contacto_nombre'] ?? '');
     $email = trim($_POST['email'] ?? '');
