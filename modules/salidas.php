@@ -546,13 +546,13 @@ unset($_SESSION['flash_msg']);
             modalS.show();
         }
 
-        function formatoCedula(nums) {
-            if (nums.length <= 2) return nums;
-            if (nums.length <= 5) return nums.slice(0,2) + '.' + nums.slice(2);
-            if (nums.length <= 8) return nums.slice(0,2) + '.' + nums.slice(2,5) + '.' + nums.slice(5);
-            return nums.slice(0,2) + '.' + nums.slice(2,5) + '.' + nums.slice(5,8) + '-' + nums.slice(8,9);
-        }
-        function formatoRIF(nums) {
+        function formatearNumero(nums, tipo) {
+            if (tipo === 'V') {
+                if (nums.length <= 2) return nums;
+                if (nums.length <= 5) return nums.slice(0,2) + '.' + nums.slice(2);
+                if (nums.length <= 8) return nums.slice(0,2) + '.' + nums.slice(2,5) + '.' + nums.slice(5);
+                return nums.slice(0,2) + '.' + nums.slice(2,5) + '.' + nums.slice(5,8) + '-' + nums.slice(8,9);
+            }
             if (nums.length <= 8) return nums;
             return nums.slice(0,8) + '-' + nums.slice(8,9);
         }
@@ -563,16 +563,20 @@ unset($_SESSION['flash_msg']);
             var letter = raw.match(/^[VJEPG]/);
             var prefix = letter ? letter[0] + '-' : '';
             var nums = prefix ? raw.slice(1).replace(/\D/g, '') : raw.replace(/\D/g, '');
-            if (!prefix) { prefix = 'V-'; }
-            var display = prefix === 'V-' ? prefix + formatoCedula(nums) : prefix + formatoRIF(nums);
-            var clean = prefix + nums;
-            var valido = /^[VJGPE]-\d{7,9}(?:-\d)?$/.test(clean);
+            var display, clean;
+            if (prefix) {
+                display = prefix + formatearNumero(nums, letter[0]);
+                clean = prefix + nums;
+            } else {
+                display = formatearNumero(nums, 'V');
+                clean = nums;
+            }
+            var valido = /^[VJGPE]-\d{7,9}(?:-\d)?$/.test(clean) || /^\d{7,9}$/.test(clean);
             if (valido) {
                 msg.innerHTML = '<span style="color:#22c55e;">✓ Válido</span>';
                 el.style.borderColor = '#22c55e';
             } else {
-                var hint = prefix === 'V-' ? 'V-XY.ZZZ.AAA' : 'J-XXXXXXXX-X';
-                msg.innerHTML = '<span style="color:#ef4444;">Formato: ' + hint + '</span>';
+                msg.innerHTML = '<span style="color:#ef4444;">Anteponga V- o J- y escriba los números</span>';
                 el.style.borderColor = '#ef4444';
             }
             el.value = display;
@@ -603,8 +607,13 @@ unset($_SESSION['flash_msg']);
                 document.getElementById('s_precio').value = '0';
                 document.getElementById('s_cliente').value = document.getElementById('s_cliente_reg').value;
             }
-            var rif = document.getElementById('s_rif');
-            if (rif) rif.value = rif.value.replace(/\./g, '');
+            var rifEl = document.getElementById('s_rif');
+            var rifVal = rifEl.value.replace(/\./g, '');
+            if (rifVal && !/^[VJGPE]-\d{7,9}(?:-\d)?$/.test(rifVal)) {
+                Swal.fire({icon:'warning',title:'RIF INVÁLIDO',text:'Debe empezar con V- o J- seguido de los números.',background:'#0f172a',color:'#fff',confirmButtonColor:'#dc2626'});
+                btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA'; return;
+            }
+            rifEl.value = rifVal;
             const fd = new FormData(document.getElementById('formSalida'));
 
             fetch('preview_factura.php?store=1', { method:'POST', body:fd })
