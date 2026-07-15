@@ -179,17 +179,17 @@ CREATE TABLE `productos` (
   CONSTRAINT `fk_prod_cat` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `productos` (`sku`,`nombre_producto`,`precio_venta`,`precio_costo`,`stock_actual`,`stock_minimo`,`id_categoria`) VALUES
-('PROD-001','ACEITE MOTOR 20W50 TOTAL','12.00','8.50','68','10','1'),
-('PROD-002','ACEITE MOTOR 10W40 MOBIL','13.50','9.00','57','10','1'),
-('PROD-003','ACEITE MOTOR 15W40 CASTROL','13.00','8.75','50','10','1'),
-('PROD-004','ACEITE TRANSMISION ATF','18.00','12.00','40','10','1'),
-('PROD-005','ACEITE HIDRAULICO ISO 68','11.50','7.50','45','10','2'),
-('PROD-006','ACEITE HIDRAULICO ISO 46','11.00','7.00','30','10','2'),
-('PROD-007','GRASA MULTIPROPOSITO 1KG','7.50','4.50','85','10','3'),
-('PROD-009','FILTRO ACEITE TO-6731','5.50','3.00','105','10','4'),
-('PROD-012','ADITIVO LIMPIA INYECTORES','10.00','6.00','120','10','5'),
-('PROD-014','BUJIA NGK STANDARD','4.00','2.00','140','10','6');
+INSERT INTO `productos` (`sku`,`nombre_producto`,`precio_venta`,`precio_costo`,`stock_actual`,`stock_minimo`,`id_categoria`,`fecha_vencimiento`) VALUES
+('PROD-001','ACEITE MOTOR 20W50 TOTAL','12.00','8.50','68','10','1','2026-08-15'),
+('PROD-002','ACEITE MOTOR 10W40 MOBIL','13.50','9.00','57','10','1','2026-07-30'),
+('PROD-003','ACEITE MOTOR 15W40 CASTROL','13.00','8.75','50','10','1','2026-10-15'),
+('PROD-004','ACEITE TRANSMISION ATF','18.00','12.00','40','10','1','2027-03-15'),
+('PROD-005','ACEITE HIDRAULICO ISO 68','11.50','7.50','45','10','2','2026-06-01'),
+('PROD-006','ACEITE HIDRAULICO ISO 46','11.00','7.00','30','10','2','2026-08-01'),
+('PROD-007','GRASA MULTIPROPOSITO 1KG','7.50','4.50','85','10','3','2027-06-15'),
+('PROD-009','FILTRO ACEITE TO-6731','5.50','3.00','105','10','4','2026-09-01'),
+('PROD-012','ADITIVO LIMPIA INYECTORES','10.00','6.00','120','10','5','2026-07-20'),
+('PROD-014','BUJIA NGK STANDARD','4.00','2.00','140','10','6','2027-12-01');
 
 
 CREATE TABLE `compras` (
