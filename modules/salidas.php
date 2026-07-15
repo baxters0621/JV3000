@@ -547,11 +547,7 @@ unset($_SESSION['flash_msg']);
         }
 
         function formatearNumero(nums, tipo) {
-            if (tipo === 'V') {
-                if (nums.length <= 2) return nums;
-                if (nums.length <= 5) return nums.slice(0,2) + '.' + nums.slice(2);
-                return nums.slice(0,2) + '.' + nums.slice(2,5) + '.' + nums.slice(5);
-            }
+            if (tipo === 'V') return nums.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             if (nums.length <= 8) return nums;
             return nums.slice(0,8) + '-' + nums.slice(8,9);
         }
