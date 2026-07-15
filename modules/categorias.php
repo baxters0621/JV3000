@@ -11,9 +11,6 @@ if (isset($_POST['accion_categoria'])) {
     $codigo = trim($_POST['codigo'] ?? '');
     $descripcion = trim($_POST['descripcion'] ?? '');
     $status = $_POST['status'] ?? 'Activo';
-    $stock_minimo = max(0, min(500, intval($_POST['stock_minimo'] ?? 5)));
-    $stock_maximo = max(0, min(500, intval($_POST['stock_maximo'] ?? 100)));
-    $alerta_reorden = 1;
     $clasificacion_abc = strtoupper(trim($_POST['clasificacion_abc'] ?? ''));
     if (!in_array($clasificacion_abc, ['A', 'B', 'C', ''])) $clasificacion_abc = '';
     $tipo_manejo = in_array($_POST['tipo_manejo'] ?? '', ['normal', 'perecedero', 'congelado', 'peligroso', 'controlado', 'granel']) ? $_POST['tipo_manejo'] : 'normal';
@@ -33,12 +30,6 @@ if (isset($_POST['accion_categoria'])) {
             exit();
         }
 
-        if ($stock_maximo <= $stock_minimo) {
-            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'STOCK MÁXIMO DEBE SER MAYOR QUE STOCK MÍNIMO.'];
-            header("Location: categorias.php");
-            exit();
-        }
-
         $db->begin();
         try {
             $cnt = $db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix='CAT' FOR UPDATE");
@@ -49,9 +40,6 @@ if (isset($_POST['accion_categoria'])) {
                 'nombre'          => $nombre,
                 'codigo'          => $codigo,
                 'descripcion'     => $descripcion,
-                'stock_minimo'    => $stock_minimo,
-                'stock_maximo'    => $stock_maximo,
-                'alerta_reorden'  => $alerta_reorden,
                 'clasificacion_abc' => $clasificacion_abc,
                 'tipo_manejo'     => $tipo_manejo,
                 'status'          => $status,
@@ -77,16 +65,10 @@ if (isset($_POST['accion_categoria'])) {
             exit();
         }
 
-        if ($stock_maximo <= $stock_minimo) {
-            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'STOCK MÁXIMO DEBE SER MAYOR QUE STOCK MÍNIMO.'];
-            header("Location: categorias.php");
-            exit();
-        }
-
         $existente = $db->fetchOne("SELECT codigo FROM categorias WHERE id_categoria = ?", [$id_cat]);
         $codigo_final = $existente['codigo'] ?? $codigo;
-        $db->execute("UPDATE categorias SET nombre=?, codigo=?, descripcion=?, stock_minimo=?, stock_maximo=?, alerta_reorden=?, clasificacion_abc=?, tipo_manejo=?, status=? WHERE id_categoria=?", 
-            [$nombre, $codigo_final, $descripcion, $stock_minimo, $stock_maximo, $alerta_reorden, $clasificacion_abc, $tipo_manejo, $status, $id_cat]);
+        $db->execute("UPDATE categorias SET nombre=?, codigo=?, descripcion=?, clasificacion_abc=?, tipo_manejo=?, status=? WHERE id_categoria=?", 
+            [$nombre, $codigo_final, $descripcion, $clasificacion_abc, $tipo_manejo, $status, $id_cat]);
         registrarAuditoria('editar', 'Categoría modificada');
         $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'CATEGORÍA ACTUALIZADA CORRECTAMENTE.'];
         header("Location: categorias.php");
@@ -169,8 +151,6 @@ foreach ($nulls as $n) {
         .card-jv-table { border-top: 4px solid #22d3ee; border-radius: var(--jv-radius) !important; overflow: hidden; }
         /* Separador */
         .actions-divider { width: 1px; height: 26px; background: rgba(56, 189, 248, 0.15); display: inline-block; vertical-align: middle; }
-        /* Stock text */
-        .stock-text { font-size: 0.9rem; color: #94a3b8; font-weight: 600; }
         /* Codigo badge */
         .codigo-badge { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 6px; padding: 3px 10px; font-size: 0.8rem; font-weight: 700; color: #22d3ee; font-family: 'Courier New', monospace; display: inline-block; }
     </style>
@@ -219,7 +199,6 @@ foreach ($nulls as $n) {
                                 <th style="width: 25%;">NOMBRE</th>
                                 <th style="width: 14%;">CÓDIGO</th>
                                 <th style="width: 8%;" class="text-center">ABC</th>
-                                <th style="width: 14%;" class="text-center">STOCK</th>
                                 <th style="width: 12%;" class="text-center">ESTADO</th>
                                 <th style="width: 22%;" class="text-center">ACCIONES</th>
                             </tr>
@@ -227,16 +206,6 @@ foreach ($nulls as $n) {
                         <tbody id="tablaCategorias">
                             <?php if (!empty($categorias)): ?>
                                 <?php foreach ($categorias as $row): ?>
-                                    <?php
-                                        $c_min = intval($row['stock_minimo']);
-                                        $c_max = intval($row['stock_maximo']);
-                                        if ($c_max <= 0) $c_max = 100;
-                                        $c_pct = ($c_min / $c_max) * 100;
-                                        if ($c_pct >= 80) { $c_cls = 'danger'; $c_lbl = 'ALTO'; }
-                                        elseif ($c_pct >= 50) { $c_cls = 'warning'; $c_lbl = 'MEDIO'; }
-                                        else { $c_cls = 'success'; $c_lbl = 'BAJO'; }
-                                        $c_bar = $c_cls == 'danger' ? '#ef4444' : ($c_cls == 'warning' ? '#f59e0b' : '#4ade80');
-                                    ?>
                                     <tr data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre'])); ?>" data-codigo="<?php echo strtolower(htmlspecialchars($row['codigo'] ?? '')); ?>">
                                         <td>
                                             <i class="bi bi-folder2-open me-2" style="color: #22d3ee; font-size: 1rem;"></i>
@@ -254,18 +223,6 @@ foreach ($nulls as $n) {
                                             <?php else: ?>
                                                 <span class="text-muted">-</span>
                                             <?php endif; ?>
-                                        </td>
-                                        <td class="text-center" style="min-width:110px;">
-                                            <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
-                                                <span style="font-size:1.15rem;font-weight:900;color:#f1f5f9;line-height:1;"><?php echo $c_min; ?></span>
-                                                <span class="badge-jv badge-<?php echo $c_cls; ?>" style="font-size:0.6rem;padding:2px 8px;"><?php echo $c_lbl; ?></span>
-                                            </div>
-                                            <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin:0 auto;max-width:100px;">
-                                                <div style="height:100%;width:<?php echo $c_pct; ?>%;background:<?php echo $c_bar; ?>;border-radius:3px;transition:width 0.3s;"></div>
-                                            </div>
-                                            <div style="font-size:0.6rem;color:#94a3b8;font-weight:600;margin-top:2px;">
-                                                Máx: <?php echo $c_max; ?>
-                                            </div>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>">
@@ -293,7 +250,7 @@ foreach ($nulls as $n) {
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" class="text-center py-5">
+                                    <td colspan="5" class="text-center py-5">
                                         <i class="bi bi-tags d-block mb-3 mx-auto" style="font-size: 3rem; color: rgba(6, 182, 212, 0.5);"></i>
                                         <span class="text-uppercase" style="color: #e2e8f0; font-weight: 700; font-size: 0.95rem;">No hay categorías registradas</span>
                                         <p class="mt-2" style="color: #94a3b8; font-size: 0.85rem;">Crea una categoría usando el botón <strong style="color: #22d3ee;">CREAR</strong></p>
@@ -345,14 +302,6 @@ foreach ($nulls as $n) {
                                 </div>
                                 <div class="d-flex flex-column gap-2">
                                     <div>
-                                        <label for="cat_stock_min" class="fw-bold mb-1" style="color: #94a3b8; font-size: 0.85rem;">STOCK MÍNIMO</label>
-                                        <input type="number" name="stock_minimo" id="cat_stock_min" class="input-jv" value="5" min="0" max="500" oninput="if(this.value>500)this.value=500;if(this.value<0)this.value=0" style="padding: 12px 16px; font-size: 0.95rem;">
-                                    </div>
-                                    <div>
-                                        <label for="cat_stock_max" class="fw-bold mb-1" style="color: #94a3b8; font-size: 0.85rem;">STOCK MÁXIMO</label>
-                                        <input type="number" name="stock_maximo" id="cat_stock_max" class="input-jv" value="100" min="0" max="500" oninput="if(this.value>500)this.value=500;if(this.value<0)this.value=0" style="padding: 12px 16px; font-size: 0.95rem;">
-                                    </div>
-                                    <div>
                                         <label for="cat_abc" class="fw-bold mb-1" style="color: #94a3b8; font-size: 0.85rem;">CLASIFICACIÓN ABC</label>
                                         <select name="clasificacion_abc" id="cat_abc" class="input-jv" style="padding: 12px 16px; font-size: 0.95rem;">
                                             <option value="">—</option>
@@ -397,8 +346,6 @@ foreach ($nulls as $n) {
                 document.getElementById('modalTitle').innerHTML = '<i class="bi bi-tag-fill me-2"></i>NUEVA CATEGORÍA';
                 document.getElementById('cat_nombre').value = "";
                 document.getElementById('cat_desc').value = "";
-                document.getElementById('cat_stock_min').value = "5";
-                document.getElementById('cat_stock_max').value = "100";
                 document.getElementById('cat_abc').value = "";
                 document.getElementById('cat_manejo').value = "normal";
                 document.getElementById('cat_nombre').focus();
@@ -411,8 +358,6 @@ foreach ($nulls as $n) {
                 document.getElementById('modalTitle').innerHTML = '<i class="bi bi-tag-fill me-2"></i>EDITAR CATEGORÍA';
                 document.getElementById('cat_nombre').value = data.nombre;
                 document.getElementById('cat_desc').value = data.descripcion || '';
-                document.getElementById('cat_stock_min').value = data.stock_minimo || 5;
-                document.getElementById('cat_stock_max').value = data.stock_maximo || 100;
                 document.getElementById('cat_abc').value = data.clasificacion_abc || '';
                 document.getElementById('cat_manejo').value = data.tipo_manejo || 'normal';
                 document.getElementById('cat_nombre').focus();
