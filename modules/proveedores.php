@@ -121,7 +121,7 @@ if (isset($_POST['accion_proveedor'])) {
     }
 }
 
-$proveedores = $db->fetchAll("SELECT * FROM proveedores WHERE status = 'Activo' ORDER BY nombre_empresa ASC");
+$proveedores = $db->fetchAll("SELECT * FROM proveedores ORDER BY nombre_empresa ASC");
 
 $total_prov = count($proveedores);
 $activos_prov = $db->fetchOne("SELECT COUNT(*) as t FROM proveedores WHERE status='Activo'")['t'];
