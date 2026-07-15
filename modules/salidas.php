@@ -438,7 +438,7 @@ unset($_SESSION['flash_msg']);
                         <div class="sal-field-group" data-grupo="venta">
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">PRECIO UNITARIO ($)</label>
-                                <input type="number" step="0.01" name="precio_venta" id="s_precio" class="input-jv" placeholder="0.00" min="0" max="999999.99" oninput="if(parseFloat(this.value)>999999.99)this.value=999999.99;if(parseFloat(this.value)<0)this.value=0">
+                                <input type="text" inputmode="decimal" name="precio_venta" id="s_precio" class="input-jv" placeholder="0.00" oninput="formatearPrecio(this)">
                             </div>
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">CLIENTE <span class="text-secondary fw-normal">(opcional)</span></label>
@@ -538,7 +538,7 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_rif').value = data.rif_cliente;
             validarRIFInput(document.getElementById('s_rif'));
             document.getElementById('s_cant').value = data.cantidad;
-            document.getElementById('s_precio').value = parseFloat(data.precio_venta).toFixed(2);
+            var pv = document.getElementById('s_precio'); pv.value = parseFloat(data.precio_venta).toFixed(2); formatearPrecio(pv);
             document.getElementById('s_tipo').value = data.id_tipo_mov;
             // nro_control se genera automáticamente al registrar
             document.getElementById('s_obs').value = data.observaciones;
@@ -554,6 +554,17 @@ unset($_SESSION['flash_msg']);
             }
             if (nums.length <= 8) return nums;
             return nums.slice(0,8) + '-' + nums.slice(8,9);
+        }
+        function formatearPrecio(el) {
+            var raw = el.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+            var parts = raw.split('.');
+            var entero = parts[0].replace(/^0+/, '') || '0';
+            var decimales = parts[1] ? parts[1].slice(0,2) : '';
+            var formateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            if (decimales) formateado += '.' + decimales;
+            var num = parseFloat(entero + '.' + (decimales || '0'));
+            if (num > 999999.99) { entero = '999999'; decimales = '99'; formateado = '999,999.99'; }
+            el.value = formateado;
         }
         function validarRIFInput(el) {
             var raw = el.value.toUpperCase().replace(/[^VJEPG\d]/g, '');
@@ -606,6 +617,8 @@ unset($_SESSION['flash_msg']);
                 document.getElementById('s_precio').value = '0';
                 document.getElementById('s_cliente').value = document.getElementById('s_cliente_reg').value;
             }
+            var precEl = document.getElementById('s_precio');
+            if (precEl) precEl.value = precEl.value.replace(/,/g, '');
             var rifEl = document.getElementById('s_rif');
             var rifVal = rifEl.value.replace(/\./g, '');
             if (rifVal && !/^[VJGPE]-\d{7,9}(?:-\d)?$/.test(rifVal)) {
