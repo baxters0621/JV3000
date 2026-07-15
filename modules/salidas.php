@@ -560,6 +560,8 @@ unset($_SESSION['flash_msg']);
             }
             el.value = v;
         }
+
+        function enviarPreview() {
             const btn = document.getElementById('btnPreview');
             btn.disabled = true; btn.innerHTML = '⏳ PROCESANDO...';
 
