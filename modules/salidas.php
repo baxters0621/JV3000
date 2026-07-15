@@ -431,14 +431,14 @@ unset($_SESSION['flash_msg']);
                         <!-- CANTIDAD (todos los grupos) -->
                         <div class="section-bg">
                             <label class="small fw-bold text-secondary mb-2">CANTIDAD</label>
-                            <input type="number" name="cantidad" id="s_cant" class="input-jv" required min="1" placeholder="1">
+                            <input type="number" name="cantidad" id="s_cant" class="input-jv" required min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1" placeholder="1">
                         </div>
 
                         <!-- GRUPO: VENTA -->
                         <div class="sal-field-group" data-grupo="venta">
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">PRECIO UNITARIO ($)</label>
-                                <input type="number" step="0.01" name="precio_venta" id="s_precio" class="input-jv" placeholder="0.00" min="0">
+                                <input type="number" step="0.01" name="precio_venta" id="s_precio" class="input-jv" placeholder="0.00" min="0" max="999999.99" oninput="if(parseFloat(this.value)>999999.99)this.value=999999.99;if(parseFloat(this.value)<0)this.value=0">
                             </div>
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">CLIENTE <span class="text-secondary fw-normal">(opcional)</span></label>
