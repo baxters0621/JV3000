@@ -103,11 +103,6 @@ $badge_label = $tipo_mov;
 if ($es_regalias) { $badge_color = '#f59e0b'; $badge_label = 'REGALÍA'; }
 if ($es_merma) $badge_color = '#64748b';
 
-// Datos impresor autorizado
-$imprenta_nom = getConfig('imprenta_nombre', 'IMPRENTA AUTORIZADA');
-$imprenta_rif = getConfig('imprenta_rif', 'J-00000000-0');
-$imprenta_prov = getConfig('imprenta_providencia', '00000');
-
 // Hora actual para el sello fiscal
 $hora_actual = date('H:i:s');
 ?>
@@ -342,14 +337,6 @@ table td:nth-child(3) { text-align:center; }
     <div class="obs-box">
         <label>Observaciones</label>
         <p><?php echo nl2br(htmlspecialchars($data['observaciones'])); ?></p>
-    </div>
-    <?php endif; ?>
-
-    <?php if ($es_venta): ?>
-    <div class="legal-box">
-        <strong>DATOS DEL IMPRESOR AUTORIZADO</strong><br>
-        <?php echo htmlspecialchars($imprenta_nom); ?> — RIF: <?php echo htmlspecialchars($imprenta_rif); ?> — Providencia SENIAT N° <?php echo htmlspecialchars($imprenta_prov); ?><br>
-        Sistema JV3000 C.A. — RIF: <?php echo htmlspecialchars($rif_emp); ?> — Homologado según Providencia N° 0001
     </div>
     <?php endif; ?>
 
