@@ -396,7 +396,10 @@ unset($_SESSION['flash_msg']);
                     <input type="hidden" name="accion_salida" id="s_accion" value="registrar">
                     <input type="hidden" name="id_salida" id="s_id_edit">
                     <div class="modal-body p-4">
-                        <h5 class="fw-bolder mb-4 font-brand text-uppercase" id="modalTitle" style="color:#fca5a5;">REGISTRAR MOVIMIENTO</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bolder font-brand text-uppercase m-0" id="modalTitle" style="color:#fca5a5;">REGISTRAR MOVIMIENTO</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
 
                         <!-- TIPO (siempre visible) -->
                         <div class="section-bg">

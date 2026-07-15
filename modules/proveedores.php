@@ -498,7 +498,10 @@ unset($_SESSION['flash_msg']);
                     <input type="hidden" name="accion_proveedor" id="p_accion" value="registrar">
                     <input type="hidden" name="id_proveedor" id="p_id_edit">
                     <div class="modal-body p-4">
-                        <h5 class="fw-bolder mb-4 font-brand" id="modalTitle" style="color:#a855f7;letter-spacing:-.5px;">REGISTRAR PROVEEDOR</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bolder font-brand m-0" id="modalTitle" style="color:#a855f7;letter-spacing:-.5px;">REGISTRAR PROVEEDOR</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
 
                         <div class="section-bg">
                             <div class="section-label"><i class="bi bi-building"></i> Información Fiscal</div>
