@@ -8,12 +8,17 @@ $csrf_token = Security::generateToken();
 if (isset($_POST['accion_proveedor'])) {
     $accion = $_POST['accion_proveedor'];
 
-    if ($accion == "eliminar") {
+    if ($accion == "toggle_status") {
         Security::soloAdmin();
         $id_proveedor = intval($_POST['id_proveedor'] ?? 0);
-        $db->execute("UPDATE proveedores SET status = 'Inactivo' WHERE id_proveedor = ?", [$id_proveedor]);
-        registrarAuditoria('eliminar', 'Proveedor desactivado');
-        $_SESSION['flash_msg'] = ['tipo'=>'success','texto'=>'PROVEEDOR DESACTIVADO.'];
+        $prov = $db->fetchOne("SELECT status FROM proveedores WHERE id_proveedor = ?", [$id_proveedor]);
+        if ($prov) {
+            $nuevo_status = $prov['status'] == 'Activo' ? 'Inactivo' : 'Activo';
+            $db->execute("UPDATE proveedores SET status = ? WHERE id_proveedor = ?", [$nuevo_status, $id_proveedor]);
+            $accion_aud = $nuevo_status == 'Activo' ? 'activar' : 'desactivar';
+            registrarAuditoria($accion_aud, 'Proveedor ' . $accion_aud . 'do');
+            $_SESSION['flash_msg'] = ['tipo'=>'success','texto'=>'PROVEEDOR ' . strtoupper($accion_aud) . 'DO.'];
+        }
         header("Location: proveedores.php");
         exit();
     }
@@ -172,9 +177,7 @@ unset($_SESSION['flash_msg']);
         background:var(--jv-bg-hover);border-color:#a855f7;
         color:#a855f7;
     }
-    .btn-action-del:hover {
-        border-color:#ef4444 !important;
-        color:#ef4444 !important;
+
     }
 
     .estado-vacio { padding:60px 20px;text-align:center; }
@@ -431,9 +434,9 @@ unset($_SESSION['flash_msg']);
                             <button class="btn-action" onclick='editarProveedor(<?php echo json_encode($row); ?>)' title="Editar">
                                 <i class="bi bi-pencil-square"></i>
                             </button>
-                            <?php if (Security::esAdmin()): ?>
-                            <button class="btn-action btn-action-del" onclick="eliminarProveedor(<?php echo $row['id_proveedor']; ?>,'<?php echo htmlspecialchars($row['nombre_empresa'], ENT_QUOTES); ?>')" title="Eliminar">
-                                <i class="bi bi-trash3"></i>
+                                    <?php if (Security::esAdmin()): ?>
+                            <button class="btn-action" onclick="toggleStatusProveedor(<?php echo $row['id_proveedor']; ?>,'<?php echo htmlspecialchars($row['nombre_empresa'], ENT_QUOTES); ?>','<?php echo $row['status']; ?>')" title="<?php echo $row['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
+                                <i class="bi <?php echo $row['status'] == 'Activo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>" style="color:<?php echo $row['status'] == 'Activo' ? '#f87171' : '#4ade80'; ?>"></i>
                             </button>
                             <?php endif; ?>
                         </div>
@@ -730,15 +733,16 @@ unset($_SESSION['flash_msg']);
         window.location.href = 'compras.php?filtro_proveedor=' + idProveedor;
     }
 
-    function eliminarProveedor(id, nombre) {
+    function toggleStatusProveedor(id, nombre, statusActual) {
+        var activo = statusActual === 'Activo';
         Swal.fire({
-            title: '¿Desactivar proveedor?',
-            html: `Se desactivará <strong>${nombre}</strong>.`,
+            title: activo ? '¿Desactivar proveedor?' : '¿Activar proveedor?',
+            html: activo ? `Se desactivará <strong>${nombre}</strong>.` : `Se reactivará <strong>${nombre}</strong>.`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#ef4444',
+            confirmButtonColor: activo ? '#ef4444' : '#22c55e',
             cancelButtonColor: '#64748b',
-            confirmButtonText: 'Sí, desactivar',
+            confirmButtonText: activo ? 'Sí, desactivar' : 'Sí, activar',
             cancelButtonText: 'Cancelar',
             background:'#0f172a', color:'#fff',
             reverseButtons: true
@@ -747,7 +751,7 @@ unset($_SESSION['flash_msg']);
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.innerHTML = `
-                    <input type="hidden" name="accion_proveedor" value="eliminar">
+                    <input type="hidden" name="accion_proveedor" value="toggle_status">
                     <input type="hidden" name="id_proveedor" value="${id}">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 `;
