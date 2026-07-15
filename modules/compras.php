@@ -245,17 +245,9 @@ unset($_SESSION['flash_msg']);
         box-shadow:0 0 30px rgba(5,150,105,0.3);
     }
 
-    /* ── Codigo badge (green-tinted) ── */
-    .codigo-badge {
-        background:rgba(5,150,105,0.12);color:#6ee7b7;
-        font-size:.7rem;font-weight:800;padding:3px 10px;
-        border-radius:20px;display:inline-block;
-        letter-spacing:.5px;
-    }
-
-    /* ── Action button (40px) ── */
+    /* ── Action button (36px) ── */
     .btn-action {
-        width:40px;height:40px;border-radius:12px;
+        width:36px;height:36px;border-radius:10px;
         display:inline-flex;align-items:center;justify-content:center;
         border:1px solid var(--jv-border);background:var(--jv-bg-primary);
         color:var(--jv-text);transition:.15s;
@@ -289,21 +281,32 @@ unset($_SESSION['flash_msg']);
         border-top:4px solid #10b981;
         border-radius:var(--jv-radius) !important;overflow:hidden;
     }
+    .pagina-compras .table-jv { table-layout:auto; width:100%; }
     .pagina-compras .table-jv thead th {
         background:linear-gradient(135deg,#065f46,#047857);
         color:#a7f3d0;
         border-bottom:2px solid rgba(16,185,129,0.3);
-        font-size:1rem;
-        padding:18px 24px;
+        font-size:.82rem;
+        padding:14px 16px;
+        text-align:left;
+        white-space:nowrap;
     }
+    .pagina-compras .table-jv thead th.text-center { text-align:center; }
     .pagina-compras .table-jv tbody td {
         border-bottom:1px solid rgba(16,185,129,0.07);
-        padding:18px 24px;
-        font-size:1rem;
+        padding:14px 16px;
+        font-size:.85rem;
+        vertical-align:middle;
+        color:#e2e8f0;
     }
     .pagina-compras .table-jv tbody tr:hover {
         background:rgba(16,185,129,0.03);
     }
+    .pagina-compras .table-jv tbody td.text-center { text-align:center; }
+    .pagina-compras .table-jv tbody td.fw-bold { font-weight:700; }
+    .pagina-compras .table-jv tbody td.text-muted { color:#94a3b8; }
+    .pagina-compras .table-jv tbody td.text-success { color:#34d399; }
+    .pagina-compras .table-jv tbody td.fecha-cell { font-weight:600; font-size:.82rem; color:#e2e8f0; white-space:nowrap; }
     .pagina-compras .btn-jv-primary {
         background:linear-gradient(135deg,#059669,#065f46);
     }
@@ -375,19 +378,25 @@ unset($_SESSION['flash_msg']);
         line-height:1.2;
     }
 
-    /* ── Cant badge ── */
-    .cant-badge {
-        background:rgba(16,185,129,0.15);color:#34d399;
-        padding:2px 10px;border-radius:4px;
-        font-weight:700;font-size:.8rem;
+    /* ── Badges ── */
+    .pagina-compras .codigo-badge {
+        background:rgba(5,150,105,0.12);color:#6ee7b7;
+        font-size:.72rem;font-weight:800;padding:4px 12px;
+        border-radius:20px;display:inline-block;
+        letter-spacing:.5px;line-height:1.5;
     }
-
-    /* ── Badges de tipo y condiciones ── */
+    .pagina-compras .cant-badge {
+        background:rgba(16,185,129,0.15);color:#34d399;
+        padding:4px 12px;border-radius:20px;
+        font-weight:700;font-size:.75rem;display:inline-block;
+        line-height:1.5;
+    }
     .pagina-compras .badge-jv {
-        padding: 5px 16px;
+        padding: 4px 14px;
         font-size: 0.72rem;
         line-height: 1.5;
         white-space: nowrap;
+        display:inline-block;
     }
     .pagina-compras .badge-success {
         background: rgba(16,185,129,0.15);
@@ -487,28 +496,28 @@ unset($_SESSION['flash_msg']);
                     <table class="table-jv mb-0">
                         <thead>
                             <tr>
-                                <th>Factura</th>
-                                <th>Control</th>
+                                <th style="min-width:100px;">Factura</th>
+                                <th style="min-width:110px;">Control</th>
                                 <th>Tipo</th>
                                 <th>Proveedor</th>
-                                <th class="text-center">Cant</th>
-                                <th>Total</th>
+                                <th class="text-center" style="width:70px;">Cant</th>
+                                <th style="width:100px;">Total</th>
                                 <th class="text-center">Condiciones</th>
-                                <th>Fecha</th>
-                                <th class="text-center"></th>
+                                <th style="width:90px;">Fecha</th>
+                                <th class="text-center" style="width:50px;"></th>
                             </tr>
                         </thead>
                         <tbody id="tablaEntradas">
                             <?php if (count($compras) > 0): foreach ($compras as $row): ?>
                                 <tr>
                                     <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
-                                    <td style="color:#94a3b8;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
+                                    <td class="text-muted"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
                                     <td><span class="badge-jv <?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'bi bi-box-seam' : 'bi bi-arrow-down-circle'; ?> me-1"></i><?php echo htmlspecialchars($row['tipo_entrada']); ?></span></td>
                                     <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
                                     <td class="text-center"><span class="cant-badge">+<?php echo $row['cantidad']; ?></span></td>
-                                    <td class="fw-bold" style="color:#34d399;">$<?php echo number_format($row['total'], 2); ?></td>
+                                    <td class="fw-bold text-success">$<?php echo number_format($row['total'], 2); ?></td>
                                     <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
-                                    <td style="color:#e2e8f0;font-weight:600;font-size:.82rem;"><?php echo date('d/m/Y', strtotime($row['fecha_compra'])); ?></td>
+                                    <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_compra'])); ?></td>
                                     <td class="text-center">
                                         <?php if ($esAdmin): ?>
                                             <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo $row['id_compra']; ?>)"><i class="bi bi-trash"></i></button>
