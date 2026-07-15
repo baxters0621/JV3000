@@ -348,19 +348,15 @@ unset($_SESSION['flash_msg']);
     .pagina-compras .widget-card {
         border-radius:var(--jv-radius-lg);
         background:var(--jv-bg-card);
-        backdrop-filter:blur(20px);
         border:1px solid var(--jv-border);
         padding:20px 22px;
         display:flex;
         align-items:center;
         gap:18px;
-        transition:all .25s ease;
         min-height:90px;
     }
     .pagina-compras .widget-card:hover {
         border-color:var(--jv-border-hover);
-        transform:translateY(-3px);
-        box-shadow:0 12px 40px -8px rgba(0,0,0,0.4);
     }
     .widget-card .widget-icon {
         width:46px;height:46px;border-radius:14px;

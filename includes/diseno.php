@@ -214,16 +214,13 @@ body {
    CLASES REUTILIZABLES - CARDS
    ============================================= */
 
-/* Card con glassmorphism */
+/* Card base */
 .card-jv {
     background: var(--jv-bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--jv-border);
     border-radius: var(--jv-radius-lg);
     padding: 24px;
     box-shadow: var(--jv-shadow);
-    transition: all 0.3s ease;
 }
 
 .card-jv:hover {
@@ -233,19 +230,16 @@ body {
 /* Card widget (para el dashboard) */
 .card-widget {
     background: var(--jv-bg-card);
-    backdrop-filter: blur(20px);
     border: 1px solid var(--jv-border);
     border-radius: var(--jv-radius);
     padding: 20px;
     display: flex;
     align-items: center;
     gap: 16px;
-    transition: all 0.3s ease;
 }
 
 .card-widget:hover {
     border-color: var(--jv-border-hover);
-    transform: translateY(-2px);
 }
 
 /* =============================================
@@ -459,9 +453,7 @@ input[type="date"].input-jv {
 }
 
 .navbar-jv {
-    background: rgba(15, 23, 42, 0.9);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--jv-bg-secondary);
     border-bottom: 1px solid var(--jv-border);
 }
 
