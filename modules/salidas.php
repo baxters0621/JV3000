@@ -546,19 +546,36 @@ unset($_SESSION['flash_msg']);
             modalS.show();
         }
 
+        function formatoCedula(nums) {
+            if (nums.length <= 2) return nums;
+            if (nums.length <= 5) return nums.slice(0,2) + '.' + nums.slice(2);
+            if (nums.length <= 8) return nums.slice(0,2) + '.' + nums.slice(2,5) + '.' + nums.slice(5);
+            return nums.slice(0,2) + '.' + nums.slice(2,5) + '.' + nums.slice(5,8) + '-' + nums.slice(8,9);
+        }
+        function formatoRIF(nums) {
+            if (nums.length <= 8) return nums;
+            return nums.slice(0,8) + '-' + nums.slice(8,9);
+        }
         function validarRIFInput(el) {
-            var v = el.value.toUpperCase().replace(/[^VJEPG\d-]/g, '');
+            var raw = el.value.toUpperCase().replace(/[^VJEPG\d]/g, '');
             var msg = document.getElementById('s-rif-msg');
-            if (v === '') { msg.innerHTML = ''; el.style.borderColor = ''; el.value = v; return; }
-            var valido = /^[VJGPE]-\d{7,9}(?:-\d)?$/.test(v);
+            if (raw === '') { msg.innerHTML = ''; el.style.borderColor = ''; el.value = ''; return; }
+            var letter = raw.match(/^[VJEPG]/);
+            var prefix = letter ? letter[0] + '-' : '';
+            var nums = prefix ? raw.slice(1).replace(/\D/g, '') : raw.replace(/\D/g, '');
+            if (!prefix) { prefix = 'V-'; }
+            var display = prefix === 'V-' ? prefix + formatoCedula(nums) : prefix + formatoRIF(nums);
+            var clean = prefix + nums;
+            var valido = /^[VJGPE]-\d{7,9}(?:-\d)?$/.test(clean);
             if (valido) {
                 msg.innerHTML = '<span style="color:#22c55e;">✓ Válido</span>';
                 el.style.borderColor = '#22c55e';
             } else {
-                msg.innerHTML = '<span style="color:#ef4444;">Formato: V-12345678 o J-12345678-0</span>';
+                var hint = prefix === 'V-' ? 'V-XY.ZZZ.AAA' : 'J-XXXXXXXX-X';
+                msg.innerHTML = '<span style="color:#ef4444;">Formato: ' + hint + '</span>';
                 el.style.borderColor = '#ef4444';
             }
-            el.value = v;
+            el.value = display;
         }
 
         function enviarPreview() {
@@ -586,6 +603,8 @@ unset($_SESSION['flash_msg']);
                 document.getElementById('s_precio').value = '0';
                 document.getElementById('s_cliente').value = document.getElementById('s_cliente_reg').value;
             }
+            var rif = document.getElementById('s_rif');
+            if (rif) rif.value = rif.value.replace(/\./g, '');
             const fd = new FormData(document.getElementById('formSalida'));
 
             fetch('preview_factura.php?store=1', { method:'POST', body:fd })
