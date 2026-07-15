@@ -365,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
         <div class="brand-tagline" style="color:#ffffff !important;">Sistema de Inventario y Ventas</div>
 
         <?php if ($error): ?>
-        <div class="alert-jv alert-jv-danger mb-3 flash-auto">
+        <div class="alert-jv alert-jv-danger mb-3" id="alerta-bloqueo">
             <i class="bi bi-shield-slash me-2"></i><?php echo htmlspecialchars($error); ?>
         </div>
         <?php endif; ?>
@@ -609,8 +609,13 @@ if (segRestantes > 0) {
             document.getElementById('btn-login').disabled = false;
             document.getElementById('f-user').focus();
             if (elAlerta) {
-                elAlerta.className = 'alert-jv alert-jv-success mb-3 flash-auto';
+                elAlerta.className = 'alert-jv alert-jv-success mb-3';
                 elAlerta.innerHTML = '<i class="bi bi-unlock-fill me-2"></i>BLOQUEO TERMINADO. YA PUEDES INTENTAR DE NUEVO.';
+                setTimeout(function() {
+                    elAlerta.style.transition = 'opacity .5s';
+                    elAlerta.style.opacity = '0';
+                    setTimeout(function() { elAlerta.remove(); }, 500);
+                }, 4000);
             }
         }
     }, 1000);
