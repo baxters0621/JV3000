@@ -34,6 +34,12 @@ if (isset($_GET['store'])) {
         exit();
     }
 
+    $prod_check = $db->fetchOne("SELECT fecha_vencimiento FROM productos WHERE id_producto = ?", [$id_producto]);
+    if ($prod_check && $prod_check['fecha_vencimiento'] && $prod_check['fecha_vencimiento'] <= date('Y-m-d')) {
+        echo json_encode(['ok'=>false,'error'=>'PRODUCTO VENCIDO. NO SE PUEDE VENDER.']);
+        exit();
+    }
+
     $_SESSION['preview_data'] = [
         'id_producto'        => $id_producto,
         'cantidad'           => $cantidad,
@@ -69,15 +75,25 @@ if (isset($_GET['id'])) {
     $data = $_SESSION['preview_data'] ?? null;
     if (!$data) { echo "<h2>NO HAY DATOS DE PREVIEW</h2>"; exit(); }
 
-    $prod = $db->fetchOne("SELECT nombre_producto, sku FROM productos WHERE id_producto = ?", [(int)$data['id_producto']]);
+    $prod = $db->fetchOne("SELECT nombre_producto, sku, fecha_vencimiento FROM productos WHERE id_producto = ?", [(int)$data['id_producto']]);
     if ($prod) {
         $data['nombre_producto'] = $prod['nombre_producto'];
         $data['sku'] = $prod['sku'];
+        $data['fecha_vencimiento'] = $prod['fecha_vencimiento'];
     }
     $tn_row = $db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [(int)$data['id_tipo_mov']]);
     if ($tn_row) {
         $data['tipo_nombre'] = $tn_row['nombre'];
     }
+}
+
+// ── Alerta de vencimiento ──
+$alerta_venc = '';
+$venc_fecha = $data['fecha_vencimiento'] ?? null;
+if ($venc_fecha && $venc_fecha <= date('Y-m-d')) {
+    $alerta_venc = 'vencido';
+} elseif ($venc_fecha && $venc_fecha <= date('Y-m-d', strtotime('+7 days'))) {
+    $alerta_venc = 'proximo';
 }
 
 // ── Determinar tipo para layout adaptativo ──
@@ -284,6 +300,16 @@ table td:nth-child(3) { text-align:center; }
         <span class="num-item"><strong>FECHA:</strong> <?php echo date('d/m/Y', strtotime($data['fecha_salida'])); ?></span>
         <span class="num-item"><strong>HORA:</strong> <?php echo $hora_actual; ?></span>
     </div>
+
+    <?php if ($alerta_venc): ?>
+    <div style="padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:.8rem;font-weight:600;text-align:center;<?php echo $alerta_venc === 'vencido' ? 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca;' : 'background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;'; ?>">
+        <?php if ($alerta_venc === 'vencido'): ?>
+        ⚠ PRODUCTO VENCIDO (<?php echo date('d/m/Y', strtotime($venc_fecha)); ?>)
+        <?php else: ?>
+        ⚠ PRODUCTO PRÓXIMO A VENCER (<?php echo date('d/m/Y', strtotime($venc_fecha)); ?>)
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
 
     <?php if (!$es_merma): ?>
     <div class="info-grid">

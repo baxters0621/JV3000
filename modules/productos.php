@@ -22,6 +22,15 @@ $productos = $db->fetchAll(
 
 $esAdmin = Security::esAdmin();
 $id_eliminar = intval($_GET['eliminar'] ?? 0);
+$id_baja_vencido = intval($_GET['baja_vencido'] ?? 0);
+
+if ($id_baja_vencido && $esAdmin) {
+    $db->execute("UPDATE productos SET status = 'Inactivo', fecha_vencimiento = NULL WHERE id_producto = ?", [$id_baja_vencido]);
+    registrarAuditoria('baja_vencido', 'Producto dado de baja por vencimiento');
+    $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'PRODUCTO DADO DE BAJA POR VENCIMIENTO.'];
+    header('Location: productos.php');
+    exit;
+}
 
 if ($id_eliminar && $esAdmin) {
     $db->execute("UPDATE productos SET status = 'Inactivo' WHERE id_producto = ?", [$id_eliminar]);
@@ -58,6 +67,9 @@ $productos = $db->fetchAll(
     FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
 );
+
+$vencidos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE fecha_vencimiento <= CURDATE() AND fecha_vencimiento IS NOT NULL AND status = 'Activo'")['t'];
+$proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE fecha_vencimiento BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND fecha_vencimiento IS NOT NULL AND status = 'Activo'")['t'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -89,6 +101,24 @@ $productos = $db->fetchAll(
         .buscador-wrapper i { font-size: 1.15rem !important; }
         .card-jv-table { border-top: 4px solid #22d3ee; border-radius: var(--jv-radius) !important; overflow: hidden; }
         .codigo-badge { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 6px; padding: 3px 10px; font-size: 0.8rem; font-weight: 700; color: #22d3ee; font-family: 'Courier New', monospace; display: inline-block; }
+        .alert-card { border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border: 1px solid; min-height: 64px; }
+        .alert-card .alert-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .alert-card .alert-num { font-size: 1.6rem; font-weight: 900; line-height: 1; }
+        .alert-card .alert-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .alert-card .alert-link { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; text-decoration: none; padding: 6px 14px; border-radius: 8px; transition: 0.15s; border: 1px solid; }
+        .alert-card .alert-link:hover { transform: scale(1.05); }
+        .alert-vencida { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); }
+        .alert-vencida .alert-icon { background: rgba(239,68,68,0.2); color: #f87171; }
+        .alert-vencida .alert-num { color: #f87171; }
+        .alert-vencida .alert-label { color: rgba(248,113,113,0.8); }
+        .alert-vencida .alert-link { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.3); }
+        .alert-vencida .alert-link:hover { background: rgba(239,68,68,0.25); }
+        .alert-proxima { background: rgba(251,146,60,0.08); border-color: rgba(251,146,60,0.25); }
+        .alert-proxima .alert-icon { background: rgba(251,146,60,0.2); color: #fb923c; }
+        .alert-proxima .alert-num { color: #fb923c; }
+        .alert-proxima .alert-label { color: rgba(251,146,60,0.8); }
+        .alert-proxima .alert-link { background: rgba(251,146,60,0.12); color: #fb923c; border-color: rgba(251,146,60,0.3); }
+        .alert-proxima .alert-link:hover { background: rgba(251,146,60,0.25); }
     </style>
 </head>
 
@@ -108,6 +138,39 @@ $productos = $db->fetchAll(
                 </div>
             </div>
 
+            <?php if ($vencidos_count > 0 || $proximos_count > 0): ?>
+            <div class="row g-2 mb-3">
+                <?php if ($vencidos_count > 0): ?>
+                <div class="col-md-6">
+                    <div class="alert-card alert-vencida">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="alert-icon"><i class="bi bi-x-circle-fill"></i></div>
+                            <div>
+                                <div class="alert-label">Productos Vencidos</div>
+                                <div class="alert-num"><?php echo $vencidos_count; ?></div>
+                            </div>
+                        </div>
+                        <button class="alert-link" onclick="filtrarPorAlerta('vencido')">Ver todos →</button>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <?php if ($proximos_count > 0): ?>
+                <div class="col-md-6">
+                    <div class="alert-card alert-proxima">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="alert-icon"><i class="bi bi-clock-fill"></i></div>
+                            <div>
+                                <div class="alert-label">Próximos a Vencer (7 días)</div>
+                                <div class="alert-num"><?php echo $proximos_count; ?></div>
+                            </div>
+                        </div>
+                        <button class="alert-link" onclick="filtrarPorAlerta('proximo')">Ver todos →</button>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <?php if (isset($_SESSION['flash_msg'])): ?>
                 <div class="alert-jv alert-jv-<?php echo $_SESSION['flash_msg']['tipo']; ?> mb-3 px-3 py-2">
                     <i class="bi bi-<?php echo $_SESSION['flash_msg']['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
@@ -117,9 +180,18 @@ $productos = $db->fetchAll(
             <?php endif; ?>
 
             <div class="card-jv card-jv-table p-0">
-                <div class="buscador-wrapper d-flex align-items-center px-3 py-2">
-                    <i class="bi bi-search me-2" style="color: #22d3ee; font-size: 1rem;"></i>
-                    <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por SKU o nombre..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; font-size: 0.85rem; padding: 8px 6px;">
+                <div class="buscador-wrapper d-flex align-items-center flex-wrap gap-2 px-3 py-2">
+                    <i class="bi bi-search me-1" style="color: #22d3ee; font-size: 1rem;"></i>
+                    <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por SKU, nombre o proveedor..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; font-size: 0.85rem; padding: 8px 6px; max-width: 260px;">
+                    <span class="actions-divider mx-1"></span>
+                    <span class="small fw-bold text-uppercase" style="color:#64748b;font-size:.65rem;letter-spacing:1px;">Vence:</span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-sm btn-filtro-venc active" data-venc="todas" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:6px 0 0 6px;background:rgba(6,182,212,0.2);color:#22d3ee;border:1px solid rgba(6,182,212,0.3);">Todas</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vencido" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:0;background:transparent;color:#f87171;border:1px solid rgba(239,68,68,0.3);">Vencidos</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="proximo" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:0;background:transparent;color:#fb923c;border:1px solid rgba(251,146,60,0.3);">Próximo</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="pronto" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:0;background:transparent;color:#fbbf24;border:1px solid rgba(251,191,36,0.3);">Pronto</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vigente" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:0 6px 6px 0;background:transparent;color:#4ade80;border:1px solid rgba(74,222,128,0.3);">Vigente</button>
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table-jv mb-0">
@@ -150,7 +222,25 @@ $productos = $db->fetchAll(
                                     else { $pct = ($stk / $max) * 100; $stk_cls = 'success'; $stk_lbl = 'OK'; $stk_pct = $pct; }
                                     $bar_color = $stk_cls == 'danger' ? '#ef4444' : ($stk_cls == 'info' ? '#22d3ee' : '#4ade80');
                                 ?>
-                                    <tr data-id="<?php echo $row['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($row['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($row['ultimo_proveedor'] ?? '')); ?>" data-stock="<?php echo $row['stock_actual']; ?>" data-minimo="<?php echo $row['stock_minimo']; ?>" data-max="<?php echo $max; ?>" data-pvp="<?php echo $row['precio_venta']; ?>" data-costo="<?php echo $row['precio_costo']; ?>" data-status="<?php echo $row['status']; ?>" data-venc="<?php echo $row['fecha_vencimiento'] ?? ''; ?>">
+                                    <?php
+                                        $venc = $row['fecha_vencimiento'] ?? '';
+                                        $venc_cls = '';
+                                        $vc = 'badge-secondary'; $vt = 'S/V'; $vi = 'dash-circle'; $vd = '';
+                                        if ($venc) {
+                                            $dias_v = floor((strtotime($venc) - time()) / 86400);
+                                            $vd = date('d/m/Y', strtotime($venc));
+                                            if ($dias_v < 0) {
+                                                $venc_cls = 'vencido'; $vc = 'badge-danger'; $vt = 'VENCIDO'; $vi = 'exclamation-triangle';
+                                            } elseif ($dias_v <= 7) {
+                                                $venc_cls = 'proximo'; $vc = 'badge-danger'; $vt = 'PRÓXIMO'; $vi = 'clock';
+                                            } elseif ($dias_v <= 30) {
+                                                $venc_cls = 'pronto'; $vc = 'badge-warning'; $vt = 'PRONTO'; $vi = 'clock';
+                                            } else {
+                                                $venc_cls = 'vigente'; $vc = 'badge-success'; $vt = 'VIGENTE'; $vi = 'check-circle';
+                                            }
+                                        }
+                                    ?>
+                                    <tr data-id="<?php echo $row['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($row['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($row['ultimo_proveedor'] ?? '')); ?>" data-stock="<?php echo $row['stock_actual']; ?>" data-minimo="<?php echo $row['stock_minimo']; ?>" data-max="<?php echo $max; ?>" data-pvp="<?php echo $row['precio_venta']; ?>" data-costo="<?php echo $row['precio_costo']; ?>" data-status="<?php echo $row['status']; ?>" data-venc="<?php echo $row['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
                                         <td>
                                             <span class="codigo-badge"><?php echo htmlspecialchars($row['sku']); ?></span>
                                         </td>
@@ -179,24 +269,6 @@ $productos = $db->fetchAll(
                                             <span class="prod-precio">$<?php echo number_format($row['precio_venta'], 2); ?></span>
                                         </td>
                                         <td class="text-center">
-                                            <?php
-                                            $venc = $row['fecha_vencimiento'] ?? '';
-                                            if ($venc) {
-                                                $dias = floor((strtotime($venc) - time()) / 86400);
-                                                if ($dias < 0) {
-                                                    $vc = 'badge-danger'; $vt = 'VENCIDO'; $vi = 'exclamation-triangle';
-                                                } elseif ($dias <= 15) {
-                                                    $vc = 'badge-danger'; $vt = 'PRÓXIMO'; $vi = 'clock';
-                                                } elseif ($dias <= 30) {
-                                                    $vc = 'badge-warning'; $vt = 'PRONTO'; $vi = 'clock';
-                                                } else {
-                                                    $vc = 'badge-success'; $vt = 'VIGENTE'; $vi = 'check-circle';
-                                                }
-                                                $vd = date('d/m/Y', strtotime($venc));
-                                            } else {
-                                                $vc = 'badge-secondary'; $vt = 'S/V'; $vi = 'dash-circle'; $vd = '';
-                                            }
-                                            ?>
                                             <span class="badge-jv <?php echo $vc; ?>" style="white-space:nowrap;">
                                                 <i class="bi bi-<?php echo $vi; ?>"></i> <?php echo $vd ? "$vd" : $vt; ?>
                                             </span>
@@ -216,6 +288,11 @@ $productos = $db->fetchAll(
                                                 <button type="button" class="btn btn-sm p-0" style="width:32px;height:32px;border-radius:8px;background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="eliminarProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Eliminar">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
+                                                <?php if ($venc_cls === 'vencido'): ?>
+                                                <button type="button" class="btn btn-sm p-0 ms-1" style="width:32px;height:32px;border-radius:8px;background:rgba(100,116,139,0.12);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="bajaVencido(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Dar de baja por vencimiento">
+                                                    <i class="bi bi-archive"></i>
+                                                </button>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                         <?php endif; ?>
@@ -336,7 +413,45 @@ $productos = $db->fetchAll(
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script>
-        function filtrar() {
+        function filtrarPorAlerta(clase) {
+            var btn = document.querySelector('.btn-filtro-venc[data-venc="' + clase + '"]');
+            if (btn) filtrarVenc(btn);
+        }
+
+        function filtrarVenc(btn) {
+        document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
+            b.style.background = 'transparent';
+            b.style.color = b.dataset.venc === 'vencido' ? '#f87171' : b.dataset.venc === 'proximo' ? '#fb923c' : b.dataset.venc === 'pronto' ? '#fbbf24' : b.dataset.venc === 'vigente' ? '#4ade80' : '#22d3ee';
+        });
+        btn.style.background = 'rgba(6,182,212,0.2)';
+        btn.style.color = '#22d3ee';
+        var filtro = btn.getAttribute('data-venc');
+        var rows = document.getElementById('tablaProductos').getElementsByTagName('tr');
+        for (var i = 0; i < rows.length; i++) {
+            var vc = rows[i].getAttribute('data-venc-cls') || '';
+            if (filtro === 'todas') { rows[i].style.display = ''; }
+            else { rows[i].style.display = vc === filtro ? '' : 'none'; }
+        }
+    }
+
+    function bajaVencido(id, nombre) {
+        Swal.fire({
+            title: '¿DAR DE BAJA?',
+            html: 'Se marcará como <strong>Inactivo</strong> por vencimiento: ' + nombre,
+            icon: 'warning',
+            showCancelButton: true,
+            background: '#0f172a',
+            color: '#fff',
+            confirmButtonColor: '#64748b',
+            cancelButtonColor: '#1e293b',
+            confirmButtonText: 'SÍ, DAR DE BAJA',
+            cancelButtonText: 'CANCELAR'
+        }).then(function(r) {
+            if (r.isConfirmed) window.location.href = 'productos.php?baja_vencido=' + id;
+        });
+    }
+
+    function filtrar() {
             const input = document.getElementById('buscar');
             const filter = input.value.toLowerCase();
             const rows = document.getElementById('tablaProductos').getElementsByTagName('tr');

@@ -26,9 +26,19 @@ if (isset($_GET['confirm'])) {
     $cantidad = intval($data['cantidad']);
     $precio_venta = floatval($data['precio_venta']);
 
-    $prod_st = $db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [$id_producto]);
+    $prod_st = $db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$id_producto]);
 
-    if (!$prod_st || (int)$prod_st['stock_actual'] < $cantidad) {
+    if (!$prod_st) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRODUCTO NO ENCONTRADO.'];
+        unset($_SESSION['preview_data']);
+        header("Location: salidas.php"); exit();
+    }
+    if ($prod_st['fecha_vencimiento'] && $prod_st['fecha_vencimiento'] <= date('Y-m-d')) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRODUCTO VENCIDO. NO SE PUEDE VENDER.'];
+        unset($_SESSION['preview_data']);
+        header("Location: salidas.php"); exit();
+    }
+    if ((int)$prod_st['stock_actual'] < $cantidad) {
         $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'STOCK INSUFICIENTE.'];
         unset($_SESSION['preview_data']);
         header("Location: salidas.php"); exit();
@@ -118,9 +128,17 @@ if (isset($_POST['accion_salida'])) {
     }
 
     if ($accion === 'registrar') {
-        $prod_st = $db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [$id_producto]);
+        $prod_info = $db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$id_producto]);
 
-        if (!$prod_st || (int)$prod_st['stock_actual'] < $cantidad) {
+        if (!$prod_info) {
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRODUCTO NO ENCONTRADO.'];
+            header("Location: salidas.php"); exit();
+        }
+        if ($prod_info['fecha_vencimiento'] && $prod_info['fecha_vencimiento'] <= date('Y-m-d')) {
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRODUCTO VENCIDO. NO SE PUEDE VENDER.'];
+            header("Location: salidas.php"); exit();
+        }
+        if ((int)$prod_info['stock_actual'] < $cantidad) {
             $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'STOCK INSUFICIENTE.'];
             header("Location: salidas.php"); exit();
         }
@@ -197,7 +215,7 @@ if (isset($_GET['eliminar'])) {
 
 // ── DATOS PARA LA VISTA ──
 $salidas = $db->fetchAll("SELECT s.*, p.nombre_producto, p.sku FROM salidas s INNER JOIN productos p ON s.id_producto = p.id_producto WHERE s.status = 'Activa' ORDER BY s.id_salida DESC");
-$productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
+$productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta, fecha_vencimiento FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
 $tipos_mov = $db->fetchAll("SELECT id_tipo_mov, nombre FROM tipos_movimientos WHERE tipo_movimiento = 'Salida' ORDER BY id_tipo_mov");
 $clientes_previos = $db->fetchAll("SELECT DISTINCT cliente, rif_cliente FROM salidas WHERE cliente IS NOT NULL AND cliente != 'Venta General' AND status = 'Activa' ORDER BY cliente ASC");
 
@@ -419,8 +437,15 @@ unset($_SESSION['flash_msg']);
                             <label class="small fw-bold text-secondary mb-2">PRODUCTO</label>
                             <select name="id_producto" id="s_prod" class="input-jv" required onchange="cargarPrecio()">
                                 <option value="">Seleccione un producto...</option>
-                                <?php foreach ($productos as $pr): ?>
-                                    <option value="<?php echo $pr['id_producto']; ?>" data-precio="<?php echo $pr['precio_venta']; ?>"><?php echo $pr['sku'] . " - " . $pr['nombre_producto']; ?></option>
+                                <?php foreach ($productos as $pr):
+                                    $alerta = '';
+                                    if ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d')) {
+                                        $alerta = '«VENCIDO» ';
+                                    } elseif ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d', strtotime('+7 days'))) {
+                                        $alerta = '«PRÓX» ';
+                                    }
+                                ?>
+                                    <option value="<?php echo $pr['id_producto']; ?>" data-precio="<?php echo $pr['precio_venta']; ?>"><?php echo $alerta . $pr['sku'] . " - " . $pr['nombre_producto']; ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

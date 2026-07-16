@@ -35,8 +35,28 @@ if (isset($_GET['ajax_dashboard'])) {
     $fac = $db->fetchAll("SELECT cliente, MAX(fecha_salida) as fecha_salida, SUM(cantidad * precio_venta) as total, nro_factura_manual FROM salidas WHERE id_tipo_mov = 1 AND status = 'Activa' GROUP BY nro_factura_manual ORDER BY MAX(fecha_salida) DESC LIMIT 5");
     $datos['ultimas_facturas'] = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => number_format($r['total'], 2)], $fac);
 
-    $crit = $db->fetchAll("SELECT nombre_producto, stock_actual, stock_minimo FROM productos WHERE (stock_actual <= stock_minimo OR stock_actual = 0) AND status = 'Activo' ORDER BY stock_actual ASC LIMIT 5");
-    $datos['tabla_criticos'] = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'stock' => $r['stock_actual'], 'minimo' => $r['stock_minimo'], 'estado' => ($r['stock_actual'] == 0) ? 'critico' : 'bajo'], $crit);
+    // Productos próximos a vencer (≤15 días) y expirados
+    $venc_now = $db->fetchAll("SELECT id_producto, nombre_producto, fecha_vencimiento, stock_actual FROM productos WHERE fecha_vencimiento <= CURRENT_DATE() AND status = 'Activo' ORDER BY fecha_vencimiento ASC LIMIT 8");
+    $venc_pending = $db->fetchAll("SELECT id_producto, nombre_producto, fecha_vencimiento, stock_actual FROM productos WHERE fecha_vencimiento <= DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY) AND fecha_vencimiento > CURRENT_DATE() AND status = 'Activo' ORDER BY fecha_vencimiento ASC LIMIT 5");
+    
+    $productos_vencer = array_map(fn($r) => [
+        'id' => $r['id_producto'],
+        'nombre' => $r['nombre_producto'],
+        'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
+        'dias' => floor((strtotime($r['fecha_vencimiento']) - time()) / 86400),
+        'stock' => (int)$r['stock_actual']
+    ], $venc_now);
+    
+    $productos_pronto = array_map(fn($r) => [
+        'id' => $r['id_producto'],
+        'nombre' => $r['nombre_producto'],
+        'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
+        'dias' => floor((strtotime($r['fecha_vencimiento']) - time()) / 86400),
+        'stock' => (int)$r['stock_actual']
+    ], $venc_pending);
+    
+    $datos['productos_vencer'] = $productos_vencer;
+    $datos['productos_pronto'] = $productos_pronto;
 
     echo json_encode(['success' => true] + $datos);
     exit();
