@@ -1,0 +1,112 @@
+=================================================================
+  CONTENIDO PARA AGREGAR AL MANUAL DE USUARIOS
+  (Insertar despu�s de la INTRODUCCI�N, renumerando lo dem�s)
+=================================================================
+
+T�TULO DEL NUEVO CAP�TULO:
+============================
+1. Instalaci�n y Configuraci�n del Sistema
+
+RENUMERAR CAP�TULOS EXISTENTES:
+===============================
+El actual "1. Acceso y Seguridad"          pasar� a "2."
+          "2. Inicio o Panel de Inicio"               "3."
+          "3. Gesti�n de Inventarios"                 "4."
+          "4. M�dulo de Compras"                      "5."
+          "5. M�dulo de Ventas..."                    "6."
+          "6. Auditor�a y Control"                    "7."
+          "7. M�dulo de Estad�sticas"                 "8."
+          "8. Reporte de Inventario"                  "9."
+          "9. M�dulo de Colaboradores"                "10."
+
+CONTENIDO DEL CAP�TULO 1:
+==========================
+
+(P�rrafo de apertura)
+Este cap�tulo est� dise�ado para que cualquier persona, aunque no tenga
+experiencia en computaci�n, pueda instalar y poner en funcionamiento el
+sistema JV3000 C.A. siguiendo las instrucciones una por una. Lo �nico
+que necesita es el USB que le fue entregado con el proyecto.
+
+Paso 1: Revisar qu� trae el USB
+
+El USB contiene una carpeta llamada JV3000_db. Dentro de ella est�n todos
+los archivos del sistema. No debe mover ni borrar ning�n archivo de esta
+carpeta. Solo la usar� m�s adelante.
+
+Paso 2: Instalar XAMPP en la computadora
+
+XAMPP es el programa que permite que el sistema funcione. Sin �l, la
+computadora no podr� ejecutar la aplicaci�n. Siga estos pasos:
+
+1. Encienda la computadora y aseg�rese de que est� conectada a internet.
+2. Abra el navegador web (Chrome, Edge o Firefox).
+3. En la barra de direcciones, escriba:
+   https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/
+4. Haga clic en la carpeta "XAMPP Windows" (la primera de la lista).
+5. Seleccione la versi�n m�s reciente (n�mero m�s grande, ej. 8.2.12)
+   y descargue el archivo xampp-windows-x64-xxx-installer.exe.
+6. Una vez descargado, ejecute el instalador.
+7. Si Windows pide permiso, haga clic en S�.
+8. En el instalador: Next -> Next -> Next -> Finish.
+9. Al finalizar, se abrir� autom�ticamente el Panel de Control de XAMPP.
+
+Paso 3: Copiar el proyecto a la computadora
+
+1. Conecte el USB a la computadora.
+2. Abra el USB, busque la carpeta JV3000_db, haga clic derecho -> Copiar.
+3. Vaya a C:\xampp\htdocs y pegue la carpeta all� (clic derecho -> Pegar).
+4. La ruta final debe ser: C:\xampp\htdocs\JV3000_db
+
+Paso 4: Iniciar los servicios de XAMPP
+
+1. En el Panel de Control de XAMPP, haga clic en Start (junto a Apache).
+   Debe ponerse en fondo verde.
+2. Haga clic en Start (junto a MySQL). Tambi�n en fondo verde.
+3. No cierre esta ventana. Solo minim�cela.
+
+Paso 5: Crear la base de datos e importar los datos
+
+1. Abra el navegador y vaya a: http://localhost/phpmyadmin
+2. En el panel izquierdo, haga clic en "Nueva".
+3. Nombre de la BD: jv3000_db
+   Cotejamiento: utf8_general_ci
+   Haga clic en "Crear".
+4. Seleccione jv3000_db en el panel izquierdo.
+5. Vaya a la pesta�a "Importar".
+6. Haga clic en "Seleccionar archivo" y busque:
+   C:\xampp\htdocs\JV3000_db\jv3000_db.sql
+7. Haga clic en "Continuar".
+8. Espere el mensaje verde: "La importaci�n ha sido exitosa".
+
+Paso 6: Ingresar al sistema
+
+1. En el navegador, vaya a: http://localhost/JV3000_db
+2. Aparecer� la pantalla de Inicio de Sesi�n.
+3. Ingrese con el usuario y contrase�a proporcionados por el administrador.
+
+Paso 7: C�mo apagar correctamente
+
+1. Dentro del sistema, cierre sesi�n (bot�n rojo en el men� lateral).
+2. En el Panel de Control de XAMPP: Stop en Apache, Stop en MySQL.
+3. Cierre la ventana del Panel de Control.
+
+Paso 8: C�mo volver a usar el sistema otro d�a
+
+1. Abra el Panel de Control de XAMPP.
+2. Start en Apache, Start en MySQL.
+3. Abra el navegador en http://localhost/JV3000_db
+4. Inicie sesi�n.
+
+Consejos �tiles
+
+- Si la p�gina no carga: verifique que Apache y MySQL tengan fondo verde.
+- Si el USB se pierde: pida una copia del proyecto al desarrollador.
+- Para respaldar la BD: vaya a http://localhost/phpmyadmin ->
+  seleccione jv3000_db -> pesta�a Exportar -> SQL -> Continuar.
+- Si algo sale mal: puede reinstalar todo siguiendo estos mismos pasos
+  desde el principio. La carpeta JV3000_db en el USB es su respaldo.
+
+=================================================================
+  FIN DEL CONTENIDO
+=================================================================
