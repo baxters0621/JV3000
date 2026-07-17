@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
         } elseif (!validarRespuestaSeguridad($reg_respuesta)) {
             $error = "RESPUESTA INVÁLIDA. MÍN 3 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
         } else {
-            $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) OR LOWER(correo) = LOWER(?)", [$new_user, $new_email]);
+            $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE BINARY usuario = ? OR BINARY correo = ?", [$new_user, $new_email]);
             if ($dup) {
                 $error = "EL USUARIO O CORREO YA ESTA EN USO";
             } else {
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
         $user = trim($_POST['usuario']);
         $pass = $_POST['password'];
 
-        $row = $db->fetchOne("SELECT * FROM usuarios WHERE LOWER(usuario) = LOWER(?) LIMIT 1", [$user]);
+        $row = $db->fetchOne("SELECT * FROM usuarios WHERE BINARY usuario = ? LIMIT 1", [$user]);
         if ($row) {
             if (password_verify($pass, $row['password'])) {
                 $aprobado = $row['aprobado'] ?? 1;
@@ -365,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
         <div class="brand-tagline" style="color:#ffffff !important;">Sistema de Inventario y Ventas</div>
 
         <?php if ($error): ?>
-        <div class="alert-jv alert-jv-danger mb-3" id="alerta-bloqueo">
+        <div class="alert-jv alert-jv-danger mb-3 flash-auto" id="alerta-bloqueo">
             <i class="bi bi-shield-slash me-2"></i><?php echo htmlspecialchars($error); ?>
         </div>
         <?php endif; ?>
