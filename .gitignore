@@ -27,6 +27,9 @@ assets/js/bootstrap.bundle.min.js
 # Cache PHP
 cache/
 
+# Backups locales
+backups/*.zip
+
 # Capturas de pantalla
 Captura.PNG
 
