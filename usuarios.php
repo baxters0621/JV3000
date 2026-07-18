@@ -327,11 +327,13 @@ unset($_SESSION['flash_msg']);
                                     <td class="text-secondary small"><?php echo htmlspecialchars($row['correo'] ?? 'N/A'); ?></td>
                                     <td>
                                         <?php
-                                        $role_class = 'badge-danger';
-                                        if ($row['rol'] === 'Administrador') $role_class = 'badge-warning';
-                                        if ($row['rol'] === 'Operador de Carga') $role_class = 'badge-success';
+                                        $role_class = 'badge-secondary';
+                                        $role_text = $row['rol'] ?? '';
+                                        if (empty($role_text)) { $role_text = 'SIN ROL'; }
+                                        if ($role_text === 'Administrador') $role_class = 'badge-warning';
+                                        if ($role_text === 'Operador de Carga' || $role_text === 'Operador de Ventas') $role_class = 'badge-success';
                                         ?>
-                                        <span class="badge-jv <?php echo $role_class; ?>"><?php echo $row['rol']; ?></span>
+                                        <span class="badge-jv <?php echo $role_class; ?>"><?php echo $role_text; ?></span>
                                     </td>
                                     <td class="text-center">
                                         <?php if ($row['aprobado'] == 1): ?>

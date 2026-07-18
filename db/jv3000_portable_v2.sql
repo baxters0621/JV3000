@@ -47,9 +47,9 @@ CREATE TABLE `sku_contadores` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `sku_contadores` (`sku_prefix`,`ultimo_numero`) VALUES
-('CAT','6'),
-('FAC','8'),
-('PROD','15');
+('CAT','0'),
+('FAC','0'),
+('PROD','0');
 
 
 CREATE TABLE `tipos_movimientos` (
@@ -108,12 +108,7 @@ CREATE TABLE `proveedores` (
   UNIQUE KEY `idx_rif` (`rif`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `proveedores` (`rif`,`nombre_empresa`,`contacto`,`lead_time`,`limite_credito`,`dias_credito`,`condiciones_pago`,`moneda`,`status`,`telefono`,`email`,`direccion`) VALUES
-('J-40012345-6','TOTAL OIL & GAS VENEZUELA','Luis','5','5000.00','30','Credito','USD','Activo','(0412) 555-0101','compras@totaloil.com.ve','Av. Principal de la Industria'),
-('J-40067890-1','MOBIL LUBRICANTES C.A.','Carlos','5','5000.00','30','Credito','USD','Activo','(0412) 555-0202','ventas@mobil.com.ve','Calle 3, Edif. Mobil'),
-('J-40123456-7','CASTROL VENEZOLANA S.A.','Maria','5','5000.00','30','Credito','USD','Activo','(0412) 555-0303','pedidos@castrol.com.ve','Zona Ind. Los Cortijos'),
-('J-40987654-3','REPUESTOS Y FILTROS DEL SUR','Jose','5','5000.00','30','Credito','USD','Activo','(0414) 555-0404','ventas@filtrossur.com','Av. Fuerzas Armadas'),
-('J-40543210-9','QUIMICOS INDUSTRIALES C.A.','Ana','5','5000.00','30','Credito','USD','Activo','(0412) 555-0505','info@quimicosca.com','Urb. Industrial La Trinidad');
+-- Los proveedores se agregan desde el módulo de Proveedores
 
 
 CREATE TABLE `categorias` (
@@ -136,13 +131,7 @@ CREATE TABLE `categorias` (
   PRIMARY KEY (`id_categoria`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `categorias` (`codigo`,`nombre`) VALUES
-('CAT-001','ACEITES DE MOTOR'),
-('CAT-002','LUBRICANTES INDUSTRIALES'),
-('CAT-003','GRASAS'),
-('CAT-004','FILTROS'),
-('CAT-005','ADITIVOS'),
-('CAT-006','REPUESTOS');
+-- Las categorías se agregan desde el módulo de Categorías
 
 
 -- ===========================================
@@ -179,17 +168,7 @@ CREATE TABLE `productos` (
   CONSTRAINT `fk_prod_cat` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `productos` (`sku`,`nombre_producto`,`precio_venta`,`precio_costo`,`stock_actual`,`stock_minimo`,`id_categoria`,`fecha_vencimiento`) VALUES
-('PROD-001','ACEITE MOTOR 20W50 TOTAL','12.00','8.50','68','10','1','2026-08-15'),
-('PROD-002','ACEITE MOTOR 10W40 MOBIL','13.50','9.00','57','10','1','2026-07-30'),
-('PROD-003','ACEITE MOTOR 15W40 CASTROL','13.00','8.75','50','10','1','2026-10-15'),
-('PROD-004','ACEITE TRANSMISION ATF','18.00','12.00','40','10','1','2027-03-15'),
-('PROD-005','ACEITE HIDRAULICO ISO 68','11.50','7.50','45','10','2','2026-06-01'),
-('PROD-006','ACEITE HIDRAULICO ISO 46','11.00','7.00','30','10','2','2026-08-01'),
-('PROD-007','GRASA MULTIPROPOSITO 1KG','7.50','4.50','85','10','3','2027-06-15'),
-('PROD-009','FILTRO ACEITE TO-6731','5.50','3.00','105','10','4','2026-09-01'),
-('PROD-012','ADITIVO LIMPIA INYECTORES','10.00','6.00','120','10','5','2026-07-20'),
-('PROD-014','BUJIA NGK STANDARD','4.00','2.00','140','10','6','2027-12-01');
+-- Los productos se agregan desde el módulo de Productos
 
 
 CREATE TABLE `compras` (
@@ -219,17 +198,7 @@ CREATE TABLE `compras` (
   CONSTRAINT `fk_comp_user` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `compras` (`nro_factura`,`id_proveedor`,`id_producto`,`cantidad`,`precio_costo`,`tipo_entrada`,`id_usuario`,`fecha_compra`,`nro_control`,`condiciones_pago`,`dias_plazo`,`total`) VALUES
-('FAC-001','1','1','30','8.50','Compra a proveedor','1','2026-06-01 00:00:00','01-00000001','Credito','30','255.00'),
-('FAC-001','1','3','20','8.75','Compra a proveedor','1','2026-06-01 00:00:00','01-00000002','Credito','30','175.00'),
-('FAC-002','2','2','25','9.00','Compra a proveedor','1','2026-06-03 00:00:00','01-00000003','Credito','30','225.00'),
-('FAC-002','2','5','15','7.50','Compra a proveedor','1','2026-06-03 00:00:00','01-00000004','Credito','30','112.50'),
-('FAC-003','1','7','40','4.50','Compra a proveedor','1','2026-06-05 00:00:00','01-00000005','Credito','30','180.00'),
-('FAC-003','1','9','50','3.00','Compra a proveedor','1','2026-06-05 00:00:00','01-00000006','Credito','30','150.00'),
-('FAC-004','4','12','30','6.00','Compra a proveedor','1','2026-06-08 00:00:00','01-00000007','Credito','30','180.00'),
-('FAC-004','4','14','40','2.00','Compra a proveedor','1','2026-06-08 00:00:00','01-00000008','Credito','30','80.00'),
-('FAC-005','3','4','15','12.00','Compra a proveedor','1','2026-06-10 00:00:00','01-00000009','Credito','30','180.00'),
-('FAC-005','3','6','10','7.00','Compra a proveedor','1','2026-06-10 00:00:00','01-00000010','Credito','30','70.00');
+-- Las compras se registran desde el módulo de Compras
 
 
 CREATE TABLE `salidas` (
@@ -255,13 +224,7 @@ CREATE TABLE `salidas` (
   CONSTRAINT `fk_sal_user` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `salidas` (`nro_factura_manual`,`nro_control`,`id_producto`,`cantidad`,`precio_venta`,`cliente`,`rif_cliente`,`id_tipo_mov`,`id_usuario`,`fecha_salida`,`observaciones`) VALUES
-('FAC-001','02-35058787','1','10','12.00','CLIENTE ABC C.A.','J-12345678-0','1','1','2026-06-12 00:00:00','Venta de prueba'),
-('FAC-002','02-63505166','2','8','13.50','TALLER EL MOTOR','J-87654321-0','1','1','2026-06-12 00:00:00','Venta de prueba'),
-('FAC-003','02-54897416','3','5','13.00','TRANSPORTE CARIBE','J-11223344-5','1','1','2026-06-13 00:00:00','Venta de prueba'),
-('FAC-004','02-58019959','7','15','7.50','LUBRICENTRO SANTA FE','J-55667788-9','1','1','2026-06-13 00:00:00','Venta de prueba'),
-('FAC-005','02-64370291','9','25','5.50','CONCESIONARIO AUTOMUNDO','J-99887766-1','1','1','2026-06-14 00:00:00','Venta de prueba'),
-('FAC-006','02-24136937','1','2','12.00','CLIENTE FIEL','','3','1','2026-06-14 00:00:00','Regalía');
+-- Las salidas se registran desde el módulo de Salidas
 
 -- ===========================================
 -- INDICES ADICIONALES PARA RENDIMIENTO

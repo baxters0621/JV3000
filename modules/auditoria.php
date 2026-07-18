@@ -48,8 +48,9 @@ $accion_nombres = ['login' => 'Inicio de Sesión', 'logout' => 'Sesión Cerrada'
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['limpiar'])) {
     $db->execute("DELETE FROM auditoria");
     $eliminados = $db->getConnection()->affected_rows;
-    registrarAuditoria('eliminar', "Historial de auditoría limpiado ($eliminados registro(s))");
-    $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => "SE ELIMINARON $eliminados REGISTRO(S) DE AUDITORÍA."];
+    $detalle = $eliminados === 1 ? "1 registro" : "$eliminados registros";
+    registrarAuditoria('eliminar', "Depuración del historial de auditoría completada — $detalle eliminados.");
+    $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => "Depuración del historial de auditoría completada exitosamente. Total de registros eliminados: $eliminados."];
     header('Location: auditoria.php');
     exit;
 }
