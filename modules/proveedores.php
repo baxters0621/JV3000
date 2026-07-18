@@ -178,8 +178,6 @@ unset($_SESSION['flash_msg']);
         color:#a855f7;
     }
 
-    }
-
     .estado-vacio { padding:60px 20px;text-align:center; }
     .estado-vacio i {
         font-size:3.5rem;color:rgba(168,85,247,0.2);display:block;margin-bottom:16px;

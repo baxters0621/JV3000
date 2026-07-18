@@ -14,7 +14,7 @@ $total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE 
 $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 
 $productos = $db->fetchAll(
-    "SELECT p.*, c.nombre as nombre_cat, c.stock_maximo,
+    "SELECT p.*, c.nombre as nombre_cat,
         (SELECT pr.nombre_empresa FROM compras co LEFT JOIN proveedores pr ON co.id_proveedor = pr.id_proveedor WHERE co.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1) as ultimo_proveedor
     FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria WHERE p.status = 'Activo' ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 $total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos")['total'] ?? 0;
 $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 $productos = $db->fetchAll(
-    "SELECT p.*, c.nombre as nombre_cat, c.stock_maximo,
+    "SELECT p.*, c.nombre as nombre_cat,
         (SELECT pr.nombre_empresa FROM compras co LEFT JOIN proveedores pr ON co.id_proveedor = pr.id_proveedor WHERE co.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1) as ultimo_proveedor
     FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
@@ -215,7 +215,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                                 <?php foreach ($productos as $row):
                                     $stk = intval($row['stock_actual']);
                                     $min = intval($row['stock_minimo']);
-                                    $max = intval($row['stock_maximo'] ?? 100);
+                                    $max = 100;
                                     if ($stk == 0) { $stk_cls = 'danger'; $stk_lbl = 'AGOTADO'; $stk_pct = 0; }
                                     elseif ($stk <= $min) { $stk_cls = 'danger'; $stk_lbl = 'BAJO'; $stk_pct = max(5, ($stk / $max) * 100); }
                                     elseif ($stk >= $max) { $stk_cls = 'info'; $stk_lbl = 'COMPLETO'; $stk_pct = 100; }
