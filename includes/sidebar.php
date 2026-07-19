@@ -62,7 +62,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         <!-- --- Sales / Outputs (Admin / Sales) --- -->
         <!-- Ventas / Salidas -->
         <?php if ($es_admin || $es_op_ventas): ?>
-        <div class="nav-item nav-facturacion <?php echo ($archivo_actual === 'salidas.php') ? 'active' : ''; ?>">
+        <div class="nav-item nav-salidas <?php echo ($archivo_actual === 'salidas.php') ? 'active' : ''; ?>">
             <a href="<?php echo $prefijo; ?>modules/salidas.php" class="nav-link">
                 <i class="bi bi-receipt"></i>
                 <span>Ventas / Salidas</span>
