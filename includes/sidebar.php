@@ -40,11 +40,11 @@ function es_activo(string $pagina, string $modulo = ''): string {
 
     <!-- Menú de navegación -->
     <nav class="sidebar-nav">
-        <!-- Dashboard -->
+        <!-- Panel de Inicio -->
         <div class="nav-item nav-dashboard <?php echo ($archivo_actual === 'index.php') ? 'active' : ''; ?>">
             <a href="<?php echo $prefijo; ?>index.php" class="nav-link">
                 <i class="bi bi-house-door"></i>
-                <span>Dashboard</span>
+                <span>Panel de Inicio</span>
             </a>
         </div>
 

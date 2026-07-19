@@ -101,7 +101,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | JV3000 C.A.</title>
+    <title>Panel de Inicio | JV3000 C.A.</title>
     <?php include 'includes/diseno.php'; ?>
     <script src="assets/js/chart.umd.min.js"></script>
 
@@ -242,7 +242,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
 
         /* ===== NUEVO DASHBOARD ===== */
         
-        /* Header Dashboard */
+        /* Header Panel de Inicio */
         .dashboard-header {
             display: flex;
             justify-content: space-between;
@@ -664,7 +664,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
     <div class="main-wrapper" id="mainWrapper">
         <div class="container-fluid px-4 py-4">
         
-        <!-- Header Dashboard -->
+        <!-- Header Panel de Inicio -->
         <div class="dashboard-header">
             <div class="dashboard-title">
                 <div class="dashboard-logo">JV</div>
@@ -896,10 +896,10 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
                             if (data.grafico_ventas) renderCharts(data.grafico_ventas, data.grafico_productos);
                         }
                     } catch(e) {
-                        console.error('Dashboard refresh error:', e);
+                        console.error('Panel de Inicio refresh error:', e);
                     }
                 })
-                .catch(error => console.warn('Dashboard sync error:', error));
+                .catch(error => console.warn('Panel de Inicio sync error:', error));
         }
 
         // Auto-actualización inteligente

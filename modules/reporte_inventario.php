@@ -142,7 +142,7 @@ $valor_inventario = 0;
                 <i class="bi bi-printer-fill me-2"></i>Imprimir Reporte
             </button>
             <a href="../index.php" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
-                Volver al Dashboard
+                Volver al Panel de Inicio
             </a>
         </div>
     </div>
