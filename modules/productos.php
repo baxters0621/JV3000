@@ -1,4 +1,7 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
@@ -20,6 +23,9 @@ $productos = $db->fetchAll(
     [$registros_por_pagina, $offset]
 );
 
+// ==========================================
+// PROCESAR ACCIONES GET
+// ==========================================
 $esAdmin = Security::esAdmin();
 $id_eliminar = intval($_GET['eliminar'] ?? 0);
 $id_baja_vencido = intval($_GET['baja_vencido'] ?? 0);
@@ -40,6 +46,9 @@ if ($id_eliminar && $esAdmin) {
     exit;
 }
 
+// ==========================================
+// PROCESAR EDICIÓN DE PRODUCTO
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'editar_producto' && $esAdmin) {
     $id_prod = intval($_POST['id_producto'] ?? 0);
     $stock_minimo = intval($_POST['stock_minimo'] ?? 5);
@@ -58,7 +67,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     exit;
 }
 
-// Re-query after potential edit/delete
+// ==========================================
+// OBTENER DATOS
+// ==========================================
 $total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos")['total'] ?? 0;
 $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 $productos = $db->fetchAll(
@@ -71,6 +82,7 @@ $productos = $db->fetchAll(
 $vencidos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE fecha_vencimiento <= CURDATE() AND fecha_vencimiento IS NOT NULL AND status = 'Activo'")['t'];
 $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE fecha_vencimiento BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND fecha_vencimiento IS NOT NULL AND status = 'Activo'")['t'];
 ?>
+<!-- HEAD Y ESTILOS HTML -->
 <!DOCTYPE html>
 <html lang="es">
 
@@ -122,12 +134,14 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
     </style>
 </head>
 
+<!-- BODY HTML -->
 <body>
     <?php include '../includes/sidebar.php'; ?>
 
     <div class="main-wrapper" id="mainWrapper">
         <div class="container-fluid px-4 py-4">
 
+            <!-- Encabezado -->
             <div class="card-jv d-flex align-items-center gap-3 mb-3" style="padding: 18px 24px; border-left: 4px solid #22d3ee;">
                 <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0e7490, #155e75); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(6, 182, 212, 0.35);">
                     <i class="bi bi-box-seam text-white" style="font-size: 1.3rem;"></i>
@@ -171,6 +185,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
             </div>
             <?php endif; ?>
 
+            <!-- Mensajes flash -->
             <?php if (isset($_SESSION['flash_msg'])): ?>
                 <div class="alert-jv alert-jv-<?php echo $_SESSION['flash_msg']['tipo']; ?> mb-3 px-3 py-2">
                     <i class="bi bi-<?php echo $_SESSION['flash_msg']['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
@@ -179,6 +194,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                 <?php unset($_SESSION['flash_msg']); ?>
             <?php endif; ?>
 
+            <!-- Tabla de productos -->
             <div class="card-jv card-jv-table p-0">
                 <div class="buscador-wrapper d-flex align-items-center flex-wrap gap-2 px-3 py-2">
                     <i class="bi bi-search me-1" style="color: #22d3ee; font-size: 1rem;"></i>
@@ -342,7 +358,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
     </div>
 
     <?php if ($esAdmin): ?>
-    <!-- Modal Editar Producto -->
+    <!-- Modal: Editar producto -->
     <div class="modal fade" id="modalEditar" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content modal-content-jv">
@@ -411,6 +427,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
     </div>
     <?php endif; ?>
 
+    <!-- JAVASCRIPT -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script>
         function filtrarPorAlerta(clase) {

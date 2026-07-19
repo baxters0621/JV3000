@@ -1,5 +1,7 @@
 <?php
-// Fallback para $base_assets si no fue definido por diseno.php
+// ==========================================
+// INICIALIZACIÓN
+// ==========================================
 if (!isset($base_assets)) {
     $base_assets = (basename(dirname($_SERVER['PHP_SELF'])) === 'modules') ? '../assets/' : 'assets/';
 }
@@ -12,10 +14,12 @@ $prefijo = $es_modulo ? '../' : '';
 $nombre_visual = ucfirst($_SESSION['usuario'] ?? 'Invitado');
 $rol_visual = ucfirst($_SESSION['rol'] ?? 'Sin rol');
 
+// Roles de usuario
 $es_admin = Security::esAdmin();
 $es_op_carga = ($_SESSION['rol'] ?? '') === 'Operador de Carga';
 $es_op_ventas = ($_SESSION['rol'] ?? '') === 'Operador de Ventas';
 
+// Detección de página activa
 function es_activo(string $pagina, string $modulo = ''): string {
     global $archivo_actual;
     if (!empty($modulo)) {
@@ -25,13 +29,16 @@ function es_activo(string $pagina, string $modulo = ''): string {
 }
 ?>
 
+<!-- SIDEBAR HTML -->
 <aside class="sidebar" id="sidebar">
+    <!-- Encabezado / Marca -->
     <div class="sidebar-header">
         <a href="<?php echo $prefijo; ?>index.php" class="brand-link">
             <span class="brand-jv">JV</span><span class="brand-num">3000</span><span class="brand-ca"> C.A.</span>
         </a>
     </div>
 
+    <!-- Menú de navegación -->
     <nav class="sidebar-nav">
         <!-- Dashboard -->
         <div class="nav-item nav-dashboard <?php echo ($archivo_actual === 'index.php') ? 'active' : ''; ?>">
@@ -41,6 +48,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
             </a>
         </div>
 
+        <!-- --- Statistics (Admin / Sales) --- -->
         <!-- Estadísticas -->
         <?php if ($es_admin || $es_op_ventas): ?>
         <div class="nav-item nav-estadisticas <?php echo ($archivo_actual === 'estadisticas.php') ? 'active' : ''; ?>">
@@ -51,6 +59,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         </div>
         <?php endif; ?>
 
+        <!-- --- Sales / Outputs (Admin / Sales) --- -->
         <!-- Ventas / Salidas -->
         <?php if ($es_admin || $es_op_ventas): ?>
         <div class="nav-item nav-facturacion <?php echo ($archivo_actual === 'salidas.php') ? 'active' : ''; ?>">
@@ -61,6 +70,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         </div>
         <?php endif; ?>
 
+        <!-- --- Inventory (All operators) --- -->
         <!-- Inventario -->
         <?php if ($es_admin || $es_op_carga || $es_op_ventas): ?>
         <div class="nav-item nav-inventario <?php echo ($archivo_actual === 'productos.php') ? 'active' : ''; ?>">
@@ -71,6 +81,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         </div>
         <?php endif; ?>
 
+        <!-- --- Purchases (Admin / Load) --- -->
         <!-- Compras -->
         <?php if ($es_admin || $es_op_carga): ?>
         <div class="nav-item nav-entradas <?php echo ($archivo_actual === 'compras.php') ? 'active' : ''; ?>">
@@ -81,6 +92,8 @@ function es_activo(string $pagina, string $modulo = ''): string {
         </div>
         <?php endif; ?>
 
+        <!-- --- Admin-only menu items --- -->
+        <!-- --- Suppliers --- -->
         <!-- Proveedores -->
         <?php if ($es_admin): ?>
         <div class="nav-item nav-clientes <?php echo ($archivo_actual === 'proveedores.php') ? 'active' : ''; ?>">
@@ -91,6 +104,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         </div>
         <?php endif; ?>
 
+        <!-- --- Categories --- -->
         <!-- Categorías -->
         <?php if ($es_admin): ?>
         <div class="nav-item nav-inventario <?php echo ($archivo_actual === 'categorias.php') ? 'active' : ''; ?>">
@@ -101,6 +115,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         </div>
         <?php endif; ?>
 
+        <!-- --- Users --- -->
         <!-- Usuarios -->
         <?php if ($es_admin): ?>
         <div class="nav-item nav-usuarios <?php echo ($archivo_actual === 'usuarios.php') ? 'active' : ''; ?>">
@@ -111,6 +126,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         </div>
         <?php endif; ?>
 
+        <!-- --- Audit --- -->
         <!-- Auditoría -->
         <?php if ($es_admin): ?>
         <div class="nav-item nav-auditoria <?php echo ($archivo_actual === 'auditoria.php') ? 'active' : ''; ?>">
@@ -121,6 +137,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         </div>
         <?php endif; ?>
 
+        <!-- --- Print (Admin / Sales) --- -->
         <!-- Imprimir -->
         <?php if ($es_admin || $es_op_ventas): ?>
         <div class="nav-item nav-reportes">
@@ -132,6 +149,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
         <?php endif; ?>
     </nav>
 
+    <!-- Pie / Info de usuario -->
     <div class="sidebar-footer">
         <div class="user-info">
             <div class="user-avatar">
@@ -148,6 +166,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
     </div>
 </aside>
 
+<!-- BOTÓN TOGGLE Y BACKDROP -->
 <!-- Botón de Toggle Manual -->
 <button class="sidebar-toggle-btn" id="sidebarToggle" title="Abrir/Cerrar Menú">
     <i class="bi bi-list"></i>
@@ -156,11 +175,13 @@ function es_activo(string $pagina, string $modulo = ''): string {
 <!-- Backdrop para móvil -->
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
+<!-- ESTILOS DEL SIDEBAR -->
 <style>
 /* =============================================
    SIDEBAR - JV3000
    ============================================= */
 
+/* --- Main Sidebar --- */
 .sidebar {
     position: fixed;
     left: 0;
@@ -198,6 +219,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
     pointer-events: auto;
 }
 
+/* --- Header / Brand --- */
 /* Header */
 .sidebar-header {
     padding: 20px;
@@ -227,6 +249,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
     margin-left: 2px;
 }
 
+/* --- Navigation --- */
 /* Navegación */
 .sidebar-nav {
     flex: 1;
@@ -234,6 +257,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
     padding: 12px 0;
 }
 
+/* --- Module Colors --- */
 /* Colores por módulo */
 .nav-dashboard { --mod-color: #94a3b8; }
 .nav-estadisticas { --mod-color: #14b8a6; }
@@ -256,7 +280,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
 .nav-item.nav-usuarios { --mod-color: #ea580c; }
 .nav-item.nav-estadisticas { --mod-color: #14b8a6; }
 
-
+/* --- Nav Items & Links --- */
 .nav-item {
     margin: 6px 12px;
 }
@@ -325,6 +349,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
     color: #fff;
 }
 
+/* --- Expandable Groups / Submenu --- */
 /* Grupo expansible */
 .nav-group > .nav-toggle {
     display: flex;
@@ -449,6 +474,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
     font-weight: 500;
 }
 
+/* --- Footer / User Info / Logout --- */
 /* Footer */
 .sidebar-footer {
     padding: 12px 14px;
@@ -539,6 +565,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
     font-size: 0.9rem;
 }
 
+/* --- Main Content Wrapper --- */
 /* Main content wrapper */
 .main-wrapper {
     margin-left: 0;
@@ -550,6 +577,7 @@ function es_activo(string $pagina, string $modulo = ''): string {
     margin-left: 260px;
 }
 
+/* --- Toggle Button --- */
 /* Botón de Toggle Manual */
 .sidebar-toggle-btn {
     position: fixed;
@@ -595,6 +623,7 @@ body.sidebar-open .sidebar-toggle-btn i {
 
 <script src="<?php echo $base_assets; ?>js/sweetalert2.all.min.js"></script>
 <script>
+// JAVASCRIPT: TOGGLE DEL SIDEBAR
 const sidebar = document.getElementById('sidebar');
 const toggleBtn = document.getElementById('sidebarToggle');
 const backdrop = document.getElementById('sidebarBackdrop');
@@ -616,6 +645,7 @@ function cerrarSidebar() {
     if (mainWrapper) mainWrapper.style.marginLeft = '0';
 }
 
+// Evento del botón toggle
 // Botón de toggle
 toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -632,6 +662,7 @@ document.querySelectorAll('.sidebar .nav-link').forEach(link => {
     });
 });
 
+// Imprimir reporte
 function imprimirReporte(e) {
     e.preventDefault();
     window.open('<?php echo $prefijo; ?>modules/reporte_inventario.php', '_blank');

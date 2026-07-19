@@ -1,4 +1,7 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
@@ -7,7 +10,9 @@ $csrf_token = Security::generateToken();
 
 $iva_pct = getConfig('iva_porcentaje', '16');
 
-// ── MODO: STORE (AJAX) ──
+// ==========================================
+// MODO ALMACENAR (AJAX)
+// ==========================================
 if (isset($_GET['store'])) {
     header('Content-Type: application/json');
 
@@ -58,7 +63,9 @@ if (isset($_GET['store'])) {
     exit();
 }
 
-// ── MODO: REIMPRIMIR desde DB ──
+// ==========================================
+// MODO REIMPRESIÓN (DESDE BD)
+// ==========================================
 $data = null;
 
 if (isset($_GET['id'])) {
@@ -87,7 +94,9 @@ if (isset($_GET['id'])) {
     }
 }
 
-// ── Alerta de vencimiento ──
+// ==========================================
+// ALERTA DE VENCIMIENTO
+// ==========================================
 $alerta_venc = '';
 $venc_fecha = $data['fecha_vencimiento'] ?? null;
 if ($venc_fecha && $venc_fecha <= date('Y-m-d')) {
@@ -96,7 +105,10 @@ if ($venc_fecha && $venc_fecha <= date('Y-m-d')) {
     $alerta_venc = 'proximo';
 }
 
-// ── Determinar tipo para layout adaptativo ──
+// ==========================================
+// LÓGICA DE DISEÑO
+// ==========================================
+// Determinar tipo de documento
 $tipo_mov = strtoupper(trim($data['tipo_nombre'] ?? 'VENTA'));
 $es_venta = $tipo_mov === 'VENTA';
 $es_regalias = $tipo_mov === 'REGALIAS';
@@ -107,7 +119,7 @@ $subtotal = $es_merma ? 0 : $total_fila;
 $iva = $es_venta ? ($subtotal * ($iva_pct / 100)) : 0;
 $total_neto = $subtotal + $iva;
 
-// Config empresa (key-value table)
+// Datos de la empresa
 $empresa = getConfig('empresa_nombre', 'JV3000');
 $rif_emp  = getConfig('empresa_rif', 'J-00000000-0');
 $tel_emp  = getConfig('empresa_telefono', '');
@@ -131,6 +143,7 @@ $hora_actual = date('H:i:s');
 <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
 <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
 <style>
+/* === PRINT STYLES === */
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
     font-family:system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;

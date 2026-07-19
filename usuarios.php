@@ -1,4 +1,7 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/init.php';
 
 $db = Database::getInstance();
@@ -7,6 +10,9 @@ Security::soloAdmin();
 $id_propio = $_SESSION['id_usuario'];
 $csrf_token = Security::generateToken();
 
+// ==========================================
+// PROCESAR EDICIÓN DE USUARIO
+// ==========================================
 if (isset($_POST['accion_usuario'])) {
     $accion = $_POST['accion_usuario'];
     $usuario = trim($_POST['usuario'] ?? '');
@@ -69,6 +75,9 @@ if (isset($_POST['accion_usuario'])) {
     }
 }
 
+// ==========================================
+// CAMBIAR ESTADO DE USUARIO
+// ==========================================
 if (isset($_GET['toggle_status'])) {
     $id_target = intval($_GET['toggle_status']);
     if ($id_target == $id_propio) {
@@ -86,6 +95,9 @@ if (isset($_GET['toggle_status'])) {
     }
 }
 
+// ==========================================
+// OBTENER DATOS
+// ==========================================
 $usuarios = $db->fetchAll("SELECT id_usuario, usuario, correo, rol, status, COALESCE(aprobado, 1) as aprobado, pregunta_seguridad FROM usuarios ORDER BY usuario ASC");
 
 $total_users = $db->fetchOne("SELECT COUNT(*) as t FROM usuarios")['t'];
@@ -97,6 +109,9 @@ unset($_SESSION['flash_msg']);
 ?>
 <!DOCTYPE html>
 <html lang="es">
+<?php // ==========================================
+// HEAD Y ESTILOS HTML
+// ========================================== ?>
 <head>
 <?php include 'includes/diseno.php'; ?>
     <title>Colaboradores | JV3000</title>
@@ -259,6 +274,9 @@ unset($_SESSION['flash_msg']);
             </div>
         <?php endif; ?>
 
+        <?php // ==========================================
+        // WIDGETS DE ESTADÍSTICAS
+        // ========================================== ?>
         <!-- Stats Widgets -->
         <div class="row g-3 mb-4">
             <div class="col-md-4">
@@ -296,6 +314,9 @@ unset($_SESSION['flash_msg']);
             </div>
         </div>
 
+        <?php // ==========================================
+        // TABLA DE USUARIOS
+        // ========================================== ?>
         <!-- Tabla Premium -->
         <div class="card-jv p-0 overflow-hidden">
             <div class="header-card d-flex align-items-center gap-2">
@@ -385,6 +406,9 @@ unset($_SESSION['flash_msg']);
 </div>
 </div>
 
+    <?php // ==========================================
+    // MODAL EDITAR USUARIO
+    // ========================================== ?>
     <!-- Modal Premium -->
     <div class="modal fade" id="modalUser" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -471,6 +495,9 @@ unset($_SESSION['flash_msg']);
         </div>
     </div>
 
+    <?php // ==========================================
+    // JAVASCRIPT
+    // ========================================== ?>
     <script src="<?php echo $base_assets; ?>js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo $base_assets; ?>js/sweetalert2.all.min.js"></script>
     <script>

@@ -1,6 +1,8 @@
 <?php
 
-// === CONSTANTES GLOBALES (usadas por init.php y módulos) ===
+// ==========================================
+// CONSTANTES GLOBALES
+// ==========================================
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');

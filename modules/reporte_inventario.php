@@ -1,9 +1,15 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
 Security::verificarPermisoVenta();
 
+// ==========================================
+// OBTENER DATOS
+// ==========================================
 $productos = $db->fetchAll("SELECT p.*, (p.stock_actual * p.precio_venta) as valor_total FROM productos p JOIN categorias c ON p.id_categoria = c.id_categoria WHERE p.status = 'Activo' AND c.status = 'Activo' ORDER BY p.nombre_producto ASC");
 
 $gran_total_stock = 0;
@@ -16,6 +22,7 @@ $valor_inventario = 0;
     <title>Reporte de Inventario | JV3000 C.A.</title>
     <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
+    <!-- ESTILOS DE IMPRESIÓN -->
     <style>
         body {
             background-color: white !important;
@@ -53,6 +60,7 @@ $valor_inventario = 0;
 </head>
 <body class="p-4 p-md-5">
     <div class="container-fluid">
+        <!-- ENCABEZADO DEL REPORTE -->
         <div class="header-report d-flex justify-content-between align-items-center">
             <div class="text-start">
                 <h2 class="fw-bold m-0 text-dark">JV3000 C.A. SYSTEM, C.A.</h2>
@@ -66,6 +74,7 @@ $valor_inventario = 0;
             </div>
         </div>
 
+        <!-- TABLA DE INVENTARIO -->
         <div class="table-responsive">
             <table class="table table-bordered table-sm align-middle mt-2">
                 <thead class="text-center">
@@ -115,6 +124,7 @@ $valor_inventario = 0;
             </table>
         </div>
 
+        <!-- FIRMAS (solo impresión) -->
         <div class="row mt-5 pt-5 text-center d-none d-print-flex">
             <div class="col-6">
                 <div style="width: 70%; border-top: 1.5px solid #000; margin: 0 auto;"></div>
@@ -126,6 +136,7 @@ $valor_inventario = 0;
             </div>
         </div>
 
+        <!-- BOTONES DE ACCIÓN -->
         <div class="mt-5 no-print d-flex justify-content-center gap-3">
             <button onclick="window.print()" class="btn btn-dark btn-lg rounded-pill px-5 shadow">
                 <i class="bi bi-printer-fill me-2"></i>Imprimir Reporte

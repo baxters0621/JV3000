@@ -1,13 +1,19 @@
 <?php
 
+// ==========================================
+// CLASE SINGLETON DE BASE DE DATOS
+// ==========================================
 class Database
 {
+    // Instancia singleton y estado de conexión
     private static ?self $instance = null;
     private ?mysqli $conn = null;
     private int $transactionDepth = 0;
 
+    // Constructor privado
     private function __construct() {}
 
+    // Obtener instancia singleton
     public static function getInstance(): self
     {
         if (self::$instance === null) {
@@ -16,6 +22,7 @@ class Database
         return self::$instance;
     }
 
+    // Conectar a MySQL
     public function connect(string $host, string $user, string $pass, string $db): void
     {
         $this->conn = new mysqli($host, $user, $pass, $db);
@@ -26,11 +33,13 @@ class Database
         $this->conn->autocommit(true);
     }
 
+    // Obtener conexión mysqli
     public function getConnection(): ?mysqli
     {
         return $this->conn;
     }
 
+    // Ejecutar consulta SQL
     public function execute(string $sql, array $params = []): mysqli_stmt
     {
         if (!$this->conn) {
@@ -71,6 +80,7 @@ class Database
         return $stmt;
     }
 
+    // Obtener una fila
     public function fetchOne(string $sql, array $params = []): ?array
     {
         $stmt = $this->execute($sql, $params);
@@ -81,6 +91,7 @@ class Database
         return $row ?: null;
     }
 
+    // Obtener todas las filas
     public function fetchAll(string $sql, array $params = []): array
     {
         $stmt = $this->execute($sql, $params);
@@ -91,6 +102,7 @@ class Database
         return $rows;
     }
 
+    // Insertar fila
     public function insert(string $table, array $data): int
     {
         $columns = implode(', ', array_keys($data));
@@ -102,6 +114,7 @@ class Database
         return $insertId;
     }
 
+    // Actualizar filas
     public function update(string $table, array $data, string $where, array $whereParams = []): int
     {
         $sets = implode(', ', array_map(fn($col) => "{$col} = ?", array_keys($data)));
@@ -112,6 +125,7 @@ class Database
         return $affected;
     }
 
+    // Iniciar transacción
     public function begin(): void
     {
         if ($this->transactionDepth === 0) {
@@ -120,6 +134,7 @@ class Database
         $this->transactionDepth++;
     }
 
+    // Confirmar transacción
     public function commit(): void
     {
         $this->transactionDepth--;
@@ -128,17 +143,20 @@ class Database
         }
     }
 
+    // Revertir transacción
     public function rollback(): void
     {
         $this->transactionDepth = 0;
         $this->conn->rollback();
     }
 
+    // Verificar si hay transacción activa
     public function inTransaction(): bool
     {
         return $this->transactionDepth > 0;
     }
 
+    // Último ID insertado
     public function lastInsertId(): int
     {
         return (int)$this->conn->insert_id;

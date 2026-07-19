@@ -1,4 +1,7 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
@@ -7,7 +10,10 @@ Security::verificarPermisoCarga();
 $esAdmin = Security::esAdmin();
 $csrf_token = Security::generateToken();
 
-// --- AJAX: Create product inline from compra modal ---
+// ==========================================
+// PROCESAR ACCIONES POST
+// ==========================================
+// AJAX: Crear producto desde el modal
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_producto']) && $_POST['accion_producto'] === 'crear_ajax') {
     header('Content-Type: application/json');
     $nombre = mb_strtoupper(trim($_POST['nombre_producto'] ?? ''));
@@ -58,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_producto']) &&
     exit;
 }
 
-// --- Compra POST handler ---
+// Procesar compra
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
     $tipo_entrada = in_array(trim($_POST['tipo_entrada'] ?? ''), ['Compra a proveedor', 'Ajuste', 'Donación']) ? trim($_POST['tipo_entrada']) : 'Compra a proveedor';
     $es_proveedor = $tipo_entrada === 'Compra a proveedor';
@@ -186,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
     exit;
 }
 
-// --- Delete handler ---
+// Eliminar / anular
 if (isset($_GET['eliminar']) && $esAdmin) {
     $id_compra = intval($_GET['eliminar']);
     $compra = $db->fetchOne("SELECT id_producto, cantidad FROM compras WHERE id_compra = ?", [$id_compra]);
@@ -206,7 +212,9 @@ if (isset($_GET['eliminar']) && $esAdmin) {
     exit;
 }
 
-// --- Queries ---
+// ==========================================
+// OBTENER DATOS
+// ==========================================
 $filtro_proveedor = intval($_GET['filtro_proveedor'] ?? 0);
 $sql_compras = "
     SELECT c.*, p.nombre_producto, pr.nombre_empresa as proveedor
@@ -232,12 +240,13 @@ $entradas_hoy = (int)$db->fetchOne("SELECT COALESCE(SUM(cantidad),0) as t FROM c
 $inv_mes_row = $db->fetchOne("SELECT COALESCE(SUM(total),0) as t FROM compras WHERE fecha_compra >= DATE_FORMAT(CURDATE(),'%Y-%m-01') AND fecha_compra < DATE_FORMAT(CURDATE() + INTERVAL 1 MONTH,'%Y-%m-01') AND status = 'Activa'");
 $invertido_mes = $inv_mes_row['t'] ?? 0;
 
-
+// Manejo de mensajes flash
 
 
 $flash = $_SESSION['flash_msg'] ?? null;
 unset($_SESSION['flash_msg']);
 ?>
+<!-- HEAD Y ESTILOS HTML -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -439,12 +448,14 @@ unset($_SESSION['flash_msg']);
     }
     </style>
 </head>
+<!-- BODY HTML -->
 <body>
     <?php include '../includes/sidebar.php'; ?>
 
     <div class="main-wrapper" id="mainWrapper">
         <div class="container-fluid px-4 py-4 pagina-compras">
 
+            <!-- Encabezado -->
             <div class="card-jv d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 header-card">
                 <div class="d-flex align-items-center gap-3">
                     <div class="com-header-icon">
@@ -462,6 +473,7 @@ unset($_SESSION['flash_msg']);
                 </div>
             </div>
 
+            <!-- Mensajes flash -->
             <?php if ($flash): ?>
                 <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3 px-3 py-2">
                     <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
@@ -469,6 +481,7 @@ unset($_SESSION['flash_msg']);
                 </div>
             <?php endif; ?>
 
+            <!-- Estadísticas / Widgets -->
             <div class="row g-3 mb-4">
                 <div class="col-md-6">
                     <div class="widget-card" style="border-left:4px solid #22c55e;">
@@ -495,6 +508,7 @@ unset($_SESSION['flash_msg']);
 
             </div>
 
+            <!-- Tabla de entradas -->
             <div class="card-jv card-jv-table p-0">
                 <div class="d-flex align-items-center px-3 py-2 buscador-wrapper">
                     <i class="bi bi-search me-2" style="font-size:1rem;"></i>
@@ -547,7 +561,7 @@ unset($_SESSION['flash_msg']);
         </div>
     </div>
 
-    <!-- Modal Compra -->
+    <!-- Modal: Registrar entrada -->
     <div class="modal fade" id="modalCompra" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content modal-content-jv">
@@ -706,7 +720,7 @@ unset($_SESSION['flash_msg']);
         </div>
     </div>
 
-    <!-- Mini Modal: Nuevo Producto -->
+    <!-- Modal: Crear producto -->
     <div class="modal fade" id="modalNuevoProducto" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content modal-content-jv">
@@ -757,6 +771,7 @@ unset($_SESSION['flash_msg']);
         </div>
     </div>
 
+    <!-- JAVASCRIPT -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script>
     let productos = [];

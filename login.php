@@ -1,8 +1,14 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/init.php';
 
 $db = Database::getInstance();
 
+// ==========================================
+// VERIFICAR SESIÓN Y REDIRIGIR
+// ==========================================
 if (isset($_SESSION['id_usuario'])) {
     $userCheck = Database::getInstance()->fetchOne("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND status = 'Activo' AND COALESCE(aprobado,1) = 1 LIMIT 1", [$_SESSION['id_usuario']]);
     if ($userCheck) {
@@ -15,6 +21,9 @@ if (isset($_SESSION['id_usuario'])) {
 $error = "";
 $exito = "";
 
+// ==========================================
+// MENSAJES DE ERROR DESDE URL
+// ==========================================
 $error_get = $_GET['error'] ?? '';
 switch ($error_get) {
     case 'cuenta_pendiente':
@@ -38,7 +47,9 @@ $csrf_token = Security::generateToken();
 
 $preguntas_opciones = getPreguntasRespuestas();
 
-// Bloqueo por IP
+// ==========================================
+// VERIFICAR BLOQUEO POR IP
+// ==========================================
 $segundos_restantes = 0;
 $ip_actual = $_SERVER['REMOTE_ADDR'];
 $row_rest = $db->fetchOne("SELECT 45 - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE ip_address = ? AND intentos >= 3 AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < 45", [$ip_actual]);
@@ -47,6 +58,9 @@ if ($row_rest && $row_rest['restante'] > 0) {
     $error = "DEMASIADOS INTENTOS. ESPERE $segundos_restantes SEGUNDOS.";
 }
 
+// ==========================================
+// PROCESAR REGISTRO
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
     $new_user = trim($_POST['reg_usuario']);
     $new_email = strtolower(trim($_POST['reg_email']));
@@ -94,6 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
     }
 }
 
+// ==========================================
+// PROCESAR INICIO DE SESIÓN
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     $ip_usuario = $_SERVER['REMOTE_ADDR'];
 
@@ -376,6 +393,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
         </div>
         <?php endif; ?>
 
+        <?php // ==========================================
+        // FORMULARIO DE INICIO DE SESIÓN
+        // ========================================== ?>
         <form action="" method="POST">
             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
 
@@ -414,6 +434,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     </div>
 </div>
 
+<?php // ==========================================
+// MODAL DE REGISTRO
+// ========================================== ?>
 <div class="modal fade modal-reg" id="modalReg" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -502,6 +525,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     </div>
 </div>
 
+<?php // ==========================================
+// JAVASCRIPT
+// ========================================== ?>
 <script src="<?php echo $base_assets; ?>js/bootstrap.bundle.min.js?v=2"></script>
 <script>
 function setupEye(btnId, iconId, inputId) {

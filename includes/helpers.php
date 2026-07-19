@@ -1,6 +1,8 @@
 <?php
 
-// Proteger contra redeclaración
+// ==========================================
+// FUNCIONES AUXILIARES
+// ==========================================
 if (!function_exists('validarRIF')) {
     /**
      * Valida el formato del RIF/CI venezolano.
@@ -8,6 +10,7 @@ if (!function_exists('validarRIF')) {
      * @param string $rif
      * @return bool
      */
+    // Validar RIF/CI venezolano
     function validarRIF($rif)
     {
         $rif_regex = '/^[VJGPE]-\d{7,9}(?:-\d)?$/';
@@ -22,17 +25,20 @@ if (!function_exists('validarTelefono')) {
      * @param string $tel
      * @return bool
      */
+    // Validar teléfono venezolano
     function validarTelefono($tel)
     {
         return (bool)preg_match('/^\(\d{4}\) \d{3}-\d{4}$/', $tel);
     }
 }
 
+// Utilidades CSRF
 if (!function_exists('generarTokenCSRF')) {
     /**
      * Genera un token CSRF y lo guarda en sesión
      * @return string
      */
+    // Generar token CSRF
     function generarTokenCSRF()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -53,6 +59,7 @@ if (!function_exists('validarTokenCSRF')) {
      * @param string $token
      * @return bool
      */
+    // Validar token CSRF
     function validarTokenCSRF($token)
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -67,7 +74,9 @@ if (!function_exists('validarTokenCSRF')) {
     }
 }
 
+// Helpers de BD / Config
 if (!function_exists('getConfig')) {
+    // Obtener valor de configuración
     function getConfig(string $clave, string $default = ''): string
     {
         $db = Database::getInstance();
@@ -76,7 +85,9 @@ if (!function_exists('getConfig')) {
     }
 }
 
+// Generadores de números secuenciales
 if (!function_exists('generarControlNumero')) {
+    // Generar número de control
     function generarControlNumero()
     {
         $db = Database::getInstance();
@@ -101,6 +112,7 @@ if (!function_exists('generarControlNumero')) {
 }
 
 if (!function_exists('generarFacturaNumero')) {
+    // Generar número de factura
     function generarFacturaNumero()
     {
         $db = Database::getInstance();
@@ -124,6 +136,7 @@ if (!function_exists('generarFacturaNumero')) {
 }
 
 if (!function_exists('registrarAuditoria')) {
+    // Registrar acción en auditoría
     function registrarAuditoria(string $accion, string $detalle = '')
     {
         $db = Database::getInstance();
@@ -133,7 +146,9 @@ if (!function_exists('registrarAuditoria')) {
     }
 }
 
+// Preguntas de seguridad
 if (!function_exists('getPreguntasRespuestas')) {
+// Obtener preguntas de seguridad
 function getPreguntasRespuestas(): array
 {
     return [
@@ -148,6 +163,7 @@ function getPreguntasRespuestas(): array
     ];
 }
 
+// Validar respuesta de seguridad
 function validarRespuestaSeguridad(string $respuesta): bool
 {
     $r = trim($respuesta);

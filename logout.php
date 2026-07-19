@@ -1,5 +1,7 @@
 <?php
-// --- Tab close beacon: silent session destroy ---
+// ==========================================
+// CIERRE DE PESTAÑA (BEACON)
+// ==========================================
 if (isset($_GET['action']) && $_GET['action'] === 'tab_closed') {
     if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
         ini_set('session.use_strict_mode', '1');
@@ -18,6 +20,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'tab_closed') {
     exit;
 }
 
+// ==========================================
+// CERRAR SESIÓN
+// ==========================================
 require_once __DIR__ . '/init.php';
 
 $db = Database::getInstance();

@@ -1,4 +1,7 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
@@ -7,6 +10,9 @@ Security::verificarPermisoVenta();
 
 $csrf_token = Security::generateToken();
 
+// ==========================================
+// FUNCIONES AUXILIARES
+// ==========================================
 function getGrupoTipo(string $nombre) {
     $n = mb_strtoupper(trim($nombre));
     if ($n === 'VENTA') return 'venta';
@@ -14,7 +20,10 @@ function getGrupoTipo(string $nombre) {
     return 'merma';
 }
 
-// ── CONFIRMAR desde preview_factura.php ──
+// ==========================================
+// PROCESAR ACCIONES GET
+// ==========================================
+// Confirmar desde preview_factura.php
 if (isset($_GET['confirm'])) {
     $data = $_SESSION['preview_data'] ?? null;
     if (!$data) {
@@ -79,7 +88,9 @@ if (isset($_GET['confirm'])) {
     }
 }
 
-// ── POST desde modal ──
+// ==========================================
+// PROCESAR ACCIONES POST
+// ==========================================
 if (isset($_POST['accion_salida'])) {
     $accion = in_array($_POST['accion_salida'] ?? '', ['registrar', 'editar']) ? $_POST['accion_salida'] : '';
     $id_producto = intval($_POST['id_producto'] ?? 0);
@@ -191,7 +202,7 @@ if (isset($_POST['accion_salida'])) {
     }
 }
 
-// ── ELIMINAR ──
+// Eliminar / anular salida
 if (isset($_GET['eliminar'])) {
     Security::soloAdmin();
     $id_del = intval($_GET['eliminar']);
@@ -213,7 +224,9 @@ if (isset($_GET['eliminar'])) {
     }
 }
 
-// ── DATOS PARA LA VISTA ──
+// ==========================================
+// OBTENER DATOS
+// ==========================================
 $salidas = $db->fetchAll("SELECT s.*, p.nombre_producto, p.sku FROM salidas s INNER JOIN productos p ON s.id_producto = p.id_producto WHERE s.status = 'Activa' ORDER BY s.id_salida DESC");
 $productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta, fecha_vencimiento FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
 $tipos_mov = $db->fetchAll("SELECT id_tipo_mov, nombre FROM tipos_movimientos WHERE tipo_movimiento = 'Salida' ORDER BY id_tipo_mov");
@@ -228,6 +241,7 @@ foreach ($tipos_mov as $tm) {
 $flash = $_SESSION['flash_msg'] ?? null;
 unset($_SESSION['flash_msg']);
 ?>
+<!-- HEAD Y ESTILOS HTML -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -316,12 +330,14 @@ unset($_SESSION['flash_msg']);
     .sal-avanzado .section-bg { margin-top:10px; }
     </style>
 </head>
+<!-- BODY HTML -->
 <body>
     <?php include '../includes/sidebar.php'; ?>
 
     <div class="main-wrapper" id="mainWrapper">
     <div class="container-fluid px-4 py-4 pagina-salidas">
 
+        <!-- Encabezado -->
         <div class="d-flex align-items-center gap-3 mb-4">
             <div class="sal-header-icon"><i class="bi bi-cart-x-fill"></i></div>
             <div>
@@ -335,12 +351,14 @@ unset($_SESSION['flash_msg']);
             </div>
         </div>
 
+        <!-- Mensajes flash -->
         <?php if ($flash): ?>
         <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4">
             <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($flash['texto']); ?>
         </div>
         <?php endif; ?>
 
+        <!-- Tabla de ventas -->
         <div class="card-jv p-0">
             <div class="table-responsive">
                 <table class="table-jv mb-0">
@@ -405,7 +423,7 @@ unset($_SESSION['flash_msg']);
             </div>
         </div>
 
-    <!-- ═══════════════ MODAL POS DINÁMICO ═══════════════ -->
+    <!-- Modal: Nueva / Editar salida -->
     <div class="modal fade" id="modalSalida" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content modal-content-jv">
@@ -517,6 +535,7 @@ unset($_SESSION['flash_msg']);
         </div>
     </div>
 
+    <!-- JAVASCRIPT -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/sweetalert2.all.min.js"></script>
     <script>

@@ -1,13 +1,22 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/init.php';
 
 $db = Database::getInstance();
 
+// ==========================================
+// VERIFICAR SESIÓN
+// ==========================================
 if (isset($_SESSION['id_usuario'])) {
     header("Location: index.php");
     exit();
 }
 
+// ==========================================
+// INICIAR PROCESO DE RECUPERACIÓN
+// ==========================================
 if (isset($_GET['reset'])) {
     $_SESSION['rec_step'] = 1;
     $_SESSION['rec_id'] = 0;
@@ -24,9 +33,13 @@ $csrf_token = Security::generateToken();
 if (!isset($_SESSION['rec_step'])) $_SESSION['rec_step'] = 1;
 if (!isset($_SESSION['rec_id'])) $_SESSION['rec_id'] = 0;
 
+// ==========================================
+// PROCESAR PETICIONES POST
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $action = $_POST['rec_action'] ?? '';
 
+    // --- Step 1: Search by email ---
     if ($action === 'buscar') {
         $correo = strtolower(trim($_POST['rec_correo'] ?? ''));
         if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
@@ -49,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
+    // --- Step 2: Answer security question ---
     elseif ($action === 'responder') {
         if ($_SESSION['rec_step'] != 2 || $_SESSION['rec_id'] == 0) {
             $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
@@ -77,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
     }
 
+    // --- Step 3: Change password ---
     elseif ($action === 'cambiar') {
         if ($_SESSION['rec_step'] != 3 || $_SESSION['rec_id'] == 0) {
             $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
@@ -99,6 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
+// ==========================================
+// LÓGICA DE VISTAS
+// ==========================================
 $step = $_SESSION['rec_step'] ?? 1;
 $show_buscar = ($step == 1);
 $show_pregunta = ($step == 2);
@@ -199,7 +217,9 @@ if ($step == 4) {
             <div class="alert-jv alert-jv-success mb-3 py-2 px-3" style="font-size:.8rem;"><?php echo htmlspecialchars($exito); ?></div>
         <?php endif; ?>
 
-        <!-- STEP 1: Buscar por correo -->
+        <?php // ==========================================
+        // PASO 1: BUSCAR POR CORREO
+        // ========================================== ?>
         <div class="rec-step <?php echo $show_buscar ? 'active' : ''; ?>">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
@@ -211,7 +231,9 @@ if ($step == 4) {
             </form>
         </div>
 
-        <!-- STEP 2: Responder pregunta -->
+        <?php // ==========================================
+        // PASO 2: RESPONDER PREGUNTA
+        // ========================================== ?>
         <div id="rec-step-pregunta" class="rec-step <?php echo $show_pregunta ? 'active' : ''; ?>">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
@@ -224,7 +246,9 @@ if ($step == 4) {
             </form>
         </div>
 
-        <!-- STEP 3: Nueva contraseña -->
+        <?php // ==========================================
+        // PASO 3: NUEVA CONTRASEÑA
+        // ========================================== ?>
         <div class="rec-step <?php echo $show_cambiar ? 'active' : ''; ?>">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
@@ -238,7 +262,9 @@ if ($step == 4) {
             </form>
         </div>
 
-        <!-- STEP 4: Éxito -->
+        <?php // ==========================================
+        // PASO 4: ÉXITO
+        // ========================================== ?>
         <div class="rec-step <?php echo $show_exito ? 'active' : ''; ?>">
             <div class="text-center">
                 <div style="font-size:3rem;color:var(--jv-success);margin-bottom:12px;"><i class="bi bi-check-circle-fill"></i></div>

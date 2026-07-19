@@ -1,9 +1,8 @@
 <?php
 
-// ==========================================================
-// init.php — Middleware Central de Seguridad
-// TODO entry point DEBE requerir este archivo primero.
-// ==========================================================
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 
 // --- 1. Session (strict mode) ---
 if (session_status() === PHP_SESSION_NONE) {
@@ -29,6 +28,10 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/Database.php';
 require_once __DIR__ . '/includes/Security.php';
 require_once __DIR__ . '/includes/helpers.php';
+
+// ==========================================
+// BASE DE DATOS
+// ==========================================
 
 // --- 6. Auto-instalador: crear BD si no existe ---
 $conn_no_db = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
@@ -62,6 +65,10 @@ try {
          </div>");
 }
 
+// ==========================================
+// SEGURIDAD Y SESIÓN
+// ==========================================
+
 // --- 8. Validación de sesión (salvo páginas públicas) ---
 $publicPages = ['login.php', 'recuperar.php', 'logout.php'];
 $currentScript = basename($_SERVER['SCRIPT_NAME']);
@@ -90,6 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Security::validateCSRF();
 }
 
+// ==========================================
+// MANEJADOR DE ERRORES GLOBAL
+// ==========================================
+
 // --- 11. Manejador global de excepciones ---
 set_exception_handler(function (Throwable $e) {
     $db = Database::getInstance();
@@ -112,6 +123,10 @@ set_exception_handler(function (Throwable $e) {
     header("Location: $referer");
     exit;
 });
+
+// ==========================================
+// COMPATIBILIDAD
+// ==========================================
 
 // --- 12. Variable global $db para compatibilidad con helpers legacy ---
 $db = Database::getInstance();

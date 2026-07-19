@@ -1,4 +1,7 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
@@ -7,7 +10,9 @@ if ($rol_est !== 'Administrador' && $rol_est !== 'Operador de Ventas') {
     header("Location: ../index.php?error=acceso_denegado"); exit();
 }
 
-// === KPIs ===
+// ==========================================
+// OBTENER KPI
+// ==========================================
 $ventas_7d = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND id_tipo_mov = 1 AND status = 'Activa'")['total'];
 
 $compras_7d = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_costo), 0) as total FROM compras WHERE fecha_compra >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND status = 'Activa'")['total'];
@@ -18,7 +23,10 @@ $transacciones_7d = $db->fetchOne("SELECT COUNT(DISTINCT nro_factura_manual) as 
 
 $productos_activos = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE status = 'Activo'")['total'];
 
-// === Gráfico Ventas vs Compras (7 días) ===
+// ==========================================
+// OBTENER DATOS PARA GRÁFICOS
+// ==========================================
+// Ventas vs Compras (7 días)
 $fechas = [];
 $ventas_data = [];
 $compras_data = [];
@@ -38,15 +46,15 @@ for ($i = 6; $i >= 0; $i--) {
     $compras_data[] = $compras_idx[$f] ?? 0;
 }
 
-// === Costo de lo vendido (últimos 7 días) ===
+// Costo de venta (7 días)
 $costo_vendido_7d = $db->fetchOne("SELECT COALESCE(SUM(s.cantidad * p.precio_costo), 0) as total FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa'")['total'];
 
 $porc_margen = ($ventas_7d > 0) ? round(($margen_7d / $ventas_7d) * 100, 1) : 0;
 
-// === Top 5 productos por ganancia (7 días) ===
+// Top 5 productos por ganancia (7 días)
 $top_ganancia = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, p.sku, SUM(s.cantidad) as unidades, SUM(s.cantidad * s.precio_venta) as ingresos, SUM(s.cantidad * p.precio_costo) as costo, SUM(s.cantidad * (s.precio_venta - p.precio_costo)) as ganancia FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY p.id_producto ORDER BY ganancia DESC LIMIT 5");
 
-// === Top 5 productos más vendidos (30 días) ===
+// Top 5 más vendidos (30 días)
 $top_prod_nombres = [];
 $top_prod_cant = [];
 $top_prod_colores = [];
@@ -66,6 +74,7 @@ foreach ($res_top as $row) {
 <?php include '../includes/diseno.php'; ?>
     <title>Estadísticas | JV3000 C.A.</title>
     <script src="../assets/js/chart.umd.min.js"></script>
+    <!-- ESTILOS -->
     <style>
     /* === THEME: ESTADÍSTICAS (Cyan) ==================== */
     .stats-header-icon {
@@ -246,6 +255,7 @@ foreach ($res_top as $row) {
     <div class="pagina-estadisticas">
     <div class="container-fluid px-4 py-4">
 
+        <!-- ENCABEZADO -->
         <div class="d-flex align-items-center gap-4 mb-4">
             <div class="stats-header-icon">
                 <i class="bi bi-graph-up-arrow"></i>
@@ -256,7 +266,7 @@ foreach ($res_top as $row) {
             </div>
         </div>
 
-        <!-- KPIs -->
+        <!-- WIDGETS KPI -->
         <div class="row g-3 mb-4">
             <div class="col-md-3">
                 <div class="widget-card">
@@ -304,7 +314,7 @@ foreach ($res_top as $row) {
             </div>
         </div>
 
-        <!-- Charts -->
+        <!-- GRÁFICOS -->
         <div class="row g-4">
             <div class="col-lg-8">
                 <div class="chart-card h-100">
@@ -321,7 +331,7 @@ foreach ($res_top as $row) {
             </div>
         </div>
 
-        <!-- Fila extra: resumen adicional -->
+        <!-- RESUMEN ADICIONAL -->
         <div class="row g-3 mt-4">
             <div class="col-12">
                 <div class="card-jv d-flex align-items-center justify-content-between py-3 px-4">
@@ -343,7 +353,7 @@ foreach ($res_top as $row) {
             </div>
         </div>
 
-        <!-- Análisis de Ganancias -->
+        <!-- ANÁLISIS DE GANANCIAS -->
         <div class="row g-3 mt-4">
             <div class="col-12">
                 <div class="card-jv p-4">
@@ -417,6 +427,7 @@ foreach ($res_top as $row) {
     </div>
     </div>
 
+    <!-- JAVASCRIPT -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script>
     Chart.defaults.color = '#94a3b8';

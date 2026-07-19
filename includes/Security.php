@@ -1,7 +1,11 @@
 <?php
 
+// ==========================================
+// CLASE DE SEGURIDAD
+// ==========================================
 class Security
 {
+    // Validar sesión de usuario
     public static function validateSession(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -43,6 +47,7 @@ class Security
         $_SESSION['rol'] = $user['rol'];
     }
 
+    // Sanitizar variables globales
     public static function sanitizeGlobals(): void
     {
         $sanitize = function (&$value) {
@@ -56,6 +61,7 @@ class Security
         array_walk_recursive($_REQUEST, $sanitize);
     }
 
+    // Generar token CSRF
     public static function generateToken(): string
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -67,6 +73,7 @@ class Security
         return $_SESSION['csrf_token'];
     }
 
+    // Validar token CSRF
     public static function validateCSRF(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -83,6 +90,7 @@ class Security
         }
     }
 
+    // Manejar error de CSRF
     private static function failCSRF(): void
     {
         $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
@@ -98,16 +106,19 @@ class Security
         exit;
     }
 
+    // Escapar HTML
     public static function escape(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 
+    // Verificar si es admin
     public static function esAdmin(): bool
     {
         return isset($_SESSION['rol']) && $_SESSION['rol'] === 'Administrador';
     }
 
+    // Solo admin
     public static function soloAdmin(): void
     {
         if (!self::esAdmin()) {
@@ -117,16 +128,19 @@ class Security
         }
     }
 
+    // Verificar permiso de carga
     public static function puedeCargar(): bool
     {
         return self::esAdmin() || (isset($_SESSION['rol']) && $_SESSION['rol'] === 'Operador de Carga');
     }
 
+    // Verificar permiso de venta
     public static function puedeVender(): bool
     {
         return self::esAdmin() || (isset($_SESSION['rol']) && $_SESSION['rol'] === 'Operador de Ventas');
     }
 
+    // Redirigir si no tiene permiso de carga
     public static function verificarPermisoCarga(): void
     {
         if (!self::puedeCargar()) {
@@ -136,6 +150,7 @@ class Security
         }
     }
 
+    // Redirigir si no tiene permiso de venta
     public static function verificarPermisoVenta(): void
     {
         if (!self::puedeVender()) {
@@ -145,6 +160,7 @@ class Security
         }
     }
 
+    // Datos del usuario actual
     public static function currentUser(): array
     {
         return [
@@ -154,6 +170,7 @@ class Security
         ];
     }
 
+    // Verificar intentos de login
     public static function checkLoginAttempts(string $ip): bool
     {
         $db = Database::getInstance();
@@ -174,6 +191,7 @@ class Security
         return true;
     }
 
+    // Registrar intento de login fallido
     public static function registerLoginAttempt(string $ip, string $username): void
     {
         $db = Database::getInstance();
@@ -194,6 +212,7 @@ class Security
         }
     }
 
+    // Redirigir al login
     private static function redirectToLogin(string $error = ''): void
     {
         $isModule = basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules';

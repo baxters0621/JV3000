@@ -1,11 +1,15 @@
 <?php
-// Detectar si estamos en modules para rutas de assets
+// ==========================================
+// CONFIGURACIÓN DE DISEÑO
+// ==========================================
 $base_assets = (basename(dirname($_SERVER['PHP_SELF'])) === 'modules') ? '../assets/' : 'assets/';
 ?>
+<!-- META TAGS -->
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- GESTIÓN DE SESIÓN POR PESTAÑA -->
 <?php if (isset($_SESSION['id_usuario']) && defined('_TAB_FRESH_LOGIN')):
 $marker = strval($_SESSION['tab_marker'] ?? '');
 $fresh = constant('_TAB_FRESH_LOGIN');
@@ -28,7 +32,7 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 </script>
 <?php endif; ?>
 
-<!-- Fuentes con fallback local (descargar de https://fonts.google.com si se desea version local) -->
+<!-- FUENTES Y ESTILOS BASE -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -38,11 +42,11 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 <link rel="stylesheet" href="<?php echo $base_assets; ?>css/bootstrap-icons.css?v=2">
 
 <style>
-/* =============================================
-   JV3000 - SISTEMA DE DISEÑO BASE
-   ============================================= */
+/* ==========================================
+   SISTEMA DE DISEÑO BASE
+   ========================================== */
 
-/* Variables CSS principales */
+/* VARIABLES CSS */
 :root {
     /* Colores principales */
     --jv-cyan: #06b6d4;
@@ -90,7 +94,7 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 /* text-secondary de Bootstrap muy oscuro (#6c757d) para fondo oscuro */
 .text-secondary { color: var(--jv-text-secondary) !important; }
 
-/* Reset y estilos base */
+/* RESET Y BASE */
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -103,11 +107,12 @@ body {
     margin: 0;
 }
 
-/* =============================================
+/* BOTONES */
+/* ==========================================
    CLASES REUTILIZABLES - BOTONES
-   ============================================= */
+   ========================================== */
 
-/* Botón primario (Cyan) */
+/* Primario (Cyan) */
 .btn-jv-primary {
     background: linear-gradient(135deg, var(--jv-cyan) 0%, var(--jv-cyan-dark) 100%);
     color: var(--jv-bg-primary);
@@ -131,7 +136,7 @@ body {
     transform: translateY(0);
 }
 
-/* Botón éxito (Verde) */
+/* Éxito (Verde) */
 .btn-jv-success {
     background: linear-gradient(135deg, var(--jv-success) 0%, #16a34a 100%);
     color: #fff;
@@ -151,7 +156,7 @@ body {
     color: #fff;
 }
 
-/* Botón peligro (Rojo) */
+/* Peligro (Rojo) */
 .btn-jv-danger {
     background: linear-gradient(135deg, var(--jv-danger) 0%, #dc2626 100%);
     color: #fff;
@@ -171,7 +176,7 @@ body {
     color: #fff;
 }
 
-/* Botón warning (Amarillo) */
+/* Warning (Amarillo) */
 .btn-jv-warning {
     background: linear-gradient(135deg, var(--jv-warning) 0%, #d97706 100%);
     color: var(--jv-bg-primary);
@@ -191,7 +196,7 @@ body {
     color: var(--jv-bg-primary);
 }
 
-/* Botón outline */
+/* Outline */
 .btn-jv-outline {
     background: transparent;
     color: var(--jv-cyan);
@@ -210,9 +215,10 @@ body {
     transform: translateY(-2px);
 }
 
-/* =============================================
+/* CARDS */
+/* ==========================================
    CLASES REUTILIZABLES - CARDS
-   ============================================= */
+   ========================================== */
 
 /* Card base */
 .card-jv {
@@ -242,9 +248,10 @@ body {
     border-color: var(--jv-border-hover);
 }
 
-/* =============================================
+/* INPUTS */
+/* ==========================================
    CLASES REUTILIZABLES - INPUTS
-   ============================================= */
+   ========================================== */
 
 /* Input base dark */
 .input-jv {
@@ -280,9 +287,10 @@ input[type="date"].input-jv {
     color-scheme: dark;
 }
 
-/* =============================================
+/* ALERTAS */
+/* ==========================================
    CLASES REUTILIZABLES - ALERTAS
-   ============================================= */
+   ========================================== */
 
 /* Alerta base */
 .alert-jv {
@@ -292,37 +300,38 @@ input[type="date"].input-jv {
     font-weight: 600;
 }
 
-/* Alerta éxito */
+/* Éxito */
 .alert-jv-success {
     background: rgba(34, 197, 94, 0.1);
     border-color: rgba(34, 197, 94, 0.3);
     color: var(--jv-success);
 }
 
-/* Alerta error */
+/* Error */
 .alert-jv-danger {
     background: rgba(239, 68, 68, 0.1);
     border-color: rgba(239, 68, 68, 0.3);
     color: var(--jv-danger);
 }
 
-/* Alerta warning */
+/* Warning */
 .alert-jv-warning {
     background: rgba(245, 158, 11, 0.1);
     border-color: rgba(245, 158, 11, 0.3);
     color: var(--jv-warning);
 }
 
-/* Alerta info */
+/* Info */
 .alert-jv-info {
     background: rgba(6, 182, 212, 0.1);
     border-color: rgba(6, 182, 212, 0.3);
     color: var(--jv-cyan);
 }
 
-/* =============================================
+/* BADGES */
+/* ==========================================
    CLASES REUTILIZABLES - BADGES
-   ============================================= */
+   ========================================== */
 
 .badge-jv {
     background: rgba(6, 182, 212, 0.1);
@@ -336,33 +345,38 @@ input[type="date"].input-jv {
     text-transform: uppercase;
 }
 
+/* Success */
 .badge-success {
     background: rgba(34, 197, 94, 0.1);
     color: var(--jv-success);
     border-color: rgba(34, 197, 94, 0.3);
 }
 
+/* Warning */
 .badge-warning {
     background: rgba(245, 158, 11, 0.1);
     color: var(--jv-warning);
     border-color: rgba(245, 158, 11, 0.3);
 }
 
+/* Danger */
 .badge-danger {
     background: rgba(239, 68, 68, 0.1);
     color: var(--jv-danger);
     border-color: rgba(239, 68, 68, 0.3);
 }
 
+/* Secondary */
 .badge-secondary {
     background: rgba(148, 163, 184, 0.1);
     color: #94a3b8;
     border-color: rgba(148, 163, 184, 0.3);
 }
 
-/* =============================================
+/* SPINNERS / LOADING */
+/* ==========================================
    CLASES REUTILIZABLES - SPINNER / LOADING
-   ============================================= */
+   ========================================== */
 
 .spinner-jv {
     width: 24px;
@@ -389,9 +403,10 @@ input[type="date"].input-jv {
     to { transform: rotate(360deg); }
 }
 
-/* =============================================
+/* TABLAS */
+/* ==========================================
    CLASES REUTILIZABLES - TABLAS
-   ============================================= */
+   ========================================== */
 
 .table-jv {
     color: var(--jv-text-primary);
@@ -419,9 +434,10 @@ input[type="date"].input-jv {
     background: rgba(6, 182, 212, 0.03);
 }
 
-/* =============================================
+/* UTILIDADES */
+/* ==========================================
    UTILIDADES
-   ============================================= */
+   ========================================== */
 
 .text-jv-cyan { color: var(--jv-cyan); }
 .text-jv-success { color: var(--jv-success); }
@@ -517,7 +533,7 @@ input[type="date"].input-jv {
 .navbar-user-name { color: var(--jv-cyan); font-size: 0.8rem; font-weight: 700; }
 .navbar-user-role { color: var(--jv-text-muted); font-size: 0.65rem; text-transform: capitalize; }
 
-/* Animación pulse */
+/* Pulse */
 .pulse-jv {
     animation: pulse-animation 2s ease-in-out infinite;
 }
@@ -528,13 +544,14 @@ input[type="date"].input-jv {
     100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
 }
 
-/* ── Responsive ── */
+/* RESPONSIVE */
 @media (max-width: 1200px) {
     .kpi-grid { grid-template-columns: repeat(2,1fr); }
     .charts-grid { grid-template-columns: 1fr; }
     .tables-grid { grid-template-columns: 1fr; }
 }
 
+/* Medium (max 992px) */
 @media (max-width: 992px) {
     body { padding-left: 0 !important; }
     .container-fluid.px-4 { padding-left: 16px !important; padding-right: 16px !important; }
@@ -545,6 +562,7 @@ input[type="date"].input-jv {
     .widget-card { padding: 14px; }
 }
 
+/* Tablets (max 768px) */
 @media (max-width: 768px) {
     #sidebar { width: 100% !important; }
     body.sidebar-open .main-wrapper { margin-left: 0 !important; }
@@ -574,6 +592,7 @@ input[type="date"].input-jv {
     .firma { flex-direction: column; gap: 16px; align-items: center; }
 }
 
+/* Small (max 480px) */
 @media (max-width: 480px) {
     .kpi-grid { grid-template-columns: 1fr; }
     .table-card { max-height: none; }

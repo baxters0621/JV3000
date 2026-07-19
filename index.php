@@ -1,4 +1,7 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/init.php';
 
 $db = Database::getInstance();
@@ -11,7 +14,9 @@ $esOpCarga = ($rol_user === 'Operador de Carga');
 
 $fecha_hoy = date('d/m/Y');
 
-// --- AJAX DASHBOARD ---
+// ==========================================
+// ENDPOINT AJAX DEL DASHBOARD
+// ==========================================
 if (isset($_GET['ajax_dashboard'])) {
     header('Content-Type: application/json');
     $datos = [];
@@ -62,7 +67,9 @@ if (isset($_GET['ajax_dashboard'])) {
     exit();
 }
 
-// === CONSULTAS INICIALES ===
+// ==========================================
+// CONSULTAS INICIALES DEL DASHBOARD
+// ==========================================
 $vd = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE DATE(fecha_salida) = CURRENT_DATE AND id_tipo_mov = 1 AND status = 'Activa'");
 $ventas_dia = $vd['total'];
 
@@ -88,6 +95,9 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
 <!DOCTYPE html>
 <html lang="es">
 
+<?php // ==========================================
+// HEAD Y ESTILOS HTML
+// ========================================== ?>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -645,6 +655,9 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
     </style>
 </head>
 
+<?php // ==========================================
+// LAYOUT DEL DASHBOARD
+// ========================================== ?>
 <body>
     <?php include 'includes/sidebar.php'; ?>
 
@@ -789,6 +802,9 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
         </div>
     </div>
 
+<?php // ==========================================
+// JAVASCRIPT
+// ========================================== ?>
 <script src="assets/js/bootstrap.bundle.min.js"></script>
 <script>
         // Gráficos Chart.js

@@ -1,10 +1,16 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
 Security::verificarPermisoCarga();
 $csrf_token = Security::generateToken();
 
+// ==========================================
+// PROCESAR ACCIONES POST
+// ==========================================
 if (isset($_POST['accion_proveedor'])) {
     $accion = $_POST['accion_proveedor'];
 
@@ -48,6 +54,7 @@ if (isset($_POST['accion_proveedor'])) {
         exit();
     }
 
+    // Crear proveedor
     if ($accion == "registrar") {
         if (!validarRIF($rif)) {
             $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0'];
@@ -91,6 +98,7 @@ if (isset($_POST['accion_proveedor'])) {
         exit();
     }
 
+    // Editar proveedor
     if ($accion == "editar") {
         if (!validarRIF($rif)) {
             $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0'];
@@ -126,13 +134,16 @@ if (isset($_POST['accion_proveedor'])) {
     }
 }
 
+// ==========================================
+// OBTENER DATOS
+// ==========================================
 $proveedores = $db->fetchAll("SELECT * FROM proveedores ORDER BY nombre_empresa ASC");
 
 $total_prov = count($proveedores);
 $activos_prov = $db->fetchOne("SELECT COUNT(*) as t FROM proveedores WHERE status='Activo'")['t'];
 $limite_credito_total = $db->fetchOne("SELECT COALESCE(SUM(limite_credito),0) as t FROM proveedores WHERE limite_credito > 0 AND status = 'Activo'")['t'];
 
-// Flash messages via session
+// Manejo de mensajes flash
 $flash = null;
 if (isset($_GET['res'])) {
     $map = ['success' => 'PROVEEDOR REGISTRADO CON ÉXITO.', 'updated' => 'DATOS ACTUALIZADOS CORRECTAMENTE.'];
@@ -145,6 +156,7 @@ $flash_s = $_SESSION['flash_msg'] ?? $flash;
 if ($flash_s) $flash = $flash_s;
 unset($_SESSION['flash_msg']);
 ?>
+<!-- HEAD Y ESTILOS HTML -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -348,6 +360,7 @@ unset($_SESSION['flash_msg']);
     }
     </style>
 </head>
+<!-- BODY HTML -->
 <body>
     <?php include '../includes/sidebar.php'; ?>
 
@@ -355,6 +368,7 @@ unset($_SESSION['flash_msg']);
     <div class="pagina-proveedores">
     <div class="container-fluid px-4 py-4">
 
+        <!-- Encabezado -->
         <div class="d-flex align-items-center gap-4 mb-4">
             <div class="prov-header-icon">
                 <i class="bi bi-building"></i>
@@ -375,13 +389,14 @@ unset($_SESSION['flash_msg']);
             </div>
         </div>
 
+        <!-- Mensajes flash -->
         <?php if ($flash): ?>
             <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4">
                 <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($flash['texto']); ?>
             </div>
         <?php endif; ?>
 
-        <!-- Stats Widgets -->
+        <!-- Widgets de estadísticas -->
         <div class="row g-3 mb-4">
             <div class="col-md-4">
                 <div class="widget-card">
@@ -418,7 +433,7 @@ unset($_SESSION['flash_msg']);
             </div>
         </div>
 
-        <!-- Provider Cards Grid -->
+        <!-- Tarjetas de proveedores -->
         <div class="row g-3" id="provGrid">
             <?php if ($total_prov > 0): ?>
                 <?php foreach ($proveedores as $row): ?>
@@ -492,7 +507,7 @@ unset($_SESSION['flash_msg']);
     </div>
     </div>
 
-    <!-- Modal Premium -->
+    <!-- Modal: Formulario de proveedor -->
     <div class="modal fade" id="modalProveedor" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="background:var(--jv-bg-secondary); border:1px solid var(--jv-border); border-radius:var(--jv-radius-xl);">
@@ -593,6 +608,7 @@ unset($_SESSION['flash_msg']);
         </div>
     </div>
 
+    <!-- JAVASCRIPT -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/sweetalert2.all.min.js"></script>
     <script>

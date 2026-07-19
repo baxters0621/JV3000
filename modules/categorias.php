@@ -1,10 +1,16 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
 Security::verificarPermisoCarga();
 $csrf_token = Security::generateToken();
 
+// ==========================================
+// PROCESAR ACCIONES POST
+// ==========================================
 if (isset($_POST['accion_categoria'])) {
     $accion = $_POST['accion_categoria'];
     $nombre = mb_strtoupper(trim($_POST['nombre'] ?? ''));
@@ -76,6 +82,7 @@ if (isset($_POST['accion_categoria'])) {
     }
 }
 
+// Cambiar estado
 if (isset($_GET['toggle_status'])) {
     $id_target = intval($_GET['toggle_status']);
     $row_target = $db->fetchOne("SELECT status FROM categorias WHERE id_categoria = ?", [$id_target]);
@@ -89,8 +96,12 @@ if (isset($_GET['toggle_status'])) {
     exit();
 }
 
+// ==========================================
+// OBTENER DATOS
+// ==========================================
 $categorias = $db->fetchAll("SELECT * FROM categorias ORDER BY nombre ASC");
 
+// Corregir códigos nulos
 $nulls = $db->fetchAll("SELECT id_categoria FROM categorias WHERE codigo IS NULL OR codigo = '' ORDER BY id_categoria");
 foreach ($nulls as $n) {
     $cnt = $db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix='CAT' FOR UPDATE");
@@ -107,6 +118,7 @@ foreach ($nulls as $n) {
 <head>
     <?php include '../includes/diseno.php'; ?>
     <title>Categorías | JV3000 C.A.</title>
+    <!-- ESTILOS -->
     <style>
         .section-bg { background: rgba(6, 182, 212, 0.03); border-radius: var(--jv-radius); padding: 14px; }
         /* THEAD */
@@ -162,6 +174,7 @@ foreach ($nulls as $n) {
     <div class="main-wrapper" id="mainWrapper">
         <div class="container-fluid px-4 py-4">
 
+            <!-- ENCABEZADO -->
             <div class="card-jv d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" style="padding: 18px 24px; border-left: 4px solid #22d3ee;">
                 <div class="d-flex align-items-center gap-3">
                     <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0e7490, #155e75); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(6, 182, 212, 0.35);">
@@ -179,6 +192,7 @@ foreach ($nulls as $n) {
                 </div>
             </div>
 
+            <!-- MENSAJES FLASH -->
             <?php if (isset($_SESSION['flash_msg'])): ?>
                 <div class="alert-jv alert-jv-<?php echo $_SESSION['flash_msg']['tipo']; ?> mb-3 px-3 py-2">
                     <i class="bi bi-<?php echo $_SESSION['flash_msg']['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
@@ -187,6 +201,7 @@ foreach ($nulls as $n) {
                 <?php unset($_SESSION['flash_msg']); ?>
             <?php endif; ?>
 
+            <!-- TABLA PRINCIPAL -->
             <div class="card-jv card-jv-table p-0">
                 <div class="buscador-wrapper d-flex align-items-center px-3 py-2">
                     <i class="bi bi-search me-2" style="color: #22d3ee; font-size: 1rem;"></i>
@@ -263,6 +278,7 @@ foreach ($nulls as $n) {
             </div>
         </div>
 
+        <!-- MODAL DE CATEGORÍA -->
         <div class="modal fade" id="modalCat" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content modal-content-jv">
@@ -337,6 +353,7 @@ foreach ($nulls as $n) {
             </div>
         </div>
 
+        <!-- JAVASCRIPT -->
         <script src="../assets/js/bootstrap.bundle.min.js"></script>
         <script>
             const modalC = new bootstrap.Modal(document.getElementById('modalCat'));

@@ -1,15 +1,20 @@
 <?php
+// ==========================================
+// ENDPOINT AJAX DE ESTADÍSTICAS
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
 header('Content-Type: application/json');
 
+// Verificar permiso
 $rol_ajax = $_SESSION['rol'] ?? '';
 if ($rol_ajax !== 'Administrador' && $rol_ajax !== 'Operador de Ventas') {
     echo json_encode(['success' => false, 'error' => 'acceso_denegado']);
     exit();
 }
 
+// Agregados de 7 días
 $ventas_7d_raw = (float)$db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND id_tipo_mov = 1 AND status = 'Activa'")['total'];
 $ventas_7d = number_format($ventas_7d_raw, 2);
 
@@ -24,6 +29,7 @@ $porc_margen = ($ventas_7d_raw > 0) ? round(($margen_7d_raw / $ventas_7d_raw) * 
 
 $transacciones_7d = (int)$db->fetchOne("SELECT COUNT(DISTINCT nro_factura_manual) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND nro_factura_manual IS NOT NULL AND id_tipo_mov = 1 AND status = 'Activa'")['total'];
 
+// Top 5 productos por ganancia
 $top_rows = $db->fetchAll("SELECT p.nombre_producto, SUM(s.cantidad) as unidades, SUM(s.cantidad * (s.precio_venta - p.precio_costo)) as ganancia FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY p.id_producto ORDER BY ganancia DESC LIMIT 5");
 $sum_prof = 0;
 foreach ($top_rows as $tp) {
@@ -40,6 +46,7 @@ foreach ($top_rows as $tp) {
     ];
 }
 
+// Respuesta JSON
 echo json_encode([
     'success' => true,
     'ventas_7d' => $ventas_7d,

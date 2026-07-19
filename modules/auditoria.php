@@ -1,4 +1,7 @@
 <?php
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
@@ -6,6 +9,9 @@ Security::soloAdmin();
 
 $csrf_token = Security::generateToken();
 
+// ==========================================
+// FILTROS
+// ==========================================
 $filtro_usuario = $_GET['usuario'] ?? '';
 $filtro_accion = $_GET['accion'] ?? '';
 $filtro_desde = $_GET['desde'] ?? '';
@@ -33,6 +39,9 @@ if ($filtro_hasta !== '') {
 
 $sql_where = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
+// ==========================================
+// PAGINACIÓN
+// ==========================================
 $page = max(1, intval($_GET['page'] ?? 1));
 $limit = 50;
 $offset = ($page - 1) * $limit;
@@ -45,6 +54,9 @@ $registros = $db->fetchAll("SELECT a.* FROM auditoria a $sql_where ORDER BY a.fe
 $acciones_disponibles = ['crear', 'editar', 'eliminar', 'anular', 'login', 'logout'];
 $accion_nombres = ['login' => 'Inicio de Sesión', 'logout' => 'Sesión Cerrada', 'crear' => 'Crear', 'editar' => 'Editar', 'eliminar' => 'Eliminar', 'anular' => 'Anular'];
 
+// ==========================================
+// LIMPIAR HISTORIAL
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['limpiar'])) {
     $db->execute("DELETE FROM auditoria");
     $eliminados = $db->getConnection()->affected_rows;
@@ -65,6 +77,7 @@ unset($_SESSION['flash_msg']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Auditoría | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
+    <!-- ESTILOS -->
     <style>
     .aud-header-icon {
         width:48px;height:48px;border-radius:14px;
@@ -125,12 +138,14 @@ unset($_SESSION['flash_msg']);
 <div class="main-wrapper" id="mainWrapper">
 <div class="container-fluid px-4 py-4 pagina-aud">
 
+    <!-- MENSAJES FLASH -->
     <?php if ($flash): ?>
         <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?>" style="padding:12px 18px;font-size:.85rem;font-weight:600;">
             <?php echo htmlspecialchars($flash['texto']); ?>
         </div>
     <?php endif; ?>
 
+    <!-- ENCABEZADO -->
     <div class="card-jv d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" style="padding:18px 24px;border-left:4px solid #8b5cf6;">
         <div class="d-flex align-items-center gap-3">
             <div class="aud-header-icon"><i class="bi bi-shield-check"></i></div>
@@ -142,6 +157,7 @@ unset($_SESSION['flash_msg']);
         <span class="text-jv-muted small fw-bold"><?php echo $total_registros; ?> registro(s)</span>
     </div>
 
+    <!-- FORMULARIO DE FILTROS -->
     <form class="filtro-box" method="GET">
         <div class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -171,7 +187,7 @@ unset($_SESSION['flash_msg']);
         </div>
     </form>
 
-    <!-- Mantenimiento: Limpiar historial -->
+    <!-- MANTENIMIENTO: LIMPIAR HISTORIAL -->
     <details class="mb-3" style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.15);border-radius:var(--jv-radius);padding:10px 16px;">
         <summary style="cursor:pointer;font-size:.8rem;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:1px;list-style:none;">
             <i class="bi bi-trash3 me-2"></i>MANTENIMIENTO — LIMPIAR HISTORIAL
@@ -188,6 +204,7 @@ unset($_SESSION['flash_msg']);
         </div>
     </details>
 
+    <!-- TABLA PRINCIPAL -->
     <div class="card-jv card-jv-table p-0">
         <div class="table-responsive">
             <table class="table-jv mb-0">
@@ -227,6 +244,7 @@ unset($_SESSION['flash_msg']);
         </div>
     </div>
 
+    <!-- PAGINACIÓN -->
     <?php if ($total_paginas > 1): ?>
     <div class="pagination-jv">
         <a href="?page=1<?php echo htmlspecialchars($query_string ?? ''); ?>" class="<?php echo $page <= 1 ? 'disabled' : ''; ?>">&laquo;</a>
@@ -238,6 +256,7 @@ unset($_SESSION['flash_msg']);
     <?php endif; ?>
 </div>
 </div>
+<!-- JAVASCRIPT -->
 <script src="../assets/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/sweetalert2.all.min.js"></script>
 <script>
