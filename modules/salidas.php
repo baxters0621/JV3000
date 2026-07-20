@@ -711,7 +711,6 @@ unset($_SESSION['flash_msg']);
         }
 
         function formatearNumero(nums, tipo) {
-            if (tipo === 'V') return nums.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             if (nums.length <= 8) return nums;
             return nums.slice(0,8) + '-' + nums.slice(8,9);
         }
