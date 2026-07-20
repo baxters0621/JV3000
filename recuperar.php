@@ -232,7 +232,7 @@ if ($step == 4) {
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="buscar">
                 <label class="small fw-bold mb-1 d-block"><span class="text-jv-warning"><i class="bi bi-envelope me-1"></i>Correo</span>  <span class="text-jv-muted">o</span>  <span class="text-jv-cyan"><i class="bi bi-person me-1"></i>Usuario</span></label>
-                <input type="text" name="rec_input" class="rec-input mb-3" required placeholder="admin@correo.com  o  tu_usuario" autofocus>
+                <input type="text" name="rec_input" class="rec-input mb-3" required placeholder="admin@correo.com  o  Usuario" autofocus>
                 <button type="submit" class="rec-btn"><i class="bi bi-search me-2"></i>BUSCAR</button>
                 <a href="login.php" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Volver al inicio</a>
             </form>

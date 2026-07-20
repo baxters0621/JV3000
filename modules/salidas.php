@@ -578,7 +578,8 @@ unset($_SESSION['flash_msg']);
                         <!-- FECHA (todos los grupos) -->
                         <div class="section-bg">
                             <label class="small fw-bold text-secondary mb-2">FECHA</label>
-                            <input type="date" name="fecha_salida" id="s_fecha" class="input-jv" value="<?php echo date('Y-m-d'); ?>">
+                            <input type="date" id="s_fecha" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
+                            <input type="hidden" name="fecha_salida" id="s_fecha_hidden" value="<?php echo date('Y-m-d'); ?>">
                         </div>
 
                         <!-- CANTIDAD (todos los grupos) -->
@@ -692,7 +693,9 @@ unset($_SESSION['flash_msg']);
             var ri = document.getElementById('s_rif'); if (ri) ri.style.borderColor = '';
             // nro_control se genera automáticamente
             document.getElementById('s_obs').value = '';
-            document.getElementById('s_fecha').value = new Date().toISOString().slice(0,10);
+            var hoy = new Date().toISOString().slice(0,10);
+            document.getElementById('s_fecha').value = hoy;
+            document.getElementById('s_fecha_hidden').value = hoy;
             document.getElementById('s_desc_motivo') && (document.getElementById('s_desc_motivo').value = '');
             document.getElementById('s_causa') && (document.getElementById('s_causa').value = '');
             document.getElementById('s_tipo').value = '';
@@ -705,6 +708,7 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_id_edit').value = data.id_salida;
             document.getElementById('modalTitle').innerText = 'EDITAR SALIDA';
             document.getElementById('s_fecha').value = data.fecha_salida;
+            document.getElementById('s_fecha_hidden').value = data.fecha_salida;
             document.getElementById('s_prod').value = data.first_id_producto;
             document.getElementById('s_cliente').value = data.cliente;
             document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = data.cliente);

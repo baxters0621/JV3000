@@ -707,7 +707,8 @@ unset($_SESSION['flash_msg']);
                                 </div>
                                 <div class="col-md-2">
                                     <label class="small fw-bold text-secondary mb-1">FECHA</label>
-                                    <input type="date" name="fecha_compra" class="input-jv" value="<?php echo date('Y-m-d'); ?>">
+                                    <input type="date" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
+                                    <input type="hidden" name="fecha_compra" value="<?php echo date('Y-m-d'); ?>">
                                 </div>
                             </div>
                         </div>
