@@ -700,7 +700,7 @@ unset($_SESSION['flash_msg']);
                             <div class="row g-2">
                                 <div class="comp-factura-section col-md-4">
                                     <label class="small fw-bold text-secondary mb-1">NRO. FACTURA *</label>
-                                    <input type="text" name="nro_factura" class="input-jv" value="<?php echo htmlspecialchars($fac_default); ?>" oninput="var n=this.value.replace(/^FAC-/i,'').replace(/[^0-9]/g,'');this.value='FAC-'+n">
+                                    <input type="text" name="nro_factura" class="input-jv" value="<?php echo htmlspecialchars($fac_default); ?>" maxlength="10" oninput="var n=this.value.replace(/^FAC-/i,'').replace(/[^0-9]/g,'');if(n.length>6)n=n.slice(0,6);this.value='FAC-'+n">
                                 </div>
                                 <div class="comp-factura-section col-md-3">
                                     <label class="small fw-bold text-secondary mb-1">NRO. CONTROL *</label>
