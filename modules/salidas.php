@@ -414,9 +414,10 @@ unset($_SESSION['flash_msg']);
         transform:translateY(-2px);
     }
     .pagina-salidas .input-jv:focus {
-        border-color:#dc2626;
-        box-shadow:0 0 0 3px rgba(220,38,38,0.15);
+        border-color:#ef4444;
+        box-shadow:0 0 0 3px rgba(239,68,68,0.15);
     }
+    .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
 
     /* === DYNAMIC FIELD GROUPS === */
     .sal-field-group { display:none; }
@@ -665,6 +666,7 @@ unset($_SESSION['flash_msg']);
         const TIPO_MAP = <?php echo json_encode($tipos_mov_map); ?>;
 
         function toggleCampos() {
+            limpiarErrores();
             const sel = document.getElementById('s_tipo');
             const tipoId = sel.value;
             const grupo = TIPO_MAP[tipoId] || '';
@@ -676,6 +678,7 @@ unset($_SESSION['flash_msg']);
         }
 
         function nuevaSalida() {
+            limpiarErrores();
             document.getElementById('s_accion').value = 'registrar';
             document.getElementById('s_id_edit').value = '';
             document.getElementById('modalTitle').innerText = 'REGISTRAR MOVIMIENTO';
@@ -757,40 +760,66 @@ unset($_SESSION['flash_msg']);
             el.value = display;
         }
 
+        function limpiarErrores() {
+            document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+            document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+        }
+        function marcarError(el, msg) {
+            el.classList.add('input-error');
+            if (msg && el.id) {
+                var errEl = document.getElementById(el.id + '_err');
+                if (!errEl) {
+                    errEl = document.createElement('small');
+                    errEl.id = el.id + '_err';
+                    errEl.className = 'field-error';
+                    errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
+                    el.parentNode.appendChild(errEl);
+                }
+                errEl.textContent = msg;
+            }
+        }
         function enviarPreview() {
+            limpiarErrores();
             const btn = document.getElementById('btnPreview');
-            btn.disabled = true; btn.innerHTML = '⏳ PROCESANDO...';
+            let valido = true;
+            let primerError = null;
 
             const tipo = document.getElementById('s_tipo');
-            if (!tipo.value) {
-                Swal.fire({icon:'warning',title:'SELECCIONE TIPO',text:'Debe elegir un tipo de movimiento.',background:'#0f172a',color:'#fff',confirmButtonColor:'#dc2626'});
-                btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA'; return;
-            }
+            if (!tipo.value) { marcarError(tipo, 'SELECCIONE TIPO'); valido = false; if (!primerError) primerError = tipo; }
             const prod = document.getElementById('s_prod');
-            if (!prod.value) {
-                Swal.fire({icon:'warning',title:'SELECCIONE PRODUCTO',text:'Debe elegir un producto.',background:'#0f172a',color:'#fff',confirmButtonColor:'#dc2626'});
-                btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA'; return;
-            }
+            if (!prod.value) { marcarError(prod, 'SELECCIONE PRODUCTO'); valido = false; if (!primerError) primerError = prod; }
             const cant = parseInt(document.getElementById('s_cant').value);
-            if (!cant || cant <= 0) {
-                Swal.fire({icon:'warning',title:'CANTIDAD INVÁLIDA',text:'Ingrese una cantidad mayor a cero.',background:'#0f172a',color:'#fff',confirmButtonColor:'#dc2626'});
-                btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA'; return;
-            }
+            if (!cant || cant <= 0) { marcarError(document.getElementById('s_cant'), 'CANTIDAD > 0'); valido = false; if (!primerError) primerError = document.getElementById('s_cant'); }
 
             const grupo = TIPO_MAP[tipo.value] || '';
+            if (grupo === 'merma') {
+                const causa = document.getElementById('s_causa');
+                if (!causa.value) { marcarError(causa, 'SELECCIONE CAUSA'); valido = false; if (!primerError) primerError = causa; }
+            }
             if (grupo === 'regalias') {
                 document.getElementById('s_precio').value = '0';
                 document.getElementById('s_cliente').value = document.getElementById('s_cliente_reg').value;
             }
-            var precEl = document.getElementById('s_precio');
-            if (precEl) precEl.value = precEl.value.replace(/,/g, '');
+            if (grupo === 'venta') {
+                var precEl = document.getElementById('s_precio');
+                if (precEl) precEl.value = precEl.value.replace(/,/g, '');
+                var pv = parseFloat(precEl.value);
+                if (!pv || pv <= 0) { marcarError(precEl, 'PRECIO > 0'); valido = false; if (!primerError) primerError = precEl; }
+            }
             var rifEl = document.getElementById('s_rif');
             var rifVal = rifEl.value.replace(/\./g, '');
             if (rifVal && !/^[VJGPE]-\d{7,9}(?:-\d)?$/.test(rifVal)) {
-                Swal.fire({icon:'warning',title:'RIF INVÁLIDO',text:'Debe empezar con V- o J- seguido de los números.',background:'#0f172a',color:'#fff',confirmButtonColor:'#dc2626'});
-                btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA'; return;
+                marcarError(rifEl, 'RIF INVÁLIDO'); valido = false; if (!primerError) primerError = rifEl;
             }
             rifEl.value = rifVal;
+
+            if (!valido) {
+                btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA';
+                if (primerError) { primerError.focus(); var p = primerError.closest('.modal-body') || primerError; p.scrollIntoView({behavior:'smooth',block:'center'}); }
+                return;
+            }
+
+            btn.disabled = true; btn.innerHTML = '⏳ PROCESANDO...';
             const fd = new FormData(document.getElementById('formSalida'));
 
             fetch('preview_factura.php?store=1', { method:'POST', body:fd })
@@ -830,6 +859,10 @@ unset($_SESSION['flash_msg']);
     <script>
     document.querySelectorAll('.flash-auto').forEach(el => {
         setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 4000);
+    });
+    document.querySelectorAll('#formSalida input, #formSalida select, #formSalida textarea').forEach(function(el) {
+        el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
+        el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
     });
     </script>
     <script>

@@ -249,6 +249,7 @@ unset($_SESSION['flash_msg']);
     /* ── Strength meter ── */
     .strength-meter { height:6px;background:rgba(255,255,255,0.05);border-radius:10px;overflow:hidden; }
     .strength-meter-fill { height:100%;width:0%;border-radius:10px;transition:all .3s ease; }
+    .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
     </style>
 </head>
 <body>
@@ -517,9 +518,28 @@ unset($_SESSION['flash_msg']);
             }
         }
 
+        function limpiarErrores() {
+            document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+            document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+        }
+        function marcarError(el, msg) {
+            el.classList.add('input-error');
+            if (msg && el.id) {
+                var errEl = document.getElementById(el.id + '_err');
+                if (!errEl) {
+                    errEl = document.createElement('small');
+                    errEl.id = el.id + '_err';
+                    errEl.className = 'field-error';
+                    errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
+                    el.parentNode.appendChild(errEl);
+                }
+                errEl.textContent = msg;
+            }
+        }
         function validarFormulario() {
             const user = document.getElementById('u_nombre').value.trim();
             const pass = document.getElementById('u_pass').value;
+            const correo = document.getElementById('u_correo').value.trim();
             const btn = document.getElementById('btn-user-submit');
             const uError = document.getElementById('u_error_text');
             const fill = document.getElementById('meter-fill');
@@ -534,6 +554,7 @@ unset($_SESSION['flash_msg']);
                     uError.className = 'text-info mt-1 d-block fw-bold';
                 }
             }
+            const correoValido = correo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
 
             if (pass.length > 0) {
                 let score = 0;
@@ -560,9 +581,13 @@ unset($_SESSION['flash_msg']);
                 if (meterText) { meterText.textContent = 'Mín. 8 caracteres: Mayúsculas, Minúsculas, Números y Símbolos.'; meterText.className = 'text-info mt-1 d-block fw-bold'; }
             }
 
+            // Highlight errores
+            document.getElementById('u_nombre').classList.toggle('input-error', !userValido && user.length > 0);
+            document.getElementById('u_correo').classList.toggle('input-error', !correoValido && correo.length > 0);
+
             var esEdicion = document.getElementById('u_accion').value === 'editar';
             if (esEdicion && pass === '') { btn.disabled = !userValido; return; }
-            btn.disabled = !userValido;
+            btn.disabled = !userValido || !correoValido;
         }
 
         function editarUsuario(data) {
@@ -632,6 +657,10 @@ unset($_SESSION['flash_msg']);
     <script>
     document.querySelectorAll('.flash-auto').forEach(el => {
         setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 4000);
+    });
+    document.querySelectorAll('#formUsuario input, #formUsuario select, #formUsuario textarea').forEach(function(el) {
+        el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
+        el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
     });
     </script>
 </body>

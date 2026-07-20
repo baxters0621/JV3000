@@ -387,6 +387,7 @@ unset($_SESSION['flash_msg']);
         border-color:#10b981;
         box-shadow:0 0 0 3px rgba(16,185,129,0.15);
     }
+    .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
     .pagina-compras .buscador-wrapper {
         border-bottom:1px solid rgba(16,185,129,0.15);
         background:rgba(2,6,23,0.5);
@@ -995,19 +996,43 @@ unset($_SESSION['flash_msg']);
         document.getElementById('productosData').value = JSON.stringify(productos);
     }
 
+    function limpiarErrores() {
+        document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+    }
+    function marcarError(el, mensaje) {
+        el.classList.add('input-error');
+        if (mensaje) {
+            const errId = el.id + '_err';
+            let errEl = document.getElementById(errId);
+            if (!errEl) {
+                errEl = document.createElement('small');
+                errEl.id = errId;
+                errEl.className = 'field-error';
+                errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
+                el.parentNode.appendChild(errEl);
+            }
+            errEl.textContent = mensaje;
+        }
+    }
     function validarFormulario(btn) {
+        limpiarErrores();
         const tipo = document.querySelector('select[name="tipo_entrada"]').value;
         const errores = [];
+        let primerError = null;
         if (tipo === 'Compra a proveedor') {
-            if (!document.getElementById('selProveedor').value) errores.push('SELECCIONE UN PROVEEDOR');
-            if (!document.querySelector('input[name="nro_factura"]').value.trim()) errores.push('NRO. FACTURA ES OBLIGATORIO');
-            const ctrl = document.querySelector('input[name="nro_control"]').value.trim();
-            if (!/^\d{2}-\d{8}$/.test(ctrl)) errores.push('NRO. CONTROL INVÁLIDO (00-00000000)');
+            const prov = document.getElementById('selProveedor');
+            if (!prov.value) { errores.push('SELECCIONE UN PROVEEDOR'); marcarError(prov); if (!primerError) primerError = prov; }
+            const fac = document.querySelector('input[name="nro_factura"]');
+            if (!fac.value.trim()) { errores.push('NRO. FACTURA ES OBLIGATORIO'); marcarError(fac); if (!primerError) primerError = fac; }
+            const ctrl = document.querySelector('input[name="nro_control"]');
+            if (!/^\d{2}-\d{8}$/.test(ctrl.value.trim())) { errores.push('NRO. CONTROL INVÁLIDO (00-00000000)'); marcarError(ctrl); if (!primerError) primerError = ctrl; }
         } else {
-            if (!document.querySelector('select[name="causa_ajuste"]').value) errores.push('SELECCIONE UNA CAUSA DE AJUSTE');
+            const causa = document.querySelector('select[name="causa_ajuste"]');
+            if (!causa.value) { errores.push('SELECCIONE UNA CAUSA DE AJUSTE'); marcarError(causa); if (!primerError) primerError = causa; }
         }
         if (productos.length === 0) errores.push('AGREGUE AL MENOS UN PRODUCTO');
         if (errores.length > 0) {
+            if (primerError) { primerError.focus(); primerError.scrollIntoView({behavior:'smooth',block:'center'}); }
             Swal.fire({ title: 'CAMPOS REQUERIDOS', html: errores.join('<br>'), icon: 'warning', background: '#0f172a', color: '#fff', confirmButtonColor: '#10b981' });
             return false;
         }
@@ -1027,6 +1052,7 @@ unset($_SESSION['flash_msg']);
     }
 
     function toggleCamposCompras(sel) {
+        limpiarErrores();
         const tipo = sel.value;
         const esProv = tipo === 'Compra a proveedor';
         const esDonacion = tipo === 'Donación';
@@ -1061,6 +1087,10 @@ unset($_SESSION['flash_msg']);
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.flash-auto').forEach(el => {
             setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 4000);
+        });
+        document.querySelectorAll('input, select, textarea').forEach(function(el) {
+            el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
+            el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
         });
         const tipoSel = document.querySelector('select[name="tipo_entrada"]');
         if (tipoSel) toggleCamposCompras(tipoSel);

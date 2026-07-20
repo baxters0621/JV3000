@@ -57,6 +57,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $status = $_POST['status'] ?? 'Activo';
     $fecha_venc = !empty($_POST['fecha_vencimiento']) ? $_POST['fecha_vencimiento'] : null;
 
+    if ($id_prod <= 0) { $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'PRODUCTO INVÁLIDO.']; header('Location: productos.php'); exit; }
+    if ($stock_minimo < 0) { $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'STOCK MÍNIMO NO PUEDE SER NEGATIVO.']; header('Location: productos.php'); exit; }
+    if ($precio_venta < 0) { $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'PRECIO VENTA NO PUEDE SER NEGATIVO.']; header('Location: productos.php'); exit; }
+    if ($precio_costo < 0) { $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'PRECIO COSTO NO PUEDE SER NEGATIVO.']; header('Location: productos.php'); exit; }
+    if (!in_array($status, ['Activo','Inactivo'])) $status = 'Activo';
+    if ($fecha_venc && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_venc)) $fecha_venc = null;
+
     $db->execute(
         "UPDATE productos SET stock_minimo=?, precio_venta=?, precio_costo=?, status=?, fecha_vencimiento=? WHERE id_producto=?",
         [$stock_minimo, $precio_venta, $precio_costo, $status, $fecha_venc, $id_prod]
@@ -131,6 +138,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
         .alert-proxima .alert-label { color: rgba(251,146,60,0.8); }
         .alert-proxima .alert-link { background: rgba(251,146,60,0.12); color: #fb923c; border-color: rgba(251,146,60,0.3); }
         .alert-proxima .alert-link:hover { background: rgba(251,146,60,0.25); }
+        .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
     </style>
 </head>
 
@@ -419,7 +427,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                     </div>
                     <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid rgba(6,182,212,0.1);">
                         <button type="button" class="btn btn-jv-danger" style="padding:8px 20px;font-size:.8rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                        <button type="submit" class="btn btn-jv-success" style="padding:8px 20px;font-size:.8rem;" onclick="this.disabled=true;this.innerHTML='<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';this.form.submit()"><i class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
+                        <button type="button" class="btn btn-jv-success" style="padding:8px 20px;font-size:.8rem;" onclick="return validarEditarProducto(this)"><i class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
                     </div>
                 </form>
             </div>
@@ -489,6 +497,10 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                     setTimeout(function() { a.remove(); }, 600);
                 }, 4000);
             });
+            document.querySelectorAll('#formEditar input, #formEditar select').forEach(function(el) {
+                el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
+                el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
+            });
         });
 
         var modalEditar = null;
@@ -497,7 +509,39 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
             if (el) modalEditar = new bootstrap.Modal(el);
         });
 
+        function limpiarErrores() {
+            document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+            document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+        }
+        function marcarError(el, msg) {
+            el.classList.add('input-error');
+            if (msg && el.id) {
+                var errEl = document.getElementById(el.id + '_err');
+                if (!errEl) {
+                    errEl = document.createElement('small');
+                    errEl.id = el.id + '_err';
+                    errEl.className = 'field-error';
+                    errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
+                    el.parentNode.appendChild(errEl);
+                }
+                errEl.textContent = msg;
+            }
+        }
+        function validarEditarProducto(btn) {
+            limpiarErrores();
+            let primerError = null;
+            const minimo = document.getElementById('edit_minimo');
+            const pvp = document.getElementById('edit_pvp');
+            const costo = document.getElementById('edit_costo');
+            if (parseInt(minimo.value) < 0) { marcarError(minimo, '>= 0'); if (!primerError) primerError = minimo; }
+            if (parseFloat(pvp.value) < 0) { marcarError(pvp, '>= 0'); if (!primerError) primerError = pvp; }
+            if (parseFloat(costo.value) < 0) { marcarError(costo, '>= 0'); if (!primerError) primerError = costo; }
+            if (primerError) { primerError.focus(); return false; }
+            btn.disabled = true; btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';
+            btn.form.submit(); return false;
+        }
         function editarProducto(id) {
+            limpiarErrores();
             var row = document.querySelector('tr[data-id="' + id + '"]');
             if (!row) return;
             document.getElementById('edit_id').value = id;

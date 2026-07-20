@@ -212,9 +212,10 @@ unset($_SESSION['flash_msg']);
         transform:translateY(-2px);
     }
     .pagina-proveedores .input-jv:focus {
-        border-color:#a855f7;
-        box-shadow:0 0 0 3px rgba(168,85,247,0.15);
+        border-color:#22d3ee;
+        box-shadow:0 0 0 3px rgba(6,182,212,0.15);
     }
+    .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
     .pagina-proveedores .header-card {
         padding:18px 24px;
         border-left:4px solid #a855f7;
@@ -663,25 +664,47 @@ unset($_SESSION['flash_msg']);
         e.target.value = formatted;
     });
 
+    function limpiarErrores() {
+        document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+        document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+    }
+    function marcarError(el, msg) {
+        el.classList.add('input-error');
+        if (msg && el.id) {
+            var errEl = document.getElementById(el.id + '_err');
+            if (!errEl) {
+                errEl = document.createElement('small');
+                errEl.id = el.id + '_err';
+                errEl.className = 'field-error';
+                errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
+                el.parentNode.appendChild(errEl);
+            }
+            errEl.textContent = msg;
+        }
+    }
     // Submit validation + anti-doble-click
     formP.addEventListener('submit', function(e) {
-        const rifValue = document.getElementById('p_rif').value;
-        const rifRegex = /^[VJGPE]-\d{7,9}-\d$/;
-        if (!rifRegex.test(rifValue)) {
-            e.preventDefault();
-            Swal.fire({ icon:'error', title:'RIF INVÁLIDO', text:'Use el formato oficial: J-12345678-0', background:'#0f172a', color:'#fff', confirmButtonColor:'#ef4444' });
-            return;
-        }
-        const telValue = document.getElementById('p_tel').value;
-        if (!/^\(\d{4}\) \d{3}-\d{4}$/.test(telValue)) {
-            e.preventDefault();
-            Swal.fire({ icon:'error', title:'TELÉFONO INVÁLIDO', text:'Ingrese un número válido: (04XX) 000-0000', background:'#0f172a', color:'#fff', confirmButtonColor:'#ef4444' });
-            return;
-        }
+        limpiarErrores();
+        let primerError = null;
+        const emp = document.getElementById('p_empresa');
+        if (!emp.value.trim()) { marcarError(emp, 'NOMBRE REQUERIDO'); e.preventDefault(); if (!primerError) primerError = emp; }
+        const rifEl = document.getElementById('p_rif');
+        const rifValue = rifEl.value;
+        if (!/^[VJGPE]-\d{7,9}-\d$/.test(rifValue)) { marcarError(rifEl, 'RIF INVÁLIDO (J-12345678-0)'); e.preventDefault(); if (!primerError) primerError = rifEl; }
+        const telEl = document.getElementById('p_tel');
+        if (!/^\(\d{4}\) \d{3}-\d{4}$/.test(telEl.value)) { marcarError(telEl, 'TELÉFONO INVÁLIDO'); e.preventDefault(); if (!primerError) primerError = telEl; }
+        const emailEl = document.getElementById('p_email');
+        if (emailEl.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value.trim())) { marcarError(emailEl, 'EMAIL INVÁLIDO'); e.preventDefault(); if (!primerError) primerError = emailEl; }
+        if (primerError) { primerError.focus(); return; }
         // Anti-doble-click
         const btn = document.getElementById('btn-prov-submit');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
+    });
+
+    document.querySelectorAll('#formProveedor input, #formProveedor select, #formProveedor textarea').forEach(function(el) {
+        el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
+        el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
     });
 
     function nuevoProveedor() {

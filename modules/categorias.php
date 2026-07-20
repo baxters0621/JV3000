@@ -165,6 +165,7 @@ foreach ($nulls as $n) {
         .actions-divider { width: 1px; height: 26px; background: rgba(56, 189, 248, 0.15); display: inline-block; vertical-align: middle; }
         /* Codigo badge */
         .codigo-badge { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 6px; padding: 3px 10px; font-size: 0.8rem; font-weight: 700; color: #22d3ee; font-family: 'Courier New', monospace; display: inline-block; }
+        .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
     </style>
 </head>
 
@@ -343,7 +344,7 @@ foreach ($nulls as $n) {
 
                             <div class="d-flex justify-content-end gap-2 pt-2">
                                 <button type="button" class="btn-jv-primary" style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 10px 22px; font-size: 0.9rem;" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn-jv-success" style="padding: 10px 22px; font-size: 0.9rem;">
+                                <button type="button" class="btn-jv-success" style="padding: 10px 22px; font-size: 0.9rem;" onclick="return validarCategoria(this)">
                                     <i class="bi bi-check-lg me-1"></i> Guardar
                                 </button>
                             </div>
@@ -356,6 +357,31 @@ foreach ($nulls as $n) {
         <!-- JAVASCRIPT -->
         <script src="../assets/js/bootstrap.bundle.min.js"></script>
         <script>
+            function limpiarErrores() {
+                document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+                document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+            }
+            function marcarError(el, msg) {
+                el.classList.add('input-error');
+                if (msg && el.id) {
+                    var errEl = document.getElementById(el.id + '_err');
+                    if (!errEl) {
+                        errEl = document.createElement('small');
+                        errEl.id = el.id + '_err';
+                        errEl.className = 'field-error';
+                        errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
+                        el.parentNode.appendChild(errEl);
+                    }
+                    errEl.textContent = msg;
+                }
+            }
+            function validarCategoria(btn) {
+                limpiarErrores();
+                const nom = document.getElementById('cat_nombre');
+                if (!nom.value.trim()) { marcarError(nom, 'NOMBRE REQUERIDO'); nom.focus(); return false; }
+                btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
+                btn.form.submit(); return false;
+            }
             const modalC = new bootstrap.Modal(document.getElementById('modalCat'));
 
             function nuevaCat() {
@@ -421,6 +447,10 @@ foreach ($nulls as $n) {
                         a.style.opacity = '0';
                         setTimeout(function() { a.remove(); }, 600);
                     }, 4000);
+                });
+                document.querySelectorAll('#formCat input, #formCat select, #formCat textarea').forEach(function(el) {
+                    el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
+                    el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
                 });
             });
         </script>
