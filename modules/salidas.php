@@ -626,7 +626,17 @@ unset($_SESSION['flash_msg']);
                         <!-- DATOS ADICIONALES -->
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">RIF / CÉDULA</label>
-                                <input type="text" name="rif_cliente" id="s_rif" class="input-jv" maxlength="13" placeholder="Ej: V-12345678 o J-12345678-0" oninput="validarRIFInput(this)">
+                                <div class="d-flex gap-2">
+                                    <select id="s_rif_tipo" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="validarRIFInput()">
+                                        <option value="V">V-</option>
+                                        <option value="J">J-</option>
+                                        <option value="E">E-</option>
+                                        <option value="P">P-</option>
+                                        <option value="G">G-</option>
+                                    </select>
+                                    <input type="text" id="s_rif_num" class="input-jv" placeholder="Número de identificación" oninput="validarRIFInput()" style="flex:1;" inputmode="numeric">
+                                    <input type="hidden" name="rif_cliente" id="s_rif">
+                                </div>
                                 <div id="s-rif-msg" class="small mt-1" style="min-height:18px;"></div>
                             </div>
                             <div class="section-bg">
@@ -676,9 +686,11 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_precio').value = '';
             document.getElementById('s_cliente').value = '';
             document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = '');
+            document.getElementById('s_rif_tipo').value = 'V';
+            document.getElementById('s_rif_num').value = '';
             document.getElementById('s_rif').value = '';
             var m = document.getElementById('s-rif-msg'); if (m) m.innerHTML = '';
-            var ri = document.getElementById('s_rif'); if (ri) ri.style.borderColor = '';
+            var ri = document.getElementById('s_rif_num'); if (ri) ri.style.borderColor = '';
             // nro_control se genera automáticamente
             document.getElementById('s_obs').value = '';
             var hoy = new Date().toISOString().slice(0,10);
@@ -700,8 +712,15 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_prod').value = data.first_id_producto;
             document.getElementById('s_cliente').value = data.cliente;
             document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = data.cliente);
-            document.getElementById('s_rif').value = data.rif_cliente;
-            validarRIFInput(document.getElementById('s_rif'));
+            var rifMatch = (data.rif_cliente || '').match(/^([VJGPE])-(\d[\d.-]*)/);
+            if (rifMatch) {
+                document.getElementById('s_rif_tipo').value = rifMatch[1];
+                document.getElementById('s_rif_num').value = rifMatch[2].replace(/[^\d]/g, '');
+            } else {
+                document.getElementById('s_rif_tipo').value = 'V';
+                document.getElementById('s_rif_num').value = '';
+            }
+            validarRIFInput();
             document.getElementById('s_cant').value = data.first_cantidad;
             var pv = document.getElementById('s_precio'); pv.value = parseFloat(data.first_precio_venta).toFixed(2); formatearPrecio(pv);
             document.getElementById('s_tipo').value = data.id_tipo_mov;
@@ -726,32 +745,30 @@ unset($_SESSION['flash_msg']);
             if (num > 999999.99) { entero = '999999'; decimales = '99'; formateado = '999,999.99'; }
             el.value = formateado;
         }
-        function validarRIFInput(el) {
-            var raw = el.value.toUpperCase().replace(/[^VJEPG\d]/g, '');
+        function validarRIFInput() {
+            var tipo = document.getElementById('s_rif_tipo').value;
+            var nums = document.getElementById('s_rif_num').value.replace(/\D/g, '');
             var msg = document.getElementById('s-rif-msg');
-            if (raw === '') { msg.innerHTML = ''; el.style.borderColor = ''; el.value = ''; return; }
-            var letter = raw.match(/^[VJEPG]/);
-            var prefix = letter ? letter[0] + '-' : '';
-            var nums = prefix ? raw.slice(1).replace(/\D/g, '') : raw.replace(/\D/g, '');
-            var maxDig = (letter && letter[0] === 'J') ? 9 : 8;
-            if (nums.length > maxDig) nums = nums.slice(0, maxDig);
-            var display, clean;
-            if (prefix) {
-                display = prefix + formatearNumero(nums, letter[0]);
-                clean = prefix + nums;
-            } else {
-                display = formatearNumero(nums, 'V');
-                clean = nums;
+            var numInput = document.getElementById('s_rif_num');
+            var hidden = document.getElementById('s_rif');
+            var maxDig = (tipo === 'J') ? 9 : 8;
+            if (nums.length > maxDig) { nums = nums.slice(0, maxDig); numInput.value = nums; }
+            if (nums === '') {
+                msg.innerHTML = ''; numInput.style.borderColor = ''; hidden.value = '';
+                return;
             }
-            var valido = /^[VGPE]-\d{7,8}$/.test(clean) || /^J-\d{8,9}(?:-\d)?$/.test(clean) || /^\d{7,8}$/.test(clean);
+            var clean = tipo + '-' + nums;
+            var display = tipo + '-' + formatearNumero(nums, tipo);
+            var valido = /^[VGPE]-\d{7,8}$/.test(clean) || /^J-\d{8,9}(?:-\d)?$/.test(clean);
             if (valido) {
                 msg.innerHTML = '<span style="color:#22c55e;">✓ Válido</span>';
-                el.style.borderColor = '#22c55e';
+                numInput.style.borderColor = '#22c55e';
             } else {
-                msg.innerHTML = '<span style="color:#ef4444;">Anteponga V- o J- y escriba los números</span>';
-                el.style.borderColor = '#ef4444';
+                msg.innerHTML = '<span style="color:#ef4444;">Mín. 7 dígitos (persona) u 8 (empresa)</span>';
+                numInput.style.borderColor = '#ef4444';
             }
-            el.value = display;
+            numInput.value = nums;
+            hidden.value = display;
         }
 
         function limpiarErrores() {
@@ -802,7 +819,7 @@ unset($_SESSION['flash_msg']);
             }
             var rifEl = document.getElementById('s_rif');
             var rifVal = rifEl.value.replace(/\./g, '');
-            if (rifVal && !/^[VJGPE]-\d{7,9}(?:-\d)?$/.test(rifVal)) {
+            if (rifVal && !(/^[VGPE]-\d{7,8}$/.test(rifVal) || /^J-\d{8,9}(?:-\d)?$/.test(rifVal))) {
                 marcarError(rifEl, 'RIF INVÁLIDO'); valido = false; if (!primerError) primerError = rifEl;
             }
             rifEl.value = rifVal;
