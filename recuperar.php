@@ -39,13 +39,20 @@ if (!isset($_SESSION['rec_id'])) $_SESSION['rec_id'] = 0;
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $action = $_POST['rec_action'] ?? '';
 
-    // --- Step 1: Search by email ---
+    // --- Step 1: Search by email or username ---
     if ($action === 'buscar') {
-        $correo = strtolower(trim($_POST['rec_correo'] ?? ''));
-        if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-            $error = "INGRESE UN CORREO VÁLIDO.";
+        $input = trim($_POST['rec_input'] ?? '');
+        if ($input === '') {
+            $error = "INGRESE SU CORREO O NOMBRE DE USUARIO.";
         } else {
-            $row = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(correo) = ? LIMIT 1", [$correo]);
+            if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
+                $input_lower = strtolower($input);
+                $row = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(correo) = ? LIMIT 1", [$input_lower]);
+                $campo = 'correo';
+            } else {
+                $row = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(usuario) = ? LIMIT 1", [strtolower($input)]);
+                $campo = 'usuario';
+            }
             if ($row) {
                 if (empty($row['pregunta_seguridad'])) {
                     $error = "ESTE USUARIO NO TIENE PREGUNTA DE SEGURIDAD CONFIGURADA. CONTACTA AL ADMIN.";
@@ -57,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $_SESSION['rec_intentos'] = 0;
                 }
             } else {
-                $error = "CORREO NO REGISTRADO EN EL SISTEMA.";
+                $error = $campo === 'correo' ? "CORREO NO REGISTRADO." : "USUARIO NO REGISTRADO.";
             }
         }
     }
@@ -218,14 +225,14 @@ if ($step == 4) {
         <?php endif; ?>
 
         <?php // ==========================================
-        // PASO 1: BUSCAR POR CORREO
+        // PASO 1: BUSCAR POR CORREO O USUARIO
         // ========================================== ?>
         <div class="rec-step <?php echo $show_buscar ? 'active' : ''; ?>">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="buscar">
-                <label class="small fw-bold text-jv-muted mb-1 d-block">Correo electrónico registrado</label>
-                <input type="email" name="rec_correo" class="rec-input mb-3" required placeholder="ejemplo@correo.com" autofocus>
+                <label class="small fw-bold text-jv-muted mb-1 d-block">Correo o nombre de usuario</label>
+                <input type="text" name="rec_input" class="rec-input mb-3" required placeholder="ejemplo@correo.com o tu_usuario" autofocus>
                 <button type="submit" class="rec-btn"><i class="bi bi-search me-2"></i>BUSCAR</button>
                 <a href="login.php" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Volver al inicio</a>
             </form>
