@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $respuesta = trim($_POST['rec_respuesta'] ?? '');
                 $preg_user = $_SESSION['rec_pregunta'] ?? '';
                 if (!validarRespuestaSeguridad($respuesta)) {
-                    $error = "RESPUESTA INVÁLIDA. MÍN 3 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
+                    $error = "RESPUESTA INVÁLIDA. MÍN 5 Y MÁX 20 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
                 } else {
                     $row = $db->fetchOne("SELECT respuesta_seguridad FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
                     if ($row && password_verify($respuesta, $row['respuesta_seguridad'])) {
@@ -240,8 +240,9 @@ if ($step == 4) {
                 <input type="hidden" name="rec_action" value="responder">
                 <div class="small text-jv-muted mb-2">Usuario: <strong class="text-white"><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
                 <div class="rec-question"><i class="bi bi-question-circle me-2"></i><?php echo htmlspecialchars($_SESSION['rec_pregunta'] ?? ''); ?></div>
-                <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required maxlength="50" autofocus placeholder="Tu respuesta personalizada" autocomplete="off">
-                <button type="submit" class="rec-btn"><i class="bi bi-shield-check me-2"></i>VERIFICAR</button>
+                <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required maxlength="20" autofocus placeholder="Mín. 5 y máx. 20 caracteres" autocomplete="off" oninput="validarRespuesta()">
+                <small id="rec-resp-hint" style="color:#ef4444;font-size:.7rem;display:block;height:14px;text-align:center;"></small>
+                <button type="submit" id="rec-btn" class="rec-btn"><i class="bi bi-shield-check me-2"></i>VERIFICAR</button>
                 <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Intentar con otro correo</a>
             </form>
         </div>
@@ -275,6 +276,27 @@ if ($step == 4) {
         </div>
     </div>
 
+    <script>
+        function validarRespuesta() {
+            var resp = document.getElementById('rec-resp').value.trim();
+            var btn = document.getElementById('rec-btn');
+            var hint = document.getElementById('rec-resp-hint');
+            if (resp.length === 0) {
+                btn.disabled = true;
+                hint.textContent = '';
+                document.getElementById('rec-resp').style.borderColor = '';
+                return;
+            }
+            var ok = resp.length >= 5 && resp.length <= 20 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp);
+            btn.disabled = !ok;
+            document.getElementById('rec-resp').style.borderColor = ok ? '#22c55e' : '#ef4444';
+            hint.textContent = ok ? '' : 'Mín. 5 y máx. 20 caracteres, sin patrones (asdf, 1234, etc).';
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            var el = document.getElementById('rec-resp');
+            if (el) { validarRespuesta(); }
+        });
+    </script>
     <script src="assets/js/bootstrap.bundle.min.js?v=2"></script>
 </body>
 </html>

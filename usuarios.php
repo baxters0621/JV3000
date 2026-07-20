@@ -62,7 +62,7 @@ if (isset($_POST['accion_usuario'])) {
         $respuesta = trim($_POST['respuesta_seguridad'] ?? '');
         if ($pregunta !== '' && $respuesta !== '') {
             if (!validarRespuestaSeguridad($respuesta)) {
-                $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'RESPUESTA INVÁLIDA. MÍN 3 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).'];
+                $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'RESPUESTA INVÁLIDA. MÍN 5 Y MÁX 20 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).'];
                 header("Location: usuarios.php"); exit();
             }
             $resp_hash = password_hash($respuesta, PASSWORD_BCRYPT);
@@ -484,7 +484,8 @@ unset($_SESSION['flash_msg']);
                                 <option value="Color favorito">Color favorito</option>
                             </select>
                             <small class="text-jv-muted mt-1 d-block" style="font-size:.7rem;">Selecciona una pregunta o déjalo vacío para mantener la actual.</small>
-                            <input type="text" name="respuesta_seguridad" id="u_resp" class="input-jv mt-2" maxlength="50" placeholder="Tu respuesta personalizada" autocomplete="off">
+                            <input type="text" name="respuesta_seguridad" id="u_resp" class="input-jv mt-2" maxlength="20" oninput="validarFormulario()" placeholder="Mín. 5 y máx. 20 caracteres" autocomplete="off">
+                            <small id="u_resp_hint" class="field-error" style="color:#ef4444;font-size:.7rem;margin-top:2px;display:block;height:14px;"></small>
                         </div>
 
                         <button type="submit" id="btn-user-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase" disabled>
@@ -540,6 +541,8 @@ unset($_SESSION['flash_msg']);
             const user = document.getElementById('u_nombre').value.trim();
             const pass = document.getElementById('u_pass').value;
             const correo = document.getElementById('u_correo').value.trim();
+            const preg = document.getElementById('u_preg').value;
+            const resp = document.getElementById('u_resp').value.trim();
             const btn = document.getElementById('btn-user-submit');
             const uError = document.getElementById('u_error_text');
             const fill = document.getElementById('meter-fill');
@@ -555,6 +558,28 @@ unset($_SESSION['flash_msg']);
                 }
             }
             const correoValido = correo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+
+            // Validación de respuesta de seguridad
+            const respOk = resp.length >= 5 && resp.length <= 20 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp);
+            const respInput = document.getElementById('u_resp');
+            const respHint = document.getElementById('u_resp_hint');
+            let pregRespOk = true;
+            if (preg !== '' && resp === '') {
+                pregRespOk = false;
+                respInput.classList.add('input-error');
+                if (respHint) respHint.textContent = 'Seleccionaste una pregunta, debes escribir tu respuesta.';
+            } else if (preg === '' && resp !== '') {
+                pregRespOk = false;
+                respInput.classList.add('input-error');
+                if (respHint) respHint.textContent = 'Primero selecciona una pregunta de seguridad.';
+            } else if (preg !== '' && resp !== '') {
+                pregRespOk = respOk;
+                respInput.classList.toggle('input-error', !respOk);
+                if (respHint) respHint.textContent = respOk ? '' : 'Mín. 5 y máx. 20 caracteres, sin patrones (asdf, 1234, etc).';
+            } else {
+                respInput.classList.remove('input-error');
+                if (respHint) respHint.textContent = '';
+            }
 
             if (pass.length > 0) {
                 let score = 0;
@@ -586,8 +611,8 @@ unset($_SESSION['flash_msg']);
             document.getElementById('u_correo').classList.toggle('input-error', !correoValido && correo.length > 0);
 
             var esEdicion = document.getElementById('u_accion').value === 'editar';
-            if (esEdicion && pass === '') { btn.disabled = !userValido; return; }
-            btn.disabled = !userValido || !correoValido;
+            if (esEdicion && pass === '') { btn.disabled = !userValido || !pregRespOk; return; }
+            btn.disabled = !userValido || !correoValido || !pregRespOk;
         }
 
         function editarUsuario(data) {

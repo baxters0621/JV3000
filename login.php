@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
         if ($reg_pregunta === '' || $reg_respuesta === '') {
             $error = "DEBE SELECCIONAR UNA PREGUNTA DE SEGURIDAD Y SU RESPUESTA.";
         } elseif (!validarRespuestaSeguridad($reg_respuesta)) {
-            $error = "RESPUESTA INVÁLIDA. MÍN 3 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
+            $error = "RESPUESTA INVÁLIDA. MÍN 5 Y MÁX 20 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
         } else {
             $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE BINARY usuario = ? OR BINARY correo = ?", [$new_user, $new_email]);
             if ($dup) {
@@ -509,7 +509,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                 <label class="form-label" style="margin-top:10px;">Respuesta</label>
                 <div class="field-group">
                     <i class="field-icon bi bi-shield-lock"></i>
-                    <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required maxlength="50" oninput="validarReg()" placeholder="Tu respuesta personalizada" autocomplete="off">
+                    <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required maxlength="20" oninput="validarReg()" placeholder="Mín. 5 y máx. 20 caracteres" autocomplete="off">
                 </div>
 
             </div>
@@ -563,7 +563,7 @@ function validarReg() {
 
     var resp = document.getElementById('r-resp').value.trim();
     var respOk = false;
-    if (resp.length >= 3 && resp.length <= 50 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp)) {
+    if (resp.length >= 5 && resp.length <= 20 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp)) {
         respOk = true;
         document.getElementById('r-resp').style.borderColor = 'var(--jv-success)';
     } else if (resp.length > 0) {

@@ -167,7 +167,7 @@ function getPreguntasRespuestas(): array
 function validarRespuestaSeguridad(string $respuesta): bool
 {
     $r = trim($respuesta);
-    if (strlen($r) < 3 || strlen($r) > 50) return false;
+    if (strlen($r) < 5 || strlen($r) > 20) return false;
     if (!preg_match('/[a-zA-Z]/', $r)) return false;
     if (!preg_match('/[aeiouAEIOU]/', $r)) return false;
     if (preg_match('/(.)\1{3,}/', $r)) return false;
