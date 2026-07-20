@@ -141,6 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
             'dias_plazo'       => $dias_credito,
             'total'            => 0,
             'status'           => 'Activa',
+            'tipo_entrada'     => $tipo_entrada,
         ]);
 
         $total_compra = 0;
@@ -182,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
 
         if ($exitos > 0) {
             // 4. Actualizar total en cabecera
-            $db->execute("UPDATE compras SET total = ? WHERE id_compra = ?", [$total_compra, $compra_id]);
+            $db->execute("UPDATE compras SET subtotal = ?, total = ? WHERE id_compra = ?", [$total_compra, $total_compra, $compra_id]);
 
             // 5. Insertar movimiento de inventario
             $mov_id = $db->insert('movimientos', [

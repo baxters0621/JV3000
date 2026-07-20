@@ -42,6 +42,7 @@ if (isset($_GET['confirm'])) {
             'id_usuario'         => $data['id_usuario'],
             'fecha_salida'       => $data['fecha_salida'] ?? date('Y-m-d H:i:s'),
             'status'             => 'Activa',
+            'observaciones'      => $data['observaciones'] ?? '',
         ]);
 
         // 2. Procesar producto(s) desde preview_data
@@ -214,8 +215,8 @@ if (isset($_POST['accion_salida'])) {
 
             // Actualizar cabecera
             $db->execute(
-                "UPDATE salidas SET nro_control=?, cliente=?, rif_cliente=?, fecha_salida=?, id_tipo_mov=? WHERE id_salida=?",
-                [$nro_control, $cliente, $rif_cliente, $fecha_salida, $id_tipo_mov, $id_salida]
+                "UPDATE salidas SET nro_control=?, cliente=?, rif_cliente=?, fecha_salida=?, id_tipo_mov=?, observaciones=? WHERE id_salida=?",
+                [$nro_control, $cliente, $rif_cliente, $fecha_salida, $id_tipo_mov, $observaciones, $id_salida]
             );
 
             // Eliminar detalles viejos e insertar el nuevo
