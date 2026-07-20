@@ -57,6 +57,18 @@ if (isset($_GET['confirm'])) {
             ];
         }
 
+        // 3. Validar stock de todos los productos antes de procesar
+        foreach ($productos_raw as $prod) {
+            $id_producto = intval($prod['id_producto'] ?? 0);
+            $cantidad = intval($prod['cantidad'] ?? 0);
+            if ($id_producto <= 0 || $cantidad <= 0) continue;
+            $pi = $db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [$id_producto]);
+            if (!$pi) throw new Exception("Producto #$id_producto no encontrado");
+            if ((int)$pi['stock_actual'] < $cantidad)
+                throw new Exception("Stock insuficiente para producto (ID:$id_producto). Disponible:{$pi['stock_actual']}, solicitado:$cantidad");
+        }
+
+        // 4. Insertar detalles en lote y descontar stock
         foreach ($productos_raw as $prod) {
             $id_producto = intval($prod['id_producto'] ?? 0);
             $cantidad = intval($prod['cantidad'] ?? 0);
@@ -73,7 +85,7 @@ if (isset($_GET['confirm'])) {
             $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [$cantidad, $id_producto]);
         }
 
-        // 3. Insertar movimiento
+        // 5. Insertar movimiento
         $mov_id = $db->insert('movimientos', [
             'id_referencia'   => $salida_id,
             'tipo_referencia' => 'venta',
@@ -82,7 +94,7 @@ if (isset($_GET['confirm'])) {
             'status'          => 'Activo',
         ]);
 
-        // 4. Insertar detalle de movimiento
+        // 6. Insertar detalle de movimiento
         foreach ($productos_raw as $prod) {
             $id_producto = intval($prod['id_producto'] ?? 0);
             $cantidad = intval($prod['cantidad'] ?? 0);
@@ -104,7 +116,7 @@ if (isset($_GET['confirm'])) {
         exit();
     } catch (Exception $e) {
         $db->rollback();
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR AL REGISTRAR LA VENTA.'];
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => $e->getMessage()];
         unset($_SESSION['preview_data']);
         header("Location: salidas.php");
         exit();
@@ -213,6 +225,11 @@ if (isset($_POST['accion_salida'])) {
                 $db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
             }
 
+            // Validar stock antes de descontar
+            $prod_check = $db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [$id_producto]);
+            if (!$prod_check || (int)$prod_check['stock_actual'] < $cantidad)
+                throw new Exception("STOCK INSUFICIENTE. Disponible: {$prod_check['stock_actual']}, solicitado: $cantidad.");
+
             // Actualizar cabecera
             $db->execute(
                 "UPDATE salidas SET nro_control=?, cliente=?, rif_cliente=?, fecha_salida=?, id_tipo_mov=?, observaciones=? WHERE id_salida=?",
@@ -237,7 +254,7 @@ if (isset($_POST['accion_salida'])) {
             exit();
         } catch (Exception $e) {
             $db->rollback();
-            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR EN LA BASE DE DATOS.'];
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => $e->getMessage()];
             header("Location: salidas.php");
             exit();
         }

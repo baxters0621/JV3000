@@ -229,6 +229,12 @@ if (isset($_GET['eliminar']) && $esAdmin) {
     if (!empty($detalles)) {
         $db->begin();
         try {
+            // Validar stock antes de descontar
+            foreach ($detalles as $det) {
+                $pi = $db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [(int)$det['id_producto']]);
+                if (!$pi || (int)$pi['stock_actual'] < (int)$det['cantidad'])
+                    throw new Exception("STOCK INSUFICIENTE para el producto (ID:{$det['id_producto']}). Se vendió parte del lote, no se puede anular.");
+            }
             foreach ($detalles as $det) {
                 $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
             }
@@ -238,7 +244,7 @@ if (isset($_GET['eliminar']) && $esAdmin) {
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'ENTRADA ANULADA. STOCK RESTAURADO.'];
         } catch (Exception $e) {
             $db->rollback();
-            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR AL ANULAR.'];
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => $e->getMessage()];
         }
     }
     header('Location: compras.php');

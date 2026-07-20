@@ -44,13 +44,18 @@ if (isset($_GET['store'])) {
         exit();
     }
 
-    // Check for expired products
+    // Check for expired and stock availability
     foreach ($productos as $p) {
         $pid = intval($p['id_producto'] ?? 0);
+        $cant = intval($p['cantidad'] ?? 0);
         if ($pid) {
-            $pc = $db->fetchOne("SELECT fecha_vencimiento FROM productos WHERE id_producto = ?", [$pid]);
+            $pc = $db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$pid]);
             if ($pc && $pc['fecha_vencimiento'] && $pc['fecha_vencimiento'] <= date('Y-m-d')) {
                 echo json_encode(['ok'=>false,'error'=>'PRODUCTO VENCIDO. NO SE PUEDE VENDER.']);
+                exit();
+            }
+            if ($pc && (int)$pc['stock_actual'] < $cant) {
+                echo json_encode(['ok'=>false,'error'=>"STOCK INSUFICIENTE. Disponible: {$pc['stock_actual']}, solicitado: $cant."]);
                 exit();
             }
         }
