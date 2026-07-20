@@ -95,13 +95,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
         exit;
     }
     $fecha_compra = $_POST['fecha_compra'] ?? date('Y-m-d');
-    $motivo = $es_proveedor ? '' : trim($_POST['motivo'] ?? '');
-    if (!$es_proveedor && empty($motivo)) {
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'LA DESCRIPCIÓN/MOTIVO ES OBLIGATORIO PARA AJUSTE O DONACIÓN.'];
+    $causa_ajuste = !$es_proveedor ? trim($_POST['causa_ajuste'] ?? '') : '';
+    if (!$es_proveedor && empty($causa_ajuste)) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SELECCIONE UNA CAUSA PARA AJUSTE O DONACIÓN.'];
         header('Location: compras.php');
         exit;
     }
-    $observaciones = $motivo ?: ($_POST['observaciones'] ?? '');
+    $motivo = $es_proveedor ? '' : trim($_POST['motivo'] ?? '');
+    $observaciones = !$es_proveedor ? "Causa: $causa_ajuste" . ($motivo ? " | Motivo: $motivo" : '') : ($_POST['observaciones'] ?? '');
 
     $condiciones_pago = 'Contado';
     $dias_credito = 0;
@@ -208,7 +209,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
                 ]);
             }
 
-            registrarAuditoria('crear', "Entrada registrada ($tipo_entrada, $exitos producto(s))");
+            $det_auditoria = $es_proveedor ? "Entrada registrada ($tipo_entrada, $exitos producto(s))" : "Ajuste (+): Causa: $causa_ajuste, $exitos producto(s)";
+            registrarAuditoria('crear', $det_auditoria);
         }
         $db->commit();
     } catch (Exception $e) {
@@ -241,6 +243,7 @@ if (isset($_GET['eliminar']) && $esAdmin) {
             $db->execute("UPDATE compras SET status = 'Anulada' WHERE id_compra = ?", [$id_compra]);
             $db->execute("UPDATE movimientos SET status = 'Anulado' WHERE id_referencia = ? AND tipo_referencia = 'compra'", [$id_compra]);
             $db->commit();
+            registrarAuditoria('anular', "Compra #$id_compra anulada, " . count($detalles) . " producto(s)");
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'ENTRADA ANULADA. STOCK RESTAURADO.'];
         } catch (Exception $e) {
             $db->rollback();
@@ -260,6 +263,7 @@ $sql_compras = "
            GROUP_CONCAT(DISTINCT p.nombre_producto SEPARATOR ', ') as productos_list,
            SUM(dc.cantidad) as total_cantidad,
            COUNT(dc.id_detalle) as num_productos,
+           MIN(dc.observaciones) as observaciones,
            pr.nombre_empresa as proveedor
     FROM compras c
     LEFT JOIN detalle_compras dc ON c.id_compra = dc.id_compra
@@ -566,6 +570,7 @@ unset($_SESSION['flash_msg']);
                                 <th style="min-width:120px;">Nro. Control</th>
                                 <th>Proveedor</th>
                                 <th>Productos</th>
+                                <th style="width:110px;">Tipo</th>
                                 <th class="text-center" style="width:70px;">Cant</th>
                                 <th style="width:100px;">Total</th>
                                 <th class="text-center">Condiciones</th>
@@ -580,6 +585,17 @@ unset($_SESSION['flash_msg']);
                                     <td style="color:#cbd5e1;font-weight:600;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
                                     <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
                                     <td style="font-size:.75rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?php echo htmlspecialchars($row['productos_list'] ?? ''); ?>"><?php echo htmlspecialchars($row['productos_list'] ?? '-'); ?></td>
+                                    <td><?php
+                                        $te = $row['tipo_entrada'] ?? 'Compra a proveedor';
+                                        $obs = $row['observaciones'] ?? '';
+                                        $causa = '';
+                                        if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $obs, $m)) $causa = trim($m[1]);
+                                        if ($te === 'Compra a proveedor') echo '<span class="badge-jv badge-success" style="font-size:.7rem;"><i class="bi bi-cart-check me-1"></i>Compra</span>';
+                                        else {
+                                            $badge = $te === 'Ajuste' ? 'badge-warning' : 'badge-info';
+                                            echo '<span class="badge-jv ' . $badge . '" style="font-size:.7rem;" title="' . htmlspecialchars($causa) . '"><i class="bi bi-arrow-up-circle me-1"></i>' . htmlspecialchars($te) . ($causa ? ': ' . htmlspecialchars($causa) : '') . '</span>';
+                                        }
+                                    ?></td>
                                     <td class="text-center"><span class="cant-badge">+<?php echo $row['total_cantidad']; ?></span></td>
                                     <td class="fw-bold text-success">$<?php echo number_format($row['total'], 2); ?></td>
                                     <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
@@ -591,7 +607,7 @@ unset($_SESSION['flash_msg']);
                                     </td>
                                 </tr>
                             <?php endforeach; else: ?>
-                                <tr><td colspan="9">
+                                <tr><td colspan="10">
                                     <div class="estado-vacio">
                                         <i class="bi bi-cart-x"></i>
                                         <span>No hay entradas registradas</span>
@@ -649,11 +665,22 @@ unset($_SESSION['flash_msg']);
 
                         <!-- MOTIVO (solo para Ajuste / Donación) -->
                         <div class="comp-motivo-section section-bg" style="display:none;">
-                            <div class="section-label"><i class="bi bi-chat-dots me-1"></i>Motivo</div>
+                            <div class="section-label"><i class="bi bi-chat-dots me-1"></i>Motivo del Ajuste</div>
                             <div class="row g-2">
-                                <div class="col-md-12">
-                                    <label class="small fw-bold text-secondary mb-1">DESCRIPCIÓN / MOTIVO *</label>
-                                    <textarea name="motivo" class="input-jv" rows="2" placeholder="Ej: Ajuste por inventario, Donación recibida..." style="resize:vertical;"></textarea>
+                                <div class="col-md-5">
+                                    <label class="small fw-bold text-secondary mb-1">CAUSA *</label>
+                                    <select name="causa_ajuste" class="input-jv">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Sobrante físico">Sobrante físico</option>
+                                        <option value="Devolución">Devolución</option>
+                                        <option value="Reclasificación">Reclasificación</option>
+                                        <option value="Error de conteo">Error de conteo</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="small fw-bold text-secondary mb-1">DESCRIPCIÓN <span class="fw-normal">(opcional)</span></label>
+                                    <textarea name="motivo" class="input-jv" rows="2" placeholder="Detalle adicional..." style="resize:vertical;"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -977,7 +1004,7 @@ unset($_SESSION['flash_msg']);
             const ctrl = document.querySelector('input[name="nro_control"]').value.trim();
             if (!/^\d{2}-\d{8}$/.test(ctrl)) errores.push('NRO. CONTROL INVÁLIDO (00-00000000)');
         } else {
-            if (!document.querySelector('textarea[name="motivo"]').value.trim()) errores.push('DESCRIPCIÓN/MOTIVO ES OBLIGATORIO');
+            if (!document.querySelector('select[name="causa_ajuste"]').value) errores.push('SELECCIONE UNA CAUSA DE AJUSTE');
         }
         if (productos.length === 0) errores.push('AGREGUE AL MENOS UN PRODUCTO');
         if (errores.length > 0) {

@@ -22,8 +22,18 @@ if (isset($_GET['store'])) {
     $rif_cliente  = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));
     $fecha_salida = $_POST['fecha_salida'] ?? date('Y-m-d');
     $nro_control  = generarControlNumero();
-    $observaciones = trim(($_POST['descripcion_motivo'] ?? '') . ' | ' . ($_POST['observaciones'] ?? ''));
-    $observaciones = trim(preg_replace('/^\s*\|\s*$/', '', $observaciones));
+    $tn_row2 = $db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$id_tipo_mov]);
+    $tipo_nombre2 = $tn_row2['nombre'] ?? '';
+    $n2 = mb_strtoupper(trim($tipo_nombre2));
+    $grupo = $n2 === 'VENTA' ? 'venta' : ($n2 === 'REGALIAS' ? 'regalias' : 'merma');
+    $causa_ajuste = $grupo === 'merma' ? trim($_POST['causa_ajuste'] ?? '') : '';
+    $motivo_merma = trim($_POST['descripcion_motivo'] ?? '');
+    $obs_extra = trim($_POST['observaciones'] ?? '');
+    $partes = [];
+    if ($causa_ajuste) $partes[] = "Causa: $causa_ajuste";
+    if ($motivo_merma) $partes[] = "Motivo: $motivo_merma";
+    if ($obs_extra) $partes[] = $obs_extra;
+    $observaciones = implode(' | ', $partes);
     $id_usuario   = $_SESSION['id_usuario'];
 
     // Parse productos: from JSON string or individual fields
@@ -77,6 +87,8 @@ if (isset($_GET['store'])) {
         'nro_control'        => $nro_control,
         'fecha_salida'       => $fecha_salida,
         'id_tipo_mov'        => $id_tipo_mov,
+        'grupo'              => $grupo,
+        'causa_ajuste'       => $causa_ajuste,
         'observaciones'      => $observaciones,
         'id_usuario'         => $id_usuario,
     ];

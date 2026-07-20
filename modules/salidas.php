@@ -109,7 +109,12 @@ if (isset($_GET['confirm'])) {
         }
 
         $db->commit();
-        registrarAuditoria('crear', 'Venta registrada');
+        $grupo_data = $data['grupo'] ?? 'venta';
+        $causa_data = $data['causa_ajuste'] ?? '';
+        $det_auditoria = $grupo_data === 'merma'
+            ? "Ajuste (-): Causa: $causa_data, " . count($productos_raw) . " producto(s)"
+            : "Venta registrada, " . count($productos_raw) . " producto(s)";
+        registrarAuditoria('crear', $det_auditoria);
         $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'VENTA REGISTRADA EXITOSAMENTE.'];
         unset($_SESSION['preview_data']);
         header("Location: salidas.php#salida-$salida_id");
@@ -164,8 +169,23 @@ if (isset($_POST['accion_salida'])) {
     $rif_cliente = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));
     $cliente = mb_strtoupper(trim($_POST['cliente'] ?? 'VENTA GENERAL'));
     $fecha_salida = $_POST['fecha_salida'] ?? date('Y-m-d');
-    $observaciones = trim(($_POST['descripcion_motivo'] ?? '') . ' | ' . ($_POST['observaciones'] ?? ''));
-    $observaciones = trim(preg_replace('/^\s*\|\s*$/', '', $observaciones));
+    // Validar causa si es ajuste (merma/daño)
+    $causa_ajuste = '';
+    $motivo_merma = '';
+    if ($grupo === 'merma') {
+        $causa_ajuste = trim($_POST['causa_ajuste'] ?? '');
+        if (!$causa_ajuste) {
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SELECCIONE UNA CAUSA DE AJUSTE.'];
+            header("Location: salidas.php"); exit();
+        }
+        $motivo_merma = trim($_POST['descripcion_motivo'] ?? '');
+    }
+    $obs_extra = trim($_POST['observaciones'] ?? '');
+    $partes = [];
+    if ($causa_ajuste) $partes[] = "Causa: $causa_ajuste";
+    if ($motivo_merma) $partes[] = "Motivo: $motivo_merma";
+    if ($obs_extra) $partes[] = $obs_extra;
+    $observaciones = implode(' | ', $partes);
     $id_usuario = $_SESSION['id_usuario'];
 
     if ($rif_cliente !== '' && $rif_cliente !== 'N/A' && !validarRIF($rif_cliente)) {
@@ -199,6 +219,8 @@ if (isset($_POST['accion_salida'])) {
             'nro_control'         => $nro_control,
             'fecha_salida'        => $fecha_salida,
             'id_tipo_mov'         => $id_tipo_mov,
+            'grupo'               => $grupo,
+            'causa_ajuste'        => $causa_ajuste,
             'observaciones'       => $observaciones,
             'id_usuario'          => $id_usuario,
         ];
@@ -248,7 +270,8 @@ if (isset($_POST['accion_salida'])) {
             $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [$cantidad, $id_producto]);
 
             $db->commit();
-            registrarAuditoria('editar', 'Movimiento modificado');
+            $det_edit = $grupo === 'merma' ? "Ajuste (-) editado, Causa: $causa_ajuste" : 'Venta editada';
+            registrarAuditoria('editar', $det_edit);
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'SALIDA ACTUALIZADA CORRECTAMENTE.'];
             header("Location: salidas.php");
             exit();
@@ -275,7 +298,7 @@ if (isset($_GET['eliminar'])) {
             $db->execute("UPDATE salidas SET status = 'Anulada' WHERE id_salida = ?", [$id_salida]);
             $db->execute("UPDATE movimientos SET status = 'Anulado' WHERE id_referencia = ? AND tipo_referencia = 'venta'", [$id_salida]);
             $db->commit();
-            registrarAuditoria('anular', 'Movimiento anulado');
+            registrarAuditoria('anular', "Salida #$id_salida anulada, " . count($detalles) . " producto(s)");
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'SALIDA ANULADA. STOCK RESTAURADO.'];
             header("Location: salidas.php"); exit();
         } catch (Exception $e) {
@@ -465,7 +488,16 @@ unset($_SESSION['flash_msg']);
                                     </td>
                                     <td><?php echo htmlspecialchars(mb_substr($row['productos_list'] ?? '', 0, 60)) . (mb_strlen($row['productos_list'] ?? '') > 60 ? '...' : ''); ?></td>
                                     <td class="text-center"><span class="badge-jv badge-danger">-<?php echo $row['total_cantidad']; ?></span></td>
-                                    <td><?php echo htmlspecialchars($row['tipo_mov_nombre']); ?></td>
+                                    <td><?php
+                                        $tn = $row['tipo_mov_nombre'] ?? '';
+                                        $obs = $row['observaciones'] ?? '';
+                                        $causa = '';
+                                        if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $obs, $m)) $causa = trim($m[1]);
+                                        $g = getGrupoTipo($tn);
+                                        if ($g === 'venta') echo '<span class="badge-jv badge-success" style="font-size:.7rem;"><i class="bi bi-cart me-1"></i>Venta</span>';
+                                        elseif ($g === 'regalias') echo '<span class="badge-jv badge-info" style="font-size:.7rem;"><i class="bi bi-gift me-1"></i>Regalía</span>';
+                                        else echo '<span class="badge-jv badge-warning" style="font-size:.7rem;" title="' . htmlspecialchars($causa) . '"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($tn) . ($causa ? ': ' . htmlspecialchars($causa) : '') . '</span>';
+                                    ?></td>
                                     <td style="color:#e2e8f0;font-weight:600;font-size:.82rem;"><?php echo date('d/m/Y', strtotime($row['fecha_salida'])); ?></td>
                                     <td class="text-center">
                                         <button class="btn-action" onclick="verFactura(<?php echo $row['id_salida']; ?>)" title="Ver Nota">
@@ -577,8 +609,24 @@ unset($_SESSION['flash_msg']);
                         <!-- GRUPO: MERMA (Mermas + Daños) -->
                         <div class="sal-field-group" data-grupo="merma">
                             <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">DESCRIPCIÓN / MOTIVO</label>
-                                <textarea name="descripcion_motivo" id="s_desc_motivo" class="input-jv" rows="2" placeholder="Ej: Producto vencido, dañado durante transporte..."></textarea>
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <label class="small fw-bold text-secondary mb-1">CAUSA *</label>
+                                        <select name="causa_ajuste" id="s_causa" class="input-jv">
+                                            <option value="">Seleccionar...</option>
+                                            <option>Producto vencido</option>
+                                            <option>Dañado/Averiado</option>
+                                            <option>Robo hormiga</option>
+                                            <option>Error de inventario</option>
+                                            <option>Merma operativa</option>
+                                            <option>Otro</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <label class="small fw-bold text-secondary mb-1">MOTIVO <span class="fw-normal">(opcional)</span></label>
+                                        <textarea name="descripcion_motivo" id="s_desc_motivo" class="input-jv" rows="2" placeholder="Detalle adicional..."></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -643,6 +691,7 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_obs').value = '';
             document.getElementById('s_fecha').value = new Date().toISOString().slice(0,10);
             document.getElementById('s_desc_motivo') && (document.getElementById('s_desc_motivo').value = '');
+            document.getElementById('s_causa') && (document.getElementById('s_causa').value = '');
             document.getElementById('s_tipo').value = '';
             document.querySelectorAll('.sal-field-group').forEach(el => el.classList.remove('active'));
             modalS.show();
