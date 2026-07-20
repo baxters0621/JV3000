@@ -752,13 +752,14 @@ unset($_SESSION['flash_msg']);
             var numInput = document.getElementById('s_rif_num');
             var hidden = document.getElementById('s_rif');
             var maxDig = (tipo === 'J') ? 9 : 8;
-            if (nums.length > maxDig) { nums = nums.slice(0, maxDig); numInput.value = nums; }
+            if (nums.length > maxDig) { nums = nums.slice(0, maxDig); }
             if (nums === '') {
-                msg.innerHTML = ''; numInput.style.borderColor = ''; hidden.value = '';
+                msg.innerHTML = ''; numInput.style.borderColor = ''; hidden.value = ''; numInput.value = '';
                 return;
             }
+            var formatted = formatearNumero(nums, tipo);
             var clean = tipo + '-' + nums;
-            var display = tipo + '-' + formatearNumero(nums, tipo);
+            var display = tipo + '-' + formatted;
             var valido = /^[VGPE]-\d{7,8}$/.test(clean) || /^J-\d{8,9}(?:-\d)?$/.test(clean);
             if (valido) {
                 msg.innerHTML = '<span style="color:#22c55e;">✓ Válido</span>';
@@ -767,7 +768,7 @@ unset($_SESSION['flash_msg']);
                 msg.innerHTML = '<span style="color:#ef4444;">Mín. 7 dígitos (persona) u 8 (empresa)</span>';
                 numInput.style.borderColor = '#ef4444';
             }
-            numInput.value = nums;
+            numInput.value = formatted;
             hidden.value = display;
         }
 
