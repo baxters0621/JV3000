@@ -30,61 +30,83 @@ if (isset($_GET['confirm'])) {
         header("Location: salidas.php"); exit();
     }
 
-    $id_tipo_mov = intval($data['id_tipo_mov']);
-    $id_producto = intval($data['id_producto']);
-    $cantidad = intval($data['cantidad']);
-    $precio_venta = floatval($data['precio_venta']);
-
-    $prod_st = $db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$id_producto]);
-
-    if (!$prod_st) {
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRODUCTO NO ENCONTRADO.'];
-        unset($_SESSION['preview_data']);
-        header("Location: salidas.php"); exit();
-    }
-    if ($prod_st['fecha_vencimiento'] && $prod_st['fecha_vencimiento'] <= date('Y-m-d')) {
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRODUCTO VENCIDO. NO SE PUEDE VENDER.'];
-        unset($_SESSION['preview_data']);
-        header("Location: salidas.php"); exit();
-    }
-    if ((int)$prod_st['stock_actual'] < $cantidad) {
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'STOCK INSUFICIENTE.'];
-        unset($_SESSION['preview_data']);
-        header("Location: salidas.php"); exit();
-    }
-
     $db->begin();
     try {
-        $factura_num = generarFacturaNumero();
-        $nro_ctrl = $data['nro_control'] ?? '';
-
-        $inserted_id = $db->insert('salidas', [
-            'nro_factura_manual' => $factura_num,
-            'nro_control'        => $nro_ctrl,
-            'id_producto'        => $id_producto,
-            'cantidad'           => $cantidad,
-            'precio_venta'       => $precio_venta,
-            'cliente'            => $data['cliente'],
-            'rif_cliente'        => $data['rif_cliente'],
+        // 1. Insertar cabecera
+        $salida_id = $db->insert('salidas', [
+            'nro_factura_manual' => $data['nro_factura_manual'] ?? generarFacturaNumero(),
+            'nro_control'        => $data['nro_control'] ?? '',
+            'cliente'            => $data['cliente'] ?? 'VENTA GENERAL',
+            'rif_cliente'        => $data['rif_cliente'] ?? 'N/A',
+            'id_tipo_mov'        => intval($data['id_tipo_mov']),
             'id_usuario'         => $data['id_usuario'],
-            'fecha_salida'       => $data['fecha_salida'],
-            'id_tipo_mov'        => $id_tipo_mov,
-            'observaciones'      => $data['observaciones'],
+            'fecha_salida'       => $data['fecha_salida'] ?? date('Y-m-d H:i:s'),
+            'status'             => 'Activa',
         ]);
 
-        $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [$cantidad, $id_producto]);
+        // 2. Procesar producto(s) desde preview_data
+        $productos_raw = [];
+        if (isset($data['productos_data'])) {
+            $productos_raw = json_decode($data['productos_data'], true) ?: [];
+        } else {
+            $productos_raw[] = [
+                'id_producto' => intval($data['id_producto'] ?? 0),
+                'cantidad'    => intval($data['cantidad'] ?? 0),
+                'precio'      => floatval($data['precio_venta'] ?? 0),
+            ];
+        }
+
+        foreach ($productos_raw as $prod) {
+            $id_producto = intval($prod['id_producto'] ?? 0);
+            $cantidad = intval($prod['cantidad'] ?? 0);
+            $precio_venta = floatval($prod['precio'] ?? 0);
+            if ($id_producto <= 0 || $cantidad <= 0) continue;
+
+            $db->insert('detalle_salidas', [
+                'id_salida'    => $salida_id,
+                'id_producto'  => $id_producto,
+                'cantidad'     => $cantidad,
+                'precio_venta' => $precio_venta,
+            ]);
+
+            $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [$cantidad, $id_producto]);
+        }
+
+        // 3. Insertar movimiento
+        $mov_id = $db->insert('movimientos', [
+            'id_referencia'   => $salida_id,
+            'tipo_referencia' => 'venta',
+            'tipo'            => 'Salida',
+            'id_usuario'      => $data['id_usuario'],
+            'status'          => 'Activo',
+        ]);
+
+        // 4. Insertar detalle de movimiento
+        foreach ($productos_raw as $prod) {
+            $id_producto = intval($prod['id_producto'] ?? 0);
+            $cantidad = intval($prod['cantidad'] ?? 0);
+            $precio_venta = floatval($prod['precio'] ?? 0);
+            if ($id_producto <= 0 || $cantidad <= 0) continue;
+            $db->insert('detalle_movimientos', [
+                'id_movimiento'  => $mov_id,
+                'id_producto'    => $id_producto,
+                'cantidad'       => $cantidad,
+                'precio_unitario'=> $precio_venta,
+            ]);
+        }
 
         $db->commit();
-        registrarAuditoria('crear', 'Movimiento registrado');
-        $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'MOVIMIENTO REGISTRADO CON ÉXITO.'];
+        registrarAuditoria('crear', 'Venta registrada');
+        $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'VENTA REGISTRADA EXITOSAMENTE.'];
         unset($_SESSION['preview_data']);
-        header("Location: salidas.php#salida-$inserted_id");
+        header("Location: salidas.php#salida-$salida_id");
         exit();
     } catch (Exception $e) {
         $db->rollback();
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR EN LA BASE DE DATOS.'];
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR AL REGISTRAR LA VENTA.'];
         unset($_SESSION['preview_data']);
-        header("Location: salidas.php"); exit();
+        header("Location: salidas.php");
+        exit();
     }
 }
 
@@ -173,21 +195,40 @@ if (isset($_POST['accion_salida'])) {
 
     if ($accion === 'editar') {
         $id_salida = intval($_POST['id_salida'] ?? 0);
-        $ant = $db->fetchOne("SELECT cantidad, id_producto, nro_factura_manual FROM salidas WHERE id_salida = ?", [$id_salida]);
+        $salida = $db->fetchOne("SELECT id_salida, nro_factura_manual FROM salidas WHERE id_salida = ?", [$id_salida]);
 
-        if (!$ant) {
+        if (!$salida) {
             $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'REGISTRO NO ENCONTRADO.'];
             header("Location: salidas.php"); exit();
         }
 
+        // Obtener detalles anteriores para restaurar stock
+        $ant_detalles = $db->fetchAll("SELECT id_producto, cantidad FROM detalle_salidas WHERE id_salida = ?", [$id_salida]);
+
         $db->begin();
         try {
+            // Restaurar stock de productos anteriores
+            foreach ($ant_detalles as $det) {
+                $db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
+            }
+
+            // Actualizar cabecera
             $db->execute(
-                "UPDATE salidas SET nro_factura_manual=?, nro_control=?, id_producto=?, cantidad=?, precio_venta=?, cliente=?, rif_cliente=?, fecha_salida=?, id_tipo_mov=?, observaciones=? WHERE id_salida=?",
-                [$ant['nro_factura_manual'], $nro_control, $id_producto, $cantidad, $precio_venta, $cliente, $rif_cliente, $fecha_salida, $id_tipo_mov, $observaciones, $id_salida]
+                "UPDATE salidas SET nro_control=?, cliente=?, rif_cliente=?, fecha_salida=?, id_tipo_mov=? WHERE id_salida=?",
+                [$nro_control, $cliente, $rif_cliente, $fecha_salida, $id_tipo_mov, $id_salida]
             );
-            $db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [(int)$ant['cantidad'], (int)$ant['id_producto']]);
+
+            // Eliminar detalles viejos e insertar el nuevo
+            $db->execute("DELETE FROM detalle_salidas WHERE id_salida = ?", [$id_salida]);
+            $db->insert('detalle_salidas', [
+                'id_salida'    => $id_salida,
+                'id_producto'  => $id_producto,
+                'cantidad'     => $cantidad,
+                'precio_venta' => $precio_venta,
+            ]);
+
             $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [$cantidad, $id_producto]);
+
             $db->commit();
             registrarAuditoria('editar', 'Movimiento modificado');
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'SALIDA ACTUALIZADA CORRECTAMENTE.'];
@@ -205,13 +246,16 @@ if (isset($_POST['accion_salida'])) {
 // Eliminar / anular salida
 if (isset($_GET['eliminar'])) {
     Security::soloAdmin();
-    $id_del = intval($_GET['eliminar']);
-    $inf = $db->fetchOne("SELECT cantidad, id_producto FROM salidas WHERE id_salida = ?", [$id_del]);
-    if ($inf) {
+    $id_salida = intval($_GET['eliminar']);
+    $detalles = $db->fetchAll("SELECT id_producto, cantidad FROM detalle_salidas WHERE id_salida = ?", [$id_salida]);
+    if (!empty($detalles)) {
         $db->begin();
         try {
-            $db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [(int)$inf['cantidad'], (int)$inf['id_producto']]);
-            $db->execute("UPDATE salidas SET status = 'Anulada' WHERE id_salida = ?", [$id_del]);
+            foreach ($detalles as $det) {
+                $db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
+            }
+            $db->execute("UPDATE salidas SET status = 'Anulada' WHERE id_salida = ?", [$id_salida]);
+            $db->execute("UPDATE movimientos SET status = 'Anulado' WHERE id_referencia = ? AND tipo_referencia = 'venta'", [$id_salida]);
             $db->commit();
             registrarAuditoria('anular', 'Movimiento anulado');
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'SALIDA ANULADA. STOCK RESTAURADO.'];
@@ -227,7 +271,24 @@ if (isset($_GET['eliminar'])) {
 // ==========================================
 // OBTENER DATOS
 // ==========================================
-$salidas = $db->fetchAll("SELECT s.*, p.nombre_producto, p.sku FROM salidas s INNER JOIN productos p ON s.id_producto = p.id_producto WHERE s.status = 'Activa' ORDER BY s.id_salida DESC");
+$sql = "
+    SELECT s.*,
+           GROUP_CONCAT(p.nombre_producto SEPARATOR ', ') as productos_list,
+           SUM(ds.cantidad) as total_cantidad,
+           COUNT(ds.id_detalle) as num_productos,
+           tm.nombre as tipo_mov_nombre,
+           (SELECT ds2.id_producto FROM detalle_salidas ds2 WHERE ds2.id_salida = s.id_salida ORDER BY ds2.id_detalle LIMIT 1) as first_id_producto,
+           (SELECT ds2.cantidad FROM detalle_salidas ds2 WHERE ds2.id_salida = s.id_salida ORDER BY ds2.id_detalle LIMIT 1) as first_cantidad,
+           (SELECT ds2.precio_venta FROM detalle_salidas ds2 WHERE ds2.id_salida = s.id_salida ORDER BY ds2.id_detalle LIMIT 1) as first_precio_venta
+    FROM salidas s
+    LEFT JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
+    LEFT JOIN productos p ON ds.id_producto = p.id_producto
+    LEFT JOIN tipos_movimientos tm ON s.id_tipo_mov = tm.id_tipo_mov
+    WHERE s.status = 'Activa'
+    GROUP BY s.id_salida
+    ORDER BY s.fecha_salida DESC, s.id_salida DESC
+";
+$salidas = $db->fetchAll($sql);
 $productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta, fecha_vencimiento FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
 $tipos_mov = $db->fetchAll("SELECT id_tipo_mov, nombre FROM tipos_movimientos WHERE tipo_movimiento = 'Salida' ORDER BY id_tipo_mov");
 $clientes_previos = $db->fetchAll("SELECT DISTINCT cliente, rif_cliente FROM salidas WHERE cliente IS NOT NULL AND cliente != 'Venta General' AND status = 'Activa' ORDER BY cliente ASC");
@@ -364,34 +425,29 @@ unset($_SESSION['flash_msg']);
                 <table class="table-jv mb-0">
                     <thead>
                         <tr>
-                            <th>CÓDIGO</th>
-                            <th>PRODUCTO</th>
-                            <th>CLIENTE / DESTINO</th>
-                            <th class="text-center">CANT.</th>
-                            <th>P.UNIT.</th>
-                            <th>TOTAL</th>
-                            <th>FECHA</th>
-                            <th class="text-center">ACCIONES</th>
+                            <th>Factura</th>
+                            <th>Nro. Control</th>
+                            <th>Cliente</th>
+                            <th>Productos</th>
+                            <th class="text-center">Cant</th>
+                            <th>Tipo</th>
+                            <th class="text-center">Fecha</th>
+                            <th class="text-center"></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (count($salidas) > 0): ?>
-                            <?php foreach ($salidas as $row):
-                                $total_fila = $row['cantidad'] * $row['precio_venta'];
-                            ?>
+                            <?php foreach ($salidas as $row): ?>
                                 <tr>
                                     <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura_manual'] ?: '#' . $row['id_salida']); ?></span></td>
-                                    <td>
-                                        <div class="fw-bold"><?php echo htmlspecialchars($row['nombre_producto']); ?></div>
-                                        <div class="text-jv-cyan small fw-bold"><?php echo htmlspecialchars($row['sku']); ?></div>
-                                    </td>
+                                    <td><?php echo htmlspecialchars($row['nro_control']); ?></td>
                                     <td class="text-uppercase">
                                         <div class="fw-bold"><?php echo htmlspecialchars($row['cliente'] ?? 'Venta General'); ?></div>
                                         <div class="text-secondary small"><?php echo htmlspecialchars($row['rif_cliente'] ?? 'S/RIF'); ?></div>
                                     </td>
-                                    <td class="text-center"><span class="badge-jv badge-danger">-<?php echo $row['cantidad']; ?></span></td>
-                                    <td class="fw-bold">$<?php echo number_format($row['precio_venta'], 2); ?></td>
-                                    <td class="fw-bold text-jv-cyan">$<?php echo number_format($total_fila, 2); ?></td>
+                                    <td><?php echo htmlspecialchars(mb_substr($row['productos_list'] ?? '', 0, 60)) . (mb_strlen($row['productos_list'] ?? '') > 60 ? '...' : ''); ?></td>
+                                    <td class="text-center"><span class="badge-jv badge-danger">-<?php echo $row['total_cantidad']; ?></span></td>
+                                    <td><?php echo htmlspecialchars($row['tipo_mov_nombre']); ?></td>
                                     <td style="color:#e2e8f0;font-weight:600;font-size:.82rem;"><?php echo date('d/m/Y', strtotime($row['fecha_salida'])); ?></td>
                                     <td class="text-center">
                                         <button class="btn-action" onclick="verFactura(<?php echo $row['id_salida']; ?>)" title="Ver Nota">
@@ -579,15 +635,14 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_id_edit').value = data.id_salida;
             document.getElementById('modalTitle').innerText = 'EDITAR SALIDA';
             document.getElementById('s_fecha').value = data.fecha_salida;
-            document.getElementById('s_prod').value = data.id_producto;
+            document.getElementById('s_prod').value = data.first_id_producto;
             document.getElementById('s_cliente').value = data.cliente;
             document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = data.cliente);
             document.getElementById('s_rif').value = data.rif_cliente;
             validarRIFInput(document.getElementById('s_rif'));
-            document.getElementById('s_cant').value = data.cantidad;
-            var pv = document.getElementById('s_precio'); pv.value = parseFloat(data.precio_venta).toFixed(2); formatearPrecio(pv);
+            document.getElementById('s_cant').value = data.first_cantidad;
+            var pv = document.getElementById('s_precio'); pv.value = parseFloat(data.first_precio_venta).toFixed(2); formatearPrecio(pv);
             document.getElementById('s_tipo').value = data.id_tipo_mov;
-            // nro_control se genera automáticamente al registrar
             document.getElementById('s_obs').value = data.observaciones;
             toggleCampos();
             modalS.show();

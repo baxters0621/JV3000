@@ -175,14 +175,8 @@ CREATE TABLE `compras` (
   `id_compra` int(11) NOT NULL AUTO_INCREMENT,
   `nro_factura` varchar(50) NOT NULL,
   `id_proveedor` int(11) DEFAULT NULL,
-  `id_producto` int(11) NOT NULL,
-  `cantidad` int(11) NOT NULL,
-  `precio_costo` decimal(10,2) NOT NULL,
-  `fecha_vencimiento` date DEFAULT NULL,
-  `tipo_entrada` varchar(50) DEFAULT 'Compra a proveedor',
   `id_usuario` int(11) NOT NULL,
   `fecha_compra` timestamp NOT NULL DEFAULT current_timestamp(),
-  `observaciones` text DEFAULT NULL,
   `nro_control` varchar(20) DEFAULT NULL,
   `condiciones_pago` enum('Contado','Credito') DEFAULT 'Contado',
   `dias_plazo` int(11) DEFAULT 0,
@@ -205,26 +199,84 @@ CREATE TABLE `salidas` (
   `id_salida` int(11) NOT NULL AUTO_INCREMENT,
   `nro_factura_manual` varchar(20) DEFAULT NULL,
   `nro_control` varchar(20) DEFAULT NULL,
-  `id_producto` int(11) NOT NULL,
-  `cantidad` int(11) NOT NULL,
-  `precio_venta` decimal(10,2) NOT NULL,
   `cliente` varchar(150) DEFAULT 'Venta General',
   `rif_cliente` varchar(20) DEFAULT NULL,
   `id_tipo_mov` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
   `fecha_salida` timestamp NOT NULL DEFAULT current_timestamp(),
-  `observaciones` text DEFAULT NULL,
   `status` enum('Activa','Anulada') NOT NULL DEFAULT 'Activa',
   PRIMARY KEY (`id_salida`),
-  KEY `fk_sal_prod` (`id_producto`),
   KEY `fk_sal_tipo` (`id_tipo_mov`),
   KEY `fk_sal_user` (`id_usuario`),
-  CONSTRAINT `fk_sal_prod` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`),
   CONSTRAINT `fk_sal_tipo` FOREIGN KEY (`id_tipo_mov`) REFERENCES `tipos_movimientos` (`id_tipo_mov`),
   CONSTRAINT `fk_sal_user` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Las salidas se registran desde el módulo de Salidas
+
+-- ===========================================
+-- TABLAS DETALLE (RELACIÓN 1:N)
+-- ===========================================
+
+CREATE TABLE `detalle_compras` (
+  `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
+  `id_compra` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio_costo` decimal(10,2) NOT NULL,
+  `fecha_vencimiento` date DEFAULT NULL,
+  `observaciones` text DEFAULT NULL,
+  PRIMARY KEY (`id_detalle`),
+  KEY `fk_detcomp_compra` (`id_compra`),
+  KEY `fk_detcomp_producto` (`id_producto`),
+  CONSTRAINT `fk_detcomp_compra` FOREIGN KEY (`id_compra`) REFERENCES `compras` (`id_compra`) ON DELETE CASCADE,
+  CONSTRAINT `fk_detcomp_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `detalle_salidas` (
+  `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
+  `id_salida` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio_venta` decimal(10,2) NOT NULL,
+  `observaciones` text DEFAULT NULL,
+  PRIMARY KEY (`id_detalle`),
+  KEY `fk_detsal_salida` (`id_salida`),
+  KEY `fk_detsal_producto` (`id_producto`),
+  CONSTRAINT `fk_detsal_salida` FOREIGN KEY (`id_salida`) REFERENCES `salidas` (`id_salida`) ON DELETE CASCADE,
+  CONSTRAINT `fk_detsal_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ===========================================
+-- MOVIMIENTOS DE INVENTARIO
+-- ===========================================
+
+CREATE TABLE `movimientos` (
+  `id_movimiento` int(11) NOT NULL AUTO_INCREMENT,
+  `id_referencia` int(11) NOT NULL,
+  `tipo_referencia` enum('compra','venta') NOT NULL,
+  `tipo` enum('Entrada','Salida') NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `fecha_movimiento` timestamp NOT NULL DEFAULT current_timestamp(),
+  `status` enum('Activo','Anulado') NOT NULL DEFAULT 'Activo',
+  PRIMARY KEY (`id_movimiento`),
+  KEY `idx_ref` (`tipo_referencia`,`id_referencia`),
+  KEY `fk_mov_usuario` (`id_usuario`),
+  CONSTRAINT `fk_mov_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `detalle_movimientos` (
+  `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
+  `id_movimiento` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio_unitario` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id_detalle`),
+  KEY `fk_detmov_movimiento` (`id_movimiento`),
+  KEY `fk_detmov_producto` (`id_producto`),
+  CONSTRAINT `fk_detmov_movimiento` FOREIGN KEY (`id_movimiento`) REFERENCES `movimientos` (`id_movimiento`) ON DELETE CASCADE,
+  CONSTRAINT `fk_detmov_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ===========================================
 -- INDICES ADICIONALES PARA RENDIMIENTO
@@ -234,10 +286,9 @@ ALTER TABLE `productos` ADD INDEX `idx_prod_status` (`status`);
 
 ALTER TABLE `compras` ADD INDEX `idx_comp_status` (`status`);
 ALTER TABLE `compras` ADD INDEX `idx_comp_fecha` (`fecha_compra`);
-ALTER TABLE `compras` ADD INDEX `idx_comp_producto` (`id_producto`);
 
 ALTER TABLE `salidas` ADD INDEX `idx_sal_status` (`status`);
 ALTER TABLE `salidas` ADD INDEX `idx_sal_fecha` (`fecha_salida`);
 ALTER TABLE `salidas` ADD INDEX `idx_sal_fecha_status_tipo` (`fecha_salida`, `status`, `id_tipo_mov`);
 
--- === FIN VERSION 2.0 ===
+-- === FIN VERSION 3.0 ===

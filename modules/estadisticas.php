@@ -13,11 +13,11 @@ if ($rol_est !== 'Administrador' && $rol_est !== 'Operador de Ventas') {
 // ==========================================
 // OBTENER KPI
 // ==========================================
-$ventas_7d = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND id_tipo_mov = 1 AND status = 'Activa'")['total'];
+$ventas_7d = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa'")['total'];
 
-$compras_7d = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_costo), 0) as total FROM compras WHERE fecha_compra >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND status = 'Activa'")['total'];
+$compras_7d = $db->fetchOne("SELECT COALESCE(SUM(dc.cantidad * dc.precio_costo), 0) as total FROM compras c JOIN detalle_compras dc ON c.id_compra = dc.id_compra WHERE c.fecha_compra >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND c.status = 'Activa'")['total'];
 
-$margen_7d = $db->fetchOne("SELECT COALESCE(SUM(s.cantidad * (s.precio_venta - p.precio_costo)), 0) as margen FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa'")['margen'];
+$margen_7d = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * (ds.precio_venta - p.precio_costo)), 0) as margen FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa'")['margen'];
 
 $transacciones_7d = $db->fetchOne("SELECT COUNT(DISTINCT nro_factura_manual) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND nro_factura_manual IS NOT NULL AND id_tipo_mov = 1 AND status = 'Activa'")['total'];
 
@@ -31,8 +31,8 @@ $fechas = [];
 $ventas_data = [];
 $compras_data = [];
 
-$ventas_7d_raw = $db->fetchAll("SELECT DATE(fecha_salida) as fecha, COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND id_tipo_mov = 1 AND status = 'Activa' GROUP BY DATE(fecha_salida)");
-$compras_7d_raw = $db->fetchAll("SELECT DATE(fecha_compra) as fecha, COALESCE(SUM(cantidad * precio_costo), 0) as total FROM compras WHERE fecha_compra >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND status = 'Activa' GROUP BY DATE(fecha_compra)");
+$ventas_7d_raw = $db->fetchAll("SELECT DATE(s.fecha_salida) as fecha, COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY DATE(s.fecha_salida)");
+$compras_7d_raw = $db->fetchAll("SELECT DATE(c.fecha_compra) as fecha, COALESCE(SUM(dc.cantidad * dc.precio_costo), 0) as total FROM compras c JOIN detalle_compras dc ON c.id_compra = dc.id_compra WHERE c.fecha_compra >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND c.status = 'Activa' GROUP BY DATE(c.fecha_compra)");
 
 $ventas_idx = [];
 foreach ($ventas_7d_raw as $r) { $ventas_idx[$r['fecha']] = $r['total']; }
@@ -47,12 +47,12 @@ for ($i = 6; $i >= 0; $i--) {
 }
 
 // Costo de venta (7 días)
-$costo_vendido_7d = $db->fetchOne("SELECT COALESCE(SUM(s.cantidad * p.precio_costo), 0) as total FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa'")['total'];
+$costo_vendido_7d = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * p.precio_costo), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa'")['total'];
 
 $porc_margen = ($ventas_7d > 0) ? round(($margen_7d / $ventas_7d) * 100, 1) : 0;
 
 // Top 5 productos por ganancia (7 días)
-$top_ganancia = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, p.sku, SUM(s.cantidad) as unidades, SUM(s.cantidad * s.precio_venta) as ingresos, SUM(s.cantidad * p.precio_costo) as costo, SUM(s.cantidad * (s.precio_venta - p.precio_costo)) as ganancia FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY p.id_producto ORDER BY ganancia DESC LIMIT 5");
+$top_ganancia = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, p.sku, SUM(ds.cantidad) as unidades, SUM(ds.cantidad * ds.precio_venta) as ingresos, SUM(ds.cantidad * p.precio_costo) as costo, SUM(ds.cantidad * (ds.precio_venta - p.precio_costo)) as ganancia FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY p.id_producto ORDER BY ganancia DESC LIMIT 5");
 
 // Top 5 más vendidos (30 días)
 $top_prod_nombres = [];
@@ -61,7 +61,7 @@ $top_prod_colores = [];
 
 $paleta = ['#38bdf8','#818cf8','#c084fc','#fb923c','#4ade80','#f472b6','#34d399','#fbbf24','#a78bfa','#fb7185'];
 
-$res_top = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, COALESCE(SUM(s.cantidad), 0) as total FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.id_producto ORDER BY total DESC LIMIT 5");
+$res_top = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, COALESCE(SUM(ds.cantidad), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY total DESC LIMIT 5");
 foreach ($res_top as $row) {
     $top_prod_nombres[] = $row['nombre_producto'];
     $top_prod_cant[] = (int)$row['total'];

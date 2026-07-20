@@ -21,7 +21,7 @@ if (isset($_GET['ajax_dashboard'])) {
     header('Content-Type: application/json');
     $datos = [];
 
-    $vd = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE DATE(fecha_salida) = CURRENT_DATE AND id_tipo_mov = 1 AND status = 'Activa'");
+    $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE DATE(s.fecha_salida) = CURRENT_DATE AND s.id_tipo_mov = 1 AND s.status = 'Activa'");
     $datos['ventas_dia'] = number_format($vd['total'], 2);
 
     $vi = $db->fetchOne("SELECT COALESCE(SUM(stock_actual * precio_costo), 0) as valor FROM productos WHERE status = 'Activo'");
@@ -30,14 +30,14 @@ if (isset($_GET['ajax_dashboard'])) {
     $pc = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE stock_actual <= stock_minimo AND status = 'Activo'");
     $datos['productos_criticos'] = (int)$pc['total'];
 
-    $g1 = $db->fetchAll("SELECT DATE(fecha_salida) as fecha, SUM(cantidad * precio_venta) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND id_tipo_mov = 1 AND status = 'Activa' GROUP BY DATE(fecha_salida) ORDER BY fecha");
+    $g1 = $db->fetchAll("SELECT DATE(s.fecha_salida) as fecha, SUM(ds.cantidad * ds.precio_venta) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY DATE(s.fecha_salida) ORDER BY fecha");
     $datos['grafico_ventas'] = array_map(fn($r) => ['fecha' => $r['fecha'], 'total' => (float)$r['total']], $g1);
 
-    $g2 = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, SUM(s.cantidad) as cantidad FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY p.id_producto ORDER BY cantidad DESC LIMIT 5");
+    $g2 = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, SUM(ds.cantidad) as cantidad FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY cantidad DESC LIMIT 5");
     $paleta_idx = ['#38bdf8','#22c55e','#f59e0b','#ef4444','#a855f7','#f472b6','#34d399','#fbbf24','#a78bfa','#fb7185'];
     $datos['grafico_productos'] = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'cantidad' => (int)$r['cantidad'], 'color' => $paleta_idx[$r['id_producto'] % count($paleta_idx)]], $g2);
 
-    $fac = $db->fetchAll("SELECT cliente, MAX(fecha_salida) as fecha_salida, SUM(cantidad * precio_venta) as total, nro_factura_manual FROM salidas WHERE id_tipo_mov = 1 AND status = 'Activa' GROUP BY nro_factura_manual ORDER BY MAX(fecha_salida) DESC LIMIT 5");
+    $fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
     $datos['ultimas_facturas'] = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => number_format($r['total'], 2)], $fac);
 
     // Productos próximos a vencer (≤15 días) y expirados
@@ -70,7 +70,7 @@ if (isset($_GET['ajax_dashboard'])) {
 // ==========================================
 // CONSULTAS INICIALES DEL DASHBOARD
 // ==========================================
-$vd = $db->fetchOne("SELECT COALESCE(SUM(cantidad * precio_venta), 0) as total FROM salidas WHERE DATE(fecha_salida) = CURRENT_DATE AND id_tipo_mov = 1 AND status = 'Activa'");
+$vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE DATE(s.fecha_salida) = CURRENT_DATE AND s.id_tipo_mov = 1 AND s.status = 'Activa'");
 $ventas_dia = $vd['total'];
 
 $vi = $db->fetchOne("SELECT COALESCE(SUM(stock_actual * precio_costo), 0) as valor FROM productos WHERE status = 'Activo'");
@@ -79,14 +79,14 @@ $valor_inventario = $vi['valor'];
 $pc = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE stock_actual <= stock_minimo AND status = 'Activo'");
 $productos_criticos = (int)$pc['total'];
 
-$gv = $db->fetchAll("SELECT DATE(fecha_salida) as fecha, SUM(cantidad * precio_venta) as total FROM salidas WHERE fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND id_tipo_mov = 1 AND status = 'Activa' GROUP BY DATE(fecha_salida) ORDER BY fecha");
+$gv = $db->fetchAll("SELECT DATE(s.fecha_salida) as fecha, SUM(ds.cantidad * ds.precio_venta) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY DATE(s.fecha_salida) ORDER BY fecha");
 $grafico_ventas = array_map(fn($r) => ['fecha' => $r['fecha'], 'total' => (float)$r['total']], $gv);
 
-$gp = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, SUM(s.cantidad) as cantidad FROM salidas s JOIN productos p ON s.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY p.id_producto ORDER BY cantidad DESC LIMIT 5");
+$gp = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, SUM(ds.cantidad) as cantidad FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY cantidad DESC LIMIT 5");
 $paleta_idx = ['#38bdf8','#22c55e','#f59e0b','#ef4444','#a855f7','#f472b6','#34d399','#fbbf24','#a78bfa','#fb7185'];
 $grafico_productos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'cantidad' => (int)$r['cantidad'], 'color' => $paleta_idx[$r['id_producto'] % count($paleta_idx)]], $gp);
 
-$fac = $db->fetchAll("SELECT cliente, MAX(fecha_salida) as fecha_salida, SUM(cantidad * precio_venta) as total, nro_factura_manual FROM salidas WHERE id_tipo_mov = 1 AND status = 'Activa' GROUP BY nro_factura_manual ORDER BY MAX(fecha_salida) DESC LIMIT 5");
+$fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
 $ultimas_facturas = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => number_format($r['total'], 2)], $fac);
 
 $crit = $db->fetchAll("SELECT nombre_producto, stock_actual, stock_minimo FROM productos WHERE (stock_actual <= stock_minimo OR stock_actual = 0) AND status = 'Activo' ORDER BY stock_actual ASC LIMIT 5");

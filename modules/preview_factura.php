@@ -16,10 +16,8 @@ $iva_pct = getConfig('iva_porcentaje', '16');
 if (isset($_GET['store'])) {
     header('Content-Type: application/json');
 
-    $id_producto  = intval($_POST['id_producto'] ?? 0);
-    $cantidad     = intval($_POST['cantidad'] ?? 0);
+    $productos_data = $_POST['productos_data'] ?? '';
     $id_tipo_mov  = intval($_POST['id_tipo_mov'] ?? 0);
-    $precio_venta = floatval($_POST['precio_venta'] ?? 0);
     $cliente      = mb_strtoupper(trim($_POST['cliente'] ?? 'VENTA GENERAL'));
     $rif_cliente  = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));
     $fecha_salida = $_POST['fecha_salida'] ?? date('Y-m-d');
@@ -28,27 +26,46 @@ if (isset($_GET['store'])) {
     $observaciones = trim(preg_replace('/^\s*\|\s*$/', '', $observaciones));
     $id_usuario   = $_SESSION['id_usuario'];
 
-    $tn_row = $db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$id_tipo_mov]);
-    $tipo_nombre = $tn_row['nombre'] ?? '';
-    if (mb_strtoupper(trim($tipo_nombre)) === 'REGALIAS') {
-        $precio_venta = 0;
+    // Parse productos: from JSON string or individual fields
+    $productos = [];
+    if (!empty($productos_data)) {
+        $parsed = json_decode($productos_data, true);
+        if (is_array($parsed)) $productos = $parsed;
+    } else {
+        $productos[] = [
+            'id_producto' => intval($_POST['id_producto'] ?? 0),
+            'cantidad'    => intval($_POST['cantidad'] ?? 0),
+            'precio'      => floatval($_POST['precio_venta'] ?? 0),
+        ];
     }
 
-    if (!$id_producto || $cantidad <= 0 || !$id_tipo_mov) {
+    if (empty($productos) || !$id_tipo_mov) {
         echo json_encode(['ok'=>false,'error'=>'DATOS INCOMPLETOS.']);
         exit();
     }
 
-    $prod_check = $db->fetchOne("SELECT fecha_vencimiento FROM productos WHERE id_producto = ?", [$id_producto]);
-    if ($prod_check && $prod_check['fecha_vencimiento'] && $prod_check['fecha_vencimiento'] <= date('Y-m-d')) {
-        echo json_encode(['ok'=>false,'error'=>'PRODUCTO VENCIDO. NO SE PUEDE VENDER.']);
-        exit();
+    // Check for expired products
+    foreach ($productos as $p) {
+        $pid = intval($p['id_producto'] ?? 0);
+        if ($pid) {
+            $pc = $db->fetchOne("SELECT fecha_vencimiento FROM productos WHERE id_producto = ?", [$pid]);
+            if ($pc && $pc['fecha_vencimiento'] && $pc['fecha_vencimiento'] <= date('Y-m-d')) {
+                echo json_encode(['ok'=>false,'error'=>'PRODUCTO VENCIDO. NO SE PUEDE VENDER.']);
+                exit();
+            }
+        }
+    }
+
+    // Handle REGALIAS (force price to 0 for all products)
+    $tn_row = $db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$id_tipo_mov]);
+    $tipo_nombre = $tn_row['nombre'] ?? '';
+    if (mb_strtoupper(trim($tipo_nombre)) === 'REGALIAS') {
+        foreach ($productos as &$p) $p['precio'] = 0;
+        unset($p);
     }
 
     $_SESSION['preview_data'] = [
-        'id_producto'        => $id_producto,
-        'cantidad'           => $cantidad,
-        'precio_venta'       => $precio_venta,
+        'productos_data'     => json_encode($productos),
         'cliente'            => $cliente,
         'rif_cliente'        => $rif_cliente ?: 'N/A',
         'nro_factura_manual' => 'PENDIENTE',
@@ -67,27 +84,53 @@ if (isset($_GET['store'])) {
 // MODO REIMPRESIÓN (DESDE BD)
 // ==========================================
 $data = null;
+$detalles = [];
 
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
     $data = $db->fetchOne("
-        SELECT s.*, p.nombre_producto, p.sku, p.precio_venta as p_precio, tm.nombre as tipo_nombre
+        SELECT s.*, tm.nombre as tipo_nombre
         FROM salidas s
-        JOIN productos p ON s.id_producto = p.id_producto
         LEFT JOIN tipos_movimientos tm ON s.id_tipo_mov = tm.id_tipo_mov
         WHERE s.id_salida = ?
     ", [$id]);
     if (!$data) { echo "<h2>NOTA DE ENTREGA NO ENCONTRADA</h2>"; exit(); }
+
+    $detalles = $db->fetchAll("
+        SELECT ds.*, p.nombre_producto, p.sku, p.fecha_vencimiento
+        FROM detalle_salidas ds
+        JOIN productos p ON ds.id_producto = p.id_producto
+        WHERE ds.id_salida = ?
+    ", [$id]);
 } else {
     $data = $_SESSION['preview_data'] ?? null;
     if (!$data) { echo "<h2>NO HAY DATOS DE PREVIEW</h2>"; exit(); }
 
-    $prod = $db->fetchOne("SELECT nombre_producto, sku, fecha_vencimiento FROM productos WHERE id_producto = ?", [(int)$data['id_producto']]);
-    if ($prod) {
-        $data['nombre_producto'] = $prod['nombre_producto'];
-        $data['sku'] = $prod['sku'];
-        $data['fecha_vencimiento'] = $prod['fecha_vencimiento'];
+    $productos_raw = [];
+    if (isset($data['productos_data'])) {
+        $productos_raw = json_decode($data['productos_data'], true) ?: [];
+    } else {
+        // Fallback for old single-product preview
+        $productos_raw[] = [
+            'id_producto' => intval($data['id_producto'] ?? 0),
+            'cantidad'    => intval($data['cantidad'] ?? 0),
+            'precio'      => floatval($data['precio_venta'] ?? 0),
+        ];
     }
+
+    foreach ($productos_raw as $p) {
+        $pid = intval($p['id_producto'] ?? 0);
+        $prod = $db->fetchOne("SELECT nombre_producto, sku, fecha_vencimiento FROM productos WHERE id_producto = ?", [$pid]);
+        $detalles[] = [
+            'id_producto'     => $pid,
+            'cantidad'        => intval($p['cantidad'] ?? 0),
+            'precio_venta'    => floatval($p['precio'] ?? 0),
+            'nombre_producto' => $prod['nombre_producto'] ?? '—',
+            'sku'             => $prod['sku'] ?? '—',
+            'fecha_vencimiento' => $prod['fecha_vencimiento'] ?? null,
+        ];
+    }
+
     $tn_row = $db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [(int)$data['id_tipo_mov']]);
     if ($tn_row) {
         $data['tipo_nombre'] = $tn_row['nombre'];
@@ -95,27 +138,31 @@ if (isset($_GET['id'])) {
 }
 
 // ==========================================
-// ALERTA DE VENCIMIENTO
+// ALERTA DE VENCIMIENTO (por cada producto)
 // ==========================================
-$alerta_venc = '';
-$venc_fecha = $data['fecha_vencimiento'] ?? null;
-if ($venc_fecha && $venc_fecha <= date('Y-m-d')) {
-    $alerta_venc = 'vencido';
-} elseif ($venc_fecha && $venc_fecha <= date('Y-m-d', strtotime('+7 days'))) {
-    $alerta_venc = 'proximo';
+$alertas_venc = [];
+foreach ($detalles as $det) {
+    $vf = $det['fecha_vencimiento'] ?? null;
+    if ($vf && $vf <= date('Y-m-d')) {
+        $alertas_venc[] = ['tipo' => 'vencido', 'producto' => $det['nombre_producto'], 'fecha' => $vf];
+    } elseif ($vf && $vf <= date('Y-m-d', strtotime('+7 days'))) {
+        $alertas_venc[] = ['tipo' => 'proximo', 'producto' => $det['nombre_producto'], 'fecha' => $vf];
+    }
 }
 
 // ==========================================
 // LÓGICA DE DISEÑO
 // ==========================================
-// Determinar tipo de documento
 $tipo_mov = strtoupper(trim($data['tipo_nombre'] ?? 'VENTA'));
 $es_venta = $tipo_mov === 'VENTA';
 $es_regalias = $tipo_mov === 'REGALIAS';
 $es_merma = in_array($tipo_mov, ['MERMAS', 'DAÑOS']);
 
-$total_fila = $data['cantidad'] * $data['precio_venta'];
-$subtotal = $es_merma ? 0 : $total_fila;
+// Calcular totales desde detalles
+$subtotal = 0;
+foreach ($detalles as $det) {
+    $subtotal += $det['cantidad'] * $det['precio_venta'];
+}
 $iva = $es_venta ? ($subtotal * ($iva_pct / 100)) : 0;
 $total_neto = $subtotal + $iva;
 
@@ -314,15 +361,12 @@ table td:nth-child(3) { text-align:center; }
         <span class="num-item"><strong>HORA:</strong> <?php echo $hora_actual; ?></span>
     </div>
 
-    <?php if ($alerta_venc): ?>
-    <div style="padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:.8rem;font-weight:600;text-align:center;<?php echo $alerta_venc === 'vencido' ? 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca;' : 'background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;'; ?>">
-        <?php if ($alerta_venc === 'vencido'): ?>
-        ⚠ PRODUCTO VENCIDO (<?php echo date('d/m/Y', strtotime($venc_fecha)); ?>)
-        <?php else: ?>
-        ⚠ PRODUCTO PRÓXIMO A VENCER (<?php echo date('d/m/Y', strtotime($venc_fecha)); ?>)
-        <?php endif; ?>
+    <?php foreach ($alertas_venc as $av): ?>
+    <div style="padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:.75rem;font-weight:600;text-align:center;<?php echo $av['tipo'] === 'vencido' ? 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca;' : 'background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;'; ?>">
+        <?php echo $av['tipo'] === 'vencido' ? '⚠ VENCIDO' : '⚠ PRÓXIMO A VENCER'; ?>
+        — <?php echo htmlspecialchars($av['producto']); ?> (<?php echo date('d/m/Y', strtotime($av['fecha'])); ?>)
     </div>
-    <?php endif; ?>
+    <?php endforeach; ?>
 
     <?php if (!$es_merma): ?>
     <div class="info-grid">
@@ -347,12 +391,15 @@ table td:nth-child(3) { text-align:center; }
             </tr>
         </thead>
         <tbody>
+            <?php foreach ($detalles as $det): ?>
+            <?php $fila_total = $det['cantidad'] * $det['precio_venta']; ?>
             <tr>
-                <td><?php echo $data['cantidad']; ?></td>
-                <td><strong><?php echo htmlspecialchars($data['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.7rem;color:#94a3b8;">SKU: <?php echo htmlspecialchars($data['sku'] ?? ''); ?></span></td>
-                <td>$ <?php echo number_format($data['precio_venta'], 2); ?></td>
-                <td>$ <?php echo number_format($total_fila, 2); ?></td>
+                <td><?php echo $det['cantidad']; ?></td>
+                <td><strong><?php echo htmlspecialchars($det['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.7rem;color:#94a3b8;">SKU: <?php echo htmlspecialchars($det['sku'] ?? ''); ?></span></td>
+                <td>$ <?php echo number_format($det['precio_venta'], 2); ?></td>
+                <td>$ <?php echo number_format($fila_total, 2); ?></td>
             </tr>
+            <?php endforeach; ?>
         </tbody>
     </table>
 

@@ -18,7 +18,7 @@ $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 
 $productos = $db->fetchAll(
     "SELECT p.*, c.nombre as nombre_cat,
-        (SELECT pr.nombre_empresa FROM compras co LEFT JOIN proveedores pr ON co.id_proveedor = pr.id_proveedor WHERE co.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1) as ultimo_proveedor
+        (SELECT pr.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr ON co.id_proveedor = pr.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1) as ultimo_proveedor
     FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria WHERE p.status = 'Activo' ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
 );
@@ -74,7 +74,7 @@ $total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos")['tot
 $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 $productos = $db->fetchAll(
     "SELECT p.*, c.nombre as nombre_cat,
-        (SELECT pr.nombre_empresa FROM compras co LEFT JOIN proveedores pr ON co.id_proveedor = pr.id_proveedor WHERE co.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1) as ultimo_proveedor
+        (SELECT pr.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr ON co.id_proveedor = pr.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1) as ultimo_proveedor
     FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
 );

@@ -127,66 +127,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
     }
 
     $db->begin();
-        try {
-            $id_usuario_sesion = intval($_SESSION['id_usuario'] ?? 0);
+    try {
+        $id_usuario_sesion = intval($_SESSION['id_usuario'] ?? 0);
 
-            foreach ($productos as $i => $prod) {
+        // 1. Insertar cabecera en compras
+        $compra_id = $db->insert('compras', [
+            'nro_factura'      => $nro_factura,
+            'id_proveedor'     => $id_proveedor ?: null,
+            'id_usuario'       => $id_usuario_sesion,
+            'fecha_compra'     => $fecha_compra,
+            'nro_control'      => $nro_control,
+            'condiciones_pago' => $condiciones_pago,
+            'dias_plazo'       => $dias_credito,
+            'total'            => 0,
+            'status'           => 'Activa',
+        ]);
+
+        $total_compra = 0;
+        foreach ($productos as $prod) {
+            $id_producto = intval($prod['id'] ?? 0);
+            $cantidad = intval($prod['cantidad'] ?? 0);
+            $precio_costo = $es_donacion ? 0 : floatval($prod['precio'] ?? 0);
+            if ($id_producto <= 0 || $cantidad <= 0 || (!$es_donacion && $precio_costo <= 0)) continue;
+
+            // 2. Insertar detalle
+            $db->insert('detalle_compras', [
+                'id_compra'       => $compra_id,
+                'id_producto'     => $id_producto,
+                'cantidad'        => $cantidad,
+                'precio_costo'    => $precio_costo,
+                'fecha_vencimiento' => $fecha_vencimiento,
+                'observaciones'   => $observaciones,
+            ]);
+
+            // 3. Actualizar stock en productos
+            $prod_row = $db->fetchOne("SELECT stock_actual, precio_costo, precio_venta FROM productos WHERE id_producto = ?", [$id_producto]);
+            $old_stock = (int)($prod_row['stock_actual'] ?? 0);
+            $old_cost = (float)($prod_row['precio_costo'] ?? 0);
+            $old_pv = (float)($prod_row['precio_venta'] ?? 0);
+            $new_stock = $old_stock + $cantidad;
+            if (!$es_donacion) {
+                $new_avg = $new_stock > 0 ? (($old_stock * $old_cost) + ($cantidad * $precio_costo)) / $new_stock : $precio_costo;
+                $new_pv = $old_pv > 0 ? $old_pv : round($new_avg * 1.3, 2);
+            } else {
+                $new_avg = $old_cost;
+                $new_pv = $old_pv;
+            }
+            $db->execute("UPDATE productos SET stock_actual = ?, precio_costo = ?, precio_venta = ? WHERE id_producto = ?", [$new_stock, $new_avg, $new_pv, $id_producto]);
+
+            $subtotal_item = $cantidad * $precio_costo;
+            $total_compra += $subtotal_item;
+            $exitos++;
+        }
+
+        if ($exitos > 0) {
+            // 4. Actualizar total en cabecera
+            $db->execute("UPDATE compras SET total = ? WHERE id_compra = ?", [$total_compra, $compra_id]);
+
+            // 5. Insertar movimiento de inventario
+            $mov_id = $db->insert('movimientos', [
+                'id_referencia'   => $compra_id,
+                'tipo_referencia' => 'compra',
+                'tipo'            => 'Entrada',
+                'id_usuario'      => $id_usuario_sesion,
+                'status'          => 'Activo',
+            ]);
+
+            // 6. Insertar detalle de movimiento (re-iterate productos)
+            foreach ($productos as $prod) {
                 $id_producto = intval($prod['id'] ?? 0);
                 $cantidad = intval($prod['cantidad'] ?? 0);
                 $precio_costo = $es_donacion ? 0 : floatval($prod['precio'] ?? 0);
-
-                if ($id_producto > 0 && $cantidad > 0 && ($es_donacion || $precio_costo > 0)) {
-                    $total = $cantidad * $precio_costo;
-                    $nro_ctrl_row = $nro_control;
-                    if ($es_proveedor && $i > 0 && $nro_control) {
-                        $nro_ctrl_row = $nro_control . '-' . $i;
-                    }
-
-                    $db->insert('compras', [
-                        'id_proveedor'     => $id_proveedor,
-                        'id_producto'      => $id_producto,
-                        'nro_factura'      => $nro_factura,
-                        'nro_control'      => $nro_ctrl_row,
-                        'tipo_entrada'     => $tipo_entrada,
-                        'cantidad'         => $cantidad,
-                        'precio_costo'     => $precio_costo,
-                        'total'            => $total,
-                        'condiciones_pago' => $condiciones_pago,
-                        'dias_plazo'       => $dias_credito,
-                        'fecha_compra'     => $fecha_compra,
-                        'fecha_vencimiento'=> $fecha_vencimiento,
-                        'observaciones'    => $observaciones,
-                        'id_usuario'       => $id_usuario_sesion,
-                    ]);
-
-                    $prod_row = $db->fetchOne("SELECT stock_actual, precio_costo, precio_venta FROM productos WHERE id_producto = ?", [$id_producto]);
-                    $old_stock = (int)($prod_row['stock_actual'] ?? 0);
-                    $old_cost = (float)($prod_row['precio_costo'] ?? 0);
-                    $old_pv = (float)($prod_row['precio_venta'] ?? 0);
-                    $new_stock = $old_stock + $cantidad;
-                    if ($es_donacion) {
-                        $new_avg = $old_cost;
-                        $new_pv = $old_pv;
-                    } else {
-                        $new_avg = $new_stock > 0 ? (($old_stock * $old_cost) + ($cantidad * $precio_costo)) / $new_stock : $precio_costo;
-                        $new_pv = $old_pv > 0 ? $old_pv : round($new_avg * 1.3, 2);
-                    }
-                    $db->execute("UPDATE productos SET stock_actual = ?, precio_costo = ?, precio_venta = ? WHERE id_producto = ?", [$new_stock, $new_avg, $new_pv, $id_producto]);
-
-                    $exitos++;
-                }
+                if ($id_producto <= 0 || $cantidad <= 0) continue;
+                $db->insert('detalle_movimientos', [
+                    'id_movimiento'  => $mov_id,
+                    'id_producto'    => $id_producto,
+                    'cantidad'       => $cantidad,
+                    'precio_unitario'=> $precio_costo,
+                ]);
             }
-            if ($exitos > 0) {
-                registrarAuditoria('crear', "Entrada registrada ($tipo_entrada, $exitos producto(s))");
-            }
-            $db->commit();
-        } catch (Exception $e) {
-            $db->rollback();
-            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR AL PROCESAR LA ENTRADA. VERIFICA LOS DATOS E INTENTA DE NUEVO.'];
-            header('Location: compras.php');
-            exit;
+
+            registrarAuditoria('crear', "Entrada registrada ($tipo_entrada, $exitos producto(s))");
         }
-
+        $db->commit();
+    } catch (Exception $e) {
+        $db->rollback();
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR AL PROCESAR LA ENTRADA. VERIFICA LOS DATOS E INTENTA DE NUEVO.'];
+        header('Location: compras.php');
+        exit;
+    }
     $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => $exitos > 0 ? "ENTRADA REGISTRADA: $exitos producto(s)." : 'Error al guardar: verifica los datos e intenta de nuevo.'];
     header('Location: compras.php');
     exit;
@@ -195,17 +224,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
 // Eliminar / anular
 if (isset($_GET['eliminar']) && $esAdmin) {
     $id_compra = intval($_GET['eliminar']);
-    $compra = $db->fetchOne("SELECT id_producto, cantidad FROM compras WHERE id_compra = ?", [$id_compra]);
-    if ($compra) {
+    $detalles = $db->fetchAll("SELECT id_producto, cantidad FROM detalle_compras WHERE id_compra = ?", [$id_compra]);
+    if (!empty($detalles)) {
         $db->begin();
         try {
-            $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [(int)$compra['cantidad'], (int)$compra['id_producto']]);
+            foreach ($detalles as $det) {
+                $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
+            }
             $db->execute("UPDATE compras SET status = 'Anulada' WHERE id_compra = ?", [$id_compra]);
+            $db->execute("UPDATE movimientos SET status = 'Anulado' WHERE id_referencia = ? AND tipo_referencia = 'compra'", [$id_compra]);
             $db->commit();
-            registrarAuditoria('anular', 'Entrada de compra anulada - stock revertido');
-            $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'ENTRADA ANULADA. STOCK REVERTIDO.'];
+            $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'ENTRADA ANULADA. STOCK RESTAURADO.'];
         } catch (Exception $e) {
             $db->rollback();
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'ERROR AL ANULAR.'];
         }
     }
     header('Location: compras.php');
@@ -217,9 +249,14 @@ if (isset($_GET['eliminar']) && $esAdmin) {
 // ==========================================
 $filtro_proveedor = intval($_GET['filtro_proveedor'] ?? 0);
 $sql_compras = "
-    SELECT c.*, p.nombre_producto, pr.nombre_empresa as proveedor
+    SELECT c.*,
+           GROUP_CONCAT(DISTINCT p.nombre_producto SEPARATOR ', ') as productos_list,
+           SUM(dc.cantidad) as total_cantidad,
+           COUNT(dc.id_detalle) as num_productos,
+           pr.nombre_empresa as proveedor
     FROM compras c
-    LEFT JOIN productos p ON c.id_producto = p.id_producto
+    LEFT JOIN detalle_compras dc ON c.id_compra = dc.id_compra
+    LEFT JOIN productos p ON dc.id_producto = p.id_producto
     LEFT JOIN proveedores pr ON c.id_proveedor = pr.id_proveedor
     WHERE c.status = 'Activa'
 ";
@@ -228,7 +265,7 @@ if ($filtro_proveedor > 0) {
     $sql_compras .= " AND c.id_proveedor = ?";
     $params[] = $filtro_proveedor;
 }
-$sql_compras .= " ORDER BY c.fecha_compra DESC, c.id_compra DESC LIMIT 100";
+$sql_compras .= " GROUP BY c.id_compra ORDER BY c.fecha_compra DESC, c.id_compra DESC LIMIT 100";
 $compras = $db->fetchAll($sql_compras, $params);
 
 $productos = $db->fetchAll("SELECT id_producto, nombre_producto, stock_actual, precio_costo FROM productos WHERE status = 'Activo' ORDER BY nombre_producto");
@@ -236,8 +273,8 @@ $proveedores = $db->fetchAll("SELECT id_proveedor, nombre_empresa, rif, condicio
 $categorias = $db->fetchAll("SELECT id_categoria, nombre FROM categorias WHERE status = 'Activo' ORDER BY nombre");
 
 $total_entradas = (int)$db->fetchOne("SELECT COUNT(*) as t FROM compras WHERE status = 'Activa'")['t'];
-$entradas_hoy = (int)$db->fetchOne("SELECT COALESCE(SUM(cantidad),0) as t FROM compras WHERE fecha_compra >= CURDATE() AND fecha_compra < CURDATE() + INTERVAL 1 DAY AND status = 'Activa'")['t'];
-$inv_mes_row = $db->fetchOne("SELECT COALESCE(SUM(total),0) as t FROM compras WHERE fecha_compra >= DATE_FORMAT(CURDATE(),'%Y-%m-01') AND fecha_compra < DATE_FORMAT(CURDATE() + INTERVAL 1 MONTH,'%Y-%m-01') AND status = 'Activa'");
+$entradas_hoy = (int)$db->fetchOne("SELECT COALESCE(SUM(dc.cantidad),0) as t FROM compras c JOIN detalle_compras dc ON c.id_compra = dc.id_compra WHERE c.fecha_compra >= CURDATE() AND c.fecha_compra < CURDATE() + INTERVAL 1 DAY AND c.status = 'Activa'")['t'];
+$inv_mes_row = $db->fetchOne("SELECT COALESCE(SUM(c.total),0) as t FROM compras c WHERE c.fecha_compra >= DATE_FORMAT(CURDATE(),'%Y-%m-01') AND c.fecha_compra < DATE_FORMAT(CURDATE() + INTERVAL 1 MONTH,'%Y-%m-01') AND c.status = 'Activa'");
 $invertido_mes = $inv_mes_row['t'] ?? 0;
 
 // Manejo de mensajes flash
@@ -520,8 +557,8 @@ unset($_SESSION['flash_msg']);
                             <tr>
                                 <th style="min-width:100px;">Factura</th>
                                 <th style="min-width:120px;">Nro. Control</th>
-                                <th>Tipo de Entrada</th>
                                 <th>Proveedor</th>
+                                <th>Productos</th>
                                 <th class="text-center" style="width:70px;">Cant</th>
                                 <th style="width:100px;">Total</th>
                                 <th class="text-center">Condiciones</th>
@@ -534,9 +571,9 @@ unset($_SESSION['flash_msg']);
                                 <tr>
                                     <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
                                     <td style="color:#cbd5e1;font-weight:600;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
-                                    <td><span class="badge-jv <?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['tipo_entrada'] ?? '') == 'Compra a proveedor' ? 'bi bi-box-seam' : 'bi bi-arrow-down-circle'; ?> me-1"></i><?php echo htmlspecialchars($row['tipo_entrada']); ?></span></td>
                                     <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
-                                    <td class="text-center"><span class="cant-badge">+<?php echo $row['cantidad']; ?></span></td>
+                                    <td style="font-size:.75rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?php echo htmlspecialchars($row['productos_list'] ?? ''); ?>"><?php echo htmlspecialchars($row['productos_list'] ?? '-'); ?></td>
+                                    <td class="text-center"><span class="cant-badge">+<?php echo $row['total_cantidad']; ?></span></td>
                                     <td class="fw-bold text-success">$<?php echo number_format($row['total'], 2); ?></td>
                                     <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
                                     <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_compra'])); ?></td>
@@ -547,7 +584,7 @@ unset($_SESSION['flash_msg']);
                                     </td>
                                 </tr>
                             <?php endforeach; else: ?>
-                                <tr><td colspan="10">
+                                <tr><td colspan="9">
                                     <div class="estado-vacio">
                                         <i class="bi bi-cart-x"></i>
                                         <span>No hay entradas registradas</span>
