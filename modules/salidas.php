@@ -711,6 +711,7 @@ unset($_SESSION['flash_msg']);
         }
 
         function formatearNumero(nums, tipo) {
+            if (tipo === 'V' || tipo === 'E' || tipo === 'P' || tipo === 'G') return nums.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             if (nums.length <= 8) return nums;
             return nums.slice(0,8) + '-' + nums.slice(8,9);
         }
@@ -732,6 +733,8 @@ unset($_SESSION['flash_msg']);
             var letter = raw.match(/^[VJEPG]/);
             var prefix = letter ? letter[0] + '-' : '';
             var nums = prefix ? raw.slice(1).replace(/\D/g, '') : raw.replace(/\D/g, '');
+            var maxDig = (letter && letter[0] === 'J') ? 9 : 8;
+            if (nums.length > maxDig) nums = nums.slice(0, maxDig);
             var display, clean;
             if (prefix) {
                 display = prefix + formatearNumero(nums, letter[0]);
@@ -740,7 +743,7 @@ unset($_SESSION['flash_msg']);
                 display = formatearNumero(nums, 'V');
                 clean = nums;
             }
-            var valido = /^[VJGPE]-\d{7,9}(?:-\d)?$/.test(clean) || /^\d{7,9}$/.test(clean);
+            var valido = /^[VGPE]-\d{7,8}$/.test(clean) || /^J-\d{8,9}(?:-\d)?$/.test(clean) || /^\d{7,8}$/.test(clean);
             if (valido) {
                 msg.innerHTML = '<span style="color:#22c55e;">✓ Válido</span>';
                 el.style.borderColor = '#22c55e';

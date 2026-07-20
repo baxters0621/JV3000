@@ -13,7 +13,7 @@ if (!function_exists('validarRIF')) {
     // Validar RIF/CI venezolano
     function validarRIF($rif)
     {
-        $rif_regex = '/^[VJGPE]-\d{7,9}(?:-\d)?$/';
+        $rif_regex = '/^[VGPE]-\d{7,8}$|^J-\d{8,9}(?:-\d)?$/';
         return (bool)preg_match($rif_regex, $rif);
     }
 }
