@@ -10,6 +10,15 @@ Security::verificarPermisoCarga();
 $esAdmin = Security::esAdmin();
 $csrf_token = Security::generateToken();
 
+// Auto-incremento FAC
+$ultimo_fac = $db->fetchOne("SELECT nro_factura FROM compras WHERE nro_factura LIKE 'FAC-%' ORDER BY id_compra DESC LIMIT 1");
+$proximo_num = 1;
+if ($ultimo_fac) {
+    $num = (int)preg_replace('/[^0-9]/', '', $ultimo_fac['nro_factura']);
+    $proximo_num = $num + 1;
+}
+$fac_default = 'FAC-' . str_pad($proximo_num, 3, '0', STR_PAD_LEFT);
+
 // ==========================================
 // PROCESAR ACCIONES POST
 // ==========================================
@@ -691,7 +700,7 @@ unset($_SESSION['flash_msg']);
                             <div class="row g-2">
                                 <div class="comp-factura-section col-md-4">
                                     <label class="small fw-bold text-secondary mb-1">NRO. FACTURA *</label>
-                                    <input type="text" name="nro_factura" class="input-jv" value="FAC-001" oninput="var n=this.value.replace(/^FAC-/i,'').replace(/[^0-9]/g,'');if(n>999)n='999';if(n<1||n=='')n='1';this.value='FAC-'+n.padStart(3,'0')">
+                                    <input type="text" name="nro_factura" class="input-jv" value="<?php echo htmlspecialchars($fac_default); ?>" oninput="var n=this.value.replace(/^FAC-/i,'').replace(/[^0-9]/g,'');this.value='FAC-'+n">
                                 </div>
                                 <div class="comp-factura-section col-md-3">
                                     <label class="small fw-bold text-secondary mb-1">NRO. CONTROL *</label>
