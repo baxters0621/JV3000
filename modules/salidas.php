@@ -422,15 +422,6 @@ unset($_SESSION['flash_msg']);
     /* === DYNAMIC FIELD GROUPS === */
     .sal-field-group { display:none; }
     .sal-field-group.active { display:block; }
-    .sal-avanzado summary {
-        cursor:pointer; font-size:.75rem; font-weight:700;
-        text-transform:uppercase; letter-spacing:1px;
-        color:rgba(148,163,184,0.6); padding:8px 0;
-        list-style:none;
-    }
-    .sal-avanzado summary:hover { color:var(--jv-text-secondary); }
-    .sal-avanzado[open] summary { color:var(--jv-text-secondary); }
-    .sal-avanzado .section-bg { margin-top:10px; }
     </style>
 </head>
 <!-- BODY HTML -->
@@ -595,7 +586,7 @@ unset($_SESSION['flash_msg']);
                                 <input type="text" inputmode="decimal" name="precio_venta" id="s_precio" class="input-jv" placeholder="0.00" oninput="formatearPrecio(this)">
                             </div>
                             <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">CLIENTE <span class="text-secondary fw-normal">(opcional)</span></label>
+                                <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
                                 <input type="text" name="cliente" id="s_cliente" class="input-jv" placeholder="Nombre o Razón Social">
                             </div>
                         </div>
@@ -603,7 +594,7 @@ unset($_SESSION['flash_msg']);
                         <!-- GRUPO: REGALIAS (solo cliente, precio $0) -->
                         <div class="sal-field-group" data-grupo="regalias">
                             <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">CLIENTE <span class="text-secondary fw-normal">(opcional)</span></label>
+                                <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
                                 <input type="text" name="cliente" id="s_cliente_reg" class="input-jv" placeholder="Nombre o Razón Social" oninput="document.getElementById('s_cliente').value=this.value">
                             </div>
                         </div>
@@ -632,9 +623,7 @@ unset($_SESSION['flash_msg']);
                             </div>
                         </div>
 
-                        <!-- AVANZADO (colapsable, todos los grupos) -->
-                        <details class="sal-avanzado">
-                            <summary>📋 OPCIONES AVANZADAS</summary>
+                        <!-- DATOS ADICIONALES -->
                             <div class="section-bg">
                                 <label class="small fw-bold text-secondary mb-2">RIF / CÉDULA</label>
                                 <input type="text" name="rif_cliente" id="s_rif" class="input-jv" maxlength="13" placeholder="Ej: V-12345678 o J-12345678-0" oninput="validarRIFInput(this)">
@@ -648,7 +637,6 @@ unset($_SESSION['flash_msg']);
                                 <label class="small fw-bold text-secondary mb-2">OBSERVACIONES</label>
                                 <textarea name="observaciones" id="s_obs" class="input-jv" rows="2" placeholder="Notas adicionales..."></textarea>
                             </div>
-                        </details>
 
                         <button type="button" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase" id="btnPreview" onclick="enviarPreview()">
                             📄 VISTA PREVIA NOTA
