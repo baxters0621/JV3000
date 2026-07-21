@@ -203,7 +203,7 @@ $hora_actual = date('H:i:s');
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Factura #<?php echo $data['id_salida'] ?? 'PREVIEW'; ?> | <?php echo $empresa; ?></title>
+<title>Nota de Entrega #<?php echo $data['id_salida'] ?? 'PREVIEW'; ?> | <?php echo $empresa; ?></title>
 <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
 <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
 <style>
@@ -372,7 +372,7 @@ table td:nth-child(3) { text-align:center; }
     </div>
 
     <div class="num-row">
-        <span class="num-item"><strong>N° FACTURA:</strong> <?php echo htmlspecialchars($data['nro_factura_manual'] ?? 'PENDIENTE'); ?></span>
+        <span class="num-item"><strong>N° N/ENTREGA:</strong> <?php echo htmlspecialchars($data['nro_factura_manual'] ?? 'PENDIENTE'); ?></span>
         <span class="num-item"><strong>N° CONTROL:</strong> <?php echo htmlspecialchars($data['nro_control'] ?? '—'); ?></span>
         <span class="num-item"><strong>FECHA:</strong> <?php echo date('d/m/Y', strtotime($data['fecha_salida'])); ?></span>
         <span class="num-item"><strong>HORA:</strong> <?php echo $hora_actual; ?></span>

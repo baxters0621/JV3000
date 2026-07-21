@@ -17,7 +17,7 @@ if ($ultimo_fac) {
     $num = (int)preg_replace('/[^0-9]/', '', $ultimo_fac['nro_factura']);
     $proximo_num = $num + 1;
 }
-$fac_default = 'FAC-' . str_pad($proximo_num, 3, '0', STR_PAD_LEFT);
+$fac_default = 'FAC-' . str_pad($proximo_num, 8, '0', STR_PAD_LEFT);
 
 // ==========================================
 // PROCESAR ACCIONES POST
@@ -700,7 +700,8 @@ unset($_SESSION['flash_msg']);
                             <div class="row g-2">
                                 <div class="comp-factura-section col-md-4">
                                     <label class="small fw-bold text-secondary mb-1">NRO. FACTURA *</label>
-                                    <input type="text" name="nro_factura" class="input-jv" value="<?php echo htmlspecialchars($fac_default); ?>" maxlength="10" oninput="var n=this.value.replace(/^FAC-/i,'').replace(/[^0-9]/g,'');if(n.length>6)n=n.slice(0,6);this.value='FAC-'+n">
+                                    <input type="text" class="input-jv" value="<?php echo htmlspecialchars($fac_default); ?>" disabled style="color:#94a3b8;">
+                                    <input type="hidden" name="nro_factura" value="<?php echo htmlspecialchars($fac_default); ?>">
                                 </div>
                                 <div class="comp-factura-section col-md-3">
                                     <label class="small fw-bold text-secondary mb-1">NRO. CONTROL *</label>
