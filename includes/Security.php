@@ -19,7 +19,7 @@ class Security
         $db = Database::getInstance();
         $userId = (int)$_SESSION['id_usuario'];
         $user = $db->fetchOne(
-            "SELECT rol, usuario, status, COALESCE(aprobado, 1) as aprobado FROM usuarios WHERE id_usuario = ? LIMIT 1",
+            "SELECT id_rol, usuario, status, COALESCE(aprobado, 1) as aprobado FROM usuarios WHERE id_usuario = ? LIMIT 1",
             [$userId]
         );
 
@@ -44,7 +44,7 @@ class Security
         }
 
         $_SESSION['usuario'] = $user['usuario'];
-        $_SESSION['rol'] = $user['rol'];
+        $_SESSION['id_rol'] = (int)$user['id_rol'];
     }
 
     // Sanitizar variables globales
@@ -115,7 +115,7 @@ class Security
     // Verificar si es admin
     public static function esAdmin(): bool
     {
-        return isset($_SESSION['rol']) && $_SESSION['rol'] === 'Administrador';
+        return isset($_SESSION['id_rol']) && $_SESSION['id_rol'] === 1;
     }
 
     // Solo admin
@@ -131,13 +131,13 @@ class Security
     // Verificar permiso de carga
     public static function puedeCargar(): bool
     {
-        return self::esAdmin() || (isset($_SESSION['rol']) && $_SESSION['rol'] === 'Operador de Carga');
+        return self::esAdmin() || (isset($_SESSION['id_rol']) && $_SESSION['id_rol'] === 2);
     }
 
     // Verificar permiso de venta
     public static function puedeVender(): bool
     {
-        return self::esAdmin() || (isset($_SESSION['rol']) && $_SESSION['rol'] === 'Operador de Ventas');
+        return self::esAdmin() || (isset($_SESSION['id_rol']) && $_SESSION['id_rol'] === 3);
     }
 
     // Redirigir si no tiene permiso de carga
@@ -166,7 +166,7 @@ class Security
         return [
             'id' => (int)($_SESSION['id_usuario'] ?? 0),
             'usuario' => $_SESSION['usuario'] ?? 'Invitado',
-            'rol' => $_SESSION['rol'] ?? 'Sin Rol',
+            'id_rol' => $_SESSION['id_rol'] ?? 0,
         ];
     }
 

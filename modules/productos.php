@@ -13,16 +13,6 @@ $pagina_actual = isset($_GET['p']) ? (int)$_GET['p'] : 1;
 if ($pagina_actual < 1) $pagina_actual = 1;
 $offset = ($pagina_actual - 1) * $registros_por_pagina;
 
-$total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE status = 'Activo'")['total'] ?? 0;
-$total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
-
-$productos = $db->fetchAll(
-    "SELECT p.*, c.nombre as nombre_cat,
-        (SELECT pr.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr ON co.id_proveedor = pr.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1) as ultimo_proveedor
-    FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria WHERE p.status = 'Activo' ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
-    [$registros_por_pagina, $offset]
-);
-
 // ==========================================
 // PROCESAR ACCIONES GET
 // ==========================================
@@ -57,16 +47,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $status = $_POST['status'] ?? 'Activo';
     $fecha_venc = !empty($_POST['fecha_vencimiento']) ? $_POST['fecha_vencimiento'] : null;
 
-    if ($id_prod <= 0) { $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'PRODUCTO INVÁLIDO.']; header('Location: productos.php'); exit; }
-    if ($stock_minimo < 0) { $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'STOCK MÍNIMO NO PUEDE SER NEGATIVO.']; header('Location: productos.php'); exit; }
-    if ($precio_venta < 0) { $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'PRECIO VENTA NO PUEDE SER NEGATIVO.']; header('Location: productos.php'); exit; }
-    if ($precio_costo < 0) { $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'PRECIO COSTO NO PUEDE SER NEGATIVO.']; header('Location: productos.php'); exit; }
-    if (!in_array($status, ['Activo','Inactivo'])) $status = 'Activo';
+    if ($id_prod <= 0) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRODUCTO INVÁLIDO.'];
+        header('Location: productos.php');
+        exit;
+    }
+    if ($stock_minimo <= 0) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'STOCK MÍNIMO DEBE SER MAYOR A 0.'];
+        header('Location: productos.php');
+        exit;
+    }
+    if ($precio_venta <= 0) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRECIO VENTA DEBE SER MAYOR A 0.'];
+        header('Location: productos.php');
+        exit;
+    }
+    if ($precio_costo <= 0) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'PRECIO COSTO DEBE SER MAYOR A 0.'];
+        header('Location: productos.php');
+        exit;
+    }
+    if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
     if ($fecha_venc && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_venc)) $fecha_venc = null;
 
+    $id_proveedor = intval($_POST['id_proveedor'] ?? 0);
+    if ($id_proveedor <= 0) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'DEBE SELECCIONAR UN PROVEEDOR.'];
+        header('Location: productos.php');
+        exit;
+    }
+
     $db->execute(
-        "UPDATE productos SET stock_minimo=?, precio_venta=?, precio_costo=?, status=?, fecha_vencimiento=? WHERE id_producto=?",
-        [$stock_minimo, $precio_venta, $precio_costo, $status, $fecha_venc, $id_prod]
+        "UPDATE productos SET stock_minimo=?, precio_venta=?, precio_costo=?, status=?, fecha_vencimiento=?, id_proveedor=? WHERE id_producto=?",
+        [$stock_minimo, $precio_venta, $precio_costo, $status, $fecha_venc, $id_proveedor, $id_prod]
     );
     registrarAuditoria('editar', 'Producto modificado');
     $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'PRODUCTO ACTUALIZADO EN EL INVENTARIO.'];
@@ -77,17 +90,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 // ==========================================
 // OBTENER DATOS
 // ==========================================
-$total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos")['total'] ?? 0;
+$total_registros = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE status = 'Activo'")['total'] ?? 0;
 $total_paginas = max(1, ceil($total_registros / $registros_por_pagina));
 $productos = $db->fetchAll(
     "SELECT p.*, c.nombre as nombre_cat,
-        (SELECT pr.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr ON co.id_proveedor = pr.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1) as ultimo_proveedor
-    FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
+        COALESCE(pr.nombre_empresa, (
+            SELECT pr2.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr2 ON co.id_proveedor = pr2.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1
+        )) as ultimo_proveedor
+    FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor WHERE p.status = 'Activo' ORDER BY p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
 );
 
 $vencidos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE fecha_vencimiento <= CURDATE() AND fecha_vencimiento IS NOT NULL AND status = 'Activo'")['t'];
 $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE fecha_vencimiento BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND fecha_vencimiento IS NOT NULL AND status = 'Activo'")['t'];
+$proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM proveedores WHERE status = 'Activo' ORDER BY nombre_empresa ASC");
 ?>
 <!-- HEAD Y ESTILOS HTML -->
 <!DOCTYPE html>
@@ -97,52 +113,260 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
     <?php include '../includes/diseno.php'; ?>
     <title>Inventario | JV3000 C.A.</title>
     <style>
-        .table-jv thead { background: #0e7490 !important; }
-        .table-jv thead th { background: transparent !important; color: #ffffff !important; font-weight: 900 !important; letter-spacing: 1.2px !important; font-size: 0.8rem !important; padding: 14px 16px !important; border-bottom: 1px solid rgba(255,255,255,0.12) !important; }
-        .table-jv tbody td { padding: 16px 16px !important; border-bottom: 1px dashed rgba(56, 189, 248, 0.15) !important; }
-        .table-jv tbody tr:last-child td { border-bottom: none !important; }
-        .table-jv tbody tr:hover { background: rgba(6, 182, 212, 0.12) !important; }
-        .table-jv tbody tr:hover td:first-child { border-left-color: #22d3ee; }
-        .table-jv tbody td:first-child { border-left: 3px solid transparent; transition: border-color 0.2s ease; }
-        .prod-nombre { font-size: 1rem; font-weight: 800; color: #f1f5f9; }
-        .prod-cat { font-size: 0.8rem; color: #22d3ee; font-weight: 700; }
-        .prod-prov { font-size: 0.8rem; color: #fbbf24; font-weight: 700; }
-        .prod-precio { font-weight: 800; color: #22d3ee; font-size: 0.9rem; }
-        .badge-jv { padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; }
-        .badge-success { background: rgba(34,197,94,0.18); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
-        .badge-danger { background: rgba(239,68,68,0.18); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
-        .badge-info { background: rgba(34,211,238,0.18); color: #22d3ee; border: 1px solid rgba(34,211,238,0.4); }
-        .alert-jv { border-left: 4px solid; border-radius: 8px; padding: 14px 20px !important; font-size: 0.9rem; }
-        .alert-jv-success { border-left-color: #22c55e; background: rgba(34,197,94,0.1); }
-        .alert-jv-danger { border-left-color: #ef4444; background: rgba(239,68,68,0.1); }
-        .buscador-wrapper { border-bottom: 1px solid rgba(56, 189, 248, 0.12); background: rgba(2, 6, 23, 0.5); }
-        .buscador-wrapper input { font-size: 0.95rem !important; padding: 10px 8px !important; }
-        .buscador-wrapper i { font-size: 1.15rem !important; }
-        .card-jv-table { border-top: 4px solid #22d3ee; border-radius: var(--jv-radius) !important; overflow: hidden; }
-        .codigo-badge { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 6px; padding: 3px 10px; font-size: 0.8rem; font-weight: 700; color: #22d3ee; font-family: 'Courier New', monospace; display: inline-block; }
-        .alert-card { border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border: 1px solid; min-height: 64px; }
-        .alert-card .alert-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-        .alert-card .alert-num { font-size: 1.6rem; font-weight: 900; line-height: 1; }
-        .alert-card .alert-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .alert-card .alert-link { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; text-decoration: none; padding: 6px 14px; border-radius: 8px; transition: 0.15s; border: 1px solid; }
-        .alert-card .alert-link:hover { transform: scale(1.05); }
-        .alert-vencida { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); }
-        .alert-vencida .alert-icon { background: rgba(239,68,68,0.2); color: #f87171; }
-        .alert-vencida .alert-num { color: #f87171; }
-        .alert-vencida .alert-label { color: rgba(248,113,113,0.8); }
-        .alert-vencida .alert-link { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.3); }
-        .alert-vencida .alert-link:hover { background: rgba(239,68,68,0.25); }
-        .alert-proxima { background: rgba(251,146,60,0.08); border-color: rgba(251,146,60,0.25); }
-        .alert-proxima .alert-icon { background: rgba(251,146,60,0.2); color: #fb923c; }
-        .alert-proxima .alert-num { color: #fb923c; }
-        .alert-proxima .alert-label { color: rgba(251,146,60,0.8); }
-        .alert-proxima .alert-link { background: rgba(251,146,60,0.12); color: #fb923c; border-color: rgba(251,146,60,0.3); }
-        .alert-proxima .alert-link:hover { background: rgba(251,146,60,0.25); }
-        .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
+        .table-jv thead {
+            background: #0e7490 !important;
+        }
+
+        .table-jv thead th {
+            background: transparent !important;
+            color: #ffffff !important;
+            font-weight: 900 !important;
+            letter-spacing: 1.2px !important;
+            font-size: 0.8rem !important;
+            padding: 14px 16px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+        }
+
+        .table-jv tbody td {
+            padding: 16px 16px !important;
+            border-bottom: 1px dashed rgba(56, 189, 248, 0.15) !important;
+        }
+
+        .table-jv tbody tr:last-child td {
+            border-bottom: none !important;
+        }
+
+        .table-jv tbody tr:hover {
+            background: rgba(6, 182, 212, 0.12) !important;
+        }
+
+        .table-jv tbody tr:hover td:first-child {
+            border-left-color: #22d3ee;
+        }
+
+        .table-jv tbody td:first-child {
+            border-left: 3px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .prod-nombre {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #f1f5f9;
+        }
+
+        .prod-cat {
+            font-size: 0.8rem;
+            color: #22d3ee;
+            font-weight: 700;
+        }
+
+        .prod-prov {
+            font-size: 0.8rem;
+            color: #fbbf24;
+            font-weight: 700;
+        }
+
+        .prod-precio {
+            font-weight: 800;
+            color: #22d3ee;
+            font-size: 0.9rem;
+        }
+
+        .badge-jv {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.18);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.18);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .badge-info {
+            background: rgba(34, 211, 238, 0.18);
+            color: #22d3ee;
+            border: 1px solid rgba(34, 211, 238, 0.4);
+        }
+
+        .alert-jv {
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 14px 20px !important;
+            font-size: 0.9rem;
+        }
+
+        .alert-jv-success {
+            border-left-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .alert-jv-danger {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .buscador-wrapper {
+            border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+            background: rgba(2, 6, 23, 0.5);
+        }
+
+        .buscador-wrapper input {
+            font-size: 0.95rem !important;
+            padding: 10px 8px !important;
+        }
+
+        .buscador-wrapper i {
+            font-size: 1.15rem !important;
+        }
+
+        .card-jv-table {
+            border-top: 4px solid #22d3ee;
+            border-radius: var(--jv-radius) !important;
+            overflow: hidden;
+        }
+
+        .codigo-badge {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #22d3ee;
+            font-family: 'Courier New', monospace;
+            display: inline-block;
+        }
+
+        .alert-card {
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid;
+            min-height: 64px;
+        }
+
+        .alert-card .alert-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .alert-card .alert-num {
+            font-size: 1.6rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .alert-card .alert-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .alert-card .alert-link {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            transition: 0.15s;
+            border: 1px solid;
+        }
+
+        .alert-card .alert-link:hover {
+            transform: scale(1.05);
+        }
+
+        .alert-vencida {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.25);
+        }
+
+        .alert-vencida .alert-icon {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .alert-vencida .alert-num {
+            color: #f87171;
+        }
+
+        .alert-vencida .alert-label {
+            color: rgba(248, 113, 113, 0.8);
+        }
+
+        .alert-vencida .alert-link {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .alert-vencida .alert-link:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .alert-proxima {
+            background: rgba(251, 146, 60, 0.08);
+            border-color: rgba(251, 146, 60, 0.25);
+        }
+
+        .alert-proxima .alert-icon {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+        }
+
+        .alert-proxima .alert-num {
+            color: #fb923c;
+        }
+
+        .alert-proxima .alert-label {
+            color: rgba(251, 146, 60, 0.8);
+        }
+
+        .alert-proxima .alert-link {
+            background: rgba(251, 146, 60, 0.12);
+            color: #fb923c;
+            border-color: rgba(251, 146, 60, 0.3);
+        }
+
+        .alert-proxima .alert-link:hover {
+            background: rgba(251, 146, 60, 0.25);
+        }
+
+        .input-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+        }
     </style>
 </head>
 
 <!-- BODY HTML -->
+
 <body>
     <?php include '../includes/sidebar.php'; ?>
 
@@ -161,36 +385,36 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
             </div>
 
             <?php if ($vencidos_count > 0 || $proximos_count > 0): ?>
-            <div class="row g-2 mb-3">
-                <?php if ($vencidos_count > 0): ?>
-                <div class="col-md-6">
-                    <div class="alert-card alert-vencida">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="alert-icon"><i class="bi bi-x-circle-fill"></i></div>
-                            <div>
-                                <div class="alert-label">Productos Vencidos</div>
-                                <div class="alert-num"><?php echo $vencidos_count; ?></div>
+                <div class="row g-2 mb-3">
+                    <?php if ($vencidos_count > 0): ?>
+                        <div class="col-md-6">
+                            <div class="alert-card alert-vencida">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="alert-icon"><i class="bi bi-x-circle-fill"></i></div>
+                                    <div>
+                                        <div class="alert-label">Productos Vencidos</div>
+                                        <div class="alert-num"><?php echo $vencidos_count; ?></div>
+                                    </div>
+                                </div>
+                                <button class="alert-link" onclick="filtrarPorAlerta('vencido')">Ver todos →</button>
                             </div>
                         </div>
-                        <button class="alert-link" onclick="filtrarPorAlerta('vencido')">Ver todos →</button>
-                    </div>
-                </div>
-                <?php endif; ?>
-                <?php if ($proximos_count > 0): ?>
-                <div class="col-md-6">
-                    <div class="alert-card alert-proxima">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="alert-icon"><i class="bi bi-clock-fill"></i></div>
-                            <div>
-                                <div class="alert-label">Próximos a Vencer (7 días)</div>
-                                <div class="alert-num"><?php echo $proximos_count; ?></div>
+                    <?php endif; ?>
+                    <?php if ($proximos_count > 0): ?>
+                        <div class="col-md-6">
+                            <div class="alert-card alert-proxima">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="alert-icon"><i class="bi bi-clock-fill"></i></div>
+                                    <div>
+                                        <div class="alert-label">Próximos a Vencer (7 días)</div>
+                                        <div class="alert-num"><?php echo $proximos_count; ?></div>
+                                    </div>
+                                </div>
+                                <button class="alert-link" onclick="filtrarPorAlerta('proximo')">Ver todos →</button>
                             </div>
                         </div>
-                        <button class="alert-link" onclick="filtrarPorAlerta('proximo')">Ver todos →</button>
-                    </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
-            </div>
             <?php endif; ?>
 
             <!-- Mensajes flash -->
@@ -230,7 +454,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                                 <th style="width: 10%;" class="text-center">VENCE</th>
                                 <th style="width: 9%;" class="text-center">ESTADO</th>
                                 <?php if ($esAdmin): ?>
-                                <th style="width: 10%;" class="text-center">ACCIONES</th>
+                                    <th style="width: 10%;" class="text-center">ACCIONES</th>
                                 <?php endif; ?>
                             </tr>
                         </thead>
@@ -240,31 +464,60 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                                     $stk = intval($row['stock_actual']);
                                     $min = intval($row['stock_minimo']);
                                     $max = 100;
-                                    if ($stk == 0) { $stk_cls = 'danger'; $stk_lbl = 'AGOTADO'; $stk_pct = 0; }
-                                    elseif ($stk <= $min) { $stk_cls = 'danger'; $stk_lbl = 'BAJO'; $stk_pct = max(5, ($stk / $max) * 100); }
-                                    elseif ($stk >= $max) { $stk_cls = 'info'; $stk_lbl = 'COMPLETO'; $stk_pct = 100; }
-                                    else { $pct = ($stk / $max) * 100; $stk_cls = 'success'; $stk_lbl = 'OK'; $stk_pct = $pct; }
+                                    if ($stk == 0) {
+                                        $stk_cls = 'danger';
+                                        $stk_lbl = 'AGOTADO';
+                                        $stk_pct = 0;
+                                    } elseif ($stk <= $min) {
+                                        $stk_cls = 'danger';
+                                        $stk_lbl = 'BAJO';
+                                        $stk_pct = max(5, ($stk / $max) * 100);
+                                    } elseif ($stk >= $max) {
+                                        $stk_cls = 'info';
+                                        $stk_lbl = 'COMPLETO';
+                                        $stk_pct = 100;
+                                    } else {
+                                        $pct = ($stk / $max) * 100;
+                                        $stk_cls = 'success';
+                                        $stk_lbl = 'OK';
+                                        $stk_pct = $pct;
+                                    }
                                     $bar_color = $stk_cls == 'danger' ? '#ef4444' : ($stk_cls == 'info' ? '#22d3ee' : '#4ade80');
                                 ?>
                                     <?php
-                                        $venc = $row['fecha_vencimiento'] ?? '';
-                                        $venc_cls = '';
-                                        $vc = 'badge-secondary'; $vt = 'S/V'; $vi = 'dash-circle'; $vd = '';
-                                        if ($venc) {
-                                            $dias_v = floor((strtotime($venc) - time()) / 86400);
-                                            $vd = date('d/m/Y', strtotime($venc));
-                                            if ($dias_v < 0) {
-                                                $venc_cls = 'vencido'; $vc = 'badge-danger'; $vt = 'VENCIDO'; $vi = 'exclamation-triangle';
-                                            } elseif ($dias_v <= 7) {
-                                                $venc_cls = 'proximo'; $vc = 'badge-danger'; $vt = 'PRÓXIMO'; $vi = 'clock';
-                                            } elseif ($dias_v <= 30) {
-                                                $venc_cls = 'pronto'; $vc = 'badge-warning'; $vt = 'PRONTO'; $vi = 'clock';
-                                            } else {
-                                                $venc_cls = 'vigente'; $vc = 'badge-success'; $vt = 'VIGENTE'; $vi = 'check-circle';
-                                            }
+                                    $venc = $row['fecha_vencimiento'] ?? '';
+                                    $venc_cls = '';
+                                    $vc = 'badge-secondary';
+                                    $vt = 'S/V';
+                                    $vi = 'dash-circle';
+                                    $vd = '';
+                                    if ($venc) {
+                                        $dias_v = floor((strtotime($venc) - time()) / 86400);
+                                        $vd = date('d/m/Y', strtotime($venc));
+                                        if ($dias_v < 0) {
+                                            $venc_cls = 'vencido';
+                                            $vc = 'badge-danger';
+                                            $vt = 'VENCIDO';
+                                            $vi = 'exclamation-triangle';
+                                        } elseif ($dias_v <= 7) {
+                                            $venc_cls = 'proximo';
+                                            $vc = 'badge-danger';
+                                            $vt = 'PRÓXIMO';
+                                            $vi = 'clock';
+                                        } elseif ($dias_v <= 30) {
+                                            $venc_cls = 'pronto';
+                                            $vc = 'badge-warning';
+                                            $vt = 'PRONTO';
+                                            $vi = 'clock';
+                                        } else {
+                                            $venc_cls = 'vigente';
+                                            $vc = 'badge-success';
+                                            $vt = 'VIGENTE';
+                                            $vi = 'check-circle';
                                         }
+                                    }
                                     ?>
-                                    <tr data-id="<?php echo $row['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($row['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($row['ultimo_proveedor'] ?? '')); ?>" data-stock="<?php echo $row['stock_actual']; ?>" data-minimo="<?php echo $row['stock_minimo']; ?>" data-max="<?php echo $max; ?>" data-pvp="<?php echo $row['precio_venta']; ?>" data-costo="<?php echo $row['precio_costo']; ?>" data-status="<?php echo $row['status']; ?>" data-venc="<?php echo $row['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
+                                    <tr data-id="<?php echo $row['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($row['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($row['ultimo_proveedor'] ?? '')); ?>" data-prov-id="<?php echo intval($row['id_proveedor'] ?? 0); ?>" data-stock="<?php echo $row['stock_actual']; ?>" data-minimo="<?php echo $row['stock_minimo']; ?>" data-max="<?php echo $max; ?>" data-pvp="<?php echo $row['precio_venta']; ?>" data-costo="<?php echo $row['precio_costo']; ?>" data-status="<?php echo $row['status']; ?>" data-venc="<?php echo $row['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
                                         <td>
                                             <span class="codigo-badge"><?php echo htmlspecialchars($row['sku']); ?></span>
                                         </td>
@@ -304,21 +557,21 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                                             </span>
                                         </td>
                                         <?php if ($esAdmin): ?>
-                                        <td class="text-center">
-                                            <div class="d-flex justify-content-center gap-1">
-                                                <button type="button" class="btn btn-sm p-0" style="width:32px;height:32px;border-radius:8px;background:rgba(6,182,212,0.12);color:#22d3ee;border:1px solid rgba(6,182,212,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="editarProducto(<?php echo $row['id_producto']; ?>)" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm p-0" style="width:32px;height:32px;border-radius:8px;background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="eliminarProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Eliminar">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                                <?php if ($venc_cls === 'vencido'): ?>
-                                                <button type="button" class="btn btn-sm p-0 ms-1" style="width:32px;height:32px;border-radius:8px;background:rgba(100,116,139,0.12);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="bajaVencido(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Dar de baja por vencimiento">
-                                                    <i class="bi bi-archive"></i>
-                                                </button>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
+                                            <td class="text-center">
+                                                <div class="d-flex justify-content-center gap-1">
+                                                    <button type="button" class="btn btn-sm p-0" style="width:32px;height:32px;border-radius:8px;background:rgba(6,182,212,0.12);color:#22d3ee;border:1px solid rgba(6,182,212,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="editarProducto(<?php echo $row['id_producto']; ?>)" title="Editar">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm p-0" style="width:32px;height:32px;border-radius:8px;background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="eliminarProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Eliminar">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                    <?php if ($venc_cls === 'vencido'): ?>
+                                                        <button type="button" class="btn btn-sm p-0 ms-1" style="width:32px;height:32px;border-radius:8px;background:rgba(100,116,139,0.12);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="bajaVencido(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Dar de baja por vencimiento">
+                                                            <i class="bi bi-archive"></i>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
                                         <?php endif; ?>
                                     </tr>
                                 <?php endforeach; ?>
@@ -366,73 +619,82 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
     </div>
 
     <?php if ($esAdmin): ?>
-    <!-- Modal: Editar producto -->
-    <div class="modal fade" id="modalEditar" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modal-content-jv">
-                <form method="POST" id="formEditar">
-                    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                    <input type="hidden" name="accion" value="editar_producto">
-                    <input type="hidden" name="id_producto" id="edit_id">
-                    <div class="p-3" style="border-bottom:1px solid rgba(6,182,212,0.12);">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="fw-bold mb-0 font-brand" style="color:#22d3ee;font-size:.95rem;letter-spacing:-.5px;">
-                                <i class="bi bi-pencil-square me-2"></i>EDITAR PRODUCTO
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                    </div>
-                    <div class="p-3">
-                        <div class="mb-2">
-                            <label class="small fw-bold text-secondary mb-1">PRODUCTO</label>
-                            <input type="text" class="input-jv" id="edit_nombre" readonly disabled style="color:#94a3b8;">
-                        </div>
-                        <div class="mb-2">
-                            <label class="small fw-bold text-secondary mb-1">SKU</label>
-                            <input type="text" class="input-jv" id="edit_sku" readonly disabled style="color:#94a3b8;">
-                        </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">STOCK ACTUAL</label>
-                                <input type="text" class="input-jv" id="edit_stock" readonly disabled style="color:#94a3b8;">
-                            </div>
-                            <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">STOCK MÍNIMO</label>
-                                <input type="number" class="input-jv" id="edit_minimo" name="stock_minimo" min="0" max="99999">
+        <!-- Modal: Editar producto -->
+        <div class="modal fade" id="modalEditar" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content modal-content-jv">
+                    <form method="POST" id="formEditar">
+                        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                        <input type="hidden" name="accion" value="editar_producto">
+                        <input type="hidden" name="id_producto" id="edit_id">
+                        <div class="p-3" style="border-bottom:1px solid rgba(6,182,212,0.12);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="fw-bold mb-0 font-brand" style="color:#22d3ee;font-size:.95rem;letter-spacing:-.5px;">
+                                    <i class="bi bi-pencil-square me-2"></i>EDITAR PRODUCTO
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">PRECIO VENTA ($)</label>
-                                <input type="number" class="input-jv" id="edit_pvp" name="precio_venta" step="0.01" min="0" max="999999">
+                        <div class="p-3">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-secondary mb-1">PRODUCTO</label>
+                                <input type="text" class="input-jv" id="edit_nombre" readonly disabled style="color:#94a3b8;">
                             </div>
-                            <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">PRECIO COSTO ($)</label>
-                                <input type="number" class="input-jv" id="edit_costo" name="precio_costo" step="0.01" min="0" max="999999">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-secondary mb-1">SKU</label>
+                                <input type="text" class="input-jv" id="edit_sku" readonly disabled style="color:#94a3b8;">
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="small fw-bold text-secondary mb-1">STOCK ACTUAL</label>
+                                    <input type="text" class="input-jv" id="edit_stock" readonly disabled style="color:#94a3b8;">
+                                </div>
+                                <div class="col-6">
+                                    <label class="small fw-bold text-secondary mb-1">STOCK MÍNIMO</label>
+                                    <input type="number" class="input-jv" id="edit_minimo" name="stock_minimo" min="0" max="99999">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="small fw-bold text-secondary mb-1">PRECIO VENTA ($)</label>
+                                    <input type="number" class="input-jv" id="edit_pvp" name="precio_venta" step="0.01" min="0" max="999999">
+                                </div>
+                                <div class="col-6">
+                                    <label class="small fw-bold text-secondary mb-1">PRECIO COSTO ($)</label>
+                                    <input type="number" class="input-jv" id="edit_costo" name="precio_costo" step="0.01" min="0" max="999999">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-4">
+                                    <label class="small fw-bold text-secondary mb-1">ESTADO</label>
+                                    <select class="input-jv" id="edit_status" name="status">
+                                        <option value="Activo">Activo</option>
+                                        <option value="Inactivo">Inactivo</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="small fw-bold text-secondary mb-1">VENCIMIENTO</label>
+                                    <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento">
+                                </div>
+                                <div class="col-4">
+                                    <label class="small fw-bold text-secondary mb-1">PROVEEDOR <span style="color:#ef4444;">*</span></label>
+                                    <select class="input-jv" id="edit_proveedor" name="id_proveedor">
+                                        <option value="">SELECCIONE...</option>
+                                        <?php foreach ($proveedores_list as $prov): ?>
+                                            <option value="<?php echo $prov['id_proveedor']; ?>"><?php echo htmlspecialchars($prov['nombre_empresa']); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">ESTADO</label>
-                                <select class="input-jv" id="edit_status" name="status">
-                                    <option value="Activo">Activo</option>
-                                    <option value="Inactivo">Inactivo</option>
-                                </select>
-                            </div>
-                            <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">VENCIMIENTO</label>
-                                <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento">
-                            </div>
+                        <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid rgba(6,182,212,0.1);">
+                            <button type="button" class="btn btn-jv-danger" style="padding:8px 20px;font-size:.8rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
+                            <button type="button" class="btn btn-jv-success" style="padding:8px 20px;font-size:.8rem;" onclick="return validarEditarProducto(this)"><i class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
                         </div>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid rgba(6,182,212,0.1);">
-                        <button type="button" class="btn btn-jv-danger" style="padding:8px 20px;font-size:.8rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                        <button type="button" class="btn btn-jv-success" style="padding:8px 20px;font-size:.8rem;" onclick="return validarEditarProducto(this)"><i class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
     <?php endif; ?>
 
     <!-- JAVASCRIPT -->
@@ -444,39 +706,42 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
         }
 
         function filtrarVenc(btn) {
-        document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
-            b.style.background = 'transparent';
-            b.style.color = b.dataset.venc === 'vencido' ? '#f87171' : b.dataset.venc === 'proximo' ? '#fb923c' : b.dataset.venc === 'pronto' ? '#fbbf24' : b.dataset.venc === 'vigente' ? '#4ade80' : '#22d3ee';
-        });
-        btn.style.background = 'rgba(6,182,212,0.2)';
-        btn.style.color = '#22d3ee';
-        var filtro = btn.getAttribute('data-venc');
-        var rows = document.getElementById('tablaProductos').getElementsByTagName('tr');
-        for (var i = 0; i < rows.length; i++) {
-            var vc = rows[i].getAttribute('data-venc-cls') || '';
-            if (filtro === 'todas') { rows[i].style.display = ''; }
-            else { rows[i].style.display = vc === filtro ? '' : 'none'; }
+            document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
+                b.style.background = 'transparent';
+                b.style.color = b.dataset.venc === 'vencido' ? '#f87171' : b.dataset.venc === 'proximo' ? '#fb923c' : b.dataset.venc === 'pronto' ? '#fbbf24' : b.dataset.venc === 'vigente' ? '#4ade80' : '#22d3ee';
+            });
+            btn.style.background = 'rgba(6,182,212,0.2)';
+            btn.style.color = '#22d3ee';
+            var filtro = btn.getAttribute('data-venc');
+            var rows = document.getElementById('tablaProductos').getElementsByTagName('tr');
+            for (var i = 0; i < rows.length; i++) {
+                var vc = rows[i].getAttribute('data-venc-cls') || '';
+                if (filtro === 'todas') {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = vc === filtro ? '' : 'none';
+                }
+            }
         }
-    }
 
-    function bajaVencido(id, nombre) {
-        Swal.fire({
-            title: '¿DAR DE BAJA?',
-            html: 'Se marcará como <strong>Inactivo</strong> por vencimiento: ' + nombre,
-            icon: 'warning',
-            showCancelButton: true,
-            background: '#0f172a',
-            color: '#fff',
-            confirmButtonColor: '#64748b',
-            cancelButtonColor: '#1e293b',
-            confirmButtonText: 'SÍ, DAR DE BAJA',
-            cancelButtonText: 'CANCELAR'
-        }).then(function(r) {
-            if (r.isConfirmed) window.location.href = 'productos.php?baja_vencido=' + id;
-        });
-    }
+        function bajaVencido(id, nombre) {
+            Swal.fire({
+                title: '¿DAR DE BAJA?',
+                html: 'Se marcará como <strong>Inactivo</strong> por vencimiento: ' + nombre,
+                icon: 'warning',
+                showCancelButton: true,
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#64748b',
+                cancelButtonColor: '#1e293b',
+                confirmButtonText: 'SÍ, DAR DE BAJA',
+                cancelButtonText: 'CANCELAR'
+            }).then(function(r) {
+                if (r.isConfirmed) window.location.href = 'productos.php?baja_vencido=' + id;
+            });
+        }
 
-    function filtrar() {
+        function filtrar() {
             const input = document.getElementById('buscar');
             const filter = input.value.toLowerCase();
             const rows = document.getElementById('tablaProductos').getElementsByTagName('tr');
@@ -494,12 +759,22 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                 setTimeout(function() {
                     a.style.transition = 'opacity 0.6s';
                     a.style.opacity = '0';
-                    setTimeout(function() { a.remove(); }, 600);
+                    setTimeout(function() {
+                        a.remove();
+                    }, 600);
                 }, 4000);
             });
             document.querySelectorAll('#formEditar input, #formEditar select').forEach(function(el) {
-                el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
-                el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
+                el.addEventListener('input', function() {
+                    this.classList.remove('input-error');
+                    var e = document.getElementById(this.id + '_err');
+                    if (e) e.remove();
+                });
+                el.addEventListener('change', function() {
+                    this.classList.remove('input-error');
+                    var e = document.getElementById(this.id + '_err');
+                    if (e) e.remove();
+                });
             });
         });
 
@@ -510,9 +785,14 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
         });
 
         function limpiarErrores() {
-            document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
-            document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+            document.querySelectorAll('.input-error').forEach(function(el) {
+                el.classList.remove('input-error');
+            });
+            document.querySelectorAll('.field-error').forEach(function(el) {
+                el.remove();
+            });
         }
+
         function marcarError(el, msg) {
             el.classList.add('input-error');
             if (msg && el.id) {
@@ -527,19 +807,40 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
                 errEl.textContent = msg;
             }
         }
+
         function validarEditarProducto(btn) {
             limpiarErrores();
             let primerError = null;
             const minimo = document.getElementById('edit_minimo');
             const pvp = document.getElementById('edit_pvp');
             const costo = document.getElementById('edit_costo');
-            if (parseInt(minimo.value) < 0) { marcarError(minimo, '>= 0'); if (!primerError) primerError = minimo; }
-            if (parseFloat(pvp.value) < 0) { marcarError(pvp, '>= 0'); if (!primerError) primerError = pvp; }
-            if (parseFloat(costo.value) < 0) { marcarError(costo, '>= 0'); if (!primerError) primerError = costo; }
-            if (primerError) { primerError.focus(); return false; }
-            btn.disabled = true; btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';
-            btn.form.submit(); return false;
+            const proveedor = document.getElementById('edit_proveedor');
+            if (!minimo.value || parseInt(minimo.value) <= 0) {
+                marcarError(minimo, 'OBLIGATORIO (> 0)');
+                if (!primerError) primerError = minimo;
+            }
+            if (!pvp.value || parseFloat(pvp.value) <= 0) {
+                marcarError(pvp, 'OBLIGATORIO (> 0)');
+                if (!primerError) primerError = pvp;
+            }
+            if (!costo.value || parseFloat(costo.value) <= 0) {
+                marcarError(costo, 'OBLIGATORIO (> 0)');
+                if (!primerError) primerError = costo;
+            }
+            if (!proveedor.value || parseInt(proveedor.value) <= 0) {
+                marcarError(proveedor, 'OBLIGATORIO');
+                if (!primerError) primerError = proveedor;
+            }
+            if (primerError) {
+                primerError.focus();
+                return false;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';
+            btn.form.submit();
+            return false;
         }
+
         function editarProducto(id) {
             limpiarErrores();
             var row = document.querySelector('tr[data-id="' + id + '"]');
@@ -553,6 +854,7 @@ $proximos_count = (int)$db->fetchOne("SELECT COUNT(*) as t FROM productos WHERE 
             document.getElementById('edit_costo').value = parseFloat(row.getAttribute('data-costo')).toFixed(2);
             document.getElementById('edit_status').value = row.getAttribute('data-status');
             document.getElementById('edit_vencimiento').value = row.getAttribute('data-venc');
+            document.getElementById('edit_proveedor').value = row.getAttribute('data-prov-id');
             if (modalEditar) modalEditar.show();
         }
 

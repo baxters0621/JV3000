@@ -10,3 +10,18 @@ Antes de escribir cualquier línea de código, detente en el primer nivel que fu
 7. Solo si nada de lo anterior funciona: Escribe el código mínimo necesario.
 
 *Nota de seguridad: Nunca recortes en validaciones de seguridad, accesibilidad o manejo de errores críticos.*
+
+## Control de sesión y permisos
+- `$_SESSION['id_rol']` = 1 (Administrador), 2 (Operador de Carga), 3 (Operador de Ventas)
+- Roles desde tabla `roles` con FK en `usuarios.id_rol`
+- `Security::esAdmin()` → `id_rol === 1`, `puedeCargar()` → `id_rol === 1 || id_rol === 2`, `puedeVender()` → `id_rol === 1 || id_rol === 3`
+- Para mostrar el nombre del rol: JOIN con `roles` o usar el mapa inline `$roles_map = [1=>'Administrador', 2=>'Operador de Carga', 3=>'Operador de Ventas']`
+
+## DB
+- Portable: `db/jv3000_portable_v3.sql`
+- Auto-instalador en `init.php` apunta a `v3`
+- Backups en `backups/`
+
+## Configuración XAMPP
+- MySQL no corre como servicio Windows. Iniciar con: `Start-Process -FilePath "C:\xampp\mysql\bin\mysqld.exe" -NoNewWindow`
+- PHP CLI requiere arrancar MySQL manualmente antes de scripts externos

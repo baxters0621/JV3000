@@ -38,7 +38,7 @@ $conn_no_db = mysqli_connect(DB_HOST, DB_USER, DB_PASS);
 if ($conn_no_db) {
     $db_check = mysqli_query($conn_no_db, "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '" . DB_NAME . "'");
     if ($db_check && mysqli_num_rows($db_check) == 0) {
-        $sql_path = __DIR__ . '/db/jv3000_portable_v2.sql';
+        $sql_path = __DIR__ . '/db/jv3000_portable_v3.sql';
         if (file_exists($sql_path)) {
             $sql_content = file_get_contents($sql_path);
             if (!empty($sql_content)) {

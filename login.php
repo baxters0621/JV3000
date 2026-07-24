@@ -20,6 +20,9 @@ if (isset($_SESSION['id_usuario'])) {
 
 $error = "";
 $exito = "";
+$intentos_actuales = 0;
+$max_intentos = 3;
+$tiempo_bloqueo = 120; // segundos (2 minutos)
 
 // ==========================================
 // MENSAJES DE ERROR DESDE URL
@@ -48,14 +51,19 @@ $csrf_token = Security::generateToken();
 $preguntas_opciones = getPreguntasRespuestas();
 
 // ==========================================
+// LIMPIAR INTENTOS EXPIRADOS
+// ==========================================
+$db->execute("DELETE FROM login_intentos WHERE TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) >= ?", [$tiempo_bloqueo]);
+
+// ==========================================
 // VERIFICAR BLOQUEO POR IP
 // ==========================================
 $segundos_restantes = 0;
 $ip_actual = $_SERVER['REMOTE_ADDR'];
-$row_rest = $db->fetchOne("SELECT 45 - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE ip_address = ? AND intentos >= 3 AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < 45", [$ip_actual]);
+$row_rest = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE ip_address = ? AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ?", [$ip_actual, $max_intentos, $tiempo_bloqueo]);
 if ($row_rest && $row_rest['restante'] > 0) {
     $segundos_restantes = (int)$row_rest['restante'];
-    $error = "DEMASIADOS INTENTOS. ESPERE $segundos_restantes SEGUNDOS.";
+    $error = "ACCESO BLOQUEADO - Espere $segundos_restantes segundos";
 }
 
 // ==========================================
@@ -66,10 +74,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
     $new_email = strtolower(trim($_POST['reg_email']));
     $new_pass = $_POST['reg_password'];
 
-    if (!preg_match('/^[a-zA-Z0-9_]{4,20}$/', $new_user)) {
+    if (strlen($new_user) > 20) {
+        $error = "USUARIO DEMASIADO LARGO (MAX 20 CARACTERES)";
+    } elseif (!preg_match('/^[a-zA-Z0-9_]{4,20}$/', $new_user)) {
         $error = "USUARIO: MIN 4 Y MAX 20 CARACTERES (letras, numeros, guion bajo)";
+    } elseif (strlen($new_email) > 50) {
+        $error = "CORREO DEMASIADO LARGO (MAX 50 CARACTERES)";
     } elseif (!filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
         $error = "CORREO: FORMATO INVALIDO";
+    } elseif (strlen($new_pass) > 20) {
+        $error = "CONTRASEÑA DEMASIADO LARGA (MAX 20 CARACTERES)";
     } elseif (!preg_match('/^.{8,}$/', $new_pass)) {
         $error = "CONTRASEÑA: MIN 8 CARACTERES";
     } elseif ($new_pass !== $_POST['reg_password_confirm']) {
@@ -93,9 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
                     'usuario'             => $new_user,
                     'correo'              => $new_email,
                     'password'            => $pass_hash,
+                    'id_rol'              => $es_admin ? 1 : NULL,
                     'pregunta_seguridad'  => $reg_pregunta,
                     'respuesta_seguridad' => $resp_hash,
-                    'rol'                 => $es_admin ? 'Administrador' : 'Sin Asignar',
                     'status'              => $es_admin ? 'Activo' : 'Inactivo',
                     'aprobado'            => $es_admin ? 1 : 0,
                 ]);
@@ -114,44 +128,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     $ip_usuario = $_SERVER['REMOTE_ADDR'];
 
-    $blocked = $db->fetchOne("SELECT 1 FROM login_intentos WHERE ip_address = ? AND intentos >= 3 AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < 45", [$ip_usuario]);
+    $blocked = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE ip_address = ? AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ?", [$ip_usuario, $max_intentos, $tiempo_bloqueo]);
     if ($blocked) {
-        $segundos_restantes = max(1, $segundos_restantes);
-        $error = "DEMASIADOS INTENTOS. ESPERE $segundos_restantes SEGUNDOS.";
+        $segundos_restantes = max(1, (int)$blocked['restante']);
+        $error = "ACCESO BLOQUEADO - Espere $segundos_restantes segundos";
     } else {
         $user = trim($_POST['usuario']);
         $pass = $_POST['password'];
 
-        $row = $db->fetchOne("SELECT * FROM usuarios WHERE BINARY usuario = ? LIMIT 1", [$user]);
-        if ($row) {
-            if (password_verify($pass, $row['password'])) {
-                $aprobado = $row['aprobado'] ?? 1;
-                if ($aprobado == 0) {
-                    $error = "TU CUENTA ESTA PENDIENTE DE APROBACION. CONTACTA AL ADMINISTRADOR.";
-                } elseif ($row['status'] === 'Inactivo') {
-                    $error = "TU CUENTA ESTA DESACTIVADA. CONTACTA AL ADMINISTRADOR.";
-                } else {
+        if (strlen($user) > 30) {
+            $error = "USUARIO DEMASIADO LARGO (MAX 30 CARACTERES)";
+        } elseif (strlen($pass) > 20) {
+            $error = "CONTRASEÑA DEMASIADO LARGA (MAX 20 CARACTERES)";
+        } else {
+            $login_exitoso = false;
+            $row = $db->fetchOne("SELECT * FROM usuarios WHERE BINARY usuario = ? LIMIT 1", [$user]);
+            if ($row) {
+                if (password_verify($pass, $row['password'])) {
                     $db->execute("DELETE FROM login_intentos WHERE ip_address = ?", [$ip_usuario]);
-                    $_SESSION['id_usuario']   = $row['id_usuario'];
-                    $_SESSION['usuario']      = $row['usuario'];
-                    $_SESSION['rol']          = $row['rol'];
-                    $_SESSION['ip_addr']      = $_SERVER['REMOTE_ADDR'];
-                    $_SESSION['fresh_login']  = true;
-                    registrarAuditoria('login', "Inicio de sesión");
-                    header("Location: index.php");
-                    exit();
+                    $aprobado = $row['aprobado'] ?? 1;
+                    if ($aprobado == 0) {
+                        $error = "TU CUENTA ESTA PENDIENTE DE APROBACION. CONTACTA AL ADMINISTRADOR.";
+                    } elseif ($row['status'] === 'Inactivo') {
+                        $error = "TU CUENTA ESTA DESACTIVADA. CONTACTA AL ADMINISTRADOR.";
+                    } else {
+                        $login_exitoso = true;
+                        $_SESSION['id_usuario']   = $row['id_usuario'];
+                        $_SESSION['usuario']      = $row['usuario'];
+                        $_SESSION['id_rol']       = (int)$row['id_rol'];
+                        $_SESSION['ip_addr']      = $_SERVER['REMOTE_ADDR'];
+                        $_SESSION['fresh_login']  = true;
+                        registrarAuditoria('login', "Inicio de sesión");
+                        header("Location: index.php");
+                        exit();
+                    }
                 }
-            } else {
-                $existing = $db->fetchOne("SELECT 1 FROM login_intentos WHERE ip_address = ?", [$ip_usuario]);
+            }
+
+            // Si NO hubo login exitoso, registrar intento fallido
+            if (!$login_exitoso) {
+                $existing = $db->fetchOne("SELECT id, intentos FROM login_intentos WHERE ip_address = ?", [$ip_usuario]);
                 if ($existing) {
-                    $db->execute("UPDATE login_intentos SET intentos = intentos + 1, ultimo_intento = NOW() WHERE ip_address = ?", [$ip_usuario]);
+                    $nuevos_intentos = (int)$existing['intentos'] + 1;
+                    $db->execute("UPDATE login_intentos SET intentos = ?, ultimo_intento = NOW() WHERE id = ?", [$nuevos_intentos, (int)$existing['id']]);
+                    $intentos_actuales = $nuevos_intentos;
                 } else {
                     $db->execute("INSERT INTO login_intentos (ip_address, intentos) VALUES (?, 1)", [$ip_usuario]);
+                    $intentos_actuales = 1;
                 }
-                $error = "CODIGO DE ACCESO INCORRECTO";
+                $restantes = $max_intentos - $intentos_actuales;
+                if ($restantes <= 0) {
+                    $error = "ACCESO BLOQUEADO POR 2 MINUTOS (3 intentos fallidos)";
+                } else {
+                    $error = $row ? "CONTRASEÑA INVÁLIDA (intento $intentos_actuales de $max_intentos)" : "USUARIO NO REGISTRADO (intento $intentos_actuales de $max_intentos)";
+                }
             }
-        } else {
-            $error = "EL USUARIO NO EXISTE EN EL SISTEMA";
         }
     }
 }
@@ -371,6 +402,120 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     pointer-events: none;
     z-index: 2;
 }
+
+/* === ALERTAS MEJORADAS === */
+.alert-card-jv {
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    animation: alertSlideIn 0.35s ease-out;
+}
+@keyframes alertSlideIn {
+    from { opacity:0; transform:translateY(-12px) scale(0.96); }
+    to { opacity:1; transform:translateY(0) scale(1); }
+}
+.alert-card-jv .alert-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.alert-card-jv .alert-body { flex:1; min-width:0; }
+.alert-card-jv .alert-title {
+    font-size: .75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+.alert-card-jv .alert-text {
+    font-size: .8rem;
+    font-weight: 600;
+    opacity: 0.9;
+    line-height: 1.3;
+}
+/* Danger / Error */
+.alert-card-jv.alert-card-danger {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.3);
+}
+.alert-card-jv.alert-card-danger .alert-icon-box {
+    background: rgba(239,68,68,0.2);
+    color: #f87171;
+}
+.alert-card-jv.alert-card-danger .alert-title { color: #f87171; }
+.alert-card-jv.alert-card-danger .alert-text { color: #fca5a5; }
+/* Blocked (intensified danger) */
+.alert-card-jv.alert-card-blocked {
+    background: rgba(185,28,28,0.15);
+    border-color: rgba(239,68,68,0.4);
+    border-left: 4px solid #ef4444;
+}
+.alert-card-jv.alert-card-blocked .alert-icon-box {
+    background: rgba(239,68,68,0.3);
+    color: #fca5a5;
+}
+.alert-card-jv.alert-card-blocked .alert-title { color: #fca5a5; }
+.alert-card-jv.alert-card-blocked .alert-text { color: #fecaca; }
+.alert-card-jv.alert-card-blocked .alert-timer {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #f87171;
+    line-height: 1;
+    margin-top: 4px;
+}
+.alert-card-jv.alert-card-blocked .alert-timer small {
+    font-size: .7rem;
+    font-weight: 700;
+    opacity: 0.7;
+}
+/* Progress bar for blocked alert */
+.alert-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(239,68,68,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+.alert-progress .alert-progress-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    border-radius: 2px;
+    transition: width 1s linear;
+}
+/* Success */
+.alert-card-jv.alert-card-success {
+    background: rgba(34,197,94,0.1);
+    border-color: rgba(34,197,94,0.3);
+}
+.alert-card-jv.alert-card-success .alert-icon-box {
+    background: rgba(34,197,94,0.2);
+    color: #4ade80;
+}
+.alert-card-jv.alert-card-success .alert-title { color: #4ade80; }
+.alert-card-jv.alert-card-success .alert-text { color: #86efac; }
+/* Warning */
+.alert-card-jv.alert-card-warning {
+    background: rgba(251,191,36,0.1);
+    border-color: rgba(251,191,36,0.3);
+}
+.alert-card-jv.alert-card-warning .alert-icon-box {
+    background: rgba(251,191,36,0.2);
+    color: #fbbf24;
+}
+.alert-card-jv.alert-card-warning .alert-title { color: #fbbf24; }
+.alert-card-jv.alert-card-warning .alert-text { color: #fde68a; }
 </style>
 </head>
 <body>
@@ -382,14 +527,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
         <div class="brand-tagline" style="color:#ffffff !important;">Sistema de Inventario y Ventas</div>
 
         <?php if ($error): ?>
-        <div class="alert-jv alert-jv-danger mb-3 flash-auto" id="alerta-bloqueo">
-            <i class="bi bi-shield-slash me-2"></i><?php echo htmlspecialchars($error); ?>
+        <div class="alert-card-jv <?php echo $segundos_restantes > 0 ? 'alert-card-blocked' : 'alert-card-danger'; ?> flash-auto" id="alerta-bloqueo">
+            <div class="alert-icon-box"><i class="bi bi-shield-slash-fill"></i></div>
+            <div class="alert-body">
+                <div class="alert-title"><?php echo $segundos_restantes > 0 ? 'ACCESO BLOQUEADO' : 'ERROR DE ACCESO'; ?></div>
+                <div class="alert-text"><?php echo htmlspecialchars($error); ?></div>
+                <?php if ($segundos_restantes > 0): ?>
+                <div class="alert-timer" id="alertTimer"><?php echo $segundos_restantes; ?> <small>seg</small></div>
+                <div class="alert-progress"><div class="alert-progress-fill" id="alertProgressFill"></div></div>
+                <?php endif; ?>
+            </div>
         </div>
         <?php endif; ?>
 
         <?php if ($exito): ?>
-        <div class="alert-jv alert-jv-success mb-3 flash-auto">
-            <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($exito); ?>
+        <div class="alert-card-jv alert-card-success flash-auto" id="alerta-exito">
+            <div class="alert-icon-box"><i class="bi bi-shield-check-fill"></i></div>
+            <div class="alert-body">
+                <div class="alert-title">OPERACIÓN EXITOSA</div>
+                <div class="alert-text"><?php echo htmlspecialchars($exito); ?></div>
+            </div>
         </div>
         <?php endif; ?>
 
@@ -401,12 +558,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 
             <div class="field-group">
                 <i class="field-icon bi bi-person-fill"></i>
-                <input type="text" id="f-user" name="usuario" class="field-input" placeholder="ID de Operador" required autofocus <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                <input type="text" id="f-user" name="usuario" class="field-input" placeholder="ID de Operador" required autofocus maxlength="30" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
             </div>
 
             <div class="field-group">
                 <i class="field-icon bi bi-lock-fill"></i>
-                <input type="password" id="f-pass" name="password" class="field-input" placeholder="Clave de Acceso" required <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                <input type="password" id="f-pass" name="password" class="field-input" placeholder="Clave de Acceso" required maxlength="20" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
                 <button type="button" class="field-eye" id="btnEyePass" aria-label="Mostrar contraseña">
                     <i class="bi bi-eye-slash-fill" id="iconEyePass"></i>
                 </button>
@@ -454,20 +611,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                     <label class="form-label">Nombre de Usuario</label>
                     <div class="field-group">
                         <i class="field-icon bi bi-at"></i>
-                        <input type="text" name="reg_usuario" id="r-user" class="field-input" required oninput="validarReg()" placeholder="Ej: admin_sistema">
+                        <input type="text" name="reg_usuario" id="r-user" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Ej: admin_sistema">
                     </div>
                     <small class="reg-hint" id="r-user-hint">Minimo 4 caracteres, solo letras, numeros y guiones bajos.</small>
 
                     <label class="form-label" style="margin-top:14px;">Correo Electronico</label>
                     <div class="field-group">
                         <i class="field-icon bi bi-envelope-fill"></i>
-                        <input type="email" name="reg_email" class="field-input" required placeholder="ejemplo@jv3000.com">
+                        <input type="email" name="reg_email" class="field-input" required maxlength="50" placeholder="ejemplo@jv3000.com">
                     </div>
 
                     <label class="form-label" style="margin-top:14px;">Contraseña</label>
                     <div class="field-group">
                         <i class="field-icon bi bi-key-fill"></i>
-                        <input type="password" name="reg_password" id="r-pass" class="field-input" required oninput="validarReg()" placeholder="Cree una clave fuerte">
+                        <input type="password" name="reg_password" id="r-pass" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Cree una clave fuerte">
                         <button type="button" class="field-eye" id="btnEyeR1" aria-label="Mostrar">
                             <i class="bi bi-eye-slash-fill" id="iconEyeR1"></i>
                         </button>
@@ -480,7 +637,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                     <label class="form-label" style="margin-top:14px;">Confirmar Contraseña</label>
                     <div class="field-group">
                         <i class="field-icon bi bi-key"></i>
-                        <input type="password" name="reg_password_confirm" id="r-pass2" class="field-input" required oninput="validarReg()" placeholder="Repita la contraseña">
+                        <input type="password" name="reg_password_confirm" id="r-pass2" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Repita la contraseña">
                         <button type="button" class="field-eye" id="btnEyeR2" aria-label="Mostrar">
                             <i class="bi bi-eye-slash-fill" id="iconEyeR2"></i>
                         </button>
@@ -619,14 +776,21 @@ document.getElementById('r-preg').addEventListener('change', function() {
 });
 </script>
 <script>
-// Contador regresivo de bloqueo
+// Contador regresivo de bloqueo con barra de progreso
 var segRestantes = <?php echo $segundos_restantes; ?>;
+var totalSegundos = segRestantes;
 if (segRestantes > 0) {
-    var elAlerta = document.querySelector('.alert-jv-danger');
+    var elAlerta = document.getElementById('alerta-bloqueo');
+    var timerEl = document.getElementById('alertTimer');
+    var progressFill = document.getElementById('alertProgressFill');
     var timerBloqueo = setInterval(function() {
         segRestantes--;
-        if (elAlerta) {
-            elAlerta.innerHTML = '<i class="bi bi-shield-slash me-2"></i>DEMASIADOS INTENTOS. ESPERE <strong>' + segRestantes + '</strong> SEGUNDOS.';
+        if (timerEl) {
+            timerEl.innerHTML = segRestantes + ' <small>seg</small>';
+        }
+        if (progressFill && totalSegundos > 0) {
+            var pct = (segRestantes / totalSegundos) * 100;
+            progressFill.style.width = pct + '%';
         }
         if (segRestantes <= 0) {
             clearInterval(timerBloqueo);
@@ -635,8 +799,8 @@ if (segRestantes > 0) {
             document.getElementById('btn-login').disabled = false;
             document.getElementById('f-user').focus();
             if (elAlerta) {
-                elAlerta.className = 'alert-jv alert-jv-success mb-3';
-                elAlerta.innerHTML = '<i class="bi bi-unlock-fill me-2"></i>BLOQUEO TERMINADO. YA PUEDES INTENTAR DE NUEVO.';
+                elAlerta.className = 'alert-card-jv alert-card-success flash-auto';
+                elAlerta.innerHTML = '<div class="alert-icon-box"><i class="bi bi-unlock-fill"></i></div><div class="alert-body"><div class="alert-title">BLOQUEO TERMINADO</div><div class="alert-text">YA PUEDES INTENTAR DE NUEVO.</div></div>';
                 setTimeout(function() {
                     elAlerta.style.transition = 'opacity .5s';
                     elAlerta.style.opacity = '0';

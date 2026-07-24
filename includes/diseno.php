@@ -359,6 +359,13 @@ input[type="date"].input-jv {
     border-color: rgba(245, 158, 11, 0.3);
 }
 
+/* Info */
+.badge-info {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
 /* Danger */
 .badge-danger {
     background: rgba(239, 68, 68, 0.1);

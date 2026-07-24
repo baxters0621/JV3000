@@ -8,8 +8,8 @@ $db = Database::getInstance();
 header('Content-Type: application/json');
 
 // Verificar permiso
-$rol_ajax = $_SESSION['rol'] ?? '';
-if ($rol_ajax !== 'Administrador' && $rol_ajax !== 'Operador de Ventas') {
+$rol_ajax = (int)($_SESSION['id_rol'] ?? 0);
+if ($rol_ajax !== 1 && $rol_ajax !== 3) {
     echo json_encode(['success' => false, 'error' => 'acceso_denegado']);
     exit();
 }

@@ -5,8 +5,8 @@
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
-$rol_est = $_SESSION['rol'] ?? '';
-if ($rol_est !== 'Administrador' && $rol_est !== 'Operador de Ventas') {
+$rol_est = (int)($_SESSION['id_rol'] ?? 0);
+if ($rol_est !== 1 && $rol_est !== 3) {
     header("Location: ../index.php?error=acceso_denegado"); exit();
 }
 
@@ -270,7 +270,7 @@ foreach ($res_top as $row) {
         <div class="row g-3 mb-4">
             <div class="col-md-3">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(56,189,248,0.12);color:#38bdf8;">
+                    <div class="widget-icon" style="background:rgba(248,113,113,0.12);color:#f87171;">
                         <i class="bi bi-currency-dollar"></i>
                     </div>
                     <div>
@@ -281,7 +281,7 @@ foreach ($res_top as $row) {
             </div>
             <div class="col-md-3">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(248,113,113,0.12);color:#f87171;">
+                    <div class="widget-icon" style="background:rgba(56,189,248,0.12);color:#38bdf8;">
                         <i class="bi bi-truck"></i>
                     </div>
                     <div>
@@ -362,13 +362,13 @@ foreach ($res_top as $row) {
                     </h5>
                     <div class="profit-grid">
                         <div class="profit-summary">
-                            <div class="profit-row" style="--profit-color:#38bdf8;">
-                                <span class="label">Ingresos</span>
-                                <span class="value cyan" id="prof-ingresos">$<?php echo number_format($ventas_7d, 2); ?></span>
-                            </div>
                             <div class="profit-row" style="--profit-color:#f87171;">
+                                <span class="label">Ingresos</span>
+                                <span class="value rojo" id="prof-ingresos">$<?php echo number_format($ventas_7d, 2); ?></span>
+                            </div>
+                            <div class="profit-row" style="--profit-color:#38bdf8;">
                                 <span class="label">Costo Vendido</span>
-                                <span class="value rojo" id="prof-costo">$<?php echo number_format($costo_vendido_7d, 2); ?></span>
+                                <span class="value cyan" id="prof-costo">$<?php echo number_format($costo_vendido_7d, 2); ?></span>
                             </div>
                             <div class="profit-separator"></div>
                             <div class="profit-row" style="--profit-color:#4ade80;">
@@ -442,8 +442,8 @@ foreach ($res_top as $row) {
         data: {
             labels: fechas,
             datasets: [
-                { label: 'Ventas ($)', data: ventas, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', fill: true, tension: 0.4 },
-                { label: 'Compras ($)', data: compras, borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', fill: true, tension: 0.4 }
+                { label: 'Ventas ($)', data: ventas, borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', fill: true, tension: 0.4 },
+                { label: 'Compras ($)', data: compras, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', fill: true, tension: 0.4 }
             ]
         },
         options: {
@@ -474,12 +474,12 @@ foreach ($res_top as $row) {
                     display: true,
                     position: 'bottom',
                     labels: {
-                        color: '#94a3b8',
+                        color: '#e2e8f0',
                         usePointStyle: true,
-                        padding: 10,
-                        font: { size: 10, weight: 'bold' },
-                        boxWidth: 12,
-                        boxHeight: 12
+                        padding: 14,
+                        font: { size: 13, weight: 'bold' },
+                        boxWidth: 16,
+                        boxHeight: 16
                     }
                 },
                 tooltip: {

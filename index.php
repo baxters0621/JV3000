@@ -6,11 +6,13 @@ require_once __DIR__ . '/init.php';
 
 $db = Database::getInstance();
 $nombre_user = $_SESSION['usuario'] ?? 'Usuario';
-$rol_user = $_SESSION['rol'] ?? 'Operador';
-$id_user = $_SESSION['id_usuario'] ?? 0;
-$esAdmin = ($rol_user === 'Administrador');
-$esOpVentas = ($rol_user === 'Operador de Ventas');
-$esOpCarga = ($rol_user === 'Operador de Carga');
+$rol_user_id = $_SESSION['id_rol'] ?? 0;
+$rol_data = $db->fetchOne("SELECT nombre_rol FROM roles WHERE id_rol = ?", [$rol_user_id]);
+$rol_user = $rol_data ? $rol_data['nombre_rol'] : 'Sin Rol';
+
+$esAdmin = ($rol_user_id === 1);
+$esOpVentas = ($rol_user_id === 3);
+$esOpCarga = ($rol_user_id === 2);
 
 $fecha_hoy = date('d/m/Y');
 
@@ -21,7 +23,7 @@ if (isset($_GET['ajax_dashboard'])) {
     header('Content-Type: application/json');
     $datos = [];
 
-    $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE DATE(s.fecha_salida) = CURRENT_DATE AND s.id_tipo_mov = 1 AND s.status = 'Activa'");
+    $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'");
     $datos['ventas_dia'] = number_format($vd['total'], 2);
 
     $vi = $db->fetchOne("SELECT COALESCE(SUM(stock_actual * precio_costo), 0) as valor FROM productos WHERE status = 'Activo'");
@@ -34,7 +36,7 @@ if (isset($_GET['ajax_dashboard'])) {
     $datos['grafico_ventas'] = array_map(fn($r) => ['fecha' => $r['fecha'], 'total' => (float)$r['total']], $g1);
 
     $g2 = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, SUM(ds.cantidad) as cantidad FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY cantidad DESC LIMIT 5");
-    $paleta_idx = ['#38bdf8','#22c55e','#f59e0b','#ef4444','#a855f7','#f472b6','#34d399','#fbbf24','#a78bfa','#fb7185'];
+    $paleta_idx = ['#38bdf8', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'];
     $datos['grafico_productos'] = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'cantidad' => (int)$r['cantidad'], 'color' => $paleta_idx[$r['id_producto'] % count($paleta_idx)]], $g2);
 
     $fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
@@ -43,7 +45,7 @@ if (isset($_GET['ajax_dashboard'])) {
     // Productos próximos a vencer (≤15 días) y expirados
     $venc_now = $db->fetchAll("SELECT id_producto, nombre_producto, fecha_vencimiento, stock_actual FROM productos WHERE fecha_vencimiento <= CURRENT_DATE() AND status = 'Activo' ORDER BY fecha_vencimiento ASC LIMIT 8");
     $venc_pending = $db->fetchAll("SELECT id_producto, nombre_producto, fecha_vencimiento, stock_actual FROM productos WHERE fecha_vencimiento <= DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY) AND fecha_vencimiento > CURRENT_DATE() AND status = 'Activo' ORDER BY fecha_vencimiento ASC LIMIT 5");
-    
+
     $productos_vencer = array_map(fn($r) => [
         'id' => $r['id_producto'],
         'nombre' => $r['nombre_producto'],
@@ -51,7 +53,7 @@ if (isset($_GET['ajax_dashboard'])) {
         'dias' => floor((strtotime($r['fecha_vencimiento']) - time()) / 86400),
         'stock' => (int)$r['stock_actual']
     ], $venc_now);
-    
+
     $productos_pronto = array_map(fn($r) => [
         'id' => $r['id_producto'],
         'nombre' => $r['nombre_producto'],
@@ -59,7 +61,7 @@ if (isset($_GET['ajax_dashboard'])) {
         'dias' => floor((strtotime($r['fecha_vencimiento']) - time()) / 86400),
         'stock' => (int)$r['stock_actual']
     ], $venc_pending);
-    
+
     $datos['productos_vencer'] = $productos_vencer;
     $datos['productos_pronto'] = $productos_pronto;
 
@@ -70,7 +72,7 @@ if (isset($_GET['ajax_dashboard'])) {
 // ==========================================
 // CONSULTAS INICIALES DEL DASHBOARD
 // ==========================================
-$vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE DATE(s.fecha_salida) = CURRENT_DATE AND s.id_tipo_mov = 1 AND s.status = 'Activa'");
+$vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'");
 $ventas_dia = $vd['total'];
 
 $vi = $db->fetchOne("SELECT COALESCE(SUM(stock_actual * precio_costo), 0) as valor FROM productos WHERE status = 'Activo'");
@@ -83,7 +85,7 @@ $gv = $db->fetchAll("SELECT DATE(s.fecha_salida) as fecha, SUM(ds.cantidad * ds.
 $grafico_ventas = array_map(fn($r) => ['fecha' => $r['fecha'], 'total' => (float)$r['total']], $gv);
 
 $gp = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, SUM(ds.cantidad) as cantidad FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY cantidad DESC LIMIT 5");
-$paleta_idx = ['#38bdf8','#22c55e','#f59e0b','#ef4444','#a855f7','#f472b6','#34d399','#fbbf24','#a78bfa','#fb7185'];
+$paleta_idx = ['#38bdf8', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'];
 $grafico_productos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'cantidad' => (int)$r['cantidad'], 'color' => $paleta_idx[$r['id_producto'] % count($paleta_idx)]], $gp);
 
 $fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
@@ -91,13 +93,24 @@ $ultimas_facturas = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'f
 
 $crit = $db->fetchAll("SELECT nombre_producto, stock_actual, stock_minimo FROM productos WHERE (stock_actual <= stock_minimo OR stock_actual = 0) AND status = 'Activo' ORDER BY stock_actual ASC LIMIT 5");
 $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'stock' => $r['stock_actual'], 'minimo' => $r['stock_minimo'], 'estado' => ($r['stock_actual'] == 0) ? 'critico' : 'bajo'], $crit);
+
+// Productos próximos a vencer
+$vc = $db->fetchAll("SELECT id_producto, nombre_producto, fecha_vencimiento, stock_actual FROM productos WHERE fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 15 DAY) AND status = 'Activo' ORDER BY fecha_vencimiento ASC LIMIT 5");
+$tabla_vencer = array_map(fn($r) => [
+    'id' => $r['id_producto'], 'nombre' => $r['nombre_producto'],
+    'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
+    'dias' => floor((strtotime($r['fecha_vencimiento']) - time()) / 86400),
+    'stock' => (int)$r['stock_actual']
+], $vc);
 ?>
 <!DOCTYPE html>
 <html lang="es">
 
 <?php // ==========================================
 // HEAD Y ESTILOS HTML
-// ========================================== ?>
+// ========================================== 
+?>
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -176,7 +189,8 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px -5px var(--hover-color);
         }
 
-        .card-modulo i, .card-modulo span {
+        .card-modulo i,
+        .card-modulo span {
             position: relative;
             z-index: 1;
         }
@@ -224,9 +238,20 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
         }
 
         @keyframes pulse-red {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
         }
 
         /* Íconos de los widgets */
@@ -241,7 +266,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
         }
 
         /* ===== NUEVO DASHBOARD ===== */
-        
+
         /* Header Panel de Inicio */
         .dashboard-header {
             display: flex;
@@ -254,13 +279,13 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             border-radius: 24px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
-        
+
         .dashboard-title {
             display: flex;
             align-items: center;
             gap: 16px;
         }
-        
+
         .dashboard-logo {
             width: 60px;
             height: 60px;
@@ -275,7 +300,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             color: #fff;
             box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5);
         }
-        
+
         .dashboard-title h1 {
             font-family: 'Orbitron', sans-serif;
             font-size: 2.2rem;
@@ -287,7 +312,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             -webkit-text-fill-color: transparent;
             text-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
         }
-        
+
         .dashboard-title .subtitle {
             color: rgba(56, 189, 248, 0.9);
             font-size: 0.9rem;
@@ -295,13 +320,13 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             margin-top: 4px;
             letter-spacing: 1px;
         }
-        
+
         .dashboard-info {
             display: flex;
             align-items: center;
             gap: 16px;
         }
-        
+
         .dashboard-user {
             display: flex;
             align-items: center;
@@ -311,7 +336,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 14px;
         }
-        
+
         .dashboard-user-avatar {
             width: 40px;
             height: 40px;
@@ -323,13 +348,13 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             color: #fff;
             font-size: 1.2rem;
         }
-        
+
         .dashboard-user-name {
             color: #fff;
             font-weight: 700;
             font-size: 0.95rem;
         }
-        
+
         .dashboard-user-role {
             color: rgba(168, 85, 247, 0.9);
             font-size: 0.75rem;
@@ -337,7 +362,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        
+
         .dashboard-date {
             background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(56, 189, 248, 0.1));
             border: 1px solid rgba(56, 189, 248, 0.3);
@@ -444,13 +469,28 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             font-weight: 900;
             color: #fff;
             font-family: 'Orbitron', sans-serif;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .kpi-card.kpi-verde { --kpi-color: #22c55e; --kpi-rgb: 34, 197, 94; }
-        .kpi-card.kpi-cyan { --kpi-color: #38bdf8; --kpi-rgb: 56, 189, 248; }
-        .kpi-card.kpi-amarillo { --kpi-color: #f59e0b; --kpi-rgb: 245, 158, 11; }
-        .kpi-card.kpi-rojo { --kpi-color: #ef4444; --kpi-rgb: 239, 68, 68; }
+        .kpi-card.kpi-verde {
+            --kpi-color: #22c55e;
+            --kpi-rgb: 34, 197, 94;
+        }
+
+        .kpi-card.kpi-cyan {
+            --kpi-color: #38bdf8;
+            --kpi-rgb: 56, 189, 248;
+        }
+
+        .kpi-card.kpi-amarillo {
+            --kpi-color: #f59e0b;
+            --kpi-rgb: 245, 158, 11;
+        }
+
+        .kpi-card.kpi-rojo {
+            --kpi-color: #ef4444;
+            --kpi-rgb: 239, 68, 68;
+        }
 
         /* Accesos Rápidos */
         .shortcuts-grid {
@@ -476,7 +516,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             position: relative;
             overflow: hidden;
             color: #ffffff;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
 
         .shortcut-btn::before {
@@ -486,7 +526,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
             pointer-events: none;
         }
 
@@ -497,7 +537,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
 
         .shortcut-btn i {
             font-size: 2.5rem;
-            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
             color: #ffffff;
         }
 
@@ -506,13 +546,14 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             font-weight: 700;
             letter-spacing: 2px;
             color: #ffffff;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
         }
 
         .shortcut-facturar {
             background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
             box-shadow: 0 12px 40px rgba(34, 197, 94, 0.5), 0 0 0 1px rgba(34, 197, 94, 0.3);
         }
+
         .shortcut-facturar:hover {
             box-shadow: 0 20px 50px rgba(34, 197, 94, 0.6), 0 0 0 2px rgba(34, 197, 94, 0.5);
         }
@@ -521,6 +562,7 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             box-shadow: 0 12px 40px rgba(59, 130, 246, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.3);
         }
+
         .shortcut-entrada:hover {
             box-shadow: 0 20px 50px rgba(59, 130, 246, 0.6), 0 0 0 2px rgba(59, 130, 246, 0.5);
         }
@@ -603,17 +645,46 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
             color: rgba(255, 255, 255, 0.8);
             vertical-align: middle;
         }
-        .data-table tbody tr { transition: background 0.2s; }
-        .data-table tbody tr:nth-child(odd) td { background: rgba(255,255,255,0.02); }
-        .data-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.06); }
-        .table-card:first-child .data-table tbody tr td:first-child { border-left: 3px solid rgba(6,182,212,0.3); padding-left: 12px; }
-        .table-card:last-child .data-table tbody tr td:first-child { border-left: 3px solid rgba(239,68,68,0.3); padding-left: 12px; }
+
+        .data-table tbody tr {
+            transition: background 0.2s;
+        }
+
+        .data-table tbody tr:nth-child(odd) td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .data-table tbody tr:nth-child(even) td {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .table-card:first-child .data-table tbody tr td:first-child {
+            border-left: 3px solid rgba(6, 182, 212, 0.3);
+            padding-left: 12px;
+        }
+
+        .table-card:last-child .data-table tbody tr td:first-child {
+            border-left: 3px solid rgba(239, 68, 68, 0.3);
+            padding-left: 12px;
+        }
+
         .data-table td:nth-child(2),
-        .data-table td:nth-child(3) { text-align: center; }
+        .data-table td:nth-child(3) {
+            text-align: center;
+        }
+
         .data-table th:nth-child(2),
-        .data-table th:nth-child(3) { text-align: center; }
-        .table-card:first-child .data-table td:last-child { text-align: right; }
-        .table-card:first-child .data-table th:last-child { text-align: right; }
+        .data-table th:nth-child(3) {
+            text-align: center;
+        }
+
+        .table-card:first-child .data-table td:last-child {
+            text-align: right;
+        }
+
+        .table-card:first-child .data-table th:last-child {
+            text-align: right;
+        }
 
         .data-table tr:hover td {
             background: rgba(255, 255, 255, 0.03);
@@ -642,171 +713,220 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
 
         /* Responsive */
         @media (max-width: 1200px) {
-            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-            .charts-grid { grid-template-columns: 1fr; }
-            .tables-grid { grid-template-columns: 1fr; }
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tables-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
-            .dashboard-header { flex-direction: column; gap: 16px; text-align: center; }
-            .shortcuts-grid { grid-template-columns: 1fr; }
-            .kpi-grid { grid-template-columns: 1fr; }
+            .dashboard-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .shortcuts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
-<?php // ==========================================
+<?php
+// ==========================================
 // LAYOUT DEL DASHBOARD
-// ========================================== ?>
+// ========================================== 
+?>
+
 <body>
     <?php include 'includes/sidebar.php'; ?>
 
     <div class="main-wrapper" id="mainWrapper">
         <div class="container-fluid px-4 py-4">
-        
-        <!-- Header Panel de Inicio -->
-        <div class="dashboard-header">
-            <div class="dashboard-title">
-                <div class="dashboard-logo">JV</div>
-                <div>
-                    <h1>3000</h1>
-                    <div class="subtitle">Centro de Control | <?php echo htmlspecialchars($nombre_user); ?></div>
-                </div>
-            </div>
-            <div class="dashboard-info">
-                <div class="dashboard-user">
-                    <div class="dashboard-user-avatar"><i class="bi bi-person-fill"></i></div>
+
+            <!-- Header Panel de Inicio -->
+            <div class="dashboard-header">
+                <div class="dashboard-title">
+                    <div class="dashboard-logo">JV</div>
                     <div>
-                        <div class="dashboard-user-name"><?php echo htmlspecialchars($nombre_user); ?></div>
-                        <div class="dashboard-user-role"><?php echo strtoupper($rol_user); ?></div>
+                        <h1>3000</h1>
+                        <div class="subtitle">Centro de Control | <?php echo htmlspecialchars($nombre_user); ?></div>
                     </div>
                 </div>
-                <div class="dashboard-date">
-                    <i class="bi bi-calendar3 me-2"></i><?php echo $fecha_hoy; ?>
+                <div class="dashboard-info">
+                    <div class="dashboard-user">
+                        <div class="dashboard-user-avatar"><i class="bi bi-person-fill"></i></div>
+                        <div>
+                            <div class="dashboard-user-name"><?php echo htmlspecialchars($nombre_user); ?></div>
+                            <div class="dashboard-user-role"><?php echo strtoupper($rol_user); ?></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-date">
+                        <i class="bi bi-calendar3 me-2"></i><?php echo $fecha_hoy; ?>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- KPIs -->
-        <div class="section-title">
-            <i class="bi bi-speedometer2"></i> Indicadores Clave
-        </div>
-        <div class="kpi-grid">
-            <div class="kpi-card kpi-verde">
-                <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
-                <div class="kpi-label">Ventas Hoy</div>
-                <div class="kpi-value" id="kpi-ventas-dia">$<?php echo number_format($ventas_dia, 2); ?></div>
+            <!-- KPIs -->
+            <div class="section-title">
+                <i class="bi bi-speedometer2"></i> Indicadores Clave
             </div>
-            <div class="kpi-card kpi-amarillo">
-                <div class="kpi-icon"><i class="bi bi-box-seam"></i></div>
-                <div class="kpi-label">Valor Inventario</div>
-                <div class="kpi-value" id="kpi-valor-inv">$<?php echo number_format($valor_inventario, 2); ?></div>
-            </div>
-            <div class="kpi-card kpi-rojo">
-                <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
-                <div class="kpi-label">Productos Críticos</div>
-                <div class="kpi-value" id="kpi-criticos"><?php echo $productos_criticos; ?></div>
-            </div>
-        </div>
-
-        <!-- Accesos Rápidos -->
-        <div class="section-title">
-            <i class="bi bi-lightning-charge"></i> Accesos Rápidos
-        </div>
-        <div class="shortcuts-grid">
-            <?php if ($esAdmin || $esOpVentas): ?>
-            <a href="modules/salidas.php" class="shortcut-btn shortcut-facturar">
-                <i class="bi bi-plus-circle"></i>
-                <span>+ NUEVA VENTA</span>
-            </a>
-            <?php endif; ?>
-            <?php if ($esAdmin || $esOpCarga): ?>
-            <a href="modules/compras.php" class="shortcut-btn shortcut-entrada">
-                <i class="bi bi-arrow-down-circle-fill"></i>
-                <span>+ NUEVA ENTRADA</span>
-            </a>
-            <?php endif; ?>
-        </div>
-
-        <!-- Gráficos -->
-        <div class="section-title">
-            <i class="bi bi-pie-chart"></i> Análisis de Tendencias
-        </div>
-        <div class="charts-grid">
-            <div class="chart-card">
-                <h5 class="text-white mb-3 fw-bold">Ventas - Últimos 7 Días</h5>
-                <div class="chart-container">
-                    <canvas id="chartVentas"></canvas>
+            <div class="kpi-grid">
+                <div class="kpi-card kpi-verde">
+                    <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
+                    <div class="kpi-label">Ventas Totales</div>
+                    <div class="kpi-value" id="kpi-ventas-dia">$<?php echo number_format($ventas_dia, 2); ?></div>
+                </div>
+                <div class="kpi-card kpi-amarillo">
+                    <div class="kpi-icon"><i class="bi bi-box-seam"></i></div>
+                    <div class="kpi-label">Valor Inventario</div>
+                    <div class="kpi-value" id="kpi-valor-inv">$<?php echo number_format($valor_inventario, 2); ?></div>
+                </div>
+                <div class="kpi-card kpi-rojo">
+                    <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="kpi-label">Productos Críticos</div>
+                    <div class="kpi-value" id="kpi-criticos"><?php echo $productos_criticos; ?></div>
                 </div>
             </div>
-            <div class="chart-card">
-                <h5 class="text-white mb-3 fw-bold">Productos Más Vendidos</h5>
-                <div class="chart-container">
-                    <canvas id="chartProductos"></canvas>
+
+            <!-- Accesos Rápidos -->
+            <div class="section-title">
+                <i class="bi bi-lightning-charge"></i> Accesos Rápidos
+            </div>
+            <div class="shortcuts-grid">
+                <?php if ($esAdmin || $esOpVentas): ?>
+                    <a href="modules/salidas.php" class="shortcut-btn shortcut-facturar">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>+ NUEVA VENTA</span>
+                    </a>
+                <?php endif; ?>
+                <?php if ($esAdmin || $esOpCarga): ?>
+                    <a href="modules/compras.php" class="shortcut-btn shortcut-entrada">
+                        <i class="bi bi-arrow-down-circle-fill"></i>
+                        <span>+ NUEVA ENTRADA</span>
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="section-title">
+                <i class="bi bi-pie-chart"></i> Análisis de Tendencias
+            </div>
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h5 class="text-white mb-3 fw-bold">Ventas - Últimos 7 Días</h5>
+                    <div class="chart-container">
+                        <canvas id="chartVentas"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h5 class="text-white mb-3 fw-bold">Productos Más Vendidos</h5>
+                    <div class="chart-container">
+                        <canvas id="chartProductos"></canvas>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Tablas de Actividad -->
-        <div class="section-title">
-            <i class="bi bi-clock-history"></i> Actividad Reciente
-        </div>
-        <div class="tables-grid">
+            <!-- Tablas de Actividad -->
+            <div class="section-title">
+                <i class="bi bi-clock-history"></i> Actividad Reciente
+            </div>
+            <div class="tables-grid">
+                <div class="table-card">
+                    <h5 class="text-white mb-3 fw-bold">Últimas 5 Notas de Entrega</h5>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-facturas">
+                            <?php foreach ($ultimas_facturas as $f): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($f['cliente']); ?></td>
+                                    <td style="color:#e2e8f0;font-weight:600;"><?php echo $f['fecha']; ?></td>
+                                    <td class="text-success fw-bold" style="text-align:right;">$<?php echo $f['total']; ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-card">
+                    <h5 class="text-white mb-3 fw-bold">Productos Críticos</h5>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-criticos">
+                            <?php foreach ($tabla_criticos as $c): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($c['producto']); ?></td>
+                                    <td><?php echo $c['stock']; ?></td>
+                                    <td>
+                                        <span class="stock-badge <?php echo $c['estado']; ?>">
+                                            <?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             <div class="table-card">
-                <h5 class="text-white mb-3 fw-bold">Últimas 5 Notas de Entrega</h5>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>Fecha</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-facturas">
-                        <?php foreach ($ultimas_facturas as $f): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($f['cliente']); ?></td>
-                            <td style="color:#e2e8f0;font-weight:600;"><?php echo $f['fecha']; ?></td>
-                            <td class="text-success fw-bold" style="text-align:right;">$<?php echo $f['total']; ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <div class="table-card">
-                <h5 class="text-white mb-3 fw-bold">Productos Críticos</h5>
+                <h5 class="text-white mb-3 fw-bold">Próximos a Vencer (15 días)</h5>
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>Producto</th>
+                            <th>Vence</th>
                             <th>Stock</th>
-                            <th>Estado</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-criticos">
-                        <?php foreach ($tabla_criticos as $c): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($c['producto']); ?></td>
-                            <td><?php echo $c['stock']; ?></td>
-                            <td>
-                                <span class="stock-badge <?php echo $c['estado']; ?>">
-                                    <?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?>
-                                </span>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                    <tbody id="tabla-vencer">
+                        <?php if (!empty($tabla_vencer)): ?>
+                            <?php foreach ($tabla_vencer as $v): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($v['nombre']); ?></td>
+                                    <td style="<?php echo $v['dias'] < 0 ? 'color:#ef4444;font-weight:700;' : ($v['dias'] <= 7 ? 'color:#fb923c;font-weight:700;' : 'color:#fbbf24;'); ?>">
+                                        <?php echo $v['fecha']; ?> (<?php echo $v['dias'] < 0 ? 'VENCIDO' : $v['dias'] . 'd'; ?>)
+                                    </td>
+                                    <td style="text-align:center;"><?php echo $v['stock']; ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr><td colspan="3" style="text-align:center;color:#64748b;padding:20px;">Sin productos próximos a vencer</td></tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
         </div>
-        </div>
     </div>
 
-<?php // ==========================================
-// JAVASCRIPT
-// ========================================== ?>
-<script src="assets/js/bootstrap.bundle.min.js"></script>
-<script>
+    <?php // ==========================================
+    // JAVASCRIPT
+    // ========================================== 
+    ?>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script>
         // Gráficos Chart.js
         const chartVentasCtx = document.getElementById('chartVentas').getContext('2d');
         const chartProductosCtx = document.getElementById('chartProductos').getContext('2d');
@@ -836,11 +956,30 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
                     scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                        x: {
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
                     }
                 }
             });
@@ -857,11 +996,30 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
                     scales: {
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
                     }
                 }
             });
@@ -893,9 +1051,29 @@ $tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'sto
                             });
                             document.getElementById('tabla-criticos').innerHTML = htmlCriticos;
 
+                                            if (data.tabla_criticos) {
+                                let htmlC = '';
+                                data.tabla_criticos.forEach(c => {
+                                    let badge = c.estado === 'critico' ? 'Crítico' : 'Bajo';
+                                    htmlC += `<tr><td>${c.producto}</td><td>${c.stock}</td><td><span class="stock-badge ${c.estado}">${badge}</span></td></tr>`;
+                                });
+                                document.getElementById('tabla-criticos').innerHTML = htmlC;
+                            }
+
+                            if (data.productos_vencer || data.productos_pronto) {
+                                let htmlV = '';
+                                const todos = [...(data.productos_vencer||[]), ...(data.productos_pronto||[])];
+                                todos.slice(0, 5).forEach(v => {
+                                    const estilo = v.dias < 0 ? 'color:#ef4444;font-weight:700;' : (v.dias <= 7 ? 'color:#fb923c;font-weight:700;' : 'color:#fbbf24;');
+                                    const label = v.dias < 0 ? 'VENCIDO' : v.dias + 'd';
+                                    htmlV += `<tr><td>${v.nombre}</td><td style="${estilo}">${v.fecha} (${label})</td><td style="text-align:center;">${v.stock}</td></tr>`;
+                                });
+                                document.getElementById('tabla-vencer').innerHTML = htmlV || '<tr><td colspan="3" style="text-align:center;color:#64748b;padding:20px;">Sin productos próximos a vencer</td></tr>';
+                            }
+
                             if (data.grafico_ventas) renderCharts(data.grafico_ventas, data.grafico_productos);
                         }
-                    } catch(e) {
+                    } catch (e) {
                         console.error('Panel de Inicio refresh error:', e);
                     }
                 })

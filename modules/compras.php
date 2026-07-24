@@ -80,6 +80,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
     $es_ajuste = $tipo_entrada === 'Ajuste';
     $es_donacion = $tipo_entrada === 'Donación';
 
+    $mapa_direccion = [
+        // Ajuste — Sumar stock
+        'Sobrante físico'               => 1,
+        'Devolución'                    => 1,
+        'Error de conteo (+) Excedente' => 1,
+        // Ajuste — Restar stock
+        'Producto vencido'              => -1,
+        'Dañado/Averiado'               => -1,
+        'Robo hormiga'                  => -1,
+        'Merma operativa'               => -1,
+        'Error de conteo (-) Faltante'  => -1,
+        // Donación — Recibir
+        'Regalo de proveedor'           => 1,
+        'Muestra comercial'             => 1,
+        'Promocional'                   => 1,
+        // Donación — Realizar
+        'Apoyo comunitario'             => -1,
+        'Cortesía comercial'            => -1,
+        'Regalo empleado'               => -1,
+        'Lote promocional'              => -1,
+    ];
+    $es_movimiento = $es_ajuste || $es_donacion;
+    $causa_ajuste = $es_movimiento ? trim($_POST['causa_ajuste'] ?? '') : '';
+    $signo_stock = $es_movimiento && isset($mapa_direccion[$causa_ajuste]) ? $mapa_direccion[$causa_ajuste] : 1;
+
     $id_proveedor = $es_proveedor ? intval($_POST['id_proveedor'] ?? 0) : null;
     if ($es_proveedor && $id_proveedor <= 0) {
         $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SELECCIONE UN PROVEEDOR PARA COMPRA A PROVEEDOR.'];
@@ -104,14 +129,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
         exit;
     }
     $fecha_compra = $_POST['fecha_compra'] ?? date('Y-m-d');
-    $causa_ajuste = !$es_proveedor ? trim($_POST['causa_ajuste'] ?? '') : '';
-    if (!$es_proveedor && empty($causa_ajuste)) {
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SELECCIONE UNA CAUSA PARA AJUSTE O DONACIÓN.'];
+    if ($es_movimiento && empty($causa_ajuste)) {
+        $tipo_label = $es_donacion ? 'DONACIÓN' : 'AJUSTE';
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => "SELECCIONE UNA CAUSA PARA $tipo_label."];
         header('Location: compras.php');
         exit;
     }
-    $motivo = $es_proveedor ? '' : trim($_POST['motivo'] ?? '');
-    $observaciones = !$es_proveedor ? "Causa: $causa_ajuste" . ($motivo ? " | Motivo: $motivo" : '') : ($_POST['observaciones'] ?? '');
+    if ($es_movimiento && !isset($mapa_direccion[$causa_ajuste])) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'CAUSA INVÁLIDA.'];
+        header('Location: compras.php');
+        exit;
+    }
+    $motivo = $es_movimiento ? trim($_POST['motivo'] ?? '') : '';
+    $tipo_prefix = $es_donacion ? 'Donación' : 'Ajuste';
+    $label_dir = $signo_stock > 0 ? '(+)' : '(-)';
+    $observaciones = $es_movimiento ? "Causa: $causa_ajuste $label_dir" . ($motivo ? " | Motivo: $motivo" : '') : ($_POST['observaciones'] ?? '');
 
     $condiciones_pago = 'Contado';
     $dias_credito = 0;
@@ -158,8 +190,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
         foreach ($productos as $prod) {
             $id_producto = intval($prod['id'] ?? 0);
             $cantidad = intval($prod['cantidad'] ?? 0);
-            $precio_costo = $es_donacion ? 0 : floatval($prod['precio'] ?? 0);
-            if ($id_producto <= 0 || $cantidad <= 0 || (!$es_donacion && $precio_costo <= 0)) continue;
+            $precio_costo = ($es_donacion || $signo_stock < 0) ? 0 : floatval($prod['precio'] ?? 0);
+            if ($id_producto <= 0 || $cantidad <= 0 || ($signo_stock > 0 && !$es_donacion && $precio_costo <= 0)) continue;
 
             // 2. Insertar detalle
             $db->insert('detalle_compras', [
@@ -176,8 +208,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
             $old_stock = (int)($prod_row['stock_actual'] ?? 0);
             $old_cost = (float)($prod_row['precio_costo'] ?? 0);
             $old_pv = (float)($prod_row['precio_venta'] ?? 0);
-            $new_stock = $old_stock + $cantidad;
-            if (!$es_donacion) {
+            $new_stock = $old_stock + ($signo_stock * $cantidad);
+            if ($new_stock < 0) throw new Exception("Stock insuficiente para {$prod['nombre']} (ID:$id_producto). Disponible: $old_stock, solicitado: $cantidad.");
+            if (!$es_donacion && $signo_stock > 0) {
                 $new_avg = $new_stock > 0 ? (($old_stock * $old_cost) + ($cantidad * $precio_costo)) / $new_stock : $precio_costo;
                 $new_pv = $old_pv > 0 ? $old_pv : round($new_avg * 1.3, 2);
             } else {
@@ -214,11 +247,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
                     'id_movimiento'  => $mov_id,
                     'id_producto'    => $id_producto,
                     'cantidad'       => $cantidad,
-                    'precio_unitario'=> $precio_costo,
+                    'precio_unitario' => $precio_costo,
                 ]);
             }
 
-            $det_auditoria = $es_proveedor ? "Entrada registrada ($tipo_entrada, $exitos producto(s))" : "Ajuste (+): Causa: $causa_ajuste, $exitos producto(s)";
+            $det_auditoria = $es_proveedor ? "Entrada registrada ($tipo_entrada, $exitos producto(s))" : "$tipo_prefix $label_dir: Causa: $causa_ajuste, $exitos producto(s)";
             registrarAuditoria('crear', $det_auditoria);
         }
         $db->commit();
@@ -236,24 +269,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
 // Eliminar / anular
 if (isset($_GET['eliminar']) && $esAdmin) {
     $id_compra = intval($_GET['eliminar']);
+    $compra = $db->fetchOne("SELECT tipo_entrada, observaciones FROM compras WHERE id_compra = ?", [$id_compra]);
+    $obs = $compra['observaciones'] ?? '';
+    $fue_resta = strpos($obs, '(-)') !== false;
     $detalles = $db->fetchAll("SELECT id_producto, cantidad FROM detalle_compras WHERE id_compra = ?", [$id_compra]);
     if (!empty($detalles)) {
         $db->begin();
         try {
-            // Validar stock antes de descontar
+            // Validar stock antes de revertir
             foreach ($detalles as $det) {
-                $pi = $db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [(int)$det['id_producto']]);
-                if (!$pi || (int)$pi['stock_actual'] < (int)$det['cantidad'])
-                    throw new Exception("STOCK INSUFICIENTE para el producto (ID:{$det['id_producto']}). Se vendió parte del lote, no se puede anular.");
+                if (!$fue_resta) {
+                    $pi = $db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [(int)$det['id_producto']]);
+                    if (!$pi || (int)$pi['stock_actual'] < (int)$det['cantidad'])
+                        throw new Exception("STOCK INSUFICIENTE para el producto (ID:{$det['id_producto']}). Se vendió parte del lote, no se puede anular.");
+                }
             }
             foreach ($detalles as $det) {
-                $db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
+                $delta = $fue_resta ? (int)$det['cantidad'] : -(int)$det['cantidad'];
+                $db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [$delta, (int)$det['id_producto']]);
             }
             $db->execute("UPDATE compras SET status = 'Anulada' WHERE id_compra = ?", [$id_compra]);
             $db->execute("UPDATE movimientos SET status = 'Anulado' WHERE id_referencia = ? AND tipo_referencia = 'compra'", [$id_compra]);
             $db->commit();
-            registrarAuditoria('anular', "Compra #$id_compra anulada, " . count($detalles) . " producto(s)");
-            $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'ENTRADA ANULADA. STOCK RESTAURADO.'];
+            $label = $fue_resta ? 'RESTA (-) ANULADA' : 'SUMA (+) ANULADA';
+            registrarAuditoria('anular', "Compra #$id_compra anulada ($label), " . count($detalles) . " producto(s)");
+            $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => $fue_resta ? 'AJUSTE/DONACIÓN (-) ANULADO. STOCK RESTAURADO.' : 'ENTRADA ANULADA. STOCK RESTAURADO.'];
         } catch (Exception $e) {
             $db->rollback();
             $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => $e->getMessage()];
@@ -306,207 +346,323 @@ unset($_SESSION['flash_msg']);
 <!-- HEAD Y ESTILOS HTML -->
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compras | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
     <style>
-    /* === THEME: COMPRAS (Green / Emerald) ================ */
+        /* === THEME: COMPRAS (Green / Emerald) ================ */
 
-    /* ── Header icon ── */
-    .com-header-icon {
-        width:52px;height:52px;border-radius:14px;
-        background:linear-gradient(135deg,#059669,#065f46);
-        display:flex;align-items:center;justify-content:center;
-        color:#fff;font-size:1.5rem;flex-shrink:0;
-        box-shadow:0 0 30px rgba(5,150,105,0.3);
-    }
+        /* ── Header icon ── */
+        .com-header-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #059669, #065f46);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            box-shadow: 0 0 30px rgba(5, 150, 105, 0.3);
+        }
 
-    /* ── Action button (36px) ── */
-    .btn-action {
-        width:36px;height:36px;border-radius:10px;
-        display:inline-flex;align-items:center;justify-content:center;
-        border:1px solid var(--jv-border);background:var(--jv-bg-primary);
-        color:var(--jv-text);transition:.15s;
-    }
-    .btn-action:hover {
-        background:var(--jv-bg-hover);border-color:#10b981;
-        color:#10b981;
-    }
+        /* ── Action button (36px) ── */
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--jv-border);
+            background: var(--jv-bg-primary);
+            color: var(--jv-text);
+            transition: .15s;
+        }
 
-    /* ── Empty state ── */
-    .estado-vacio {
-        padding:60px 20px;text-align:center;
-    }
-    .estado-vacio i {
-        font-size:3.5rem;color:rgba(16,185,129,0.2);display:block;margin-bottom:16px;
-    }
-    .estado-vacio span {
-        font-size:.85rem;font-weight:700;text-transform:uppercase;
-        letter-spacing:1px;color:rgba(148,163,184,0.5);
-    }
+        .btn-action:hover {
+            background: var(--jv-bg-hover);
+            border-color: #10b981;
+            color: #10b981;
+        }
 
-    /* ── Scoped module styles ── */
-    .pagina-compras .card-jv {
-        border-color:rgba(16,185,129,0.25);
-        box-shadow:0 20px 50px -12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(16,185,129,0.06);
-    }
-    .pagina-compras .card-jv:hover {
-        border-color:rgba(16,185,129,0.45);
-    }
-    .pagina-compras .card-jv-table {
-        border-top:4px solid #10b981;
-        border-radius:var(--jv-radius) !important;overflow:hidden;
-    }
-    .pagina-compras .table-jv { table-layout:auto; width:100%; }
-    .pagina-compras .table-jv thead th {
-        background:linear-gradient(135deg,#065f46,#047857);
-        color:#a7f3d0;
-        border-bottom:2px solid rgba(16,185,129,0.3);
-        font-size:.82rem;
-        padding:14px 16px;
-        text-align:left;
-        white-space:nowrap;
-    }
-    .pagina-compras .table-jv thead th.text-center { text-align:center; }
-    .pagina-compras .table-jv tbody td {
-        border-bottom:1px solid rgba(16,185,129,0.07);
-        padding:14px 16px;
-        font-size:.85rem;
-        vertical-align:middle;
-        color:#e2e8f0;
-    }
-    .pagina-compras .table-jv tbody tr:hover {
-        background:rgba(16,185,129,0.03);
-    }
-    .pagina-compras .table-jv tbody td.text-center { text-align:center; }
-    .pagina-compras .table-jv tbody td.fw-bold { font-weight:700; }
-    .pagina-compras .table-jv tbody td.text-muted { color:#94a3b8; }
-    .pagina-compras .table-jv tbody td.text-success { color:#34d399; }
-    .pagina-compras .table-jv tbody td.fecha-cell { font-weight:600; font-size:.82rem; color:#e2e8f0; white-space:nowrap; }
-    .pagina-compras .btn-jv-primary {
-        background:linear-gradient(135deg,#059669,#065f46);
-    }
-    .pagina-compras .btn-jv-primary:hover {
-        box-shadow:0 8px 25px -5px rgba(5,150,105,0.4);
-        transform:translateY(-2px);
-    }
-    .pagina-compras .input-jv:focus {
-        border-color:#10b981;
-        box-shadow:0 0 0 3px rgba(16,185,129,0.15);
-    }
-    .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
-    .pagina-compras .buscador-wrapper {
-        border-bottom:1px solid rgba(16,185,129,0.15);
-        background:rgba(2,6,23,0.5);
-    }
-    .pagina-compras .buscador-wrapper i {
-        color:#10b981;
-    }
-    .pagina-compras .btn-jv-success {
-        border:1px solid rgba(255,255,255,0.12);
-        box-shadow:0 0 24px rgba(5,150,105,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
-    }
-    .pagina-compras .btn-jv-success:hover {
-        box-shadow:0 8px 30px -5px rgba(5,150,105,0.5);
-        transform:translateY(-2px);
-    }
-    .pagina-compras .header-card {
-        padding:18px 24px;
-        border-left:4px solid #10b981;
-    }
-    .pagina-compras .widget-card {
-        border-left:3px solid #10b981;
-    }
-    .pagina-compras .widget-card:hover {
-        border-color:#34d399;
-    }
+        /* ── Empty state ── */
+        .estado-vacio {
+            padding: 60px 20px;
+            text-align: center;
+        }
 
-    /* ── Widget cards bigger & bolder ── */
-    .pagina-compras .widget-card {
-        border-radius:var(--jv-radius-lg);
-        background:var(--jv-bg-card);
-        border:1px solid var(--jv-border);
-        padding:20px 22px;
-        display:flex;
-        align-items:center;
-        gap:18px;
-        min-height:90px;
-    }
-    .pagina-compras .widget-card:hover {
-        border-color:var(--jv-border-hover);
-    }
-    .widget-card .widget-icon {
-        width:46px;height:46px;border-radius:14px;
-        display:flex;align-items:center;justify-content:center;
-        font-size:1.3rem;flex-shrink:0;
-    }
-    .widget-card .widget-label {
-        font-size:.6rem;text-transform:uppercase;
-        letter-spacing:1px;font-weight:700;
-        color:rgba(148,163,184,0.7);
-        margin-bottom:4px;
-    }
-    .widget-card .widget-value {
-        font-size:1.4rem;font-weight:800;color:#fff;
-        line-height:1.2;
-    }
+        .estado-vacio i {
+            font-size: 3.5rem;
+            color: rgba(16, 185, 129, 0.2);
+            display: block;
+            margin-bottom: 16px;
+        }
 
-    /* ── Badges ── */
-    .pagina-compras .codigo-badge {
-        background:rgba(5,150,105,0.12);color:#6ee7b7;
-        font-size:.72rem;font-weight:800;padding:4px 12px;
-        border-radius:20px;display:inline-block;
-        letter-spacing:.5px;line-height:1.5;
-    }
-    .pagina-compras .cant-badge {
-        background:rgba(16,185,129,0.15);color:#34d399;
-        padding:4px 12px;border-radius:20px;
-        font-weight:700;font-size:.75rem;display:inline-block;
-        line-height:1.5;
-    }
-    .pagina-compras .badge-jv {
-        padding: 4px 14px;
-        font-size: 0.72rem;
-        line-height: 1.5;
-        white-space: nowrap;
-        display:inline-block;
-    }
-    .pagina-compras .badge-success {
-        background: rgba(16,185,129,0.15);
-        color: #6ee7b7;
-        border-color: rgba(16,185,129,0.35);
-    }
-    .pagina-compras .badge-warning {
-        background: rgba(245,158,11,0.15);
-        color: #fbbf24;
-        border-color: rgba(245,158,11,0.35);
-    }
+        .estado-vacio span {
+            font-size: .85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(148, 163, 184, 0.5);
+        }
 
-    /* ── Alert overrides ── */
-    .alert-jv { border-left:4px solid; border-radius:8px; padding:14px 20px !important; font-size:.9rem; }
-    .alert-jv-success { border-left-color:#22c55e; background:rgba(34,197,94,0.1); }
-    .alert-jv-danger { border-left-color:#ef4444; background:rgba(239,68,68,0.1); }
+        /* ── Scoped module styles ── */
+        .pagina-compras .card-jv {
+            border-color: rgba(16, 185, 129, 0.25);
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(16, 185, 129, 0.06);
+        }
 
-    /* ── Modal section groups ── */
-    .section-bg {
-        background:rgba(2,6,23,0.3);
-        border:1px solid rgba(16,185,129,0.08);
-        border-radius:var(--jv-radius);
-        padding:12px 14px;
-        margin-bottom:10px;
-    }
-    .section-label {
-        font-size:.65rem;font-weight:800;text-transform:uppercase;
-        letter-spacing:1px;color:#34d399;
-        margin-bottom:6px;padding-bottom:4px;
-        border-bottom:1px solid rgba(16,185,129,0.15);
-        display:flex;align-items:center;gap:4px;
-    }
+        .pagina-compras .card-jv:hover {
+            border-color: rgba(16, 185, 129, 0.45);
+        }
+
+        .pagina-compras .card-jv-table {
+            border-top: 4px solid #10b981;
+            border-radius: var(--jv-radius) !important;
+            overflow: hidden;
+        }
+
+        .pagina-compras .table-jv {
+            table-layout: auto;
+            width: 100%;
+        }
+
+        .pagina-compras .table-jv thead th {
+            background: linear-gradient(135deg, #065f46, #047857);
+            color: #a7f3d0;
+            border-bottom: 2px solid rgba(16, 185, 129, 0.3);
+            font-size: .82rem;
+            padding: 14px 16px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .pagina-compras .table-jv thead th.text-center {
+            text-align: center;
+        }
+
+        .pagina-compras .table-jv tbody td {
+            border-bottom: 1px solid rgba(16, 185, 129, 0.07);
+            padding: 14px 16px;
+            font-size: .85rem;
+            vertical-align: middle;
+            color: #e2e8f0;
+        }
+
+        .pagina-compras .table-jv tbody tr:hover {
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .pagina-compras .table-jv tbody td.text-center {
+            text-align: center;
+        }
+
+        .pagina-compras .table-jv tbody td.fw-bold {
+            font-weight: 700;
+        }
+
+        .pagina-compras .table-jv tbody td.text-muted {
+            color: #94a3b8;
+        }
+
+        .pagina-compras .table-jv tbody td.text-success {
+            color: #34d399;
+        }
+
+        .pagina-compras .table-jv tbody td.fecha-cell {
+            font-weight: 600;
+            font-size: .82rem;
+            color: #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .pagina-compras .btn-jv-primary {
+            background: linear-gradient(135deg, #059669, #065f46);
+        }
+
+        .pagina-compras .btn-jv-primary:hover {
+            box-shadow: 0 8px 25px -5px rgba(5, 150, 105, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .pagina-compras .input-jv:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+
+        .input-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+        }
+
+        .pagina-compras .buscador-wrapper {
+            border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+            background: rgba(2, 6, 23, 0.5);
+        }
+
+        .pagina-compras .buscador-wrapper i {
+            color: #10b981;
+        }
+
+        .pagina-compras .btn-jv-success {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 24px rgba(5, 150, 105, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .pagina-compras .btn-jv-success:hover {
+            box-shadow: 0 8px 30px -5px rgba(5, 150, 105, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .pagina-compras .header-card {
+            padding: 18px 24px;
+            border-left: 4px solid #10b981;
+        }
+
+        .pagina-compras .widget-card {
+            border-left: 3px solid #10b981;
+        }
+
+        .pagina-compras .widget-card:hover {
+            border-color: #34d399;
+        }
+
+        /* ── Widget cards bigger & bolder ── */
+        .pagina-compras .widget-card {
+            border-radius: var(--jv-radius-lg);
+            background: var(--jv-bg-card);
+            border: 1px solid var(--jv-border);
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            min-height: 90px;
+        }
+
+        .pagina-compras .widget-card:hover {
+            border-color: var(--jv-border-hover);
+        }
+
+        .widget-card .widget-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .widget-card .widget-label {
+            font-size: .6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: rgba(148, 163, 184, 0.7);
+            margin-bottom: 4px;
+        }
+
+        .widget-card .widget-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        /* ── Badges ── */
+        .pagina-compras .codigo-badge {
+            background: rgba(5, 150, 105, 0.12);
+            color: #6ee7b7;
+            font-size: .72rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            letter-spacing: .5px;
+            line-height: 1.5;
+        }
+
+        .pagina-compras .cant-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: .75rem;
+            display: inline-block;
+            line-height: 1.5;
+        }
+
+        .pagina-compras .badge-jv {
+            padding: 4px 14px;
+            font-size: 0.72rem;
+            line-height: 1.5;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .pagina-compras .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .pagina-compras .badge-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        /* ── Alert overrides ── */
+        .alert-jv {
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 14px 20px !important;
+            font-size: .9rem;
+        }
+
+        .alert-jv-success {
+            border-left-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .alert-jv-danger {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* ── Modal section groups ── */
+        .section-bg {
+            background: rgba(2, 6, 23, 0.3);
+            border: 1px solid rgba(16, 185, 129, 0.08);
+            border-radius: var(--jv-radius);
+            padding: 12px 14px;
+            margin-bottom: 10px;
+        }
+
+        .section-label {
+            font-size: .65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #34d399;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
     </style>
 </head>
 <!-- BODY HTML -->
+
 <body>
     <?php include '../includes/sidebar.php'; ?>
 
@@ -590,39 +746,42 @@ unset($_SESSION['flash_msg']);
                         </thead>
                         <tbody id="tablaEntradas">
                             <?php if (count($compras) > 0): foreach ($compras as $row): ?>
+                                    <tr>
+                                        <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
+                                        <td style="color:#cbd5e1;font-weight:600;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
+                                        <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
+                                        <td style="font-size:.75rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?php echo htmlspecialchars($row['productos_list'] ?? ''); ?>"><?php echo htmlspecialchars($row['productos_list'] ?? '-'); ?></td>
+                                        <td><?php
+                                            $te = $row['tipo_entrada'] ?? 'Compra a proveedor';
+                                            $obs = $row['observaciones'] ?? '';
+                                            $causa = '';
+                                            if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $obs, $m)) $causa = trim($m[1]);
+                                            if ($te === 'Compra a proveedor') echo '<span class="badge-jv badge-success" style="font-size:.7rem;"><i class="bi bi-cart-check me-1"></i>Compra</span>';
+                                            else {
+                                                $badge = $te === 'Ajuste' ? 'badge-warning' : 'badge-info';
+                                                echo '<span class="badge-jv ' . $badge . '" style="font-size:.7rem;" title="' . htmlspecialchars($causa) . '"><i class="bi bi-arrow-up-circle me-1"></i>' . htmlspecialchars($te) . ($causa ? ': ' . htmlspecialchars($causa) : '') . '</span>';
+                                            }
+                                            ?></td>
+                                        <td class="text-center"><span class="cant-badge">+<?php echo $row['total_cantidad']; ?></span></td>
+                                        <td class="fw-bold text-success">$<?php echo number_format($row['total'], 2); ?></td>
+                                        <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
+                                        <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_compra'])); ?></td>
+                                        <td class="text-center">
+                                            <?php if ($esAdmin): ?>
+                                                <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo $row['id_compra']; ?>)"><i class="bi bi-trash"></i></button>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach;
+                            else: ?>
                                 <tr>
-                                    <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
-                                    <td style="color:#cbd5e1;font-weight:600;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
-                                    <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
-                                    <td style="font-size:.75rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?php echo htmlspecialchars($row['productos_list'] ?? ''); ?>"><?php echo htmlspecialchars($row['productos_list'] ?? '-'); ?></td>
-                                    <td><?php
-                                        $te = $row['tipo_entrada'] ?? 'Compra a proveedor';
-                                        $obs = $row['observaciones'] ?? '';
-                                        $causa = '';
-                                        if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $obs, $m)) $causa = trim($m[1]);
-                                        if ($te === 'Compra a proveedor') echo '<span class="badge-jv badge-success" style="font-size:.7rem;"><i class="bi bi-cart-check me-1"></i>Compra</span>';
-                                        else {
-                                            $badge = $te === 'Ajuste' ? 'badge-warning' : 'badge-info';
-                                            echo '<span class="badge-jv ' . $badge . '" style="font-size:.7rem;" title="' . htmlspecialchars($causa) . '"><i class="bi bi-arrow-up-circle me-1"></i>' . htmlspecialchars($te) . ($causa ? ': ' . htmlspecialchars($causa) : '') . '</span>';
-                                        }
-                                    ?></td>
-                                    <td class="text-center"><span class="cant-badge">+<?php echo $row['total_cantidad']; ?></span></td>
-                                    <td class="fw-bold text-success">$<?php echo number_format($row['total'], 2); ?></td>
-                                    <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
-                                    <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_compra'])); ?></td>
-                                    <td class="text-center">
-                                        <?php if ($esAdmin): ?>
-                                            <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo $row['id_compra']; ?>)"><i class="bi bi-trash"></i></button>
-                                        <?php endif; ?>
+                                    <td colspan="10">
+                                        <div class="estado-vacio">
+                                            <i class="bi bi-cart-x"></i>
+                                            <span>No hay entradas registradas</span>
+                                        </div>
                                     </td>
                                 </tr>
-                            <?php endforeach; else: ?>
-                                <tr><td colspan="10">
-                                    <div class="estado-vacio">
-                                        <i class="bi bi-cart-x"></i>
-                                        <span>No hay entradas registradas</span>
-                                    </div>
-                                </td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -673,20 +832,18 @@ unset($_SESSION['flash_msg']);
                             </div>
                         </div>
 
-                        <!-- MOTIVO (solo para Ajuste / Donación) -->
+                        <!-- MOTIVO (Ajuste / Donación) -->
                         <div class="comp-motivo-section section-bg" style="display:none;">
-                            <div class="section-label"><i class="bi bi-chat-dots me-1"></i>Motivo del Ajuste</div>
+                            <div class="section-label"><i class="bi bi-chat-dots me-1"></i><span id="motivoLabel">Motivo</span></div>
                             <div class="row g-2">
                                 <div class="col-md-5">
                                     <label class="small fw-bold text-secondary mb-1">CAUSA *</label>
-                                    <select name="causa_ajuste" class="input-jv">
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Sobrante físico">Sobrante físico</option>
-                                        <option value="Devolución">Devolución</option>
-                                        <option value="Reclasificación">Reclasificación</option>
-                                        <option value="Error de conteo">Error de conteo</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
+                                    <div class="d-flex gap-2 align-items-start">
+                                        <select name="causa_ajuste" class="input-jv" style="flex:1;" onchange="actualizarDireccion()">
+                                            <option value="">Seleccionar...</option>
+                                        </select>
+                                        <span id="direccionBadge" class="badge" style="display:none;padding:5px 12px;font-size:.7rem;border-radius:6px;font-weight:700;white-space:nowrap;margin-top:1px;"></span>
+                                    </div>
                                 </div>
                                 <div class="col-md-7">
                                     <label class="small fw-bold text-secondary mb-1">DESCRIPCIÓN <span class="fw-normal">(opcional)</span></label>
@@ -726,66 +883,68 @@ unset($_SESSION['flash_msg']);
                         <div class="section-bg">
                             <div class="section-label"><i class="bi bi-box-seam me-1"></i>Productos</div>
 
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-5">
-                                <label class="small fw-bold text-secondary mb-1">Producto</label>
-                                <div class="d-flex gap-2">
-                                    <select class="input-jv" id="selProducto" style="flex:1;min-width:0;">
-                                        <option value="">Seleccionar...</option>
-                                        <?php foreach ($productos as $prod): ?>
-                                            <option value="<?php echo $prod['id_producto']; ?>" data-precio="<?php echo $prod['precio_costo']; ?>">
-                                                <?php echo htmlspecialchars($prod['nombre_producto']); ?> (Stock: <?php echo $prod['stock_actual']; ?>)
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <button type="button" class="btn-jv-primary pagina-compras" style="flex-shrink:0;padding:8px 14px;font-size:.75rem;white-space:nowrap;font-weight:700;" onclick="abrirNuevoProducto()" title="Crear producto nuevo">
-                                        <i class="bi bi-lightning-fill me-1"></i>CREAR
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="small fw-bold text-secondary mb-1">Producto</label>
+                                    <div class="d-flex gap-2">
+                                        <select class="input-jv" id="selProducto" style="flex:1;min-width:0;">
+                                            <option value="">Seleccionar...</option>
+                                            <?php foreach ($productos as $prod): ?>
+                                                <option value="<?php echo $prod['id_producto']; ?>" data-precio="<?php echo $prod['precio_costo']; ?>">
+                                                    <?php echo htmlspecialchars($prod['nombre_producto']); ?> (Stock: <?php echo $prod['stock_actual']; ?>)
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <button type="button" class="btn-jv-primary pagina-compras" style="flex-shrink:0;padding:8px 14px;font-size:.75rem;white-space:nowrap;font-weight:700;" onclick="abrirNuevoProducto()" title="Crear producto nuevo">
+                                            <i class="bi bi-lightning-fill me-1"></i>CREAR
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small fw-bold text-secondary mb-1">Cant</label>
+                                    <input type="number" class="input-jv" id="inputCant" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small fw-bold text-secondary mb-1">Precio $</label>
+                                    <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" placeholder="0.00" oninput="formatearPrecioCompra(this)">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn-jv-primary w-100" style="padding:12px;" onclick="agregarProducto()">
+                                        <i class="bi bi-plus-lg"></i> Agregar
                                     </button>
                                 </div>
                             </div>
-                            <div class="col-md-2">
-                                <label class="small fw-bold text-secondary mb-1">Cant</label>
-                                <input type="number" class="input-jv" id="inputCant" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="small fw-bold text-secondary mb-1">Precio $</label>
-                                <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" placeholder="0.00" oninput="formatearPrecioCompra(this)">
-                            </div>
-                            <div class="col-md-3">
-                                <button type="button" class="btn-jv-primary w-100" style="padding:12px;" onclick="agregarProducto()">
-                                    <i class="bi bi-plus-lg"></i> Agregar
-                                </button>
-                            </div>
-                        </div>
 
-                        <div style="border:1px solid rgba(16,185,129,0.12);border-radius:8px;overflow:hidden;margin-top:10px;">
-                            <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-primary);">
-                                <thead>
-                                    <tr style="background:linear-gradient(135deg,#065f46,#047857);">
-                                        <th style="padding:6px 8px;width:28px;text-align:center;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">#</th>
-                                        <th style="padding:6px 8px;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Producto</th>
-                                        <th style="padding:6px 8px;width:55px;text-align:center;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Cant</th>
-                                        <th style="padding:6px 8px;width:90px;text-align:right;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Precio</th>
-                                        <th style="padding:6px 8px;width:90px;text-align:right;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Total</th>
-                                        <th style="width:28px;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="productosBody">
-                                    <tr id="filaVacia"><td colspan="6" style="padding:24px 12px;text-align:center;color:#64748b;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">⬆ Use los controles de arriba para agregar productos</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                            <div style="border:1px solid rgba(16,185,129,0.12);border-radius:8px;overflow:hidden;margin-top:10px;">
+                                <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-primary);">
+                                    <thead>
+                                        <tr style="background:linear-gradient(135deg,#065f46,#047857);">
+                                            <th style="padding:6px 8px;width:28px;text-align:center;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">#</th>
+                                            <th style="padding:6px 8px;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Producto</th>
+                                            <th style="padding:6px 8px;width:55px;text-align:center;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Cant</th>
+                                            <th style="padding:6px 8px;width:90px;text-align:right;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Precio</th>
+                                            <th style="padding:6px 8px;width:90px;text-align:right;color:#a7f3d0;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Total</th>
+                                            <th style="width:28px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productosBody">
+                                        <tr id="filaVacia">
+                                            <td colspan="6" style="padding:24px 12px;text-align:center;color:#64748b;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">⬆ Use los controles de arriba para agregar productos</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-top:8px;background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.15);border-radius:8px;">
-                            <div>
-                                <span class="text-secondary" style="font-weight:600;font-size:.9rem;">Productos</span>
-                                <span class="fw-bold ms-2" id="totalItems" style="color:#34d399;font-size:1.1rem;">0</span>
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;margin-top:8px;background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.15);border-radius:8px;">
+                                <div>
+                                    <span class="text-secondary" style="font-weight:600;font-size:.9rem;">Productos</span>
+                                    <span class="fw-bold ms-2" id="totalItems" style="color:#34d399;font-size:1.1rem;">0</span>
+                                </div>
+                                <div>
+                                    <span class="text-secondary" style="font-weight:600;font-size:.9rem;">Total Costo</span>
+                                    <span class="fw-bold ms-2" id="totalCosto" style="color:#f59e0b;font-size:1.15rem;">$0.00</span>
+                                </div>
                             </div>
-                            <div>
-                                <span class="text-secondary" style="font-weight:600;font-size:.9rem;">Total Costo</span>
-                                <span class="fw-bold ms-2" id="totalCosto" style="color:#f59e0b;font-size:1.15rem;">$0.00</span>
-                            </div>
-                        </div>
                         </div>
 
                         <div class="section-bg" style="margin-bottom:0;">
@@ -857,255 +1016,475 @@ unset($_SESSION['flash_msg']);
     <!-- JAVASCRIPT -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script>
-    let productos = [];
-    const modalNP = new bootstrap.Modal(document.getElementById('modalNuevoProducto'));
+        let productos = [];
+        const modalNP = new bootstrap.Modal(document.getElementById('modalNuevoProducto'));
 
-    function abrirNuevoProducto() {
-        document.getElementById('np_nombre').value = '';
-        document.getElementById('np_categoria').value = '';
-        document.getElementById('np_stock_minimo').value = 5;
-        document.getElementById('np_status').value = 'Activo';
-        document.getElementById('np_fecha_vencimiento').value = '';
-        document.getElementById('np_nombre').focus();
-        modalNP.show();
-    }
-
-    function crearProducto() {
-        const nombre = document.getElementById('np_nombre').value.trim();
-        const cat = document.getElementById('np_categoria').value;
-        const stockMin = parseInt(document.getElementById('np_stock_minimo').value) || 5;
-        const statusVal = document.getElementById('np_status').value;
-        const fechaVenc = document.getElementById('np_fecha_vencimiento').value;
-        const btn = document.getElementById('btnCrearProducto');
-
-        if (!nombre || !cat) {
-            Swal.fire({ title: 'Campos requeridos', text: 'Completa nombre y categoría', icon: 'warning', background: '#0f172a', color: '#fff', confirmButtonColor: '#06b6d4' });
-            return;
+        function abrirNuevoProducto() {
+            document.getElementById('np_nombre').value = '';
+            document.getElementById('np_categoria').value = '';
+            document.getElementById('np_stock_minimo').value = 5;
+            document.getElementById('np_status').value = 'Activo';
+            document.getElementById('np_fecha_vencimiento').value = '';
+            document.getElementById('np_nombre').focus();
+            modalNP.show();
         }
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creando...';
+        function crearProducto() {
+            const nombre = document.getElementById('np_nombre').value.trim();
+            const cat = document.getElementById('np_categoria').value;
+            const stockMin = parseInt(document.getElementById('np_stock_minimo').value) || 5;
+            const statusVal = document.getElementById('np_status').value;
+            const fechaVenc = document.getElementById('np_fecha_vencimiento').value;
+            const btn = document.getElementById('btnCrearProducto');
 
-        const formData = new FormData();
-        formData.append('csrf_token', document.getElementById('np_csrf').value);
-        formData.append('accion_producto', 'crear_ajax');
-        formData.append('nombre_producto', nombre);
-        formData.append('id_categoria', cat);
-        formData.append('stock_minimo', stockMin);
-        formData.append('status', statusVal);
-        formData.append('fecha_vencimiento', fechaVenc);
-
-        fetch('compras.php', { method: 'POST', body: formData })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    const sel = document.getElementById('selProducto');
-                    const opt = document.createElement('option');
-                    opt.value = res.id;
-                    opt.dataset.precio = '0';
-                    opt.textContent = res.nombre + ' (Stock: 0)';
-                    sel.appendChild(opt);
-                    sel.value = res.id;
-                    document.getElementById('inputPrecio').value = '';
-                    document.getElementById('inputPrecio').focus();
-                    modalNP.hide();
-                } else {
-                    Swal.fire({ title: 'Error', text: res.error || 'No se pudo crear', icon: 'error', background: '#0f172a', color: '#fff', confirmButtonColor: '#06b6d4' });
-                }
-            })
-            .catch(function(err) {
-                Swal.fire({ title: 'Error', text: 'Error de conexión: ' + (err.message || 'desconocido'), icon: 'error', background: '#0f172a', color: '#fff', confirmButtonColor: '#06b6d4' });
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Crear';
-            });
-    }
-
-    document.getElementById('selProveedor').addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
-        if (opt && opt.value) {
-            const cond = opt.dataset.condicion || 'Contado';
-            const dias = opt.dataset.dias || '0';
-            document.getElementById('displayCondicion').value = cond;
-            document.getElementById('displayDias').value = dias;
-        } else {
-            document.getElementById('displayCondicion').value = '-';
-            document.getElementById('displayDias').value = '-';
-        }
-    });
-
-    document.getElementById('selProducto').addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
-        if (opt && opt.dataset.precio) {
-            document.getElementById('inputPrecio').value = parseFloat(opt.dataset.precio).toFixed(2);
-        }
-    });
-
-    function formatearPrecioCompra(el) {
-        var raw = el.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-        var parts = raw.split('.');
-        var entero = parts[0].replace(/^0+/, '') || '0';
-        var decimales = parts[1] ? parts[1].slice(0,2) : '';
-        var formateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        if (decimales) formateado += '.' + decimales;
-        var num = parseFloat(entero + '.' + (decimales || '0'));
-        if (num > 999999.99) { entero = '999999'; decimales = '99'; formateado = '999,999.99'; }
-        el.value = formateado;
-    }
-
-    function agregarProducto() {
-        const sel = document.getElementById('selProducto');
-        const precEl = document.getElementById('inputPrecio');
-        precEl.value = precEl.value.replace(/,/g, '');
-        const cant = parseInt(document.getElementById('inputCant').value) || 0;
-        const precio = parseFloat(precEl.value) || 0;
-        const tipoSel = document.querySelector('select[name="tipo_entrada"]');
-        const esDonacion = tipoSel && tipoSel.value === 'Donación';
-
-        if (!sel.value || cant <= 0 || (!esDonacion && precio <= 0)) {
-            alert('Seleccione producto, cantidad y precio válidos');
-            return;
-        }
-
-        const nombre = sel.options[sel.selectedIndex].text.split(' (')[0];
-
-        productos.push({ id: sel.value, nombre: nombre, cantidad: cant, precio: precio, total: cant * precio });
-        actualizarTabla();
-
-        sel.value = '';
-        document.getElementById('inputCant').value = 1;
-        document.getElementById('inputPrecio').value = '';
-    }
-
-    function quitarProducto(idx) {
-        productos.splice(idx, 1);
-        actualizarTabla();
-    }
-
-    function actualizarTabla() {
-        const body = document.getElementById('productosBody');
-        if (productos.length === 0) {
-            body.innerHTML = '<tr id="filaVacia"><td colspan="6" style="padding:24px 12px;text-align:center;color:#64748b;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">⬆ Use los controles de arriba para agregar productos</td></tr>';
-        } else {
-            body.innerHTML = '';
-            productos.forEach((p, i) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = '<td style="padding:8px 10px;color:#64748b;text-align:center;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">' + (i + 1) + '</td>' +
-                    '<td style="padding:8px 10px;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">' + p.nombre + '</td>' +
-                    '<td style="padding:8px 10px;font-size:.85rem;text-align:center;border-bottom:1px solid rgba(16,185,129,0.07);">' + p.cantidad + '</td>' +
-                    '<td style="padding:8px 10px;font-size:.85rem;text-align:right;color:#94a3b8;border-bottom:1px solid rgba(16,185,129,0.07);">$' + p.precio.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</td>' +
-                    '<td style="padding:8px 10px;font-size:.85rem;text-align:right;color:#06b6d4;font-weight:700;border-bottom:1px solid rgba(16,185,129,0.07);">$' + p.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</td>' +
-                    '<td style="padding:8px 10px;border-bottom:1px solid rgba(16,185,129,0.07);"><button type="button" class="btn btn-sm border-0" style="padding:0;color:#ef4444;font-size:.8rem;line-height:1;" onclick="quitarProducto(' + i + ')"><i class="bi bi-x-circle"></i></button></td>';
-                body.appendChild(tr);
-            });
-        }
-        document.getElementById('totalItems').textContent = productos.length;
-        const suma = productos.reduce(function(s, p) { return s + p.total; }, 0);
-        document.getElementById('totalCosto').textContent = '$' + suma.toFixed(2);
-        document.getElementById('btnGuardar').disabled = productos.length === 0;
-        document.getElementById('productosData').value = JSON.stringify(productos);
-    }
-
-    function limpiarErrores() {
-        document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
-    }
-    function marcarError(el, mensaje) {
-        el.classList.add('input-error');
-        if (mensaje) {
-            const errId = el.id + '_err';
-            let errEl = document.getElementById(errId);
-            if (!errEl) {
-                errEl = document.createElement('small');
-                errEl.id = errId;
-                errEl.className = 'field-error';
-                errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
-                el.parentNode.appendChild(errEl);
+            if (!nombre || !cat) {
+                Swal.fire({
+                    title: 'Campos requeridos',
+                    text: 'Completa nombre y categoría',
+                    icon: 'warning',
+                    background: '#0f172a',
+                    color: '#fff',
+                    confirmButtonColor: '#06b6d4'
+                });
+                return;
             }
-            errEl.textContent = mensaje;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creando...';
+
+            const formData = new FormData();
+            formData.append('csrf_token', document.getElementById('np_csrf').value);
+            formData.append('accion_producto', 'crear_ajax');
+            formData.append('nombre_producto', nombre);
+            formData.append('id_categoria', cat);
+            formData.append('stock_minimo', stockMin);
+            formData.append('status', statusVal);
+            formData.append('fecha_vencimiento', fechaVenc);
+
+            fetch('compras.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        const sel = document.getElementById('selProducto');
+                        const opt = document.createElement('option');
+                        opt.value = res.id;
+                        opt.dataset.precio = '0';
+                        opt.textContent = res.nombre + ' (Stock: 0)';
+                        sel.appendChild(opt);
+                        sel.value = res.id;
+                        document.getElementById('inputPrecio').value = '';
+                        document.getElementById('inputPrecio').focus();
+                        modalNP.hide();
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: res.error || 'No se pudo crear',
+                            icon: 'error',
+                            background: '#0f172a',
+                            color: '#fff',
+                            confirmButtonColor: '#06b6d4'
+                        });
+                    }
+                })
+                .catch(function(err) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Error de conexión: ' + (err.message || 'desconocido'),
+                        icon: 'error',
+                        background: '#0f172a',
+                        color: '#fff',
+                        confirmButtonColor: '#06b6d4'
+                    });
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Crear';
+                });
         }
-    }
-    function validarFormulario(btn) {
-        limpiarErrores();
-        const tipo = document.querySelector('select[name="tipo_entrada"]').value;
-        const errores = [];
-        let primerError = null;
-        if (tipo === 'Compra a proveedor') {
-            const prov = document.getElementById('selProveedor');
-            if (!prov.value) { errores.push('SELECCIONE UN PROVEEDOR'); marcarError(prov); if (!primerError) primerError = prov; }
-            const fac = document.querySelector('input[name="nro_factura"]');
-            if (!fac.value.trim()) { errores.push('NRO. FACTURA ES OBLIGATORIO'); marcarError(fac); if (!primerError) primerError = fac; }
-            const ctrl = document.querySelector('input[name="nro_control"]');
-            if (!/^\d{2}-\d{8}$/.test(ctrl.value.trim())) { errores.push('NRO. CONTROL INVÁLIDO (00-00000000)'); marcarError(ctrl); if (!primerError) primerError = ctrl; }
-        } else {
-            const causa = document.querySelector('select[name="causa_ajuste"]');
-            if (!causa.value) { errores.push('SELECCIONE UNA CAUSA DE AJUSTE'); marcarError(causa); if (!primerError) primerError = causa; }
+
+        document.getElementById('selProveedor').addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if (opt && opt.value) {
+                const cond = opt.dataset.condicion || 'Contado';
+                const dias = opt.dataset.dias || '0';
+                document.getElementById('displayCondicion').value = cond;
+                document.getElementById('displayDias').value = dias;
+            } else {
+                document.getElementById('displayCondicion').value = '-';
+                document.getElementById('displayDias').value = '-';
+            }
+        });
+
+        document.getElementById('selProducto').addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if (opt && opt.dataset.precio) {
+                document.getElementById('inputPrecio').value = parseFloat(opt.dataset.precio).toFixed(2);
+            }
+        });
+
+        function formatearPrecioCompra(el) {
+            var raw = el.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+            var parts = raw.split('.');
+            var entero = parts[0].replace(/^0+/, '') || '0';
+            var decimales = parts[1] ? parts[1].slice(0, 2) : '';
+            var formateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            if (decimales) formateado += '.' + decimales;
+            var num = parseFloat(entero + '.' + (decimales || '0'));
+            if (num > 999999.99) {
+                entero = '999999';
+                decimales = '99';
+                formateado = '999,999.99';
+            }
+            el.value = formateado;
         }
-        if (productos.length === 0) errores.push('AGREGUE AL MENOS UN PRODUCTO');
-        if (errores.length > 0) {
-            if (primerError) { primerError.focus(); primerError.scrollIntoView({behavior:'smooth',block:'center'}); }
-            Swal.fire({ title: 'CAMPOS REQUERIDOS', html: errores.join('<br>'), icon: 'warning', background: '#0f172a', color: '#fff', confirmButtonColor: '#10b981' });
+
+        function agregarProducto() {
+            const sel = document.getElementById('selProducto');
+            const precEl = document.getElementById('inputPrecio');
+            precEl.value = precEl.value.replace(/,/g, '');
+            const cant = parseInt(document.getElementById('inputCant').value) || 0;
+            const precio = parseFloat(precEl.value) || 0;
+            const tipoSel = document.querySelector('select[name="tipo_entrada"]');
+            const sinPrecio = (tipoSel && tipoSel.value === 'Donación') || getDireccion() < 0;
+
+            if (!sel.value || cant <= 0 || (!sinPrecio && precio <= 0)) {
+                alert('Seleccione producto, cantidad y precio válidos');
+                return;
+            }
+
+            const nombre = sel.options[sel.selectedIndex].text.split(' (')[0];
+
+            productos.push({
+                id: sel.value,
+                nombre: nombre,
+                cantidad: cant,
+                precio: precio,
+                total: cant * precio
+            });
+            actualizarTabla();
+
+            sel.value = '';
+            document.getElementById('inputCant').value = 1;
+            document.getElementById('inputPrecio').value = '';
+        }
+
+        function quitarProducto(idx) {
+            productos.splice(idx, 1);
+            actualizarTabla();
+        }
+
+        function actualizarTabla() {
+            const body = document.getElementById('productosBody');
+            if (productos.length === 0) {
+                body.innerHTML = '<tr id="filaVacia"><td colspan="6" style="padding:24px 12px;text-align:center;color:#64748b;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">⬆ Use los controles de arriba para agregar productos</td></tr>';
+            } else {
+                body.innerHTML = '';
+                productos.forEach((p, i) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td style="padding:8px 10px;color:#64748b;text-align:center;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">' + (i + 1) + '</td>' +
+                        '<td style="padding:8px 10px;font-size:.85rem;border-bottom:1px solid rgba(16,185,129,0.07);">' + p.nombre + '</td>' +
+                        '<td style="padding:8px 10px;font-size:.85rem;text-align:center;border-bottom:1px solid rgba(16,185,129,0.07);">' + p.cantidad + '</td>' +
+                        '<td style="padding:8px 10px;font-size:.85rem;text-align:right;color:#94a3b8;border-bottom:1px solid rgba(16,185,129,0.07);">$' + p.precio.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</td>' +
+                        '<td style="padding:8px 10px;font-size:.85rem;text-align:right;color:#06b6d4;font-weight:700;border-bottom:1px solid rgba(16,185,129,0.07);">$' + p.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</td>' +
+                        '<td style="padding:8px 10px;border-bottom:1px solid rgba(16,185,129,0.07);"><button type="button" class="btn btn-sm border-0" style="padding:0;color:#ef4444;font-size:.8rem;line-height:1;" onclick="quitarProducto(' + i + ')"><i class="bi bi-x-circle"></i></button></td>';
+                    body.appendChild(tr);
+                });
+            }
+            document.getElementById('totalItems').textContent = productos.length;
+            const suma = productos.reduce(function(s, p) {
+                return s + p.total;
+            }, 0);
+            document.getElementById('totalCosto').textContent = '$' + suma.toFixed(2);
+            document.getElementById('btnGuardar').disabled = productos.length === 0;
+            document.getElementById('productosData').value = JSON.stringify(productos);
+        }
+
+        function limpiarErrores() {
+            document.querySelectorAll('.input-error').forEach(function(el) {
+                el.classList.remove('input-error');
+            });
+        }
+
+        function marcarError(el, mensaje) {
+            el.classList.add('input-error');
+            if (mensaje) {
+                const errId = el.id + '_err';
+                let errEl = document.getElementById(errId);
+                if (!errEl) {
+                    errEl = document.createElement('small');
+                    errEl.id = errId;
+                    errEl.className = 'field-error';
+                    errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
+                    el.parentNode.appendChild(errEl);
+                }
+                errEl.textContent = mensaje;
+            }
+        }
+
+        function validarFormulario(btn) {
+            limpiarErrores();
+            const tipo = document.querySelector('select[name="tipo_entrada"]').value;
+            const errores = [];
+            let primerError = null;
+            if (tipo === 'Compra a proveedor') {
+                const prov = document.getElementById('selProveedor');
+                if (!prov.value) {
+                    errores.push('SELECCIONE UN PROVEEDOR');
+                    marcarError(prov);
+                    if (!primerError) primerError = prov;
+                }
+                const fac = document.querySelector('input[name="nro_factura"]');
+                if (!fac.value.trim()) {
+                    errores.push('NRO. FACTURA ES OBLIGATORIO');
+                    marcarError(fac);
+                    if (!primerError) primerError = fac;
+                }
+                const ctrl = document.querySelector('input[name="nro_control"]');
+                if (!/^\d{2}-\d{8}$/.test(ctrl.value.trim())) {
+                    errores.push('NRO. CONTROL INVÁLIDO (00-00000000)');
+                    marcarError(ctrl);
+                    if (!primerError) primerError = ctrl;
+                }
+            } else {
+                const causa = document.querySelector('select[name="causa_ajuste"]');
+                if (!causa.value) {
+                    errores.push('SELECCIONE UNA CAUSA DE AJUSTE');
+                    marcarError(causa);
+                    if (!primerError) primerError = causa;
+                }
+            }
+            if (productos.length === 0) errores.push('AGREGUE AL MENOS UN PRODUCTO');
+            if (errores.length > 0) {
+                if (primerError) {
+                    primerError.focus();
+                    primerError.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+                Swal.fire({
+                    title: 'CAMPOS REQUERIDOS',
+                    html: errores.join('<br>'),
+                    icon: 'warning',
+                    background: '#0f172a',
+                    color: '#fff',
+                    confirmButtonColor: '#10b981'
+                });
+                return false;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
+            btn.form.submit();
             return false;
         }
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
-        btn.form.submit();
-        return false;
-    }
 
-    function filtrar() {
-        const input = document.getElementById('buscar');
-        const filter = input.value.toLowerCase();
-        const rows = document.getElementById('tablaEntradas').getElementsByTagName('tr');
-        for (let i = 0; i < rows.length; i++) {
-            rows[i].style.display = rows[i].textContent.toLowerCase().includes(filter) ? '' : 'none';
-        }
-    }
-
-    function toggleCamposCompras(sel) {
-        limpiarErrores();
-        const tipo = sel.value;
-        const esProv = tipo === 'Compra a proveedor';
-        const esDonacion = tipo === 'Donación';
-        document.querySelectorAll('.comp-proveedor-section').forEach(el => el.style.display = esProv ? '' : 'none');
-        document.querySelectorAll('.comp-factura-section').forEach(el => el.style.display = esProv ? '' : 'none');
-        document.querySelectorAll('.comp-motivo-section').forEach(el => el.style.display = esProv ? 'none' : '');
-        const provSel = document.getElementById('selProveedor');
-        if (!esProv && provSel) provSel.removeAttribute('required');
-        if (esProv && provSel) provSel.setAttribute('required', '');
-        const facInput = document.querySelector('input[name="nro_factura"]');
-        if (facInput) {
-            if (esProv) facInput.setAttribute('required', '');
-            else facInput.removeAttribute('required');
-        }
-        const precioInput = document.getElementById('inputPrecio');
-        if (precioInput) {
-            if (esDonacion) {
-                precioInput.value = '0';
-                precioInput.readOnly = true;
-            } else {
-                precioInput.readOnly = false;
+        function filtrar() {
+            const input = document.getElementById('buscar');
+            const filter = input.value.toLowerCase();
+            const rows = document.getElementById('tablaEntradas').getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].style.display = rows[i].textContent.toLowerCase().includes(filter) ? '' : 'none';
             }
         }
-    }
 
-    function confirmarEliminar(id) {
-        Swal.fire({title:'¿ANULAR?',text:'El stock será revertido del inventario.',icon:'warning',showCancelButton:true,background:'#0f172a',color:'#fff',confirmButtonColor:'#ef4444',cancelButtonColor:'#1e293b',confirmButtonText:'SÍ, ANULAR',cancelButtonText:'CANCELAR'}).then(r => {
-            if (r.isConfirmed) window.location.href = 'compras.php?eliminar=' + id;
-        });
-    }
+        const DIR_MAP = {
+            'Sobrante físico': 1,
+            'Devolución': 1,
+            'Error de conteo (+) Excedente': 1,
+            'Producto vencido': -1,
+            'Dañado/Averiado': -1,
+            'Robo hormiga': -1,
+            'Merma operativa': -1,
+            'Error de conteo (-) Faltante': -1,
+            'Regalo de proveedor': 1,
+            'Muestra comercial': 1,
+            'Promocional': 1,
+            'Apoyo comunitario': -1,
+            'Cortesía comercial': -1,
+            'Regalo empleado': -1,
+            'Lote promocional': -1,
+        };
+        const CAUSAS_AJUSTE = [{
+                v: 'Sobrante físico',
+                l: '➕ Sobrante físico'
+            },
+            {
+                v: 'Devolución',
+                l: '➕ Devolución'
+            },
+            {
+                v: 'Error de conteo (+) Excedente',
+                l: '➕ Error de conteo — Excedente'
+            },
+            {
+                v: 'Producto vencido',
+                l: '➖ Producto vencido'
+            },
+            {
+                v: 'Dañado/Averiado',
+                l: '➖ Dañado/Averiado'
+            },
+            {
+                v: 'Robo hormiga',
+                l: '➖ Robo hormiga'
+            },
+            {
+                v: 'Merma operativa',
+                l: '➖ Merma operativa'
+            },
+            {
+                v: 'Error de conteo (-) Faltante',
+                l: '➖ Error de conteo — Faltante'
+            },
+        ];
+        const CAUSAS_DONACION = [{
+                v: 'Regalo de proveedor',
+                l: '➕ Regalo de proveedor'
+            },
+            {
+                v: 'Muestra comercial',
+                l: '➕ Muestra comercial'
+            },
+            {
+                v: 'Promocional',
+                l: '➕ Promocional'
+            },
+            {
+                v: 'Apoyo comunitario',
+                l: '➖ Apoyo comunitario'
+            },
+            {
+                v: 'Cortesía comercial',
+                l: '➖ Cortesía comercial'
+            },
+            {
+                v: 'Regalo empleado',
+                l: '➖ Regalo empleado'
+            },
+            {
+                v: 'Lote promocional',
+                l: '➖ Lote promocional'
+            },
+        ];
 
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.flash-auto').forEach(el => {
-            setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 4000);
+        function actualizarDireccion() {
+            const causa = document.querySelector('select[name="causa_ajuste"]').value;
+            const badge = document.getElementById('direccionBadge');
+            const precioInput = document.getElementById('inputPrecio');
+            const tipoSel = document.querySelector('select[name="tipo_entrada"]');
+            const esDonacion = tipoSel && tipoSel.value === 'Donación';
+            const dir = DIR_MAP[causa] || 0;
+            if (dir > 0) {
+                badge.style.display = 'inline-block';
+                badge.style.background = '#16a34a';
+                badge.textContent = 'SUMA STOCK +';
+                if (precioInput && !esDonacion) {
+                    precioInput.readOnly = false;
+                }
+            } else if (dir < 0) {
+                badge.style.display = 'inline-block';
+                badge.style.background = '#dc2626';
+                badge.textContent = 'RESTA STOCK -';
+                if (precioInput) {
+                    precioInput.value = '0';
+                    precioInput.readOnly = true;
+                }
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function getDireccion() {
+            const tipoSel = document.querySelector('select[name="tipo_entrada"]');
+            if (!tipoSel || (tipoSel.value !== 'Ajuste' && tipoSel.value !== 'Donación')) return 0;
+            const causa = document.querySelector('select[name="causa_ajuste"]').value;
+            return DIR_MAP[causa] || 0;
+        }
+
+        function toggleCamposCompras(sel) {
+            limpiarErrores();
+            const tipo = sel.value;
+            const esProv = tipo === 'Compra a proveedor';
+            const esDonacion = tipo === 'Donación';
+            const esAjuste = tipo === 'Ajuste';
+            const esMov = esAjuste || esDonacion;
+            document.querySelectorAll('.comp-proveedor-section').forEach(el => el.style.display = esProv ? '' : 'none');
+            document.querySelectorAll('.comp-factura-section').forEach(el => el.style.display = esProv ? '' : 'none');
+            document.querySelectorAll('.comp-motivo-section').forEach(el => el.style.display = esMov ? '' : 'none');
+            document.getElementById('motivoLabel').textContent = esDonacion ? 'Motivo de la Donación' : 'Motivo del Ajuste';
+            const provSel = document.getElementById('selProveedor');
+            if (!esProv && provSel) provSel.removeAttribute('required');
+            if (esProv && provSel) provSel.setAttribute('required', '');
+            const facInput = document.querySelector('input[name="nro_factura"]');
+            if (facInput) {
+                if (esProv) facInput.setAttribute('required', '');
+                else facInput.removeAttribute('required');
+            }
+            // Populate causas
+            const causaSel = document.querySelector('select[name="causa_ajuste"]');
+            if (causaSel && esMov) {
+                var lista = esDonacion ? CAUSAS_DONACION : CAUSAS_AJUSTE;
+                var html = '<option value="">Seleccionar...</option>';
+                for (var i = 0; i < lista.length; i++) {
+                    html += '<option value="' + lista[i].v + '">' + lista[i].l + '</option>';
+                }
+                causaSel.innerHTML = html;
+            }
+            const precioInput = document.getElementById('inputPrecio');
+            if (precioInput) {
+                if (esDonacion || getDireccion() < 0) {
+                    precioInput.value = '0';
+                    precioInput.readOnly = true;
+                } else {
+                    precioInput.readOnly = false;
+                }
+            }
+            actualizarDireccion();
+        }
+
+        function confirmarEliminar(id) {
+            Swal.fire({
+                title: '¿ANULAR?',
+                text: 'El stock será revertido del inventario.',
+                icon: 'warning',
+                showCancelButton: true,
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#1e293b',
+                confirmButtonText: 'SÍ, ANULAR',
+                cancelButtonText: 'CANCELAR'
+            }).then(r => {
+                if (r.isConfirmed) window.location.href = 'compras.php?eliminar=' + id;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.flash-auto').forEach(el => {
+                setTimeout(() => {
+                    el.style.transition = 'opacity .5s';
+                    el.style.opacity = '0';
+                    setTimeout(() => el.remove(), 500);
+                }, 4000);
+            });
+            document.querySelectorAll('input, select, textarea').forEach(function(el) {
+                el.addEventListener('input', function() {
+                    this.classList.remove('input-error');
+                    var e = document.getElementById(this.id + '_err');
+                    if (e) e.remove();
+                });
+                el.addEventListener('change', function() {
+                    this.classList.remove('input-error');
+                    var e = document.getElementById(this.id + '_err');
+                    if (e) e.remove();
+                });
+            });
+            const tipoSel = document.querySelector('select[name="tipo_entrada"]');
+            if (tipoSel) toggleCamposCompras(tipoSel);
         });
-        document.querySelectorAll('input, select, textarea').forEach(function(el) {
-            el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
-            el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
-        });
-        const tipoSel = document.querySelector('select[name="tipo_entrada"]');
-        if (tipoSel) toggleCamposCompras(tipoSel);
-    });
     </script>
     <script>
         const mainWrapper = document.getElementById('mainWrapper');
@@ -1116,7 +1495,11 @@ unset($_SESSION['flash_msg']);
                 mainWrapper.classList.remove('sidebar-open');
             }
         });
-        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
     </script>
 </body>
+
 </html>

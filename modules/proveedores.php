@@ -467,7 +467,7 @@ unset($_SESSION['flash_msg']);
                         </div>
                         <div class="prov-details">
                             <div class="prov-detail-row">
-                                <span class="detail-label">Lead Time</span>
+                                <span class="detail-label">Plazo Entrega</span>
                                 <span class="detail-value"><?php echo $row['lead_time'] ? $row['lead_time'] . ' días' : '-'; ?></span>
                             </div>
                             <div class="prov-detail-row">

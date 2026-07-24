@@ -21,7 +21,7 @@ if (isset($_POST['accion_usuario'])) {
         $id_target = intval($_POST['id_usuario']);
         $correo = strtolower(trim($_POST['correo'] ?? ''));
         $password = $_POST['password'];
-        $rol_final = ($id_target == $id_propio) ? $_SESSION['rol'] : $_POST['rol'];
+        $rol_final = ($id_target == $id_propio) ? (int)$_SESSION['id_rol'] : (int)$_POST['id_rol'];
         $status_final = ($id_target == $id_propio) ? 'Activo' : ($_POST['status'] ?? 'Activo');
 
         if ($db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) AND id_usuario != ?", [$usuario, $id_target])) {
@@ -51,10 +51,10 @@ if (isset($_POST['accion_usuario'])) {
                 header("Location: usuarios.php"); exit();
             }
             $pass_hash = password_hash($password, PASSWORD_BCRYPT);
-            $db->execute("UPDATE usuarios SET usuario=?, correo=?, password=?, rol=?, status=?, aprobado=? WHERE id_usuario=?", 
+            $db->execute("UPDATE usuarios SET usuario=?, correo=?, password=?, id_rol=?, status=?, aprobado=? WHERE id_usuario=?", 
                 [$usuario, $correo, $pass_hash, $rol_final, $status_final, ($status_final == 'Activo' ? 1 : 0), $id_target]);
         } else {
-            $db->execute("UPDATE usuarios SET usuario=?, correo=?, rol=?, status=?, aprobado=? WHERE id_usuario=?", 
+            $db->execute("UPDATE usuarios SET usuario=?, correo=?, id_rol=?, status=?, aprobado=? WHERE id_usuario=?", 
                 [$usuario, $correo, $rol_final, $status_final, ($status_final == 'Activo' ? 1 : 0), $id_target]);
         }
 
@@ -98,7 +98,8 @@ if (isset($_GET['toggle_status'])) {
 // ==========================================
 // OBTENER DATOS
 // ==========================================
-$usuarios = $db->fetchAll("SELECT id_usuario, usuario, correo, rol, status, COALESCE(aprobado, 1) as aprobado, pregunta_seguridad FROM usuarios ORDER BY usuario ASC");
+$roles_lista = $db->fetchAll("SELECT id_rol, nombre_rol FROM roles ORDER BY id_rol");
+$usuarios = $db->fetchAll("SELECT u.id_usuario, u.usuario, u.correo, u.id_rol, r.nombre_rol, u.status, COALESCE(u.aprobado, 1) as aprobado, u.pregunta_seguridad FROM usuarios u LEFT JOIN roles r ON u.id_rol = r.id_rol ORDER BY u.usuario ASC");
 
 $total_users = $db->fetchOne("SELECT COUNT(*) as t FROM usuarios")['t'];
 $activos = $db->fetchOne("SELECT COUNT(*) as t FROM usuarios WHERE status='Activo'")['t'];
@@ -350,10 +351,10 @@ unset($_SESSION['flash_msg']);
                                     <td>
                                         <?php
                                         $role_class = 'badge-secondary';
-                                        $role_text = $row['rol'] ?? '';
+                                        $role_text = $row['nombre_rol'] ?? '';
                                         if (empty($role_text)) { $role_text = 'SIN ROL'; }
-                                        if ($role_text === 'Administrador') $role_class = 'badge-warning';
-                                        if ($role_text === 'Operador de Carga' || $role_text === 'Operador de Ventas') $role_class = 'badge-success';
+                                        if ($row['id_rol'] == 1) $role_class = 'badge-warning';
+                                        if ($row['id_rol'] == 2 || $row['id_rol'] == 3) $role_class = 'badge-success';
                                         ?>
                                         <span class="badge-jv <?php echo $role_class; ?>"><?php echo $role_text; ?></span>
                                     </td>
@@ -456,9 +457,10 @@ unset($_SESSION['flash_msg']);
 
                         <div class="section-bg">
                             <div class="section-label"><i class="bi bi-shield"></i> Rol de Acceso</div>
-                            <select name="rol" id="u_rol" class="input-jv" required>
-                                <option value="Operador de Carga">Operador de Carga (Entradas)</option>
-                                <option value="Operador de Ventas">Operador de Ventas (Salidas)</option>
+                            <select name="id_rol" id="u_rol" class="input-jv" required>
+                                <?php foreach ($roles_lista as $rl): ?>
+                                    <option value="<?php echo $rl['id_rol']; ?>"><?php echo htmlspecialchars($rl['nombre_rol']); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
 
@@ -632,7 +634,7 @@ unset($_SESSION['flash_msg']);
             document.getElementById('btn-user-submit').disabled = false;
 
             const selectRol = document.getElementById('u_rol');
-            selectRol.value = data.rol;
+            selectRol.value = data.id_rol;
             const esPropio = (data.id_usuario == "<?php echo $id_propio; ?>");
             selectRol.disabled = esPropio;
 

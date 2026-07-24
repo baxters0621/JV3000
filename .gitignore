@@ -17,6 +17,7 @@ assets/js/bootstrap.bundle.min.js
 # Base de datos (dumps manuales aparte)
 *.sql
 *.dump
+!db/jv3000_portable_*.sql
 
 # IDE / Editor
 .vscode/

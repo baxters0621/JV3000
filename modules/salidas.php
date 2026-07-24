@@ -36,7 +36,7 @@ if (isset($_GET['confirm'])) {
         $salida_id = $db->insert('salidas', [
             'nro_factura_manual' => $data['nro_factura_manual'] ?? generarFacturaNumero(),
             'nro_control'        => $data['nro_control'] ?? '',
-            'cliente'            => $data['cliente'] ?? 'VENTA GENERAL',
+            'cliente'            => $data['cliente'] ?? '',
             'rif_cliente'        => $data['rif_cliente'] ?? 'N/A',
             'id_tipo_mov'        => intval($data['id_tipo_mov']),
             'id_usuario'         => $data['id_usuario'],
@@ -167,7 +167,7 @@ if (isset($_POST['accion_salida'])) {
     $nro_fac_man = 'PENDIENTE';
     $nro_control = generarControlNumero();
     $rif_cliente = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));
-    $cliente = mb_strtoupper(trim($_POST['cliente'] ?? 'VENTA GENERAL'));
+    $cliente = mb_strtoupper(trim($_POST['cliente'] ?? ''));
     $fecha_salida = $_POST['fecha_salida'] ?? date('Y-m-d');
     // Validar causa si es ajuste (merma/daño)
     $causa_ajuste = '';
@@ -316,6 +316,7 @@ $sql = "
     SELECT s.*,
            GROUP_CONCAT(p.nombre_producto SEPARATOR ', ') as productos_list,
            SUM(ds.cantidad) as total_cantidad,
+           SUM(ds.cantidad * ds.precio_venta) as total_monto,
            COUNT(ds.id_detalle) as num_productos,
            tm.nombre as tipo_mov_nombre,
            (SELECT ds2.id_producto FROM detalle_salidas ds2 WHERE ds2.id_salida = s.id_salida ORDER BY ds2.id_detalle LIMIT 1) as first_id_producto,
@@ -330,9 +331,9 @@ $sql = "
     ORDER BY s.fecha_salida DESC, s.id_salida DESC
 ";
 $salidas = $db->fetchAll($sql);
-$productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta, fecha_vencimiento FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
+$productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta, precio_costo, fecha_vencimiento FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
 $tipos_mov = $db->fetchAll("SELECT id_tipo_mov, nombre FROM tipos_movimientos WHERE tipo_movimiento = 'Salida' ORDER BY id_tipo_mov");
-$clientes_previos = $db->fetchAll("SELECT DISTINCT cliente, rif_cliente FROM salidas WHERE cliente IS NOT NULL AND cliente != 'Venta General' AND status = 'Activa' ORDER BY cliente ASC");
+$clientes_previos = $db->fetchAll("SELECT DISTINCT cliente, rif_cliente FROM salidas WHERE cliente IS NOT NULL AND cliente != '' AND status = 'Activa' ORDER BY cliente ASC");
 
 // Mapa id_tipo_mov → grupo para JS
 $tipos_mov_map = [];
@@ -370,11 +371,26 @@ unset($_SESSION['flash_msg']);
         width:40px;height:40px;border-radius:12px;
         display:inline-flex;align-items:center;justify-content:center;
         border:1px solid var(--jv-border);background:var(--jv-bg-primary);
-        color:var(--jv-text);transition:.15s;
+        color:var(--jv-text-primary);transition:.15s;
     }
     .btn-action:hover {
-        background:var(--jv-bg-hover);border-color:#dc2626;
+        background:rgba(255,255,255,0.05);border-color:#dc2626;
         color:#dc2626;
+    }
+    .section-bg {
+        background:rgba(2,6,23,0.3);
+        border:1px solid rgba(6,182,212,0.08);
+        border-radius:var(--jv-radius);
+        padding:12px 14px;
+        margin-bottom:10px;
+    }
+    .section-label {
+        font-size:.65rem;
+        text-transform:uppercase;
+        letter-spacing:1px;
+        font-weight:700;
+        color:rgba(148,163,184,0.6);
+        margin-bottom:8px;
     }
     /* === EMPTY STATE === */
     .estado-vacio {
@@ -458,14 +474,15 @@ unset($_SESSION['flash_msg']);
                 <table class="table-jv mb-0">
                     <thead>
                         <tr>
-                            <th>Factura</th>
-                            <th>Nro. Control</th>
+                            <th style="width:145px;">Nota de Entrega</th>
+                            <th style="width:140px;">Control</th>
                             <th>Cliente</th>
                             <th>Productos</th>
-                            <th class="text-center">Cant</th>
-                            <th>Tipo</th>
-                            <th class="text-center">Fecha</th>
-                            <th class="text-center"></th>
+                            <th class="text-center" style="width:55px;">Cant</th>
+                            <th class="text-center" style="width:180px;">Tipo</th>
+                            <th class="text-end" style="width:110px;">Total</th>
+                            <th class="text-center" style="width:85px;">Fecha</th>
+                            <th class="text-center" style="width:120px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -473,25 +490,26 @@ unset($_SESSION['flash_msg']);
                             <?php foreach ($salidas as $row): ?>
                                 <tr>
                                     <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura_manual'] ?: '#' . $row['id_salida']); ?></span></td>
-                                    <td><?php echo htmlspecialchars($row['nro_control']); ?></td>
+                                    <td style="font-size:.82rem;color:#94a3b8;"><?php echo htmlspecialchars($row['nro_control']); ?></td>
                                     <td class="text-uppercase">
-                                        <div class="fw-bold"><?php echo htmlspecialchars($row['cliente'] ?? 'Venta General'); ?></div>
-                                        <div class="text-secondary small"><?php echo htmlspecialchars($row['rif_cliente'] ?? 'S/RIF'); ?></div>
+                                        <div class="fw-bold" style="font-size:.85rem;"><?php echo htmlspecialchars($row['cliente'] ?? 'S/Cliente'); ?></div>
+                                        <div class="text-secondary small" style="font-size:.7rem;"><?php echo htmlspecialchars($row['rif_cliente'] ?? 'S/RIF'); ?></div>
                                     </td>
-                                    <td><?php echo htmlspecialchars(mb_substr($row['productos_list'] ?? '', 0, 60)) . (mb_strlen($row['productos_list'] ?? '') > 60 ? '...' : ''); ?></td>
-                                    <td class="text-center"><span class="badge-jv badge-danger">-<?php echo $row['total_cantidad']; ?></span></td>
-                                    <td><?php
+                                    <td style="font-size:.82rem;color:#cbd5e1;"><?php echo htmlspecialchars(mb_substr($row['productos_list'] ?? '', 0, 60)) . (mb_strlen($row['productos_list'] ?? '') > 60 ? '...' : ''); ?></td>
+                                    <td class="text-center"><span class="badge-jv badge-danger" style="font-size:.7rem;padding:3px 12px;">-<?php echo $row['total_cantidad']; ?></span></td>
+                                    <td class="text-center"><?php
                                         $tn = $row['tipo_mov_nombre'] ?? '';
                                         $obs = $row['observaciones'] ?? '';
                                         $causa = '';
                                         if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $obs, $m)) $causa = trim($m[1]);
                                         $g = getGrupoTipo($tn);
-                                        if ($g === 'venta') echo '<span class="badge-jv badge-success" style="font-size:.7rem;"><i class="bi bi-cart me-1"></i>Venta</span>';
-                                        elseif ($g === 'regalias') echo '<span class="badge-jv badge-info" style="font-size:.7rem;"><i class="bi bi-gift me-1"></i>Regalía</span>';
-                                        else echo '<span class="badge-jv badge-warning" style="font-size:.7rem;" title="' . htmlspecialchars($causa) . '"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($tn) . ($causa ? ': ' . htmlspecialchars($causa) : '') . '</span>';
+                                        if ($g === 'venta') echo '<span class="badge-jv badge-success"><i class="bi bi-cart me-1"></i>Venta</span>';
+                                        elseif ($g === 'regalias') echo '<span class="badge-jv badge-info"><i class="bi bi-gift me-1"></i>Regalía</span>';
+                                        else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" title="' . htmlspecialchars($tn) . ($causa ? ': ' . htmlspecialchars($causa) : '') . '" onclick="verDetalleDano(\'' . htmlspecialchars($tn, ENT_QUOTES) . '\', \'' . htmlspecialchars($causa, ENT_QUOTES) . '\')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($tn) . '</span>';
                                     ?></td>
-                                    <td style="color:#e2e8f0;font-weight:600;font-size:.82rem;"><?php echo date('d/m/Y', strtotime($row['fecha_salida'])); ?></td>
-                                    <td class="text-center">
+                                    <td class="text-end fw-bold" style="font-size:.9rem;<?php echo $g === 'merma' ? 'color:#f87171;' : 'color:#34d399;'; ?>">$<?php echo number_format($row['total_monto'] ?? 0, 2); ?></td>
+                                    <td class="text-center" style="font-weight:600;font-size:.82rem;color:#e2e8f0;"><?php echo date('d/m/Y', strtotime($row['fecha_salida'])); ?></td>
+                                    <td class="text-center" style="white-space:nowrap;">
                                         <button class="btn-action" onclick="verFactura(<?php echo $row['id_salida']; ?>)" title="Ver Nota">
                                             <i class="bi bi-receipt"></i>
                                         </button>
@@ -508,7 +526,7 @@ unset($_SESSION['flash_msg']);
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8">
+                                <td colspan="9">
                                     <div class="estado-vacio">
                                         <i class="bi bi-clipboard-x"></i>
                                         <span>No hay registros de ventas</span>
@@ -523,83 +541,90 @@ unset($_SESSION['flash_msg']);
 
     <!-- Modal: Nueva / Editar salida -->
     <div class="modal fade" id="modalSalida" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content modal-content-jv">
                 <form action="" method="POST" id="formSalida">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                     <input type="hidden" name="accion_salida" id="s_accion" value="registrar">
                     <input type="hidden" name="id_salida" id="s_id_edit">
-                    <div class="modal-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="modal-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="fw-bolder font-brand text-uppercase m-0" id="modalTitle" style="color:#fca5a5;">REGISTRAR MOVIMIENTO</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
 
-                        <!-- TIPO (siempre visible) -->
                         <div class="section-bg">
-                            <label class="small fw-bold text-secondary mb-2">TIPO DE MOVIMIENTO</label>
-                            <select name="id_tipo_mov" id="s_tipo" class="input-jv" required onchange="toggleCampos()">
-                                <option value="">Seleccione tipo...</option>
-                                <?php foreach ($tipos_mov as $tm):
-                                    $grupo = $tipos_mov_map[$tm['id_tipo_mov']];
-                                ?>
-                                    <option value="<?php echo $tm['id_tipo_mov']; ?>" data-grupo="<?php echo $grupo; ?>"><?php echo $tm['nombre']; ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="small fw-bold text-secondary mb-2">TIPO DE MOVIMIENTO</label>
+                                    <select name="id_tipo_mov" id="s_tipo" class="input-jv" required onchange="toggleCampos()">
+                                        <option value="">Seleccione tipo...</option>
+                                        <?php foreach ($tipos_mov as $tm):
+                                            $grupo = $tipos_mov_map[$tm['id_tipo_mov']];
+                                        ?>
+                                            <option value="<?php echo $tm['id_tipo_mov']; ?>" data-grupo="<?php echo $grupo; ?>"><?php echo $tm['nombre']; ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="small fw-bold text-secondary mb-2">FECHA</label>
+                                    <input type="date" id="s_fecha" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
+                                    <input type="hidden" name="fecha_salida" id="s_fecha_hidden" value="<?php echo date('Y-m-d'); ?>">
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- PRODUCTO (todos los grupos) -->
-                        <div class="section-bg">
-                            <label class="small fw-bold text-secondary mb-2">PRODUCTO</label>
-                            <select name="id_producto" id="s_prod" class="input-jv" required onchange="cargarPrecio()">
-                                <option value="">Seleccione un producto...</option>
-                                <?php foreach ($productos as $pr):
-                                    $alerta = '';
-                                    if ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d')) {
-                                        $alerta = '«VENCIDO» ';
-                                    } elseif ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d', strtotime('+7 days'))) {
-                                        $alerta = '«PRÓX» ';
-                                    }
-                                ?>
-                                    <option value="<?php echo $pr['id_producto']; ?>" data-precio="<?php echo $pr['precio_venta']; ?>"><?php echo $alerta . $pr['sku'] . " - " . $pr['nombre_producto']; ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <!-- FECHA (todos los grupos) -->
-                        <div class="section-bg">
-                            <label class="small fw-bold text-secondary mb-2">FECHA</label>
-                            <input type="date" id="s_fecha" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
-                            <input type="hidden" name="fecha_salida" id="s_fecha_hidden" value="<?php echo date('Y-m-d'); ?>">
-                        </div>
-
-                        <!-- CANTIDAD (todos los grupos) -->
-                        <div class="section-bg">
-                            <label class="small fw-bold text-secondary mb-2">CANTIDAD</label>
-                            <input type="number" name="cantidad" id="s_cant" class="input-jv" required min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1" placeholder="1">
-                        </div>
-
-                        <!-- GRUPO: VENTA -->
+                        <!-- GRUPO: VENTA (Cliente + RIF) -->
                         <div class="sal-field-group" data-grupo="venta">
                             <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">PRECIO UNITARIO ($)</label>
-                                <input type="text" inputmode="decimal" name="precio_venta" id="s_precio" class="input-jv" placeholder="0.00" oninput="formatearPrecio(this)">
-                            </div>
-                            <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
-                                <input type="text" name="cliente" id="s_cliente" class="input-jv" placeholder="Nombre o Razón Social">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
+                                        <input type="text" name="cliente" id="s_cliente" class="input-jv" placeholder="Nombre o Razón Social">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="small fw-bold text-secondary mb-2">RIF / CÉDULA <span style="color:#ef4444;">*</span></label>
+                                        <div class="d-flex gap-2">
+                                            <select id="s_rif_tipo" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="validarRIFInput()">
+                                                <option value="V">V-</option>
+                                                <option value="J">J-</option>
+                                                <option value="E">E-</option>
+                                                <option value="P">P-</option>
+                                                <option value="G">G-</option>
+                                            </select>
+                                            <input type="text" id="s_rif_num" class="input-jv" placeholder="Número de identificación" oninput="validarRIFInput()" style="flex:1;" inputmode="numeric">
+                                            <input type="hidden" name="rif_cliente" id="s_rif">
+                                        </div>
+                                        <div id="s-rif-msg" class="small mt-1" style="min-height:18px;"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- GRUPO: REGALIAS (solo cliente, precio $0) -->
+                        <!-- GRUPO: REGALIAS (solo Cliente) -->
                         <div class="sal-field-group" data-grupo="regalias">
                             <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
-                                <input type="text" name="cliente" id="s_cliente_reg" class="input-jv" placeholder="Nombre o Razón Social" oninput="document.getElementById('s_cliente').value=this.value">
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <label class="small fw-bold text-secondary mb-1">MOTIVO *</label>
+                                        <select name="motivo_regalia" id="s_motivo_reg" class="input-jv">
+                                            <option value="">Seleccionar...</option>
+                                            <option>Promoción</option>
+                                            <option>Cortesía / Fidelización</option>
+                                            <option>Garantía</option>
+                                            <option>Producto Dañado</option>
+                                            <option>Muestra</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-7">
+                                        <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
+                                        <input type="text" name="cliente" id="s_cliente_reg" class="input-jv" placeholder="Nombre o Razón Social" oninput="document.getElementById('s_cliente').value=this.value">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- GRUPO: MERMA (Mermas + Daños) -->
+                        <!-- GRUPO: MERMA (Causa + Motivo) -->
                         <div class="sal-field-group" data-grupo="merma">
                             <div class="section-bg">
                                 <div class="row g-2">
@@ -623,32 +648,75 @@ unset($_SESSION['flash_msg']);
                             </div>
                         </div>
 
-                        <!-- DATOS ADICIONALES -->
-                            <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">RIF / CÉDULA</label>
-                                <div class="d-flex gap-2">
-                                    <select id="s_rif_tipo" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="validarRIFInput()">
-                                        <option value="V">V-</option>
-                                        <option value="J">J-</option>
-                                        <option value="E">E-</option>
-                                        <option value="P">P-</option>
-                                        <option value="G">G-</option>
+                        <!-- PRODUCTOS: Controles + Tabla (siempre visible) -->
+                        <div class="section-bg">
+                            <div class="section-label"><i class="bi bi-box-seam me-1"></i>Agregar productos</div>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="small fw-bold text-secondary mb-1">Producto</label>
+                                    <select id="s_prod" class="input-jv" onchange="cargarPrecio()">
+                                        <option value="">Seleccionar...</option>
+                                        <?php foreach ($productos as $pr):
+                                            $alerta = '';
+                                            if ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d')) {
+                                                $alerta = '«VENCIDO» ';
+                                            } elseif ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d', strtotime('+7 days'))) {
+                                                $alerta = '«PRÓX» ';
+                                            }
+                                        ?>
+                                            <option value="<?php echo $pr['id_producto']; ?>" data-precio="<?php echo $pr['precio_venta']; ?>" data-costo="<?php echo $pr['precio_costo']; ?>"><?php echo $alerta . $pr['sku'] . " - " . $pr['nombre_producto']; ?></option>
+                                        <?php endforeach; ?>
                                     </select>
-                                    <input type="text" id="s_rif_num" class="input-jv" placeholder="Número de identificación" oninput="validarRIFInput()" style="flex:1;" inputmode="numeric">
-                                    <input type="hidden" name="rif_cliente" id="s_rif">
                                 </div>
-                                <div id="s-rif-msg" class="small mt-1" style="min-height:18px;"></div>
+                                <div class="col-md-2">
+                                    <label class="small fw-bold text-secondary mb-1">Cant</label>
+                                    <input type="number" id="s_cant" class="input-jv" value="1" min="1" max="999999">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-secondary mb-1">Precio $</label>
+                                    <input type="text" inputmode="decimal" id="s_precio" class="input-jv" placeholder="0.00" readonly style="background:rgba(255,255,255,0.04);cursor:not-allowed;color:#94a3b8;">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn-jv-primary w-100" style="margin-top:22px;padding:12px 8px;" onclick="agregarProductoSalida()">
+                                        <i class="bi bi-plus-lg"></i> Agregar
+                                    </button>
+                                </div>
                             </div>
-                            <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">NRO. CONTROL</label>
-                                <input type="text" class="input-jv" value="Generado automáticamente" disabled style="color:#94a3b8;">
-                            </div>
-                            <div class="section-bg">
-                                <label class="small fw-bold text-secondary mb-2">OBSERVACIONES</label>
-                                <textarea name="observaciones" id="s_obs" class="input-jv" rows="2" placeholder="Notas adicionales..."></textarea>
-                            </div>
+                        </div>
 
-                        <button type="button" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase" id="btnPreview" onclick="enviarPreview()">
+                        <!-- TABLA DE PRODUCTOS -->
+                        <div style="border:1px solid rgba(6,182,212,0.12);border-radius:8px;overflow:hidden;margin-top:8px;">
+                            <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-primary);">
+                                <thead>
+                                    <tr style="background:linear-gradient(135deg,#0e7490,#0891b2);">
+                                        <th style="padding:4px 6px;width:26px;text-align:center;color:#a5f3fc;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">#</th>
+                                        <th style="padding:4px 6px;color:#a5f3fc;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Producto</th>
+                                        <th style="padding:4px 6px;width:50px;text-align:center;color:#a5f3fc;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Cant</th>
+                                        <th style="padding:4px 6px;width:85px;text-align:right;color:#a5f3fc;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Precio</th>
+                                        <th style="padding:4px 6px;width:85px;text-align:right;color:#a5f3fc;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Total</th>
+                                        <th style="width:26px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="s_productos_body">
+                                    <tr id="s_fila_vacia"><td colspan="6" style="padding:18px 10px;text-align:center;color:#64748b;font-size:.8rem;border-bottom:1px solid rgba(6,182,212,0.07);">⬆ Agregue productos con los controles de arriba</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-top:6px;background:rgba(6,182,212,0.04);border:1px solid rgba(6,182,212,0.15);border-radius:8px;">
+                            <span class="text-secondary small">Productos</span>
+                            <span class="fw-bold ms-2" id="s_total_items" style="color:var(--jv-cyan);">0</span>
+                            <span class="text-secondary small ms-auto">Total Venta</span>
+                            <span class="fw-bold ms-2" id="s_total_monto" style="color:var(--jv-cyan);">$0.00</span>
+                        </div>
+
+                        <!-- OBSERVACIONES -->
+                        <div class="section-bg">
+                            <label class="small fw-bold text-secondary mb-2">OBSERVACIONES</label>
+                            <textarea name="observaciones" id="s_obs" class="input-jv" rows="1" placeholder="Notas adicionales..."></textarea>
+                        </div>
+
+                        <button type="button" class="btn btn-jv-primary w-100 py-2 fw-bolder text-uppercase mt-1" id="btnPreview" onclick="enviarPreview()">
                             📄 VISTA PREVIA NOTA
                         </button>
                     </div>
@@ -663,6 +731,66 @@ unset($_SESSION['flash_msg']);
     <script>
         const modalS = new bootstrap.Modal(document.getElementById('modalSalida'));
         const TIPO_MAP = <?php echo json_encode($tipos_mov_map); ?>;
+        let s_productos = [];
+
+        function agregarProductoSalida() {
+            const sel = document.getElementById('s_prod');
+            const opt = sel.options[sel.selectedIndex];
+            if (!opt || !opt.value) { alert('Seleccione un producto.'); sel.focus(); return; }
+            const cant = parseInt(document.getElementById('s_cant').value) || 0;
+            if (cant < 1) { alert('Cantidad debe ser mayor a 0.'); document.getElementById('s_cant').focus(); return; }
+            const tipo = document.getElementById('s_tipo');
+            const grupo = tipo && tipo.value ? (TIPO_MAP[tipo.value] || '') : '';
+            const precio = parseFloat(document.getElementById('s_precio').value) || 0;
+            if (grupo !== 'regalias' && grupo !== 'merma' && precio <= 0) { alert('El precio debe ser mayor a 0.'); document.getElementById('s_precio').focus(); return; }
+            s_productos.push({
+                id_producto: opt.value,
+                sku: opt.text.split(' - ')[0].replace(/«.*?»\s*/g, ''),
+                nombre_producto: opt.text.split(' - ').slice(1).join(' - ').replace(/«.*?»\s*/g, ''),
+                cantidad: cant,
+                precio_venta: precio
+            });
+            actualizarTablaSalida();
+            sel.selectedIndex = 0;
+            document.getElementById('s_cant').value = 1;
+            document.getElementById('s_precio').value = '';
+        }
+
+        function quitarProductoSalida(idx) {
+            s_productos.splice(idx, 1);
+            actualizarTablaSalida();
+        }
+
+        function actualizarTablaSalida() {
+            const tbody = document.getElementById('s_productos_body');
+            if (!s_productos.length) {
+                tbody.innerHTML = '<tr id="s_fila_vacia"><td colspan="6" style="padding:24px 12px;text-align:center;color:#64748b;font-size:.85rem;border-bottom:1px solid rgba(6,182,212,0.07);">⬆ Agregue productos con los controles de arriba</td></tr>';
+                document.getElementById('s_total_items').textContent = '0';
+                document.getElementById('s_total_monto').textContent = '$0.00';
+                return;
+            }
+            let html = '';
+            let totalItems = 0;
+            let totalMonto = 0;
+            s_productos.forEach((p, i) => {
+                const subtotal = p.cantidad * p.precio_venta;
+                totalItems += p.cantidad;
+                totalMonto += subtotal;
+                html += `<tr>
+                    <td style="padding:6px 8px;text-align:center;color:#94a3b8;font-size:.8rem;border-bottom:1px solid rgba(6,182,212,0.07);">${i+1}</td>
+                    <td style="padding:6px 8px;color:var(--jv-text-primary);font-size:.85rem;border-bottom:1px solid rgba(6,182,212,0.07);">${p.sku} - ${p.nombre_producto}</td>
+                    <td style="padding:6px 8px;text-align:center;color:#e2e8f0;font-size:.85rem;border-bottom:1px solid rgba(6,182,212,0.07);">${p.cantidad}</td>
+                    <td style="padding:6px 8px;text-align:right;color:#94a3b8;font-size:.85rem;border-bottom:1px solid rgba(6,182,212,0.07);">$${p.precio_venta.toFixed(2)}</td>
+                    <td style="padding:6px 8px;text-align:right;color:var(--jv-cyan);font-weight:600;font-size:.85rem;border-bottom:1px solid rgba(6,182,212,0.07);">$${subtotal.toFixed(2)}</td>
+                    <td style="padding:6px 8px;text-align:center;border-bottom:1px solid rgba(6,182,212,0.07);">
+                        <button type="button" onclick="quitarProductoSalida(${i})" style="background:none;border:none;color:#ef4444;font-size:1rem;cursor:pointer;padding:2px 6px;" title="Quitar">&times;</button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+            document.getElementById('s_total_items').textContent = totalItems;
+            document.getElementById('s_total_monto').textContent = '$' + totalMonto.toFixed(2);
+        }
 
         function toggleCampos() {
             limpiarErrores();
@@ -674,6 +802,10 @@ unset($_SESSION['flash_msg']);
             });
             const nombres = {venta:'REGISTRAR VENTA', regalias:'REGISTRAR REGALÍA', merma:'REGISTRAR AJUSTE'};
             document.getElementById('modalTitle').innerText = nombres[grupo] || 'REGISTRAR MOVIMIENTO';
+            // reset productos al cambiar tipo
+            s_productos = [];
+            actualizarTablaSalida();
+            if (document.getElementById('s_prod').value) cargarPrecio();
         }
 
         function nuevaSalida() {
@@ -681,9 +813,8 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_accion').value = 'registrar';
             document.getElementById('s_id_edit').value = '';
             document.getElementById('modalTitle').innerText = 'REGISTRAR MOVIMIENTO';
-            document.getElementById('s_prod').value = '';
-            document.getElementById('s_cant').value = '';
-            document.getElementById('s_precio').value = '';
+            s_productos = [];
+            actualizarTablaSalida();
             document.getElementById('s_cliente').value = '';
             document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = '');
             document.getElementById('s_rif_tipo').value = 'V';
@@ -691,7 +822,7 @@ unset($_SESSION['flash_msg']);
             document.getElementById('s_rif').value = '';
             var m = document.getElementById('s-rif-msg'); if (m) m.innerHTML = '';
             var ri = document.getElementById('s_rif_num'); if (ri) ri.style.borderColor = '';
-            // nro_control se genera automáticamente
+            document.getElementById('s_motivo_reg') && (document.getElementById('s_motivo_reg').value = '');
             document.getElementById('s_obs').value = '';
             var hoy = new Date().toISOString().slice(0,10);
             document.getElementById('s_fecha').value = hoy;
@@ -703,73 +834,57 @@ unset($_SESSION['flash_msg']);
             modalS.show();
         }
 
-        function editarSalida(data) {
-            document.getElementById('s_accion').value = 'editar';
-            document.getElementById('s_id_edit').value = data.id_salida;
-            document.getElementById('modalTitle').innerText = 'EDITAR SALIDA';
-            document.getElementById('s_fecha').value = data.fecha_salida;
-            document.getElementById('s_fecha_hidden').value = data.fecha_salida;
-            document.getElementById('s_prod').value = data.first_id_producto;
-            document.getElementById('s_cliente').value = data.cliente;
-            document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = data.cliente);
-            var rifMatch = (data.rif_cliente || '').match(/^([VJGPE])-(\d[\d.-]*)/);
-            if (rifMatch) {
-                document.getElementById('s_rif_tipo').value = rifMatch[1];
-                document.getElementById('s_rif_num').value = rifMatch[2].replace(/[^\d]/g, '');
-            } else {
-                document.getElementById('s_rif_tipo').value = 'V';
-                document.getElementById('s_rif_num').value = '';
-            }
-            validarRIFInput();
-            document.getElementById('s_cant').value = data.first_cantidad;
-            var pv = document.getElementById('s_precio'); pv.value = parseFloat(data.first_precio_venta).toFixed(2); formatearPrecio(pv);
-            document.getElementById('s_tipo').value = data.id_tipo_mov;
-            document.getElementById('s_obs').value = data.observaciones;
-            toggleCampos();
-            modalS.show();
-        }
-
-        function formatearNumero(nums, tipo) {
-            if (tipo === 'V' || tipo === 'E' || tipo === 'P' || tipo === 'G') return nums.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            if (nums.length <= 8) return nums;
-            return nums.slice(0,8) + '-' + nums.slice(8,9);
-        }
-        function formatearPrecio(el) {
-            var raw = el.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-            var parts = raw.split('.');
-            var entero = parts[0].replace(/^0+/, '') || '0';
-            var decimales = parts[1] ? parts[1].slice(0,2) : '';
-            var formateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            if (decimales) formateado += '.' + decimales;
-            var num = parseFloat(entero + '.' + (decimales || '0'));
-            if (num > 999999.99) { entero = '999999'; decimales = '99'; formateado = '999,999.99'; }
-            el.value = formateado;
-        }
         function validarRIFInput() {
             var tipo = document.getElementById('s_rif_tipo').value;
             var nums = document.getElementById('s_rif_num').value.replace(/\D/g, '');
             var msg = document.getElementById('s-rif-msg');
             var numInput = document.getElementById('s_rif_num');
             var hidden = document.getElementById('s_rif');
-            var maxDig = (tipo === 'J') ? 9 : 8;
+            var maxDig = (tipo === 'J' || tipo === 'G') ? 9 : 8;
             if (nums.length > maxDig) { nums = nums.slice(0, maxDig); }
             if (nums === '') {
                 msg.innerHTML = ''; numInput.style.borderColor = ''; hidden.value = ''; numInput.value = '';
                 return;
             }
-            var formatted = formatearNumero(nums, tipo);
-            var clean = tipo + '-' + nums;
-            var display = tipo + '-' + formatted;
-            var valido = /^[VGPE]-\d{7,8}$/.test(clean) || /^J-\d{8,9}(?:-\d)?$/.test(clean);
+            var formatted = nums.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            var valido = (tipo === 'V' || tipo === 'E') ? nums.length >= 7 : nums.length >= 8;
+            hidden.value = tipo + '-' + nums;
+            numInput.value = formatted;
             if (valido) {
                 msg.innerHTML = '<span style="color:#22c55e;">✓ Válido</span>';
                 numInput.style.borderColor = '#22c55e';
             } else {
-                msg.innerHTML = '<span style="color:#ef4444;">Mín. 7 dígitos (persona) u 8 (empresa)</span>';
+                msg.innerHTML = '<span style="color:#ef4444;">RIF incompleto</span>';
                 numInput.style.borderColor = '#ef4444';
             }
-            numInput.value = formatted;
-            hidden.value = display;
+        }
+
+        function editarSalida(data) {
+            document.getElementById('s_accion').value = 'editar';
+            document.getElementById('s_id_edit').value = data.id_salida;
+            document.getElementById('modalTitle').innerText = 'EDITAR SALIDA';
+            document.getElementById('s_fecha').value = data.fecha_salida;
+            document.getElementById('s_fecha_hidden').value = data.fecha_salida;
+            document.getElementById('s_cliente').value = data.cliente;
+            document.getElementById('s_cliente_reg') && (document.getElementById('s_cliente_reg').value = data.cliente);
+            var rifMatch = (data.rif_cliente || '').match(/^([VJGPE])-(\d+)/);
+            if (rifMatch) {
+                document.getElementById('s_rif_tipo').value = rifMatch[1];
+                document.getElementById('s_rif_num').value = rifMatch[2];
+            } else {
+                document.getElementById('s_rif_tipo').value = 'V';
+                document.getElementById('s_rif_num').value = '';
+            }
+            validarRIFInput();
+            // cargar productos desde JSON si existe
+            try {
+                var prods = JSON.parse(data.productos_json || '[]');
+                if (prods.length) { s_productos = prods; actualizarTablaSalida(); }
+            } catch(e) {}
+            document.getElementById('s_tipo').value = data.id_tipo_mov;
+            document.getElementById('s_obs').value = data.observaciones;
+            toggleCampos();
+            modalS.show();
         }
 
         function limpiarErrores() {
@@ -790,6 +905,7 @@ unset($_SESSION['flash_msg']);
                 errEl.textContent = msg;
             }
         }
+
         function enviarPreview() {
             limpiarErrores();
             const btn = document.getElementById('btnPreview');
@@ -798,10 +914,8 @@ unset($_SESSION['flash_msg']);
 
             const tipo = document.getElementById('s_tipo');
             if (!tipo.value) { marcarError(tipo, 'SELECCIONE TIPO'); valido = false; if (!primerError) primerError = tipo; }
-            const prod = document.getElementById('s_prod');
-            if (!prod.value) { marcarError(prod, 'SELECCIONE PRODUCTO'); valido = false; if (!primerError) primerError = prod; }
-            const cant = parseInt(document.getElementById('s_cant').value);
-            if (!cant || cant <= 0) { marcarError(document.getElementById('s_cant'), 'CANTIDAD > 0'); valido = false; if (!primerError) primerError = document.getElementById('s_cant'); }
+
+            if (!s_productos.length) { marcarError(document.getElementById('s_prod'), 'AGREGUE PRODUCTOS'); valido = false; if (!primerError) primerError = document.getElementById('s_prod'); }
 
             const grupo = TIPO_MAP[tipo.value] || '';
             if (grupo === 'merma') {
@@ -811,19 +925,21 @@ unset($_SESSION['flash_msg']);
             if (grupo === 'regalias') {
                 document.getElementById('s_precio').value = '0';
                 document.getElementById('s_cliente').value = document.getElementById('s_cliente_reg').value;
+                const motivo = document.getElementById('s_motivo_reg');
+                if (!motivo.value) { marcarError(motivo, 'SELECCIONE MOTIVO'); valido = false; if (!primerError) primerError = motivo; }
+                const cliReg = document.getElementById('s_cliente_reg');
+                if (!cliReg.value.trim()) { marcarError(cliReg, 'CLIENTE OBLIGATORIO'); valido = false; if (!primerError) primerError = cliReg; }
             }
             if (grupo === 'venta') {
-                var precEl = document.getElementById('s_precio');
-                if (precEl) precEl.value = precEl.value.replace(/,/g, '');
-                var pv = parseFloat(precEl.value);
-                if (!pv || pv <= 0) { marcarError(precEl, 'PRECIO > 0'); valido = false; if (!primerError) primerError = precEl; }
+                const rifEl = document.getElementById('s_rif');
+                const rifInput = document.getElementById('s_rif_num');
+                const rifMsg = document.getElementById('s-rif-msg');
+                const rifTipo = document.getElementById('s_rif_tipo');
+                if (!rifEl.value) { marcarError(rifInput, 'RIF OBLIGATORIO'); valido = false; if (!primerError) primerError = rifInput; }
+                else if (rifMsg && rifMsg.innerHTML.includes('incompleto')) { marcarError(rifInput, 'RIF INCOMPLETO'); valido = false; if (!primerError) primerError = rifInput; }
+                const cli = document.getElementById('s_cliente');
+                if (!cli.value.trim()) { marcarError(cli, 'CLIENTE OBLIGATORIO'); valido = false; if (!primerError) primerError = cli; }
             }
-            var rifEl = document.getElementById('s_rif');
-            var rifVal = rifEl.value.replace(/\./g, '');
-            if (rifVal && !(/^[VGPE]-\d{7,8}$/.test(rifVal) || /^J-\d{8,9}(?:-\d)?$/.test(rifVal))) {
-                marcarError(rifEl, 'RIF INVÁLIDO'); valido = false; if (!primerError) primerError = rifEl;
-            }
-            rifEl.value = rifVal;
 
             if (!valido) {
                 btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA';
@@ -832,6 +948,18 @@ unset($_SESSION['flash_msg']);
             }
 
             btn.disabled = true; btn.innerHTML = '⏳ PROCESANDO...';
+
+    // inyectar productos como JSON en el campo que espera el backend
+    let pj = document.getElementById('formSalida').querySelector('[name="productos_data"]');
+    if (!pj) { pj = document.createElement('input'); pj.type = 'hidden'; pj.name = 'productos_data'; document.getElementById('formSalida').appendChild(pj); }
+    // mapear a lo que espera el backend: id_producto, cantidad, precio
+    const payload = s_productos.map(p => ({
+        id_producto: parseInt(p.id_producto),
+        cantidad: parseInt(p.cantidad),
+        precio: parseFloat(p.precio_venta)
+    }));
+    pj.value = JSON.stringify(payload);
+
             const fd = new FormData(document.getElementById('formSalida'));
 
             fetch('preview_factura.php?store=1', { method:'POST', body:fd })
@@ -851,6 +979,18 @@ unset($_SESSION['flash_msg']);
                 });
         }
 
+        function verDetalleDano(tipo, causa) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Detalle del Movimiento',
+                html: '<div style="text-align:left;"><strong>Tipo:</strong> ' + tipo + '<br><strong>Causa:</strong> ' + (causa || 'No especificada') + '</div>',
+                background: '#0f172a',
+                color: '#fff',
+                confirmButtonColor: '#06b6d4',
+                confirmButtonText: 'OK'
+            });
+        }
+
         function verFactura(id) {
             window.open('preview_factura.php?id=' + id, '_blank');
         }
@@ -865,7 +1005,16 @@ unset($_SESSION['flash_msg']);
             const sel = document.getElementById('s_prod');
             const opt = sel.options[sel.selectedIndex];
             const precio = document.getElementById('s_precio');
-            if (opt && opt.dataset.precio) precio.value = opt.dataset.precio;
+            if (!opt || !opt.value) { precio.value = ''; return; }
+            const tipo = document.getElementById('s_tipo');
+            const grupo = tipo && tipo.value ? (TIPO_MAP[tipo.value] || '') : '';
+            if (grupo === 'regalias') {
+                precio.value = '0.00';
+            } else if (grupo === 'merma' && opt.dataset.costo) {
+                precio.value = parseFloat(opt.dataset.costo).toFixed(2);
+            } else if (opt.dataset.precio) {
+                precio.value = parseFloat(opt.dataset.precio).toFixed(2);
+            }
         }
     </script>
     <script>
