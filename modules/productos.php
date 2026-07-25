@@ -112,7 +112,7 @@ $productos = $db->fetchAll(
         COALESCE(pr.nombre_empresa, (
             SELECT pr2.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr2 ON co.id_proveedor = pr2.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1
         )) as ultimo_proveedor
-    FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor ORDER BY p.status ASC, p.nombre_producto ASC LIMIT ? OFFSET ?",
+    FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor ORDER BY p.status DESC, p.nombre_producto ASC LIMIT ? OFFSET ?",
     [$registros_por_pagina, $offset]
 );
 
