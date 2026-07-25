@@ -1,10 +1,11 @@
 -- JV3000 C.A. - Base de Datos Portable v3
--- Generado el 2026-07-24 04:35:49
+-- Generado el 2026-07-25 05:15:46
 
 SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';
 START TRANSACTION;
 SET time_zone = '+00:00';
 
+DROP TABLE IF EXISTS `auditoria`;
 CREATE TABLE `auditoria` (
   `id_auditoria` int(11) NOT NULL AUTO_INCREMENT,
   `id_usuario` int(11) DEFAULT NULL,
@@ -15,25 +16,14 @@ CREATE TABLE `auditoria` (
   PRIMARY KEY (`id_auditoria`),
   KEY `idx_usuario` (`id_usuario`),
   KEY `idx_fecha` (`fecha_hora`)
-) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=95 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `auditoria` (`id_auditoria`,`id_usuario`,`usuario_nombre`,`accion`,`detalle`,`fecha_hora`) VALUES
-('76','1','Administrador','editar','Categoría modificada','2026-07-21 00:44:43'),
-('77','1','Administrador','editar','Categoría modificada','2026-07-21 00:44:56'),
-('78','1','Administrador','editar','Categoría modificada','2026-07-21 00:45:04'),
-('79','1','Administrador','logout','Cierre de sesión','2026-07-21 01:27:34'),
-('80','1','Administrador','login','Inicio de sesión','2026-07-21 22:15:31'),
-('81','1','Administrador','logout','Cierre de sesión','2026-07-21 22:16:00'),
-('82','1','Administrador','login','Inicio de sesión','2026-07-21 22:40:52'),
-('83','1','Administrador','login','Inicio de sesión','2026-07-22 08:37:35'),
-('84','1','Administrador','editar','Categoría modificada','2026-07-22 08:56:13'),
-('85','1','Administrador','editar','Categoría modificada','2026-07-22 08:56:18'),
-('86','1','Administrador','editar','Categoría modificada','2026-07-22 08:56:23'),
-('87','1','Administrador','editar','Categoría modificada','2026-07-22 08:56:28'),
-('88','1','Administrador','toggle_status','Cambio de estado','2026-07-22 09:32:55'),
-('89','1','Administrador','toggle_status','Cambio de estado','2026-07-22 09:32:59'),
-('90','1','Administrador','logout','Cierre de sesión','2026-07-22 09:33:06');
+('92','1','Administrador','eliminar','Depuración del historial de auditoría completada — -1 registros eliminados.','2026-07-23 22:53:09'),
+('93','1','Administrador','logout','Cierre de sesión','2026-07-23 22:53:20'),
+('94','1','Administrador','login','Inicio de sesión','2026-07-24 22:40:31');
 
+DROP TABLE IF EXISTS `categorias`;
 CREATE TABLE `categorias` (
   `id_categoria` int(11) NOT NULL AUTO_INCREMENT,
   `codigo` varchar(20) DEFAULT NULL,
@@ -94,6 +84,7 @@ INSERT INTO `categorias` (`id_categoria`,`codigo`,`nombre`,`descripcion`,`parent
 ('34','MOT-TER','Termostatos y Sensores',NULL,'8','1','MOT/MOT-TER','MOT-TER',NULL,'5','100','0','C',NULL,NULL,'0.00','normal',NULL,'Activo'),
 ('35','MOT-BOM','Bombas de Agua y Aceite',NULL,'8','1','MOT/MOT-BOM','MOT-BOM',NULL,'5','100','0','C',NULL,NULL,'0.00','normal',NULL,'Activo');
 
+DROP TABLE IF EXISTS `compras`;
 CREATE TABLE `compras` (
   `id_compra` int(11) NOT NULL AUTO_INCREMENT,
   `nro_factura` varchar(50) NOT NULL,
@@ -123,6 +114,7 @@ INSERT INTO `compras` (`id_compra`,`nro_factura`,`id_proveedor`,`id_usuario`,`fe
 ('2','FAC-FRE-001','3','1','2026-07-21 10:00:00','02-00000002','Credito','30','1983.00','317.28','2300.28','Activa','Compra a proveedor'),
 ('3','FAC-ELE-001','4','1','2026-07-17 14:30:00','03-00000003','Credito','30','3084.60','493.54','3578.14','Activa','Compra a proveedor');
 
+DROP TABLE IF EXISTS `configuracion`;
 CREATE TABLE `configuracion` (
   `id_config` int(11) NOT NULL AUTO_INCREMENT,
   `clave` varchar(50) NOT NULL,
@@ -141,6 +133,7 @@ INSERT INTO `configuracion` (`id_config`,`clave`,`valor`,`descripcion`,`fecha_ac
 ('5','empresa_direccion','Calle Guzman Blanco, Edif. El Surtidor Local 2, Valencia, Edo. Carabobo','Dirección de la empresa','2026-07-14 21:17:48'),
 ('6','empresa_email','jv3000ca@gmail.com','Correo de la empresa','2026-07-14 21:17:48');
 
+DROP TABLE IF EXISTS `detalle_compras`;
 CREATE TABLE `detalle_compras` (
   `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
   `id_compra` int(11) NOT NULL,
@@ -171,6 +164,7 @@ INSERT INTO `detalle_compras` (`id_detalle`,`id_compra`,`id_producto`,`cantidad`
 ('13','3','11','10','81.00',NULL,NULL),
 ('14','3','12','8','105.00',NULL,NULL);
 
+DROP TABLE IF EXISTS `detalle_movimientos`;
 CREATE TABLE `detalle_movimientos` (
   `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
   `id_movimiento` int(11) NOT NULL,
@@ -210,6 +204,7 @@ INSERT INTO `detalle_movimientos` (`id_detalle`,`id_movimiento`,`id_producto`,`c
 ('28','6','15','1','10.00'),
 ('31','8','19','1','13.20');
 
+DROP TABLE IF EXISTS `detalle_salidas`;
 CREATE TABLE `detalle_salidas` (
   `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
   `id_salida` int(11) NOT NULL,
@@ -234,6 +229,7 @@ INSERT INTO `detalle_salidas` (`id_detalle`,`id_salida`,`id_producto`,`cantidad`
 ('7','2','26','1','95.00',NULL),
 ('8','2','12','1','175.00',NULL);
 
+DROP TABLE IF EXISTS `login_intentos`;
 CREATE TABLE `login_intentos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `ip_address` varchar(45) NOT NULL,
@@ -243,6 +239,7 @@ CREATE TABLE `login_intentos` (
   KEY `idx_ip` (`ip_address`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+DROP TABLE IF EXISTS `movimientos`;
 CREATE TABLE `movimientos` (
   `id_movimiento` int(11) NOT NULL AUTO_INCREMENT,
   `id_referencia` int(11) NOT NULL,
@@ -266,6 +263,7 @@ INSERT INTO `movimientos` (`id_movimiento`,`id_referencia`,`tipo_referencia`,`ti
 ('6','3','venta','Salida','1','2026-07-21 23:33:07','Anulado'),
 ('8','5','venta','Salida','1','2026-07-21 23:33:08','Anulado');
 
+DROP TABLE IF EXISTS `productos`;
 CREATE TABLE `productos` (
   `id_producto` int(11) NOT NULL AUTO_INCREMENT,
   `sku` varchar(50) NOT NULL,
@@ -317,6 +315,7 @@ INSERT INTO `productos` (`id_producto`,`sku`,`nombre_producto`,`precio_venta`,`p
 ('39','ELE-BUJ-0001','Bujía NGK Iridium BKR6EIX-11','18.00','10.80','36','10','2030-05-22','Activo','26','4'),
 ('40','ELE-BUJ-0002','Bujía Bosch Super 4 FR7DC+','12.00','7.20','45','10','2031-01-10','Activo','26','4');
 
+DROP TABLE IF EXISTS `proveedores`;
 CREATE TABLE `proveedores` (
   `id_proveedor` int(11) NOT NULL AUTO_INCREMENT,
   `rif` varchar(20) NOT NULL,
@@ -344,6 +343,7 @@ INSERT INTO `proveedores` (`id_proveedor`,`rif`,`nombre_empresa`,`contacto`,`lea
 ('5','J-40789012-5','Iluminación y Accesorios C.A.','Luis Mendoza','2','18000.00','30','30','Credito','USD','Activo','+58 241-855.6789','luis@iluminacionca.com','Calle Ricaurte, Edif. Luxor, Valencia'),
 ('6','J-40234567-8','Motor Parts Central C.A.','Ana Guerrero','3','30000.00','45','45','Credito','USD','Activo','+58 241-866.7890','ana@motorpartscentral.com','Zona Industrial Municipal Sur, Galpón 7, Valencia');
 
+DROP TABLE IF EXISTS `roles`;
 CREATE TABLE `roles` (
   `id_rol` int(11) NOT NULL AUTO_INCREMENT,
   `nombre_rol` varchar(50) NOT NULL,
@@ -358,6 +358,7 @@ INSERT INTO `roles` (`id_rol`,`nombre_rol`,`descripcion`,`created_at`) VALUES
 ('2','Operador de Carga','Gestiu00f3n de compras, productos, proveedores y categoru00edas','2026-07-23 21:54:53'),
 ('3','Operador de Ventas','Gestiu00f3n de ventas, reportes y estadu00edsticas','2026-07-23 21:54:53');
 
+DROP TABLE IF EXISTS `salidas`;
 CREATE TABLE `salidas` (
   `id_salida` int(11) NOT NULL AUTO_INCREMENT,
   `nro_factura_manual` varchar(20) DEFAULT NULL,
@@ -383,6 +384,7 @@ INSERT INTO `salidas` (`id_salida`,`nro_factura_manual`,`nro_control`,`cliente`,
 ('1','NDE-000001','00-00000001','TALLER MECÁNICO EL TURBO C.A.','J-41234567-8','1','1','2026-07-20 00:00:00','Activa',''),
 ('2','NDE-000002','00-00000002','TRANSPORTE RODRÍGUEZ','J-42345678-9','1','1','2026-07-21 00:00:00','Activa','');
 
+DROP TABLE IF EXISTS `sku_contadores`;
 CREATE TABLE `sku_contadores` (
   `sku_prefix` varchar(20) NOT NULL,
   `ultimo_numero` int(11) DEFAULT 0,
@@ -392,8 +394,10 @@ CREATE TABLE `sku_contadores` (
 INSERT INTO `sku_contadores` (`sku_prefix`,`ultimo_numero`) VALUES
 ('CTRL','5'),
 ('FAC','5'),
+('NDE','5'),
 ('PROD','53');
 
+DROP TABLE IF EXISTS `tipos_movimientos`;
 CREATE TABLE `tipos_movimientos` (
   `id_tipo_mov` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(50) NOT NULL,
@@ -410,6 +414,7 @@ INSERT INTO `tipos_movimientos` (`id_tipo_mov`,`nombre`,`tipo_movimiento`) VALUE
 ('6','Ajuste de Inventario','Entrada'),
 ('7','Compra','Entrada');
 
+DROP TABLE IF EXISTS `usuarios`;
 CREATE TABLE `usuarios` (
   `id_usuario` int(11) NOT NULL AUTO_INCREMENT,
   `usuario` varchar(50) NOT NULL,

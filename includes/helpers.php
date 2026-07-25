@@ -112,25 +112,25 @@ if (!function_exists('generarControlNumero')) {
 }
 
 if (!function_exists('generarFacturaNumero')) {
-    // Generar número de factura
+    // Generar número de Nota de Entrega
     function generarFacturaNumero()
     {
         $db = Database::getInstance();
         $db->begin();
         try {
-            $cnt = $db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix='FAC' FOR UPDATE");
+            $cnt = $db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix='NDE' FOR UPDATE");
             if (!$cnt) {
-                $db->execute("INSERT INTO sku_contadores (sku_prefix, ultimo_numero) VALUES ('FAC', 0)");
+                $db->execute("INSERT INTO sku_contadores (sku_prefix, ultimo_numero) VALUES ('NDE', 0)");
                 $prox = 1;
             } else {
                 $prox = intval($cnt['ultimo_numero']) + 1;
             }
-            $db->execute("UPDATE sku_contadores SET ultimo_numero=? WHERE sku_prefix='FAC'", [$prox]);
+            $db->execute("UPDATE sku_contadores SET ultimo_numero=? WHERE sku_prefix='NDE'", [$prox]);
             $db->commit();
-            return 'FAC-' . str_pad($prox, 4, '0', STR_PAD_LEFT);
+            return 'NDE-' . str_pad($prox, 6, '0', STR_PAD_LEFT);
         } catch (Exception $e) {
             $db->rollback();
-            return 'FAC-ERROR';
+            return 'NDE-ERROR';
         }
     }
 }
