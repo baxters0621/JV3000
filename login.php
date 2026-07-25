@@ -153,6 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                         $error = "TU CUENTA ESTA DESACTIVADA. CONTACTA AL ADMINISTRADOR.";
                     } else {
                         $login_exitoso = true;
+                        session_regenerate_id(true);
                         $_SESSION['id_usuario']   = $row['id_usuario'];
                         $_SESSION['usuario']      = $row['usuario'];
                         $_SESSION['id_rol']       = (int)$row['id_rol'];

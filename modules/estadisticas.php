@@ -499,7 +499,7 @@ foreach ($res_top as $row) {
 
     // Auto-refresh cada 30s
     function refreshKPIs() {
-        fetch('../includes/estadisticas_ajax.php')
+        fetch('../includes/estadisticas_ajax.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.json())
             .then(d => {
                 try {

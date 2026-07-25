@@ -1032,7 +1032,7 @@ $tabla_vencer = array_map(fn($r) => [
 
         // Actualización en tiempo real del dashboard
         function actualizarDashboard() {
-            fetch('index.php?ajax_dashboard=1')
+            fetch('index.php?ajax_dashboard=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(response => response.json())
                 .then(data => {
                     try {
