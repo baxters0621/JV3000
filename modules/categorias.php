@@ -19,7 +19,7 @@ if (isset($_POST['accion_categoria'])) {
     $status = $_POST['status'] ?? 'Activo';
     $clasificacion_abc = strtoupper(trim($_POST['clasificacion_abc'] ?? ''));
     if (!in_array($clasificacion_abc, ['A', 'B', 'C', ''])) $clasificacion_abc = '';
-    $tipo_manejo = in_array($_POST['tipo_manejo'] ?? '', ['normal', 'perecedero', 'congelado', 'peligroso', 'controlado', 'granel']) ? $_POST['tipo_manejo'] : 'normal';
+    $tipo_manejo = in_array($_POST['tipo_manejo'] ?? '', ['normal', 'inflamable', 'liquido', 'peligroso', 'voluminoso', 'aerosol']) ? $_POST['tipo_manejo'] : 'normal';
     $status = in_array($status, ['Activo', 'Inactivo']) ? $status : 'Activo';
 
     if (empty($nombre)) {
@@ -165,6 +165,13 @@ foreach ($nulls as $n) {
         .actions-divider { width: 1px; height: 26px; background: rgba(56, 189, 248, 0.15); display: inline-block; vertical-align: middle; }
         /* Codigo badge */
         .codigo-badge { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 6px; padding: 3px 10px; font-size: 0.8rem; font-weight: 700; color: #22d3ee; font-family: 'Courier New', monospace; display: inline-block; vertical-align: middle; white-space: nowrap; }
+        .manejo-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.65rem; font-weight:800; letter-spacing:.5px; text-transform:uppercase; }
+        .manejo-normal { background:rgba(6,182,212,0.1); color:#22d3ee; }
+        .manejo-inflamable { background:rgba(239,68,68,0.12); color:#f87171; }
+        .manejo-liquido { background:rgba(59,130,246,0.12); color:#60a5fa; }
+        .manejo-peligroso { background:rgba(251,191,36,0.12); color:#fbbf24; }
+        .manejo-voluminoso { background:rgba(168,85,247,0.12); color:#c084fc; }
+        .manejo-aerosol { background:rgba(251,146,60,0.12); color:#fb923c; }
         .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
     </style>
 </head>
@@ -215,8 +222,9 @@ foreach ($nulls as $n) {
                                 <th style="width: 25%;">NOMBRE</th>
                                 <th style="width: 14%;">CÓDIGO</th>
                                 <th style="width: 8%;" class="text-center">ABC</th>
+                                <th style="width: 12%;" class="text-center">MANEJO</th>
                                 <th style="width: 12%;" class="text-center">ESTADO</th>
-                                <th style="width: 22%;" class="text-center">ACCIONES</th>
+                                <th style="width: 18%;" class="text-center">ACCIONES</th>
                             </tr>
                         </thead>
                         <tbody id="tablaCategorias">
@@ -239,6 +247,9 @@ foreach ($nulls as $n) {
                                             <?php else: ?>
                                                 <span class="text-muted">-</span>
                                             <?php endif; ?>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="manejo-badge manejo-<?php echo htmlspecialchars($row['tipo_manejo'] ?? 'normal'); ?>"><?php echo htmlspecialchars(ucfirst($row['tipo_manejo'] ?? 'Normal')); ?></span>
                                         </td>
                                         <td class="text-center">
                                             <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>">
