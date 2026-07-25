@@ -364,8 +364,8 @@ unset($_SESSION['flash_msg']);
     .codigo-badge {
         background:rgba(220,38,38,0.1);color:#fca5a5;
         font-size:.7rem;font-weight:800;padding:3px 10px;
-        border-radius:20px;display:inline-block;
-        letter-spacing:.5px;
+        border-radius:20px;display:inline-block;vertical-align:middle;
+        letter-spacing:.5px;white-space:nowrap;
     }
     /* === ACTION BUTTON (40px) === */
     .btn-action {
@@ -490,7 +490,7 @@ unset($_SESSION['flash_msg']);
                         <?php if (count($salidas) > 0): ?>
                             <?php foreach ($salidas as $row): ?>
                                 <tr>
-                                    <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura_manual'] ?: '#' . $row['id_salida']); ?></span></td>
+                                    <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura_manual'] ?: '#' . $row['id_salida']); ?></span></td>
                                     <td style="font-size:.82rem;color:#94a3b8;"><?php echo htmlspecialchars($row['nro_control']); ?></td>
                                     <td class="text-uppercase">
                                         <div class="fw-bold" style="font-size:.85rem;"><?php echo htmlspecialchars($row['cliente'] ?? 'S/Cliente'); ?></div>
