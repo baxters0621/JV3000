@@ -164,7 +164,7 @@ foreach ($nulls as $n) {
         /* Separador */
         .actions-divider { width: 1px; height: 26px; background: rgba(56, 189, 248, 0.15); display: inline-block; vertical-align: middle; }
         /* Codigo badge */
-        .codigo-badge { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 6px; padding: 3px 10px; font-size: 0.8rem; font-weight: 700; color: #22d3ee; font-family: 'Courier New', monospace; display: inline-block; }
+        .codigo-badge { background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 6px; padding: 3px 10px; font-size: 0.8rem; font-weight: 700; color: #22d3ee; font-family: 'Courier New', monospace; display: inline-block; vertical-align: middle; white-space: nowrap; }
         .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
     </style>
 </head>

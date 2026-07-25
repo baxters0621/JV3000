@@ -589,6 +589,8 @@ unset($_SESSION['flash_msg']);
             padding: 4px 12px;
             border-radius: 20px;
             display: inline-block;
+            vertical-align: middle;
+            white-space: nowrap;
             letter-spacing: .5px;
             line-height: 1.5;
         }
@@ -752,7 +754,7 @@ unset($_SESSION['flash_msg']);
                         <tbody id="tablaEntradas">
                             <?php if (count($compras) > 0): foreach ($compras as $row): ?>
                                     <tr>
-                                        <td><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
+                                        <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
                                         <td style="color:#cbd5e1;font-weight:600;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
                                         <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
                                         <td style="font-size:.75rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<?php echo htmlspecialchars($row['productos_list'] ?? ''); ?>"><?php echo htmlspecialchars($row['productos_list'] ?? '-'); ?></td>

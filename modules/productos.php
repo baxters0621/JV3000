@@ -249,6 +249,8 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
             color: #22d3ee;
             font-family: 'Courier New', monospace;
             display: inline-block;
+            vertical-align: middle;
+            white-space: nowrap;
         }
 
         .alert-card {

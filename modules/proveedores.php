@@ -175,7 +175,7 @@ unset($_SESSION['flash_msg']);
     .codigo-badge {
         background:rgba(168,85,247,0.12);color:#c084fc;
         font-size:.7rem;font-weight:800;padding:3px 10px;
-        border-radius:20px;display:inline-block;
+        border-radius:20px;display:inline-block;vertical-align:middle;white-space:nowrap;
         letter-spacing:.5px;
     }
 
