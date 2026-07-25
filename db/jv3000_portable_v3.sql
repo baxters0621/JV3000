@@ -99,6 +99,7 @@ CREATE TABLE `compras` (
   `total` decimal(12,2) DEFAULT 0.00,
   `status` enum('Activa','Anulada') NOT NULL DEFAULT 'Activa',
   `tipo_entrada` varchar(50) DEFAULT 'Compra a proveedor',
+  `observaciones` text DEFAULT NULL,
   PRIMARY KEY (`id_compra`),
   UNIQUE KEY `uq_nro_control` (`nro_control`),
   KEY `fk_comp_prov` (`id_proveedor`),
