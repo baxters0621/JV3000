@@ -35,9 +35,9 @@ if ($id_toggle && $esAdmin) {
 }
 
 if ($id_baja_vencido && $esAdmin) {
-    $db->execute("UPDATE productos SET status = 'Inactivo', fecha_vencimiento = NULL WHERE id_producto = ?", [$id_baja_vencido]);
+    $db->execute("UPDATE productos SET status = 'Inactivo', stock_actual = 0 WHERE id_producto = ?", [$id_baja_vencido]);
     registrarAuditoria('baja_vencido', 'Producto dado de baja por vencimiento');
-    $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'PRODUCTO DADO DE BAJA POR VENCIMIENTO.'];
+    $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'PRODUCTO DADO DE BAJA POR VENCIMIENTO. STOCK PUESTO EN CERO.'];
     header('Location: productos.php');
     exit;
 }
