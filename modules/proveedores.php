@@ -36,7 +36,7 @@ if (isset($_POST['accion_proveedor'])) {
     $email = trim($_POST['email'] ?? '');
     $direccion = trim($_POST['direccion'] ?? '');
     $lead_time = !empty($_POST['lead_time']) ? min(365, max(0, intval($_POST['lead_time']))) : null;
-    $limite_credito_raw = str_replace(',', '', trim($_POST['limite_credito'] ?? ''));
+    $limite_credito_raw = preg_replace('/[^0-9.]/', '', str_replace(',', '', trim($_POST['limite_credito'] ?? '')));
     $limite_credito = !empty($limite_credito_raw) ? min(999999999.99, max(0, floatval($limite_credito_raw))) : null;
     $dias_credito = !empty($_POST['dias_credito']) ? min(360, max(0, intval($_POST['dias_credito']))) : 0;
     $condiciones_pago = in_array($_POST['condiciones_pago'] ?? '', ['Contado', 'Credito']) ? $_POST['condiciones_pago'] : 'Contado';

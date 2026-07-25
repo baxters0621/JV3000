@@ -7,6 +7,12 @@ require_once __DIR__ . '/../init.php';
 $db = Database::getInstance();
 header('Content-Type: application/json');
 
+// Verificar que sea una peticion AJAX legítima
+if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+    echo json_encode(['success' => false, 'error' => 'acceso_denegado']);
+    exit();
+}
+
 // Verificar permiso
 $rol_ajax = (int)($_SESSION['id_rol'] ?? 0);
 if ($rol_ajax !== 1 && $rol_ajax !== 3) {

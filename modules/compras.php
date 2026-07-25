@@ -160,6 +160,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
 
     $productos_raw = json_decode($_POST['productos_data'] ?? '[]', true);
     $productos = is_array($productos_raw) ? $productos_raw : [];
+    if (count($productos) > 200) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'MÁXIMO 200 PRODUCTOS POR LOTE.'];
+        header('Location: compras.php');
+        exit;
+    }
     $exitos = 0;
 
     if (empty($productos)) {

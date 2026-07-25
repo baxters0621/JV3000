@@ -678,7 +678,7 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
                                 </div>
                                 <div class="col-4">
                                     <label class="small fw-bold text-secondary mb-1">PROVEEDOR <span style="color:#ef4444;">*</span></label>
-                                    <select class="input-jv" id="edit_proveedor" name="id_proveedor">
+                                    <select class="input-jv" id="edit_proveedor" name="id_proveedor" required>
                                         <option value="">SELECCIONE...</option>
                                         <?php foreach ($proveedores_list as $prov): ?>
                                             <option value="<?php echo $prov['id_proveedor']; ?>"><?php echo htmlspecialchars($prov['nombre_empresa']); ?></option>

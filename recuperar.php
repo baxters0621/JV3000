@@ -106,8 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $new_pass = $_POST['rec_password'] ?? '';
             $new_pass2 = $_POST['rec_password2'] ?? '';
-            if (!preg_match('/^.{8,}$/', $new_pass)) {
-                $error = "CONTRASEÑA: MIN 8 CARACTERES.";
+            if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/', $new_pass)) {
+                $error = "CONTRASEÑA DÉBIL: MÍN 8 CARACTERES, MAYÚSCULAS, NÚMEROS Y SÍMBOLOS.";
             } elseif ($new_pass !== $new_pass2) {
                 $error = "LAS CONTRASEÑAS NO COINCIDEN.";
             } else {
@@ -262,10 +262,14 @@ if ($step == 4) {
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="cambiar">
                 <label class="small fw-bold text-jv-muted mb-1 d-block">Nueva contraseña</label>
-                <input type="password" name="rec_password" class="rec-input mb-3" required minlength="8" placeholder="Min. 8 caracteres" autofocus>
+                <input type="password" name="rec_password" id="rec-pass" class="rec-input mb-1" required minlength="8" placeholder="Min. 8 caracteres" autofocus oninput="validarPassRec()">
+                <div class="strength-meter mb-3" style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;">
+                    <div class="strength-fill" id="rec-meter" style="height:100%;width:0%;border-radius:4px;transition:all .35s ease;"></div>
+                </div>
                 <label class="small fw-bold text-jv-muted mb-1 d-block">Confirmar contraseña</label>
-                <input type="password" name="rec_password2" class="rec-input mb-3" required minlength="8" placeholder="Repite la contraseña">
-                <button type="submit" class="rec-btn"><i class="bi bi-check2 me-2"></i>CAMBIAR CONTRASEÑA</button>
+                <input type="password" name="rec_password2" id="rec-pass2" class="rec-input mb-3" required minlength="8" placeholder="Repite la contraseña" oninput="validarPassRec()">
+                <small id="rec-pass-hint" style="color:var(--jv-cyan);font-size:.7rem;display:block;height:16px;text-align:center;margin-top:-10px;margin-bottom:10px;"></small>
+                <button type="submit" id="rec-btn-pass" class="rec-btn"><i class="bi bi-check2 me-2"></i>CAMBIAR CONTRASEÑA</button>
                 <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>
             </form>
         </div>
@@ -299,10 +303,45 @@ if ($step == 4) {
             document.getElementById('rec-resp').style.borderColor = ok ? '#22c55e' : '#ef4444';
             hint.textContent = ok ? '' : 'Mín. 5 y máx. 20 caracteres, sin patrones (asdf, 1234, etc).';
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            var el = document.getElementById('rec-resp');
-            if (el) { validarRespuesta(); }
-        });
+
+        function validarPassRec() {
+            var p = document.getElementById('rec-pass').value;
+            var p2 = document.getElementById('rec-pass2').value;
+            var btn = document.getElementById('rec-btn-pass');
+            var meter = document.getElementById('rec-meter');
+            var hint = document.getElementById('rec-pass-hint');
+
+            var s = 0;
+            if (p.length >= 8) s++;
+            if (/[a-z]/.test(p)) s++;
+            if (/[A-Z]/.test(p)) s++;
+            if (/[0-9]/.test(p)) s++;
+            if (/[\W_]/.test(p)) s++;
+
+            var cols = ['#ef4444', '#ef4444', '#f59e0b', '#38bdf8', '#22c55e'];
+            var wids = ['20%', '40%', '60%', '80%', '100%'];
+            var idx = Math.max(0, Math.min(s - 1, 4));
+            meter.style.width = wids[idx];
+            meter.style.backgroundColor = cols[idx];
+
+            var pwdOk = p.length >= 8 && s >= 5;
+            var matchOk = p.length > 0 && p === p2;
+
+            if (p.length > 0 && s < 5) {
+                hint.textContent = 'Debe tener mayúsculas, minúsculas, números y símbolos.';
+                hint.style.color = '#ef4444';
+            } else if (p2.length > 0 && !matchOk) {
+                hint.textContent = 'Las contraseñas no coinciden.';
+                hint.style.color = '#ef4444';
+            } else if (matchOk && pwdOk) {
+                hint.textContent = '✓ Contraseña segura';
+                hint.style.color = '#22c55e';
+            } else {
+                hint.textContent = '';
+            }
+
+            btn.disabled = !(pwdOk && matchOk);
+        }
     </script>
     <script src="assets/js/bootstrap.bundle.min.js?v=2"></script>
 </body>

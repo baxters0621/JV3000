@@ -44,7 +44,12 @@ if (isset($_GET['store'])) {
     $productos = [];
     if (!empty($productos_data)) {
         $parsed = json_decode($productos_data, true);
-        if (is_array($parsed)) $productos = $parsed;
+        if (is_array($parsed)) {
+            if (count($parsed) > 200) {
+                echo json_encode(['ok' => false, 'error' => 'MÁXIMO 200 PRODUCTOS POR VENTA.']); exit();
+            }
+            $productos = $parsed;
+        }
     } else {
         $productos[] = [
             'id_producto' => intval($_POST['id_producto'] ?? 0),

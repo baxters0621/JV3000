@@ -305,7 +305,7 @@ foreach ($nulls as $n) {
                                 <div class="d-flex flex-column gap-2">
                                     <div>
                                         <label for="cat_nombre" class="fw-bold mb-1" style="color: #e2e8f0; font-size: 0.85rem;">NOMBRE</label>
-                                        <input type="text" name="nombre" id="cat_nombre" class="input-jv" required placeholder="Ej: Aceites, Lubricantes" oninput="this.value = this.value.toUpperCase()" style="padding: 12px 16px; font-size: 0.95rem;">
+                                        <input type="text" name="nombre" id="cat_nombre" class="input-jv" required maxlength="100" placeholder="Ej: Aceites, Lubricantes" oninput="this.value = this.value.toUpperCase()" style="padding: 12px 16px; font-size: 0.95rem;">
                                     </div>
                                     <div>
                                         <label for="cat_desc" class="fw-bold mb-1" style="color: #94a3b8; font-size: 0.85rem;">DESCRIPCIÓN</label>

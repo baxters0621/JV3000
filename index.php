@@ -21,6 +21,9 @@ $fecha_hoy = date('d/m/Y');
 // ==========================================
 if (isset($_GET['ajax_dashboard'])) {
     header('Content-Type: application/json');
+    if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+        echo json_encode(['success' => false, 'error' => 'acceso_denegado']); exit;
+    }
     $datos = [];
 
     $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'");

@@ -49,6 +49,7 @@ if (isset($_GET['confirm'])) {
         $productos_raw = [];
         if (isset($data['productos_data'])) {
             $productos_raw = json_decode($data['productos_data'], true) ?: [];
+            if (count($productos_raw) > 200) { throw new Exception("MÁXIMO 200 PRODUCTOS POR VENTA."); }
         } else {
             $productos_raw[] = [
                 'id_producto' => intval($data['id_producto'] ?? 0),
