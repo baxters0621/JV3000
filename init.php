@@ -5,6 +5,7 @@
 // ==========================================
 
 // --- 1. Session (strict mode) ---
+date_default_timezone_set('America/Caracas');
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_strict_mode', '1');
     session_start();

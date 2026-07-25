@@ -332,7 +332,7 @@ $sql = "
     ORDER BY s.fecha_salida DESC, s.id_salida DESC
 ";
 $salidas = $db->fetchAll($sql);
-$productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta, precio_costo, fecha_vencimiento FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
+$productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta, precio_costo, stock_actual, fecha_vencimiento FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
 $tipos_mov = $db->fetchAll("SELECT id_tipo_mov, nombre FROM tipos_movimientos WHERE tipo_movimiento = 'Salida' ORDER BY id_tipo_mov");
 $clientes_previos = $db->fetchAll("SELECT DISTINCT cliente, rif_cliente FROM salidas WHERE cliente IS NOT NULL AND cliente != '' AND status = 'Activa' ORDER BY cliente ASC");
 
@@ -378,6 +378,8 @@ unset($_SESSION['flash_msg']);
         background:rgba(255,255,255,0.05);border-color:#dc2626;
         color:#dc2626;
     }
+    /* === DISABLED OPTIONS (AGOTADO) === */
+    #s_prod option:disabled { color:#64748b; background:rgba(30,41,59,0.8); }
     .section-bg {
         background:rgba(2,6,23,0.3);
         border:1px solid rgba(6,182,212,0.08);
@@ -655,18 +657,26 @@ unset($_SESSION['flash_msg']);
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-5">
                                     <label class="small fw-bold text-secondary mb-1">Producto</label>
-                                    <select id="s_prod" class="input-jv" onchange="cargarPrecio()">
-                                        <option value="">Seleccionar...</option>
-                                        <?php foreach ($productos as $pr):
-                                            $alerta = '';
-                                            if ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d')) {
-                                                $alerta = '«VENCIDO» ';
-                                            } elseif ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d', strtotime('+7 days'))) {
-                                                $alerta = '«PRÓX» ';
-                                            }
-                                        ?>
-                                            <option value="<?php echo $pr['id_producto']; ?>" data-precio="<?php echo $pr['precio_venta']; ?>" data-costo="<?php echo $pr['precio_costo']; ?>"><?php echo $alerta . $pr['sku'] . " - " . $pr['nombre_producto']; ?></option>
-                                        <?php endforeach; ?>
+                                        <select id="s_prod" class="input-jv" onchange="cargarPrecio()">
+                                            <option value="">Seleccionar...</option>
+                                            <?php foreach ($productos as $pr):
+                                                $alerta = '';
+                                                $stock = (int)$pr['stock_actual'];
+                                                if ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d')) {
+                                                    $alerta = '«VENCIDO» ';
+                                                } elseif ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d', strtotime('+7 days'))) {
+                                                    $alerta = '«PRÓX» ';
+                                                }
+                                                $disabled = $stock <= 0 ? 'disabled' : '';
+                                                $label = $alerta . $pr['sku'] . ' - ' . $pr['nombre_producto'];
+                                                if ($stock <= 0) {
+                                                    $label .= ' (AGOTADO)';
+                                                } else {
+                                                    $label .= " (Stock: $stock)";
+                                                }
+                                            ?>
+                                                <option value="<?php echo $pr['id_producto']; ?>" data-precio="<?php echo $pr['precio_venta']; ?>" data-costo="<?php echo $pr['precio_costo']; ?>" <?php echo $disabled; ?>><?php echo $label; ?></option>
+                                            <?php endforeach; ?>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
