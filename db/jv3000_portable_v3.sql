@@ -1,5 +1,5 @@
 -- JV3000 C.A. - Base de Datos Portable v3
--- Generado el 2026-07-25 05:15:46
+-- Generado el 2026-07-25 05:19:47
 
 SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';
 START TRANSACTION;
@@ -110,9 +110,9 @@ CREATE TABLE `compras` (
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `compras` (`id_compra`,`nro_factura`,`id_proveedor`,`id_usuario`,`fecha_compra`,`nro_control`,`condiciones_pago`,`dias_plazo`,`subtotal`,`iva`,`total`,`status`,`tipo_entrada`) VALUES
-('1','FAC-LUB-001','2','1','2026-07-22 08:30:00','01-00000001','Credito','30','1116.00','178.56','1294.56','Activa','Compra a proveedor'),
-('2','FAC-FRE-001','3','1','2026-07-21 10:00:00','02-00000002','Credito','30','1983.00','317.28','2300.28','Activa','Compra a proveedor'),
-('3','FAC-ELE-001','4','1','2026-07-17 14:30:00','03-00000003','Credito','30','3084.60','493.54','3578.14','Activa','Compra a proveedor');
+('1','FAC-00000001','2','1','2026-07-22 08:30:00','01-00000001','Credito','30','1116.00','178.56','1294.56','Activa','Compra a proveedor'),
+('2','FAC-00000002','3','1','2026-07-21 10:00:00','02-00000002','Credito','30','1983.00','317.28','2300.28','Activa','Compra a proveedor'),
+('3','FAC-00000003','4','1','2026-07-17 14:30:00','03-00000003','Credito','30','3084.60','493.54','3578.14','Activa','Compra a proveedor');
 
 DROP TABLE IF EXISTS `configuracion`;
 CREATE TABLE `configuracion` (
@@ -393,7 +393,7 @@ CREATE TABLE `sku_contadores` (
 
 INSERT INTO `sku_contadores` (`sku_prefix`,`ultimo_numero`) VALUES
 ('CTRL','5'),
-('FAC','5'),
+('FAC','3'),
 ('NDE','5'),
 ('PROD','53');
 
