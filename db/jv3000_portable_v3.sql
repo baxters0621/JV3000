@@ -434,7 +434,7 @@ CREATE TABLE `usuarios` (
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `usuarios` (`id_usuario`,`usuario`,`correo`,`password`,`id_rol`,`status`,`aprobado`,`pregunta_seguridad`,`respuesta_seguridad`) VALUES
-('1','Administrador','admin@jv3000.com','$2y$10$s.9VU8M6.Y9DhwkLU4FiZOWpjfEHySGer/fz8b8Li06go5epEcKky','1','Activo','1','Nombre de tu mascota','$2y$10$m4gAG5wq1mWddoZsLFZF7u587virmloOs3BNhwkBRA0qpTLpkRnBG'),
+('1','Administrador','admin@jv3000.com','$2y$10$1O5iWaWKQEg21F/Eu9AoSOPYiJj03s7iM4aE32A1Y9FI1mwmikW0y','1','Activo','1','Nombre de tu mascota','$2y$10$m4gAG5wq1mWddoZsLFZF7u587virmloOs3BNhwkBRA0qpTLpkRnBG'),
 ('2','Operador','operador@jv3000.com','$2y$10$54WnFBypdQamS9JuST.fleETcDCwsW1Trk./FLhtAYpvdoMiGl6yi','2','Activo','1','Nombre de tu mascota','$2y$10$X6.tFFcCnrL21m9Ji3QBreO1870X7MIid7nGpykNQQPgwSwJNqKoy'),
 ('3','Operador_Ventas','ventas123@gmail.com','$2y$10$6u/bDddDy7Tc2KM/IkGG5OMX/M0W7eic..rWyCkHWiPPiWZqnKb8W','3','Activo','1','Nombre de tu mascota','$2y$10$vdHIKGFfG1JTFUqH1kBWz.BojzTZ3RIJ5/1xtNXfvQLeGgZIqErE2');
 

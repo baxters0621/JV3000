@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['limpiar'])) {
     $detalle = $eliminados === 1 ? "1 registro" : "$eliminados registros";
     registrarAuditoria('eliminar', "Depuración del historial de auditoría completada — $detalle eliminados.");
     $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => "Depuración del historial de auditoría completada exitosamente. Total de registros eliminados: $eliminados."];
-    header('Location: auditoria.php');
+    header('Location: historial.php');
     exit;
 }
 
@@ -75,7 +75,7 @@ unset($_SESSION['flash_msg']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auditoría | JV3000 C.A.</title>
+    <title>Historial | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
     <!-- ESTILOS -->
     <style>
@@ -150,7 +150,7 @@ unset($_SESSION['flash_msg']);
         <div class="d-flex align-items-center gap-3">
             <div class="aud-header-icon"><i class="bi bi-shield-check"></i></div>
             <div>
-                <h1 class="font-brand fw-bold m-0 text-white" style="font-size:1.4rem;">AUDITORÍA</h1>
+                <h1 class="font-brand fw-bold m-0 text-white" style="font-size:1.4rem;">HISTORIAL</h1>
                 <p class="m-0 text-white opacity-75" style="font-size:.85rem;">Registro de Actividades del Sistema</p>
             </div>
         </div>

@@ -129,13 +129,13 @@ function es_activo(string $pagina, string $modulo = ''): string
             </div>
         <?php endif; ?>
 
-        <!-- --- Audit --- -->
-        <!-- Auditoría -->
+        <!-- --- History --- -->
+        <!-- Historial -->
         <?php if ($es_admin): ?>
-            <div class="nav-item nav-auditoria <?php echo ($archivo_actual === 'auditoria.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/auditoria.php" class="nav-link">
-                    <i class="bi bi-shield-check"></i>
-                    <span>Auditoría</span>
+            <div class="nav-item nav-historial <?php echo ($archivo_actual === 'historial.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>modules/historial.php" class="nav-link">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Historial</span>
                 </a>
             </div>
         <?php endif; ?>
@@ -324,7 +324,7 @@ function es_activo(string $pagina, string $modulo = ''): string
         --mod-color: #f59e0b;
     }
 
-    .nav-item.nav-auditoria {
+    .nav-item.nav-historial {
         --mod-color: #8b5cf6;
     }
 
