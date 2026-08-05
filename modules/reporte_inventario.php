@@ -5,6 +5,7 @@ Security::verificarPermisoVenta();
 
 $productos = $db->fetchAll("
     SELECT p.*, c.nombre as nombre_cat,
+        COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
         COALESCE(pr.nombre_empresa, (
             SELECT pr2.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr2 ON co.id_proveedor = pr2.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1
         )) as ultimo_proveedor,
@@ -28,29 +29,14 @@ $valor_venta_total = 0;
     <title>Reporte de Inventario | JV3000 C.A.</title>
     <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
-    <style>
-        body { background-color: white !important; color: black !important; font-family: 'Segoe UI', sans-serif; }
-        .header-report { border-bottom: 2px solid #334155; margin-bottom: 30px; padding-bottom: 15px; }
-        .table thead { background-color: #f8fafc !important; color: #1e293b !important; border-bottom: 2px solid #cbd5e1; }
-        .footer-total { background-color: #f1f5f9 !important; font-weight: bold; border-top: 2px solid #334155 !important; }
-
-        @media print {
-            .no-print { display: none !important; }
-            body { margin: 0 !important; padding: 15mm !important; }
-            .container-fluid { max-width: 100% !important; padding: 0 !important; }
-            @page { margin: 0; size: letter; }
-            .table { font-size: 8px; }
-            .table th, .table td { padding: 2px 3px !important; }
-            .header-report { margin-bottom: 8px; padding-bottom: 4px; }
-        }
-    </style>
+        <link rel="stylesheet" href="../assets/modules/reporte_inventario/reporte_inventario.css">
 </head>
 <body class="p-4 p-md-5">
     <div class="container-fluid">
         <div class="header-report d-flex justify-content-between align-items-center">
             <div class="text-start">
                 <h2 class="fw-bold m-0 text-dark">JV3000 C.A.</h2>
-                <p class="m-0 text-muted small fw-bold">RIF: J-502873090 | CONTROL DE EXISTENCIAS</p>
+                <p class="m-0 text-muted small fw-bold">RIF: <?php echo htmlspecialchars(getConfig('empresa_rif', 'J-502873090')); ?> | CONTROL DE EXISTENCIAS</p>
                 <p class="m-0 small">Sede Principal: Valencia, Edo. Carabobo</p>
             </div>
             <div class="text-end">
@@ -64,14 +50,16 @@ $valor_venta_total = 0;
             <table class="table table-bordered table-sm align-middle mt-2">
                 <thead class="text-center">
                     <tr class="text-uppercase small fw-bold">
-                        <th width="10%">SKU</th>
-                        <th width="26%">Producto</th>
-                        <th width="14%">Categoría</th>
-                        <th width="16%">Proveedor</th>
-                        <th width="8%">Stock</th>
-                        <th width="10%">P. Costo</th>
-                        <th width="10%">P. Venta</th>
-                        <th width="12%">Valor Total</th>
+                        <th width="9%">SKU</th>
+                        <th width="24%">Producto</th>
+                        <th width="12%">Categoría</th>
+                        <th width="14%">Proveedor</th>
+                        <th width="7%">Stock</th>
+                        <th width="7%">Cap.</th>
+                        <th width="9%">Estado</th>
+                        <th width="9%">P. Costo</th>
+                        <th width="9%">P. Venta</th>
+                        <th width="9%">Valor Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -86,6 +74,8 @@ $valor_venta_total = 0;
                             <td class="text-center small text-muted"><?php echo htmlspecialchars($r['nombre_cat'] ?? '-'); ?></td>
                             <td class="text-center small text-muted"><?php echo htmlspecialchars($r['ultimo_proveedor'] ?? '-'); ?></td>
                             <td class="text-center <?php echo ($r['stock_actual'] <= 5) ? 'text-danger fw-bold' : ''; ?>"><?php echo number_format($r['stock_actual'], 0); ?></td>
+                            <td class="text-center small text-muted"><?php echo number_format((int)$r['capacidad'], 0); ?></td>
+                            <td class="text-center"><?php if ((int)$r['stock_actual'] >= (int)$r['capacidad']): ?><span class="badge bg-danger">COMPLETO</span><?php else: ?><span class="badge bg-success">OK</span><?php endif; ?></td>
                             <td class="text-end pe-2 small">$<?php echo number_format($r['precio_costo'], 2); ?></td>
                             <td class="text-end pe-2 small">$<?php echo number_format($r['precio_venta'], 2); ?></td>
                             <td class="text-end pe-2 fw-bold">$<?php echo number_format($r['valor_venta'], 2); ?></td>
@@ -96,6 +86,8 @@ $valor_venta_total = 0;
                     <tr class="footer-total">
                         <td colspan="4" class="text-end text-uppercase py-2 pe-3 small">Totales Consolidados:</td>
                         <td class="text-center py-2"><?php echo number_format($gran_total_stock, 0); ?> Unds.</td>
+                        <td></td>
+                        <td></td>
                         <td class="text-end pe-2 py-2 text-primary fw-bold">$<?php echo number_format($valor_costo_total, 2); ?></td>
                         <td class="text-end pe-2 py-2 text-success fw-bold">$<?php echo number_format($valor_venta_total, 2); ?></td>
                         <td class="text-end pe-2 py-2 text-success fw-bold">$<?php echo number_format($valor_venta_total, 2); ?></td>

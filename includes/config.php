@@ -9,5 +9,6 @@ define('DB_PASS', '');
 define('DB_NAME', 'jv3000_db');
 define('APP_NAME', 'JV3000 C.A.');
 define('VERSION', '3.0.0');
+define('AUDIT_RETENCION_MESES', 6);
 define('BASE_ASSETS', (basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules') ? '../assets/' : 'assets/');
 

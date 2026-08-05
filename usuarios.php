@@ -46,7 +46,7 @@ if (isset($_POST['accion_usuario'])) {
         }
 
         if (!empty($password)) {
-            if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/', $password)) {
+            if (!validarPasswordFuerte($password)) {
                 $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'CONTRASEÑA DÉBIL: MÍN 8 CARACTERES, MAYÚSCULAS, NÚMEROS Y SÍMBOLOS.'];
                 header("Location: usuarios.php"); exit();
             }
@@ -78,8 +78,8 @@ if (isset($_POST['accion_usuario'])) {
 // ==========================================
 // CAMBIAR ESTADO DE USUARIO
 // ==========================================
-if (isset($_GET['toggle_status'])) {
-    $id_target = intval($_GET['toggle_status']);
+if (isset($_POST['toggle_status'])) {
+    $id_target = intval($_POST['toggle_status']);
     if ($id_target == $id_propio) {
         $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'NO PUEDES DESACTIVAR TU PROPIA CUENTA.'];
         header("Location: usuarios.php"); exit();
@@ -116,142 +116,7 @@ unset($_SESSION['flash_msg']);
 <head>
 <?php include 'includes/diseno.php'; ?>
     <title>Colaboradores | JV3000</title>
-    <style>
-    /* === THEME: USUARIOS (Orange) ======================= */
-
-    .user-header-icon {
-        width:52px;height:52px;border-radius:14px;
-        background:linear-gradient(135deg,#ea580c,#c2410c);
-        display:flex;align-items:center;justify-content:center;
-        color:#fff;font-size:1.5rem;flex-shrink:0;
-        box-shadow:0 0 30px rgba(234,88,12,0.3);
-    }
-
-    .codigo-badge {
-        background:rgba(234,88,12,0.12);color:#fdba74;
-        font-size:.7rem;font-weight:800;padding:3px 10px;
-        border-radius:20px;display:inline-block;
-        letter-spacing:.5px;
-    }
-
-    .btn-action {
-        width:40px;height:40px;border-radius:12px;
-        display:inline-flex;align-items:center;justify-content:center;
-        border:1px solid var(--jv-border);background:var(--jv-bg-primary);
-        color:var(--jv-text);transition:.15s;
-    }
-    .btn-action:hover {
-        background:var(--jv-bg-hover);border-color:#ea580c;
-        color:#ea580c;
-    }
-
-    .estado-vacio { padding:60px 20px;text-align:center; }
-    .estado-vacio i {
-        font-size:3.5rem;color:rgba(234,88,12,0.2);display:block;margin-bottom:16px;
-    }
-    .estado-vacio span {
-        font-size:.85rem;font-weight:700;text-transform:uppercase;
-        letter-spacing:1px;color:rgba(148,163,184,0.5);
-    }
-
-    .pagina-usuarios .card-jv {
-        border-color:rgba(234,88,12,0.25);
-        box-shadow:0 20px 50px -12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(234,88,12,0.06);
-    }
-    .pagina-usuarios .card-jv:hover { border-color:rgba(234,88,12,0.45); }
-    .pagina-usuarios .table-jv thead th {
-        background:linear-gradient(135deg,#c2410c,#ea580c);
-        color:#fed7aa;
-        border-bottom:2px solid rgba(234,88,12,0.3);
-    }
-    .pagina-usuarios .table-jv tbody td {
-        border-bottom:1px solid rgba(234,88,12,0.07);
-    }
-    .pagina-usuarios .table-jv tbody tr:hover {
-        background:rgba(234,88,12,0.03);
-    }
-    .pagina-usuarios .btn-jv-primary {
-        background:linear-gradient(135deg,#ea580c,#c2410c);
-    }
-    .pagina-usuarios .btn-jv-primary:hover {
-        box-shadow:0 8px 25px -5px rgba(234,88,12,0.4);
-        transform:translateY(-2px);
-    }
-    .pagina-usuarios .input-jv:focus {
-        border-color:#ea580c;
-        box-shadow:0 0 0 3px rgba(234,88,12,0.15);
-    }
-    .pagina-usuarios .header-card {
-        padding:18px 24px;
-        border-left:4px solid #ea580c;
-    }
-
-    /* ── Widget cards ── */
-    .pagina-usuarios .widget-card {
-        border-radius:var(--jv-radius-lg);
-        background:var(--jv-bg-card);
-        backdrop-filter:blur(20px);
-        border:1px solid var(--jv-border);
-        padding:20px 22px;
-        display:flex;
-        align-items:center;
-        gap:18px;
-        transition:all .25s ease;
-        min-height:90px;
-    }
-    .pagina-usuarios .widget-card:hover {
-        border-color:var(--jv-border-hover);
-        transform:translateY(-3px);
-        box-shadow:0 12px 40px -8px rgba(0,0,0,0.4);
-    }
-    .widget-card .widget-icon {
-        width:46px;height:46px;border-radius:14px;
-        display:flex;align-items:center;justify-content:center;
-        font-size:1.3rem;flex-shrink:0;
-    }
-    .widget-card .widget-label {
-        font-size:.6rem;text-transform:uppercase;
-        letter-spacing:1px;font-weight:700;
-        color:rgba(148,163,184,0.7);
-        margin-bottom:4px;
-    }
-    .widget-card .widget-value {
-        font-size:1.4rem;font-weight:800;color:#fff;
-        line-height:1.2;
-    }
-
-    /* ── Badge overrides ── */
-    .badge-jv { padding:4px 12px;border-radius:20px;font-weight:800;font-size:.7rem;letter-spacing:.5px;display:inline-flex;align-items:center;gap:5px; }
-    .badge-success { background:rgba(34,197,94,0.18);color:#4ade80;border:1px solid rgba(34,197,94,0.4); }
-    .badge-danger { background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.4); }
-    .badge-warning { background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.4); }
-
-    /* ── Alert ── */
-    .alert-jv { border-left:4px solid;border-radius:8px;padding:14px 20px !important;font-size:.9rem; }
-    .alert-jv-success { border-left-color:#22c55e;background:rgba(34,197,94,0.1); }
-    .alert-jv-danger { border-left-color:#ef4444;background:rgba(239,68,68,0.1); }
-
-    /* ── Modal section groups ── */
-    .section-bg {
-        background:rgba(2,6,23,0.3);
-        border:1px solid rgba(234,88,12,0.08);
-        border-radius:var(--jv-radius);
-        padding:14px 16px;
-        margin-bottom:12px;
-    }
-    .section-label {
-        font-size:.65rem;font-weight:800;text-transform:uppercase;
-        letter-spacing:1px;color:#fb923c;
-        margin-bottom:8px;padding-bottom:6px;
-        border-bottom:1px solid rgba(234,88,12,0.15);
-        display:flex;align-items:center;gap:4px;
-    }
-
-    /* ── Strength meter ── */
-    .strength-meter { height:6px;background:rgba(255,255,255,0.05);border-radius:10px;overflow:hidden; }
-    .strength-meter-fill { height:100%;width:0%;border-radius:10px;transition:all .3s ease; }
-    .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
-    </style>
+        <link rel="stylesheet" href="assets/dashboard/usuarios.css">
 </head>
 <body>
     <?php include 'includes/sidebar.php'; ?>
@@ -265,8 +130,8 @@ unset($_SESSION['flash_msg']);
                 <i class="bi bi-people-fill"></i>
             </div>
             <div>
-                <h1 class="font-brand mb-1" style="font-size:1.8rem;letter-spacing:-1px;">COLABORADORES</h1>
-                <p class="text-white opacity-75 small fw-bold text-uppercase mb-0">Gestión de Personal Autorizado</p>
+                <h1 class="font-brand mb-1" style="font-size:1.8rem;letter-spacing:-1px; color: var(--jv-text-primary);">COLABORADORES</h1>
+                <p class="text-secondary small fw-bold text-uppercase mb-0">Gestión de Personal Autorizado</p>
             </div>
         </div>
 
@@ -283,7 +148,7 @@ unset($_SESSION['flash_msg']);
         <div class="row g-3 mb-4">
             <div class="col-md-4">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(148,163,184,0.12);color:#94a3b8;">
+                    <div class="widget-icon" style="background:rgba(108,117,125,0.12);color:var(--jv-text-muted);">
                         <i class="bi bi-people"></i>
                     </div>
                     <div>
@@ -294,7 +159,7 @@ unset($_SESSION['flash_msg']);
             </div>
             <div class="col-md-4">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(34,197,94,0.12);color:#4ade80;">
+                    <div class="widget-icon" style="background:rgba(25,135,84,0.12);color:var(--jv-success);">
                         <i class="bi bi-person-check"></i>
                     </div>
                     <div>
@@ -305,7 +170,7 @@ unset($_SESSION['flash_msg']);
             </div>
             <div class="col-md-4">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(234,88,12,0.12);color:#fb923c;">
+                    <div class="widget-icon" style="background:rgba(234,88,12,0.12);color:var(--jv-orange);">
                         <i class="bi bi-hourglass-split"></i>
                     </div>
                     <div>
@@ -322,7 +187,7 @@ unset($_SESSION['flash_msg']);
         <!-- Tabla Premium -->
         <div class="card-jv p-0 overflow-hidden">
             <div class="header-card d-flex align-items-center gap-2">
-                <i class="bi bi-person-lines-fill" style="color:#ea580c;"></i>
+                <i class="bi bi-person-lines-fill" style="color:var(--jv-navy);"></i>
                 <span class="fw-bold small text-secondary text-uppercase">Listado de Accesos</span>
                 <span class="codigo-badge ms-auto"><?php echo $total_users; ?> registros</span>
             </div>
@@ -360,9 +225,9 @@ unset($_SESSION['flash_msg']);
                                     </td>
                                     <td class="text-center">
                                         <?php if ($row['aprobado'] == 1): ?>
-                                            <i class="bi bi-check-circle-fill fs-5" style="color:#4ade80;"></i>
+                                            <i class="bi bi-check-circle-fill fs-5" style="color:var(--jv-success);"></i>
                                         <?php else: ?>
-                                            <i class="bi bi-hourglass-split fs-5" style="color:#fbbf24;"></i>
+                                            <i class="bi bi-hourglass-split fs-5" style="color:var(--jv-warning);"></i>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center">
@@ -421,8 +286,8 @@ unset($_SESSION['flash_msg']);
                     <input type="hidden" name="id_usuario" id="u_id_edit">
                     <div class="modal-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="fw-bolder font-brand m-0" id="modalTitle" style="color:#ea580c;letter-spacing:-.5px;">EDITAR USUARIO</h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            <h5 class="fw-bolder font-brand m-0" id="modalTitle" style="color:var(--jv-navy);letter-spacing:-.5px;">EDITAR USUARIO</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
                         <div class="section-bg">
@@ -487,7 +352,7 @@ unset($_SESSION['flash_msg']);
                             </select>
                             <small class="text-jv-muted mt-1 d-block" style="font-size:.7rem;">Selecciona una pregunta o déjalo vacío para mantener la actual.</small>
                             <input type="text" name="respuesta_seguridad" id="u_resp" class="input-jv mt-2" maxlength="20" oninput="validarFormulario()" placeholder="Mín. 5 y máx. 20 caracteres" autocomplete="off">
-                            <small id="u_resp_hint" class="field-error" style="color:#ef4444;font-size:.7rem;margin-top:2px;display:block;height:14px;"></small>
+                            <small id="u_resp_hint" class="field-error" style="color:var(--jv-danger);font-size:.7rem;margin-top:2px;display:block;height:14px;"></small>
                         </div>
 
                         <button type="submit" id="btn-user-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase" disabled>
@@ -505,190 +370,10 @@ unset($_SESSION['flash_msg']);
     <script src="<?php echo $base_assets; ?>js/bootstrap.bundle.min.js"></script>
     <script src="<?php echo $base_assets; ?>js/sweetalert2.all.min.js"></script>
     <script>
-        const modalU = new bootstrap.Modal(document.getElementById('modalUser'));
-
-        function togglePassword() {
-            const passInput = document.getElementById('u_pass');
-            const icon = document.getElementById('toggleIcon');
-            if (passInput.type === "password") {
-                passInput.type = "text";
-                icon.classList.remove('bi-eye-slash-fill');
-                icon.classList.add('bi-eye-fill');
-            } else {
-                passInput.type = "password";
-                icon.classList.remove('bi-eye-fill');
-                icon.classList.add('bi-eye-slash-fill');
-            }
-        }
-
-        function limpiarErrores() {
-            document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
-            document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
-        }
-        function marcarError(el, msg) {
-            el.classList.add('input-error');
-            if (msg && el.id) {
-                var errEl = document.getElementById(el.id + '_err');
-                if (!errEl) {
-                    errEl = document.createElement('small');
-                    errEl.id = el.id + '_err';
-                    errEl.className = 'field-error';
-                    errEl.style.cssText = 'color:#ef4444;font-size:.7rem;margin-top:2px;display:block;';
-                    el.parentNode.appendChild(errEl);
-                }
-                errEl.textContent = msg;
-            }
-        }
-        function validarFormulario() {
-            const user = document.getElementById('u_nombre').value.trim();
-            const pass = document.getElementById('u_pass').value;
-            const correo = document.getElementById('u_correo').value.trim();
-            const preg = document.getElementById('u_preg').value;
-            const resp = document.getElementById('u_resp').value.trim();
-            const btn = document.getElementById('btn-user-submit');
-            const uError = document.getElementById('u_error_text');
-            const fill = document.getElementById('meter-fill');
-            const meterText = document.getElementById('meter-text');
-
-            const userRegex = /^[a-zA-Z0-9_]{4,}$/;
-            const userValido = userRegex.test(user);
-            if (uError) {
-                if (user.length > 0) {
-                    uError.className = userValido ? 'text-jv-success mt-1 d-block fw-bold' : 'text-jv-danger mt-1 d-block fw-bold';
-                } else {
-                    uError.className = 'text-info mt-1 d-block fw-bold';
-                }
-            }
-            const correoValido = correo === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
-
-            // Validación de respuesta de seguridad
-            const respOk = resp.length >= 5 && resp.length <= 20 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp);
-            const respInput = document.getElementById('u_resp');
-            const respHint = document.getElementById('u_resp_hint');
-            let pregRespOk = true;
-            if (preg !== '' && resp === '') {
-                pregRespOk = false;
-                respInput.classList.add('input-error');
-                if (respHint) respHint.textContent = 'Seleccionaste una pregunta, debes escribir tu respuesta.';
-            } else if (preg === '' && resp !== '') {
-                pregRespOk = false;
-                respInput.classList.add('input-error');
-                if (respHint) respHint.textContent = 'Primero selecciona una pregunta de seguridad.';
-            } else if (preg !== '' && resp !== '') {
-                pregRespOk = respOk;
-                respInput.classList.toggle('input-error', !respOk);
-                if (respHint) respHint.textContent = respOk ? '' : 'Mín. 5 y máx. 20 caracteres, sin patrones (asdf, 1234, etc).';
-            } else {
-                respInput.classList.remove('input-error');
-                if (respHint) respHint.textContent = '';
-            }
-
-            if (pass.length > 0) {
-                let score = 0;
-                if (pass.length >= 8) score++;
-                if (/[a-z]/.test(pass)) score++;
-                if (/[A-Z]/.test(pass)) score++;
-                if (/[0-9]/.test(pass)) score++;
-                if (/[\W_]/.test(pass)) score++;
-
-                const colors = ['#ef4444', '#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
-                const widths = ['20%', '40%', '60%', '80%', '100%'];
-                if (fill) {
-                    fill.style.width = widths[score - 1] || '10%';
-                    fill.style.backgroundColor = colors[score - 1] || colors[0];
-                }
-
-                if (meterText) {
-                    if (score < 3) { meterText.textContent = 'Contraseña débil'; meterText.className = 'text-jv-danger mt-1 d-block fw-bold'; }
-                    else if (score < 5) { meterText.textContent = 'Contraseña aceptable'; meterText.className = 'text-jv-warning mt-1 d-block fw-bold'; }
-                    else { meterText.textContent = 'Contraseña fuerte'; meterText.className = 'text-jv-success mt-1 d-block fw-bold'; }
-                }
-            } else {
-                if (fill) fill.style.width = '0%';
-                if (meterText) { meterText.textContent = 'Mín. 8 caracteres: Mayúsculas, Minúsculas, Números y Símbolos.'; meterText.className = 'text-info mt-1 d-block fw-bold'; }
-            }
-
-            // Highlight errores
-            document.getElementById('u_nombre').classList.toggle('input-error', !userValido && user.length > 0);
-            document.getElementById('u_correo').classList.toggle('input-error', !correoValido && correo.length > 0);
-
-            var esEdicion = document.getElementById('u_accion').value === 'editar';
-            if (esEdicion && pass === '') { btn.disabled = !userValido || !pregRespOk; return; }
-            btn.disabled = !userValido || !correoValido || !pregRespOk;
-        }
-
-        function editarUsuario(data) {
-            document.getElementById('u_accion').value = "editar";
-            document.getElementById('u_id_edit').value = data.id_usuario;
-            document.getElementById('modalTitle').innerText = "EDITAR USUARIO";
-            document.getElementById('u_nombre').value = data.usuario;
-            document.getElementById('u_correo').value = data.correo || "";
-            document.getElementById('u_pass').value = "";
-            document.getElementById('u_pass').required = false;
-            document.getElementById('passHelp').style.display = "block";
-
-            document.getElementById('u_pass').type = "password";
-            document.getElementById('toggleIcon').className = "bi bi-eye-slash-fill text-secondary";
-
-            document.getElementById('meter-fill').style.width = '0%';
-            document.getElementById('btn-user-submit').disabled = false;
-
-            const selectRol = document.getElementById('u_rol');
-            selectRol.value = data.id_rol;
-            const esPropio = (data.id_usuario == "<?php echo $id_propio; ?>");
-            selectRol.disabled = esPropio;
-
-            const selectStatus = document.getElementById('u_status');
-            if (selectStatus) selectStatus.value = data.status || 'Activo';
-
-            const selectPreg = document.getElementById('u_preg');
-            if (selectPreg) {
-                selectPreg.value = data.pregunta_seguridad || '';
-            }
-            const inputResp = document.getElementById('u_resp');
-            if (inputResp) inputResp.value = '';
-
-            modalU.show();
-        }
-
-        function confirmarToggle(id, nombre, accion) {
-            const esSuspender = (accion === 'suspender');
-            Swal.fire({
-                title: esSuspender ? '¿SUSPENDER USUARIO?' : '¿REACTIVAR USUARIO?',
-                text: esSuspender ? `El usuario ${nombre} ya no podrá acceder al sistema.` : `Se restaurará el acceso al sistema para ${nombre}.`,
-                icon: esSuspender ? 'warning' : 'info',
-                showCancelButton: true,
-                confirmButtonColor: esSuspender ? '#ef4444' : '#22c55e',
-                cancelButtonColor: '#1e293b',
-                confirmButtonText: esSuspender ? 'SÍ, SUSPENDER' : 'SÍ, ACTIVAR',
-                cancelButtonText: 'CANCELAR',
-                background: '#0f172a',
-                color: '#ffffff'
-            }).then((result) => {
-                if (result.isConfirmed) window.location.href = `usuarios.php?toggle_status=${id}`;
-            });
-        }
-    </script>
-    <script>
-        // Sincronizar main-wrapper con sidebar
-        const mainWrapper = document.getElementById('mainWrapper');
-        const observer = new MutationObserver(() => {
-            if (document.body.classList.contains('sidebar-open')) {
-                mainWrapper.classList.add('sidebar-open');
-            } else {
-                mainWrapper.classList.remove('sidebar-open');
-            }
-        });
-        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    </script>
-    <script>
-    document.querySelectorAll('.flash-auto').forEach(el => {
-        setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 4000);
-    });
-    document.querySelectorAll('#formUsuario input, #formUsuario select, #formUsuario textarea').forEach(function(el) {
-        el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
-        el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });
-    });
-    </script>
+    window.JV_CONFIG = { c0: <?php echo $id_propio; ?>, c1: '<?php echo $csrf_token; ?>' };
+</script>
+    <script src="assets/dashboard/usuarios.js"></script>
+    
+    
 </body>
 </html>

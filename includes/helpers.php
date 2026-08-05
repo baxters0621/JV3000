@@ -20,58 +20,35 @@ if (!function_exists('validarRIF')) {
 
 if (!function_exists('validarTelefono')) {
     /**
-     * Valida el formato de teléfono venezolano.
-     * Formato esperado: (04XX) 000-0000 o (02XX) 000-0000
+     * Valida formato E.164: +584124862167
      * @param string $tel
      * @return bool
      */
-    // Validar teléfono venezolano
     function validarTelefono($tel)
     {
-        return (bool)preg_match('/^\(\d{4}\) \d{3}-\d{4}$/', $tel);
+        $digits = preg_replace('/\D/', '', $tel);
+        return str_starts_with($tel, '+') && strlen($digits) >= 8 && strlen($digits) <= 15;
     }
 }
 
-// Utilidades CSRF
-if (!function_exists('generarTokenCSRF')) {
+if (!function_exists('formatearTelefono')) {
     /**
-     * Genera un token CSRF y lo guarda en sesión
+     * Convierte E.164 (+584124862167) a formato legible (+58 412-486-2167)
+     * @param string $e164
      * @return string
      */
-    // Generar token CSRF
-    function generarTokenCSRF()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        if (!isset($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-
-        return $_SESSION['csrf_token'];
+function formatearTelefono($e164)
+{
+    if (str_starts_with($e164, '+58')) {
+        $num = substr($e164, 3);
+        return '(58) ' . substr($num, 0, 3) . '-' . substr($num, 3);
     }
+    if (preg_match('/^\+(\d{1,3})(\d+)$/', $e164, $m)) {
+        $parts = str_split($m[2], 3);
+        return '+' . $m[1] . ' ' . implode('-', $parts);
+    }
+    return $e164;
 }
-
-if (!function_exists('validarTokenCSRF')) {
-    /**
-     * Valida un token CSRF
-     * @param string $token
-     * @return bool
-     */
-    // Validar token CSRF
-    function validarTokenCSRF($token)
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        if (!isset($_SESSION['csrf_token']) || empty($token)) {
-            return false;
-        }
-
-        return hash_equals($_SESSION['csrf_token'], $token);
-    }
 }
 
 // Helpers de BD / Config
@@ -135,6 +112,26 @@ if (!function_exists('generarFacturaNumero')) {
     }
 }
 
+if (!function_exists('validarPasswordFuerte')) {
+    // Validar contraseña fuerte: mín 8, mayúscula, minúscula, número y símbolo
+    function validarPasswordFuerte(string $password): bool
+    {
+        return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/', $password) === 1;
+    }
+}
+
+if (!function_exists('purgarPreviewsSesion')) {
+    // Elimina previews de ventas abandonados (solo queda el más reciente en sesión)
+    function purgarPreviewsSesion(): void
+    {
+        foreach (array_keys($_SESSION) as $clave) {
+            if ($clave === 'preview_data' || strpos((string)$clave, 'preview_data_') === 0) {
+                unset($_SESSION[$clave]);
+            }
+        }
+    }
+}
+
 if (!function_exists('registrarAuditoria')) {
     // Registrar acción en auditoría
     function registrarAuditoria(string $accion, string $detalle = '')
@@ -180,3 +177,99 @@ function validarRespuestaSeguridad(string $respuesta): bool
     return true;
 }
 }
+
+// ==========================================
+// LOTES DE INVENTARIO (FEFO)
+// ==========================================
+if (!function_exists('capacidadProducto')) {
+    /**
+     * Capacidad de almacenamiento efectiva de un producto:
+     * propia (stock_maximo) si > 0; si no, la de su categoría; si no, 100.
+     */
+    function capacidadProducto($db, int $id_producto): int
+    {
+        $r = $db->fetchOne(
+            "SELECT COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as cap
+             FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
+             WHERE p.id_producto = ?",
+            [$id_producto]
+        );
+        return max(0, (int)($r['cap'] ?? 100));
+    }
+}
+
+if (!function_exists('lotesConsumibles')) {
+    /**
+     * Lotes disponibles de un producto en orden FEFO (primero lo que vence antes).
+     * $solo_vencidos = true  → solo lotes vencidos (para ajustes por vencimiento).
+     * $solo_vencidos = false → solo lotes vigentes (para ventas/regalías).
+     */
+    function lotesConsumibles($db, int $id_producto, bool $solo_vencidos = false): array
+    {
+        if ($solo_vencidos) {
+            return $db->fetchAll(
+                "SELECT id_lote, cantidad_restante, fecha_vencimiento
+                 FROM lotes
+                 WHERE id_producto = ? AND cantidad_restante > 0
+                   AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento <= CURDATE()
+                 ORDER BY fecha_vencimiento ASC, id_lote ASC",
+                [$id_producto]
+            );
+        }
+        return $db->fetchAll(
+            "SELECT id_lote, cantidad_restante, fecha_vencimiento
+             FROM lotes
+             WHERE id_producto = ? AND cantidad_restante > 0
+               AND (fecha_vencimiento IS NULL OR fecha_vencimiento > CURDATE())
+             ORDER BY (fecha_vencimiento IS NULL) ASC, fecha_vencimiento ASC, id_lote ASC",
+            [$id_producto]
+        );
+    }
+}
+
+if (!function_exists('stockLoteDisponible')) {
+    /** Stock total disponible de un producto según el modo (solo vencidos o vigentes). */
+    function stockLoteDisponible($db, int $id_producto, bool $solo_vencidos = false): int
+    {
+        $total = 0;
+        foreach (lotesConsumibles($db, $id_producto, $solo_vencidos) as $l) {
+            $total += (int)$l['cantidad_restante'];
+        }
+        return $total;
+    }
+}
+
+if (!function_exists('consumirLotes')) {
+    /**
+     * Consume $cantidad del producto en modo FEFO y devuelve
+     * [ ['id_lote' => int, 'cantidad' => int], ... ].
+     * Lanza Exception si no hay stock suficiente en los lotes permitidos.
+     */
+    function consumirLotes($db, int $id_producto, int $cantidad, bool $solo_vencidos = false): array
+    {
+        $restante = $cantidad;
+        $usados = [];
+        foreach (lotesConsumibles($db, $id_producto, $solo_vencidos) as $lote) {
+            if ($restante <= 0) break;
+            $disp = (int)$lote['cantidad_restante'];
+            if ($disp <= 0) continue;
+            $tomar = min($disp, $restante);
+            $usados[] = ['id_lote' => (int)$lote['id_lote'], 'cantidad' => $tomar];
+            $restante -= $tomar;
+        }
+        if ($restante > 0) {
+            $modo = $solo_vencidos ? 'VENCIDOS' : 'VIGENTES';
+            throw new Exception("STOCK $modo INSUFICIENTE (ID:$id_producto). Faltan $restante und(s).");
+        }
+        return $usados;
+    }
+}
+
+if (!function_exists('devolverLote')) {
+    /** Devuelve unidades a un lote (anulación/edición de salida). */
+    function devolverLote($db, int $id_lote, int $cantidad): void
+    {
+        $db->execute("UPDATE lotes SET cantidad_restante = cantidad_restante + ? WHERE id_lote = ?", [$cantidad, $id_lote]);
+    }
+}
+

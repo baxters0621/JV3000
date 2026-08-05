@@ -205,19 +205,41 @@ INSERT INTO `detalle_movimientos` (`id_detalle`,`id_movimiento`,`id_producto`,`c
 ('28','6','15','1','10.00'),
 ('31','8','19','1','13.20');
 
+DROP TABLE IF EXISTS `lotes`;
+CREATE TABLE `lotes` (
+  `id_lote` int(11) NOT NULL AUTO_INCREMENT,
+  `id_producto` int(11) NOT NULL,
+  `id_proveedor` int(11) DEFAULT NULL,
+  `id_compra` int(11) DEFAULT NULL,
+  `cantidad` int(11) NOT NULL DEFAULT 0,
+  `cantidad_restante` int(11) NOT NULL DEFAULT 0,
+  `precio_costo` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `fecha_vencimiento` date DEFAULT NULL,
+  `fecha_ingreso` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_lote`),
+  KEY `fk_lot_prod` (`id_producto`),
+  KEY `fk_lot_compra` (`id_compra`),
+  KEY `idx_lot_venc` (`fecha_vencimiento`),
+  CONSTRAINT `fk_lot_prod` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE,
+  CONSTRAINT `fk_lot_compra` FOREIGN KEY (`id_compra`) REFERENCES `compras` (`id_compra`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 DROP TABLE IF EXISTS `detalle_salidas`;
 CREATE TABLE `detalle_salidas` (
   `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
   `id_salida` int(11) NOT NULL,
   `id_producto` int(11) NOT NULL,
+  `id_lote` int(11) DEFAULT NULL,
   `cantidad` int(11) NOT NULL,
   `precio_venta` decimal(10,2) NOT NULL,
   `observaciones` text DEFAULT NULL,
   PRIMARY KEY (`id_detalle`),
   KEY `fk_detsal_salida` (`id_salida`),
   KEY `fk_detsal_producto` (`id_producto`),
+  KEY `fk_detsal_lote` (`id_lote`),
   CONSTRAINT `fk_detsal_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`),
-  CONSTRAINT `fk_detsal_salida` FOREIGN KEY (`id_salida`) REFERENCES `salidas` (`id_salida`) ON DELETE CASCADE
+  CONSTRAINT `fk_detsal_salida` FOREIGN KEY (`id_salida`) REFERENCES `salidas` (`id_salida`) ON DELETE CASCADE,
+  CONSTRAINT `fk_detsal_lote` FOREIGN KEY (`id_lote`) REFERENCES `lotes` (`id_lote`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `detalle_salidas` (`id_detalle`,`id_salida`,`id_producto`,`cantidad`,`precio_venta`,`observaciones`) VALUES
@@ -273,6 +295,7 @@ CREATE TABLE `productos` (
   `precio_costo` decimal(10,2) DEFAULT 0.00,
   `stock_actual` int(11) DEFAULT 0,
   `stock_minimo` int(11) DEFAULT 5,
+  `stock_maximo` int(11) DEFAULT 0,
   `fecha_vencimiento` date DEFAULT NULL,
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `id_categoria` int(11) NOT NULL,
@@ -315,6 +338,13 @@ INSERT INTO `productos` (`id_producto`,`sku`,`nombre_producto`,`precio_venta`,`p
 ('29','FRE-LIQ-0002','Líquido Freno DOT 5.1 Motul 500ml','18.00','10.80','12','5','2028-03-22','Activo','24','3'),
 ('39','ELE-BUJ-0001','Bujía NGK Iridium BKR6EIX-11','18.00','10.80','36','10','2030-05-22','Activo','26','4'),
 ('40','ELE-BUJ-0002','Bujía Bosch Super 4 FR7DC+','12.00','7.20','45','10','2031-01-10','Activo','26','4');
+
+UPDATE `productos` SET `stock_maximo` = 100 WHERE `stock_maximo` = 0 AND `stock_actual` > 0;
+
+INSERT INTO `lotes` (`id_producto`, `id_proveedor`, `id_compra`, `cantidad`, `cantidad_restante`, `precio_costo`, `fecha_vencimiento`, `fecha_ingreso`)
+SELECT p.`id_producto`, p.`id_proveedor`, NULL, p.`stock_actual`, p.`stock_actual`, p.`precio_costo`, p.`fecha_vencimiento`, NOW()
+FROM `productos` p WHERE p.`stock_actual` > 0;
+
 
 DROP TABLE IF EXISTS `proveedores`;
 CREATE TABLE `proveedores` (

@@ -48,23 +48,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
                 $input_lower = strtolower($input);
                 $row = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(correo) = ? LIMIT 1", [$input_lower]);
-                $campo = 'correo';
             } else {
                 $row = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(usuario) = ? LIMIT 1", [strtolower($input)]);
-                $campo = 'usuario';
             }
-            if ($row) {
-                if (empty($row['pregunta_seguridad'])) {
-                    $error = "ESTE USUARIO NO TIENE PREGUNTA DE SEGURIDAD CONFIGURADA. CONTACTA AL ADMIN.";
-                } else {
-                    $_SESSION['rec_id'] = $row['id_usuario'];
-                    $_SESSION['rec_user'] = $row['usuario'];
-                    $_SESSION['rec_pregunta'] = $row['pregunta_seguridad'];
-                    $_SESSION['rec_step'] = 2;
-                    $_SESSION['rec_intentos'] = 0;
-                }
+            if ($row && !empty($row['pregunta_seguridad'])) {
+                $_SESSION['rec_id'] = $row['id_usuario'];
+                $_SESSION['rec_user'] = $row['usuario'];
+                $_SESSION['rec_pregunta'] = $row['pregunta_seguridad'];
+                $_SESSION['rec_step'] = 2;
+                $_SESSION['rec_intentos'] = 0;
             } else {
-                $error = $campo === 'correo' ? "CORREO NO REGISTRADO." : "USUARIO NO REGISTRADO.";
+                $error = "NO SE ENCONTRÓ UNA CUENTA CON ESE DATO. VERIFÍQUELO O CONTACTE AL ADMINISTRADOR.";
             }
         }
     }
@@ -106,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $new_pass = $_POST['rec_password'] ?? '';
             $new_pass2 = $_POST['rec_password2'] ?? '';
-            if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/', $new_pass)) {
+            if (!validarPasswordFuerte($new_pass)) {
                 $error = "CONTRASEÑA DÉBIL: MÍN 8 CARACTERES, MAYÚSCULAS, NÚMEROS Y SÍMBOLOS.";
             } elseif ($new_pass !== $new_pass2) {
                 $error = "LAS CONTRASEÑAS NO COINCIDEN.";
@@ -143,71 +137,7 @@ if ($step == 4) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Contraseña | JV3000 C.A.</title>
     <?php include 'includes/diseno.php'; ?>
-    <style>
-    .rec-page {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
-    .rec-card {
-        width:100%;max-width:440px;
-        background:var(--jv-bg-card);
-        backdrop-filter:blur(20px);
-        border:1px solid var(--jv-border);
-        border-radius:var(--jv-radius-xl);
-        padding:36px 32px;
-        box-shadow:var(--jv-shadow);
-    }
-    .rec-step { display:none; }
-    .rec-step.active { display:block; }
-    .rec-header {
-        text-align:center;margin-bottom:28px;
-    }
-    .rec-header .icon {
-        width:56px;height:56px;border-radius:16px;
-        background:linear-gradient(135deg,#f59e0b,#d97706);
-        display:inline-flex;align-items:center;justify-content:center;
-        font-size:1.6rem;color:#fff;margin-bottom:12px;
-        box-shadow:0 0 30px rgba(245,158,11,0.3);
-    }
-    .rec-header h1 {
-        font-family:var(--jv-font-brand);
-        font-size:1.2rem;font-weight:700;color:#fff;margin:0;
-    }
-    .rec-header p {
-        color:var(--jv-text-secondary);font-size:.85rem;margin:4px 0 0;
-    }
-    .rec-input {
-        width:100%;padding:14px 16px;border-radius:var(--jv-radius);
-        background:var(--jv-bg-primary);border:1px solid rgba(255,255,255,0.1);
-        color:var(--jv-text-primary);font-size:.9rem;transition:.15s;
-    }
-    .rec-input:focus {
-        outline:none;border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,0.15);
-    }
-    .rec-btn {
-        width:100%;padding:14px;border:none;border-radius:var(--jv-radius);
-        font-weight:700;font-size:.85rem;letter-spacing:.5px;
-        background:linear-gradient(135deg,#f59e0b,#d97706);
-        color:var(--jv-bg-primary);transition:.2s;
-    }
-    .rec-btn:hover { transform:translateY(-2px);box-shadow:0 8px 25px -5px rgba(245,158,11,0.4); }
-    .rec-btn:disabled { opacity:.5;pointer-events:none; }
-    .rec-back {
-        display:block;text-align:center;margin-top:16px;
-        color:var(--jv-text-secondary);font-size:.8rem;text-decoration:none;
-    }
-    .rec-back:hover { color:var(--jv-cyan); }
-    .rec-question {
-        background:rgba(245,158,11,0.08);
-        border:1px solid rgba(245,158,11,0.2);
-        border-radius:var(--jv-radius);
-        padding:14px 16px;margin-bottom:16px;
-        color:#fbbf24;font-size:.9rem;font-weight:600;text-align:center;
-    }
-    </style>
+        <link rel="stylesheet" href="assets/login/recuperar.css">
 </head>
 <body class="rec-page">
     <div class="rec-card">
@@ -231,7 +161,7 @@ if ($step == 4) {
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="buscar">
-                <label class="small fw-bold mb-1 d-block"><span class="text-jv-warning"><i class="bi bi-envelope me-1"></i>Correo</span>  <span class="text-jv-muted">o</span>  <span class="text-jv-cyan"><i class="bi bi-person me-1"></i>Usuario</span></label>
+                <label class="small fw-bold mb-1 d-block"><span class="text-jv-warning"><i class="bi bi-envelope me-1"></i>Correo</span>  <span class="text-jv-muted">o</span>  <span class="text-jv-info"><i class="bi bi-person me-1"></i>Usuario</span></label>
                 <input type="text" name="rec_input" class="rec-input mb-3" required placeholder="admin@correo.com  o  Usuario" autofocus>
                 <button type="submit" class="rec-btn"><i class="bi bi-search me-2"></i>BUSCAR</button>
                 <a href="login.php" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Volver al inicio</a>
@@ -245,10 +175,10 @@ if ($step == 4) {
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="responder">
-                <div class="small text-jv-muted mb-2">Usuario: <strong class="text-white"><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
+                <div class="small text-jv-muted mb-2">Usuario: <strong style="color:var(--jv-text-primary)"><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
                 <div class="rec-question"><i class="bi bi-question-circle me-2"></i><?php echo htmlspecialchars($_SESSION['rec_pregunta'] ?? ''); ?></div>
                 <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required maxlength="20" autofocus placeholder="Mín. 5 y máx. 20 caracteres" autocomplete="off" oninput="validarRespuesta()">
-                <small id="rec-resp-hint" style="color:#ef4444;font-size:.7rem;display:block;height:14px;text-align:center;"></small>
+                <small id="rec-resp-hint" style="color:#DC2626;font-size:.7rem;display:block;height:14px;text-align:center;"></small>
                 <button type="submit" id="rec-btn" class="rec-btn"><i class="bi bi-shield-check me-2"></i>VERIFICAR</button>
                 <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Intentar con otro correo</a>
             </form>
@@ -263,12 +193,12 @@ if ($step == 4) {
                 <input type="hidden" name="rec_action" value="cambiar">
                 <label class="small fw-bold text-jv-muted mb-1 d-block">Nueva contraseña</label>
                 <input type="password" name="rec_password" id="rec-pass" class="rec-input mb-1" required minlength="8" placeholder="Min. 8 caracteres" autofocus oninput="validarPassRec()">
-                <div class="strength-meter mb-3" style="height:4px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;">
+                <div class="strength-meter mb-3" style="height:4px;background:var(--jv-border);border-radius:4px;overflow:hidden;">
                     <div class="strength-fill" id="rec-meter" style="height:100%;width:0%;border-radius:4px;transition:all .35s ease;"></div>
                 </div>
                 <label class="small fw-bold text-jv-muted mb-1 d-block">Confirmar contraseña</label>
                 <input type="password" name="rec_password2" id="rec-pass2" class="rec-input mb-3" required minlength="8" placeholder="Repite la contraseña" oninput="validarPassRec()">
-                <small id="rec-pass-hint" style="color:var(--jv-cyan);font-size:.7rem;display:block;height:16px;text-align:center;margin-top:-10px;margin-bottom:10px;"></small>
+                <small id="rec-pass-hint" style="color:var(--jv-text-muted);font-size:.7rem;display:block;height:16px;text-align:center;margin-top:-10px;margin-bottom:10px;"></small>
                 <button type="submit" id="rec-btn-pass" class="rec-btn"><i class="bi bi-check2 me-2"></i>CAMBIAR CONTRASEÑA</button>
                 <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>
             </form>
@@ -287,62 +217,7 @@ if ($step == 4) {
         </div>
     </div>
 
-    <script>
-        function validarRespuesta() {
-            var resp = document.getElementById('rec-resp').value.trim();
-            var btn = document.getElementById('rec-btn');
-            var hint = document.getElementById('rec-resp-hint');
-            if (resp.length === 0) {
-                btn.disabled = true;
-                hint.textContent = '';
-                document.getElementById('rec-resp').style.borderColor = '';
-                return;
-            }
-            var ok = resp.length >= 5 && resp.length <= 20 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp);
-            btn.disabled = !ok;
-            document.getElementById('rec-resp').style.borderColor = ok ? '#22c55e' : '#ef4444';
-            hint.textContent = ok ? '' : 'Mín. 5 y máx. 20 caracteres, sin patrones (asdf, 1234, etc).';
-        }
-
-        function validarPassRec() {
-            var p = document.getElementById('rec-pass').value;
-            var p2 = document.getElementById('rec-pass2').value;
-            var btn = document.getElementById('rec-btn-pass');
-            var meter = document.getElementById('rec-meter');
-            var hint = document.getElementById('rec-pass-hint');
-
-            var s = 0;
-            if (p.length >= 8) s++;
-            if (/[a-z]/.test(p)) s++;
-            if (/[A-Z]/.test(p)) s++;
-            if (/[0-9]/.test(p)) s++;
-            if (/[\W_]/.test(p)) s++;
-
-            var cols = ['#ef4444', '#ef4444', '#f59e0b', '#38bdf8', '#22c55e'];
-            var wids = ['20%', '40%', '60%', '80%', '100%'];
-            var idx = Math.max(0, Math.min(s - 1, 4));
-            meter.style.width = wids[idx];
-            meter.style.backgroundColor = cols[idx];
-
-            var pwdOk = p.length >= 8 && s >= 5;
-            var matchOk = p.length > 0 && p === p2;
-
-            if (p.length > 0 && s < 5) {
-                hint.textContent = 'Debe tener mayúsculas, minúsculas, números y símbolos.';
-                hint.style.color = '#ef4444';
-            } else if (p2.length > 0 && !matchOk) {
-                hint.textContent = 'Las contraseñas no coinciden.';
-                hint.style.color = '#ef4444';
-            } else if (matchOk && pwdOk) {
-                hint.textContent = '✓ Contraseña segura';
-                hint.style.color = '#22c55e';
-            } else {
-                hint.textContent = '';
-            }
-
-            btn.disabled = !(pwdOk && matchOk);
-        }
-    </script>
+        <script src="assets/login/recuperar.js"></script>
     <script src="assets/js/bootstrap.bundle.min.js?v=2"></script>
 </body>
 </html>

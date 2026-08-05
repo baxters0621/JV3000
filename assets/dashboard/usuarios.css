@@ -1,0 +1,136 @@
+
+    /* === THEME: USUARIOS (Orange) ======================= */
+
+    .user-header-icon {
+        width:52px;height:52px;border-radius:14px;
+        background:linear-gradient(135deg,#ea580c,#c2410c);
+        display:flex;align-items:center;justify-content:center;
+        color:#fff;font-size:1.5rem;flex-shrink:0;
+        box-shadow:0 0 30px rgba(234,88,12,0.3);
+    }
+
+    .codigo-badge {
+        background:rgba(234,88,12,0.12);color:#fdba74;
+        font-size:.7rem;font-weight:800;padding:3px 10px;
+        border-radius:20px;display:inline-block;
+        letter-spacing:.5px;
+    }
+
+    .btn-action {
+        width:40px;height:40px;border-radius:12px;
+        display:inline-flex;align-items:center;justify-content:center;
+        border:1px solid var(--jv-border);background:var(--jv-bg-primary);
+        color:var(--jv-text);transition:.15s;
+    }
+    .btn-action:hover {
+        background:var(--jv-bg-hover);border-color:#ea580c;
+        color:#ea580c;
+    }
+
+    .estado-vacio { padding:60px 20px;text-align:center; }
+    .estado-vacio i {
+        font-size:3.5rem;color:rgba(234,88,12,0.2);display:block;margin-bottom:16px;
+    }
+    .estado-vacio span {
+        font-size:.85rem;font-weight:700;text-transform:uppercase;
+        letter-spacing:1px;color:rgba(148,163,184,0.5);
+    }
+
+    .pagina-usuarios .card-jv {
+        border-color:rgba(234,88,12,0.25);
+        box-shadow:0 20px 50px -12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(234,88,12,0.06);
+    }
+    .pagina-usuarios .card-jv:hover { border-color:rgba(234,88,12,0.45); }
+    .pagina-usuarios .table-jv thead th {
+        background:linear-gradient(135deg,#c2410c,#ea580c);
+        color:#fed7aa;
+        border-bottom:2px solid rgba(234,88,12,0.3);
+    }
+    .pagina-usuarios .table-jv tbody td {
+        border-bottom:1px solid rgba(234,88,12,0.07);
+    }
+    .pagina-usuarios .table-jv tbody tr:hover {
+        background:rgba(234,88,12,0.03);
+    }
+    .pagina-usuarios .btn-jv-primary {
+        background:linear-gradient(135deg,#ea580c,#c2410c);
+    }
+    .pagina-usuarios .btn-jv-primary:hover {
+        box-shadow:0 8px 25px -5px rgba(234,88,12,0.4);
+        transform:translateY(-2px);
+    }
+    .pagina-usuarios .input-jv:focus {
+        border-color:#ea580c;
+        box-shadow:0 0 0 3px rgba(234,88,12,0.15);
+    }
+    .pagina-usuarios .header-card {
+        padding:18px 24px;
+        border-left:4px solid #ea580c;
+    }
+
+    /* ── Widget cards ── */
+    .pagina-usuarios .widget-card {
+        border-radius:var(--jv-radius-lg);
+        background:var(--jv-bg-card);
+        backdrop-filter:blur(20px);
+        border:1px solid var(--jv-border);
+        padding:20px 22px;
+        display:flex;
+        align-items:center;
+        gap:18px;
+        transition:all .25s ease;
+        min-height:90px;
+    }
+    .pagina-usuarios .widget-card:hover {
+        border-color:var(--jv-border-hover);
+        transform:translateY(-3px);
+        box-shadow:0 12px 40px -8px rgba(0,0,0,0.4);
+    }
+    .widget-card .widget-icon {
+        width:46px;height:46px;border-radius:14px;
+        display:flex;align-items:center;justify-content:center;
+        font-size:1.3rem;flex-shrink:0;
+    }
+    .widget-card .widget-label {
+        font-size:.6rem;text-transform:uppercase;
+        letter-spacing:1px;font-weight:700;
+        color:rgba(148,163,184,0.7);
+        margin-bottom:4px;
+    }
+    .widget-card .widget-value {
+        font-size:1.4rem;font-weight:800;color:#fff;
+        line-height:1.2;
+    }
+
+    /* ── Badge overrides ── */
+    .badge-jv { padding:4px 12px;border-radius:20px;font-weight:800;font-size:.7rem;letter-spacing:.5px;display:inline-flex;align-items:center;gap:5px; }
+    .badge-success { background:rgba(34,197,94,0.18);color:#4ade80;border:1px solid rgba(34,197,94,0.4); }
+    .badge-danger { background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.4); }
+    .badge-warning { background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.4); }
+
+    /* ── Alert ── */
+    .alert-jv { border-left:4px solid;border-radius:8px;padding:14px 20px !important;font-size:.9rem; }
+    .alert-jv-success { border-left-color:#22c55e;background:rgba(34,197,94,0.1); }
+    .alert-jv-danger { border-left-color:#ef4444;background:rgba(239,68,68,0.1); }
+
+    /* ── Modal section groups ── */
+    .section-bg {
+        background:rgba(2,6,23,0.3);
+        border:1px solid rgba(234,88,12,0.08);
+        border-radius:var(--jv-radius);
+        padding:14px 16px;
+        margin-bottom:12px;
+    }
+    .section-label {
+        font-size:.65rem;font-weight:800;text-transform:uppercase;
+        letter-spacing:1px;color:#fb923c;
+        margin-bottom:8px;padding-bottom:6px;
+        border-bottom:1px solid rgba(234,88,12,0.15);
+        display:flex;align-items:center;gap:4px;
+    }
+
+    /* ── Strength meter ── */
+    .strength-meter { height:6px;background:rgba(255,255,255,0.05);border-radius:10px;overflow:hidden; }
+    .strength-meter-fill { height:100%;width:0%;border-radius:10px;transition:all .3s ease; }
+    .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
+    

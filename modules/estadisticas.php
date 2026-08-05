@@ -59,7 +59,7 @@ $top_prod_nombres = [];
 $top_prod_cant = [];
 $top_prod_colores = [];
 
-$paleta = ['#38bdf8','#818cf8','#c084fc','#fb923c','#4ade80','#f472b6','#34d399','#fbbf24','#a78bfa','#fb7185'];
+$paleta = ['#EA580C','#2563EB','#6F42C1','#FD7E14','#16A34A','#DC2626','#D97706','#20C997','#0F1A2E','#E83E8C'];
 
 $res_top = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, COALESCE(SUM(ds.cantidad), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY total DESC LIMIT 5");
 foreach ($res_top as $row) {
@@ -75,178 +75,7 @@ foreach ($res_top as $row) {
     <title>Estadísticas | JV3000 C.A.</title>
     <script src="../assets/js/chart.umd.min.js"></script>
     <!-- ESTILOS -->
-    <style>
-    /* === THEME: ESTADÍSTICAS (Cyan) ==================== */
-    .stats-header-icon {
-        width:52px;height:52px;border-radius:14px;
-        background:linear-gradient(135deg,#38bdf8,#0ea5e9);
-        display:flex;align-items:center;justify-content:center;
-        color:#fff;font-size:1.5rem;flex-shrink:0;
-        box-shadow:0 0 30px rgba(56,189,248,0.3);
-    }
-
-    .pagina-estadisticas .card-jv {
-        border-color:rgba(56,189,248,0.25);
-        box-shadow:0 20px 50px -12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(56,189,248,0.06);
-    }
-
-    .pagina-estadisticas .widget-card {
-        border-radius:var(--jv-radius-lg);
-        background:var(--jv-bg-card);
-        backdrop-filter:blur(20px);
-        border:1px solid var(--jv-border);
-        padding:20px 22px;
-        display:flex;
-        align-items:center;
-        gap:18px;
-        transition:all .25s ease;
-        min-height:90px;
-    }
-    .pagina-estadisticas .widget-card:hover {
-        border-color:var(--jv-border-hover);
-        transform:translateY(-3px);
-        box-shadow:0 12px 40px -8px rgba(0,0,0,0.4);
-    }
-    .widget-icon {
-        width:46px;height:46px;border-radius:14px;
-        display:flex;align-items:center;justify-content:center;
-        font-size:1.3rem;flex-shrink:0;
-    }
-    .widget-label {
-        font-size:.6rem;text-transform:uppercase;
-        letter-spacing:1px;font-weight:700;
-        color:rgba(148,163,184,0.7);
-        margin-bottom:4px;
-    }
-    .widget-value {
-        font-size:1.4rem;font-weight:800;color:#fff;
-        line-height:1.2;
-    }
-
-    .pagina-estadisticas .chart-card {
-        background:var(--jv-bg-card);
-        backdrop-filter:blur(20px);
-        border:1px solid var(--jv-border);
-        border-radius:var(--jv-radius-lg);
-        padding:24px;
-        transition:all .3s ease;
-    }
-    .pagina-estadisticas .chart-card:hover {
-        border-color:var(--jv-border-hover);
-    }
-    .pagina-estadisticas .chart-card h5 {
-        font-size:.85rem;font-weight:700;color:rgba(255,255,255,0.7);
-        text-transform:uppercase;letter-spacing:1px;
-        margin-bottom:20px;padding-bottom:12px;
-        border-bottom:1px solid rgba(56,189,248,0.1);
-    }
-    .pagina-estadisticas .chart-card h5 i { color:#38bdf8; }
-
-    /* === PROFIT SECTION === */
-    .profit-grid {
-        display: grid;
-        grid-template-columns: 320px 1fr;
-        gap: 24px;
-        align-items: stretch;
-    }
-    .profit-summary {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding: 0;
-    }
-    .profit-summary .profit-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 16px;
-        background: rgba(255,255,255,0.03);
-        border-radius: 12px;
-        border-left: 3px solid var(--profit-color, #38bdf8);
-    }
-    .profit-row .label {
-        font-size: .7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .5px;
-        color: rgba(148,163,184,0.7);
-    }
-    .profit-row .value {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: #fff;
-    }
-    .profit-row .value.verde { color: #4ade80; }
-    .profit-row .value.rojo { color: #f87171; }
-    .profit-row .value.cyan { color: #38bdf8; }
-    .profit-separator {
-        height: 1px;
-        background: rgba(255,255,255,0.08);
-        margin: 4px 0;
-    }
-    .margen-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 14px;
-        border-radius: 20px;
-        font-size: .85rem;
-        font-weight: 800;
-        background: rgba(74,222,128,0.15);
-        color: #4ade80;
-        border: 1px solid rgba(74,222,128,0.3);
-    }
-    .margen-badge.bajo {
-        background: rgba(245,158,11,0.15);
-        color: #fbbf24;
-        border-color: rgba(245,158,11,0.3);
-    }
-    .margen-badge.malo {
-        background: rgba(239,68,68,0.15);
-        color: #f87171;
-        border-color: rgba(239,68,68,0.3);
-    }
-    .profit-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .profit-table th {
-        font-size: .6rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 700;
-        color: rgba(148,163,184,0.5);
-        padding: 8px 10px;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
-        text-align: left;
-    }
-    .profit-table td {
-        padding: 10px;
-        font-size: .82rem;
-        border-bottom: 1px solid rgba(255,255,255,0.03);
-        color: rgba(255,255,255,0.8);
-        vertical-align: middle;
-    }
-    .profit-table tbody tr:nth-child(odd) td { background: rgba(255,255,255,0.02); }
-    .profit-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.05); }
-    .profit-table td:last-child,
-    .profit-table th:last-child { text-align: right; }
-    .profit-table td:nth-child(3),
-    .profit-table th:nth-child(3) { text-align: center; }
-    .profit-table td:first-child { font-weight: 700; }
-    .profit-table .pct-bar {
-        display: inline-block;
-        height: 6px;
-        border-radius: 3px;
-        background: linear-gradient(90deg, #4ade80 var(--pct), rgba(255,255,255,0.1) var(--pct));
-        width: 60px;
-        vertical-align: middle;
-        margin-right: 6px;
-    }
-    @media (max-width: 992px) {
-        .profit-grid { grid-template-columns: 1fr; }
-    }
-    </style>
+        <link rel="stylesheet" href="../assets/modules/estadisticas/estadisticas.css">
 </head>
 <body>
     <?php include '../includes/sidebar.php'; ?>
@@ -261,8 +90,8 @@ foreach ($res_top as $row) {
                 <i class="bi bi-graph-up-arrow"></i>
             </div>
             <div>
-                <h1 class="font-brand mb-1" style="font-size:1.8rem;letter-spacing:-1px;">ESTADÍSTICAS</h1>
-                <p class="text-white opacity-75 small fw-bold text-uppercase mb-0">Análisis de Rendimiento | JV3000 C.A.</p>
+                <h1 class="font-brand mb-1" style="font-size:1.8rem;letter-spacing:-1px; color: var(--jv-text-primary);">ESTADÍSTICAS</h1>
+                <p class="text-secondary small fw-bold text-uppercase mb-0">Análisis de Rendimiento | JV3000 C.A.</p>
             </div>
         </div>
 
@@ -270,7 +99,7 @@ foreach ($res_top as $row) {
         <div class="row g-3 mb-4">
             <div class="col-md-3">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(248,113,113,0.12);color:#f87171;">
+                    <div class="widget-icon" style="background:rgba(234,88,12,0.12);color:var(--jv-orange);">
                         <i class="bi bi-currency-dollar"></i>
                     </div>
                     <div>
@@ -281,7 +110,7 @@ foreach ($res_top as $row) {
             </div>
             <div class="col-md-3">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(56,189,248,0.12);color:#38bdf8;">
+                    <div class="widget-icon" style="background:rgba(13,110,253,0.12);color:var(--jv-info);">
                         <i class="bi bi-truck"></i>
                     </div>
                     <div>
@@ -292,7 +121,7 @@ foreach ($res_top as $row) {
             </div>
             <div class="col-md-3">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(74,222,128,0.12);color:#4ade80;">
+                    <div class="widget-icon" style="background:rgba(25,135,84,0.12);color:var(--jv-success);">
                         <i class="bi bi-graph-up"></i>
                     </div>
                     <div>
@@ -303,7 +132,7 @@ foreach ($res_top as $row) {
             </div>
             <div class="col-md-3">
                 <div class="widget-card">
-                    <div class="widget-icon" style="background:rgba(251,191,36,0.12);color:#fbbf24;">
+                    <div class="widget-icon" style="background:rgba(255,193,7,0.12);color:#856404;">
                         <i class="bi bi-receipt"></i>
                     </div>
                     <div>
@@ -332,18 +161,21 @@ foreach ($res_top as $row) {
         </div>
 
         <!-- RESUMEN ADICIONAL -->
+        <div class="section-title-est mb-2">
+            <i class="bi bi-clipboard-data"></i> Resumen General
+        </div>
         <div class="row g-3 mt-4">
             <div class="col-12">
                 <div class="card-jv d-flex align-items-center justify-content-between py-3 px-4">
                     <div class="d-flex align-items-center gap-3">
-                        <i class="bi bi-box-seam fs-3" style="color:#38bdf8;"></i>
+                        <i class="bi bi-box-seam fs-3" style="color:var(--jv-info);"></i>
                         <div>
                             <div class="small text-secondary fw-bold text-uppercase">Productos en Inventario</div>
                             <div class="fw-bold fs-5"><?php echo $productos_activos; ?> activos</div>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-3">
-                        <i class="bi bi-calendar-week fs-3" style="color:#4ade80;"></i>
+                        <i class="bi bi-calendar-week fs-3" style="color:var(--jv-success);"></i>
                         <div class="text-end">
                             <div class="small text-secondary fw-bold text-uppercase">Periodo Analizado</div>
                             <div class="fw-bold">Últimos 7 / 30 días</div>
@@ -357,25 +189,25 @@ foreach ($res_top as $row) {
         <div class="row g-3 mt-4">
             <div class="col-12">
                 <div class="card-jv p-4">
-                    <h5 class="fw-bold text-uppercase mb-3" style="font-size:.8rem;letter-spacing:1px;color:rgba(255,255,255,0.6);">
-                        <i class="bi bi-bar-chart-fill me-2" style="color:#4ade80;"></i>ANÁLISIS DE GANANCIAS (7D)
+                    <h5 class="fw-bold text-uppercase mb-3" style="font-size:.8rem;letter-spacing:1px;color:var(--jv-text-primary);">
+                        <i class="bi bi-bar-chart-fill me-2" style="color:var(--jv-success);"></i>ANÁLISIS DE GANANCIAS (7D)
                     </h5>
                     <div class="profit-grid">
                         <div class="profit-summary">
-                            <div class="profit-row" style="--profit-color:#f87171;">
+                            <div class="profit-row" style="--profit-color:var(--jv-danger);">
                                 <span class="label">Ingresos</span>
                                 <span class="value rojo" id="prof-ingresos">$<?php echo number_format($ventas_7d, 2); ?></span>
                             </div>
-                            <div class="profit-row" style="--profit-color:#38bdf8;">
+                            <div class="profit-row" style="--profit-color:var(--jv-info);">
                                 <span class="label">Costo Vendido</span>
                                 <span class="value cyan" id="prof-costo">$<?php echo number_format($costo_vendido_7d, 2); ?></span>
                             </div>
                             <div class="profit-separator"></div>
-                            <div class="profit-row" style="--profit-color:#4ade80;">
+                            <div class="profit-row" style="--profit-color:var(--jv-success);">
                                 <span class="label">Ganancia</span>
                                 <span class="value verde" id="prof-ganancia">$<?php echo number_format($margen_7d, 2); ?></span>
                             </div>
-                            <div class="profit-row" style="--profit-color:#4ade80;">
+                            <div class="profit-row" style="--profit-color:var(--jv-success);">
                                 <span class="label">Margen</span>
                                 <span class="margen-badge <?php echo $porc_margen < 10 ? 'malo' : ($porc_margen < 20 ? 'bajo' : ''); ?>" id="prof-margen">
                                     <i class="bi bi-percent"></i> <?php echo $porc_margen; ?>%
@@ -383,7 +215,7 @@ foreach ($res_top as $row) {
                             </div>
                         </div>
                         <div>
-                            <div class="small fw-bold text-uppercase mb-2" style="color:rgba(148,163,184,0.5);letter-spacing:1px;font-size:.65rem;">Top 5 Productos por Ganancia</div>
+                            <div class="small fw-bold text-uppercase mb-2" style="color:var(--jv-text-muted);letter-spacing:1px;font-size:.65rem;">Top 5 Productos por Ganancia</div>
                             <table class="profit-table">
                                 <thead>
                                     <tr>
@@ -401,7 +233,7 @@ foreach ($res_top as $row) {
                                     <tr>
                                         <td><?php echo htmlspecialchars($tp['nombre_producto']); ?></td>
                                         <td class="text-center"><?php echo $tp['unidades']; ?></td>
-                                        <td class="text-end fw-bold" style="color:#4ade80;">$<?php echo number_format($tp['ganancia'], 2); ?></td>
+                                        <td class="text-end fw-bold" style="color:var(--jv-success);">$<?php echo number_format($tp['ganancia'], 2); ?></td>
                                         <td class="text-end">
                                             <span class="profit-table-pct">
                                                 <span class="pct-bar" style="--pct:<?php echo $pct_prod; ?>%"></span>
@@ -430,120 +262,9 @@ foreach ($res_top as $row) {
     <!-- JAVASCRIPT -->
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script>
-    Chart.defaults.color = '#94a3b8';
-    Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
-
-    const fechas = <?php echo json_encode($fechas); ?>;
-    const ventas = <?php echo json_encode($ventas_data); ?>;
-    const compras = <?php echo json_encode($compras_data); ?>;
-
-    new Chart(document.getElementById('chartFlujo'), {
-        type: 'line',
-        data: {
-            labels: fechas,
-            datasets: [
-                { label: 'Ventas ($)', data: ventas, borderColor: '#f87171', backgroundColor: 'rgba(248,113,113,0.1)', fill: true, tension: 0.4 },
-                { label: 'Compras ($)', data: compras, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', fill: true, tension: 0.4 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
-            scales: {
-                y: { beginAtZero: true, grid: { display: true } },
-                x: { grid: { display: false } }
-            }
-        }
-    });
-    new Chart(document.getElementById('chartTop'), {
-        type: 'doughnut',
-        data: {
-            labels: <?php echo json_encode($top_prod_nombres); ?>,
-            datasets: [{
-                data: <?php echo json_encode($top_prod_cant); ?>,
-                backgroundColor: <?php echo json_encode($top_prod_colores); ?>,
-                borderWidth: 0, hoverOffset: 12
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        color: '#e2e8f0',
-                        usePointStyle: true,
-                        padding: 14,
-                        font: { size: 13, weight: 'bold' },
-                        boxWidth: 16,
-                        boxHeight: 16
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(ctx) {
-                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            if (total === 0) return ctx.label + ': 0';
-                            const pct = ((ctx.parsed / total) * 100).toFixed(1);
-                            return ctx.label + ': ' + ctx.parsed + ' uds (' + pct + '%)';
-                        }
-                    }
-                }
-            },
-            cutout: '62%'
-        }
-    });
-
-    // Auto-refresh cada 30s
-    function refreshKPIs() {
-        fetch('../includes/estadisticas_ajax.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.json())
-            .then(d => {
-                try {
-                    if (d.success) {
-                        document.getElementById('kpi-ventas').textContent = '$' + d.ventas_7d;
-                        document.getElementById('kpi-compras').textContent = '$' + d.compras_7d;
-                        document.getElementById('kpi-margen').textContent = '$' + d.margen_7d;
-                        document.getElementById('kpi-tx').textContent = d.transacciones_7d;
-                        document.getElementById('prof-ingresos').textContent = '$' + d.ventas_7d;
-                        document.getElementById('prof-costo').textContent = '$' + d.costo_vendido_7d;
-                        document.getElementById('prof-ganancia').textContent = '$' + d.margen_7d;
-                        const pm = document.getElementById('prof-margen');
-                        const porc = d.porc_margen;
-                        pm.innerHTML = '<i class="bi bi-percent"></i> ' + porc + '%';
-                        pm.className = 'margen-badge';
-                        if (porc < 10) pm.classList.add('malo');
-                        else if (porc < 20) pm.classList.add('bajo');
-                        let htmlTop = '';
-                        if (d.top_ganancia && d.top_ganancia.length > 0) {
-                            d.top_ganancia.forEach(tp => {
-                                htmlTop += `<tr><td>${tp.producto}</td><td class="text-center">${tp.unidades}</td><td class="text-end fw-bold" style="color:#4ade80;">$${tp.ganancia}</td><td class="text-end"><span class="profit-table-pct"><span class="pct-bar" style="--pct:${tp.pct}%"></span>${tp.pct}%</span></td></tr>`;
-                            });
-                        } else {
-                            htmlTop = '<tr><td colspan="4" class="text-center text-secondary small py-3">Sin datos en los últimos 7 días</td></tr>';
-                        }
-                        document.getElementById('tabla-top-ganancia').innerHTML = htmlTop;
-                    }
-                } catch(e) { console.error('Stats refresh error:', e); }
-            })
-            .catch(() => {});
-    }
-
-    setInterval(refreshKPIs, 60000);
-    </script>
-    <script>
-    const mainWrapper = document.getElementById('mainWrapper');
-    const observer = new MutationObserver(() => {
-        if (document.body.classList.contains('sidebar-open')) {
-            mainWrapper.classList.add('sidebar-open');
-        } else {
-            mainWrapper.classList.remove('sidebar-open');
-        }
-    });
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    </script>
+    window.JV_CONFIG = { c0: <?php echo json_encode($fechas); ?>, c1: <?php echo json_encode($ventas_data); ?>, c2: <?php echo json_encode($compras_data); ?>, c3: <?php echo json_encode($top_prod_nombres); ?>, c4: <?php echo json_encode($top_prod_cant); ?>, c5: <?php echo json_encode($top_prod_colores); ?> };
+</script>
+    <script src="../assets/modules/estadisticas/estadisticas.js"></script>
+    
 </body>
 </html>

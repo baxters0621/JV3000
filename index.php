@@ -17,16 +17,13 @@ $esOpCarga = ($rol_user_id === 2);
 $fecha_hoy = date('d/m/Y');
 
 // ==========================================
-// ENDPOINT AJAX DEL DASHBOARD
+// CONSULTAS UNIFICADAS DEL DASHBOARD
 // ==========================================
-if (isset($_GET['ajax_dashboard'])) {
-    header('Content-Type: application/json');
-    if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
-        echo json_encode(['success' => false, 'error' => 'acceso_denegado']); exit;
-    }
+function obtenerDatosDashboard($db): array
+{
     $datos = [];
 
-    $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'");
+    $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' AND s.fecha_salida >= CURRENT_DATE");
     $datos['ventas_dia'] = number_format($vd['total'], 2);
 
     $vi = $db->fetchOne("SELECT COALESCE(SUM(stock_actual * precio_costo), 0) as valor FROM productos WHERE status = 'Activo'");
@@ -39,17 +36,16 @@ if (isset($_GET['ajax_dashboard'])) {
     $datos['grafico_ventas'] = array_map(fn($r) => ['fecha' => $r['fecha'], 'total' => (float)$r['total']], $g1);
 
     $g2 = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, SUM(ds.cantidad) as cantidad FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY cantidad DESC LIMIT 5");
-    $paleta_idx = ['#38bdf8', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'];
+    $paleta_idx = ['#EA580C', '#16A34A', '#2563EB', '#DC2626', '#7C3AED', '#D97706', '#F59E0B', '#0D9488', '#0F1A2E', '#DB2777'];
     $datos['grafico_productos'] = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'cantidad' => (int)$r['cantidad'], 'color' => $paleta_idx[$r['id_producto'] % count($paleta_idx)]], $g2);
 
-    $fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
+    $fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.id_salida, s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
     $datos['ultimas_facturas'] = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => number_format($r['total'], 2)], $fac);
 
-    // Productos próximos a vencer (≤15 días) y expirados
     $venc_now = $db->fetchAll("SELECT id_producto, nombre_producto, fecha_vencimiento, stock_actual FROM productos WHERE fecha_vencimiento <= CURRENT_DATE() AND status = 'Activo' ORDER BY fecha_vencimiento ASC LIMIT 8");
     $venc_pending = $db->fetchAll("SELECT id_producto, nombre_producto, fecha_vencimiento, stock_actual FROM productos WHERE fecha_vencimiento <= DATE_ADD(CURRENT_DATE(), INTERVAL 7 DAY) AND fecha_vencimiento > CURRENT_DATE() AND status = 'Activo' ORDER BY fecha_vencimiento ASC LIMIT 5");
 
-    $productos_vencer = array_map(fn($r) => [
+    $datos['productos_vencer'] = array_map(fn($r) => [
         'id' => $r['id_producto'],
         'nombre' => $r['nombre_producto'],
         'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
@@ -57,7 +53,7 @@ if (isset($_GET['ajax_dashboard'])) {
         'stock' => (int)$r['stock_actual']
     ], $venc_now);
 
-    $productos_pronto = array_map(fn($r) => [
+    $datos['productos_pronto'] = array_map(fn($r) => [
         'id' => $r['id_producto'],
         'nombre' => $r['nombre_producto'],
         'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
@@ -65,46 +61,42 @@ if (isset($_GET['ajax_dashboard'])) {
         'stock' => (int)$r['stock_actual']
     ], $venc_pending);
 
-    $datos['productos_vencer'] = $productos_vencer;
-    $datos['productos_pronto'] = $productos_pronto;
+    $datos['tabla_vencer'] = array_slice(array_merge($datos['productos_vencer'], $datos['productos_pronto']), 0, 5);
 
-    echo json_encode(['success' => true] + $datos);
+    $crit = $db->fetchAll("SELECT nombre_producto, stock_actual, stock_minimo FROM productos WHERE (stock_actual <= stock_minimo OR stock_actual = 0) AND status = 'Activo' ORDER BY stock_actual ASC LIMIT 5");
+    $datos['tabla_criticos'] = array_map(fn($r) => [
+        'producto' => $r['nombre_producto'],
+        'stock' => (int)$r['stock_actual'],
+        'estado' => $r['stock_actual'] <= 0 ? 'critico' : 'bajo'
+    ], $crit);
+
+    return $datos;
+}
+
+// ==========================================
+// ENDPOINT AJAX DEL DASHBOARD
+// ==========================================
+if (isset($_GET['ajax_dashboard'])) {
+    header('Content-Type: application/json');
+    if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+        echo json_encode(['success' => false, 'error' => 'acceso_denegado']); exit;
+    }
+    echo json_encode(['success' => true] + obtenerDatosDashboard($db));
     exit();
 }
 
 // ==========================================
 // CONSULTAS INICIALES DEL DASHBOARD
 // ==========================================
-$vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'");
-$ventas_dia = $vd['total'];
-
-$vi = $db->fetchOne("SELECT COALESCE(SUM(stock_actual * precio_costo), 0) as valor FROM productos WHERE status = 'Activo'");
-$valor_inventario = $vi['valor'];
-
-$pc = $db->fetchOne("SELECT COUNT(*) as total FROM productos WHERE stock_actual <= stock_minimo AND status = 'Activo'");
-$productos_criticos = (int)$pc['total'];
-
-$gv = $db->fetchAll("SELECT DATE(s.fecha_salida) as fecha, SUM(ds.cantidad * ds.precio_venta) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 6 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY DATE(s.fecha_salida) ORDER BY fecha");
-$grafico_ventas = array_map(fn($r) => ['fecha' => $r['fecha'], 'total' => (float)$r['total']], $gv);
-
-$gp = $db->fetchAll("SELECT p.id_producto, p.nombre_producto, SUM(ds.cantidad) as cantidad FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY cantidad DESC LIMIT 5");
-$paleta_idx = ['#38bdf8', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb7185'];
-$grafico_productos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'cantidad' => (int)$r['cantidad'], 'color' => $paleta_idx[$r['id_producto'] % count($paleta_idx)]], $gp);
-
-$fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
-$ultimas_facturas = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => number_format($r['total'], 2)], $fac);
-
-$crit = $db->fetchAll("SELECT nombre_producto, stock_actual, stock_minimo FROM productos WHERE (stock_actual <= stock_minimo OR stock_actual = 0) AND status = 'Activo' ORDER BY stock_actual ASC LIMIT 5");
-$tabla_criticos = array_map(fn($r) => ['producto' => $r['nombre_producto'], 'stock' => $r['stock_actual'], 'minimo' => $r['stock_minimo'], 'estado' => ($r['stock_actual'] == 0) ? 'critico' : 'bajo'], $crit);
-
-// Productos próximos a vencer
-$vc = $db->fetchAll("SELECT id_producto, nombre_producto, fecha_vencimiento, stock_actual FROM productos WHERE fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 15 DAY) AND status = 'Activo' ORDER BY fecha_vencimiento ASC LIMIT 5");
-$tabla_vencer = array_map(fn($r) => [
-    'id' => $r['id_producto'], 'nombre' => $r['nombre_producto'],
-    'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
-    'dias' => floor((strtotime($r['fecha_vencimiento']) - time()) / 86400),
-    'stock' => (int)$r['stock_actual']
-], $vc);
+$datos = obtenerDatosDashboard($db);
+$ventas_dia = $datos['ventas_dia'];
+$valor_inventario = $datos['valor_inventario'];
+$productos_criticos = $datos['productos_criticos'];
+$grafico_ventas = $datos['grafico_ventas'];
+$grafico_productos = $datos['grafico_productos'];
+$ultimas_facturas = $datos['ultimas_facturas'];
+$tabla_criticos = $datos['tabla_criticos'];
+$tabla_vencer = $datos['tabla_vencer'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -121,630 +113,7 @@ $tabla_vencer = array_map(fn($r) => [
     <?php include 'includes/diseno.php'; ?>
     <script src="assets/js/chart.umd.min.js"></script>
 
-    <style>
-        /* Widgets mejorados - Minimalista pero informativo */
-        .widget-card {
-            background: rgba(8, 12, 28, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(56, 189, 248, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .widget-card:hover {
-            border-color: rgba(56, 189, 248, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .widget-label {
-            font-size: 0.65rem;
-            letter-spacing: 1.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .widget-value {
-            font-size: 1.5rem;
-            font-weight: 800;
-        }
-
-        .widget-sub {
-            font-size: 0.75rem;
-            opacity: 0.7;
-        }
-
-        /* Grid de Módulos */
-        .card-modulo {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.8));
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 30px 20px;
-            text-decoration: none !important;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .card-modulo::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, var(--hover-color) 0%, transparent 70%);
-            opacity: 0;
-            transition: 0.4s;
-            z-index: 0;
-        }
-
-        .card-modulo:hover::before {
-            opacity: 0.1;
-        }
-
-        .card-modulo:hover {
-            transform: translateY(-8px);
-            border-color: var(--hover-color);
-            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px -5px var(--hover-color);
-        }
-
-        .card-modulo i,
-        .card-modulo span {
-            position: relative;
-            z-index: 1;
-        }
-
-        .card-modulo i {
-            font-size: 2.5rem;
-            margin-bottom: 12px;
-            transition: 0.3s;
-        }
-
-        .card-modulo:hover i {
-            transform: scale(1.1);
-            filter: drop-shadow(0 0 8px var(--hover-color));
-        }
-
-        .card-modulo span {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.75rem;
-            letter-spacing: 1.5px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .main-wrapper .container-fluid {
-            max-width: 100%;
-            padding-left: 30px;
-            padding-right: 30px;
-        }
-
-        /* Badges */
-        .role-badge {
-            background: rgba(56, 189, 248, 0.1);
-            color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 6px 16px;
-            border-radius: 50px;
-            font-size: 0.65rem;
-            letter-spacing: 1px;
-            font-weight: 800;
-        }
-
-        .pulse-alert {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-            animation: pulse-red 2s infinite;
-        }
-
-        @keyframes pulse-red {
-            0% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-            }
-
-            70% {
-                transform: scale(1);
-                box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-            }
-
-            100% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-            }
-        }
-
-        /* Íconos de los widgets */
-        .widget-icon {
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-        }
-
-        /* ===== NUEVO DASHBOARD ===== */
-
-        /* Header Panel de Inicio */
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 24px;
-            background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(8, 12, 28, 0.95));
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 24px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .dashboard-title {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .dashboard-logo {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 50%, #22c55e 100%);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.4rem;
-            font-weight: 900;
-            color: #fff;
-            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5);
-        }
-
-        .dashboard-title h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
-            font-weight: 900;
-            margin: 0;
-            background: linear-gradient(90deg, #fff, #38bdf8);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(56, 189, 248, 0.5);
-        }
-
-        .dashboard-title .subtitle {
-            color: rgba(56, 189, 248, 0.9);
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-top: 4px;
-            letter-spacing: 1px;
-        }
-
-        .dashboard-info {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .dashboard-user {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 14px;
-        }
-
-        .dashboard-user-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #a855f7, #6366f1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 1.2rem;
-        }
-
-        .dashboard-user-name {
-            color: #fff;
-            font-weight: 700;
-            font-size: 0.95rem;
-        }
-
-        .dashboard-user-role {
-            color: rgba(168, 85, 247, 0.9);
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .dashboard-date {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(56, 189, 248, 0.1));
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            padding: 14px 24px;
-            border-radius: 14px;
-            color: #38bdf8;
-            font-weight: 700;
-            font-size: 0.95rem;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
-        }
-
-        /* Section Titles */
-        .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.7);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title i {
-            color: #38bdf8;
-        }
-
-        /* KPIs Cards */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin-bottom: 30px;
-        }
-
-        .kpi-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 28px;
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .kpi-card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 6px;
-            height: 100%;
-            background: var(--kpi-color);
-            opacity: 1;
-        }
-
-        .kpi-card::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle at top right, var(--kpi-color), transparent);
-            opacity: 0.15;
-            pointer-events: none;
-        }
-
-        .kpi-card:hover {
-            transform: translateY(-6px) scale(1.02);
-            box-shadow: 0 20px 50px -15px var(--kpi-color), 0 0 0 1px var(--kpi-color);
-            border-color: var(--kpi-color);
-        }
-
-        .kpi-card .kpi-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            margin-bottom: 18px;
-            background: linear-gradient(135deg, rgba(var(--kpi-rgb), 0.25), rgba(var(--kpi-rgb), 0.1));
-            color: var(--kpi-color);
-            box-shadow: 0 6px 20px rgba(var(--kpi-rgb), 0.3);
-        }
-
-        .kpi-card .kpi-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: rgba(255, 255, 255, 0.6);
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .kpi-card .kpi-value {
-            font-size: 2rem;
-            font-weight: 900;
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .kpi-card.kpi-verde {
-            --kpi-color: #22c55e;
-            --kpi-rgb: 34, 197, 94;
-        }
-
-        .kpi-card.kpi-cyan {
-            --kpi-color: #38bdf8;
-            --kpi-rgb: 56, 189, 248;
-        }
-
-        .kpi-card.kpi-amarillo {
-            --kpi-color: #f59e0b;
-            --kpi-rgb: 245, 158, 11;
-        }
-
-        .kpi-card.kpi-rojo {
-            --kpi-color: #ef4444;
-            --kpi-rgb: 239, 68, 68;
-        }
-
-        /* Accesos Rápidos */
-        .shortcuts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .shortcut-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 28px 20px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 800;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-            color: #ffffff;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-        }
-
-        .shortcut-btn::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        .shortcut-btn:hover {
-            transform: translateY(-4px) scale(1.02);
-            color: #ffffff;
-        }
-
-        .shortcut-btn i {
-            font-size: 2.5rem;
-            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
-            color: #ffffff;
-        }
-
-        .shortcut-btn span {
-            font-size: 0.9rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: #ffffff;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-        }
-
-        .shortcut-facturar {
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-            box-shadow: 0 12px 40px rgba(34, 197, 94, 0.5), 0 0 0 1px rgba(34, 197, 94, 0.3);
-        }
-
-        .shortcut-facturar:hover {
-            box-shadow: 0 20px 50px rgba(34, 197, 94, 0.6), 0 0 0 2px rgba(34, 197, 94, 0.5);
-        }
-
-        .shortcut-entrada {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.3);
-        }
-
-        .shortcut-entrada:hover {
-            box-shadow: 0 20px 50px rgba(59, 130, 246, 0.6), 0 0 0 2px rgba(59, 130, 246, 0.5);
-        }
-
-        /* Gráficos */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 30px;
-        }
-
-        .chart-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 28px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .chart-card h5 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .chart-container {
-            height: 240px;
-            position: relative;
-        }
-
-        /* Tablas */
-        .tables-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        .table-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 28px;
-            max-height: 380px;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .table-card h5 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .data-table th {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 700;
-            padding: 12px 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: left;
-        }
-
-        .data-table td {
-            padding: 14px 8px;
-            font-size: 0.9rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.8);
-            vertical-align: middle;
-        }
-
-        .data-table tbody tr {
-            transition: background 0.2s;
-        }
-
-        .data-table tbody tr:nth-child(odd) td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .data-table tbody tr:nth-child(even) td {
-            background: rgba(255, 255, 255, 0.06);
-        }
-
-        .table-card:first-child .data-table tbody tr td:first-child {
-            border-left: 3px solid rgba(6, 182, 212, 0.3);
-            padding-left: 12px;
-        }
-
-        .table-card:last-child .data-table tbody tr td:first-child {
-            border-left: 3px solid rgba(239, 68, 68, 0.3);
-            padding-left: 12px;
-        }
-
-        .data-table td:nth-child(2),
-        .data-table td:nth-child(3) {
-            text-align: center;
-        }
-
-        .data-table th:nth-child(2),
-        .data-table th:nth-child(3) {
-            text-align: center;
-        }
-
-        .table-card:first-child .data-table td:last-child {
-            text-align: right;
-        }
-
-        .table-card:first-child .data-table th:last-child {
-            text-align: right;
-        }
-
-        .data-table tr:hover td {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .stock-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        .stock-badge.critico {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .stock-badge.bajo {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .kpi-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .tables-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-header {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-            }
-
-            .shortcuts-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+        <link rel="stylesheet" href="assets/dashboard/index.css">
 </head>
 
 <?php
@@ -762,13 +131,15 @@ $tabla_vencer = array_map(fn($r) => [
             <!-- Header Panel de Inicio -->
             <div class="dashboard-header">
                 <div class="dashboard-title">
-                    <div class="dashboard-logo">JV</div>
+                    <div class="dashboard-logo">JV<span style="color:var(--jv-orange);font-weight:300;">3000</span></div>
                     <div>
-                        <h1>3000</h1>
                         <div class="subtitle">Centro de Control | <?php echo htmlspecialchars($nombre_user); ?></div>
                     </div>
                 </div>
                 <div class="dashboard-info">
+                    <button class="btn-refresh" onclick="actualizarDashboard(); this.classList.add('refreshing'); setTimeout(()=>this.classList.remove('refreshing'), 600);" title="Actualizar datos">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
                     <div class="dashboard-user">
                         <div class="dashboard-user-avatar"><i class="bi bi-person-fill"></i></div>
                         <div>
@@ -790,12 +161,12 @@ $tabla_vencer = array_map(fn($r) => [
                 <div class="kpi-card kpi-verde">
                     <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
                     <div class="kpi-label">Ventas Totales</div>
-                    <div class="kpi-value" id="kpi-ventas-dia">$<?php echo number_format($ventas_dia, 2); ?></div>
+                    <div class="kpi-value" id="kpi-ventas-dia">$<?php echo $ventas_dia; ?></div>
                 </div>
                 <div class="kpi-card kpi-amarillo">
                     <div class="kpi-icon"><i class="bi bi-box-seam"></i></div>
                     <div class="kpi-label">Valor Inventario</div>
-                    <div class="kpi-value" id="kpi-valor-inv">$<?php echo number_format($valor_inventario, 2); ?></div>
+                    <div class="kpi-value" id="kpi-valor-inv">$<?php echo $valor_inventario; ?></div>
                 </div>
                 <div class="kpi-card kpi-rojo">
                     <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
@@ -829,13 +200,13 @@ $tabla_vencer = array_map(fn($r) => [
             </div>
             <div class="charts-grid">
                 <div class="chart-card">
-                    <h5 class="text-white mb-3 fw-bold">Ventas - Últimos 7 Días</h5>
+                    <h5 style="color:var(--jv-text-primary);font-size:0.95rem;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--jv-border);">Ventas - Últimos 7 Días</h5>
                     <div class="chart-container">
                         <canvas id="chartVentas"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
-                    <h5 class="text-white mb-3 fw-bold">Productos Más Vendidos</h5>
+                    <h5 style="color:var(--jv-text-primary);font-size:0.95rem;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--jv-border);">Productos Más Vendidos</h5>
                     <div class="chart-container">
                         <canvas id="chartProductos"></canvas>
                     </div>
@@ -848,7 +219,7 @@ $tabla_vencer = array_map(fn($r) => [
             </div>
             <div class="tables-grid">
                 <div class="table-card">
-                    <h5 class="text-white mb-3 fw-bold">Últimas 5 Notas de Entrega</h5>
+                    <h5 style="color:var(--jv-text-primary);font-size:0.95rem;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--jv-border);">Últimas 5 Notas de Entrega</h5>
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -861,15 +232,15 @@ $tabla_vencer = array_map(fn($r) => [
                             <?php foreach ($ultimas_facturas as $f): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($f['cliente']); ?></td>
-                                    <td style="color:#e2e8f0;font-weight:600;"><?php echo $f['fecha']; ?></td>
-                                    <td class="text-success fw-bold" style="text-align:right;">$<?php echo $f['total']; ?></td>
+                                    <td style="font-weight:600;"><?php echo $f['fecha']; ?></td>
+                                    <td class="text-jv-success fw-bold" style="text-align:right;">$<?php echo $f['total']; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
                 <div class="table-card">
-                    <h5 class="text-white mb-3 fw-bold">Productos Críticos</h5>
+                    <h5 class="mb-3 fw-bold" style="color:var(--jv-text-primary);">Productos Críticos</h5>
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -895,7 +266,7 @@ $tabla_vencer = array_map(fn($r) => [
                 </div>
             </div>
             <div class="table-card">
-                <h5 class="text-white mb-3 fw-bold">Próximos a Vencer (15 días)</h5>
+                <h5 class="mb-3 fw-bold" style="color:var(--jv-text-primary);">Próximos a Vencer (15 días)</h5>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -909,7 +280,7 @@ $tabla_vencer = array_map(fn($r) => [
                             <?php foreach ($tabla_vencer as $v): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($v['nombre']); ?></td>
-                                    <td style="<?php echo $v['dias'] < 0 ? 'color:#ef4444;font-weight:700;' : ($v['dias'] <= 7 ? 'color:#fb923c;font-weight:700;' : 'color:#fbbf24;'); ?>">
+                                    <td style="<?php echo $v['dias'] < 0 ? 'color:#DC2626;font-weight:700;' : ($v['dias'] <= 7 ? 'color:#EA580C;font-weight:700;' : 'color:#D97706;'); ?>">
                                         <?php echo $v['fecha']; ?> (<?php echo $v['dias'] < 0 ? 'VENCIDO' : $v['dias'] . 'd'; ?>)
                                     </td>
                                     <td style="text-align:center;"><?php echo $v['stock']; ?></td>
@@ -930,189 +301,9 @@ $tabla_vencer = array_map(fn($r) => [
     ?>
     <script src="assets/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Gráficos Chart.js
-        const chartVentasCtx = document.getElementById('chartVentas').getContext('2d');
-        const chartProductosCtx = document.getElementById('chartProductos').getContext('2d');
-
-        // Datos iniciales para gráficos
-        const datosVentas = <?php echo json_encode($grafico_ventas); ?>;
-        const datosProductos = <?php echo json_encode($grafico_productos); ?>;
-
-        let chartVentas = null;
-        let chartProductos = null;
-
-        function renderCharts(vData, pData) {
-            if (chartVentas) chartVentas.destroy();
-            if (chartProductos) chartProductos.destroy();
-
-            chartVentas = new Chart(chartVentasCtx, {
-                type: 'line',
-                data: {
-                    labels: vData.map(d => d.fecha.slice(5)),
-                    datasets: [{
-                        label: 'Ventas $',
-                        data: vData.map(d => d.total),
-                        borderColor: '#22c55e',
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(255,255,255,0.05)'
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255,255,255,0.05)'
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            }
-                        }
-                    }
-                }
-            });
-
-            chartProductos = new Chart(chartProductosCtx, {
-                type: 'bar',
-                data: {
-                    labels: pData.map(d => d.producto.substring(0, 15)),
-                    datasets: [{
-                        label: 'Cantidad',
-                        data: pData.map(d => d.cantidad),
-                        backgroundColor: pData.map(d => d.color),
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255,255,255,0.05)'
-                            },
-                            ticks: {
-                                color: '#94a3b8'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        renderCharts(datosVentas, datosProductos);
-
-        // Actualización en tiempo real del dashboard
-        function actualizarDashboard() {
-            fetch('index.php?ajax_dashboard=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(response => response.json())
-                .then(data => {
-                    try {
-                        if (data.success) {
-                            document.getElementById('kpi-ventas-dia').textContent = '$' + data.ventas_dia;
-                            document.getElementById('kpi-valor-inv').textContent = '$' + data.valor_inventario;
-                            document.getElementById('kpi-criticos').textContent = data.productos_criticos;
-
-                            let htmlFacturas = '';
-                            data.ultimas_facturas.forEach(f => {
-                                htmlFacturas += `<tr><td>${f.cliente}</td><td>${f.fecha}</td><td style="text-align:right;color:#4ade80;font-weight:700;">$${f.total}</td></tr>`;
-                            });
-                            document.getElementById('tabla-facturas').innerHTML = htmlFacturas;
-
-                            let htmlCriticos = '';
-                            data.tabla_criticos.forEach(c => {
-                                let badge = c.estado === 'critico' ? 'Crítico' : 'Bajo';
-                                htmlCriticos += `<tr><td>${c.producto}</td><td>${c.stock}</td><td><span class="stock-badge ${c.estado}">${badge}</span></td></tr>`;
-                            });
-                            document.getElementById('tabla-criticos').innerHTML = htmlCriticos;
-
-                                            if (data.tabla_criticos) {
-                                let htmlC = '';
-                                data.tabla_criticos.forEach(c => {
-                                    let badge = c.estado === 'critico' ? 'Crítico' : 'Bajo';
-                                    htmlC += `<tr><td>${c.producto}</td><td>${c.stock}</td><td><span class="stock-badge ${c.estado}">${badge}</span></td></tr>`;
-                                });
-                                document.getElementById('tabla-criticos').innerHTML = htmlC;
-                            }
-
-                            if (data.productos_vencer || data.productos_pronto) {
-                                let htmlV = '';
-                                const todos = [...(data.productos_vencer||[]), ...(data.productos_pronto||[])];
-                                todos.slice(0, 5).forEach(v => {
-                                    const estilo = v.dias < 0 ? 'color:#ef4444;font-weight:700;' : (v.dias <= 7 ? 'color:#fb923c;font-weight:700;' : 'color:#fbbf24;');
-                                    const label = v.dias < 0 ? 'VENCIDO' : v.dias + 'd';
-                                    htmlV += `<tr><td>${v.nombre}</td><td style="${estilo}">${v.fecha} (${label})</td><td style="text-align:center;">${v.stock}</td></tr>`;
-                                });
-                                document.getElementById('tabla-vencer').innerHTML = htmlV || '<tr><td colspan="3" style="text-align:center;color:#64748b;padding:20px;">Sin productos próximos a vencer</td></tr>';
-                            }
-
-                            if (data.grafico_ventas) renderCharts(data.grafico_ventas, data.grafico_productos);
-                        }
-                    } catch (e) {
-                        console.error('Panel de Inicio refresh error:', e);
-                    }
-                })
-                .catch(error => console.warn('Panel de Inicio sync error:', error));
-        }
-
-        // Auto-actualización inteligente
-        var intervaloDash = null;
-
-        function iniciarDashboard() {
-            if (intervaloDash) return;
-            actualizarDashboard();
-            intervaloDash = setInterval(actualizarDashboard, 45000);
-        }
-
-        function detenerDashboard() {
-            if (intervaloDash) {
-                clearInterval(intervaloDash);
-                intervaloDash = null;
-            }
-        }
-
-        // Solo actualiza si la pestaña está visible
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                detenerDashboard();
-            } else {
-                iniciarDashboard();
-            }
-        });
-
-        // Detener al salir de la página
-        window.addEventListener('beforeunload', detenerDashboard);
-
-        iniciarDashboard();
-    </script>
+    window.JV_CONFIG = { c0: <?php echo json_encode($grafico_ventas); ?>, c1: <?php echo json_encode($grafico_productos); ?> };
+</script>
+    <script src="assets/dashboard/index.js"></script>
 </body>
 
 </html>

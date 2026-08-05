@@ -101,8 +101,16 @@ class Security
             exit;
         }
         $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'Error de seguridad: token CSRF inválido.'];
-        $referer = $_SERVER['HTTP_REFERER'] ?? 'index.php';
-        header("Location: $referer");
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        $refHost = $referer ? strtolower((string)parse_url($referer, PHP_URL_HOST)) : '';
+        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+        $appHost = strtolower((string)parse_url($scheme . ($_SERVER['HTTP_HOST'] ?? ''), PHP_URL_HOST));
+        if ($refHost !== '' && $refHost === $appHost) {
+            header("Location: $referer");
+            exit;
+        }
+        $isModule = basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules';
+        header("Location: " . ($isModule ? '../' : '') . "index.php");
         exit;
     }
 
@@ -168,48 +176,6 @@ class Security
             'usuario' => $_SESSION['usuario'] ?? 'Invitado',
             'id_rol' => $_SESSION['id_rol'] ?? 0,
         ];
-    }
-
-    // Verificar intentos de login
-    public static function checkLoginAttempts(string $ip): bool
-    {
-        $db = Database::getInstance();
-        $row = $db->fetchOne(
-            "SELECT intentos, ultimo_intento FROM login_intentos WHERE ip_address = ?",
-            [$ip]
-        );
-        if (!$row) {
-            return true;
-        }
-        if ((int)$row['intentos'] >= 3) {
-            $ultimo = strtotime($row['ultimo_intento']);
-            if (time() - $ultimo < 45) {
-                return false;
-            }
-            $db->execute("DELETE FROM login_intentos WHERE ip_address = ?", [$ip]);
-        }
-        return true;
-    }
-
-    // Registrar intento de login fallido
-    public static function registerLoginAttempt(string $ip, string $username): void
-    {
-        $db = Database::getInstance();
-        $row = $db->fetchOne(
-            "SELECT id, intentos FROM login_intentos WHERE ip_address = ?",
-            [$ip]
-        );
-        if ($row) {
-            $db->execute(
-                "UPDATE login_intentos SET intentos = intentos + 1, ultimo_intento = NOW() WHERE id = ?",
-                [(int)$row['id']]
-            );
-        } else {
-            $db->insert('login_intentos', [
-                'ip_address' => $ip,
-                'intentos' => 1,
-            ]);
-        }
     }
 
     // Redirigir al login

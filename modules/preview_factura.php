@@ -13,7 +13,7 @@ $iva_pct = getConfig('iva_porcentaje', '16');
 // ==========================================
 // MODO ALMACENAR (AJAX)
 // ==========================================
-if (isset($_GET['store'])) {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['store'])) {
     header('Content-Type: application/json');
 
     $productos_data = $_POST['productos_data'] ?? '';
@@ -89,19 +89,43 @@ if (isset($_GET['store'])) {
         }
     }
 
-    // Check for expired and stock availability
+    // Check for expired and stock availability (según grupo y lotes FEFO)
     foreach ($productos as $p) {
         $pid = intval($p['id_producto'] ?? 0);
         $cant = intval($p['cantidad'] ?? 0);
+        if ($cant > 999999) {
+            echo json_encode(['ok' => false, 'error' => 'CANTIDAD MÁXIMA PERMITIDA POR PRODUCTO: 999,999.']);
+            exit();
+        }
         if ($pid) {
             $pc = $db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$pid]);
-            if ($pc && $pc['fecha_vencimiento'] && $pc['fecha_vencimiento'] <= date('Y-m-d')) {
-                echo json_encode(['ok' => false, 'error' => 'PRODUCTO VENCIDO. NO SE PUEDE VENDER.']);
+            if (!$pc) {
+                echo json_encode(['ok' => false, 'error' => "PRODUCTO #$pid NO EXISTE."]);
                 exit();
             }
-            if ($pc && (int)$pc['stock_actual'] < $cant) {
-                echo json_encode(['ok' => false, 'error' => "STOCK INSUFICIENTE. Disponible: {$pc['stock_actual']}, solicitado: $cant."]);
-                exit();
+            $tiene_lotes = (int)$db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE id_producto = ?", [$pid])['n'];
+            if ($tiene_lotes > 0) {
+                $solo_venc = $grupo === 'merma';
+                $disp = stockLoteDisponible($db, $pid, $solo_venc);
+                if ($disp < $cant) {
+                    $modo = $solo_venc ? 'VENCIDO' : 'VIGENTE';
+                    echo json_encode(['ok' => false, 'error' => "STOCK $modo INSUFICIENTE. Disponible: $disp, solicitado: $cant."]);
+                    exit();
+                }
+            } else {
+                if ($grupo === 'merma') {
+                    if (empty($pc['fecha_vencimiento']) || $pc['fecha_vencimiento'] > date('Y-m-d')) {
+                        echo json_encode(['ok' => false, 'error' => 'EN EL MODO AJUSTE SOLO SE PUEDEN SELECCIONAR PRODUCTOS VENCIDOS.']);
+                        exit();
+                    }
+                } elseif ($pc['fecha_vencimiento'] && $pc['fecha_vencimiento'] <= date('Y-m-d')) {
+                    echo json_encode(['ok' => false, 'error' => 'PRODUCTO VENCIDO. NO SE PUEDE VENDER.']);
+                    exit();
+                }
+                if ((int)$pc['stock_actual'] < $cant) {
+                    echo json_encode(['ok' => false, 'error' => "STOCK INSUFICIENTE. Disponible: {$pc['stock_actual']}, solicitado: $cant."]);
+                    exit();
+                }
             }
         }
     }
@@ -114,7 +138,9 @@ if (isset($_GET['store'])) {
         unset($p);
     }
 
-    $_SESSION['preview_data'] = [
+    purgarPreviewsSesion();
+    $preview_token = bin2hex(random_bytes(16));
+    $_SESSION['preview_data_' . $preview_token] = [
         'productos_data'     => json_encode($productos),
         'cliente'            => $cliente,
         'rif_cliente'        => $rif_cliente ?: 'N/A',
@@ -130,7 +156,7 @@ if (isset($_GET['store'])) {
         'id_salida'          => $id_salida,
     ];
 
-    echo json_encode(['ok' => true]);
+    echo json_encode(['ok' => true, 'token' => $preview_token]);
     exit();
 }
 
@@ -154,13 +180,15 @@ if (isset($_GET['id'])) {
     }
 
     $detalles = $db->fetchAll("
-        SELECT ds.*, p.nombre_producto, p.sku, p.precio_venta as precio_original, p.fecha_vencimiento
+        SELECT ds.*, p.nombre_producto, p.sku, p.precio_venta as precio_original, p.fecha_vencimiento, l.fecha_vencimiento as lote_vencimiento
         FROM detalle_salidas ds
         JOIN productos p ON ds.id_producto = p.id_producto
+        LEFT JOIN lotes l ON ds.id_lote = l.id_lote
         WHERE ds.id_salida = ?
     ", [$id]);
 } else {
-    $data = $_SESSION['preview_data'] ?? null;
+    $preview_token = $_GET['token'] ?? '';
+    $data = $preview_token !== '' ? ($_SESSION['preview_data_' . $preview_token] ?? null) : ($_SESSION['preview_data'] ?? null);
     if (!$data) {
         echo "<h2>NO HAY DATOS DE PREVIEW</h2>";
         exit();
@@ -203,7 +231,7 @@ if (isset($_GET['id'])) {
 // ==========================================
 $alertas_venc = [];
 foreach ($detalles as $det) {
-    $vf = $det['fecha_vencimiento'] ?? null;
+    $vf = $det['lote_vencimiento'] ?? ($det['fecha_vencimiento'] ?? null);
     if ($vf && $vf <= date('Y-m-d')) {
         $alertas_venc[] = ['tipo' => 'vencido', 'producto' => $det['nombre_producto'], 'fecha' => $vf];
     } elseif ($vf && $vf <= date('Y-m-d', strtotime('+7 days'))) {
@@ -234,13 +262,13 @@ $tel_emp  = getConfig('empresa_telefono', '');
 $dir_emp  = getConfig('empresa_direccion', '');
 $email_emp = getConfig('empresa_email', '');
 
-$badge_color = '#dc2626';
+$badge_color = '#DC2626';
 $badge_label = $tipo_mov;
 if ($es_regalias) {
-    $badge_color = '#f59e0b';
+    $badge_color = '#D97706';
     $badge_label = 'REGALÍA';
 }
-if ($es_merma) $badge_color = '#64748b';
+if ($es_merma) $badge_color = '#6C757D';
 
 // Hora actual para el sello fiscal
 $hora_actual = date('H:i:s');
@@ -254,462 +282,7 @@ $hora_actual = date('H:i:s');
     <title>Nota de Entrega #<?php echo $data['id_salida'] ?? 'PREVIEW'; ?> | <?php echo $empresa; ?></title>
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
-    <style>
-        /* === PRINT STYLES === */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #f1f5f9;
-            padding: 30px;
-        }
-
-        .page {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-            padding: 32px 36px;
-        }
-
-        /* ── Encabezado ── */
-        .doc-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #0f172a;
-            padding-bottom: 16px;
-            margin-bottom: 16px;
-        }
-
-        .doc-issuer h2 {
-            font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: #0f172a;
-            margin: 0;
-            letter-spacing: -.5px;
-        }
-
-        .doc-issuer p {
-            margin: 1px 0;
-            font-size: .75rem;
-            color: #475569;
-            line-height: 1.4;
-        }
-
-        .doc-issuer .issuer-name {
-            font-size: .95rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-
-        .doc-type {
-            text-align: right;
-        }
-
-        .doc-type h1 {
-            font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            font-size: 2rem;
-            font-weight: 900;
-            color: #0f172a;
-            margin: 0;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .doc-type .type-sub {
-            font-size: .7rem;
-            color: #64748b;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 2px;
-        }
-
-        /* ── Numeración ── */
-        .num-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 10px 16px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .num-item {
-            font-size: .75rem;
-            color: #475569;
-        }
-
-        .num-item strong {
-            color: #0f172a;
-            font-size: .85rem;
-        }
-
-        /* ── Info boxes ── */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .info-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 10px 14px;
-        }
-
-        .info-box label {
-            font-size: .6rem;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: .5px;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .info-box .value {
-            font-size: .82rem;
-            font-weight: 600;
-            color: #0f172a;
-        }
-
-        /* ── Tabla ── */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 12px 0 16px;
-        }
-
-        table th {
-            background: #0f172a;
-            color: #fff;
-            font-size: .65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 10px 8px;
-            text-align: left;
-            border: none;
-        }
-
-        table th:last-child {
-            text-align: right;
-        }
-
-        table th:nth-child(2) {
-            text-align: center;
-        }
-
-        table th:nth-child(3) {
-            text-align: center;
-        }
-
-        table td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: .82rem;
-            color: #0f172a;
-        }
-
-        table td:last-child {
-            text-align: right;
-            font-weight: 700;
-        }
-
-        table td:nth-child(2) {
-            text-align: center;
-        }
-
-        table td:nth-child(3) {
-            text-align: center;
-        }
-
-        /* ── Totales ── */
-        .totals {
-            margin-left: auto;
-            width: 280px;
-        }
-
-        .totals .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            font-size: .82rem;
-        }
-
-        .totals .row.iva {
-            color: #0891b2;
-        }
-
-        .totals .row.total {
-            border-top: 2px solid #0f172a;
-            margin-top: 5px;
-            padding-top: 8px;
-            font-weight: 800;
-            font-size: 1rem;
-            color: #dc2626;
-        }
-
-        .totals .row .label {
-            font-weight: 600;
-            color: #475569;
-        }
-
-        /* ── Base legal ── */
-        .legal-box {
-            margin-top: 16px;
-            padding: 10px 14px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: .6rem;
-            color: #94a3b8;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        .obs-box {
-            margin: 12px 0;
-            padding: 10px 14px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-        }
-
-        .obs-box label {
-            font-size: .6rem;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: .5px;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .obs-box p {
-            font-size: .8rem;
-            color: #475569;
-            margin: 0;
-        }
-
-        /* ── Firmas ── */
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .signatures .sig {
-            width: 220px;
-            text-align: center;
-        }
-
-        .signatures .sig .line {
-            border-top: 1px solid #94a3b8;
-            padding-top: 6px;
-            margin-top: 36px;
-            font-size: .7rem;
-            color: #64748b;
-        }
-
-        .signatures .sig p {
-            font-size: .75rem;
-            color: #64748b;
-            margin: 0 0 4px;
-            font-weight: 600;
-        }
-
-        /* ── Botones ── */
-        .buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 24px;
-        }
-
-        .buttons form {
-            margin: 0;
-        }
-
-        .btn {
-            padding: 12px 32px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: .85rem;
-            border: none;
-            cursor: pointer;
-            transition: .2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: #dc2626;
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            background: #b91c1c;
-        }
-
-        .btn-primary:disabled {
-            opacity: .5;
-            cursor: not-allowed;
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-        }
-
-        .btn-outline:hover {
-            background: #f1f5f9;
-        }
-
-        /* ── Print ── */
-        @media print {
-            @page {
-                margin: 10mm 8mm;
-            }
-
-            body {
-                background: #fff;
-                padding: 0;
-            }
-
-            .page {
-                box-shadow: none;
-                border-radius: 0;
-                padding: 20px 22px;
-                max-width: 100%;
-            }
-
-            .buttons {
-                display: none !important;
-            }
-
-            .doc-header {
-                padding-bottom: 10px;
-                margin-bottom: 10px;
-            }
-
-            .doc-issuer h2 {
-                font-size: 1.1rem;
-            }
-
-            .doc-issuer p {
-                font-size: .65rem;
-            }
-
-            .doc-issuer .issuer-name {
-                font-size: .8rem;
-            }
-
-            .doc-type h1 {
-                font-size: 1.6rem;
-            }
-
-            .num-row {
-                padding: 6px 10px;
-                margin-bottom: 10px;
-            }
-
-            .num-item {
-                font-size: .65rem;
-            }
-
-            .num-item strong {
-                font-size: .75rem;
-            }
-
-            .info-grid {
-                gap: 6px;
-                margin-bottom: 10px;
-            }
-
-            .info-box {
-                padding: 6px 10px;
-            }
-
-            .info-box label {
-                font-size: .5rem;
-            }
-
-            .info-box .value {
-                font-size: .7rem;
-            }
-
-            table {
-                margin: 8px 0 10px;
-            }
-
-            table th {
-                padding: 6px 6px;
-                font-size: .55rem;
-            }
-
-            table td {
-                padding: 6px 6px;
-                font-size: .7rem;
-            }
-
-            .totals {
-                width: 220px;
-            }
-
-            .totals .row {
-                padding: 3px 0;
-                font-size: .7rem;
-            }
-
-            .totals .row.total {
-                font-size: .85rem;
-                padding-top: 5px;
-            }
-
-            .obs-box {
-                padding: 6px 10px;
-                margin: 8px 0;
-            }
-
-            .obs-box p {
-                font-size: .7rem;
-            }
-
-            .legal-box {
-                font-size: .5rem;
-                padding: 6px 10px;
-            }
-
-            .signatures {
-                margin-top: 12px;
-                padding-top: 10px;
-            }
-
-            .signatures .sig .line {
-                margin-top: 24px;
-                font-size: .6rem;
-            }
-        }
-    </style>
+        <link rel="stylesheet" href="../assets/modules/preview_factura/preview_factura.css">
 </head>
 
 <body>
@@ -736,7 +309,7 @@ $hora_actual = date('H:i:s');
         </div>
 
         <?php foreach ($alertas_venc as $av): ?>
-            <div style="padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:.75rem;font-weight:600;text-align:center;<?php echo $av['tipo'] === 'vencido' ? 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca;' : 'background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;'; ?>">
+            <div style="padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:.75rem;font-weight:600;text-align:center;<?php echo $av['tipo'] === 'vencido' ? 'background:rgba(220,38,38,0.1);color:#DC2626;border:1px solid rgba(220,38,38,0.3);' : 'background:rgba(217,119,6,0.1);color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);'; ?>">
                 <?php echo $av['tipo'] === 'vencido' ? '⚠ VENCIDO' : '⚠ PRÓXIMO A VENCER'; ?>
                 — <?php echo htmlspecialchars($av['producto']); ?> (<?php echo date('d/m/Y', strtotime($av['fecha'])); ?>)
             </div>
@@ -769,9 +342,9 @@ $hora_actual = date('H:i:s');
                     <?php $fila_total = $det['cantidad'] * $det['precio_venta']; ?>
                     <tr>
                         <td><?php echo $det['cantidad']; ?></td>
-                        <td><strong><?php echo htmlspecialchars($det['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.7rem;color:#94a3b8;">SKU: <?php echo htmlspecialchars($det['sku'] ?? ''); ?></span></td>
-                        <td><?php if ($es_regalias && $det['precio_venta'] == 0 && ($det['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#94a3b8;">$ <?php echo number_format($det['precio_original'], 2); ?></span> <span style="color:#22c55e;font-weight:700;">GRATIS</span><?php else: ?>$ <?php echo number_format($det['precio_venta'], 2); ?><?php endif; ?></td>
-                        <td><?php if ($es_regalias && $det['precio_venta'] == 0 && ($det['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#94a3b8;">$ <?php echo number_format($det['cantidad'] * $det['precio_original'], 2); ?></span> <span style="color:#22c55e;font-weight:700;">$ 0.00</span><?php else: ?>$ <?php echo number_format($fila_total, 2); ?><?php endif; ?></td>
+                        <td><strong><?php echo htmlspecialchars($det['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.7rem;color:#6C757D;">SKU: <?php echo htmlspecialchars($det['sku'] ?? ''); ?></span></td>
+                        <td><?php if ($es_regalias && $det['precio_venta'] == 0 && ($det['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($det['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">GRATIS</span><?php else: ?>$ <?php echo number_format($det['precio_venta'], 2); ?><?php endif; ?></td>
+                        <td><?php if ($es_regalias && $det['precio_venta'] == 0 && ($det['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($det['cantidad'] * $det['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">$ 0.00</span><?php else: ?>$ <?php echo number_format($fila_total, 2); ?><?php endif; ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -789,7 +362,7 @@ $hora_actual = date('H:i:s');
             </div>
         <?php else: ?>
             <div class="totals">
-                <div class="row total" style="border:none;color:#64748b;"><span>VALOR</span><span>$ 0.00</span></div>
+                <div class="row total" style="border:none;color:#6C757D;"><span>VALOR</span><span>$ 0.00</span></div>
             </div>
         <?php endif; ?>
 
@@ -816,7 +389,7 @@ $hora_actual = date('H:i:s');
         <div class="buttons">
             <button class="btn btn-outline" onclick="window.close()">← VOLVER</button>
             <?php if (!isset($_GET['id'])): ?>
-                <form action="salidas.php?confirm=1" method="POST" onsubmit="return confirmarRegistro(event)">
+                <form action="salidas.php?confirm=1&token=<?php echo urlencode($preview_token); ?>" method="POST" onsubmit="return confirmarRegistro(event)">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                     <button type="submit" class="btn btn-primary" id="btnConfirmar">✓ CONFIRMAR Y REGISTRAR</button>
                 </form>
@@ -826,15 +399,7 @@ $hora_actual = date('H:i:s');
         </div>
     </div>
 
-    <script>
-        function confirmarRegistro(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btnConfirmar');
-            btn.disabled = true;
-            btn.textContent = '⏳ REGISTRANDO...';
-            document.querySelector('.buttons form').submit();
-        }
-    </script>
+        <script src="../assets/modules/preview_factura/preview_factura.js"></script>
 </body>
 
 </html>

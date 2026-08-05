@@ -1,0 +1,310 @@
+
+        /* === THEME: COMPRAS (Green / Emerald) ================ */
+
+        /* ── Header icon ── */
+        .com-header-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #059669, #065f46);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            box-shadow: 0 0 30px rgba(5, 150, 105, 0.3);
+        }
+
+        /* ── Action button (36px) ── */
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--jv-border);
+            background: var(--jv-bg-primary);
+            color: var(--jv-text);
+            transition: .15s;
+        }
+
+        .btn-action:hover {
+            background: var(--jv-bg-hover);
+            border-color: #10b981;
+            color: #10b981;
+        }
+
+        /* ── Empty state ── */
+        .estado-vacio {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .estado-vacio i {
+            font-size: 3.5rem;
+            color: rgba(16, 185, 129, 0.2);
+            display: block;
+            margin-bottom: 16px;
+        }
+
+        .estado-vacio span {
+            font-size: .85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(148, 163, 184, 0.5);
+        }
+
+        /* ── Scoped module styles ── */
+        .pagina-compras .card-jv {
+            border-color: rgba(16, 185, 129, 0.25);
+            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(16, 185, 129, 0.06);
+        }
+
+        .pagina-compras .card-jv:hover {
+            border-color: rgba(16, 185, 129, 0.45);
+        }
+
+        .pagina-compras .card-jv-table {
+            border-top: 4px solid #10b981;
+            border-radius: var(--jv-radius) !important;
+            overflow: hidden;
+        }
+
+        .pagina-compras .table-jv {
+            table-layout: auto;
+            width: 100%;
+        }
+
+        .pagina-compras .table-jv thead th {
+            background: linear-gradient(135deg, #065f46, #047857);
+            color: #a7f3d0;
+            border-bottom: 2px solid rgba(16, 185, 129, 0.3);
+            font-size: .82rem;
+            padding: 14px 16px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .pagina-compras .table-jv thead th.text-center {
+            text-align: center;
+        }
+
+        .pagina-compras .table-jv tbody td {
+            border-bottom: 1px solid rgba(16, 185, 129, 0.07);
+            padding: 14px 16px;
+            font-size: .85rem;
+            vertical-align: middle;
+            color: #e2e8f0;
+        }
+
+        .pagina-compras .table-jv tbody tr:hover {
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .pagina-compras .table-jv tbody td.text-center {
+            text-align: center;
+        }
+
+        .pagina-compras .table-jv tbody td.fw-bold {
+            font-weight: 700;
+        }
+
+        .pagina-compras .table-jv tbody td.text-muted {
+            color: #94a3b8;
+        }
+
+        .pagina-compras .table-jv tbody td.text-success {
+            color: #34d399;
+        }
+
+        .pagina-compras .table-jv tbody td.fecha-cell {
+            font-weight: 600;
+            font-size: .82rem;
+            color: #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .pagina-compras .btn-jv-primary {
+            background: linear-gradient(135deg, #059669, #065f46);
+        }
+
+        .pagina-compras .btn-jv-primary:hover {
+            box-shadow: 0 8px 25px -5px rgba(5, 150, 105, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .pagina-compras .input-jv:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+
+        .input-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+        }
+
+        .pagina-compras .buscador-wrapper {
+            border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+            background: rgba(2, 6, 23, 0.5);
+        }
+
+        .pagina-compras .buscador-wrapper i {
+            color: #10b981;
+        }
+
+        .pagina-compras .btn-jv-success {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 24px rgba(5, 150, 105, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .pagina-compras .btn-jv-success:hover {
+            box-shadow: 0 8px 30px -5px rgba(5, 150, 105, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .pagina-compras .header-card {
+            padding: 18px 24px;
+            border-left: 4px solid #10b981;
+        }
+
+        .pagina-compras .widget-card {
+            border-left: 3px solid #10b981;
+        }
+
+        .pagina-compras .widget-card:hover {
+            border-color: #34d399;
+        }
+
+        /* ── Widget cards bigger & bolder ── */
+        .pagina-compras .widget-card {
+            border-radius: var(--jv-radius-lg);
+            background: var(--jv-bg-card);
+            border: 1px solid var(--jv-border);
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            min-height: 90px;
+        }
+
+        .pagina-compras .widget-card:hover {
+            border-color: var(--jv-border-hover);
+        }
+
+        .widget-card .widget-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .widget-card .widget-label {
+            font-size: .6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: rgba(148, 163, 184, 0.7);
+            margin-bottom: 4px;
+        }
+
+        .widget-card .widget-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        /* ── Badges ── */
+        .pagina-compras .codigo-badge {
+            background: rgba(5, 150, 105, 0.12);
+            color: #6ee7b7;
+            font-size: .72rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            vertical-align: middle;
+            white-space: nowrap;
+            letter-spacing: .5px;
+            line-height: 1.5;
+        }
+
+        .pagina-compras .cant-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: .75rem;
+            display: inline-block;
+            line-height: 1.5;
+        }
+
+        .pagina-compras .badge-jv {
+            padding: 4px 14px;
+            font-size: 0.72rem;
+            line-height: 1.5;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .pagina-compras .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .pagina-compras .badge-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        /* ── Alert overrides ── */
+        .alert-jv {
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 14px 20px !important;
+            font-size: .9rem;
+        }
+
+        .alert-jv-success {
+            border-left-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .alert-jv-danger {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* ── Modal section groups ── */
+        .section-bg {
+            background: rgba(2, 6, 23, 0.3);
+            border: 1px solid rgba(16, 185, 129, 0.08);
+            border-radius: var(--jv-radius);
+            padding: 12px 14px;
+            margin-bottom: 10px;
+        }
+
+        .section-label {
+            font-size: .65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #34d399;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    

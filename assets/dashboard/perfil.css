@@ -1,0 +1,20 @@
+
+    .perfil-header-icon {
+        width:52px;height:52px;border-radius:14px;
+        background:var(--jv-navy);
+        display:flex;align-items:center;justify-content:center;
+        color:#fff;font-size:1.5rem;flex-shrink:0;
+        box-shadow:0 2px 8px rgba(11,37,69,0.15);
+    }
+    .perfil-info {
+        background:var(--jv-bg-card);
+        border:1px solid var(--jv-border);
+        border-radius:var(--jv-radius);
+        padding:18px 22px;
+    }
+    .perfil-info .label, .perfil-form .label {
+        font-size:.72rem;font-weight:800;letter-spacing:1px;
+        color:var(--jv-text-secondary);text-transform:uppercase;
+    }
+    .perfil-info .valor { font-size:.95rem;font-weight:600;color:var(--jv-text-primary);margin-top:2px; }
+    

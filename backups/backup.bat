@@ -4,24 +4,36 @@ REM  BACKUP DE BASE DE DATOS - JV3000 C.A.
 REM  Genera un .sql con fecha y hora
 REM ============================================
 
-set MYSQLDUMP=C:\xampp\mysql\bin\mysqldump.exe
 set DB_USER=root
 set DB_PASS=
 set DB_NAME=jv3000_db
 set BACKUP_DIR=%~dp0
 
-for /f "tokens=1-5 delims=/:. " %%a in ("%date% %time%") do set TIMESTAMP=%%a-%%b-%%c_%%d%%e
-set TIMESTAMP=%TIMESTAMP: =0%
-set FILENAME=%BACKUP_DIR%jv3000_db_%TIMESTAMP%.sql
+REM --- Detectar mysqldump.exe (XAMPP o PATH) ---
+set MYSQLDUMP=
+if exist "C:\xampp\mysql\bin\mysqldump.exe" set "MYSQLDUMP=C:\xampp\mysql\bin\mysqldump.exe"
+if not defined MYSQLDUMP (
+    for %%d in ("C:\xampp" "D:\xampp" "%ProgramFiles%\XAMPP" "%ProgramFiles(x86)%\XAMPP") do (
+        if not defined MYSQLDUMP if exist "%%~d\mysql\bin\mysqldump.exe" set "MYSQLDUMP=%%~d\mysql\bin\mysqldump.exe"
+    )
+)
+if not defined MYSQLDUMP (
+    for /f "delims=" %%i in ('where mysqldump 2^>nul') do (
+        if not defined MYSQLDUMP set "MYSQLDUMP=%%i"
+    )
+)
 
-if not exist "%MYSQLDUMP%" (
-    echo [ERROR] No se encuentra mysqldump en:
-    echo %MYSQLDUMP%
+if not defined MYSQLDUMP (
+    echo [ERROR] No se encontro mysqldump.exe.
     echo.
-    echo Asegurate de que XAMPP este instalado en C:\xampp
+    echo Se busco en C:\xampp, D:\xampp, %%ProgramFiles%%\XAMPP y en el PATH.
+    echo Instala XAMPP o edita este archivo y coloca la ruta en MYSQLDUMP.
     pause
     exit /b 1
 )
+
+for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmmss"') do set TIMESTAMP=%%i
+set FILENAME=%BACKUP_DIR%jv3000_db_%TIMESTAMP%.sql
 
 echo ============================================
 echo  Respaldando base de datos: %DB_NAME%
