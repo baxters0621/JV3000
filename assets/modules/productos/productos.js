@@ -1,4 +1,56 @@
 
+
+        // ---------- TOOLTIP GRANDE (nombre completo de productos) ----------
+        (function() {
+            let tip = null;
+            let tipTimer = null;
+
+            function mostrarTip(e, texto) {
+                if (!texto) return;
+                if (!tip) {
+                    tip = document.createElement('div');
+                    tip.className = 'jv-tooltip';
+                    document.body.appendChild(tip);
+                }
+                tip.textContent = texto;
+                tip.classList.add('jv-tooltip-visible');
+                posicionarTip(e);
+            }
+
+            function posicionarTip(e) {
+                if (!tip) return;
+                const pad = 16;
+                let x = e.clientX + pad;
+                let y = e.clientY + pad;
+                const r = tip.getBoundingClientRect();
+                if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - pad;
+                if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - pad;
+                tip.style.left = Math.max(8, x) + 'px';
+                tip.style.top = Math.max(8, y) + 'px';
+            }
+
+            function ocultarTip() {
+                if (tipTimer) window.clearTimeout(tipTimer);
+                tipTimer = window.setTimeout(function() {
+                    if (tip) tip.classList.remove('jv-tooltip-visible');
+                }, 80);
+            }
+
+            document.addEventListener('mouseover', function(e) {
+                const t = e.target.closest('[data-tooltip]');
+                if (t) {
+                    window.clearTimeout(tipTimer);
+                    mostrarTip(e, t.dataset.tooltip);
+                }
+            });
+            document.addEventListener('mousemove', function(e) {
+                if (tip && tip.classList.contains('jv-tooltip-visible')) posicionarTip(e);
+            });
+            document.addEventListener('mouseout', function(e) {
+                if (e.target.closest('[data-tooltip]')) ocultarTip();
+            });
+        })();
+
         function filtrarPorAlerta(clase) {
             var btn = document.querySelector('.btn-filtro-venc[data-venc="' + clase + '"]');
             if (btn) filtrarVenc(btn);
@@ -16,10 +68,13 @@
                 if (filtroStatus !== 'todas' && st !== filtroStatus) { rows[i].style.display = 'none'; continue; }
                 var vc = rows[i].getAttribute('data-venc-cls') || '';
                 if (filtroVenc !== 'todas' && vc !== filtroVenc) { rows[i].style.display = 'none'; continue; }
-                var sku = rows[i].getAttribute('data-sku') || '';
-                var nombre = rows[i].getAttribute('data-nombre') || '';
-                var prov = rows[i].getAttribute('data-prov') || '';
-                rows[i].style.display = (sku.includes(searchVal) || nombre.includes(searchVal) || prov.includes(searchVal)) ? '' : 'none';
+                if (filtroBajos) {
+                    var stk = parseInt(rows[i].getAttribute('data-stock') || '', 10);
+                    var min = parseInt(rows[i].getAttribute('data-minimo') || '', 10);
+                    if (isNaN(stk) || stk > min) { rows[i].style.display = 'none'; continue; }
+                }
+                var texto = rows[i].textContent.toLowerCase();
+                rows[i].style.display = (searchVal === '' || texto.includes(searchVal)) ? '' : 'none';
             }
         }
         function filtrarVenc(btn) {
@@ -197,4 +252,53 @@
         function filtrar() {
             aplicarFiltros();
         }
+
+        var filtroBajos = false;
+
+        function filtrarBajos() {
+            filtroBajos = !filtroBajos;
+            document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
+                b.classList.remove('active');
+                b.style.background = 'transparent';
+                b.style.color = b.dataset.venc === 'vencido' ? '#DC2626' : b.dataset.venc === 'proximo' ? '#D97706' : b.dataset.venc === 'pronto' ? '#D97706' : b.dataset.venc === 'vigente' ? '#16A34A' : '#EA580C';
+            });
+            aplicarFiltros();
+        }
+
+        function destacarProducto(id) {
+            var fila = document.querySelector('#tablaProductos tr[data-id="' + id + '"]');
+            if (!fila) return;
+            var nombre = fila.getAttribute('data-nombre') || '';
+            var buscar = document.getElementById('buscar');
+            if (buscar && nombre) {
+                buscar.value = nombre.toUpperCase();
+                aplicarFiltros();
+            }
+            setTimeout(function() {
+                fila.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                fila.classList.add('flash-prod');
+                setTimeout(function() { fila.classList.remove('flash-prod'); }, 3000);
+            }, 250);
+        }
+
+        function iniciarDesdeURL() {
+            var params = new URLSearchParams(window.location.search);
+            var pid = params.get('producto');
+            var alerta = params.get('alerta');
+            if (pid) {
+                destacarProducto(pid);
+            } else if (alerta === 'vencidos') {
+                filtrarPorAlerta('vencido');
+            } else if (alerta === 'proximos') {
+                filtrarPorAlerta('proximo');
+            } else if (alerta === 'prontos') {
+                filtrarPorAlerta('pronto');
+            } else if (alerta === 'bajos') {
+                filtrarBajos();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            iniciarDesdeURL();
+        });
     

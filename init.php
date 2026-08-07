@@ -94,27 +94,27 @@ function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm) {
     if ($showDemoForm && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['instalar_demo'])) {
         Security::validateCSRF();
         $conn_demo = @mysqli_connect(DB_HOST, DB_USER, DB_PASS);
-        if ($conn_demo && jv_importar_sql($conn_demo, __DIR__ . '/db/jv3000_portable_v3.sql')) {
+        if ($conn_demo && jv_importar_sql($conn_demo, __DIR__ . '/db/jv3000_portable_v4.sql')) {
             mysqli_close($conn_demo);
-            header('Location: index.php');
+            header('Location: dashboard/index.php');
             exit;
         }
         if ($conn_demo) { mysqli_close($conn_demo); }
-        error_log("[JV3000] Fallo al instalar los datos de ejemplo.");
+        error_log("[JV3000] Fallo al instalar el sistema.");
         $demo_error = true;
     }
 
     $csrf = Security::generateToken();
     $extra = $demo_error
-        ? "<p style='color:#fbbf24;margin-top:20px;'>La instalación de los datos de ejemplo falló. Revisa que exista db/jv3000_portable_v3.sql o coloca un respaldo en backups/.</p>"
+        ? "<p style='color:#fbbf24;margin-top:20px;'>La instalación falló. Revisa que exista db/jv3000_portable_v4.sql o coloca un respaldo en backups/.</p>"
         : '';
     $form = '';
     if ($showDemoForm) {
         $form = "<hr style='border-color:rgba(148,163,184,0.2);margin:28px 0;'>
-                 <p style='color:#94a3b8;'>¿Es una instalación nueva? Puedes iniciar con datos de ejemplo (no es tu información real):</p>
+                 <p style='color:#94a3b8;'>¿Es una instalación nueva? Puedes instalar el sistema en limpio (sin datos de ejemplo):</p>
                  <form method='POST' action='" . htmlspecialchars($_SERVER['REQUEST_URI'] ?? 'login.php') . "' style='margin-top:16px;'>
                      <input type='hidden' name='csrf_token' value='" . htmlspecialchars($csrf) . "'>
-                     <button type='submit' name='instalar_demo' value='1' style='background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:1px;'>Instalar con datos de ejemplo</button>
+                     <button type='submit' name='instalar_demo' value='1' style='background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:1px;'>Instalar sistema</button>
                  </form>";
     }
     die("<div style='background:#020617;color:#f87171;font-family:sans-serif;text-align:center;padding:100px;height:100vh;'>
@@ -180,6 +180,28 @@ try {
 }
 
 // ==========================================
+// MIGRACIÓN AUTOMÁTICA DE DOCUMENTOS (una sola vez)
+// ==========================================
+
+// --- 7b. Normalización de documento fiscal (cédula/RIF) ---
+// Se ejecuta una única vez (flag en configuracion). Idempotente.
+$jv_db = Database::getInstance();
+$rowFlag = $jv_db->fetchOne("SELECT valor FROM configuracion WHERE clave = 'documentos_normalizados'");
+if (!$rowFlag) {
+    $mig_file = __DIR__ . '/db/migrar_documentos.php';
+    if (is_file($mig_file)) {
+        require_once $mig_file;
+        if (function_exists('migrar_documentos')) {
+            ob_start();
+            migrar_documentos($jv_db->getConnection(), DB_NAME);
+            ob_end_clean();
+        }
+    }
+    @mysqli_query($jv_db->getConnection(), "INSERT INTO configuracion (clave, valor, descripcion, fecha_actualizado) VALUES ('documentos_normalizados', '1', 'Migración de formato de documento fiscal aplicada (v1)', NOW()) ON DUPLICATE KEY UPDATE valor = '1'");
+    error_log("[JV3000] Migración de documentos fiscales ejecutada.");
+}
+
+// ==========================================
 // SEGURIDAD Y SESIÓN
 // ==========================================
 
@@ -238,7 +260,7 @@ set_exception_handler(function (Throwable $e) {
         $rp = parse_url($ref);
         if (($rp['host'] ?? '') !== ($_SERVER['HTTP_HOST'] ?? '')) $ref = '';
     }
-    header("Location: " . ($ref !== '' ? $ref : 'index.php'));
+    header("Location: " . ($ref !== '' ? $ref : 'dashboard/index.php'));
     exit;
 });
 

@@ -18,10 +18,14 @@ Antes de escribir cualquier línea de código, detente en el primer nivel que fu
 - Para mostrar el nombre del rol: JOIN con `roles` o usar el mapa inline `$roles_map = [1=>'Administrador', 2=>'Operador de Carga', 3=>'Operador de Ventas']`
 
 ## DB
-- Portable: `db/jv3000_portable_v3.sql`
-- Auto-instalador en `init.php` apunta a `v3`
+- Portable: `db/jv3000_portable_v4.sql` — seed de **instalación limpia** (esquema completo + solo datos de sistema: roles, tipos de movimiento, configuración, usuarios, contadores en 0). **No incluye datos demo**.
+- Auto-instalador en `init.php` apunta a `v4`; migración de BD v3 → v4: `php db/migrar_v3_v4.php`
+- Usuario inicial: `Administrador` / `Admin123*` (cambiar tras el primer inicio)
 - Backups en `backups/`
 
 ## Configuración XAMPP
-- MySQL no corre como servicio Windows. Iniciar con: `Start-Process -FilePath "C:\xampp\mysql\bin\mysqld.exe" -NoNewWindow`
-- PHP CLI requiere arrancar MySQL manualmente antes de scripts externos
+- **MySQL corre como servicio Windows `mysql` (auto-arranque)**. Iniciar/detener con `Start-Service mysql` / `Stop-Service mysql` o `net start/stop mysql`. No hace falta arrancarlo manualmente.
+- Si el puerto 3306 está ocupado (instancia manual previa), el panel XAMPP mostrará "MySQL shutdown unexpectedly": eso es un falso positivo por conflicto de puerto, no un fallo real.
+- Si MySQL aborta con `Table '.\mysql\db' is marked as crashed`: reparar la tabla del sistema (respaldar antes) con `& "C:\xampp\mysql\bin\aria_chk.exe" --recover "C:\xampp\mysql\data\mysql\db"` (tablas del sistema son Aria `.MAD/.MAI`), luego `Restart-Service mysql`.
+- Los permisos de `C:\xampp\mysql\data` ya dan `FullControl` a `BUILTIN\Users` (evita el error `ibdata1 must be writable` al arrancar sin elevación).
+- PHP CLI requiere MySQL arriba (servicio) antes de scripts externos.

@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_proveedor'])) 
     }
 
     // Limpiar datos del formulario
-    $rif = mb_strtoupper(trim($_POST['rif'] ?? ''));
+    $rif = normalizarDocumento($_POST['rif'] ?? '');
     $nombre_empresa = mb_strtoupper(trim($_POST['nombre_empresa'] ?? ''));
     $telefono = trim($_POST['telefono_completo'] ?? '');
     $contacto = trim($_POST['contacto_nombre'] ?? '');
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_proveedor'])) 
     // Crear proveedor
     if ($accion == "registrar") {
         // Validaciones específicas para registro
-        if (!preg_match('/^[VJGPE]-\d{6,9}-\d{1}$/', $rif)) {
+        if (!validarRIF($rif)) {
             $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0'];
             header("Location: proveedores.php");
             exit();
@@ -143,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_proveedor'])) 
         $id_proveedor = intval($_POST['id_proveedor'] ?? 0);
 
         // Validaciones
-        if (!preg_match('/^[VJGPE]-\d{6,9}-\d{1}$/', $rif)) {
+        if (!validarRIF($rif)) {
             $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0'];
             header("Location: proveedores.php");
             exit();
@@ -255,7 +255,7 @@ unset($_SESSION['flash_msg']);
     <title>Proveedores | JV3000 C.A.</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
-        <link rel="stylesheet" href="../assets/modules/proveedores/proveedores.css">
+        <link rel="stylesheet" href="../assets/modules/proveedores/proveedores.css?v=2">
 </head>
 <!-- BODY HTML -->
 
@@ -272,16 +272,20 @@ unset($_SESSION['flash_msg']);
                         <i class="bi bi-building"></i>
                     </div>
                     <div>
-                        <h1 class="font-brand mb-1" style="font-size:1.8rem;letter-spacing:-1px; color: var(--jv-text-primary);">PROVEEDORES</h1>
-                        <p class="text-secondary small fw-bold text-uppercase mb-0">Directorio de Alianzas Comerciales</p>
+                        <h1 class="font-brand mb-1" style="font-size:2rem;letter-spacing:-1px; color: var(--jv-text-primary);">PROVEEDORES</h1>
+                        <p class="text-secondary fw-bold text-uppercase mb-0" style="font-size:.95rem;">Directorio de Alianzas Comerciales</p>
                     </div>
-                    <div class="ms-auto d-flex align-items-center gap-3">
+                    <div class="ms-auto d-flex align-items-center gap-3 flex-wrap">
+                        <div class="prov-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="input-jv" id="buscarProv" placeholder="Buscar proveedor..." onkeyup="filtrarProvTexto()" style="padding:10px 16px 10px 38px;max-width:280px;font-size:1rem;">
+                        </div>
                         <div class="filter-group">
                             <button class="btn-filter active" onclick="filtrarProv('todos')" id="f-todos">Todos</button>
                             <button class="btn-filter" onclick="filtrarProv('Activo')" id="f-Activo">Activos</button>
                             <button class="btn-filter" onclick="filtrarProv('Inactivo')" id="f-Inactivo">Inactivos</button>
                         </div>
-                        <button class="btn btn-jv-primary" onclick="nuevoProveedor()" id="btnNuevoProv">
+                        <button class="btn btn-jv-primary" onclick="nuevoProveedor()" id="btnNuevoProv" style="padding:12px 32px;font-size:1rem;">
                             <i class="bi bi-plus-lg me-2"></i>NUEVO
                         </button>
                     </div>
@@ -352,7 +356,7 @@ unset($_SESSION['flash_msg']);
                                         <?php endif; ?>
                                     </div>
                                     <div class="prov-body" onclick="toggleProv(this)">
-                                        <div class="prov-name"><?php echo htmlspecialchars($row['nombre_empresa']); ?></div>
+                                        <div class="prov-name" data-tooltip="<?php echo htmlspecialchars($row['nombre_empresa']); ?>"><?php echo htmlspecialchars($row['nombre_empresa']); ?></div>
                                         <div class="prov-rif"><span class="codigo-badge"><?php echo htmlspecialchars($row['rif']); ?></span></div>
                                         <div class="prov-info"><i class="bi bi-telephone"></i><?php echo !empty($row['telefono']) ? htmlspecialchars(formatearTelefono($row['telefono'])) : ($row['contacto'] ?? 'Sin teléfono'); ?></div>
                                         <?php if (!empty($row['contacto'])): ?>
@@ -435,7 +439,7 @@ unset($_SESSION['flash_msg']);
                     <input type="hidden" name="id_proveedor" id="p_id_edit">
                     <div class="modal-body p-4">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="fw-bolder font-brand m-0" id="modalTitle" style="color:var(--jv-navy);letter-spacing:-.5px;">REGISTRAR PROVEEDOR</h5>
+                            <h5 class="fw-bolder font-brand m-0" id="modalTitle" style="color:var(--jv-navy);font-size:1.3rem;letter-spacing:-.5px;">REGISTRAR PROVEEDOR</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
@@ -534,7 +538,7 @@ unset($_SESSION['flash_msg']);
     <script>
     window.JV_CONFIG = { c0: '<?php echo $csrf_token; ?>' };
 </script>
-    <script src="../assets/modules/proveedores/proveedores.js"></script>
+    <script src="../assets/modules/proveedores/proveedores.js?v=2"></script>
 
 </body>
 

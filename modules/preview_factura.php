@@ -20,6 +20,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['store'])) {
     $id_tipo_mov  = intval($_POST['id_tipo_mov'] ?? 0);
     $cliente      = mb_strtoupper(trim($_POST['cliente'] ?? ''));
     $rif_cliente  = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));
+    $id_cliente   = intval($_POST['id_cliente'] ?? 0) ?: null;
     $fecha_salida = $_POST['fecha_salida'] ?? date('Y-m-d');
     $nro_control  = generarControlNumero();
     $tn_row2 = $db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$id_tipo_mov]);
@@ -71,6 +72,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['store'])) {
             echo json_encode(['ok' => false, 'error' => 'RIF OBLIGATORIO PARA VENTAS.']);
             exit();
         }
+        $rif_cliente = normalizarDocumento($rif_cliente);
+        if (!validarDocumentoFiscal($rif_cliente)) {
+            echo json_encode(['ok' => false, 'error' => 'DOCUMENTO FISCAL INVÁLIDO (CÉDULA O RIF).']);
+            exit();
+        }
     }
     if ($grupo === 'regalias') {
         if (empty($cliente)) {
@@ -93,8 +99,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['store'])) {
     foreach ($productos as $p) {
         $pid = intval($p['id_producto'] ?? 0);
         $cant = intval($p['cantidad'] ?? 0);
-        if ($cant > 999999) {
-            echo json_encode(['ok' => false, 'error' => 'CANTIDAD MÁXIMA PERMITIDA POR PRODUCTO: 999,999.']);
+        if ($cant < 1 || $cant > 999999) {
+            echo json_encode(['ok' => false, 'error' => 'CANTIDAD INVÁLIDA POR PRODUCTO. RANGO: 1 A 999,999.']);
+            exit();
+        }
+        $precio_entrante = floatval($p['precio'] ?? 0);
+        if ($grupo === 'venta' && ($precio_entrante <= 0 || $precio_entrante > 99999999.99)) {
+            echo json_encode(['ok' => false, 'error' => "PRECIO DE VENTA INVÁLIDO PARA PRODUCTO #$pid."]);
+            exit();
+        }
+        if ($grupo === 'merma' && ($precio_entrante < 0 || $precio_entrante > 99999999.99)) {
+            echo json_encode(['ok' => false, 'error' => "PRECIO DE AJUSTE INVÁLIDO PARA PRODUCTO #$pid."]);
             exit();
         }
         if ($pid) {
@@ -144,6 +159,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['store'])) {
         'productos_data'     => json_encode($productos),
         'cliente'            => $cliente,
         'rif_cliente'        => $rif_cliente ?: 'N/A',
+        'id_cliente'         => $id_cliente,
         'nro_factura_manual' => 'PENDIENTE',
         'nro_control'        => $nro_control,
         'fecha_salida'       => $fecha_salida,
@@ -282,18 +298,21 @@ $hora_actual = date('H:i:s');
     <title>Nota de Entrega #<?php echo $data['id_salida'] ?? 'PREVIEW'; ?> | <?php echo $empresa; ?></title>
     <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="../assets/css/bootstrap-icons.css">
-        <link rel="stylesheet" href="../assets/modules/preview_factura/preview_factura.css">
+        <link rel="stylesheet" href="../assets/modules/preview_factura/preview_factura.css?v=3">
 </head>
 
 <body>
     <div class="page">
         <div class="doc-header">
-            <div class="doc-issuer">
-                <div class="issuer-name"><?php echo htmlspecialchars($empresa); ?></div>
-                <p>RIF: <?php echo htmlspecialchars($rif_emp); ?></p>
-                <p><?php echo htmlspecialchars($dir_emp ?: ' '); ?></p>
-                <p>TLF: <?php echo htmlspecialchars($tel_emp ?: ' '); ?></p>
-                <p>Correo: <?php echo htmlspecialchars($email_emp ?: ' '); ?></p>
+            <div class="doc-left">
+                <img class="doc-logo" src="../assets/img/logo-mark.svg?v=1" alt="JV3000">
+                <div class="doc-issuer">
+                    <div class="issuer-name"><?php echo htmlspecialchars($empresa); ?></div>
+                    <p>RIF: <?php echo htmlspecialchars($rif_emp); ?></p>
+                    <p><?php echo htmlspecialchars($dir_emp ?: ' '); ?></p>
+                    <p>TLF: <?php echo htmlspecialchars($tel_emp ?: ' '); ?></p>
+                    <p>Correo: <?php echo htmlspecialchars($email_emp ?: ' '); ?></p>
+                </div>
             </div>
             <div class="doc-type">
                 <h1>NOTA DE ENTREGA</h1>
@@ -342,7 +361,7 @@ $hora_actual = date('H:i:s');
                     <?php $fila_total = $det['cantidad'] * $det['precio_venta']; ?>
                     <tr>
                         <td><?php echo $det['cantidad']; ?></td>
-                        <td><strong><?php echo htmlspecialchars($det['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.7rem;color:#6C757D;">SKU: <?php echo htmlspecialchars($det['sku'] ?? ''); ?></span></td>
+                        <td><strong class="pv-nombre" data-tooltip="<?php echo htmlspecialchars($det['nombre_producto'] ?? ''); ?>"><?php echo htmlspecialchars($det['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.85rem;color:#6C757D;">SKU: <?php echo htmlspecialchars($det['sku'] ?? ''); ?></span></td>
                         <td><?php if ($es_regalias && $det['precio_venta'] == 0 && ($det['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($det['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">GRATIS</span><?php else: ?>$ <?php echo number_format($det['precio_venta'], 2); ?><?php endif; ?></td>
                         <td><?php if ($es_regalias && $det['precio_venta'] == 0 && ($det['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($det['cantidad'] * $det['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">$ 0.00</span><?php else: ?>$ <?php echo number_format($fila_total, 2); ?><?php endif; ?></td>
                     </tr>

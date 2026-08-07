@@ -2,7 +2,7 @@
 // ==========================================
 // CONFIGURACIÓN INICIAL
 // ==========================================
-require_once __DIR__ . '/init.php';
+require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
 Security::soloAdmin();
@@ -114,12 +114,12 @@ unset($_SESSION['flash_msg']);
 // HEAD Y ESTILOS HTML
 // ========================================== ?>
 <head>
-<?php include 'includes/diseno.php'; ?>
+<?php include '../includes/diseno.php'; ?>
     <title>Colaboradores | JV3000</title>
-        <link rel="stylesheet" href="assets/dashboard/usuarios.css">
+        <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=4">
 </head>
 <body>
-    <?php include 'includes/sidebar.php'; ?>
+    <?php include '../includes/sidebar.php'; ?>
 
     <div class="main-wrapper" id="mainWrapper">
     <div class="pagina-usuarios">
@@ -130,7 +130,7 @@ unset($_SESSION['flash_msg']);
                 <i class="bi bi-people-fill"></i>
             </div>
             <div>
-                <h1 class="font-brand mb-1" style="font-size:1.8rem;letter-spacing:-1px; color: var(--jv-text-primary);">COLABORADORES</h1>
+                <h1 class="font-brand mb-1" style="font-size:2rem;letter-spacing:-1px; color: var(--jv-text-primary);">COLABORADORES</h1>
                 <p class="text-secondary small fw-bold text-uppercase mb-0">Gestión de Personal Autorizado</p>
             </div>
         </div>
@@ -195,13 +195,13 @@ unset($_SESSION['flash_msg']);
                 <table class="table-jv mb-0">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>USUARIO</th>
-                            <th>CORREO</th>
-                            <th>ROL</th>
-                            <th class="text-center">APROBADO</th>
-                            <th class="text-center">ESTADO</th>
-                            <th class="text-center">ACCIONES</th>
+                            <th style="width:70px;">#</th>
+                            <th style="width:20%;">USUARIO</th>
+                            <th style="width:26%;">CORREO</th>
+                            <th style="width:15%;">ROL</th>
+                            <th class="text-center" style="width:10%;">APROBADO</th>
+                            <th class="text-center" style="width:10%;">ESTADO</th>
+                            <th class="text-center" style="width:130px;">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -209,10 +209,10 @@ unset($_SESSION['flash_msg']);
                             <?php foreach ($usuarios as $row): ?>
                                 <tr>
                                     <td class="text-secondary small"><span class="codigo-badge">#<?php echo $row['id_usuario']; ?></span></td>
-                                    <td class="fw-bold">
+                                    <td class="fw-bold usuario-cell" title="<?php echo htmlspecialchars($row['usuario']); ?>">
                                         <?php echo htmlspecialchars($row['usuario']); ?>
                                     </td>
-                                    <td class="text-secondary small"><?php echo htmlspecialchars($row['correo'] ?? 'N/A'); ?></td>
+                                    <td class="text-secondary small correo-cell" title="<?php echo htmlspecialchars($row['correo'] ?? 'N/A'); ?>"><?php echo htmlspecialchars($row['correo'] ?? 'N/A'); ?></td>
                                     <td>
                                         <?php
                                         $role_class = 'badge-secondary';
@@ -221,7 +221,7 @@ unset($_SESSION['flash_msg']);
                                         if ($row['id_rol'] == 1) $role_class = 'badge-warning';
                                         if ($row['id_rol'] == 2 || $row['id_rol'] == 3) $role_class = 'badge-success';
                                         ?>
-                                        <span class="badge-jv <?php echo $role_class; ?>"><?php echo $role_text; ?></span>
+                                        <span class="role-badge <?php echo $role_class; ?>" title="<?php echo htmlspecialchars($role_text); ?>"><?php echo $role_text; ?></span>
                                     </td>
                                     <td class="text-center">
                                         <?php if ($row['aprobado'] == 1): ?>
@@ -372,7 +372,7 @@ unset($_SESSION['flash_msg']);
     <script>
     window.JV_CONFIG = { c0: <?php echo $id_propio; ?>, c1: '<?php echo $csrf_token; ?>' };
 </script>
-    <script src="assets/dashboard/usuarios.js"></script>
+    <script src="../assets/dashboard/usuarios.js?v=2"></script>
     
     
 </body>

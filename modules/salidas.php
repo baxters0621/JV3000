@@ -51,6 +51,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['confirm'])) {
     try {
         if (count($productos_raw) > 200) { throw new Exception("MÁXIMO 200 PRODUCTOS POR VENTA."); }
 
+        // Validar documento fiscal (cédula o RIF) en ventas
+        if ($grupo_data === 'venta') {
+            $rif_confirm = normalizarDocumento($data['rif_cliente'] ?? 'N/A');
+            if ($rif_confirm !== 'N/A' && !validarDocumentoFiscal($rif_confirm)) {
+                throw new Exception("DOCUMENTO FISCAL INVÁLIDO (CÉDULA O RIF).");
+            }
+            $data['rif_cliente'] = $rif_confirm;
+        }
+
         // 0. Si es edición: restaurar el stock y los lotes de los detalles actuales
         if ($es_edicion) {
             $salida_vieja = $db->fetchOne("SELECT id_salida FROM salidas WHERE id_salida = ? AND status = 'Activa'", [$id_editar]);
@@ -85,8 +94,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['confirm'])) {
         // 1. Cabecera: actualizar o insertar
         if ($es_edicion) {
             $db->execute(
-                "UPDATE salidas SET nro_control=?, cliente=?, rif_cliente=?, fecha_salida=?, id_tipo_mov=?, observaciones=? WHERE id_salida=?",
-                [$data['nro_control'] ?? '', $data['cliente'] ?? '', $data['rif_cliente'] ?? 'N/A', $data['fecha_salida'] ?? date('Y-m-d H:i:s'), intval($data['id_tipo_mov']), $data['observaciones'] ?? '', $id_editar]
+                "UPDATE salidas SET nro_control=?, cliente=?, rif_cliente=?, fecha_salida=?, id_tipo_mov=?, id_cliente=?, observaciones=? WHERE id_salida=?",
+                [$data['nro_control'] ?? '', $data['cliente'] ?? '', $data['rif_cliente'] ?? 'N/A', $data['fecha_salida'] ?? date('Y-m-d H:i:s'), intval($data['id_tipo_mov']), intval($data['id_cliente'] ?? 0) ?: null, $data['observaciones'] ?? '', $id_editar]
             );
             $db->execute("DELETE FROM detalle_salidas WHERE id_salida = ?", [$id_editar]);
             $salida_id = $id_editar;
@@ -96,6 +105,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['confirm'])) {
                 'nro_control'        => $data['nro_control'] ?? '',
                 'cliente'            => $data['cliente'] ?? '',
                 'rif_cliente'        => $data['rif_cliente'] ?? 'N/A',
+                'id_cliente'         => intval($data['id_cliente'] ?? 0) ?: null,
                 'id_tipo_mov'        => intval($data['id_tipo_mov']),
                 'id_usuario'         => $data['id_usuario'],
                 'fecha_salida'       => $data['fecha_salida'] ?? date('Y-m-d H:i:s'),
@@ -110,6 +120,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_GET['confirm'])) {
             $cantidad = intval($prod['cantidad'] ?? 0);
             $precio_venta = floatval($prod['precio'] ?? 0);
             if ($id_producto <= 0 || $cantidad <= 0) continue;
+
+            if ($grupo_data === 'venta' && ($precio_venta <= 0 || $precio_venta > 99999999.99)) {
+                throw new Exception("PRECIO DE VENTA INVÁLIDO PARA PRODUCTO (ID:$id_producto).");
+            }
+            if ($grupo_data === 'merma' && ($precio_venta < 0 || $precio_venta > 99999999.99)) {
+                throw new Exception("PRECIO DE AJUSTE INVÁLIDO PARA PRODUCTO (ID:$id_producto).");
+            }
 
             $tiene_lotes = (int)$db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE id_producto = ?", [$id_producto])['n'];
             if ($tiene_lotes > 0) {
@@ -267,9 +284,12 @@ if (isset($_POST['accion_salida'])) {
     if ($obs_extra) $partes[] = $obs_extra;
     $observaciones = implode(' | ', $partes);
     $id_usuario = $_SESSION['id_usuario'];
+    $id_cliente = intval($_POST['id_cliente'] ?? 0) ?: null;
 
-    if ($rif_cliente !== '' && $rif_cliente !== 'N/A' && !validarRIF($rif_cliente)) {
-        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'RIF INVÁLIDO.'];
+    $rif_cliente = normalizarDocumento($rif_cliente);
+
+    if ($rif_cliente !== '' && $rif_cliente !== 'N/A' && !validarDocumentoFiscal($rif_cliente)) {
+        $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'DOCUMENTO FISCAL INVÁLIDO (CÉDULA O RIF).'];
         header("Location: salidas.php"); exit();
     }
 
@@ -297,6 +317,7 @@ if (isset($_POST['accion_salida'])) {
             'precio_venta'        => $precio_venta,
             'cliente'             => $cliente,
             'rif_cliente'         => $rif_cliente ?: 'N/A',
+            'id_cliente'          => $id_cliente,
             'nro_factura_manual'  => $nro_fac_man,
             'nro_control'         => $nro_control,
             'fecha_salida'        => $fecha_salida,
@@ -364,12 +385,13 @@ $salidas = $db->fetchAll($sql);
 // Adjuntar productos por salida en JSON para el modal de edición
 if ($salidas) {
     $ids_sal = implode(',', array_map(fn($r) => (int)$r['id_salida'], $salidas));
-    $detalle_all = $db->fetchAll("SELECT ds.id_salida, ds.id_producto, ds.cantidad, ds.precio_venta, p.nombre_producto FROM detalle_salidas ds JOIN productos p ON ds.id_producto = p.id_producto WHERE ds.id_salida IN ($ids_sal)");
+    $detalle_all = $db->fetchAll("SELECT ds.id_salida, ds.id_producto, ds.cantidad, ds.precio_venta, p.nombre_producto, p.sku FROM detalle_salidas ds JOIN productos p ON ds.id_producto = p.id_producto WHERE ds.id_salida IN ($ids_sal)");
     $mapa_det = [];
     foreach ($detalle_all as $d) {
         $mapa_det[$d['id_salida']][] = [
             'id_producto'   => (int)$d['id_producto'],
             'nombre_producto' => $d['nombre_producto'],
+            'sku'           => $d['sku'] ?? '',
             'cantidad'      => (int)$d['cantidad'],
             'precio_venta'  => (float)$d['precio_venta'],
         ];
@@ -377,22 +399,34 @@ if ($salidas) {
     foreach ($salidas as &$s) { $s['productos_json'] = json_encode($mapa_det[$s['id_salida']] ?? []); }
     unset($s);
 }
-$productos = $db->fetchAll("SELECT id_producto, nombre_producto, sku, precio_venta, precio_costo, stock_actual, fecha_vencimiento FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC");
-$mapa_lotes = [];
-foreach ($db->fetchAll("SELECT id_producto,
-        SUM(CASE WHEN fecha_vencimiento IS NOT NULL AND fecha_vencimiento <= CURDATE() THEN cantidad_restante ELSE 0 END) as vencido,
-        SUM(CASE WHEN fecha_vencimiento IS NULL OR fecha_vencimiento > CURDATE() THEN cantidad_restante ELSE 0 END) as vigente
-      FROM lotes GROUP BY id_producto") as $lt) {
-    $mapa_lotes[(int)$lt['id_producto']] = $lt;
-}
 $tipos_mov = $db->fetchAll("SELECT id_tipo_mov, nombre FROM tipos_movimientos WHERE tipo_movimiento = 'Salida' ORDER BY id_tipo_mov");
-$clientes_previos = $db->fetchAll("SELECT DISTINCT cliente, rif_cliente FROM salidas WHERE cliente IS NOT NULL AND cliente != '' AND status = 'Activa' ORDER BY cliente ASC");
 
 // Mapa id_tipo_mov → grupo para JS
 $tipos_mov_map = [];
 foreach ($tipos_mov as $tm) {
     $tipos_mov_map[$tm['id_tipo_mov']] = getGrupoTipo($tm['nombre']);
 }
+
+// Widgets de estadísticas
+$widget_ventas_mes = (float)($db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta),0) as t
+    FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
+    JOIN tipos_movimientos tm ON s.id_tipo_mov = tm.id_tipo_mov
+    WHERE s.status = 'Activa' AND tm.tipo_movimiento = 'Salida'
+      AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+      AND s.fecha_salida >= DATE_FORMAT(CURDATE(),'%Y-%m-01')
+      AND s.fecha_salida < DATE_FORMAT(CURDATE() + INTERVAL 1 MONTH,'%Y-%m-01')")['t'] ?? 0);
+$widget_und_mes = (int)($db->fetchOne("SELECT COALESCE(SUM(ds.cantidad),0) as t
+    FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
+    JOIN tipos_movimientos tm ON s.id_tipo_mov = tm.id_tipo_mov
+    WHERE s.status = 'Activa' AND tm.tipo_movimiento = 'Salida'
+      AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+      AND s.fecha_salida >= DATE_FORMAT(CURDATE(),'%Y-%m-01')
+      AND s.fecha_salida < DATE_FORMAT(CURDATE() + INTERVAL 1 MONTH,'%Y-%m-01')")['t'] ?? 0);
+$widget_ventas_hoy = (int)($db->fetchOne("SELECT COUNT(*) as t
+    FROM salidas s JOIN tipos_movimientos tm ON s.id_tipo_mov = tm.id_tipo_mov
+    WHERE s.status = 'Activa' AND tm.tipo_movimiento = 'Salida'
+      AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+      AND s.fecha_salida >= CURDATE()")['t'] ?? 0);
 
 $flash = $_SESSION['flash_msg'] ?? null;
 unset($_SESSION['flash_msg']);
@@ -403,7 +437,7 @@ unset($_SESSION['flash_msg']);
 <head>
 <?php include '../includes/diseno.php'; ?>
     <title>Salidas / Ventas | JV3000 C.A.</title>
-        <link rel="stylesheet" href="../assets/modules/salidas/salidas.css">
+        <link rel="stylesheet" href="../assets/modules/salidas/salidas.css?v=6">
 </head>
 <!-- BODY HTML -->
 <body>
@@ -416,11 +450,11 @@ unset($_SESSION['flash_msg']);
         <div class="d-flex align-items-center gap-3 mb-4">
             <div class="sal-header-icon"><i class="bi bi-cart-x-fill"></i></div>
             <div>
-                <h1 class="font-brand m-0" style="font-size:1.6rem;letter-spacing:-1px; color: var(--jv-text-primary);">SALIDAS / VENTAS</h1>
-                <p class="text-secondary small fw-bold text-uppercase m-0">Notas de Entrega y Despacho</p>
+                <h1 class="font-brand m-0 sal-titulo">SALIDAS / VENTAS</h1>
+                <p class="text-secondary fw-bold text-uppercase m-0 sal-subtitulo">Notas de Entrega y Despacho</p>
             </div>
             <div class="ms-auto">
-                <button class="btn btn-jv-primary" onclick="nuevaSalida()">
+                <button class="btn btn-jv-primary btn-lg" onclick="nuevaSalida()">
                     <i class="bi bi-cart-plus-fill me-2"></i>NUEVA VENTA
                 </button>
             </div>
@@ -433,47 +467,91 @@ unset($_SESSION['flash_msg']);
         </div>
         <?php endif; ?>
 
+        <!-- Estadísticas / Widgets -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="widget-card" style="border-left:4px solid var(--jv-success);">
+                    <div class="widget-icon" style="background:rgba(22,163,74,0.12);color:var(--jv-success);">
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                    <div>
+                        <div class="widget-label">Ventas del Mes</div>
+                        <div class="widget-value" style="color: var(--jv-text-primary);">$<?php echo number_format($widget_ventas_mes, 2); ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="widget-card" style="border-left:4px solid var(--jv-info);">
+                    <div class="widget-icon" style="background:rgba(14,165,233,0.12);color:var(--jv-info);">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                    <div>
+                        <div class="widget-label">Unidades Vendidas (Mes)</div>
+                        <div class="widget-value" style="color: var(--jv-text-primary);"><?php echo number_format($widget_und_mes, 0); ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="widget-card" style="border-left:4px solid var(--jv-warning);">
+                    <div class="widget-icon" style="background:rgba(245,158,11,0.12);color:var(--jv-warning);">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <div>
+                        <div class="widget-label">Ventas de Hoy</div>
+                        <div class="widget-value" style="color: var(--jv-text-primary);"><?php echo $widget_ventas_hoy; ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Tabla de ventas -->
         <div class="card-jv p-0">
+            <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
+                <i class="bi bi-search me-1" style="font-size:1rem;color:var(--jv-orange);"></i>
+                <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nota, control, cliente, RIF, productos, tipo..." id="buscarSal" onkeyup="filtrarSalidas()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;max-width:340px;">
+            </div>
             <div class="table-responsive">
                 <table class="table-jv mb-0">
                     <thead>
                         <tr>
-                            <th style="width:145px;">Nota de Entrega</th>
-                            <th style="width:140px;">Control</th>
-                            <th>Cliente</th>
-                            <th>Productos</th>
-                            <th class="text-center" style="width:55px;">Cant</th>
-                            <th class="text-center" style="width:180px;">Tipo</th>
-                            <th class="text-end" style="width:110px;">Total</th>
-                            <th class="text-center" style="width:85px;">Fecha</th>
-                            <th class="text-center" style="width:120px;"></th>
+                            <th style="width:10%;">Nota</th>
+                            <th style="width:10%;">N° Control</th>
+                            <th style="width:15%;">Cliente</th>
+                            <th style="width:20%;">Productos</th>
+                            <th class="text-center" style="width:6%;">Cant</th>
+                            <th class="text-center" style="width:12%;">Tipo</th>
+                            <th style="width:9%;">Total</th>
+                            <th class="text-center" style="width:8%;">Fecha</th>
+                            <th class="text-center" style="width:10%;">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tablaSalidas">
                         <?php if (count($salidas) > 0): ?>
                             <?php foreach ($salidas as $row): ?>
+                                <?php
+                                    $productos_full = $row['productos_list'] ?? '';
+                                    $g = getGrupoTipo($row['tipo_mov_nombre'] ?? '');
+                                ?>
                                 <tr>
                                     <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura_manual'] ?: '#' . $row['id_salida']); ?></span></td>
-                                    <td style="font-size:.82rem;color:var(--jv-text-secondary);"><?php echo htmlspecialchars($row['nro_control']); ?></td>
-                                    <td class="text-uppercase">
-                                        <div class="fw-bold" style="font-size:.85rem;"><?php echo htmlspecialchars($row['cliente'] ?? 'S/Cliente'); ?></div>
-                                        <div class="text-secondary small" style="font-size:.7rem;"><?php echo htmlspecialchars($row['rif_cliente'] ?? 'S/RIF'); ?></div>
+                                    <td class="td-control" data-tooltip="<?php echo htmlspecialchars($row['nro_control']); ?>"><?php echo htmlspecialchars($row['nro_control']); ?></td>
+                                    <td class="text-uppercase td-cliente" data-tooltip="<?php echo htmlspecialchars(($row['cliente'] ?? 'S/Cliente') . ' - ' . ($row['rif_cliente'] ?? 'S/RIF')); ?>">
+                                        <div class="cli-nombre"><?php echo htmlspecialchars($row['cliente'] ?? 'S/Cliente'); ?></div>
+                                        <div class="cli-rif"><?php echo htmlspecialchars($row['rif_cliente'] ?? 'S/RIF'); ?></div>
                                     </td>
-                                    <td style="font-size:.82rem;color:var(--jv-text-secondary);"><?php echo htmlspecialchars(mb_substr($row['productos_list'] ?? '', 0, 60)) . (mb_strlen($row['productos_list'] ?? '') > 60 ? '...' : ''); ?></td>
-                                    <td class="text-center"><span class="badge-jv badge-danger" style="font-size:.7rem;padding:3px 12px;">-<?php echo $row['total_cantidad']; ?></span></td>
+                                    <td class="td-productos" data-tooltip="<?php echo htmlspecialchars($productos_full); ?>"><?php echo htmlspecialchars($productos_full); ?></td>
+                                    <td class="text-center"><span class="badge-jv badge-danger" style="padding:6px 14px;">-<?php echo $row['total_cantidad']; ?></span></td>
                                     <td class="text-center"><?php
                                         $tn = $row['tipo_mov_nombre'] ?? '';
                                         $obs = $row['observaciones'] ?? '';
                                         $causa = '';
                                         if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $obs, $m)) $causa = trim($m[1]);
-                                        $g = getGrupoTipo($tn);
                                         if ($g === 'venta') echo '<span class="badge-jv badge-success"><i class="bi bi-cart me-1"></i>Venta</span>';
                                         elseif ($g === 'regalias') echo '<span class="badge-jv badge-info"><i class="bi bi-gift me-1"></i>Regalía</span>';
                                         else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" title="' . htmlspecialchars($tn) . ($causa ? ': ' . htmlspecialchars($causa) : '') . '" onclick="verDetalleDano(\'' . htmlspecialchars($tn, ENT_QUOTES) . '\', \'' . htmlspecialchars($causa, ENT_QUOTES) . '\')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($tn) . '</span>';
                                     ?></td>
-                                    <td class="text-end fw-bold" style="font-size:.9rem;<?php echo $g === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($row['total_monto'] ?? 0, 2); ?></td>
-                                    <td class="text-center" style="font-weight:600;font-size:.82rem;color:var(--jv-text-primary);"><?php echo date('d/m/Y', strtotime($row['fecha_salida'])); ?></td>
+                                    <td class="td-total" style="<?php echo $g === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($row['total_monto'] ?? 0, 2); ?></td>
+                                    <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_salida'])); ?></td>
                                     <td class="text-center" style="white-space:nowrap;">
                                         <button class="btn-action" onclick="verFactura(<?php echo $row['id_salida']; ?>)" title="Ver Nota">
                                             <i class="bi bi-receipt"></i>
@@ -514,7 +592,7 @@ unset($_SESSION['flash_msg']);
                     <input type="hidden" name="id_salida" id="s_id_edit">
                     <div class="modal-body p-3">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bolder font-brand text-uppercase m-0" id="modalTitle" style="color:var(--jv-navy);">REGISTRAR MOVIMIENTO</h5>
+                            <h5 class="fw-bolder font-brand text-uppercase m-0 modal-title-jv" id="modalTitle">REGISTRAR MOVIMIENTO</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
@@ -545,7 +623,12 @@ unset($_SESSION['flash_msg']);
                                 <div class="row g-2">
                                     <div class="col-md-6">
                                         <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
-                                        <input type="text" name="cliente" id="s_cliente" class="input-jv" placeholder="Nombre o Razón Social">
+                                        <div class="com-toolbox">
+                                            <input type="text" class="input-jv w-100" id="buscarClienteSal" placeholder="Buscar o escribir cliente..." autocomplete="off">
+                                            <input type="hidden" name="id_cliente" id="s_id_cliente">
+                                            <input type="hidden" name="cliente" id="s_cliente">
+                                            <div class="com-resultados" id="resultadosBusquedaCli"></div>
+                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="small fw-bold text-secondary mb-2">RIF / CÉDULA <span style="color:var(--jv-danger);">*</span></label>
@@ -556,6 +639,7 @@ unset($_SESSION['flash_msg']);
                                                 <option value="E">E-</option>
                                                 <option value="P">P-</option>
                                                 <option value="G">G-</option>
+                                                <option value="C">C-</option>
                                             </select>
                                             <input type="text" id="s_rif_num" class="input-jv" placeholder="Número de identificación" oninput="validarRIFInput()" style="flex:1;" inputmode="numeric">
                                             <input type="hidden" name="rif_cliente" id="s_rif">
@@ -583,7 +667,7 @@ unset($_SESSION['flash_msg']);
                                     </div>
                                     <div class="col-md-7">
                                         <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
-                                        <input type="text" name="cliente" id="s_cliente_reg" class="input-jv" placeholder="Nombre o Razón Social" oninput="document.getElementById('s_cliente').value=this.value">
+                                        <input type="text" id="s_cliente_reg" class="input-jv" placeholder="Nombre o Razón Social" oninput="document.getElementById('s_cliente').value=this.value">
                                     </div>
                                 </div>
                             </div>
@@ -619,32 +703,12 @@ unset($_SESSION['flash_msg']);
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-5">
                                     <label class="small fw-bold text-secondary mb-1">Producto</label>
-                                        <select id="s_prod" class="input-jv" onchange="cargarPrecio()">
-                                            <option value="">Seleccionar...</option>
-                                            <?php foreach ($productos as $pr):
-                                                $alerta = '';
-                                                $stock = (int)$pr['stock_actual'];
-                                                $es_vencido = $pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d');
-                                                if ($es_vencido) {
-                                                    $alerta = '«VENCIDO» ';
-                                                } elseif ($pr['fecha_vencimiento'] && $pr['fecha_vencimiento'] <= date('Y-m-d', strtotime('+7 days'))) {
-                                                    $alerta = '«PRÓX» ';
-                                                }
-                                                $disabled = $stock <= 0 ? 'disabled' : '';
-                                                $venc_lot = isset($mapa_lotes[(int)$pr['id_producto']]) ? (int)$mapa_lotes[(int)$pr['id_producto']]['vencido'] : ($es_vencido ? $stock : 0);
-                                                $vig_lot = isset($mapa_lotes[(int)$pr['id_producto']]) ? (int)$mapa_lotes[(int)$pr['id_producto']]['vigente'] : ($es_vencido ? 0 : $stock);
-                                                $agotado = ($venc_lot + $vig_lot) <= 0;
-                                                $disabled = $agotado ? 'disabled' : '';
-                                                $label = $alerta . $pr['sku'] . ' - ' . $pr['nombre_producto'];
-                                                if ($agotado) {
-                                                    $label .= ' (AGOTADO)';
-                                                } else {
-                                                    $label .= " (Stock: $stock)";
-                                                }
-                                            ?>
-                                                <option value="<?php echo $pr['id_producto']; ?>" data-precio="<?php echo $pr['precio_venta']; ?>" data-costo="<?php echo $pr['precio_costo']; ?>" data-stock="<?php echo $stock; ?>" data-stock-vigente="<?php echo $vig_lot; ?>" data-stock-vencido="<?php echo $venc_lot; ?>" data-vencido="<?php echo $es_vencido ? '1' : '0'; ?>" <?php echo $disabled; ?>><?php echo htmlspecialchars($label, ENT_QUOTES); ?></option>
-                                            <?php endforeach; ?>
-                                    </select>
+                                    <div class="com-toolbox">
+                                        <input type="text" class="input-jv w-100" id="buscarProductoSal" placeholder="Buscar por nombre o SKU..." autocomplete="off">
+                                        <input type="hidden" id="selProductoSalId">
+                                        <input type="hidden" id="selProductoSalNombre">
+                                        <div class="com-resultados" id="resultadosBusquedaSal"></div>
+                                    </div>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="small fw-bold text-secondary mb-1">Cant</label>
@@ -663,29 +727,27 @@ unset($_SESSION['flash_msg']);
                         </div>
 
                         <!-- TABLA DE PRODUCTOS -->
-                        <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;margin-top:8px;">
-                            <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
+                        <div class="sal-prod-table">
+                            <table>
                                 <thead>
-                                    <tr style="background:var(--jv-navy);">
-                                        <th style="padding:4px 6px;width:26px;text-align:center;color:#fff;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">#</th>
-                                        <th style="padding:4px 6px;color:#fff;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Producto</th>
-                                        <th style="padding:4px 6px;width:50px;text-align:center;color:#fff;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Cant</th>
-                                        <th style="padding:4px 6px;width:85px;text-align:right;color:#fff;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Precio</th>
-                                        <th style="padding:4px 6px;width:85px;text-align:right;color:#fff;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Total</th>
+                                    <tr>
+                                        <th style="width:26px;">#</th>
+                                        <th>Producto</th>
+                                        <th style="width:50px;">Cant</th>
+                                        <th style="width:85px;">Precio</th>
+                                        <th style="width:85px;">Total</th>
                                         <th style="width:26px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="s_productos_body">
-                                    <tr id="s_fila_vacia"><td colspan="6" style="padding:18px 10px;text-align:center;color:var(--jv-text-muted);font-size:.8rem;border-bottom:1px solid var(--jv-border);">⬆ Agregue productos con los controles de arriba</td></tr>
+                                    <tr id="s_fila_vacia"><td colspan="6" class="sal-fila-vacia">⬆ Agregue productos con los controles de arriba</td></tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;margin-top:6px;background:var(--jv-bg-card);border:1px solid var(--jv-border);border-radius:8px;">
-                            <span class="text-secondary small">Productos</span>
-                            <span class="fw-bold ms-2" id="s_total_items" style="color:var(--jv-navy);">0</span>
-                            <span class="text-secondary small ms-auto">Total Venta</span>
-                            <span class="fw-bold ms-2" id="s_total_monto" style="color:var(--jv-navy);">$0.00</span>
+                        <div class="sal-totales-bar">
+                            <span class="tt-label">Productos <span class="tt-valor" id="s_total_items">0</span></span>
+                            <span class="tt-label ms-auto">Total Venta <span class="tt-valor" id="s_total_monto">$0.00</span></span>
                         </div>
 
                         <!-- OBSERVACIONES -->

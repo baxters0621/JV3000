@@ -2,114 +2,134 @@
     Chart.defaults.color = '#6C757D';
     Chart.defaults.borderColor = 'rgba(222,226,230,0.5)';
 
-    const fechas = window.JV_CONFIG.c0;
-    const ventas = window.JV_CONFIG.c1;
-    const compras = window.JV_CONFIG.c2;
+    const cfg = window.JV_CONFIG || {};
 
-    new Chart(document.getElementById('chartFlujo'), {
-        type: 'line',
-        data: {
-            labels: fechas,
-            datasets: [
-                { label: 'Ventas ($)', data: ventas, borderColor: '#DC2626', backgroundColor: 'rgba(220,38,38,0.1)', fill: true, tension: 0.4 },
-                { label: 'Compras ($)', data: compras, borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.4 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
-            scales: {
-                y: { beginAtZero: true, grid: { display: true } },
-                x: { grid: { display: false } }
-            }
-        }
-    });
-    new Chart(document.getElementById('chartTop'), {
-        type: 'doughnut',
-        data: {
-            labels: window.JV_CONFIG.c3,
-            datasets: [{
-                data: window.JV_CONFIG.c4,
-                backgroundColor: window.JV_CONFIG.c5,
-                borderWidth: 0, hoverOffset: 12
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        color: '#212529',
-                        usePointStyle: true,
-                        padding: 14,
-                        font: { size: 13, weight: 'bold' },
-                        boxWidth: 16,
-                        boxHeight: 16
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(ctx) {
-                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                            if (total === 0) return ctx.label + ': 0';
-                            const pct = ((ctx.parsed / total) * 100).toFixed(1);
-                            return ctx.label + ': ' + ctx.parsed + ' uds (' + pct + '%)';
-                        }
-                    }
-                }
+    // ---------- GRÁFICO DE LÍNEAS: VENTAS VS COMPRAS ----------
+    let chartFlujo = null;
+    function crearChartFlujo(labels, ventas, compras) {
+        if (chartFlujo) chartFlujo.destroy();
+        chartFlujo = new Chart(document.getElementById('chartFlujo'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Ventas ($)', data: ventas, borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,0.12)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#16A34A' },
+                    { label: 'Compras ($)', data: compras, borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.12)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#2563EB' }
+                ]
             },
-            cutout: '62%'
-        }
-    });
-
-    // Auto-refresh cada 30s
-    function refreshKPIs() {
-        fetch('../includes/estadisticas_ajax.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.json())
-            .then(d => {
-                try {
-                    if (d.success) {
-                        document.getElementById('kpi-ventas').textContent = '$' + d.ventas_7d;
-                        document.getElementById('kpi-compras').textContent = '$' + d.compras_7d;
-                        document.getElementById('kpi-margen').textContent = '$' + d.margen_7d;
-                        document.getElementById('kpi-tx').textContent = d.transacciones_7d;
-                        document.getElementById('prof-ingresos').textContent = '$' + d.ventas_7d;
-                        document.getElementById('prof-costo').textContent = '$' + d.costo_vendido_7d;
-                        document.getElementById('prof-ganancia').textContent = '$' + d.margen_7d;
-                        const pm = document.getElementById('prof-margen');
-                        const porc = d.porc_margen;
-                        pm.innerHTML = '<i class="bi bi-percent"></i> ' + porc + '%';
-                        pm.className = 'margen-badge';
-                        if (porc < 10) pm.classList.add('malo');
-                        else if (porc < 20) pm.classList.add('bajo');
-                        let htmlTop = '';
-                        if (d.top_ganancia && d.top_ganancia.length > 0) {
-                            d.top_ganancia.forEach(tp => {
-                                htmlTop += `<tr><td>${escapeHtml(tp.producto)}</td><td class="text-center">${tp.unidades}</td><td class="text-end fw-bold" style="color:var(--jv-success);">$${tp.ganancia}</td><td class="text-end"><span class="profit-table-pct"><span class="pct-bar" style="--pct:${tp.pct}%"></span>${tp.pct}%</span></td></tr>`;
-                            });
-                        } else {
-                            htmlTop = '<tr><td colspan="4" class="text-center text-secondary small py-3">Sin datos en los últimos 7 días</td></tr>';
-                        }
-                        document.getElementById('tabla-top-ganancia').innerHTML = htmlTop;
-                    }
-                } catch(e) { console.error('Stats refresh error:', e); }
-            })
-            .catch(() => {});
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' }, usePointStyle: true, padding: 16 } }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(222,226,230,0.35)' }, ticks: { font: { size: 12 } } },
+                    x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } }
+                }
+            }
+        });
     }
 
-    setInterval(refreshKPIs, 60000);
-    
+    // ---------- GRÁFICO DE BARRAS HORIZONTALES: TOP 5 ----------
+    let chartTop = null;
+    function crearChartTop(labels, cant) {
+        if (chartTop) chartTop.destroy();
+        const datos = (labels && labels.length > 0) ? cant : [0];
+        const etiquetas = (labels && labels.length > 0) ? labels : ['Sin datos'];
+        chartTop = new Chart(document.getElementById('chartTop'), {
+            type: 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [{
+                    label: 'Unidades',
+                    data: datos,
+                    backgroundColor: ['#EA580C', '#2563EB', '#6F42C1', '#16A34A', '#D97706'],
+                    borderRadius: 8,
+                    barThickness: 22
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => items[0] ? items[0].label : '',
+                            label: (ctx) => ' ' + ctx.parsed.x + ' uds'
+                        }
+                    }
+                },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: 'rgba(222,226,230,0.35)' }, ticks: { precision: 0, font: { size: 12 } } },
+                    y: { grid: { display: false }, ticks: { font: { size: 13, weight: 'bold' } } }
+                }
+            }
+        });
+    }
 
-    const observer = new MutationObserver(() => {
-        if (document.body.classList.contains('sidebar-open')) {
-            mainWrapper.classList.add('sidebar-open');
-        } else {
-            mainWrapper.classList.remove('sidebar-open');
+    // ---------- ACTUALIZAR INTERFAZ DESDE DATOS ----------
+    function actualizarUI(d) {
+        if (!d || !d.success) return;
+
+        const fmt = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const set = (id, valor) => { const el = document.getElementById(id); if (el) el.textContent = valor; };
+        set('kpi-ventas', fmt(d.ventas));
+        set('kpi-compras', fmt(d.compras));
+        set('kpi-ganancia', fmt(d.ganancia));
+
+        const sellos = {
+            'kpi-ventas': d.pct_ventas,
+            'kpi-compras': d.pct_compras,
+            'kpi-ganancia': d.pct_ganancia
+        };
+        for (const [id, pct] of Object.entries(sellos)) {
+            const wrap = document.getElementById(id)?.parentElement?.querySelector('.cmp-wrap');
+            if (!wrap) continue;
+            wrap.innerHTML = pct === null || pct === undefined
+                ? '<span class="cmp-sello cmp-nulo">—</span>'
+                : (pct >= 0
+                    ? `<span class="cmp-sello cmp-subida" title="Aumento respecto al periodo anterior"><i class="bi bi-arrow-up-right"></i> +${pct.toFixed(1)}%</span>`
+                    : `<span class="cmp-sello cmp-bajada" title="Descenso respecto al periodo anterior"><i class="bi bi-arrow-down-right"></i> ${pct.toFixed(1)}%</span>`);
         }
+
+        set('cmp-mensaje-texto', d.mensaje);
+        set('cmp-periodo', d.etiqueta);
+
+        crearChartFlujo(d.labels, d.data_ventas, d.data_compras);
+        crearChartTop(d.topLabels, d.topCant);
+    }
+
+    // ---------- FILTROS: BOTONES DE PERIODO ----------
+    document.querySelectorAll('.btn-filtro-periodo').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const p = btn.dataset.periodo;
+            window.location.href = 'estadisticas.php?periodo=' + p;
+        });
     });
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    
+
+    // ---------- RENDER INICIAL ----------
+    if (cfg.labels) {
+        crearChartFlujo(cfg.labels, cfg.ventas, cfg.compras);
+    }
+    if (cfg.topLabels) {
+        crearChartTop(cfg.topLabels, cfg.topCant);
+    }
+
+    // ---------- AUTO-REFRESH CADA 60 S ----------
+    const urlParams = new URLSearchParams(window.location.search);
+    const periodoActivo = cfg.periodo || 'semana';
+    const qs = periodoActivo === 'rango'
+        ? '?periodo=rango&desde=' + (urlParams.get('desde') || '') + '&hasta=' + (urlParams.get('hasta') || '')
+        : '?periodo=' + periodoActivo;
+
+    function refreshEstadisticas() {
+        fetch('../includes/estadisticas_ajax.php' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.json())
+            .then(d => { try { actualizarUI(d); } catch (e) { console.error('Stats refresh error:', e); } })
+            .catch(() => {});
+    }
+    setInterval(refreshEstadisticas, 60000);

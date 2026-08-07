@@ -3,13 +3,11 @@
 // INICIALIZACIÓN
 // ==========================================
 if (!isset($base_assets)) {
-    $base_assets = (basename(dirname($_SERVER['PHP_SELF'])) === 'modules') ? '../assets/' : 'assets/';
+    $base_assets = BASE_PATH . 'assets/';
 }
-$donde_estoy = basename(dirname($_SERVER['PHP_SELF']));
 $archivo_actual = basename($_SERVER['PHP_SELF']);
 
-$es_modulo = ($donde_estoy === 'modules');
-$prefijo = $es_modulo ? '../' : '';
+$prefijo = BASE_PATH;
 
 $nombre_visual = ucfirst($_SESSION['usuario'] ?? 'Invitado');
 $id_rol = (int)($_SESSION['id_rol'] ?? 0);
@@ -20,18 +18,6 @@ $rol_visual = $roles_map[$id_rol] ?? 'Sin rol';
 $es_admin = Security::esAdmin();
 $es_op_carga = $id_rol === 2;
 $es_op_ventas = $id_rol === 3;
-
-// Alertas críticas para la campana (solo admin)
-$db = Database::getInstance();
-$notif_vencidos = 0;
-$notif_proximos = 0;
-$notif_bajos = 0;
-if ($es_admin) {
-    $notif_vencidos = (int)($db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE cantidad_restante > 0 AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento <= CURDATE()")['n'] ?? 0);
-    $notif_proximos = (int)($db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE cantidad_restante > 0 AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento > CURDATE() AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)")['n'] ?? 0);
-    $notif_bajos = (int)($db->fetchOne("SELECT COUNT(*) as n FROM productos WHERE status = 'Activo' AND stock_actual <= stock_minimo")['n'] ?? 0);
-}
-$notif_total = $notif_vencidos + $notif_proximos + $notif_bajos;
 
 // Detección de página activa
 function es_activo(string $pagina, string $modulo = ''): string
@@ -48,16 +34,17 @@ function es_activo(string $pagina, string $modulo = ''): string
 <aside class="sidebar" id="sidebar">
     <!-- Encabezado / Marca -->
     <div class="sidebar-header">
-        <a href="<?php echo $prefijo; ?>index.php" class="brand-link">
-            <span class="brand-jv">JV</span><span class="brand-num">3000</span><span class="brand-ca"> C.A.</span>
+        <a href="<?php echo $prefijo; ?>dashboard/index.php" class="brand-link">
+            <img class="brand-mark" src="<?php echo $base_assets; ?>img/logo-mark.svg?v=1" alt="JV3000">
         </a>
+        <span class="brand-tag">Inventario y Ventas</span>
     </div>
 
     <!-- Menú de navegación -->
     <nav class="sidebar-nav">
         <!-- Panel de Inicio -->
         <div class="nav-item nav-dashboard <?php echo ($archivo_actual === 'index.php') ? 'active' : ''; ?>">
-            <a href="<?php echo $prefijo; ?>index.php" class="nav-link">
+            <a href="<?php echo $prefijo; ?>dashboard/index.php" class="nav-link">
                 <i class="bi bi-house-door"></i>
                 <span>Panel de Inicio</span>
             </a>
@@ -105,6 +92,14 @@ function es_activo(string $pagina, string $modulo = ''): string
                     <span>Compras</span>
                 </a>
             </div>
+
+            <!-- Recepción de mercancía -->
+            <div class="nav-item nav-recepcion <?php echo ($archivo_actual === 'recepcion.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>modules/recepcion.php" class="nav-link">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                    <span>Recepción</span>
+                </a>
+            </div>
         <?php endif; ?>
 
         <!-- --- Admin-only menu items --- -->
@@ -134,7 +129,7 @@ function es_activo(string $pagina, string $modulo = ''): string
         <!-- Usuarios -->
         <?php if ($es_admin): ?>
             <div class="nav-item nav-usuarios <?php echo ($archivo_actual === 'usuarios.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>usuarios.php" class="nav-link">
+                <a href="<?php echo $prefijo; ?>dashboard/usuarios.php" class="nav-link">
                     <i class="bi bi-people-fill"></i>
                     <span>Usuarios</span>
                 </a>
@@ -165,7 +160,7 @@ function es_activo(string $pagina, string $modulo = ''): string
 
         <!-- Mi Perfil -->
         <div class="nav-item nav-perfil <?php echo ($archivo_actual === 'perfil.php') ? 'active' : ''; ?>">
-            <a href="<?php echo $prefijo; ?>perfil.php" class="nav-link">
+            <a href="<?php echo $prefijo; ?>dashboard/perfil.php" class="nav-link">
                 <i class="bi bi-person-gear"></i>
                 <span>Mi Perfil</span>
             </a>
@@ -174,33 +169,6 @@ function es_activo(string $pagina, string $modulo = ''): string
 
     <!-- Pie / Info de usuario -->
     <div class="sidebar-footer">
-        <?php if ($es_admin): ?>
-        <div class="notif-wrap">
-            <button type="button" class="notif-btn" id="notifBtn" onclick="toggleNotif(event)" title="Alertas críticas">
-                <i class="bi bi-bell"></i>
-                <?php if ($notif_total > 0): ?><span class="notif-badge"><?php echo min($notif_total, 99); ?></span><?php endif; ?>
-            </button>
-            <div class="notif-panel" id="notifPanel">
-                <div class="notif-head">ALERTAS CRÍTICAS</div>
-                <?php if ($notif_total === 0): ?>
-                    <div class="notif-empty"><i class="bi bi-check-circle"></i> Sin alertas críticas</div>
-                <?php else: ?>
-                    <a class="notif-item notif-danger" href="<?php echo $prefijo; ?>modules/productos.php">
-                        <i class="bi bi-x-octagon"></i>
-                        <div><strong>Productos vencidos</strong><small><?php echo $notif_vencidos; ?> lote(s) caducado(s)</small></div>
-                    </a>
-                    <a class="notif-item notif-warn" href="<?php echo $prefijo; ?>modules/productos.php">
-                        <i class="bi bi-clock-history"></i>
-                        <div><strong>Próximos a vencer</strong><small><?php echo $notif_proximos; ?> lote(s) en ≤ 30 días</small></div>
-                    </a>
-                    <a class="notif-item notif-info" href="<?php echo $prefijo; ?>modules/productos.php">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <div><strong>Stock bajo / agotado</strong><small><?php echo $notif_bajos; ?> producto(s) bajo mínimo</small></div>
-                    </a>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endif; ?>
         <div class="user-info">
             <div class="user-avatar">
                 <i class="bi bi-person-fill"></i>
@@ -209,7 +177,7 @@ function es_activo(string $pagina, string $modulo = ''): string
                 <span class="user-name"><?php echo htmlspecialchars($nombre_visual); ?></span>
                 <span class="user-role"><?php echo htmlspecialchars($rol_visual); ?></span>
             </div>
-            <a href="<?php echo $prefijo; ?>logout.php" class="btn-logout" title="Cerrar Sesión">
+            <a href="<?php echo $prefijo; ?>login/logout.php" class="btn-logout" title="Cerrar Sesión">
                 <i class="bi bi-power"></i>
             </a>
         </div>
@@ -226,11 +194,11 @@ function es_activo(string $pagina, string $modulo = ''): string
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 <!-- ESTILOS DEL SIDEBAR -->
-<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css">
+<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=7">
 
 <script src="<?php echo $base_assets; ?>js/sweetalert2.all.min.js"></script>
 <script>
     window.JV_CONFIG = window.JV_CONFIG || {};
     window.JV_CONFIG.prefijo = <?php echo json_encode($prefijo); ?>;
 </script>
-<script src="<?php echo $base_assets; ?>js/sidebar.js"></script>
+<script src="<?php echo $base_assets; ?>js/sidebar.js?v=2"></script>

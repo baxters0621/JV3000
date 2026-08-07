@@ -9,6 +9,7 @@ Security::verificarPermisoCarga();
 $csrf_token = Security::generateToken();
 
 $registros_por_pagina = 30;
+if (isset($_GET['producto']) || isset($_GET['alerta'])) $registros_por_pagina = 1000;
 $pagina_actual = isset($_GET['p']) ? (int)$_GET['p'] : 1;
 if ($pagina_actual < 1) $pagina_actual = 1;
 $offset = ($pagina_actual - 1) * $registros_por_pagina;
@@ -135,7 +136,7 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
 <head>
     <?php include '../includes/diseno.php'; ?>
     <title>Inventario | JV3000 C.A.</title>
-        <link rel="stylesheet" href="../assets/modules/productos/productos.css">
+        <link rel="stylesheet" href="../assets/modules/productos/productos.css?v=7">
 </head>
 
 <!-- BODY HTML -->
@@ -148,12 +149,12 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
 
             <!-- Encabezado -->
             <div class="card-jv d-flex align-items-center gap-3 mb-3" style="padding: 18px 24px; border-left: 4px solid var(--jv-orange);">
-                <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--jv-navy); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(15, 26, 46, 0.25);">
-                    <i class="bi bi-box-seam text-white" style="font-size: 1.3rem;"></i>
+                <div style="width: 56px; height: 56px; border-radius: 12px; background: var(--jv-navy); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(15, 26, 46, 0.25);">
+                    <i class="bi bi-box-seam text-white" style="font-size: 1.5rem;"></i>
                 </div>
                 <div>
-                    <h1 class="font-brand fw-bold m-0" style="font-size: 1.4rem; color: var(--jv-text-primary);">INVENTARIO</h1>
-                    <p class="m-0 text-secondary" style="font-size: 0.85rem;">Control Maestro de Existencias</p>
+                    <h1 class="font-brand fw-bold m-0" style="font-size: 2rem; color: var(--jv-text-primary);">INVENTARIO</h1>
+                    <p class="m-0 text-secondary" style="font-size: 1rem;">Control Maestro de Existencias</p>
                 </div>
             </div>
 
@@ -169,39 +170,39 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
             <!-- Tabla de productos -->
             <div class="card-jv card-jv-table p-0">
                 <div class="buscador-wrapper d-flex align-items-center flex-wrap gap-2 px-3 py-2">
-                    <i class="bi bi-search me-1" style="color: var(--jv-orange); font-size: 1rem;"></i>
-                    <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por SKU, nombre o proveedor..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; font-size: 0.85rem; padding: 8px 6px; max-width: 260px;">
+                    <i class="bi bi-search me-1" style="color: var(--jv-orange);"></i>
+                    <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nombre, código, proveedor, categoría, estado..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; max-width: 340px;">
                     <span class="actions-divider mx-1"></span>
-                    <span class="small fw-bold text-uppercase" style="color:var(--jv-text-muted);font-size:.65rem;letter-spacing:1px;">Estado:</span>
+                    <span class="small fw-bold text-uppercase" style="color:var(--jv-text-muted);font-size:.8rem;letter-spacing:1px;">Estado:</span>
                     <div class="btn-group btn-group-sm" role="group">
                         <button type="button" class="btn-filter-prod active" data-status="todas" onclick="filtrarStatus(this)">Todos</button>
                         <button type="button" class="btn-filter-prod" data-status="Activo" onclick="filtrarStatus(this)">Activos</button>
                         <button type="button" class="btn-filter-prod" data-status="Inactivo" onclick="filtrarStatus(this)">Inactivos</button>
                     </div>
                     <span class="actions-divider mx-1"></span>
-                    <span class="small fw-bold text-uppercase" style="color:var(--jv-text-muted);font-size:.65rem;letter-spacing:1px;">Vence:</span>
+                    <span class="small fw-bold text-uppercase" style="color:var(--jv-text-muted);font-size:.8rem;letter-spacing:1px;">Vence:</span>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-sm btn-filtro-venc active" data-venc="todas" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:6px 0 0 6px;background:rgba(234,88,12,0.15);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.3);">Todas</button>
-                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vencido" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:0;background:transparent;color:var(--jv-danger);border:1px solid rgba(220,38,38,0.3);">Vencidos</button>
-                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="proximo" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">Próximo</button>
-                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="pronto" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">Pronto</button>
-                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vigente" onclick="filtrarVenc(this)" style="padding:4px 12px;font-size:.7rem;font-weight:700;border-radius:0 6px 6px 0;background:transparent;color:var(--jv-success);border:1px solid rgba(22,163,74,0.3);">Vigente</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc active" data-venc="todas" onclick="filtrarVenc(this)" style="border-radius:6px 0 0 6px;background:rgba(234,88,12,0.15);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.3);">Todas</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vencido" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-danger);border:1px solid rgba(220,38,38,0.3);">Vencidos</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="proximo" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">Próximo</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="pronto" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">Pronto</button>
+                        <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vigente" onclick="filtrarVenc(this)" style="border-radius:0 6px 6px 0;background:transparent;color:var(--jv-success);border:1px solid rgba(22,163,74,0.3);">Vigente</button>
                     </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table-jv mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 16%;">SKU</th>
-                                <th style="width: 26%;">PRODUCTO</th>
-                                <th style="width: 11%;">CATEGORÍA</th>
-                                <th style="width: 16%;">PROVEEDOR</th>
-                                <th style="width: 12%;" class="text-center">STOCK</th>
-                                <th style="width: 12%;">PRECIO VENTA</th>
-                                <th style="width: 10%;" class="text-center">VENCE</th>
-                                <th style="width: 9%;" class="text-center">ESTADO</th>
+                                <th class="text-center" style="width:9%;">CÓDIGO</th>
+                                <th style="width:22%;">PRODUCTO</th>
+                                <th style="width:13%;">CATEGORÍA</th>
+                                <th style="width:14%;">PROVEEDOR</th>
+                                <th class="text-center" style="width:8%;">STOCK</th>
+                                <th style="width:9%;">PRECIO</th>
+                                <th class="text-center" style="width:7%;">VENCE</th>
+                                <th class="text-center" style="width:8%;">ESTADO</th>
                                 <?php if ($esAdmin): ?>
-                                    <th style="width: 10%;" class="text-center">ACCIONES</th>
+                                    <th class="text-center" style="width:10%;">ACCIONES</th>
                                 <?php endif; ?>
                             </tr>
                         </thead>
@@ -260,27 +261,27 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
                                     }
                                     ?>
                                     <tr data-id="<?php echo $row['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($row['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($row['ultimo_proveedor'] ?? '')); ?>" data-prov-id="<?php echo intval($row['id_proveedor'] ?? 0); ?>" data-stock="<?php echo $row['stock_actual']; ?>" data-minimo="<?php echo $row['stock_minimo']; ?>" data-max="<?php echo $max; ?>" data-maximo="<?php echo intval($row['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $row['precio_venta']; ?>" data-costo="<?php echo $row['precio_costo']; ?>" data-status="<?php echo $row['status']; ?>" data-venc="<?php echo $row['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
-                                        <td>
+                                        <td class="td-prod-sku">
                                             <span class="codigo-badge"><?php echo htmlspecialchars($row['sku']); ?></span>
                                         </td>
-                                        <td>
+                                        <td class="td-prod-nombre" data-tooltip="<?php echo htmlspecialchars($row['nombre_producto']); ?>">
                                             <span class="prod-nombre text-uppercase"><?php echo htmlspecialchars($row['nombre_producto']); ?></span>
                                         </td>
-                                        <td>
+                                        <td class="td-prod-cat" data-tooltip="<?php echo htmlspecialchars($row['nombre_cat'] ?? 'Sin categoría'); ?>">
                                             <span class="prod-cat"><?php echo htmlspecialchars($row['nombre_cat'] ?? 'Sin categoría'); ?></span>
                                         </td>
-                                        <td>
+                                        <td class="td-prod-prov" data-tooltip="<?php echo htmlspecialchars($row['ultimo_proveedor'] ?? '—'); ?>">
                                             <span class="prod-prov"><?php echo htmlspecialchars($row['ultimo_proveedor'] ?? '—'); ?></span>
                                         </td>
-                                        <td class="text-center" style="min-width:110px;">
+                                        <td class="td-stock text-center">
                                             <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
-                                                <span style="font-size:1.2rem;font-weight:900;color:var(--jv-text-primary);line-height:1;"><?php echo $stk; ?></span>
-                                                <span class="badge-jv badge-<?php echo $stk_cls; ?>" style="font-size:0.6rem;padding:2px 8px;"><?php echo $stk_lbl; ?></span>
+                                                <span class="stk-num"><?php echo $stk; ?></span>
+                                                <span class="badge-jv badge-<?php echo $stk_cls; ?>" style="font-size:0.75rem;padding:3px 10px;"><?php echo $stk_lbl; ?></span>
                                             </div>
                                             <div style="height:6px;background:rgba(15,26,46,0.08);border-radius:3px;overflow:hidden;margin:0 auto;max-width:100px;">
                                                 <div style="height:100%;width:<?php echo $stk_pct; ?>%;background:<?php echo $bar_color; ?>;border-radius:3px;transition:width 0.3s;"></div>
                                             </div>
-                                            <div style="font-size:0.6rem;color:var(--jv-text-muted);font-weight:600;margin-top:2px;">
+                                            <div class="stk-meta">
                                                 Mín: <?php echo $min; ?> · Máx: <?php echo $max; ?>
                                             </div>
                                         </td>
@@ -288,12 +289,12 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
                                             <span class="prod-precio">$<?php echo number_format($row['precio_venta'], 2); ?></span>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge-jv <?php echo $vc; ?>" style="white-space:nowrap;">
+                                            <span class="badge-jv <?php echo $vc; ?>" style="white-space:nowrap;font-size:.85rem;">
                                                 <i class="bi bi-<?php echo $vi; ?>"></i> <?php echo $vd ?: '—'; ?>
                                             </span>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>">
+                                            <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>" style="font-size:.85rem;">
                                                 <i class="bi bi-<?php echo ($row['status'] == 'Activo') ? 'eye' : 'eye-off'; ?>"></i>
                                                 <?php echo strtoupper($row['status']); ?>
                                             </span>
@@ -301,20 +302,20 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
                                         <?php if ($esAdmin): ?>
                                             <td class="text-center">
                                                 <div class="d-flex justify-content-center gap-1">
-                                                    <button type="button" class="btn btn-sm p-0" style="width:32px;height:32px;border-radius:8px;background:rgba(234,88,12,0.12);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="editarProducto(<?php echo $row['id_producto']; ?>)" title="Editar">
+                                                    <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(234,88,12,0.12);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="editarProducto(<?php echo $row['id_producto']; ?>)" title="Editar">
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
                                                     <?php if ($row['status'] === 'Activo'): ?>
-                                                        <button type="button" class="btn btn-sm p-0" style="width:32px;height:32px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="toggleProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>', 'desactivar')" title="Desactivar">
+                                                        <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>', 'desactivar')" title="Desactivar">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                         <?php if ($venc_cls === 'vencido'): ?>
-                                                            <button type="button" class="btn btn-sm p-0 ms-1" style="width:32px;height:32px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="bajaVencido(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Dar de baja por vencimiento">
+                                                            <button type="button" class="btn btn-sm p-0 ms-1" style="width:38px;height:38px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Dar de baja por vencimiento">
                                                                 <i class="bi bi-archive"></i>
                                                             </button>
                                                         <?php endif; ?>
                                                     <?php else: ?>
-                                                        <button type="button" class="btn btn-sm p-0" style="width:32px;height:32px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;transition:.15s;" onclick="toggleProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>', 'activar')" title="Reactivar">
+                                                        <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>', 'activar')" title="Reactivar">
                                                             <i class="bi bi-play-circle"></i>
                                                         </button>
                                                     <?php endif; ?>
@@ -326,9 +327,9 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
                             <?php else: ?>
                                 <tr>
                                     <td colspan="<?php echo $esAdmin ? 9 : 8; ?>" class="text-center py-5">
-                                        <i class="bi bi-box-seam d-block mb-3 mx-auto" style="font-size: 3rem; color: var(--jv-text-muted);"></i>
-                                        <span class="text-uppercase" style="color: var(--jv-text-primary); font-weight: 700; font-size: 0.95rem;">Inventario vacío</span>
-                                        <p class="mt-2" style="color: var(--jv-text-muted); font-size: 0.85rem;">Registra entradas desde <strong style="color: var(--jv-orange);">Compras</strong> para ver productos aquí</p>
+                                        <i class="bi bi-box-seam d-block mb-3 mx-auto" style="font-size: 3.5rem; color: var(--jv-text-muted);"></i>
+                                        <span class="text-uppercase" style="color: var(--jv-text-primary); font-weight: 700; font-size: 1.1rem;">Inventario vacío</span>
+                                        <p class="mt-2" style="color: var(--jv-text-muted); font-size: 1rem;">Registra entradas desde <strong style="color: var(--jv-orange);">Compras</strong> para ver productos aquí</p>
                                     </td>
                                 </tr>
                             <?php endif; ?>
@@ -389,7 +390,7 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
                                 <input type="text" class="input-jv" id="edit_nombre" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
                             <div class="mb-2">
-                                <label class="small fw-bold text-secondary mb-1">SKU</label>
+                                <label class="small fw-bold text-secondary mb-1">Código</label>
                                 <input type="text" class="input-jv" id="edit_sku" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
                             <div class="row g-2 mb-2">
@@ -454,7 +455,7 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
     <script>
     window.JV_CONFIG = { c0: '<?php echo $csrf_token; ?>', c1: '<?php echo $csrf_token; ?>' };
 </script>
-    <script src="../assets/modules/productos/productos.js"></script>
+    <script src="../assets/modules/productos/productos.js?v=3"></script>
 </body>
 
 </html>

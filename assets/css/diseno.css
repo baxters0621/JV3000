@@ -513,15 +513,11 @@ select.input-jv { appearance: auto; cursor: pointer; }
     margin-bottom: 32px;
 }
 
-.login-logo h1 {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--jv-navy);
-    margin: 0;
-    letter-spacing: -1px;
+.login-logo img {
+    width: 340px;
+    height: auto;
+    max-width: 100%;
 }
-
-.login-logo h1 span { color: var(--jv-orange); font-weight: 300; }
 
 .login-logo p {
     font-size: 0.65rem;

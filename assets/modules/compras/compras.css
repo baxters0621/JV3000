@@ -3,35 +3,36 @@
 
         /* ── Header icon ── */
         .com-header-icon {
-            width: 52px;
-            height: 52px;
+            width: 56px;
+            height: 56px;
             border-radius: 14px;
             background: linear-gradient(135deg, #059669, #065f46);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             flex-shrink: 0;
             box-shadow: 0 0 30px rgba(5, 150, 105, 0.3);
         }
 
-        /* ── Action button (36px) ── */
+        /* ── Action button (40px) ── */
         .btn-action {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 10px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border: 1px solid var(--jv-border);
             background: var(--jv-bg-primary);
-            color: var(--jv-text);
+            color: var(--jv-text-secondary);
+            font-size: 1.05rem;
             transition: .15s;
         }
 
         .btn-action:hover {
-            background: var(--jv-bg-hover);
+            background: rgba(16, 185, 129, 0.08);
             border-color: #10b981;
             color: #10b981;
         }
@@ -50,17 +51,17 @@
         }
 
         .estado-vacio span {
-            font-size: .85rem;
+            font-size: 1.1rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: rgba(148, 163, 184, 0.5);
+            color: var(--jv-text-muted);
         }
 
         /* ── Scoped module styles ── */
         .pagina-compras .card-jv {
             border-color: rgba(16, 185, 129, 0.25);
-            box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(16, 185, 129, 0.06);
+            box-shadow: var(--jv-shadow), inset 0 0 0 1px rgba(16, 185, 129, 0.06);
         }
 
         .pagina-compras .card-jv:hover {
@@ -74,38 +75,51 @@
         }
 
         .pagina-compras .table-jv {
-            table-layout: auto;
+            table-layout: fixed;
             width: 100%;
+            min-width: 1080px;
         }
 
         .pagina-compras .table-jv thead th {
             background: linear-gradient(135deg, #065f46, #047857);
-            color: #a7f3d0;
+            color: #fff;
             border-bottom: 2px solid rgba(16, 185, 129, 0.3);
-            font-size: .82rem;
-            padding: 14px 16px;
+            font-size: 0.95rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            padding: 16px 16px;
             text-align: left;
-            white-space: nowrap;
+            vertical-align: middle;
+            white-space: normal;
         }
 
         .pagina-compras .table-jv thead th.text-center {
             text-align: center;
         }
 
+        .pagina-compras .table-jv thead th.text-end {
+            text-align: right;
+        }
+
         .pagina-compras .table-jv tbody td {
-            border-bottom: 1px solid rgba(16, 185, 129, 0.07);
-            padding: 14px 16px;
-            font-size: .85rem;
+            border-bottom: 1px dashed var(--jv-border);
+            padding: 16px 16px;
+            font-size: 1rem;
             vertical-align: middle;
-            color: #e2e8f0;
+            color: var(--jv-text-primary);
         }
 
         .pagina-compras .table-jv tbody tr:hover {
-            background: rgba(16, 185, 129, 0.03);
+            background: rgba(16, 185, 129, 0.06);
         }
 
         .pagina-compras .table-jv tbody td.text-center {
             text-align: center;
+        }
+
+        .pagina-compras .table-jv tbody td.text-end {
+            text-align: right;
+            white-space: nowrap;
         }
 
         .pagina-compras .table-jv tbody td.fw-bold {
@@ -113,18 +127,45 @@
         }
 
         .pagina-compras .table-jv tbody td.text-muted {
-            color: #94a3b8;
+            color: var(--jv-text-muted);
         }
 
         .pagina-compras .table-jv tbody td.text-success {
-            color: #34d399;
+            color: var(--jv-success);
         }
 
         .pagina-compras .table-jv tbody td.fecha-cell {
             font-weight: 600;
-            font-size: .82rem;
-            color: #e2e8f0;
+            font-size: .95rem;
+            color: var(--jv-text-primary);
             white-space: nowrap;
+        }
+
+        /* ── Celdas control / proveedor (ellipsis + tooltip) ── */
+        .pagina-compras .table-jv tbody td.nro-control-cell {
+            color: var(--jv-text-muted);
+            font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: help;
+        }
+        .pagina-compras .table-jv tbody td.proveedor-cell {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: help;
+        }
+
+        /* ── Celda de productos (ellipsis + tooltip) ── */
+        .pagina-compras .table-jv tbody td.td-prod {
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: help;
+            font-size: .95rem;
+            color: var(--jv-text-muted);
         }
 
         .pagina-compras .btn-jv-primary {
@@ -147,8 +188,8 @@
         }
 
         .pagina-compras .buscador-wrapper {
-            border-bottom: 1px solid rgba(16, 185, 129, 0.15);
-            background: rgba(2, 6, 23, 0.5);
+            border-bottom: 1px solid var(--jv-border);
+            background: rgba(15,26,46,0.02);
         }
 
         .pagina-compras .buscador-wrapper i {
@@ -156,8 +197,7 @@
         }
 
         .pagina-compras .btn-jv-success {
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 24px rgba(5, 150, 105, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
         }
 
         .pagina-compras .btn-jv-success:hover {
@@ -195,61 +235,62 @@
         }
 
         .widget-card .widget-icon {
-            width: 46px;
-            height: 46px;
+            width: 50px;
+            height: 50px;
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             flex-shrink: 0;
         }
 
         .widget-card .widget-label {
-            font-size: .6rem;
+            font-size: .75rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 700;
-            color: rgba(148, 163, 184, 0.7);
+            color: var(--jv-text-muted);
             margin-bottom: 4px;
         }
 
         .widget-card .widget-value {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: #fff;
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: var(--jv-navy);
             line-height: 1.2;
         }
 
         /* ── Badges ── */
         .pagina-compras .codigo-badge {
             background: rgba(5, 150, 105, 0.12);
-            color: #6ee7b7;
-            font-size: .72rem;
+            color: #047857;
+            font-size: .95rem;
             font-weight: 800;
-            padding: 4px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             display: inline-block;
             vertical-align: middle;
             white-space: nowrap;
             letter-spacing: .5px;
             line-height: 1.5;
+            font-family: 'Courier New', monospace;
         }
 
         .pagina-compras .cant-badge {
             background: rgba(16, 185, 129, 0.15);
-            color: #34d399;
-            padding: 4px 12px;
+            color: #047857;
+            padding: 6px 14px;
             border-radius: 20px;
-            font-weight: 700;
-            font-size: .75rem;
+            font-weight: 800;
+            font-size: .95rem;
             display: inline-block;
             line-height: 1.5;
         }
 
         .pagina-compras .badge-jv {
-            padding: 4px 14px;
-            font-size: 0.72rem;
+            padding: 6px 16px;
+            font-size: .9rem;
             line-height: 1.5;
             white-space: nowrap;
             display: inline-block;
@@ -257,54 +298,125 @@
 
         .pagina-compras .badge-success {
             background: rgba(16, 185, 129, 0.15);
-            color: #6ee7b7;
+            color: var(--jv-success);
             border-color: rgba(16, 185, 129, 0.35);
         }
 
         .pagina-compras .badge-warning {
             background: rgba(245, 158, 11, 0.15);
-            color: #fbbf24;
+            color: #92400E;
             border-color: rgba(245, 158, 11, 0.35);
-        }
-
-        /* ── Alert overrides ── */
-        .alert-jv {
-            border-left: 4px solid;
-            border-radius: 8px;
-            padding: 14px 20px !important;
-            font-size: .9rem;
-        }
-
-        .alert-jv-success {
-            border-left-color: #22c55e;
-            background: rgba(34, 197, 94, 0.1);
-        }
-
-        .alert-jv-danger {
-            border-left-color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
         }
 
         /* ── Modal section groups ── */
         .section-bg {
-            background: rgba(2, 6, 23, 0.3);
-            border: 1px solid rgba(16, 185, 129, 0.08);
+            background: var(--jv-bg-primary);
+            border: 1px solid var(--jv-border);
             border-radius: var(--jv-radius);
-            padding: 12px 14px;
-            margin-bottom: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
         }
 
         .section-label {
-            font-size: .65rem;
+            font-size: .8rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #34d399;
+            color: var(--jv-navy);
             margin-bottom: 6px;
             padding-bottom: 4px;
-            border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
             display: flex;
             align-items: center;
             gap: 4px;
+        }
+
+        /* ── Toolbox autocomplete ── */
+        .com-toolbox {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .com-resultados {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1055;
+            background: var(--jv-bg-card);
+            border: 1px solid var(--jv-border);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            max-height: 260px;
+            overflow-y: auto;
+            display: none;
+            margin-top: 4px;
+        }
+
+        .com-resultados.abierto {
+            display: block;
+        }
+
+        .com-resultados .com-resultado {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--jv-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .com-resultados .com-resultado:hover {
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .com-resultados .com-resultado .r-nombre {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--jv-text-primary);
+        }
+
+        .com-resultados .com-resultado .r-sku {
+            font-size: .85rem;
+            color: var(--jv-text-muted);
+        }
+
+        .com-resultados .com-resultado .r-stock {
+            font-size: .9rem;
+            font-weight: 700;
+            white-space: nowrap;
+            color: var(--jv-text-secondary);
+        }
+
+        .com-resultados .com-sin-resultados {
+            padding: 12px;
+            font-size: .9rem;
+            color: var(--jv-text-muted);
+            text-align: center;
+        }
+
+        /* ── Tooltip grande (nombre completo de productos) ── */
+        .jv-tooltip {
+            position: fixed;
+            z-index: 2000;
+            max-width: 420px;
+            padding: 14px 18px;
+            background: var(--jv-navy);
+            color: #fff;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            line-height: 1.5;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .12s ease;
+            word-wrap: break-word;
+        }
+
+        .jv-tooltip.jv-tooltip-visible {
+            opacity: 1;
         }
     

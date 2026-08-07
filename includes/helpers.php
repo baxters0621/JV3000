@@ -3,18 +3,108 @@
 // ==========================================
 // FUNCIONES AUXILIARES
 // ==========================================
+// ==========================================
+// DOCUMENTO FISCAL (CÉDULA / RIF)
+// ==========================================
+if (!function_exists('normalizarDocumento')) {
+    /**
+     * Limpia un documento fiscal: mayúsculas, sin espacios, guiones unificados.
+     * Mantiene el guion único separador entre letra-cuerpo(-verificador).
+     */
+    function normalizarDocumento(string $d): string
+    {
+        $d = mb_strtoupper(trim($d));
+        $d = preg_replace('/\s+/', '', $d);
+        $d = preg_replace('/[._\/\\\\]+/', '-', $d);
+        $d = preg_replace('/-{2,}/', '-', $d);
+        return $d;
+    }
+}
+
+if (!function_exists('validarCedula')) {
+    /**
+     * Cédula de Identidad: V o E + 6 a 9 dígitos (sin verificador). Ej: V-12345678
+     */
+    function validarCedula(string $d): bool
+    {
+        return (bool)preg_match('/^[VE]-[0-9]{6,9}$/', $d);
+    }
+}
+
 if (!function_exists('validarRIF')) {
     /**
-     * Valida el formato del RIF/CI venezolano.
-     * Formato esperado: Letra-Cuerpo-Dígito (Ej: J-12345678-0)
-     * @param string $rif
-     * @return bool
+     * RIF: letra [VEJGPC] + exactamente 8 dígitos + guion + 1 dígito verificador.
+     * Ej: J-12345678-9
      */
-    // Validar RIF/CI venezolano
-    function validarRIF($rif)
+    function validarRIF(string $d): bool
     {
-        $rif_regex = '/^[VJGPE]-\d{7,9}-\d$/';
-        return (bool)preg_match($rif_regex, $rif);
+        return (bool)preg_match('/^[VEJGPC]-[0-9]{8}-[0-9]$/', $d);
+    }
+}
+
+if (!function_exists('validarDocumentoFiscal')) {
+    /**
+     * Acepta cédula o RIF (para el campo "RIF / Cédula" de ventas).
+     */
+    function validarDocumentoFiscal(string $d): bool
+    {
+        return validarCedula($d) || validarRIF($d);
+    }
+}
+
+if (!function_exists('migrarFormatoDocumento')) {
+    /**
+     * Corrige formatos antiguos de documento fiscal.
+     *  - J-123456789  → J-12345678-9 (último dígito = verificador)
+     *  - J123456789 / V12345678 (sin guion) → inserta el guion
+     *  - minúsculas / espacios → normaliza
+     * Devuelve el documento corregido válido, o null si NO es recuperable.
+     */
+    function migrarFormatoDocumento(string $d): ?string
+    {
+        $d = normalizarDocumento($d);
+        if ($d === '' || $d === 'N/A' || $d === 'S/RIF' || $d === 'SIN IDENTIFICACION') {
+            return null;
+        }
+
+        // Ya válido (cédula o RIF) → se mantiene
+        if (validarDocumentoFiscal($d)) {
+            return $d;
+        }
+
+        // Quitar todos los guiones para reconstruir: LETRA + NÚMEROS
+        $solo = preg_replace('/[^VEJGPC0-9]/i', '', $d);
+        $solo = mb_strtoupper($solo);
+        if (!preg_match('/^([VEJGPC])(\d+)$/', $solo, $m)) {
+            return null;
+        }
+        $letra = $m[1];
+        $nums  = $m[2];
+
+        if ($letra === 'V' || $letra === 'E') {
+            // Cédula: 6-9 dígitos, sin verificador
+            if (strlen($nums) >= 6 && strlen($nums) <= 9) {
+                $cand = $letra . '-' . $nums;
+                return validarCedula($cand) ? $cand : null;
+            }
+            // RIF persona natural: 8 + verificador
+            if (strlen($nums) === 9) {
+                $cand = $letra . '-' . substr($nums, 0, 8) . '-' . substr($nums, 8, 1);
+                return validarRIF($cand) ? $cand : null;
+            }
+            return null;
+        }
+
+        // J/G/P/C: RIF obligatorio, 8 + 1 verificador
+        if (strlen($nums) === 9) {
+            $cand = $letra . '-' . substr($nums, 0, 8) . '-' . substr($nums, 8, 1);
+            return validarRIF($cand) ? $cand : null;
+        }
+        if (strlen($nums) === 8) {
+            // Sin verificador → no recuperable (no se adivina)
+            return null;
+        }
+        return null;
     }
 }
 
@@ -59,6 +149,21 @@ if (!function_exists('getConfig')) {
         $db = Database::getInstance();
         $row = $db->fetchOne("SELECT valor FROM configuracion WHERE clave = ?", [$clave]);
         return $row ? $row['valor'] : $default;
+    }
+}
+
+// Códigos derivados de entidades (sin estado adicional)
+if (!function_exists('codigoCliente')) {
+    function codigoCliente(int $id_cliente): string
+    {
+        return 'CLI-' . str_pad($id_cliente, 6, '0', STR_PAD_LEFT);
+    }
+}
+
+if (!function_exists('codigoProveedor')) {
+    function codigoProveedor(int $id_proveedor): string
+    {
+        return 'PROV-' . str_pad($id_proveedor, 6, '0', STR_PAD_LEFT);
     }
 }
 
@@ -270,6 +375,133 @@ if (!function_exists('devolverLote')) {
     function devolverLote($db, int $id_lote, int $cantidad): void
     {
         $db->execute("UPDATE lotes SET cantidad_restante = cantidad_restante + ? WHERE id_lote = ?", [$cantidad, $id_lote]);
+    }
+}
+
+// ==========================================
+// ALERTAS CRÍTICAS DE STOCK (CAMPANA)
+// ==========================================
+if (!function_exists('jv_alertas_por_rol')) {
+    /**
+     * Alertas de stock para la campana del Panel de Inicio.
+     * - Vencidos (< hoy), Próximos (hoy a +7 días), Prontos (+8 a +30 días), Stock bajo.
+     * - Roles 1 (Admin) y 2 (Operador de Carga): vencidos + próximos + prontos + stock bajo.
+     * - Rol 3 (Operador de Ventas): solo vencidos + próximos + prontos.
+     * Devuelve hasta 8 productos por categoría y los totales reales para el badge.
+     */
+    function jv_alertas_por_rol(?int $id_rol = null): array
+    {
+        $db = Database::getInstance();
+        $id_rol = $id_rol ?? (int)($_SESSION['id_rol'] ?? 0);
+        $es_ventas = ($id_rol === 3);
+
+        $vencidos = [];
+        $proximos = [];
+        $prontos = [];
+        $bajos = [];
+
+        $filas = $db->fetchAll(
+            "SELECT id_producto, nombre_producto, fecha_vencimiento
+             FROM productos
+             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
+               AND fecha_vencimiento < CURDATE()
+             ORDER BY fecha_vencimiento ASC
+             LIMIT 8"
+        );
+        foreach ($filas as $r) {
+            $vencidos[] = [
+                'id' => (int)$r['id_producto'],
+                'nombre' => (string)$r['nombre_producto'],
+                'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
+            ];
+        }
+
+        $filas = $db->fetchAll(
+            "SELECT id_producto, nombre_producto, fecha_vencimiento
+             FROM productos
+             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
+               AND fecha_vencimiento >= CURDATE()
+               AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+             ORDER BY fecha_vencimiento ASC
+             LIMIT 8"
+        );
+        foreach ($filas as $r) {
+            $proximos[] = [
+                'id' => (int)$r['id_producto'],
+                'nombre' => (string)$r['nombre_producto'],
+                'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
+            ];
+        }
+
+        $filas = $db->fetchAll(
+            "SELECT id_producto, nombre_producto, fecha_vencimiento
+             FROM productos
+             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
+               AND fecha_vencimiento > DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+               AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+             ORDER BY fecha_vencimiento ASC
+             LIMIT 8"
+        );
+        foreach ($filas as $r) {
+            $prontos[] = [
+                'id' => (int)$r['id_producto'],
+                'nombre' => (string)$r['nombre_producto'],
+                'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
+            ];
+        }
+
+        $count_vencidos = (int)($db->fetchOne(
+            "SELECT COUNT(*) AS n FROM productos
+             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento < CURDATE()"
+        )['n'] ?? 0);
+
+        $count_proximos = (int)($db->fetchOne(
+            "SELECT COUNT(*) AS n FROM productos
+             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
+               AND fecha_vencimiento >= CURDATE()
+               AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)"
+        )['n'] ?? 0);
+
+        $count_prontos = (int)($db->fetchOne(
+            "SELECT COUNT(*) AS n FROM productos
+             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
+               AND fecha_vencimiento > DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+               AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
+        )['n'] ?? 0);
+
+        if (!$es_ventas) {
+            $filas = $db->fetchAll(
+                "SELECT id_producto, nombre_producto, stock_actual, stock_minimo
+                 FROM productos
+                 WHERE status = 'Activo' AND stock_actual <= stock_minimo
+                 ORDER BY stock_actual ASC
+                 LIMIT 8"
+            );
+            foreach ($filas as $r) {
+                $bajos[] = [
+                    'id' => (int)$r['id_producto'],
+                    'nombre' => (string)$r['nombre_producto'],
+                    'stock' => (int)$r['stock_actual'],
+                    'minimo' => (int)$r['stock_minimo'],
+                ];
+            }
+            $count_bajos = (int)($db->fetchOne(
+                "SELECT COUNT(*) AS n FROM productos WHERE status = 'Activo' AND stock_actual <= stock_minimo"
+            )['n'] ?? 0);
+        } else {
+            $count_bajos = 0;
+        }
+
+        $total = $count_vencidos + $count_proximos + $count_prontos + $count_bajos;
+
+        return [
+            'total' => $total,
+            'counts' => ['vencidos' => $count_vencidos, 'proximos' => $count_proximos, 'prontos' => $count_prontos, 'bajos' => $count_bajos],
+            'vencidos' => $vencidos,
+            'proximos' => $proximos,
+            'prontos' => $prontos,
+            'bajos' => $bajos,
+        ];
     }
 }
 

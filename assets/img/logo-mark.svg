@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="JV3000">
+  <defs>
+    <linearGradient id="hexGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F97316"/>
+      <stop offset="55%" stop-color="#EA580C"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </linearGradient>
+  </defs>
+  <polygon points="60,8 105,34 105,86 60,112 15,86 15,34" fill="url(#hexGrad)"/>
+  <polygon points="60,14 99.8,37 99.8,83 60,106 20.2,83 20.2,37" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linejoin="round"/>
+  <text x="60" y="70" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="40" font-weight="800" fill="#FFF7ED" letter-spacing="-2">JV</text>
+  <path d="M60,86 C62.8,90 64.5,92.6 64.5,95.2 A4.3,4.3 0 1 1 55.5,95.2 C55.5,92.6 57.2,90 60,86Z" fill="rgba(255,247,237,0.9)"/>
+</svg>

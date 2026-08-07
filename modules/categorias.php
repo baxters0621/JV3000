@@ -129,7 +129,7 @@ foreach ($nulls as $n) {
     <?php include '../includes/diseno.php'; ?>
     <title>Categorías | JV3000 C.A.</title>
     <!-- ESTILOS -->
-        <link rel="stylesheet" href="../assets/modules/categorias/categorias.css">
+        <link rel="stylesheet" href="../assets/modules/categorias/categorias.css?v=6">
 </head>
 
 <body>
@@ -139,18 +139,16 @@ foreach ($nulls as $n) {
         <div class="container-fluid px-4 py-4">
 
             <!-- ENCABEZADO -->
-            <div class="card-jv d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" style="padding: 18px 24px; border-left: 4px solid var(--jv-orange);">
+            <div class="card-jv d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" style="padding: 18px 24px; border-left: 4px solid #2563eb;">
                 <div class="d-flex align-items-center gap-3">
-                    <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--jv-navy); display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-tags text-white" style="font-size: 1.3rem;"></i>
-                    </div>
+                    <div class="cat-header-icon"><i class="bi bi-tags"></i></div>
                     <div>
-                        <h1 class="font-brand fw-bold m-0" style="font-size: 1.4rem; color: var(--jv-text-primary);">CATEGORÍAS</h1>
-                        <p class="m-0" style="font-size: 0.85rem; color: var(--jv-text-secondary);">Organización de Catálogo</p>
+                        <h1 class="font-brand fw-bold m-0" style="font-size: 2rem; letter-spacing: -1px; color: var(--jv-text-primary);">CATEGORÍAS</h1>
+                        <p class="m-0 text-secondary fw-bold text-uppercase" style="font-size: 0.95rem;">Organización de Catálogo</p>
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn-jv-primary pulse-jv" onclick="nuevaCat()" style="padding: 10px 28px; font-size: 0.9rem;">
+                    <button class="btn-jv-primary pulse-jv" onclick="nuevaCat()" style="padding: 12px 32px; font-size: 1rem;">
                         <i class="bi bi-plus-lg me-1"></i>CREAR
                     </button>
                 </div>
@@ -169,18 +167,18 @@ foreach ($nulls as $n) {
             <div class="card-jv card-jv-table p-0">
                 <div class="buscador-wrapper d-flex align-items-center px-3 py-2">
                     <i class="bi bi-search me-2" style="color: var(--jv-orange); font-size: 1rem;"></i>
-                    <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar categorías..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; font-size: 0.85rem; padding: 8px 6px;">
+                    <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nombre, código, descripción, ABC, manejo..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; font-size: 0.85rem; padding: 8px 6px; max-width: 340px;">
                 </div>
                 <div class="table-responsive">
                     <table class="table-jv mb-0">
                         <thead>
                             <tr>
-                                <th style="width: 25%;">NOMBRE</th>
+                                <th style="width: 28%;">NOMBRE</th>
                                 <th style="width: 14%;">CÓDIGO</th>
                                 <th style="width: 8%;" class="text-center">ABC</th>
-                                <th style="width: 12%;" class="text-center">MANEJO</th>
+                                <th style="width: 13%;" class="text-center">MANEJO</th>
                                 <th style="width: 12%;" class="text-center">ESTADO</th>
-                                <th style="width: 18%;" class="text-center">ACCIONES</th>
+                                <th style="width: 130px;" class="text-center">ACCIONES</th>
                             </tr>
                         </thead>
                         <tbody id="tablaCategorias">
@@ -188,8 +186,8 @@ foreach ($nulls as $n) {
                                 <?php foreach ($categorias as $row): ?>
                                     <tr data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre'])); ?>" data-codigo="<?php echo strtolower(htmlspecialchars($row['codigo'] ?? '')); ?>">
                                         <td>
-                                            <i class="bi bi-folder2-open me-2" style="color: var(--jv-orange); font-size: 1rem;"></i>
-                                            <span class="cat-nombre text-uppercase"><?php echo htmlspecialchars($row['nombre']); ?></span>
+                                            <i class="bi bi-folder2-open me-2" style="color: #2563eb; font-size: 1.1rem;"></i>
+                                            <span class="cat-nombre text-uppercase" data-tooltip="<?php echo htmlspecialchars($row['nombre']); ?>"><?php echo htmlspecialchars($row['nombre']); ?></span>
                                             <?php if ($row['descripcion']): ?>
                                                 <br><span class="cat-desc"><?php echo htmlspecialchars($row['descripcion']); ?></span>
                                             <?php endif; ?>
@@ -258,7 +256,7 @@ foreach ($nulls as $n) {
 
                         <div class="px-4 py-3" style="border-bottom: 1px solid var(--jv-border);">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="fw-bold mb-0" style="color: var(--jv-navy); font-size: 1rem;" id="modalTitle"><i class="bi bi-tag-fill me-2"></i>NUEVA CATEGORÍA</h5>
+                                <h5 class="fw-bold mb-0 font-brand" style="color: var(--jv-navy); font-size: 1.3rem;" id="modalTitle"><i class="bi bi-tag-fill me-2"></i>NUEVA CATEGORÍA</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                         </div>
@@ -267,28 +265,28 @@ foreach ($nulls as $n) {
 
                             <div class="section-bg">
                                 <div class="mb-2" style="border-bottom: 1px solid var(--jv-border); padding-bottom: 6px;">
-                                    <span class="fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px; color: var(--jv-navy);">General</span>
+                                    <span class="fw-bold text-uppercase" style="font-size: .8rem; letter-spacing: 1px; color: var(--jv-navy);">General</span>
                                 </div>
                                 <div class="d-flex flex-column gap-2">
                                     <div>
-                                        <label for="cat_nombre" class="fw-bold mb-1" style="color: var(--jv-text-primary); font-size: 0.85rem;">NOMBRE</label>
-                                        <input type="text" name="nombre" id="cat_nombre" class="input-jv" required maxlength="100" placeholder="Ej: Aceites, Lubricantes" oninput="this.value = this.value.toUpperCase()" style="padding: 12px 16px; font-size: 0.95rem;">
+                                        <label for="cat_nombre" class="fw-bold mb-1" style="color: var(--jv-text-primary); font-size: .95rem;">NOMBRE</label>
+                                        <input type="text" name="nombre" id="cat_nombre" class="input-jv" required maxlength="100" placeholder="Ej: Aceites, Lubricantes" oninput="this.value = this.value.toUpperCase()" style="padding: 12px 16px; font-size: 1rem;">
                                     </div>
                                     <div>
-                                        <label for="cat_desc" class="fw-bold mb-1" style="color: var(--jv-text-secondary); font-size: 0.85rem;">DESCRIPCIÓN</label>
-                                        <textarea name="descripcion" id="cat_desc" class="input-jv" rows="2" placeholder="Ej: Aceites de motor, lubricantes, grasas..." style="padding: 12px 16px; font-size: 0.95rem;"></textarea>
+                                        <label for="cat_desc" class="fw-bold mb-1" style="color: var(--jv-text-secondary); font-size: .95rem;">DESCRIPCIÓN</label>
+                                        <textarea name="descripcion" id="cat_desc" class="input-jv" rows="2" placeholder="Ej: Aceites de motor, lubricantes, grasas..." style="padding: 12px 16px; font-size: 1rem;"></textarea>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="section-bg">
                                 <div class="mb-2" style="border-bottom: 1px solid var(--jv-border); padding-bottom: 6px;">
-                                    <span class="fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px; color: var(--jv-navy);">Parámetros</span>
+                                    <span class="fw-bold text-uppercase" style="font-size: .8rem; letter-spacing: 1px; color: var(--jv-navy);">Parámetros</span>
                                 </div>
                                 <div class="d-flex flex-column gap-2">
                                     <div>
-                                        <label for="cat_abc" class="fw-bold mb-1" style="color: var(--jv-text-secondary); font-size: 0.85rem;">CLASIFICACIÓN ABC</label>
-                                        <select name="clasificacion_abc" id="cat_abc" class="input-jv" style="padding: 12px 16px; font-size: 0.95rem;">
+                                        <label for="cat_abc" class="fw-bold mb-1" style="color: var(--jv-text-secondary); font-size: .95rem;">CLASIFICACIÓN ABC</label>
+                                        <select name="clasificacion_abc" id="cat_abc" class="input-jv" style="padding: 12px 16px; font-size: 1rem;">
                                             <option value="">—</option>
                                             <option value="A">A — Alto valor</option>
                                             <option value="B">B — Medio valor</option>
@@ -296,8 +294,8 @@ foreach ($nulls as $n) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label for="cat_manejo" class="fw-bold mb-1" style="color: var(--jv-text-secondary); font-size: 0.85rem;">TIPO DE MANEJO</label>
-                                        <select name="tipo_manejo" id="cat_manejo" class="input-jv" style="padding: 12px 16px; font-size: 0.95rem;">
+                                        <label for="cat_manejo" class="fw-bold mb-1" style="color: var(--jv-text-secondary); font-size: .95rem;">TIPO DE MANEJO</label>
+                                        <select name="tipo_manejo" id="cat_manejo" class="input-jv" style="padding: 12px 16px; font-size: 1rem;">
                                             <option value="normal">Normal</option>
                                             <option value="inflamable">Inflamable</option>
                                             <option value="liquido">Líquido</option>
@@ -310,8 +308,8 @@ foreach ($nulls as $n) {
                             </div>
 
                             <div class="d-flex justify-content-end gap-2 pt-2">
-                                <button type="button" class="btn-jv-secondary" style="padding: 10px 22px; font-size: 0.9rem;" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn-jv-primary" style="padding: 10px 22px; font-size: 0.9rem;" onclick="return validarCategoria(this)">
+                                <button type="button" class="btn-jv-secondary" style="padding: 12px 28px; font-size: 1rem;" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn-jv-primary" style="padding: 12px 28px; font-size: 1rem;" onclick="return validarCategoria(this)">
                                     <i class="bi bi-check-lg me-1"></i> Guardar
                                 </button>
                             </div>
@@ -326,7 +324,7 @@ foreach ($nulls as $n) {
         <script>
     window.JV_CONFIG = { c0: '<?php echo $csrf_token; ?>' };
 </script>
-    <script src="../assets/modules/categorias/categorias.js"></script>
+    <script src="../assets/modules/categorias/categorias.js?v=3"></script>
 </body>
 
 </html>

@@ -16,6 +16,7 @@ $filtro_usuario = $_GET['usuario'] ?? '';
 $filtro_accion = $_GET['accion'] ?? '';
 $filtro_desde = $_GET['desde'] ?? '';
 $filtro_hasta = $_GET['hasta'] ?? '';
+$filtro_detalle = $_GET['detalle'] ?? '';
 
 $where = [];
 $params = [];
@@ -38,6 +39,10 @@ if ($filtro_hasta !== '') {
     $where[] = "a.fecha_hora <= ?";
     $params[] = $filtro_hasta . ' 23:59:59';
 }
+if ($filtro_detalle !== '') {
+    $where[] = "a.detalle LIKE ?";
+    $params[] = '%' . $filtro_detalle . '%';
+}
 
 $sql_where = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
@@ -46,6 +51,7 @@ $query_string = http_build_query(array_filter([
     'accion'  => $filtro_accion,
     'desde'   => $filtro_desde,
     'hasta'   => $filtro_hasta,
+    'detalle' => $filtro_detalle,
 ], fn($v) => $v !== ''));
 if ($query_string !== '') {
     $query_string = '&' . $query_string;
@@ -80,7 +86,7 @@ unset($_SESSION['flash_msg']);
     <title>Historial | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
     <!-- ESTILOS -->
-        <link rel="stylesheet" href="../assets/modules/historial/historial.css">
+        <link rel="stylesheet" href="../assets/modules/historial/historial.css?v=5">
 </head>
 <body>
 <?php include '../includes/sidebar.php'; ?>
@@ -99,11 +105,11 @@ unset($_SESSION['flash_msg']);
         <div class="d-flex align-items-center gap-3">
             <div class="aud-header-icon"><i class="bi bi-shield-check"></i></div>
             <div>
-                <h1 class="font-brand fw-bold m-0" style="font-size:1.4rem; color: var(--jv-text-primary);">HISTORIAL</h1>
-                <p class="m-0 text-secondary" style="font-size:.85rem;">Registro de Actividades del Sistema</p>
+                <h1 class="font-brand fw-bold m-0" style="font-size:2rem; letter-spacing:-1px; color: var(--jv-text-primary);">HISTORIAL</h1>
+                <p class="m-0 text-secondary fw-bold text-uppercase" style="font-size:.95rem;">Registro de Actividades del Sistema</p>
             </div>
         </div>
-        <span class="text-jv-muted small fw-bold"><?php echo $total_registros; ?> registro(s)</span>
+        <span class="text-jv-muted fw-bold" style="font-size:.95rem;"><?php echo $total_registros; ?> registro(s)</span>
     </div>
 
     <!-- FORMULARIO DE FILTROS -->
@@ -130,6 +136,10 @@ unset($_SESSION['flash_msg']);
                 <label class="small fw-bold text-secondary mb-1">HASTA</label>
                 <input type="date" name="hasta" class="input-jv" value="<?php echo htmlspecialchars($filtro_hasta); ?>">
             </div>
+            <div class="col-md-2">
+                <label class="small fw-bold text-secondary mb-1">DETALLE</label>
+                <input type="text" name="detalle" class="input-jv" placeholder="Buscar en detalle..." value="<?php echo htmlspecialchars($filtro_detalle); ?>">
+            </div>
             <div class="col-md-1">
                 <button type="submit" class="btn-jv-primary w-100" style="padding:10px;font-size:.75rem;"><i class="bi bi-search"></i></button>
             </div>
@@ -142,11 +152,11 @@ unset($_SESSION['flash_msg']);
             <table class="table-jv mb-0">
                 <thead>
                     <tr>
-                        <th style="width:60px;">N°</th>
-                        <th>USUARIO</th>
-                        <th>ACCIÓN</th>
+                        <th style="width:70px;">N°</th>
+                        <th style="width:12%;">USUARIO</th>
+                        <th style="width:11%;">ACCIÓN</th>
                         <th>DETALLE</th>
-                        <th>FECHA / HORA</th>
+                        <th style="width:13%;">FECHA / HORA</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -164,8 +174,8 @@ unset($_SESSION['flash_msg']);
                             <td class="fw-bold text-jv-muted">#<?php echo $r['id_auditoria']; ?></td>
                             <td class="fw-bold"><?php echo htmlspecialchars($r['usuario_nombre'] ?? '?'); ?></td>
                             <td><span class="badge-accion <?php echo $badge_class; ?>"><?php echo htmlspecialchars($accion_nombres[$r['accion']] ?? $r['accion']); ?></span></td>
-                            <td class="text-jv-muted"><?php echo htmlspecialchars($r['detalle'] ?? ''); ?></td>
-                            <td style="color:var(--jv-text-primary);font-weight:600;font-size:.82rem;"><?php echo date('d/m/Y H:i', strtotime($r['fecha_hora'])); ?></td>
+                            <td class="td-detalle" data-tooltip="<?php echo htmlspecialchars($r['detalle'] ?? ''); ?>"><?php echo htmlspecialchars($r['detalle'] ?? ''); ?></td>
+                            <td class="td-fecha"><?php echo date('d/m/Y H:i', strtotime($r['fecha_hora'])); ?></td>
                         </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -191,6 +201,6 @@ unset($_SESSION['flash_msg']);
 <!-- JAVASCRIPT -->
 <script src="../assets/js/bootstrap.bundle.min.js"></script>
 <script src="../assets/js/sweetalert2.all.min.js"></script>
-    <script src="../assets/modules/historial/historial.js"></script>
+    <script src="../assets/modules/historial/historial.js?v=2"></script>
 </body>
 </html>

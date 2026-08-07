@@ -23,7 +23,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'tab_closed') {
 // ==========================================
 // CERRAR SESIÓN
 // ==========================================
-require_once __DIR__ . '/init.php';
+require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
 

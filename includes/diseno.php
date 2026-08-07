@@ -2,7 +2,7 @@
 // ==========================================
 // CONFIGURACIÓN DE DISEÑO
 // ==========================================
-$base_assets = (basename(dirname($_SERVER['PHP_SELF'])) === 'modules') ? '../assets/' : 'assets/';
+$base_assets = BASE_PATH . 'assets/';
 ?>
 <!-- META TAGS -->
 <meta charset="UTF-8">
@@ -16,7 +16,7 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 ?>
 <script>
     window.JV_CONFIG = window.JV_CONFIG || {};
-    window.JV_CONFIG.tab = { marker: <?php echo json_encode($marker); ?>, fresh: <?php echo $fresh ? 'true' : 'false'; ?> };
+    window.JV_CONFIG.tab = { marker: <?php echo json_encode($marker); ?>, fresh: <?php echo $fresh ? 'true' : 'false'; ?>, base: <?php echo json_encode(BASE_PATH); ?> };
 </script>
 <?php endif; ?>
 
@@ -32,4 +32,7 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 <link rel="stylesheet" href="<?php echo $base_assets; ?>css/bootstrap.min.css?v=4">
 <link rel="stylesheet" href="<?php echo $base_assets; ?>css/bootstrap-icons.css?v=4">
 
-<link rel="stylesheet" href="<?php echo $base_assets; ?>css/diseno.css">
+<link rel="stylesheet" href="<?php echo $base_assets; ?>css/diseno.css?v=4">
+
+<!-- FAVICON -->
+<link rel="icon" type="image/svg+xml" href="<?php echo $base_assets; ?>img/favicon.svg?v=1">

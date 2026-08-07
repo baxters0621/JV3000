@@ -24,21 +24,6 @@ function cerrarSidebar() {
 // Abrir por defecto en escritorio
 if (window.innerWidth > 768) abrirSidebar();
 
-// Campana de alertas
-function toggleNotif(e) {
-    if (e) e.stopPropagation();
-    const panel = document.getElementById('notifPanel');
-    if (!panel) return;
-    panel.classList.toggle('open');
-}
-document.addEventListener('click', function(e) {
-    const panel = document.getElementById('notifPanel');
-    if (panel && panel.classList.contains('open')) {
-        const wrap = document.getElementById('notifBtn');
-        if (wrap && !wrap.contains(e.target)) panel.classList.remove('open');
-    }
-});
-
 // Evento del botón toggle
 toggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();

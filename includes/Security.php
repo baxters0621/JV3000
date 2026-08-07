@@ -109,8 +109,7 @@ class Security
             header("Location: $referer");
             exit;
         }
-        $isModule = basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules';
-        header("Location: " . ($isModule ? '../' : '') . "index.php");
+        header("Location: " . BASE_PATH . "dashboard/index.php");
         exit;
     }
 
@@ -130,8 +129,7 @@ class Security
     public static function soloAdmin(): void
     {
         if (!self::esAdmin()) {
-            $isModule = basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules';
-            header("Location: " . ($isModule ? '../' : '') . "index.php?error=acceso_prohibido");
+            header("Location: " . BASE_PATH . "dashboard/index.php?error=acceso_prohibido");
             exit;
         }
     }
@@ -152,8 +150,7 @@ class Security
     public static function verificarPermisoCarga(): void
     {
         if (!self::puedeCargar()) {
-            $isModule = basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules';
-            header("Location: " . ($isModule ? '../' : '') . "index.php?error=acceso_denegado");
+            header("Location: " . BASE_PATH . "dashboard/index.php?error=acceso_denegado");
             exit;
         }
     }
@@ -162,8 +159,7 @@ class Security
     public static function verificarPermisoVenta(): void
     {
         if (!self::puedeVender()) {
-            $isModule = basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules';
-            header("Location: " . ($isModule ? '../' : '') . "index.php?error=acceso_denegado");
+            header("Location: " . BASE_PATH . "dashboard/index.php?error=acceso_denegado");
             exit;
         }
     }
@@ -181,8 +177,7 @@ class Security
     // Redirigir al login
     private static function redirectToLogin(string $error = ''): void
     {
-        $isModule = basename(dirname($_SERVER['SCRIPT_NAME'])) === 'modules';
-        $url = $isModule ? '../login.php' : 'login.php';
+        $url = BASE_PATH . 'login/login.php';
         if ($error) {
             $url .= '?error=' . $error;
         }

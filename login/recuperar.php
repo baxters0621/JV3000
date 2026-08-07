@@ -2,7 +2,7 @@
 // ==========================================
 // CONFIGURACIÓN INICIAL
 // ==========================================
-require_once __DIR__ . '/init.php';
+require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
 
@@ -10,7 +10,7 @@ $db = Database::getInstance();
 // VERIFICAR SESIÓN
 // ==========================================
 if (isset($_SESSION['id_usuario'])) {
-    header("Location: index.php");
+    header("Location: ../dashboard/index.php");
     exit();
 }
 
@@ -136,11 +136,12 @@ if ($step == 4) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Contraseña | JV3000 C.A.</title>
-    <?php include 'includes/diseno.php'; ?>
-        <link rel="stylesheet" href="assets/login/recuperar.css">
+    <?php include '../includes/diseno.php'; ?>
+        <link rel="stylesheet" href="../assets/login/recuperar.css?v=3">
 </head>
 <body class="rec-page">
     <div class="rec-card">
+        <img class="rec-logo" src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
         <div class="rec-header">
             <div class="icon"><i class="bi bi-key"></i></div>
             <h1>RECUPERAR ACCESO</h1>
@@ -217,7 +218,7 @@ if ($step == 4) {
         </div>
     </div>
 
-        <script src="assets/login/recuperar.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js?v=2"></script>
+        <script src="../assets/login/recuperar.js"></script>
+    <script src="../assets/js/bootstrap.bundle.min.js?v=2"></script>
 </body>
 </html>

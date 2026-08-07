@@ -2,7 +2,7 @@
 // ==========================================
 // CONFIGURACIÓN INICIAL
 // ==========================================
-require_once __DIR__ . '/init.php';
+require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
 
@@ -12,7 +12,7 @@ $db = Database::getInstance();
 if (isset($_SESSION['id_usuario'])) {
     $userCheck = Database::getInstance()->fetchOne("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND status = 'Activo' AND COALESCE(aprobado,0) = 1 LIMIT 1", [$_SESSION['id_usuario']]);
     if ($userCheck) {
-        header("Location: index.php");
+        header("Location: ../dashboard/index.php");
         exit();
     }
     session_destroy();
@@ -158,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                         $_SESSION['ip_addr']      = $_SERVER['REMOTE_ADDR'];
                         $_SESSION['fresh_login']  = true;
                         registrarAuditoria('login', "Inicio de sesión");
-                        header("Location: index.php");
+                        header("Location: ../dashboard/index.php");
                         exit();
                     }
                 }
@@ -189,16 +189,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<?php include 'includes/diseno.php'; ?>
+<?php include '../includes/diseno.php'; ?>
 <title>JV3000 C.A. | Terminal de Acceso</title>
-    <link rel="stylesheet" href="assets/login/login.css">
+    <link rel="stylesheet" href="../assets/login/login.css">
 </head>
 <body>
 <div class="login-page">
     <div class="login-card">
         <div class="login-logo">
-            <h1>JV<span>3000</span></h1>
-            <p>C.A. · Sistema de Inventario y Ventas</p>
+            <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
+            <p>Sistema de Inventario y Ventas</p>
         </div>
 
         <?php if ($error): ?>
@@ -364,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 <script>
     window.JV_CONFIG = { c0: <?php echo $segundos_restantes; ?> };
 </script>
-    <script src="assets/login/login.js"></script>
+    <script src="../assets/login/login.js"></script>
 
 
 </body>

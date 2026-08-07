@@ -104,7 +104,7 @@ $valor_venta_total = 0;
 
         <div class="mt-4 no-print d-flex justify-content-center gap-3">
             <button onclick="window.print()" class="btn btn-dark btn-lg rounded-pill px-5 shadow"><i class="bi bi-printer-fill me-2"></i>Imprimir Reporte</button>
-            <a href="../index.php" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Volver al Panel de Inicio</a>
+            <a href="../dashboard/index.php" class="btn btn-outline-secondary btn-lg rounded-pill px-4">Volver al Panel de Inicio</a>
         </div>
     </div>
 </body>

@@ -89,15 +89,15 @@
 
         // RIF formatter
         document.getElementById('p_rif').addEventListener('input', function(e) {
-            let val = e.target.value.toUpperCase().replace(/[^VJGPE0-9]/g, '');
+            let val = e.target.value.toUpperCase().replace(/[^VEJGPC0-9]/g, '');
             let formatted = '';
             if (val.length > 0) {
                 formatted += val[0];
                 if (val.length > 1) {
                     formatted += '-';
-                    let body = val.substring(1);
-                    if (body.length > 7) {
-                        formatted += body.substring(0, body.length - 1) + '-' + body.substring(body.length - 1);
+                    let body = val.substring(1).slice(0, 9);
+                    if (body.length > 8) {
+                        formatted += body.substring(0, 8) + '-' + body.substring(8);
                     } else {
                         formatted += body;
                     }
@@ -183,8 +183,22 @@
         function filtrarProv(status) {
             document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
             document.getElementById('f-' + status).classList.add('active');
+            aplicarFiltroProveedores();
+        }
+
+        function filtrarProvTexto() {
+            aplicarFiltroProveedores();
+        }
+
+        function aplicarFiltroProveedores() {
+            const activo = document.querySelector('.btn-filter.active');
+            const status = activo ? activo.id.replace('f-', '') : 'todos';
+            const input = document.getElementById('buscarProv');
+            const texto = input ? input.value.toLowerCase() : '';
             document.querySelectorAll('.prov-card').forEach(card => {
-                card.style.display = (status === 'todos' || card.dataset.status === status) ? 'block' : 'none';
+                const okStatus = (status === 'todos' || card.dataset.status === status);
+                const okTexto = texto === '' || card.textContent.toLowerCase().includes(texto);
+                card.style.display = (okStatus && okTexto) ? 'block' : 'none';
             });
         }
 
@@ -265,7 +279,7 @@
 
             const rifEl = document.getElementById('p_rif');
             const rifValue = rifEl.value;
-            if (!/^[VJGPE]-\d{7,9}-\d$/.test(rifValue)) {
+            if (!/^[VEJGPC]-\d{8}-\d$/.test(rifValue)) {
                 marcarError(rifEl, 'RIF INVÁLIDO (J-12345678-0)');
                 e.preventDefault();
                 if (!primerError) primerError = rifEl;
@@ -301,5 +315,56 @@
             const btn = document.getElementById('btn-prov-submit');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
+        });
+
+        // ==========================================
+        // TOOLTIP GRANDE (nombre completo del proveedor)
+        // ==========================================
+        let provTip = null;
+        let provTipTimer = null;
+
+        function provMostrarTip(e, texto) {
+            if (!texto) return;
+            if (!provTip) {
+                provTip = document.createElement('div');
+                provTip.className = 'jv-tooltip';
+                document.body.appendChild(provTip);
+            }
+            provTip.textContent = texto;
+            provTip.classList.add('jv-tooltip-visible');
+            provPosicionarTip(e);
+        }
+
+        function provPosicionarTip(e) {
+            if (!provTip) return;
+            const pad = 16;
+            let x = e.clientX + pad;
+            let y = e.clientY + pad;
+            const r = provTip.getBoundingClientRect();
+            if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - pad;
+            if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - pad;
+            provTip.style.left = Math.max(8, x) + 'px';
+            provTip.style.top = Math.max(8, y) + 'px';
+        }
+
+        function provOcultarTip() {
+            if (provTipTimer) window.clearTimeout(provTipTimer);
+            provTipTimer = window.setTimeout(function() {
+                if (provTip) provTip.classList.remove('jv-tooltip-visible');
+            }, 80);
+        }
+
+        document.addEventListener('mouseover', function(e) {
+            const t = e.target.closest('[data-tooltip]');
+            if (t) {
+                window.clearTimeout(provTipTimer);
+                provMostrarTip(e, t.dataset.tooltip);
+            }
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (provTip && provTip.classList.contains('jv-tooltip-visible')) provPosicionarTip(e);
+        });
+        document.addEventListener('mouseout', function(e) {
+            if (e.target.closest('[data-tooltip]')) provOcultarTip();
         });
     
