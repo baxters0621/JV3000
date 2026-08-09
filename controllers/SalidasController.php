@@ -1,0 +1,218 @@
+<?php
+
+// ==========================================
+// CONTROLADOR: Salidas / Ventas
+// ==========================================
+// Recibe la petición, delega en el Modelo y entrega
+// los datos a la Vista. Sin SQL aquí.
+class SalidasController extends Controller
+{
+    // GET  index.php?url=salidas          → vista principal
+    // POST index.php?url=salidas          → acciones del módulo original
+    public function index(): void
+    {
+        Security::verificarPermisoVenta();
+
+        $modelo = new Salida();
+
+        // ---- Acciones POST (CSRF ya validado por init.php) ----
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            // Anular salida (solo admin) — stock restaurado
+            if (isset($_POST['eliminar'])) {
+                if (!Security::esAdmin()) {
+                    $this->redirect('salidas');
+                }
+                $id_salida = (int)$_POST['eliminar'];
+                $resultado = $modelo->anular($id_salida);
+                if ($resultado['ok']) {
+                    $this->flash('success', 'SALIDA ANULADA. STOCK RESTAURADO.');
+                } else {
+                    $this->flash('danger', $resultado['error'] ?? 'ERROR EN LA BASE DE DATOS.');
+                }
+                $this->redirect('salidas');
+            }
+
+            // Acción legacy "accion_salida" (registrar/editar):
+            // valida los datos del formulario y genera el preview en sesión.
+            if (isset($_POST['accion_salida'])) {
+                $this->procesarAccionSalida($modelo);
+            }
+        }
+
+        $csrf = Security::generateToken();
+        $tipos_mov_map = $modelo->mapaTiposGrupo();
+
+        $this->view('salidas/index', [
+            'titulo'        => 'Salidas / Ventas | JV3000 C.A.',
+            'wrapper_class' => 'pagina-salidas',
+            'css_extra'     => ['modules/salidas/salidas.css?v=4'],
+            'js_extra'      => ['modules/salidas/salidas.js?v=4'],
+            'csrf'          => $csrf,
+            'js_config'     => ['c0' => $tipos_mov_map, 'c1' => $csrf],
+            'salidas'       => $modelo->obtenerSalidas(),
+            'tipos_mov'     => $modelo->obtenerTiposMov(),
+            'tipos_mov_map' => $tipos_mov_map,
+            'kpis'          => $modelo->kpis(),
+            'flash'         => $this->consumeFlash(),
+        ]);
+    }
+
+    // POST index.php?url=salidas/confirm&token=...
+    // Confirma la venta guardada en $_SESSION['preview_data'][$token]
+    // ejecutando la transacción completa del modelo.
+    public function confirm(): void
+    {
+        Security::verificarPermisoVenta();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('salidas');
+        }
+
+        $preview_token = $_GET['token'] ?? '';
+        $data = $preview_token !== ''
+            ? ($_SESSION['preview_data'][$preview_token] ?? null)
+            : ($_SESSION['preview_data'] ?? null);
+
+        if (!$data) {
+            $this->redirect('salidas');
+        }
+
+        $resultado = (new Salida())->confirmar($data);
+
+        // Limpiar el preview usado (éxito o error), como hacía el original
+        if ($preview_token !== '') {
+            unset($_SESSION['preview_data'][$preview_token]);
+        } else {
+            unset($_SESSION['preview_data']);
+        }
+
+        if ($resultado['ok']) {
+            $this->flash('success', $resultado['edicion'] ? 'SALIDA ACTUALIZADA CORRECTAMENTE.' : 'VENTA REGISTRADA EXITOSAMENTE.');
+            header('Location: ' . APP_URL_BASE . 'index.php?url=salidas#salida-' . (int)$resultado['id_salida']);
+            exit;
+        }
+
+        $this->flash('danger', $resultado['error'] ?? 'ERROR AL REGISTRAR LA SALIDA.');
+        $this->redirect('salidas');
+    }
+
+    // Acción legacy del formulario (POST accion_salida): valida y deja el
+    // preview listo en sesión para que la nota imprimible lo confirme.
+    private function procesarAccionSalida(Salida $modelo): void
+    {
+        $accion = in_array($_POST['accion_salida'] ?? '', ['registrar', 'editar']) ? $_POST['accion_salida'] : '';
+        $id_producto = intval($_POST['id_producto'] ?? 0);
+        $cantidad = intval($_POST['cantidad'] ?? 0);
+        $id_tipo_mov = intval($_POST['id_tipo_mov'] ?? 0);
+
+        if (!$accion) {
+            $this->flash('danger', 'ACCIÓN INVÁLIDA.');
+            $this->redirect('salidas');
+        }
+        if ($id_producto <= 0) {
+            $this->flash('danger', 'SELECCIONE UN PRODUCTO.');
+            $this->redirect('salidas');
+        }
+        if ($cantidad <= 0) {
+            $this->flash('danger', 'LA CANTIDAD DEBE SER MAYOR A CERO.');
+            $this->redirect('salidas');
+        }
+        if ($cantidad > Salida::LIMITE_UNIDADES) {
+            $this->flash('danger', 'CANTIDAD MÁXIMA PERMITIDA: 999,999.');
+            $this->redirect('salidas');
+        }
+
+        $tipo_nombre = $modelo->obtenerTipoNombre($id_tipo_mov);
+        $grupo = Salida::grupoDeTipo($tipo_nombre);
+
+        $precio_venta = 0;
+        if ($grupo === 'venta') {
+            $precio_venta = floatval($_POST['precio_venta'] ?? 0);
+            if ($precio_venta < 0 || $precio_venta > 99999999.99) {
+                $this->flash('danger', 'PRECIO INVÁLIDO.');
+                $this->redirect('salidas');
+            }
+        }
+
+        $nro_fac_man = 'PENDIENTE';
+        $nro_control = generarControlNumero();
+        $rif_cliente = mb_strtoupper(trim($_POST['rif_cliente'] ?? ''));
+        $cliente = mb_strtoupper(trim($_POST['cliente'] ?? ''));
+        $fecha_salida = $_POST['fecha_salida'] ?? date('Y-m-d');
+
+        // Validar causa si es ajuste (merma/daño)
+        $causa_ajuste = '';
+        $motivo_merma = '';
+        if ($grupo === 'merma') {
+            $causa_ajuste = trim($_POST['causa_ajuste'] ?? '');
+            if (!$causa_ajuste) {
+                $this->flash('danger', 'SELECCIONE UNA CAUSA DE AJUSTE.');
+                $this->redirect('salidas');
+            }
+            $motivo_merma = trim($_POST['descripcion_motivo'] ?? '');
+        }
+
+        $obs_extra = trim($_POST['observaciones'] ?? '');
+        $partes = [];
+        if ($causa_ajuste) $partes[] = "Causa: $causa_ajuste";
+        if ($motivo_merma) $partes[] = "Motivo: $motivo_merma";
+        if ($obs_extra) $partes[] = $obs_extra;
+        $observaciones = implode(' | ', $partes);
+        $id_usuario = $_SESSION['id_usuario'];
+        $id_cliente = intval($_POST['id_cliente'] ?? 0) ?: null;
+
+        $rif_cliente = normalizarDocumento($rif_cliente);
+
+        if ($rif_cliente !== '' && $rif_cliente !== 'N/A' && !validarDocumentoFiscal($rif_cliente)) {
+            $this->flash('danger', 'DOCUMENTO FISCAL INVÁLIDO (CÉDULA O RIF).');
+            $this->redirect('salidas');
+        }
+
+        if ($accion !== 'registrar') {
+            $this->redirect('salidas');
+        }
+
+        $prod_info = $modelo->obtenerProductoBasico($id_producto);
+
+        if (!$prod_info) {
+            $this->flash('danger', 'PRODUCTO NO ENCONTRADO.');
+            $this->redirect('salidas');
+        }
+        if ($prod_info['fecha_vencimiento'] && $prod_info['fecha_vencimiento'] <= date('Y-m-d')) {
+            $this->flash('danger', 'PRODUCTO VENCIDO. NO SE PUEDE VENDER.');
+            $this->redirect('salidas');
+        }
+        if ((int)$prod_info['stock_actual'] < $cantidad) {
+            $this->flash('danger', 'STOCK INSUFICIENTE.');
+            $this->redirect('salidas');
+        }
+
+        purgarPreviewsSesion();
+        $preview_token = bin2hex(random_bytes(16));
+        $_SESSION['preview_data'][$preview_token] = [
+            'id_producto'        => $id_producto,
+            'cantidad'           => $cantidad,
+            'precio_venta'       => $precio_venta,
+            'cliente'            => $cliente,
+            'rif_cliente'        => $rif_cliente ?: 'N/A',
+            'id_cliente'         => $id_cliente,
+            'nro_factura_manual' => $nro_fac_man,
+            'nro_control'        => $nro_control,
+            'fecha_salida'       => $fecha_salida,
+            'id_tipo_mov'        => $id_tipo_mov,
+            'grupo'              => $grupo,
+            'causa_ajuste'       => $causa_ajuste,
+            'observaciones'      => $observaciones,
+            'id_usuario'         => $id_usuario,
+        ];
+        $this->redirect('preview_factura', ['token' => $preview_token]);
+    }
+
+    private function consumeFlash(): ?array
+    {
+        $flash = $_SESSION['flash_msg'] ?? null;
+        unset($_SESSION['flash_msg']);
+        return $flash;
+    }
+}

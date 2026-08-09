@@ -265,21 +265,35 @@ function getPreguntasRespuestas(): array
     ];
 }
 
-// Validar respuesta de seguridad
-function validarRespuestaSeguridad(string $respuesta): bool
+// Normalizar respuesta de seguridad (trim + minúsculas + sin acentos)
+function normalizarRespuestaSeguridad(string $respuesta): string
 {
     $r = trim($respuesta);
-    if (strlen($r) < 5 || strlen($r) > 20) return false;
-    if (!preg_match('/[a-zA-Z]/', $r)) return false;
-    if (!preg_match('/[aeiouAEIOU]/', $r)) return false;
-    if (preg_match('/(.)\1{3,}/', $r)) return false;
-    if (preg_match('/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn|jklmno|klmnop|lmnopq|mnopqr|nopqrs|opqrst|pqrstu|qrstuv|rstuvw|stuvwx|tuvwxy|uvwxyz/i', $r)) return false;
-    if (preg_match('/0123|1234|2345|3456|4567|5678|6789/', $r)) return false;
-    $patrones = ['/asdf/i', '/qwerty/i', '/zxcv/i', '/abcd/i'];
-    foreach ($patrones as $p) {
-        if (preg_match($p, $r)) return false;
-    }
-    return true;
+    $r = strtr($r, [
+        'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u', 'Ñ' => 'n',
+        'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
+        'À' => 'a', 'È' => 'e', 'Ì' => 'i', 'Ò' => 'o', 'Ù' => 'u',
+        'à' => 'a', 'è' => 'e', 'ì' => 'i', 'ò' => 'o', 'ù' => 'u',
+        'Â' => 'a', 'Ê' => 'e', 'Î' => 'i', 'Ô' => 'o', 'Û' => 'u',
+        'â' => 'a', 'ê' => 'e', 'î' => 'i', 'ô' => 'o', 'û' => 'u',
+        'Ã' => 'a', 'Õ' => 'o', 'ã' => 'a', 'õ' => 'o',
+    ]);
+    return strtolower($r);
+}
+
+// Validar respuesta de seguridad: flexible, acepta desde un solo carácter
+function validarRespuestaSeguridad(string $respuesta): bool
+{
+    return normalizarRespuestaSeguridad($respuesta) !== '';
+}
+
+// Verificar respuesta: normaliza ambos textos antes de comparar
+// (con retro-compatibilidad para respuestas guardadas sin normalizar)
+function verificarRespuestaSeguridad(string $respuesta, string $hash): bool
+{
+    $normalizada = normalizarRespuestaSeguridad($respuesta);
+    if ($normalizada !== '' && password_verify($normalizada, $hash)) return true;
+    return $respuesta !== '' && password_verify($respuesta, $hash);
 }
 }
 

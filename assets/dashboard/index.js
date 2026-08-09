@@ -174,7 +174,7 @@
         }
 
         function actualizarAlertas() {
-            fetch('../includes/alertas_ajax.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            fetch('../includes/ajax/alertas_ajax.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
                     if (!data || !data.success) return;

@@ -1,0 +1,77 @@
+<?php
+
+// ==========================================
+// CONTROLADOR: Productos / Inventario
+// ==========================================
+// index(): renderiza la vista y procesa los POST
+// de toggle / baja por vencimiento / edición.
+// Toda la SQL está delegada en el Modelo.
+class ProductosController extends Controller
+{
+    // GET  index.php?url=productos?p=..&producto=..&alerta=..
+    // POST index.php?url=productos  (toggle / baja_vencido / editar_producto)
+    public function index(): void
+    {
+        Security::verificarPermisoCarga();
+        $esAdmin = Security::esAdmin();
+
+        $registros_por_pagina = (isset($_GET['producto']) || isset($_GET['alerta'])) ? 1000 : 30;
+        $pagina_actual = max(1, (int)($_GET['p'] ?? 1));
+
+        $modelo = new Producto();
+
+        // --- Acciones POST ---
+        $id_toggle = (int)($_POST['toggle'] ?? 0);
+        $id_baja = (int)($_POST['baja_vencido'] ?? 0);
+
+        if ($id_toggle && $esAdmin) {
+            $ok = $modelo->toggleStatus($id_toggle);
+            $this->flash($ok['ok'] ? 'success' : 'danger', $ok['mensaje']);
+            $this->redirect('productos');
+        }
+
+        if ($id_baja && $esAdmin) {
+            $modelo->bajaVencido($id_baja);
+            $this->flash('success', 'PRODUCTO DADO DE BAJA POR VENCIMIENTO. LOTES VENCIDOS PUESTOS EN CERO.');
+            $this->redirect('productos');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'editar_producto' && $esAdmin) {
+            $resultado = $modelo->editar([
+                'id_producto'     => (int)($_POST['id_producto'] ?? 0),
+                'stock_minimo'    => (int)($_POST['stock_minimo'] ?? 5),
+                'stock_maximo'    => (int)($_POST['stock_maximo'] ?? 0),
+                'precio_venta'    => (float)($_POST['precio_venta'] ?? 0),
+                'precio_costo'    => (float)($_POST['precio_costo'] ?? 0),
+                'status'          => $_POST['status'] ?? 'Activo',
+                'fecha_vencimiento' => !empty($_POST['fecha_vencimiento']) ? $_POST['fecha_vencimiento'] : null,
+                'id_proveedor'    => (int)($_POST['id_proveedor'] ?? 0),
+            ]);
+            $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+            $this->redirect('productos');
+        }
+
+        // --- Datos para la vista ---
+        $offset = ($pagina_actual - 1) * $registros_por_pagina;
+        $flash = $_SESSION['flash_msg'] ?? null;
+        unset($_SESSION['flash_msg']);
+
+        $this->view('productos/index', [
+            'titulo'       => 'Inventario | JV3000 C.A.',
+            'wrapper_class'=> 'pagina-productos',
+            'css_extra'    => ['modules/productos/productos.css?v=7'],
+            'js_extra'     => ['modules/productos/productos.js?v=3'],
+            'csrf'         => Security::generateToken(),
+            'flash'        => $flash,
+            'esAdmin'      => $esAdmin,
+            'productos'    => $modelo->listar($registros_por_pagina, $offset),
+            'proveedores_list' => $modelo->proveedoresActivos(),
+            'total_registros'  => $modelo->totalRegistros(),
+            'total_paginas'    => max(1, (int)ceil($modelo->totalRegistros() / $registros_por_pagina)),
+            'pagina_actual'    => $pagina_actual,
+            'offset'           => $offset,
+            'registros_por_pagina' => $registros_por_pagina,
+            'js_config' => ['c1' => Security::generateToken()],
+        ]);
+    }
+}

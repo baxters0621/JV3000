@@ -9,10 +9,10 @@
                 document.getElementById('rec-resp').style.borderColor = '';
                 return;
             }
-            var ok = resp.length >= 5 && resp.length <= 20 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp);
+            var ok = resp.length >= 1;
             btn.disabled = !ok;
-            document.getElementById('rec-resp').style.borderColor = ok ? '#16A34A' : '#DC2626';
-            hint.textContent = ok ? '' : 'Mín. 5 y máx. 20 caracteres, sin patrones (asdf, 1234, etc).';
+            document.getElementById('rec-resp').style.borderColor = ok ? '#16A34A' : '';
+            hint.textContent = '';
         }
 
         function validarPassRec() {

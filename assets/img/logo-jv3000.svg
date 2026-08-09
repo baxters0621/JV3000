@@ -6,10 +6,11 @@
       <stop offset="100%" stop-color="#C2410C"/>
     </linearGradient>
   </defs>
-  <polygon points="58,16 96.1,38 96.1,82 58,104 19.9,82 19.9,38" fill="url(#hexGrad)"/>
-  <polygon points="58,21 91.8,40.5 91.8,79.5 58,99 24.2,79.5 24.2,40.5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linejoin="round"/>
-  <text x="58" y="67" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="36" font-weight="800" fill="#FFF7ED" letter-spacing="-2">JV</text>
-  <path d="M58,82 C60.4,85.6 61.8,88 61.8,90.2 A3.9,3.9 0 1 1 54.2,90.2 C54.2,88 55.6,85.6 58,82Z" fill="rgba(255,247,237,0.9)"/>
-  <text x="116" y="76" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="800" fill="#0F1A2E" letter-spacing="-1">JV<tspan fill="#EA580C" font-weight="300">3000</tspan></text>
-  <text x="118" y="100" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="600" fill="#64748B">C.A.</text>
+  <g transform="translate(32,0)">
+    <polygon points="58,16 96.1,38 96.1,82 58,104 19.9,82 19.9,38" fill="url(#hexGrad)"/>
+    <polygon points="58,21 91.8,40.5 91.8,79.5 58,99 24.2,79.5 24.2,40.5" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-linejoin="round"/>
+    <text x="58" y="67" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="36" font-weight="800" fill="#FFF7ED" letter-spacing="-2">JV</text>
+    <path d="M58,82 C60.4,85.6 61.8,88 61.8,90.2 A3.9,3.9 0 1 1 54.2,90.2 C54.2,88 55.6,85.6 58,82Z" fill="rgba(255,247,237,0.9)"/>
+    <text x="116" y="76" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="800" fill="#0F1A2E" letter-spacing="-1">JV<tspan fill="#EA580C" font-weight="300">3000</tspan><tspan fill="#64748B" font-size="22" font-weight="600" letter-spacing="1"> C.A.</tspan></text>
+  </g>
 </svg>

@@ -31,15 +31,8 @@ function validarReg() {
     var meter = document.getElementById('r-meter');
 
     var resp = document.getElementById('r-resp').value.trim();
-    var respOk = false;
-    if (resp.length >= 5 && resp.length <= 20 && /[a-zA-Z]/.test(resp) && /[aeiouAEIOU]/.test(resp) && !/(.)\1{3,}/.test(resp) && !/abcdef|bcdefg|cdefgh|defghi|efghij|fghijk|ghijkl|hijklm|ijklmn/i.test(resp) && !/asdf|qwerty|zxcv|abcd|1234/i.test(resp)) {
-        respOk = true;
-        document.getElementById('r-resp').style.borderColor = 'var(--jv-success)';
-    } else if (resp.length > 0) {
-        document.getElementById('r-resp').style.borderColor = 'var(--jv-danger)';
-    } else {
-        document.getElementById('r-resp').style.borderColor = '';
-    }
+    var respOk = resp.length >= 1;
+    document.getElementById('r-resp').style.borderColor = resp.length > 0 ? 'var(--jv-success)' : '';
 
     var uOk = u.length >= 4 && /^[a-zA-Z0-9_]+$/.test(u);
 

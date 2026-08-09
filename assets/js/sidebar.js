@@ -43,5 +43,6 @@ document.querySelectorAll('.sidebar .nav-link').forEach(link => {
 // Imprimir reporte
 function imprimirReporte(e) {
     e.preventDefault();
-    window.location.href = (window.JV_CONFIG && window.JV_CONFIG.prefijo ? window.JV_CONFIG.prefijo : '') + 'modules/reporte_inventario.php';
+    const prefijo = window.JV_BASE || (window.JV_CONFIG && window.JV_CONFIG.prefijo) || '';
+    window.location.href = prefijo + 'index.php?url=reporte_inventario';
 }

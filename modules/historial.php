@@ -105,8 +105,8 @@ unset($_SESSION['flash_msg']);
         <div class="d-flex align-items-center gap-3">
             <div class="aud-header-icon"><i class="bi bi-shield-check"></i></div>
             <div>
-                <h1 class="font-brand fw-bold m-0" style="font-size:2rem; letter-spacing:-1px; color: var(--jv-text-primary);">HISTORIAL</h1>
-                <p class="m-0 text-secondary fw-bold text-uppercase" style="font-size:.95rem;">Registro de Actividades del Sistema</p>
+                <h1 class="module-title">HISTORIAL</h1>
+                <p class="module-subtitle">Registro de Actividades del Sistema</p>
             </div>
         </div>
         <span class="text-jv-muted fw-bold" style="font-size:.95rem;"><?php echo $total_registros; ?> registro(s)</span>

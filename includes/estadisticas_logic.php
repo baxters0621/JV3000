@@ -3,7 +3,7 @@
 // LÓGICA COMPARTIDA DE ESTADÍSTICAS
 // Calcula KPIs actuales + comparación con el
 // periodo anterior equivalente + datos de gráficos.
-// Usada por modules/estadisticas.php y includes/estadisticas_ajax.php
+// Usada por modules/estadisticas.php y includes/ajax/estadisticas_ajax.php
 // ==========================================
 
 function jv_est_periodos(): array

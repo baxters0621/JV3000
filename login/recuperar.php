@@ -72,10 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $respuesta = trim($_POST['rec_respuesta'] ?? '');
                 $preg_user = $_SESSION['rec_pregunta'] ?? '';
                 if (!validarRespuestaSeguridad($respuesta)) {
-                    $error = "RESPUESTA INVÁLIDA. MÍN 5 Y MÁX 20 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
+                    $error = "RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.";
                 } else {
                     $row = $db->fetchOne("SELECT respuesta_seguridad FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
-                    if ($row && password_verify($respuesta, $row['respuesta_seguridad'])) {
+                    if ($row && verificarRespuestaSeguridad($respuesta, $row['respuesta_seguridad'])) {
                         $_SESSION['rec_step'] = 3;
                     } else {
                         $_SESSION['rec_intentos'] = ($_SESSION['rec_intentos'] ?? 0) + 1;
@@ -178,7 +178,7 @@ if ($step == 4) {
                 <input type="hidden" name="rec_action" value="responder">
                 <div class="small text-jv-muted mb-2">Usuario: <strong style="color:var(--jv-text-primary)"><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
                 <div class="rec-question"><i class="bi bi-question-circle me-2"></i><?php echo htmlspecialchars($_SESSION['rec_pregunta'] ?? ''); ?></div>
-                <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required maxlength="20" autofocus placeholder="Mín. 5 y máx. 20 caracteres" autocomplete="off" oninput="validarRespuesta()">
+                <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required maxlength="255" autofocus placeholder="Escribe tu respuesta" autocomplete="off" oninput="validarRespuesta()">
                 <small id="rec-resp-hint" style="color:#DC2626;font-size:.7rem;display:block;height:14px;text-align:center;"></small>
                 <button type="submit" id="rec-btn" class="rec-btn"><i class="bi bi-shield-check me-2"></i>VERIFICAR</button>
                 <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Intentar con otro correo</a>

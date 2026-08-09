@@ -37,7 +37,7 @@ $valor_venta_total = 0;
             <div class="text-start">
                 <h2 class="fw-bold m-0 text-dark">JV3000 C.A.</h2>
                 <p class="m-0 text-muted small fw-bold">RIF: <?php echo htmlspecialchars(getConfig('empresa_rif', 'J-502873090')); ?> | CONTROL DE EXISTENCIAS</p>
-                <p class="m-0 small">Sede Principal: Valencia, Edo. Carabobo</p>
+                <p class="m-0 small">Sede Principal: <?php echo htmlspecialchars(getConfig('empresa_direccion', 'Naguanagua, Edo. Carabobo')); ?></p>
             </div>
             <div class="text-end">
                 <h3 class="m-0 text-uppercase fw-bold text-primary">Estado de Inventario</h3>

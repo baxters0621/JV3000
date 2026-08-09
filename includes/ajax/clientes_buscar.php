@@ -8,7 +8,7 @@
 //   incluir_inactivos  1 = incluye clientes Inactivo
 //   limit              máx resultados (default 20, máx 100)
 
-require_once __DIR__ . '/../init.php';
+require_once __DIR__ . '/../../init.php';
 
 if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
     http_response_code(403);

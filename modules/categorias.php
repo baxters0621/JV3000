@@ -143,12 +143,12 @@ foreach ($nulls as $n) {
                 <div class="d-flex align-items-center gap-3">
                     <div class="cat-header-icon"><i class="bi bi-tags"></i></div>
                     <div>
-                        <h1 class="font-brand fw-bold m-0" style="font-size: 2rem; letter-spacing: -1px; color: var(--jv-text-primary);">CATEGORÍAS</h1>
-                        <p class="m-0 text-secondary fw-bold text-uppercase" style="font-size: 0.95rem;">Organización de Catálogo</p>
+                        <h1 class="module-title">CATEGORÍAS</h1>
+                        <p class="module-subtitle">Organización de Catálogo</p>
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn-jv-primary pulse-jv" onclick="nuevaCat()" style="padding: 12px 32px; font-size: 1rem;">
+                    <button class="btn-jv-primary pulse-jv module-action-btn" onclick="nuevaCat()">
                         <i class="bi bi-plus-lg me-1"></i>CREAR
                     </button>
                 </div>
@@ -309,7 +309,7 @@ foreach ($nulls as $n) {
 
                             <div class="d-flex justify-content-end gap-2 pt-2">
                                 <button type="button" class="btn-jv-secondary" style="padding: 12px 28px; font-size: 1rem;" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn-jv-primary" style="padding: 12px 28px; font-size: 1rem;" onclick="return validarCategoria(this)">
+                                <button type="button" class="btn-jv-primary module-action-btn" onclick="return validarCategoria(this)">
                                     <i class="bi bi-check-lg me-1"></i> Guardar
                                 </button>
                             </div>

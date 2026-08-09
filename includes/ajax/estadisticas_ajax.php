@@ -2,7 +2,7 @@
 // ==========================================
 // ENDPOINT AJAX DE ESTADÍSTICAS
 // ==========================================
-require_once __DIR__ . '/../init.php';
+require_once __DIR__ . '/../../init.php';
 
 $db = Database::getInstance();
 header('Content-Type: application/json');
@@ -20,7 +20,7 @@ if ($rol_ajax !== 1 && $rol_ajax !== 3) {
     exit();
 }
 
-require_once __DIR__ . '/estadisticas_logic.php';
+require_once __DIR__ . '/../estadisticas_logic.php';
 
 $periodo = preg_match('/^(dia|semana|quincena|mes|trimestre|semestre|rango)$/', $_GET['periodo'] ?? '') ? $_GET['periodo'] : 'semana';
 $desde = $_GET['desde'] ?? '';

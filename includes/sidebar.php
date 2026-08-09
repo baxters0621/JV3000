@@ -6,6 +6,10 @@ if (!isset($base_assets)) {
     $base_assets = BASE_PATH . 'assets/';
 }
 $archivo_actual = basename($_SERVER['PHP_SELF']);
+$ruta_mvc = trim($_GET['url'] ?? '', '/');
+$mvc_activa = function (string $prefix) use ($ruta_mvc) {
+    return $ruta_mvc === $prefix || strpos($ruta_mvc, $prefix . '/') === 0;
+};
 
 $prefijo = BASE_PATH;
 
@@ -37,7 +41,7 @@ function es_activo(string $pagina, string $modulo = ''): string
         <a href="<?php echo $prefijo; ?>dashboard/index.php" class="brand-link">
             <img class="brand-mark" src="<?php echo $base_assets; ?>img/logo-mark.svg?v=1" alt="JV3000">
         </a>
-        <span class="brand-tag">Inventario y Ventas</span>
+        <span class="brand-tag">Inventario y Facturación</span>
     </div>
 
     <!-- Menú de navegación -->
@@ -50,33 +54,11 @@ function es_activo(string $pagina, string $modulo = ''): string
             </a>
         </div>
 
-        <!-- --- Statistics (Admin / Sales) --- -->
-        <!-- Estadísticas -->
-        <?php if ($es_admin || $es_op_ventas): ?>
-            <div class="nav-item nav-estadisticas <?php echo ($archivo_actual === 'estadisticas.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/estadisticas.php" class="nav-link">
-                    <i class="bi bi-graph-up-arrow"></i>
-                    <span>Estadísticas</span>
-                </a>
-            </div>
-        <?php endif; ?>
-
-        <!-- --- Sales / Outputs (Admin / Sales) --- -->
-        <!-- Ventas / Salidas -->
-        <?php if ($es_admin || $es_op_ventas): ?>
-            <div class="nav-item nav-salidas <?php echo ($archivo_actual === 'salidas.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/salidas.php" class="nav-link">
-                    <i class="bi bi-receipt"></i>
-                    <span>Ventas / Salidas</span>
-                </a>
-            </div>
-        <?php endif; ?>
-
         <!-- --- Inventory (All operators) --- -->
         <!-- Inventario -->
         <?php if ($es_admin || $es_op_carga || $es_op_ventas): ?>
-            <div class="nav-item nav-inventario <?php echo ($archivo_actual === 'productos.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/productos.php" class="nav-link">
+            <div class="nav-item nav-inventario <?php echo $mvc_activa('productos') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=productos" class="nav-link">
                     <i class="bi bi-box-seam"></i>
                     <span>Inventario</span>
                 </a>
@@ -86,18 +68,62 @@ function es_activo(string $pagina, string $modulo = ''): string
         <!-- --- Purchases (Admin / Load) --- -->
         <!-- Compras -->
         <?php if ($es_admin || $es_op_carga): ?>
-            <div class="nav-item nav-entradas <?php echo ($archivo_actual === 'compras.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/compras.php" class="nav-link">
+            <div class="nav-item nav-entradas <?php echo $mvc_activa('compras') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=compras" class="nav-link">
                     <i class="bi bi-truck"></i>
                     <span>Compras</span>
                 </a>
             </div>
 
             <!-- Recepción de mercancía -->
-            <div class="nav-item nav-recepcion <?php echo ($archivo_actual === 'recepcion.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/recepcion.php" class="nav-link">
+            <div class="nav-item nav-recepcion <?php echo $mvc_activa('recepcion') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=recepcion" class="nav-link">
                     <i class="bi bi-box-arrow-in-down"></i>
                     <span>Recepción</span>
+                </a>
+            </div>
+        <?php endif; ?>
+
+        <!-- --- Sales / Outputs (Admin / Sales) --- -->
+        <!-- Ventas / Salidas -->
+        <?php if ($es_admin || $es_op_ventas): ?>
+            <div class="nav-item nav-salidas <?php echo $mvc_activa('salidas') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=salidas" class="nav-link">
+                    <i class="bi bi-receipt"></i>
+                    <span>Ventas / Salidas</span>
+                </a>
+            </div>
+        <?php endif; ?>
+
+        <!-- --- Purchases: Solicitudes (Admin / Load) --- -->
+        <!-- Solicitudes de reposición -->
+        <?php if ($es_admin || $es_op_carga): ?>
+            <div class="nav-item nav-solicitudes <?php echo ($archivo_actual === 'solicitudes_compra.php' || $mvc_activa('solicitudes')) ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=solicitudes" class="nav-link">
+                    <i class="bi bi-cart-check"></i>
+                    <span>Solicitudes de Reposición</span>
+                </a>
+            </div>
+        <?php endif; ?>
+
+        <!-- --- Statistics (Admin / Sales) --- -->
+        <!-- Estadísticas -->
+        <?php if ($es_admin || $es_op_ventas): ?>
+            <div class="nav-item nav-estadisticas <?php echo $mvc_activa('estadisticas') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=estadisticas" class="nav-link">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Estadísticas</span>
+                </a>
+            </div>
+        <?php endif; ?>
+
+        <!-- --- Print (Admin / Sales) --- -->
+        <!-- Imprimir -->
+        <?php if ($es_admin || $es_op_ventas): ?>
+            <div class="nav-item nav-reportes <?php echo ($archivo_actual === 'reporte_inventario.php') ? 'active' : ''; ?>">
+                <a href="#" class="nav-link" onclick="imprimirReporte(event)">
+                    <i class="bi bi-printer"></i>
+                    <span>Imprimir</span>
                 </a>
             </div>
         <?php endif; ?>
@@ -106,8 +132,8 @@ function es_activo(string $pagina, string $modulo = ''): string
         <!-- --- Suppliers --- -->
         <!-- Proveedores -->
         <?php if ($es_admin): ?>
-            <div class="nav-item nav-clientes <?php echo ($archivo_actual === 'proveedores.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/proveedores.php" class="nav-link">
+            <div class="nav-item nav-clientes <?php echo $mvc_activa('proveedores') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=proveedores" class="nav-link">
                     <i class="bi bi-building"></i>
                     <span>Proveedores</span>
                 </a>
@@ -117,8 +143,8 @@ function es_activo(string $pagina, string $modulo = ''): string
         <!-- --- Categories --- -->
         <!-- Categorías -->
         <?php if ($es_admin): ?>
-            <div class="nav-item nav-inventario <?php echo ($archivo_actual === 'categorias.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/categorias.php" class="nav-link">
+            <div class="nav-item nav-categorias <?php echo $mvc_activa('categorias') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=categorias" class="nav-link">
                     <i class="bi bi-grid-3x3-gap"></i>
                     <span>Categorías</span>
                 </a>
@@ -139,21 +165,10 @@ function es_activo(string $pagina, string $modulo = ''): string
         <!-- --- History --- -->
         <!-- Historial -->
         <?php if ($es_admin): ?>
-            <div class="nav-item nav-historial <?php echo ($archivo_actual === 'historial.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>modules/historial.php" class="nav-link">
+            <div class="nav-item nav-historial <?php echo $mvc_activa('historial') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=historial" class="nav-link">
                     <i class="bi bi-clock-history"></i>
                     <span>Historial</span>
-                </a>
-            </div>
-        <?php endif; ?>
-
-        <!-- --- Print (Admin / Sales) --- -->
-        <!-- Imprimir -->
-        <?php if ($es_admin || $es_op_ventas): ?>
-            <div class="nav-item nav-reportes <?php echo ($archivo_actual === 'reporte_inventario.php') ? 'active' : ''; ?>">
-                <a href="#" class="nav-link" onclick="imprimirReporte(event)">
-                    <i class="bi bi-printer"></i>
-                    <span>Imprimir</span>
                 </a>
             </div>
         <?php endif; ?>
@@ -194,11 +209,12 @@ function es_activo(string $pagina, string $modulo = ''): string
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 <!-- ESTILOS DEL SIDEBAR -->
-<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=7">
+<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=9">
 
 <script src="<?php echo $base_assets; ?>js/sweetalert2.all.min.js"></script>
 <script>
+    window.JV_BASE = <?php echo json_encode($prefijo); ?>;
     window.JV_CONFIG = window.JV_CONFIG || {};
     window.JV_CONFIG.prefijo = <?php echo json_encode($prefijo); ?>;
 </script>
-<script src="<?php echo $base_assets; ?>js/sidebar.js?v=2"></script>
+<script src="<?php echo $base_assets; ?>js/sidebar.js?v=3"></script>

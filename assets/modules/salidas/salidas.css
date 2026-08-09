@@ -3,29 +3,17 @@
 
         /* ── Header icon ── */
         .sal-header-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 16px;
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
             background: linear-gradient(135deg, #dc2626, #b91c1c);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 1.9rem;
+            font-size: 1.6rem;
             flex-shrink: 0;
             box-shadow: 0 0 30px rgba(220, 38, 38, 0.3);
-        }
-
-        /* ── Título de la página ── */
-        .sal-titulo {
-            font-size: 2.2rem;
-            letter-spacing: -1px;
-            color: var(--jv-text-primary);
-        }
-
-        .sal-subtitulo {
-            font-size: .9rem;
-            color: var(--jv-text-secondary);
         }
 
         /* ── Action button (44px) ── */

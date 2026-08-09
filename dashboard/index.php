@@ -107,9 +107,8 @@ $tabla_compras = $datos['tabla_compras'];
                 <div class="dash-brand">
                     <img class="dash-logo-badge" src="../assets/img/logo-mark.svg?v=1" alt="JV3000">
                     <div class="dash-brand-meta">
-                        <div class="dash-brand-title">JV<span class="num">3000</span></div>
-                        <div class="dash-brand-ca">C.A.</div>
-                        <p class="dash-brand-tag">Centro de Control de Inventario y Ventas</p>
+                        <div class="dash-brand-title">JV<span class="num">3000</span> <span class="dash-brand-ca">C.A.</span></div>
+                        <p class="dash-brand-tag">Centro de Control de Inventario y Facturación</p>
                     </div>
                 </div>
                 <div class="dash-hero-info">

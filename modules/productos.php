@@ -149,12 +149,12 @@ $proveedores_list = $db->fetchAll("SELECT id_proveedor, nombre_empresa FROM prov
 
             <!-- Encabezado -->
             <div class="card-jv d-flex align-items-center gap-3 mb-3" style="padding: 18px 24px; border-left: 4px solid var(--jv-orange);">
-                <div style="width: 56px; height: 56px; border-radius: 12px; background: var(--jv-navy); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(15, 26, 46, 0.25);">
-                    <i class="bi bi-box-seam text-white" style="font-size: 1.5rem;"></i>
+                <div class="module-header-icon" style="background: var(--jv-orange); box-shadow: 0 4px 16px rgba(234,88,12,0.25);">
+                    <i class="bi bi-box-seam text-white" style="font-size:1.5rem;"></i>
                 </div>
                 <div>
-                    <h1 class="font-brand fw-bold m-0" style="font-size: 2rem; color: var(--jv-text-primary);">INVENTARIO</h1>
-                    <p class="m-0 text-secondary" style="font-size: 1rem;">Control Maestro de Existencias</p>
+                    <h1 class="module-title">INVENTARIO</h1>
+                    <p class="module-subtitle">Control Maestro de Existencias</p>
                 </div>
             </div>
 

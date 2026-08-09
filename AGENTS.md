@@ -19,7 +19,7 @@ Antes de escribir cualquier línea de código, detente en el primer nivel que fu
 
 ## DB
 - Portable: `db/jv3000_portable_v4.sql` — seed de **instalación limpia** (esquema completo + solo datos de sistema: roles, tipos de movimiento, configuración, usuarios, contadores en 0). **No incluye datos demo**.
-- Auto-instalador en `init.php` apunta a `v4`; migración de BD v3 → v4: `php db/migrar_v3_v4.php`
+- Auto-instalador en `init.php` apunta a `v4`.
 - Usuario inicial: `Administrador` / `Admin123*` (cambiar tras el primer inicio)
 - Backups en `backups/`
 

@@ -458,6 +458,28 @@
                 }, 4000);
             });
 
+            // Prefill desde una solicitud de compra (atender_solicitud)
+            if (window.COMPRAS_SOLICITUD && window.COMPRAS_SOLICITUD.items && window.COMPRAS_SOLICITUD.items.length) {
+                window.COMPRAS_SOLICITUD.items.forEach(function(it) {
+                    productos.push({
+                        id: it.id,
+                        nombre: it.nombre,
+                        cantidad: it.cantidad,
+                        precio: it.precio,
+                        fecha_vencimiento: it.fecha_vencimiento || '',
+                        total: it.cantidad * it.precio
+                    });
+                });
+                actualizarTabla();
+                const modalC = document.getElementById('modalCompra');
+                if (modalC) {
+                    setTimeout(function() {
+                        const m = bootstrap.Modal.getOrCreateInstance(modalC);
+                        m.show();
+                    }, 200);
+                }
+            }
+
             document.querySelectorAll('input, select, textarea').forEach(function(el) {
                 el.addEventListener('input', function() {
                     this.classList.remove('input-error');

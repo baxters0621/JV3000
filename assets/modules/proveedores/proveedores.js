@@ -207,7 +207,7 @@
         }
 
         function verHistorial(idProveedor) {
-            window.location.href = 'compras.php?filtro_proveedor=' + idProveedor;
+            window.location.href = 'index.php?url=compras&filtro_proveedor=' + idProveedor;
         }
 
         function toggleStatusProveedor(id, nombre, statusActual) {

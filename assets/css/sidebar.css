@@ -6,11 +6,10 @@
 .sidebar {
     position: fixed; left: 0; top: 0;
     height: 100vh; width: 260px;
-    background: #FFFFFF;
+    background-color: #FFFFFF;
     background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 45px, rgba(15,26,46,0.04) 45px, rgba(15,26,46,0.04) 46px),
-        repeating-linear-gradient(90deg, transparent, transparent 45px, rgba(15,26,46,0.04) 45px, rgba(15,26,46,0.04) 46px),
-        repeating-linear-gradient(45deg, transparent, transparent 90px, rgba(234,88,12,0.015) 90px, rgba(234,88,12,0.015) 91px);
+        radial-gradient(rgba(234,88,12,0.06) 1.3px, transparent 1.4px);
+    background-size: 26px 26px;
     display: flex; flex-direction: column;
     z-index: 1000;
     transform: translateX(-100%);
@@ -68,12 +67,15 @@
 .nav-dashboard  { --mod-color: #94A3B8; }
 .nav-estadisticas { --mod-color: #3B82F6; }
 .nav-inventario { --mod-color: var(--jv-orange); }
+.nav-categorias { --mod-color: #2563EB; }
 .nav-entradas   { --mod-color: var(--jv-success); }
+.nav-recepcion  { --mod-color: #F59E0B; }
 .nav-salidas    { --mod-color: var(--jv-danger); }
+.nav-solicitudes { --mod-color: #6366F1; }
 .nav-clientes   { --mod-color: #8B5CF6; }
 .nav-usuarios   { --mod-color: #F59E0B; }
 .nav-reportes   { --mod-color: var(--jv-warning); }
-.nav-historial  { --mod-color: #3B82F6; }
+.nav-historial  { --mod-color: #7C3AED; }
 .nav-perfil     { --mod-color: #38BDF8; }
 
 /* Nav Items */

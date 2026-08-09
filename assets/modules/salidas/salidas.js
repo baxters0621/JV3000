@@ -99,11 +99,18 @@
                 div.dataset.stock = it.stock;
                 div.dataset.vencido = it.vencido;
 
+                const bloqueado = it.stock <= 0;
+                if (bloqueado) {
+                    div.classList.add('com-resultado-bloqueado');
+                    div.dataset.blocked = '1';
+                }
+
                 const left = document.createElement('div');
                 const nombreEl = document.createElement('div');
                 nombreEl.className = 'r-nombre';
-                nombreEl.dataset.tooltip = (it.vencido ? '«VENCIDO» ' : '') + it.nombre;
-                nombreEl.textContent = (it.vencido ? '«VENCIDO» ' : '') + it.nombre;
+                const etqBloqueo = it.stock <= 0 ? '«AGOTADO» ' : (it.vencido ? '«VENCIDO» ' : '');
+                nombreEl.dataset.tooltip = etqBloqueo + it.nombre;
+                nombreEl.textContent = etqBloqueo + it.nombre;
                 const skuEl = document.createElement('div');
                 skuEl.className = 'r-sku';
                 skuEl.textContent = it.sku || '';
@@ -131,7 +138,7 @@
             const grupo = grupoActual();
             window.clearTimeout(toolboxTimer);
             toolboxTimer = window.setTimeout(function() {
-                jvBuscarProductos({ q: q, limit: 15, vencidos: grupo === 'merma' ? 1 : 0, solo_con_stock: 1 }, function(d) {
+                jvBuscarProductos({ q: q, limit: 15, vencidos: grupo === 'merma' ? 1 : 0, solo_con_stock: grupo === 'merma' ? 1 : 0 }, function(d) {
                     if (d && d.success) renderResultados(d.items);
                     else renderResultados([]);
                 });
@@ -140,6 +147,30 @@
 
         function seleccionarProducto(el) {
             if (!el || !el.dataset.id) return;
+            const bloqueado = el.dataset.blocked === '1';
+            const grupo = grupoActual();
+            if (bloqueado && grupo !== 'merma') {
+                const prod = {
+                    id: parseInt(el.dataset.id, 10),
+                    nombre: el.dataset.nombre,
+                    sku: el.dataset.sku,
+                    stock: parseInt(el.dataset.stock, 10) || 0
+                };
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'SIN STOCK DISPONIBLE',
+                    html: '<div style="text-align:left;"><strong>' + escapeHtml(prod.nombre) + '</strong><br><small>' + escapeHtml(prod.sku || '') + '</small><br><span style="color:var(--jv-danger);font-weight:700;">Stock disponible: 0</span></div><div style="margin-top:10px;color:var(--jv-text-muted);font-size:.85rem;">Este producto no puede venderse. Puede solicitarlo a Compras para reponerlo.</div>',
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#EA580C',
+                    showCancelButton: true,
+                    confirmButtonText: '🚚 Pedir a Compras',
+                    cancelButtonText: 'CERRAR'
+                }).then(r => {
+                    if (r.isConfirmed) agregarSolicitudCompras(prod);
+                });
+                return;
+            }
             productoSeleccionado = {
                 id: parseInt(el.dataset.id, 10),
                 nombre: el.dataset.nombre,
@@ -260,15 +291,43 @@
             const grupo = grupoActual();
             const stockDisp = productoSeleccionado.stock;
             if (cant > stockDisp) {
-                Swal.fire({
-                    title: 'Stock insuficiente',
-                    text: 'Disponible para este tipo de movimiento: ' + stockDisp + ', solicitado: ' + cant,
-                    icon: 'warning',
-                    background: '#fff',
-                    color: '#212529',
-                    confirmButtonColor: '#EA580C'
-                });
-                document.getElementById('s_cant').focus();
+                if (grupo === 'venta') {
+                    const prod = {
+                        id: productoSeleccionado.id,
+                        nombre: productoSeleccionado.nombre,
+                        sku: productoSeleccionado.sku,
+                        stock: stockDisp
+                    };
+                    Swal.fire({
+                        title: 'Stock insuficiente',
+                        text: 'Disponible para este tipo de movimiento: ' + stockDisp + ', solicitado: ' + cant,
+                        icon: 'warning',
+                        background: '#fff',
+                        color: '#212529',
+                        confirmButtonColor: '#EA580C',
+                        showCancelButton: true,
+                        confirmButtonText: '🚚 Pedir a Compras',
+                        cancelButtonText: 'CERRAR'
+                    }).then(r => {
+                        if (r.isConfirmed) {
+                            const cantEl = document.getElementById('s_cant');
+                            if (cantEl) cantEl.value = Math.max(1, parseInt(cantEl.value, 10) || 1);
+                            agregarSolicitudCompras(prod);
+                        } else {
+                            document.getElementById('s_cant').focus();
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Stock insuficiente',
+                        text: 'Disponible para este tipo de movimiento: ' + stockDisp + ', solicitado: ' + cant,
+                        icon: 'warning',
+                        background: '#fff',
+                        color: '#212529',
+                        confirmButtonColor: '#EA580C'
+                    });
+                    document.getElementById('s_cant').focus();
+                }
                 return;
             }
             const precio = grupo === 'regalias' ? 0 : (grupo === 'merma' ? productoSeleccionado.precioCosto : productoSeleccionado.precioVenta);
@@ -301,6 +360,100 @@
         function quitarProductoSalida(idx) {
             s_productos.splice(idx, 1);
             actualizarTablaSalida();
+        }
+
+        // ==========================================
+        // SOLICITUD DE COMPRA A PROVEEDOR (desde Ventas)
+        // ==========================================
+        let s_solicitud = [];
+
+        function agregarSolicitudCompras(prod) {
+            if (!prod || !prod.id) return;
+            const cant = Math.max(1, parseInt(document.getElementById('s_cant').value, 10) || 1);
+            const existente = s_solicitud.find(p => p.id_producto === prod.id);
+            if (existente) {
+                existente.cantidad += cant;
+            } else {
+                s_solicitud.push({
+                    id_producto: prod.id,
+                    sku: prod.sku || '',
+                    nombre_producto: prod.nombre || '',
+                    cantidad: cant
+                });
+            }
+            actualizarSolicitudCompras();
+            Swal.fire({
+                icon: 'success',
+                title: 'AGREGADO A SOLICITUD',
+                text: (prod.nombre || 'Producto') + ' se solicitará a Compras.',
+                background: '#fff',
+                color: '#212529',
+                confirmButtonColor: '#EA580C',
+                timer: 1600,
+                showConfirmButton: false
+            });
+        }
+
+        function quitarSolicitudCompras(idx) {
+            s_solicitud.splice(idx, 1);
+            actualizarSolicitudCompras();
+        }
+
+        function actualizarSolicitudCompras() {
+            const tbody = document.getElementById('s_solicitud_body');
+            const box = document.getElementById('solicitud_compras_box');
+            if (!tbody || !box) return;
+            if (!s_solicitud.length) {
+                box.style.display = 'none';
+                tbody.innerHTML = '';
+                return;
+            }
+            box.style.display = '';
+            let html = '';
+            s_solicitud.forEach((p, i) => {
+                html += `<tr>
+                    <td class="td-prod-num">${i+1}</td>
+                    <td class="td-prod-nombre">${escapeHtml(p.sku + ' - ' + p.nombre_producto)}</td>
+                    <td class="td-prod-cant">${p.cantidad}</td>
+                    <td style="text-align:center;">
+                        <button type="button" onclick="quitarSolicitudCompras(${i})" style="background:none;border:none;color:var(--jv-danger);font-size:1.2rem;cursor:pointer;padding:2px 6px;" title="Quitar">&times;</button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function enviarSolicitudCompras() {
+            if (!s_solicitud.length) return;
+            const items = s_solicitud.map(p => ({ id_producto: p.id_producto, cantidad: p.cantidad }));
+            const btn = document.getElementById('btnEnviarSolicitud');
+            if (btn) { btn.disabled = true; btn.innerHTML = '⏳ ENVIANDO...'; }
+            const fd = new FormData();
+            fd.append('csrf_token', window.JV_CONFIG.c1);
+            fd.append('items', JSON.stringify(items));
+            fetch((window.JV_BASE || '') + 'index.php?url=solicitudes/crear', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(d => {
+                    if (btn) { btn.disabled = false; btn.innerHTML = '🚚 ENVIAR SOLICITUD A COMPRAS'; }
+                    if (d.ok) {
+                        s_solicitud = [];
+                        actualizarSolicitudCompras();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'SOLICITUD ENVIADA A COMPRAS',
+                            text: 'Los productos quedaron pendientes de atención por el módulo de Compras.',
+                            background: '#fff',
+                            color: '#212529',
+                            confirmButtonColor: '#16A34A'
+                        });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'ERROR', text: d.error || 'No se pudo enviar la solicitud.', background: '#fff', color: '#212529', confirmButtonColor: '#DC2626' });
+                    }
+                })
+                .catch(e => {
+                    if (btn) { btn.disabled = false; btn.innerHTML = '🚚 ENVIAR SOLICITUD A COMPRAS'; }
+                    Swal.fire({ icon: 'error', title: 'ERROR DE CONEXIÓN', text: e.message, background: '#fff', color: '#212529', confirmButtonColor: '#DC2626' });
+                });
         }
 
         function actualizarTablaSalida() {
@@ -347,11 +500,13 @@
             document.getElementById('modalTitle').innerText = nombres[grupo] || 'REGISTRAR MOVIMIENTO';
             // reset productos al cambiar tipo
             s_productos = [];
+            s_solicitud = [];
             productoSeleccionado = null;
             if (toolboxInput) toolboxInput.value = '';
             if (resultadosBox) resultadosBox.classList.remove('abierto');
             document.getElementById('s_precio').value = '';
             actualizarTablaSalida();
+            actualizarSolicitudCompras();
         }
 
         function nuevaSalida() {
@@ -360,8 +515,10 @@
             document.getElementById('s_id_edit').value = '';
             document.getElementById('modalTitle').innerText = 'REGISTRAR MOVIMIENTO';
             s_productos = [];
+            s_solicitud = [];
             productoSeleccionado = null;
             actualizarTablaSalida();
+            actualizarSolicitudCompras();
             document.getElementById('s_cliente').value = '';
             document.getElementById('s_id_cliente').value = '';
             if (toolboxCli) toolboxCli.value = '';
@@ -525,12 +682,12 @@
 
             const fd = new FormData(document.getElementById('formSalida'));
 
-            fetch('preview_factura.php?store=1', { method:'POST', body:fd })
+            fetch((window.JV_BASE || '') + 'index.php?url=preview_factura/store', { method:'POST', headers:{ 'X-Requested-With': 'XMLHttpRequest' }, body:fd })
                 .then(r => r.json())
                 .then(d => {
                     btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA';
                     if (d.ok) {
-                        window.open('preview_factura.php?token=' + (d.token || ''), '_blank');
+                        window.open((window.JV_BASE || '') + 'index.php?url=preview_factura&token=' + (d.token || ''), '_blank');
                         modalS.hide();
                     } else {
                         Swal.fire({icon:'error',title:'ERROR',text:d.error||'Error al generar preview.',background:'#fff',color:'#212529',confirmButtonColor:'#DC2626'});
@@ -555,7 +712,7 @@
         }
 
         function verFactura(id) {
-            window.open('preview_factura.php?id=' + id, '_blank');
+            window.open((window.JV_BASE || '') + 'index.php?url=preview_factura&id=' + id, '_blank');
         }
 
         function filtrarSalidas() {

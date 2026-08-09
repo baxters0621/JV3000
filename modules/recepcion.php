@@ -73,15 +73,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_recepcion'])) 
 
     $id_usuario_sesion = intval($_SESSION['id_usuario'] ?? 0);
     $id_proveedor = $compra['id_proveedor'] ? intval($compra['id_proveedor']) : null;
+    $documento_recepcion = trim(substr((string)($_POST['documento_recepcion'] ?? ''), 0, 100));
 
     $db->begin();
     try {
         $mov_id = $db->insert('movimientos', [
-            'id_referencia'   => $id_compra,
-            'tipo_referencia' => 'compra',
-            'tipo'            => 'Entrada',
-            'id_usuario'      => $id_usuario_sesion,
-            'status'          => 'Activo',
+            'id_referencia'      => $id_compra,
+            'tipo_referencia'    => 'compra',
+            'tipo'               => 'Entrada',
+            'id_usuario'         => $id_usuario_sesion,
+            'status'             => 'Activo',
+            'documento_recepcion'=> $documento_recepcion !== '' ? $documento_recepcion : null,
         ]);
 
         $total_productos = 0;
@@ -195,7 +197,7 @@ foreach ($items_pendientes as $it) {
 
 // Últimas recepciones registradas
 $recepciones = $db->fetchAll("
-    SELECT m.id_movimiento, m.fecha_movimiento, u.usuario AS operador,
+    SELECT m.id_movimiento, m.fecha_movimiento, m.documento_recepcion, u.usuario AS operador,
            c.nro_factura, pr.nombre_empresa AS proveedor,
            (SELECT COUNT(*) FROM detalle_movimientos dm WHERE dm.id_movimiento = m.id_movimiento) AS num_items,
            (SELECT COALESCE(SUM(dm.cantidad),0) FROM detalle_movimientos dm WHERE dm.id_movimiento = m.id_movimiento) AS unidades
@@ -242,8 +244,8 @@ unset($_SESSION['flash_msg']);
                         <i class="bi bi-box-arrow-in-down"></i>
                     </div>
                     <div>
-                        <h1 class="font-brand fw-bold m-0" style="font-size:2rem;letter-spacing:-1px; color: var(--jv-text-primary);">RECEPCIÓN</h1>
-                        <p class="text-secondary fw-bold text-uppercase m-0" style="font-size:.95rem;">Ingreso de Mercancía al Inventario</p>
+                        <h1 class="module-title">RECEPCIÓN</h1>
+                        <p class="module-subtitle">Ingreso de Mercancía al Inventario</p>
                     </div>
                 </div>
                 <div class="d-flex gap-2">
@@ -371,10 +373,11 @@ unset($_SESSION['flash_msg']);
                             <tr>
                                 <th style="width:14%;">Fecha</th>
                                 <th style="width:14%;">Factura</th>
-                                <th style="width:32%;">Proveedor</th>
-                                <th class="text-center" style="width:12%;">Productos</th>
-                                <th class="text-center" style="width:12%;">Unidades</th>
-                                <th style="width:16%;">Operador</th>
+                                <th style="width:26%;">Proveedor</th>
+                                <th class="text-center" style="width:11%;">Productos</th>
+                                <th class="text-center" style="width:11%;">Unidades</th>
+                                <th style="width:16%;">Guía/Recibo</th>
+                                <th style="width:12%;">Operador</th>
                             </tr>
                         </thead>
                         <tbody id="tablaRecepciones">
@@ -385,12 +388,13 @@ unset($_SESSION['flash_msg']);
                                         <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($r['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($r['proveedor'] ?? 'S/P'); ?></td>
                                         <td class="text-center"><span class="cant-badge">+<?php echo (int)$r['num_items']; ?></span></td>
                                         <td class="text-center fw-bold text-success">+<?php echo (int)$r['unidades']; ?></td>
+                                        <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($r['documento_recepcion'] ?: '-'); ?></td>
                                         <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($r['operador'] ?? '-'); ?></td>
                                     </tr>
                                 <?php endforeach;
                             else: ?>
                                 <tr>
-                                    <td colspan="6">
+                                    <td colspan="7">
                                         <div class="estado-vacio">
                                             <i class="bi bi-inbox"></i>
                                             <span>Aún no hay recepciones registradas</span>
@@ -426,17 +430,21 @@ unset($_SESSION['flash_msg']);
                         <div class="section-bg">
                             <div class="section-label"><i class="bi bi-receipt me-1"></i>Compra</div>
                             <div class="row g-2">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="small fw-bold text-secondary mb-1">FACTURA</label>
                                     <input type="text" class="input-jv" id="recFactura" readonly disabled style="color:var(--jv-text-muted);font-weight:700;">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="small fw-bold text-secondary mb-1">PROVEEDOR</label>
                                     <input type="text" class="input-jv" id="recProveedor" readonly disabled style="color:var(--jv-text-muted);">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="small fw-bold text-secondary mb-1">CONDICIONES</label>
                                     <input type="text" class="input-jv" id="recCondiciones" readonly disabled style="color:var(--jv-text-muted);">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="small fw-bold text-secondary mb-1">N° GUÍA / RECIBO <span class="fw-normal">(opcional)</span></label>
+                                    <input type="text" name="documento_recepcion" class="input-jv" id="recDocumento" maxlength="100" placeholder="Documento físico de entrega...">
                                 </div>
                             </div>
                         </div>
@@ -466,7 +474,7 @@ unset($_SESSION['flash_msg']);
 
                     <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
                         <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                        <button type="button" class="btn btn-jv-success" id="btnRecibir" style="padding:12px 28px;font-size:1rem;" onclick="return confirmarRecepcion(this)"><i class="bi bi-check-lg me-1"></i> Registrar Recepción</button>
+                        <button type="button" class="btn btn-jv-success module-action-btn" id="btnRecibir" onclick="return confirmarRecepcion(this)"><i class="bi bi-check-lg me-1"></i> Registrar Recepción</button>
                     </div>
                 </form>
             </div>

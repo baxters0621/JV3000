@@ -201,6 +201,38 @@ if (!$rowFlag) {
     error_log("[JV3000] Migración de documentos fiscales ejecutada.");
 }
 
+// --- 7c. Esquema: solicitudes de compra + documento de recepción (idempotente) ---
+$jv_db->execute("CREATE TABLE IF NOT EXISTS solicitudes_compra (
+    id_solicitud int(11) NOT NULL AUTO_INCREMENT,
+    id_usuario_solicitante int(11) NOT NULL,
+    fecha_solicitud timestamp NOT NULL DEFAULT current_timestamp(),
+    motivo varchar(150) DEFAULT NULL,
+    estado enum('Pendiente','Atendida','Cancelada') NOT NULL DEFAULT 'Pendiente',
+    id_compra int(11) DEFAULT NULL,
+    fecha_atendida datetime DEFAULT NULL,
+    PRIMARY KEY (id_solicitud),
+    KEY fk_sol_user (id_usuario_solicitante),
+    KEY fk_sol_compra (id_compra),
+    KEY idx_sol_estado (estado),
+    CONSTRAINT fk_sol_user FOREIGN KEY (id_usuario_solicitante) REFERENCES usuarios (id_usuario),
+    CONSTRAINT fk_sol_compra FOREIGN KEY (id_compra) REFERENCES compras (id_compra) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+$jv_db->execute("CREATE TABLE IF NOT EXISTS detalle_solicitud_compra (
+    id_detalle int(11) NOT NULL AUTO_INCREMENT,
+    id_solicitud int(11) NOT NULL,
+    id_producto int(11) NOT NULL,
+    cantidad_solicitada int(11) NOT NULL,
+    PRIMARY KEY (id_detalle),
+    KEY fk_dsc_solicitud (id_solicitud),
+    KEY fk_dsc_producto (id_producto),
+    CONSTRAINT fk_dsc_solicitud FOREIGN KEY (id_solicitud) REFERENCES solicitudes_compra (id_solicitud) ON DELETE CASCADE,
+    CONSTRAINT fk_dsc_producto FOREIGN KEY (id_producto) REFERENCES productos (id_producto)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+$colMov = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'movimientos' AND COLUMN_NAME = 'documento_recepcion'");
+if (!$colMov || (int)$colMov['n'] === 0) {
+    $jv_db->execute("ALTER TABLE movimientos ADD COLUMN documento_recepcion VARCHAR(100) DEFAULT NULL AFTER status");
+}
+
 // ==========================================
 // SEGURIDAD Y SESIÓN
 // ==========================================

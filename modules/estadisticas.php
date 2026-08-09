@@ -43,7 +43,7 @@ function jv_sello(?float $pct): string {
     <title>Estadísticas | JV3000 C.A.</title>
     <script src="../assets/js/chart.umd.min.js"></script>
     <!-- ESTILOS -->
-        <link rel="stylesheet" href="../assets/modules/estadisticas/estadisticas.css?v=3">
+        <link rel="stylesheet" href="../assets/modules/estadisticas/estadisticas.css?v=4">
 </head>
 <body>
     <?php include '../includes/sidebar.php'; ?>
@@ -58,8 +58,8 @@ function jv_sello(?float $pct): string {
                 <i class="bi bi-graph-up-arrow"></i>
             </div>
             <div>
-                <h1 class="font-brand mb-1" style="font-size:2.1rem;letter-spacing:-1px; color: var(--jv-text-primary);">ESTADÍSTICAS</h1>
-                <p class="text-secondary small fw-bold text-uppercase mb-0">Resumen de rendimiento | JV3000 C.A.</p>
+                <h1 class="module-title">ESTADÍSTICAS</h1>
+                <p class="module-subtitle">Resumen de rendimiento | JV3000 C.A.</p>
             </div>
         </div>
 

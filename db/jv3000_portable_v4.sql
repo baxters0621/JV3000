@@ -69,7 +69,7 @@ INSERT INTO `configuracion` (`id_config`, `clave`, `valor`, `descripcion`, `fech
 (2, 'empresa_nombre', 'JV3000 C.A.', 'Nombre de la empresa', '2026-07-14 19:18:02'),
 (3, 'empresa_rif', 'J-50287309-0', 'RIF de la empresa', '2026-07-14 21:18:43'),
 (4, 'empresa_telefono', '+58 0414-4014690', 'Teléfono de la empresa', '2026-08-06 01:46:15'),
-(5, 'empresa_direccion', 'Calle Guzman Blanco, Edif. El Surtidor Local 2, Valencia, Edo. Carabobo', 'Dirección de la empresa', '2026-08-06 01:46:15'),
+(5, 'empresa_direccion', 'Naguanagua, Edo. Carabobo', 'Dirección de la empresa', '2026-08-08 00:00:00'),
 (6, 'empresa_email', 'jv3000ca@gmail.com', 'Correo de la empresa', '2026-07-14 21:17:48');
 
 -- Tabla: login_intentos
@@ -287,6 +287,7 @@ CREATE TABLE `movimientos` (
   `id_usuario` int(11) NOT NULL,
   `fecha_movimiento` timestamp NOT NULL DEFAULT current_timestamp(),
   `status` enum('Activo','Anulado') NOT NULL DEFAULT 'Activo',
+  `documento_recepcion` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id_movimiento`),
   KEY `idx_ref` (`tipo_referencia`, `id_referencia`),
   KEY `fk_mov_usuario` (`id_usuario`),
@@ -369,5 +370,36 @@ CREATE TABLE `detalle_movimientos` (
   CONSTRAINT `fk_detmov_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-SET FOREIGN_KEY_CHECKS = 1;
-COMMIT;
+-- Tabla: solicitudes_compra
+DROP TABLE IF EXISTS `solicitudes_compra`;
+CREATE TABLE `solicitudes_compra` (
+  `id_solicitud` int(11) NOT NULL AUTO_INCREMENT,
+  `id_usuario_solicitante` int(11) NOT NULL,
+  `fecha_solicitud` timestamp NOT NULL DEFAULT current_timestamp(),
+  `motivo` varchar(150) DEFAULT NULL,
+  `estado` enum('Pendiente','Atendida','Cancelada') NOT NULL DEFAULT 'Pendiente',
+  `id_compra` int(11) DEFAULT NULL,
+  `fecha_atendida` datetime DEFAULT NULL,
+  PRIMARY KEY (`id_solicitud`),
+  KEY `fk_sol_user` (`id_usuario_solicitante`),
+  KEY `fk_sol_compra` (`id_compra`),
+  KEY `idx_sol_estado` (`estado`),
+  CONSTRAINT `fk_sol_user` FOREIGN KEY (`id_usuario_solicitante`) REFERENCES `usuarios` (`id_usuario`),
+  CONSTRAINT `fk_sol_compra` FOREIGN KEY (`id_compra`) REFERENCES `compras` (`id_compra`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Tabla: detalle_solicitud_compra
+DROP TABLE IF EXISTS `detalle_solicitud_compra`;
+CREATE TABLE `detalle_solicitud_compra` (
+  `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
+  `id_solicitud` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `cantidad_solicitada` int(11) NOT NULL,
+  PRIMARY KEY (`id_detalle`),
+  KEY `fk_dsc_solicitud` (`id_solicitud`),
+  KEY `fk_dsc_producto` (`id_producto`),
+  CONSTRAINT `fk_dsc_solicitud` FOREIGN KEY (`id_solicitud`) REFERENCES `solicitudes_compra` (`id_solicitud`) ON DELETE CASCADE,
+  CONSTRAINT `fk_dsc_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+SET FOREIGN_KEY_CHECKS = 1;COMMIT;

@@ -62,10 +62,10 @@ if (isset($_POST['accion_usuario'])) {
         $respuesta = trim($_POST['respuesta_seguridad'] ?? '');
         if ($pregunta !== '' && $respuesta !== '') {
             if (!validarRespuestaSeguridad($respuesta)) {
-                $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'RESPUESTA INVÁLIDA. MÍN 5 Y MÁX 20 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).'];
+                $_SESSION['flash_msg'] = ['tipo'=>'danger','texto'=>'RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.'];
                 header("Location: usuarios.php"); exit();
             }
-            $resp_hash = password_hash($respuesta, PASSWORD_BCRYPT);
+            $resp_hash = password_hash(normalizarRespuestaSeguridad($respuesta), PASSWORD_BCRYPT);
             $db->execute("UPDATE usuarios SET pregunta_seguridad = ?, respuesta_seguridad = ? WHERE id_usuario = ?", [$pregunta, $resp_hash, $id_target]);
         }
 
@@ -116,7 +116,7 @@ unset($_SESSION['flash_msg']);
 <head>
 <?php include '../includes/diseno.php'; ?>
     <title>Colaboradores | JV3000</title>
-        <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=4">
+        <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=5">
 </head>
 <body>
     <?php include '../includes/sidebar.php'; ?>
@@ -130,8 +130,8 @@ unset($_SESSION['flash_msg']);
                 <i class="bi bi-people-fill"></i>
             </div>
             <div>
-                <h1 class="font-brand mb-1" style="font-size:2rem;letter-spacing:-1px; color: var(--jv-text-primary);">COLABORADORES</h1>
-                <p class="text-secondary small fw-bold text-uppercase mb-0">Gestión de Personal Autorizado</p>
+                <h1 class="module-title">COLABORADORES</h1>
+                <p class="module-subtitle">Gestión de Personal Autorizado</p>
             </div>
         </div>
 
@@ -201,7 +201,7 @@ unset($_SESSION['flash_msg']);
                             <th style="width:15%;">ROL</th>
                             <th class="text-center" style="width:10%;">APROBADO</th>
                             <th class="text-center" style="width:10%;">ESTADO</th>
-                            <th class="text-center" style="width:130px;">ACCIONES</th>
+                            <th class="text-center" style="width:180px;">CONTROL</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -236,20 +236,17 @@ unset($_SESSION['flash_msg']);
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <div class="d-flex gap-1 justify-content-center">
-                                            <button class="btn-action" onclick='editarUsuario(<?php echo json_encode($row); ?>)' title="Editar">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </button>
-                                            <?php if ($row['id_usuario'] != $id_propio): ?>
-                                                <?php if ($row['status'] == 'Activo'): ?>
-                                                    <button class="btn-action" onclick="confirmarToggle(<?php echo $row['id_usuario']; ?>, '<?php echo htmlspecialchars($row['usuario']); ?>', 'suspender')" title="Suspender">
-                                                        <i class="bi bi-person-x-fill"></i>
-                                                    </button>
-                                                <?php else: ?>
-                                                    <button class="btn-action" onclick="confirmarToggle(<?php echo $row['id_usuario']; ?>, '<?php echo htmlspecialchars($row['usuario']); ?>', 'activar')" title="Reactivar">
-                                                        <i class="bi bi-person-check-fill"></i>
-                                                    </button>
-                                                <?php endif; ?>
+                                        <div class="d-flex justify-content-center">
+                                            <?php if ($row['id_usuario'] == $id_propio): ?>
+                                                <span class="badge-jv badge-secondary" style="font-size:.72rem;padding:6px 12px;"><i class="bi bi-lock-fill me-1"></i>CUENTA PRINCIPAL</span>
+                                            <?php elseif ($row['status'] == 'Activo'): ?>
+                                                <button class="btn-suspend" onclick="confirmarToggle(<?php echo $row['id_usuario']; ?>, '<?php echo htmlspecialchars($row['usuario']); ?>', 'suspender')">
+                                                    <i class="bi bi-person-lock me-1"></i>SUSPENDER
+                                                </button>
+                                            <?php else: ?>
+                                                <button class="btn-suspend btn-reactivar" onclick="confirmarToggle(<?php echo $row['id_usuario']; ?>, '<?php echo htmlspecialchars($row['usuario']); ?>', 'activar')">
+                                                    <i class="bi bi-person-check-fill me-1"></i>REACTIVAR
+                                                </button>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -274,97 +271,6 @@ unset($_SESSION['flash_msg']);
 </div>
 
     <?php // ==========================================
-    // MODAL EDITAR USUARIO
-    // ========================================== ?>
-    <!-- Modal Premium -->
-    <div class="modal fade" id="modalUser" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background:var(--jv-bg-secondary); border:1px solid var(--jv-border); border-radius:var(--jv-radius-xl);">
-                <form action="" method="POST">
-                    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                    <input type="hidden" name="accion_usuario" id="u_accion" value="registrar">
-                    <input type="hidden" name="id_usuario" id="u_id_edit">
-                    <div class="modal-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="fw-bolder font-brand m-0" id="modalTitle" style="color:var(--jv-navy);letter-spacing:-.5px;">EDITAR USUARIO</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-
-                        <div class="section-bg">
-                            <div class="section-label"><i class="bi bi-person-vcard"></i> Datos del Colaborador</div>
-                            <div class="mb-3">
-                                <label class="small fw-bold text-secondary mb-2">USUARIO</label>
-                                <input type="text" name="usuario" id="u_nombre" class="input-jv" required oninput="validarFormulario()" placeholder="Ej: operador_01">
-                                <small id="u_error_text" class="text-info mt-1 d-block fw-bold" style="font-size:0.75rem;">Mín. 4 caracteres (letras, números o guion bajo).</small>
-                            </div>
-                            <div class="mb-0">
-                                <label class="small fw-bold text-secondary mb-2">CORREO ELECTRÓNICO</label>
-                                <input type="email" name="correo" id="u_correo" class="input-jv" required placeholder="correo@ejemplo.com">
-                            </div>
-                        </div>
-
-                        <div class="section-bg">
-                            <div class="section-label"><i class="bi bi-lock"></i> Contraseña</div>
-                            <div class="mb-3">
-                                <div class="input-group">
-                                    <input type="password" name="password" id="u_pass" class="input-jv" style="border-radius:var(--jv-radius) 0 0 var(--jv-radius);" oninput="validarFormulario()" placeholder="Nueva contraseña de acceso">
-                                    <button type="button" onclick="togglePassword()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-left:none; border-radius:0 var(--jv-radius) var(--jv-radius) 0; padding:12px 14px; display:flex; align-items:center; color:#64748b; cursor:pointer;">
-                                        <i class="bi bi-eye-slash-fill" id="toggleIcon"></i>
-                                    </button>
-                                </div>
-                                <small class="text-info" id="passHelp" style="display:none; font-size:0.75rem; font-weight:bold;">Dejar en blanco para no cambiarla.</small>
-                            </div>
-                            <div class="strength-meter">
-                                <div id="meter-fill" class="strength-meter-fill"></div>
-                            </div>
-                            <small class="text-info mt-1 d-block fw-bold" style="font-size:0.75rem;" id="meter-text">Mín. 8 caracteres: Mayúsculas, Minúsculas, Números y Símbolos.</small>
-                        </div>
-
-                        <div class="section-bg">
-                            <div class="section-label"><i class="bi bi-shield"></i> Rol de Acceso</div>
-                            <select name="id_rol" id="u_rol" class="input-jv" required>
-                                <?php foreach ($roles_lista as $rl): ?>
-                                    <option value="<?php echo $rl['id_rol']; ?>"><?php echo htmlspecialchars($rl['nombre_rol']); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="section-bg mb-4">
-                            <div class="section-label"><i class="bi bi-toggle-on"></i> Estado</div>
-                            <select name="status" id="u_status" class="input-jv" required>
-                                <option value="Activo">Activo</option>
-                                <option value="Inactivo">Inactivo</option>
-                            </select>
-                        </div>
-
-                        <div class="section-bg mb-4">
-                            <div class="section-label"><i class="bi bi-question-circle"></i> Pregunta de Seguridad</div>
-                            <select name="pregunta_seguridad" id="u_preg" class="input-jv">
-                                <option value="">Sin cambiar / No tiene</option>
-                                <option value="Nombre de tu mascota">Nombre de tu mascota</option>
-                                <option value="Ciudad donde naciste">Ciudad donde naciste</option>
-                                <option value="Nombre de tu mejor amigo">Nombre de tu mejor amigo</option>
-                                <option value="Comida favorita">Comida favorita</option>
-                                <option value="Nombre de tu escuela primaria">Nombre de tu escuela primaria</option>
-                                <option value="Apellido de tu abuela materna">Apellido de tu abuela materna</option>
-                                <option value="Marca de tu primer auto">Marca de tu primer auto</option>
-                                <option value="Color favorito">Color favorito</option>
-                            </select>
-                            <small class="text-jv-muted mt-1 d-block" style="font-size:.7rem;">Selecciona una pregunta o déjalo vacío para mantener la actual.</small>
-                            <input type="text" name="respuesta_seguridad" id="u_resp" class="input-jv mt-2" maxlength="20" oninput="validarFormulario()" placeholder="Mín. 5 y máx. 20 caracteres" autocomplete="off">
-                            <small id="u_resp_hint" class="field-error" style="color:var(--jv-danger);font-size:.7rem;margin-top:2px;display:block;height:14px;"></small>
-                        </div>
-
-                        <button type="submit" id="btn-user-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase" disabled>
-                            <i class="bi bi-shield-check me-2"></i>GUARDAR CAMBIOS
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <?php // ==========================================
     // JAVASCRIPT
     // ========================================== ?>
     <script src="<?php echo $base_assets; ?>js/bootstrap.bundle.min.js"></script>
@@ -372,7 +278,7 @@ unset($_SESSION['flash_msg']);
     <script>
     window.JV_CONFIG = { c0: <?php echo $id_propio; ?>, c1: '<?php echo $csrf_token; ?>' };
 </script>
-    <script src="../assets/dashboard/usuarios.js?v=2"></script>
+    <script src="../assets/dashboard/usuarios.js?v=3"></script>
     
     
 </body>

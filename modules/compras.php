@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
         header('Location: compras.php');
         exit;
     }
+    $id_solicitud = intval($_POST['id_solicitud'] ?? 0);
 
     // Número de factura: manual (la factura es del proveedor), única por proveedor
     $nro_factura = trim($_POST['nro_factura'] ?? '');
@@ -169,6 +170,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
         }
 
         registrarAuditoria('crear', "Compra registrada (factura $nro_factura, " . count($items_validos) . " producto(s))");
+
+        if ($id_solicitud > 0) {
+            $db->execute("UPDATE solicitudes_compra SET estado = 'Atendida', id_compra = ?, fecha_atendida = NOW() WHERE id_solicitud = ? AND estado = 'Pendiente'", [$compra_id, $id_solicitud]);
+        }
+
         $db->commit();
 
         $msg = "COMPRA REGISTRADA: factura $nro_factura, " . count($items_validos) . " producto(s). ";
@@ -209,6 +215,33 @@ if (isset($_POST['eliminar']) && $esAdmin) {
 // ==========================================
 $filtro_proveedor = intval($_GET['filtro_proveedor'] ?? 0);
 $filtro_pago = in_array($_GET['filtro_pago'] ?? '', ['Pendiente', 'Pagada']) ? $_GET['filtro_pago'] : '';
+
+// Solicitud de compra a atender (prefill del formulario)
+$atender_solicitud = intval($_GET['atender_solicitud'] ?? 0);
+$solicitud_prefill = null;
+if ($atender_solicitud > 0) {
+    $sol = $db->fetchOne("SELECT id_solicitud, motivo, estado FROM solicitudes_compra WHERE id_solicitud = ?", [$atender_solicitud]);
+    if ($sol && $sol['estado'] === 'Pendiente') {
+        $det = $db->fetchAll("SELECT d.id_producto, d.cantidad_solicitada, p.sku, p.nombre_producto, p.precio_costo
+                              FROM detalle_solicitud_compra d
+                              JOIN productos p ON d.id_producto = p.id_producto
+                              WHERE d.id_solicitud = ?", [$atender_solicitud]);
+        if (!empty($det)) {
+            $solicitud_prefill = [
+                'id_solicitud' => (int)$sol['id_solicitud'],
+                'motivo'       => $sol['motivo'],
+                'items'        => array_map(function ($d) {
+                    return [
+                        'id'          => (int)$d['id_producto'],
+                        'nombre'      => $d['nombre_producto'],
+                        'cantidad'    => (int)$d['cantidad_solicitada'],
+                        'precio'      => (float)$d['precio_costo'],
+                    ];
+                }, $det),
+            ];
+        }
+    }
+}
 
 $sql_compras = "
     SELECT c.*,
@@ -276,12 +309,12 @@ unset($_SESSION['flash_msg']);
                         <i class="bi bi-truck"></i>
                     </div>
                     <div>
-                        <h1 class="font-brand fw-bold m-0" style="font-size:2rem;letter-spacing:-1px; color: var(--jv-text-primary);">COMPRAS</h1>
-                        <p class="text-secondary fw-bold text-uppercase m-0" style="font-size:.95rem;">Facturas de Proveedores</p>
+                        <h1 class="module-title">COMPRAS</h1>
+                        <p class="module-subtitle">Facturas de Proveedores</p>
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-jv-success pulse-jv" data-bs-toggle="modal" data-bs-target="#modalCompra" style="padding:12px 32px;font-size:1rem;">
+                    <button class="btn btn-jv-success pulse-jv module-action-btn" data-bs-toggle="modal" data-bs-target="#modalCompra">
                         <i class="bi bi-plus-lg me-1"></i>NUEVA COMPRA
                     </button>
                 </div>
@@ -410,6 +443,13 @@ unset($_SESSION['flash_msg']);
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                     <input type="hidden" name="accion_compra" value="registrar">
                     <input type="hidden" name="productos_data" id="productosData">
+                    <?php if ($solicitud_prefill): ?>
+                        <input type="hidden" name="id_solicitud" id="idSolicitud" value="<?php echo (int)$solicitud_prefill['id_solicitud']; ?>">
+                        <div class="alert-jv alert-jv-info mb-3 px-3 py-2" style="margin:16px 20px 0;">
+                            <i class="bi bi-cart-check me-2"></i>
+                            <strong>SOLICITUD #<?php echo (int)$solicitud_prefill['id_solicitud']; ?></strong> — <?php echo htmlspecialchars($solicitud_prefill['motivo'] ?? 'Solicitud de reposición'); ?>. Los productos ya fueron precargados.
+                        </div>
+                    <?php endif; ?>
 
                     <div class="p-3" style="border-bottom:1px solid var(--jv-border);">
                         <div class="d-flex justify-content-between align-items-center">
@@ -587,7 +627,7 @@ unset($_SESSION['flash_msg']);
 
                     <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
                         <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                        <button type="submit" class="btn btn-jv-success" id="btnGuardar" disabled style="padding:12px 28px;font-size:1rem;" onclick="return validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar</button>
+                        <button type="submit" class="btn btn-jv-success module-action-btn" id="btnGuardar" disabled onclick="return validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar</button>
                     </div>
                 </form>
             </div>
@@ -598,8 +638,9 @@ unset($_SESSION['flash_msg']);
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
     <script>
     window.JV_CONFIG = { c0: '<?php echo $csrf_token; ?>', c1: <?php echo (float)$iva_pct; ?> };
+    window.COMPRAS_SOLICITUD = <?php echo $solicitud_prefill ? json_encode($solicitud_prefill) : 'null'; ?>;
 </script>
-    <script src="../assets/modules/compras/compras.js?v=2"></script>
+    <script src="../assets/modules/compras/compras.js?v=3"></script>
     
 </body>
 

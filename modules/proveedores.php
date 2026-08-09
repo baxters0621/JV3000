@@ -272,8 +272,8 @@ unset($_SESSION['flash_msg']);
                         <i class="bi bi-building"></i>
                     </div>
                     <div>
-                        <h1 class="font-brand mb-1" style="font-size:2rem;letter-spacing:-1px; color: var(--jv-text-primary);">PROVEEDORES</h1>
-                        <p class="text-secondary fw-bold text-uppercase mb-0" style="font-size:.95rem;">Directorio de Alianzas Comerciales</p>
+                        <h1 class="module-title">PROVEEDORES</h1>
+                        <p class="module-subtitle">Directorio de Alianzas Comerciales</p>
                     </div>
                     <div class="ms-auto d-flex align-items-center gap-3 flex-wrap">
                         <div class="prov-search">
@@ -285,7 +285,7 @@ unset($_SESSION['flash_msg']);
                             <button class="btn-filter" onclick="filtrarProv('Activo')" id="f-Activo">Activos</button>
                             <button class="btn-filter" onclick="filtrarProv('Inactivo')" id="f-Inactivo">Inactivos</button>
                         </div>
-                        <button class="btn btn-jv-primary" onclick="nuevoProveedor()" id="btnNuevoProv" style="padding:12px 32px;font-size:1rem;">
+                        <button class="btn btn-jv-primary module-action-btn" onclick="nuevoProveedor()" id="btnNuevoProv">
                             <i class="bi bi-plus-lg me-2"></i>NUEVO
                         </button>
                     </div>

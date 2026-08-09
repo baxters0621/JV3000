@@ -107,7 +107,7 @@
     document.querySelectorAll('.btn-filtro-periodo').forEach(btn => {
         btn.addEventListener('click', () => {
             const p = btn.dataset.periodo;
-            window.location.href = 'estadisticas.php?periodo=' + p;
+            window.location.href = (window.JV_BASE || '') + 'index.php?url=estadisticas&periodo=' + p;
         });
     });
 
@@ -123,11 +123,11 @@
     const urlParams = new URLSearchParams(window.location.search);
     const periodoActivo = cfg.periodo || 'semana';
     const qs = periodoActivo === 'rango'
-        ? '?periodo=rango&desde=' + (urlParams.get('desde') || '') + '&hasta=' + (urlParams.get('hasta') || '')
-        : '?periodo=' + periodoActivo;
+        ? '&periodo=rango&desde=' + (urlParams.get('desde') || '') + '&hasta=' + (urlParams.get('hasta') || '')
+        : '&periodo=' + periodoActivo;
 
     function refreshEstadisticas() {
-        fetch('../includes/estadisticas_ajax.php' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        fetch((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.json())
             .then(d => { try { actualizarUI(d); } catch (e) { console.error('Stats refresh error:', e); } })
             .catch(() => {});

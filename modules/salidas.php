@@ -437,7 +437,7 @@ unset($_SESSION['flash_msg']);
 <head>
 <?php include '../includes/diseno.php'; ?>
     <title>Salidas / Ventas | JV3000 C.A.</title>
-        <link rel="stylesheet" href="../assets/modules/salidas/salidas.css?v=6">
+        <link rel="stylesheet" href="../assets/modules/salidas/salidas.css?v=7">
 </head>
 <!-- BODY HTML -->
 <body>
@@ -450,11 +450,11 @@ unset($_SESSION['flash_msg']);
         <div class="d-flex align-items-center gap-3 mb-4">
             <div class="sal-header-icon"><i class="bi bi-cart-x-fill"></i></div>
             <div>
-                <h1 class="font-brand m-0 sal-titulo">SALIDAS / VENTAS</h1>
-                <p class="text-secondary fw-bold text-uppercase m-0 sal-subtitulo">Notas de Entrega y Despacho</p>
+                <h1 class="module-title">SALIDAS / VENTAS</h1>
+                <p class="module-subtitle">Notas de Entrega y Despacho</p>
             </div>
             <div class="ms-auto">
-                <button class="btn btn-jv-primary btn-lg" onclick="nuevaSalida()">
+                <button class="btn btn-jv-primary module-action-btn" onclick="nuevaSalida()">
                     <i class="bi bi-cart-plus-fill me-2"></i>NUEVA VENTA
                 </button>
             </div>
@@ -748,6 +748,30 @@ unset($_SESSION['flash_msg']);
                         <div class="sal-totales-bar">
                             <span class="tt-label">Productos <span class="tt-valor" id="s_total_items">0</span></span>
                             <span class="tt-label ms-auto">Total Venta <span class="tt-valor" id="s_total_monto">$0.00</span></span>
+                        </div>
+
+                        <!-- SOLICITUD A COMPRAS (venta sin stock) -->
+                        <div id="solicitud_compras_box" class="section-bg" style="display:none;border-left:4px solid var(--jv-warning);">
+                            <div class="section-label"><i class="bi bi-cart-plus me-1"></i>PRODUCTOS SOLICITADOS A COMPRAS</div>
+                            <p class="small text-secondary fw-bold mb-2">Productos sin stock que se pedirán a Compras en una sola solicitud.</p>
+                            <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;">
+                                <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
+                                    <thead>
+                                        <tr style="background:var(--jv-navy);">
+                                            <th style="padding:8px;width:30px;text-align:center;color:#fff;font-size:.8rem;text-transform:uppercase;">#</th>
+                                            <th style="padding:8px;color:#fff;font-size:.8rem;text-transform:uppercase;">Producto</th>
+                                            <th style="padding:8px;width:70px;text-align:center;color:#fff;font-size:.8rem;text-transform:uppercase;">Cant</th>
+                                            <th style="padding:8px;width:30px;text-align:center;color:#fff;font-size:.8rem;text-transform:uppercase;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="s_solicitud_body"></tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-end mt-2">
+                                <button type="button" class="btn-jv-primary" id="btnEnviarSolicitud" style="padding:10px 20px;font-size:.9rem;font-weight:700;border:none;border-radius:8px;color:#fff;" onclick="enviarSolicitudCompras()">
+                                    <i class="bi bi-truck me-1"></i> ENVIAR SOLICITUD A COMPRAS
+                                </button>
+                            </div>
                         </div>
 
                         <!-- OBSERVACIONES -->

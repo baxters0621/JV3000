@@ -92,14 +92,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
         if ($reg_pregunta === '' || $reg_respuesta === '') {
             $error = "DEBE SELECCIONAR UNA PREGUNTA DE SEGURIDAD Y SU RESPUESTA.";
         } elseif (!validarRespuestaSeguridad($reg_respuesta)) {
-            $error = "RESPUESTA INVÁLIDA. MÍN 5 Y MÁX 20 CARACTERES, DEBE TENER VOCALES, SIN PATRONES (asdf, qwerty, etc).";
+            $error = "RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.";
         } else {
             $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE BINARY usuario = ? OR BINARY correo = ?", [$new_user, $new_email]);
             if ($dup) {
                 $error = "EL USUARIO O CORREO YA ESTA EN USO";
             } else {
                 $pass_hash = password_hash($new_pass, PASSWORD_BCRYPT);
-                $resp_hash = password_hash($reg_respuesta, PASSWORD_BCRYPT);
+                $resp_hash = password_hash(normalizarRespuestaSeguridad($reg_respuesta), PASSWORD_BCRYPT);
                 $es_admin = $sistema_vacio;
                 $db->insert('usuarios', [
                     'usuario'             => $new_user,
@@ -177,9 +177,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                 }
                 $restantes = $max_intentos - $intentos_actuales;
                 if ($restantes <= 0) {
+                    $segundos_restantes = $tiempo_bloqueo;
                     $error = "ACCESO BLOQUEADO POR 2 MINUTOS (3 intentos fallidos)";
                 } else {
-                    $error = $row ? "CONTRASEÑA INVÁLIDA (intento $intentos_actuales de $max_intentos)" : "USUARIO NO REGISTRADO (intento $intentos_actuales de $max_intentos)";
+                    $error = "CREDENCIALES INVÁLIDAS (intento $intentos_actuales de $max_intentos)";
                 }
             }
         }
@@ -198,11 +199,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     <div class="login-card">
         <div class="login-logo">
             <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
-            <p>Sistema de Inventario y Ventas</p>
+            <p>Sistema web de inventario y Facturación</p>
         </div>
 
         <?php if ($error): ?>
-        <div class="alert-card-jv <?php echo $segundos_restantes > 0 ? 'alert-card-blocked' : 'alert-card-danger'; ?> flash-auto" id="alerta-bloqueo">
+        <div class="alert-card-jv <?php echo $segundos_restantes > 0 ? 'alert-card-blocked' : 'alert-card-danger flash-auto'; ?>" id="alerta-bloqueo">
             <div class="alert-icon-box"><i class="bi bi-shield-slash-fill"></i></div>
             <div class="alert-body">
                 <div class="alert-title"><?php echo $segundos_restantes > 0 ? 'ACCESO BLOQUEADO' : 'ERROR DE ACCESO'; ?></div>
@@ -249,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
             </button>
 
             <div class="text-center mt-3">
-                <a href="recuperar.php" class="text-decoration-none text-jv-orange fw-bold" style="font-size:0.9rem;">
+                <a href="recuperar.php" class="text-decoration-none text-jv-orange fw-bold" style="font-size:1rem;">
                     <i class="bi bi-question-circle me-1"></i>¿Olvidaste tu contraseña?
                 </a>
             </div>
@@ -258,7 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
         <div class="divider">Nuevo Personal</div>
 
         <div class="text-center">
-            <a href="#" class="text-decoration-none text-jv-orange fw-bold" style="font-size:0.85rem;" data-bs-toggle="modal" data-bs-target="#modalReg">
+            <a href="#" class="text-decoration-none text-jv-orange fw-bold" style="font-size:0.95rem;" data-bs-toggle="modal" data-bs-target="#modalReg">
                 <i class="bi bi-person-plus me-1"></i>
                 <?php echo $sistema_vacio ? 'Configurar Administrador Inicial' : 'Solicitar Acceso de Personal'; ?>
             </a>
@@ -341,7 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                 <label class="form-label" style="margin-top:10px;">Respuesta</label>
                 <div class="field-group">
                     <i class="field-icon bi bi-shield-lock"></i>
-                    <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required maxlength="20" oninput="validarReg()" placeholder="Mín. 5 y máx. 20 caracteres" autocomplete="off">
+                    <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required maxlength="255" oninput="validarReg()" placeholder="Escribe tu respuesta" autocomplete="off">
                 </div>
 
             </div>

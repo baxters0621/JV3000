@@ -6,7 +6,8 @@
         let recepcionCompraId = null;
 
         function abrirRecepcion(idCompra) {
-            const datos = window.RECEPCION_DATOS && window.RECEPCION_DATOS[idCompra];
+            const cfg = window.JV_CONFIG || {};
+            const datos = cfg.recepcionDatos && cfg.recepcionDatos[idCompra];
             if (!datos || !datos.items || !datos.items.length) {
                 Swal.fire({
                     title: 'Sin productos pendientes',

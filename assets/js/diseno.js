@@ -15,10 +15,10 @@
     sessionStorage.setItem('jv_tab', marker);
 })();
 
-function jvPost(params) {
+function jvPost(params, url) {
     var form = document.createElement('form');
     form.method = 'POST';
-    form.action = window.location.pathname;
+    form.action = url || window.location.href;
     form.style.display = 'none';
     var keys = Object.keys(params);
     for (var i = 0; i < keys.length; i++) {
@@ -65,9 +65,9 @@ function jvApiGet(endpoint, params, cb) {
 }
 
 function jvBuscarProductos(params, cb) {
-    jvApiGet('includes/productos_buscar.php', params || {}, cb);
+    jvApiGet('includes/ajax/productos_buscar.php', params || {}, cb);
 }
 
 function jvBuscarClientes(params, cb) {
-    jvApiGet('includes/clientes_buscar.php', params || {}, cb);
+    jvApiGet('includes/ajax/clientes_buscar.php', params || {}, cb);
 }

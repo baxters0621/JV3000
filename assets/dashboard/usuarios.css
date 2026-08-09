@@ -168,4 +168,34 @@
     .strength-meter { height:6px;background:rgba(15,26,46,0.08);border-radius:10px;overflow:hidden; }
     .strength-meter-fill { height:100%;width:0%;border-radius:10px;transition:all .3s ease; }
     .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
+
+    /* ── Botón grande: Suspender / Reactivar ── */
+    .btn-suspend {
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:12px 22px;
+        border:none;
+        border-radius:12px;
+        font-size:.82rem;
+        font-weight:800;
+        letter-spacing:.8px;
+        color:#fff;
+        background:linear-gradient(135deg,#dc2626,#b91c1c);
+        box-shadow:0 6px 18px -4px rgba(220,38,38,0.45);
+        cursor:pointer;
+        transition:all .15s ease;
+    }
+    .btn-suspend:hover {
+        transform:translateY(-2px);
+        box-shadow:0 10px 24px -6px rgba(220,38,38,0.55);
+    }
+    .btn-suspend i { font-size:1.15rem; }
+    .btn-suspend.btn-reactivar {
+        background:linear-gradient(135deg,#16a34a,#15803d);
+        box-shadow:0 6px 18px -4px rgba(22,163,74,0.45);
+    }
+    .btn-suspend.btn-reactivar:hover {
+        box-shadow:0 10px 24px -6px rgba(22,163,74,0.55);
+    }
     
