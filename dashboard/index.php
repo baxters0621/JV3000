@@ -147,10 +147,10 @@ $tabla_compras = $datos['tabla_compras'];
                                 <div class="dash-bell-sec dash-bell-<?php echo $sec['clase']; ?>">
                                     <div class="dash-bell-sec-titulo">
                                         <span><?php echo $sec['titulo']; ?> (<?php echo $sec['count']; ?>)</span>
-                                        <a href="<?php echo BASE_PATH; ?>modules/productos.php?alerta=<?php echo $sec['alerta']; ?>" class="dash-bell-ver">Ver todos</a>
+                                        <a href="<?php echo BASE_PATH; ?>index.php?url=productos&alerta=<?php echo $sec['alerta']; ?>" class="dash-bell-ver">Ver todos</a>
                                     </div>
                                     <?php foreach ($sec['items'] as $it): ?>
-                                        <a class="dash-bell-item" href="<?php echo BASE_PATH; ?>modules/productos.php?producto=<?php echo (int)$it['id']; ?>">
+                                        <a class="dash-bell-item" href="<?php echo BASE_PATH; ?>index.php?url=productos&producto=<?php echo (int)$it['id']; ?>">
                                             <i class="bi bi-<?php echo $clave === 'bajos' ? 'exclamation-triangle' : ($clave === 'proximos' ? 'clock-history' : ($clave === 'prontos' ? 'calendar3' : 'x-octagon')); ?>"></i>
                                             <span class="dash-bell-item-nombre"><?php echo htmlspecialchars($it['nombre']); ?></span>
                                             <span class="dash-bell-item-meta">
@@ -174,7 +174,7 @@ $tabla_compras = $datos['tabla_compras'];
             <section class="dash-section">
                 <div class="quick-grid">
                     <?php if ($esAdmin || $esOpVentas): ?>
-                        <a href="<?php echo BASE_PATH; ?>modules/salidas.php" class="quick-btn quick-venta">
+                        <a href="<?php echo BASE_PATH; ?>index.php?url=salidas" class="quick-btn quick-venta">
                             <span class="quick-icon"><i class="bi bi-cart-fill"></i></span>
                             <span class="quick-text">
                                 <span class="quick-label">Nueva Venta</span>
@@ -184,7 +184,7 @@ $tabla_compras = $datos['tabla_compras'];
                         </a>
                     <?php endif; ?>
                     <?php if ($esAdmin || $esOpCarga): ?>
-                        <a href="<?php echo BASE_PATH; ?>modules/compras.php" class="quick-btn quick-entrada">
+                        <a href="<?php echo BASE_PATH; ?>index.php?url=compras" class="quick-btn quick-entrada">
                             <span class="quick-icon"><i class="bi bi-box-arrow-in-down"></i></span>
                             <span class="quick-text">
                                 <span class="quick-label">Nueva Entrada</span>

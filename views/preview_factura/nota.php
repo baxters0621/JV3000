@@ -134,7 +134,8 @@
         </div>
     </div>
 
-    <script src="<?php echo BASE_PATH; ?>assets/modules/preview_factura/preview_factura.js?v=4"></script>
+    <script src="<?php echo BASE_PATH; ?>assets/js/tooltips.js?v=5"></script>
+<script src="<?php echo BASE_PATH; ?>assets/modules/preview_factura/preview_factura.js?v=5"></script>
 </body>
 
 </html>

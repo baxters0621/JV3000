@@ -33,7 +33,7 @@ class RecepcionController extends Controller
             'titulo'             => 'Recepción de Mercancía | JV3000 C.A.',
             'wrapper_class'      => 'pagina-recepcion',
             'css_extra'          => ['modules/recepcion/recepcion.css?v=4'],
-            'js_extra'           => ['modules/recepcion/recepcion.js?v=4'],
+            'js_extra'           => ['modules/recepcion/recepcion.js?v=5'],
             'csrf'               => Security::generateToken(),
             'flash'              => $flash,
             'compras_pendientes' => $datos['compras_pendientes'],

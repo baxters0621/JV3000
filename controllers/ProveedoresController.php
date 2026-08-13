@@ -78,7 +78,7 @@ class ProveedoresController extends Controller
             ],
             'js_extra'     => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
-                'modules/proveedores/proveedores.js?v=4',
+                'modules/proveedores/proveedores.js?v=5',
             ],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,

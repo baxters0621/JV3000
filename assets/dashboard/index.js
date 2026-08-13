@@ -162,9 +162,9 @@
             if (count <= 0) return '';
             var html = '<div class="dash-bell-sec dash-bell-' + clase + '">';
             html += '<div class="dash-bell-sec-titulo"><span>' + escapeHtml(titulo) + ' (' + count + ')</span>';
-            html += '<a class="dash-bell-ver" href="../modules/productos.php?alerta=' + urlAlerta + '">Ver todos</a></div>';
+            html += '<a class="dash-bell-ver" href="../index.php?url=productos&alerta=' + urlAlerta + '">Ver todos</a></div>';
             (items || []).forEach(function(it) {
-                html += '<a class="dash-bell-item" href="../modules/productos.php?producto=' + it.id + '">';
+                html += '<a class="dash-bell-item" href="../index.php?url=productos&producto=' + it.id + '">';
                 html += '<i class="bi ' + icono + '"></i>';
                 html += '<span class="dash-bell-item-nombre">' + escapeHtml(it.nombre) + '</span>';
                 html += '<span class="dash-bell-item-meta">' + escapeHtml(it.meta) + '</span></a>';

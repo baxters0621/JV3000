@@ -23,6 +23,14 @@ Antes de escribir cualquier línea de código, detente en el primer nivel que fu
 - Usuario inicial: `Administrador` / `Admin123*` (cambiar tras el primer inicio)
 - Backups en `backups/`
 
+## Bitácora de cambios (OBLIGATORIA)
+- Todo cambio de código (módulo, archivo, función, fix, optimización) debe registrarse en `BITACORA.md`.
+- Formato de cada entrada:
+  `[YYYY-MM-DD HH:MM] · Módulo: <módulo> · Cambio: <qué se hizo y por qué> · Archivos: <ruta(s)> · Prueba: <verificación realizada>`
+- La entrada se escribe AL TERMINAR cada tarea y se commitea junto con el cambio (nunca un commit sin su entrada en bitácora).
+- Prohibido reportar "cambié X" sin dejar su registro en `BITACORA.md`.
+- La bitácora es el historial único de actividad del sistema; ante cualquier consulta "¿qué cambió?", la respuesta está en `BITACORA.md`.
+
 ## Configuración XAMPP
 - **MySQL corre como servicio Windows `mysql` (auto-arranque)**. Iniciar/detener con `Start-Service mysql` / `Stop-Service mysql` o `net start/stop mysql`. No hace falta arrancarlo manualmente.
 - Si el puerto 3306 está ocupado (instancia manual previa), el panel XAMPP mostrará "MySQL shutdown unexpectedly": eso es un falso positivo por conflicto de puerto, no un fallo real.

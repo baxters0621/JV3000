@@ -71,3 +71,33 @@ function jvBuscarProductos(params, cb) {
 function jvBuscarClientes(params, cb) {
     jvApiGet('includes/ajax/clientes_buscar.php', params || {}, cb);
 }
+
+// ==========================================
+// VALIDACIÓN DE FORMULARIOS (helpers globales)
+// ==========================================
+// ANTES: cada módulo (categorias, compras, productos,
+// proveedores, salidas) traía su propia copia idéntica de
+// limpiarErrores()/marcarError(). Se unificaron aquí.
+// Uso: marcarError(elemento, 'MENSAJE') marca el campo con
+// borde rojo y añade un <small> de error debajo. limpiarErrores()
+// borra todas las marcas previas antes de validar de nuevo.
+
+function limpiarErrores() {
+    document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
+    document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+}
+
+function marcarError(el, msg) {
+    el.classList.add('input-error');
+    if (msg && el.id) {
+        var errEl = document.getElementById(el.id + '_err');
+        if (!errEl) {
+            errEl = document.createElement('small');
+            errEl.id = el.id + '_err';
+            errEl.className = 'field-error';
+            errEl.style.cssText = 'color:#DC2626;font-size:.7rem;margin-top:2px;display:block;';
+            el.parentNode.appendChild(errEl);
+        }
+        errEl.textContent = msg;
+    }
+}

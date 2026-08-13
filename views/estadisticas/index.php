@@ -6,18 +6,8 @@
 // Los valores de los gráficos los inyecta el
 // layout en window.JV_CONFIG (js_config) y los
 // actualiza estadisticas.js vía AJAX.
-
-// Helper para el sello de comparación ▲/▼
-function jv_sello(?float $pct): string
-{
-    if ($pct === null) {
-        return '<span class="cmp-sello cmp-nulo" title="Sin datos en el periodo anterior">—</span>';
-    }
-    if ($pct >= 0) {
-        return '<span class="cmp-sello cmp-subida" title="Aumento respecto al periodo anterior"><i class="bi bi-arrow-up-right"></i> +' . number_format($pct, 1) . '%</span>';
-    }
-    return '<span class="cmp-sello cmp-bajada" title="Descenso respecto al periodo anterior"><i class="bi bi-arrow-down-right"></i> ' . number_format($pct, 1) . '%</span>';
-}
+// El sello de comparación (▲/▼) lo provee el helper
+// global jv_sello() definido en includes/helpers.php.
 ?>
 <!-- MENSAJE FLASH -->
 <?php if ($flash): ?>

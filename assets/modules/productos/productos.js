@@ -1,56 +1,5 @@
 
 
-        // ---------- TOOLTIP GRANDE (nombre completo de productos) ----------
-        (function() {
-            let tip = null;
-            let tipTimer = null;
-
-            function mostrarTip(e, texto) {
-                if (!texto) return;
-                if (!tip) {
-                    tip = document.createElement('div');
-                    tip.className = 'jv-tooltip';
-                    document.body.appendChild(tip);
-                }
-                tip.textContent = texto;
-                tip.classList.add('jv-tooltip-visible');
-                posicionarTip(e);
-            }
-
-            function posicionarTip(e) {
-                if (!tip) return;
-                const pad = 16;
-                let x = e.clientX + pad;
-                let y = e.clientY + pad;
-                const r = tip.getBoundingClientRect();
-                if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - pad;
-                if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - pad;
-                tip.style.left = Math.max(8, x) + 'px';
-                tip.style.top = Math.max(8, y) + 'px';
-            }
-
-            function ocultarTip() {
-                if (tipTimer) window.clearTimeout(tipTimer);
-                tipTimer = window.setTimeout(function() {
-                    if (tip) tip.classList.remove('jv-tooltip-visible');
-                }, 80);
-            }
-
-            document.addEventListener('mouseover', function(e) {
-                const t = e.target.closest('[data-tooltip]');
-                if (t) {
-                    window.clearTimeout(tipTimer);
-                    mostrarTip(e, t.dataset.tooltip);
-                }
-            });
-            document.addEventListener('mousemove', function(e) {
-                if (tip && tip.classList.contains('jv-tooltip-visible')) posicionarTip(e);
-            });
-            document.addEventListener('mouseout', function(e) {
-                if (e.target.closest('[data-tooltip]')) ocultarTip();
-            });
-        })();
-
         function filtrarPorAlerta(clase) {
             var btn = document.querySelector('.btn-filtro-venc[data-venc="' + clase + '"]');
             if (btn) filtrarVenc(btn);
@@ -136,30 +85,6 @@
             var el = document.getElementById('modalEditar');
             if (el) modalEditar = new bootstrap.Modal(el);
         });
-
-        function limpiarErrores() {
-            document.querySelectorAll('.input-error').forEach(function(el) {
-                el.classList.remove('input-error');
-            });
-            document.querySelectorAll('.field-error').forEach(function(el) {
-                el.remove();
-            });
-        }
-
-        function marcarError(el, msg) {
-            el.classList.add('input-error');
-            if (msg && el.id) {
-                var errEl = document.getElementById(el.id + '_err');
-                if (!errEl) {
-                    errEl = document.createElement('small');
-                    errEl.id = el.id + '_err';
-                    errEl.className = 'field-error';
-                    errEl.style.cssText = 'color:#DC2626;font-size:.7rem;margin-top:2px;display:block;';
-                    el.parentNode.appendChild(errEl);
-                }
-                errEl.textContent = msg;
-            }
-        }
 
         function validarEditarProducto(btn) {
             limpiarErrores();

@@ -21,7 +21,10 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 <?php endif; ?>
 
 <!-- ACCIONES POST SEGURAS -->
-<script src="<?php echo $base_assets; ?>js/diseno.js"></script>
+<script src="<?php echo $base_assets; ?>js/diseno.js?v=5"></script>
+
+<!-- TOOLTIP GLOBAL COMPARTIDO (un solo <div> para toda la app) -->
+<script src="<?php echo $base_assets; ?>js/tooltips.js?v=5"></script>
 
 <!-- FUENTES -->
 <link rel="preconnect" href="https://fonts.googleapis.com">

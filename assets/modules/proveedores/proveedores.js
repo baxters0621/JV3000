@@ -242,30 +242,6 @@
         // ============================
         // Validación del formulario (con anti-doble-click)
         // ============================
-        function limpiarErrores() {
-            document.querySelectorAll('.input-error').forEach(function(el) {
-                el.classList.remove('input-error');
-            });
-            document.querySelectorAll('.field-error').forEach(function(el) {
-                el.remove();
-            });
-        }
-
-        function marcarError(el, msg) {
-            el.classList.add('input-error');
-            if (msg && el.id) {
-                var errEl = document.getElementById(el.id + '_err');
-                if (!errEl) {
-                    errEl = document.createElement('small');
-                    errEl.id = el.id + '_err';
-                    errEl.className = 'field-error';
-                    errEl.style.cssText = 'color:#DC2626;font-size:.7rem;margin-top:2px;display:block;';
-                    el.parentNode.appendChild(errEl);
-                }
-                errEl.textContent = msg;
-            }
-        }
-
         formP.addEventListener('submit', function(e) {
             limpiarErrores();
             let primerError = null;
@@ -315,56 +291,5 @@
             const btn = document.getElementById('btn-prov-submit');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
-        });
-
-        // ==========================================
-        // TOOLTIP GRANDE (nombre completo del proveedor)
-        // ==========================================
-        let provTip = null;
-        let provTipTimer = null;
-
-        function provMostrarTip(e, texto) {
-            if (!texto) return;
-            if (!provTip) {
-                provTip = document.createElement('div');
-                provTip.className = 'jv-tooltip';
-                document.body.appendChild(provTip);
-            }
-            provTip.textContent = texto;
-            provTip.classList.add('jv-tooltip-visible');
-            provPosicionarTip(e);
-        }
-
-        function provPosicionarTip(e) {
-            if (!provTip) return;
-            const pad = 16;
-            let x = e.clientX + pad;
-            let y = e.clientY + pad;
-            const r = provTip.getBoundingClientRect();
-            if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - pad;
-            if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - pad;
-            provTip.style.left = Math.max(8, x) + 'px';
-            provTip.style.top = Math.max(8, y) + 'px';
-        }
-
-        function provOcultarTip() {
-            if (provTipTimer) window.clearTimeout(provTipTimer);
-            provTipTimer = window.setTimeout(function() {
-                if (provTip) provTip.classList.remove('jv-tooltip-visible');
-            }, 80);
-        }
-
-        document.addEventListener('mouseover', function(e) {
-            const t = e.target.closest('[data-tooltip]');
-            if (t) {
-                window.clearTimeout(provTipTimer);
-                provMostrarTip(e, t.dataset.tooltip);
-            }
-        });
-        document.addEventListener('mousemove', function(e) {
-            if (provTip && provTip.classList.contains('jv-tooltip-visible')) provPosicionarTip(e);
-        });
-        document.addEventListener('mouseout', function(e) {
-            if (e.target.closest('[data-tooltip]')) provOcultarTip();
         });
     

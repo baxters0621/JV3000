@@ -58,7 +58,7 @@ class ComprasController extends Controller
             'titulo'            => 'Compras | JV3000 C.A.',
             'wrapper_class'     => 'pagina-compras',
             'css_extra'         => ['modules/compras/compras.css?v=4'],
-            'js_extra'          => ['modules/compras/compras.js?v=4'],
+            'js_extra'          => ['modules/compras/compras.js?v=5'],
             'compras'           => $modelo->obtenerCompras($filtro_proveedor, $filtro_pago),
             'proveedores'       => $modelo->obtenerProveedores(),
             'credito_usado'     => $modelo->creditoUsadoPorProveedor(),
