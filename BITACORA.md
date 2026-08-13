@@ -26,6 +26,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-13 16:20] · Módulo: JS compartido · Cambio: Se crea `assets/js/tooltips.js` con el tooltip global (mostrarTip/posicionarTip/ocultarTip) que antes estaba duplicado en 8 módulos JS; se eliminan las 8 copias locales y se carga el único archivo en el layout MVC y en la nota imprimible. También se unifican `limpiarErrores()`/`marcarError()` (duplicadas en 5 módulos) moviéndolas a `diseno.js`. · Archivos: `assets/js/tooltips.js`, `assets/js/diseno.js`, `assets/modules/*/*.js` (8 módulos), `includes/diseno.php`, `views/preview_factura/nota.php` · Prueba: `node --check` OK en los 10 JS; sin referencias huérfanas a los tooltips locales; smoke test HTTP = 200 y `?v=5` servido en todas las rutas.
 
+[2026-08-13 16:40] · Módulo: Documentación del código · Cambio: Se añaden docblocks detallados en español a toda la capa PHP del proyecto (core/, controllers/, models/, includes/helpers.php) y comentarios de sección en `assets/js/diseno.js`, para que cada clase y método explique qué hace y por qué. Solo se insertaron comentarios; ninguna línea de lógica fue modificada. · Archivos: `core/*.php` (3), `controllers/*.php` (11), `models/*.php` (11), `includes/helpers.php`, `assets/js/diseno.js` · Prueba: `php -l` sin errores en los 26 archivos PHP; `node --check` OK en diseno.js; `git diff` confirma que solo se eliminaron líneas de comentario `//` (convertidas a docblocks); smoke test HTTP de 10 rutas = 200.
+
 ---
 
 ## Plantilla para futuras entradas

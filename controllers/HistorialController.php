@@ -5,9 +5,24 @@
 // ==========================================
 // Solo lectura. Recibe filtros GET + paginación,
 // delega en el Modelo y entrega los datos a la Vista.
+
+/**
+ * HistorialController: consulta el historial de auditoría.
+ *
+ * Módulo de solo lectura. Recibe filtros GET (usuario, acción, fechas,
+ * detalle) y paginación, delega en el modelo Auditoria y entrega los
+ * datos junto con los totales a la vista.
+ */
 class HistorialController extends Controller
 {
-    // GET  index.php?url=historial?usuario=..&accion=..&desde=..&hasta=..&detalle=..&page=..
+    /**
+     * Lista paginada y filtrada del historial de auditoría.
+     *
+     * Valida que el usuario sea administrador, arma los filtros desde GET,
+     * consulta el modelo y prepara los datos de paginación para la vista.
+     *
+     * @return void
+     */
     public function index(): void
     {
         Security::soloAdmin();

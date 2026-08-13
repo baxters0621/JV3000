@@ -6,9 +6,26 @@
 // Única capa que consulta la base de datos.
 // Validaciones de RIF/teléfono/duplicados y
 // KPIs de crédito viven aquí.
+
+/**
+ * Proveedor: modelo del módulo de proveedores.
+ *
+ * Única capa autorizada para consultar la base de datos. Aquí viven las
+ * validaciones de RIF, teléfono y duplicados, el registro/edición, el
+ * cambio de estado y los KPIs de crédito, además de la migración de
+ * teléfonos legacy.
+ */
 class Proveedor extends Model
 {
-    // Cambiar estado Activo/Inactivo (solo admin)
+    /**
+     * Cambia el estado Activo/Inactivo de un proveedor (solo admin).
+     *
+     * Consulta el estado actual, lo invierte, actualiza el registro, registra
+     * la auditoría y guarda un flash de éxito en sesión.
+     *
+     * @param int $idProveedor Identificador del proveedor.
+     * @return void
+     */
     public function toggleStatus(int $idProveedor): void
     {
         $prov = $this->db->fetchOne("SELECT status FROM proveedores WHERE id_proveedor = ?", [$idProveedor]);
@@ -21,8 +38,16 @@ class Proveedor extends Model
         }
     }
 
-    // Procesa registrar / editar
-    // @return array ['ok'=>bool, 'mensaje'=>string]
+    /**
+     * Procesa registrar o editar según la acción recibida.
+     *
+     * Normaliza y valida RIF, nombre, teléfono, email, lead time, límite y
+     * días de crédito, condiciones de pago, moneda y status; luego delega
+     * en registrar() o editar() según $d['accion'].
+     *
+     * @param array $d Datos del formulario del proveedor.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     public function procesar(array $d): array
     {
         $rif = normalizarDocumento($d['rif']);
@@ -81,6 +106,18 @@ class Proveedor extends Model
         return ['ok' => false, 'mensaje' => 'ACCIÓN INVÁLIDA.'];
     }
 
+    /**
+     * Registra un nuevo proveedor verificando duplicados.
+     *
+     * Rechaza si el RIF, el nombre de empresa o el email ya pertenecen a
+     * otro proveedor. Inserta el registro y audita la creación.
+     *
+     * @param array  $data   Datos normalizados listos para insertar.
+     * @param string $rif    RIF normalizado.
+     * @param string $nombre Nombre de empresa normalizado.
+     * @param string $email  Email del proveedor (puede estar vacío).
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     private function registrar(array $data, string $rif, string $nombre, string $email): array
     {
         if ($this->db->fetchOne("SELECT id_proveedor FROM proveedores WHERE LOWER(rif) = LOWER(?)", [$rif])) {
@@ -102,6 +139,19 @@ class Proveedor extends Model
         }
     }
 
+/**
+     * Edita un proveedor existente verificando duplicados (excluyendo el propio).
+     *
+     * Rechaza si el RIF, el nombre o el email ya pertenecen a otro
+     * proveedor. Actualiza el registro y audita la modificación.
+     *
+     * @param int    $idProv Identificador del proveedor a editar.
+     * @param array  $data   Datos normalizados listos para actualizar.
+     * @param string $rif    RIF normalizado.
+     * @param string $nombre Nombre de empresa normalizado.
+     * @param string $email  Email del proveedor (puede estar vacío).
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     private function editar(int $idProv, array $data, string $rif, string $nombre, string $email): array
     {
         if ($this->db->fetchOne("SELECT id_proveedor FROM proveedores WHERE LOWER(rif) = LOWER(?) AND id_proveedor != ?", [$rif, $idProv])) {
@@ -123,25 +173,43 @@ class Proveedor extends Model
         }
     }
 
-    // Listado completo
+    /**
+     * Listado completo de proveedores ordenado por nombre.
+     *
+     * @return array Todos los proveedores.
+     */
     public function listar(): array
     {
         return $this->db->fetchAll("SELECT * FROM proveedores ORDER BY nombre_empresa ASC");
     }
 
-    // KPI: proveedores activos
+    /**
+     * KPI: número de proveedores activos.
+     *
+     * @return int Cantidad de proveedores con estado Activo.
+     */
     public function totalActivos(): int
     {
         return (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM proveedores WHERE status='Activo'")['t'] ?? 0);
     }
 
-    // KPI: límite de crédito total activo
+    /**
+     * KPI: límite de crédito total de los proveedores activos.
+     *
+     * Suma los límites de crédito de los proveedores activos con límite > 0.
+     *
+     * @return float Límite de crédito total.
+     */
     public function limiteCreditoTotal(): float
     {
         return (float)($this->db->fetchOne("SELECT COALESCE(SUM(limite_credito),0) as t FROM proveedores WHERE limite_credito > 0 AND status = 'Activo'")['t'] ?? 0);
     }
 
-    // Mapa id_proveedor → crédito usado (compras Activas a crédito)
+    /**
+     * Mapa id_proveedor → crédito usado (compras Activas a crédito).
+     *
+     * @return array Mapa [id_proveedor => total usado en crédito].
+     */
     public function creditoUsado(): array
     {
         $mapa = [];
@@ -151,7 +219,15 @@ class Proveedor extends Model
         return $mapa;
     }
 
-    // Migra teléfonos legacy (04XX... / (0...) a E.164 +58
+    /**
+     * Migra teléfonos legacy (04XX... / (0...) a formato E.164 +58.
+     *
+     * Recorre los proveedores cuyo teléfono empieza con "(0", le quita los
+     * caracteres no numéricos y el 0 inicial, y lo convierte a +58 seguido
+     * del número, actualizando el registro.
+     *
+     * @return void
+     */
     public function migrarTelefonosLegacy(): void
     {
         foreach ($this->db->fetchAll("SELECT id_proveedor, telefono FROM proveedores WHERE telefono LIKE '(0%'") as $p) {

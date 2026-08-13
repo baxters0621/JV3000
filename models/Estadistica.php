@@ -7,9 +7,24 @@
 // Calcula KPIs actuales + comparación con el
 // periodo anterior equivalente + series de
 // gráficos. Reemplaza includes/estadisticas_logic.php.
+
+/**
+ * Estadistica: modelo de estadísticas de ventas/compras.
+ *
+ * Única capa autorizada para consultar la base de datos. Calcula los KPIs
+ * actuales, su comparación con el periodo anterior equivalente y las series
+ * de datos para los gráficos. Reemplaza a includes/estadisticas_logic.php.
+ */
 class Estadistica extends Model
 {
-    // Catálogo de periodos disponibles (label + duración en días)
+    /**
+     * Catálogo de periodos disponibles (label + duración en días).
+     *
+     * Define los periodos predefinidos del selector: desde Diario (1 día)
+     * hasta Semestral (180 días). No incluye 'rango' (se maneja aparte).
+     *
+     * @return array Mapa [clave => ['label'=>string, 'dias'=>int]].
+     */
     public function periodos(): array
     {
         return [
@@ -22,7 +37,18 @@ class Estadistica extends Model
         ];
     }
 
-    // Ventana [desde, hasta] actual y su equivalente anterior + mensaje dinámico.
+    /**
+     * Ventana [desde, hasta] actual y su equivalente anterior + mensaje.
+     *
+     * Para 'rango' con fechas válidas calcula la duración exacta y el rango
+     * anterior equivalente; para periodos predefinidos desplaza días hacia
+     * atrás. Devuelve las fechas, la etiqueta y el mensaje comparativo.
+     *
+     * @param string $periodo Clave del periodo o 'rango'.
+     * @param string $desde   Fecha inicial (solo para rango).
+     * @param string $hasta   Fecha final (solo para rango).
+     * @return array Detalle de la ventana (periodo, fechas, mensaje, etc.).
+     */
     private function ventana(string $periodo = 'semana', string $desde = '', string $hasta = ''): array
     {
         $periodos = $this->periodos();
@@ -77,7 +103,17 @@ class Estadistica extends Model
         ];
     }
 
-    // Calcula los 3 KPIs en una ventana dada.
+    /**
+     * Calcula los 3 KPIs (ventas, compras, ganancia) en una ventana dada.
+     *
+     * Suma cantidad*precio en detalle_salidas (ventas tipo 1 activas) y en
+     * detalle_compras (compras activas); la ganancia usa la diferencia entre
+     * precio de venta y precio de costo por producto.
+     *
+     * @param string $desde Fecha inicial (YYYY-MM-DD).
+     * @param string $hasta Fecha final (YYYY-MM-DD).
+     * @return array ['ventas'=>float, 'compras'=>float, 'ganancia'=>float].
+     */
     private function kpis(string $desde, string $hasta): array
     {
         $f_desde = $desde . ' 00:00:00';
@@ -92,14 +128,36 @@ class Estadistica extends Model
         return ['ventas' => $ventas, 'compras' => $compras, 'ganancia' => $ganancia];
     }
 
-    // Porcentaje de cambio: (actual - anterior) / anterior * 100. null si anterior es 0.
+    /**
+     * Porcentaje de cambio entre el valor actual y el anterior.
+     *
+     * Devuelve (actual - anterior) / anterior * 100 redondeado a 1 decimal,
+     * o null si el valor anterior es 0 (no se puede dividir).
+     *
+     * @param float $actual   Valor del periodo actual.
+     * @param float $anterior Valor del periodo anterior.
+     * @return float|null Porcentaje de variación o null.
+     */
     private function pct(float $actual, float $anterior): ?float
     {
         if ($anterior == 0) return null;
         return round((($actual - $anterior) / $anterior) * 100, 1);
     }
 
-    // Serie de un gráfico en una ventana (por hora para 1 día, por día, por semana o por mes).
+    /**
+     * Serie de datos de un gráfico en una ventana.
+     *
+     * Ejecuta la consulta SQL (que debe contener el marcador __BUCKET__ para
+     * el agrupamiento temporal) y genera etiquetas + datos. Para 1 día agrupa
+     * por hora; para rangos cortos (≤45 días) día a día; rangos medios (≤200
+     * días) por semana y rangos largos por mes.
+     *
+     * @param string $desde     Fecha inicial (YYYY-MM-DD).
+     * @param string $hasta     Fecha final (YYYY-MM-DD).
+     * @param string $sql       SQL con marcador __BUCKET__ y columnas bucket/total.
+     * @param string $fecha_col Columna de fecha usada en el agrupamiento.
+     * @return array ['labels'=>array, 'data'=>array].
+     */
     private function serie(string $desde, string $hasta, string $sql, string $fecha_col): array
     {
         $f_desde = $desde . ' 00:00:00';
@@ -177,7 +235,18 @@ class Estadistica extends Model
         return ['labels' => $labels, 'data' => $datos];
     }
 
-    // Recolecta todo lo que necesita la vista y el endpoint AJAX de estadísticas.
+    /**
+     * Recolecta todo lo que necesita la vista y el endpoint AJAX de estadísticas.
+     *
+     * Calcula la ventana, los KPIs actuales y anteriores, sus porcentajes de
+     * variación, las series de ventas/compras y el top 5 de productos más
+     * vendidos. Devuelve un arreglo completo listo para la vista o el JSON.
+     *
+     * @param string $periodo Clave del periodo ('semana' por defecto).
+     * @param string $desde   Fecha inicial (solo para rango).
+     * @param string $hasta   Fecha final (solo para rango).
+     * @return array Datos completos de estadísticas para la vista/AJAX.
+     */
     public function obtenerDatos(string $periodo = 'semana', string $desde = '', string $hasta = ''): array
     {
         $ventana = $this->ventana($periodo, $desde, $hasta);

@@ -7,13 +7,28 @@
 // pantallas ni de peticiones web. Preserva las reglas de
 // negocio de ventas: consumo FEFO por lote, descuento de
 // stock, anulación y confirmación de salidas.
+
+/**
+ * Salida: modelo del módulo de salidas/ventas.
+ *
+ * Única capa autorizada para consultar la base de datos. No sabe de pantallas
+ * ni de peticiones web. Preserva las reglas de negocio de ventas: consumo
+ * FEFO por lote, descuento de stock, anulación y confirmación de salidas.
+ */
 class Salida extends Model
 {
     public const LIMITE_PRODUCTOS = 200;
     public const LIMITE_UNIDADES = 999999;
 
-    // Agrupa un tipo de movimiento para las reglas de venta:
-    // VENTA → venta, REGALIAS → regalias, cualquier otro → merma.
+    /**
+     * Agrupa un tipo de movimiento para las reglas de venta.
+     *
+     * Devuelve 'venta' para VENTA, 'regalias' para REGALIAS y 'merma' para
+     * cualquier otro tipo. Determina las validaciones aplicables.
+     *
+     * @param string $nombre Nombre del tipo de movimiento.
+     * @return string Grupo: 'venta', 'regalias' o 'merma'.
+     */
     public static function grupoDeTipo(string $nombre): string
     {
         $n = mb_strtoupper(trim($nombre));
@@ -22,7 +37,15 @@ class Salida extends Model
         return 'merma';
     }
 
-    // Listado de salidas activas con resumen por venta
+    /**
+     * Listado de salidas activas con resumen por venta.
+     *
+     * Devuelve las salidas activas agrupadas con el listado de productos,
+     * totales de cantidad y monto, y el primer detalle (para la vista previa).
+     * Además enriquece cada salida con productos_json para el modal.
+     *
+     * @return array Salidas activas con resumen y detalles.
+     */
     public function obtenerSalidas(): array
     {
         $salidas = $this->db->fetchAll("
@@ -71,26 +94,44 @@ class Salida extends Model
         return $salidas;
     }
 
-    // Tipos de movimiento de tipo Salida (para el selector del modal)
+    /**
+     * Tipos de movimiento de tipo Salida (para el selector del modal).
+     *
+     * @return array Lista de tipos de movimiento con tipo 'Salida'.
+     */
     public function obtenerTiposMov(): array
     {
         return $this->db->fetchAll("SELECT id_tipo_mov, nombre FROM tipos_movimientos WHERE tipo_movimiento = 'Salida' ORDER BY id_tipo_mov");
     }
 
-    // Nombre de un tipo de movimiento ('' si no existe)
+    /**
+     * Nombre de un tipo de movimiento ('' si no existe).
+     *
+     * @param int $idTipoMov Identificador del tipo de movimiento.
+     * @return string Nombre del tipo o cadena vacía.
+     */
     public function obtenerTipoNombre(int $idTipoMov): string
     {
         $row = $this->db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$idTipoMov]);
         return $row['nombre'] ?? '';
     }
 
-    // Datos básicos de stock/vencimiento de un producto para validar una venta
+    /**
+     * Datos básicos de stock/vencimiento de un producto para validar una venta.
+     *
+     * @param int $idProducto Identificador del producto.
+     * @return array|null ['stock_actual'=>.., 'fecha_vencimiento'=>..] o null.
+     */
     public function obtenerProductoBasico(int $idProducto): ?array
     {
         return $this->db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$idProducto]);
     }
 
-    // Mapa id_tipo_mov → grupo (para el JS: window.JV_CONFIG.c0)
+    /**
+     * Mapa id_tipo_mov → grupo (para el JS: window.JV_CONFIG.c0).
+     *
+     * @return array Mapa [id_tipo_mov => grupo].
+     */
     public function mapaTiposGrupo(): array
     {
         $map = [];
@@ -100,7 +141,13 @@ class Salida extends Model
         return $map;
     }
 
-    // KPIs de la cabecera (ventas del mes, unidades, ventas de hoy)
+    /**
+     * KPIs de la cabecera (ventas del mes, unidades y ventas de hoy).
+     *
+     * Considera solo salidas activas de tipo VENTA dentro del mes en curso.
+     *
+     * @return array ['ventas_mes'=>float, 'und_mes'=>int, 'ventas_hoy'=>int].
+     */
     public function kpis(): array
     {
         $ventas_mes = $this->db->fetchOne("
@@ -139,8 +186,16 @@ class Salida extends Model
         ];
     }
 
-    // Anular una salida (solo admin): restaura stock y lotes
-    // @return array ['ok'=>bool, 'error'?]
+    /**
+     * Anula una salida (solo admin): restaura stock y lotes.
+     *
+     * Devuelve las unidades a los productos y lotes, marca la salida como
+     * Anulada, anula su movimiento y registra la auditoría. Todo dentro de
+     * una transacción.
+     *
+     * @param int $id_salida Identificador de la salida.
+     * @return array ['ok'=>bool, 'error'?=>string].
+     */
     public function anular(int $id_salida): array
     {
         $detalles = $this->db->fetchAll("SELECT id_producto, id_lote, cantidad FROM detalle_salidas WHERE id_salida = ?", [$id_salida]);
@@ -165,10 +220,17 @@ class Salida extends Model
         }
     }
 
-    // Confirmar una venta guardada en preview_data:
-    // inserta/actualiza salida + detalle_salidas + descuenta stock_actual
-    // + consumo FEFO de lotes + movimiento de inventario + auditoría.
-    // @return array ['ok'=>bool, 'id_salida'?, 'edicion'?, 'error'?]
+    /**
+     * Confirma una venta guardada en preview_data.
+     *
+     * Inserta o actualiza la salida, su detalle, descuenta stock_actual con
+     * consumo FEFO de lotes, registra el movimiento de inventario y la
+     * auditoría. En edición primero restaura stock y lotes de la salida
+     * original. Todo dentro de una transacción.
+     *
+     * @param array $data Datos del preview guardado en sesión.
+     * @return array ['ok'=>bool, 'id_salida'?=>int, 'edicion'?=>bool, 'error'?=>string].
+     */
     public function confirmar(array $data): array
     {
         $productos_raw = [];

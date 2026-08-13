@@ -8,9 +8,25 @@
 // datos():  endpoint AJAX de auto-refresh (reemplaza
 //          includes/ajax/estadisticas_ajax.php).
 // Toda la SQL está delegada en el Modelo.
+
+/**
+ * EstadisticasController: muestra KPIs y gráficos del periodo elegido.
+ *
+ * Renderiza la vista con las estadísticas (ventas, compras y ganancia) del
+ * periodo seleccionado y expone un endpoint AJAX de auto-refresh que
+ * reemplazó al antiguo includes/ajax/estadisticas_ajax.php.
+ */
 class EstadisticasController extends Controller
 {
-    // GET  index.php?url=estadisticas?periodo=..&desde=..&hasta=..
+    /**
+     * Página principal de estadísticas.
+     *
+     * Valida el periodo (GET periodo/desde/hasta), consulta los datos al
+     * modelo Estadistica y los entrega a la vista junto con la configuración
+     * necesaria para los gráficos (Chart.js).
+     *
+     * @return void
+     */
     public function index(): void
     {
         if (!Security::puedeVender()) {
@@ -53,7 +69,15 @@ class EstadisticasController extends Controller
         ]);
     }
 
-    // GET  index.php?url=estadisticas/datos  (AJAX — auto-refresh cada 60s)
+    /**
+     * Endpoint AJAX de auto-refresh de las estadísticas (cada 60s).
+     *
+     * Valida que la petición sea AJAX (X-Requested-With) y que el rol pueda
+     * vender, recalcula los datos del periodo y los devuelve en JSON para
+     * que la vista actualice los KPIs y gráficos sin recargar la página.
+     *
+     * @return void
+     */
     public function datos(): void
     {
         if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {

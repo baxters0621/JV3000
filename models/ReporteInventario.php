@@ -7,8 +7,21 @@
 // costo y a venta, último proveedor (directo o
 // por compras) y capacidad efectiva.
 // Sin HTML: solo datos.
+
+/**
+ * ReporteInventario: modelo del reporte imprimible de inventario.
+ *
+ * Devuelve los productos activos valorizados a costo y a venta, con el
+ * último proveedor (directo o por compras) y la capacidad efectiva.
+ * Sin HTML: solo datos para la vista imprimible.
+ */
 class ReporteInventario extends Model
 {
+    /**
+     * Productos activos con valorización, proveedor y capacidad.
+     *
+     * @return array Productos activos enriquecidos para el reporte.
+     */
     public function productosActivos(): array
     {
         return $this->db->fetchAll("

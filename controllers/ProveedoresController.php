@@ -5,10 +5,25 @@
 // ==========================================
 // index(): renderiza y procesa POST de
 // registrar / editar / toggle_status.
+
+/**
+ * ProveedoresController: gestiona el módulo de proveedores.
+ *
+ * Renderiza el listado con KPIs de crédito y procesa las acciones POST
+ * de registrar, editar y cambiar estado (toggle_status). También ejecuta
+ * la migración de teléfonos legacy y muestra flashes por query string.
+ */
 class ProveedoresController extends Controller
 {
-    // GET  index.php?url=proveedores
-    // POST index.php?url=proveedores
+    /**
+     * Listado de proveedores y procesamiento de acciones POST.
+     *
+     * POST: valida CSRF, procesa "accion_proveedor" (registrar/editar) o
+     * "toggle_status" (solo admin). GET: migra teléfonos legacy, resuelve
+     * flashes por ?res=/?err= y entrega los datos con KPIs de crédito.
+     *
+     * @return void
+     */
     public function index(): void
     {
         Security::verificarPermisoCarga();

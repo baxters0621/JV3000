@@ -7,9 +7,26 @@
 // entrega los datos a la Vista. Sin SQL aquí.
 //   GET  index.php?url=compras
 //   POST index.php?url=compras  (accion_compra | eliminar)
+
+/**
+ * ComprasController: gestiona el módulo de compras (facturas de proveedores).
+ *
+ * Recibe la petición, delega en el modelo Compra y entrega los datos a la
+ * vista. Aquí no hay SQL: solo orquestación de acciones (registrar, anular,
+ * atender solicitud) y preparación de los datos para el tablero.
+ */
 class ComprasController extends Controller
 {
-    // GET/POST index.php?url=compras
+    /**
+     * Página principal de compras: tablero, filtros y acciones POST.
+     *
+     * GET: atiende "atender_solicitud" guardando el prefill en sesión; además
+     * aplica los filtros de proveedor/estado de pago y renderiza la vista.
+     * POST: procesa "accion_compra" (registrar) y "eliminar" (anular, solo
+     * admin), mostrando flash con el resultado y redirigiendo.
+     *
+     * @return void
+     */
     public function index(): void
     {
         Security::verificarPermisoCarga();
@@ -73,7 +90,14 @@ class ComprasController extends Controller
         ]);
     }
 
-    // GET index.php?url=compras/cancelar_solicitud
+    /**
+     * Cancela la solicitud seleccionada para atender y vuelve a compras.
+     *
+     * Simplemente elimina la solicitud guardada en sesión (prefill) y
+     * redirige al listado de compras.
+     *
+     * @return void
+     */
     public function cancelar_solicitud(): void
     {
         Security::verificarPermisoCarga();
@@ -81,6 +105,14 @@ class ComprasController extends Controller
         $this->redirect('compras');
     }
 
+    /**
+     * Lee y limpia el mensaje flash pendiente de la sesión.
+     *
+     * Obtiene el mensaje guardado por operaciones previas y lo elimina de la
+     * sesión para que solo se muestre una vez. Devuelve null si no hay mensaje.
+     *
+     * @return array|null Arreglo ['tipo'=>.., 'texto'=>..] o null si no hay.
+     */
     private function consumeFlash(): ?array
     {
         $flash = $_SESSION['flash_msg'] ?? null;

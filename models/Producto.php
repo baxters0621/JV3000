@@ -6,10 +6,25 @@
 // Única capa que consulta la base de datos.
 // Incluye las reglas de negocio de inventario:
 // toggle, baja por vencimiento y edición.
+
+/**
+ * Producto: modelo del módulo de productos/inventario.
+ *
+ * Única capa autorizada para consultar la base de datos. Contiene las reglas
+ * de negocio del inventario: cambio de estado, baja por vencimiento (lotes
+ * vencidos en cero y producto desactivado) y edición de producto (solo admin).
+ */
 class Producto extends Model
 {
-    // Cambiar estado Activo/Inactivo
-    // @return array ['ok'=>bool, 'mensaje'=>string]
+    /**
+     * Cambia el estado Activo/Inactivo de un producto.
+     *
+     * Consulta el estado actual, lo invierte y actualiza el producto,
+     * registrando la auditoría con la acción reactivado/desactivado.
+     *
+     * @param int $idProducto Identificador del producto.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     public function toggleStatus(int $idProducto): array
     {
         $p = $this->db->fetchOne("SELECT status FROM productos WHERE id_producto = ?", [$idProducto]);
@@ -21,7 +36,16 @@ class Producto extends Model
         return ['ok' => true, 'mensaje' => "PRODUCTO $accion."];
     }
 
-    // Poner en cero los lotes vencidos y desactivar el producto
+    /**
+     * Pone en cero los lotes vencidos y desactiva el producto.
+     *
+     * Actualiza a 0 la cantidad restante de todos los lotes vencidos del
+     * producto y recalcula su stock_actual según lo que quede en lotes,
+     * desactivándolo. Registra la auditoría de la baja.
+     *
+     * @param int $idProducto Identificador del producto.
+     * @return void
+     */
     public function bajaVencido(int $idProducto): void
     {
         $this->db->execute(
@@ -37,8 +61,16 @@ class Producto extends Model
         registrarAuditoria('baja_vencido', 'Producto dado de baja por vencimiento');
     }
 
-    // Edición de un producto (solo admin)
-    // @return array ['ok'=>bool, 'mensaje'=>string]
+    /**
+     * Edición de un producto (solo admin).
+     *
+     * Valida producto, stock mínimo/máximo, precios, estado, fecha de
+     * vencimiento y proveedor; luego actualiza el registro y registra la
+     * auditoría.
+     *
+     * @param array $d Datos del formulario (id_producto, stocks, precios...).
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     public function editar(array $d): array
     {
         $id_prod = (int)$d['id_producto'];
@@ -70,7 +102,17 @@ class Producto extends Model
         return ['ok' => true, 'mensaje' => 'PRODUCTO ACTUALIZADO EN EL INVENTARIO.'];
     }
 
-    // Listado paginado con categoría, capacidad y último proveedor
+    /**
+     * Listado paginado con categoría, capacidad y último proveedor.
+     *
+     * Devuelve los productos ordenados (activos primero) con el nombre de la
+     * categoría, la capacidad efectiva (propia, de categoría o 100) y el
+     * último proveedor (directo o por compras). Paginado con LIMIT/OFFSET.
+     *
+     * @param int $limit  Registros por página.
+     * @param int $offset Desplazamiento para la paginación.
+     * @return array Productos de la página solicitada.
+     */
     public function listar(int $limit, int $offset): array
     {
         return $this->db->fetchAll(
@@ -83,13 +125,21 @@ class Producto extends Model
         );
     }
 
-    // Total de productos (para paginación)
+    /**
+     * Total de productos (para la paginación).
+     *
+     * @return int Cantidad total de productos en la tabla.
+     */
     public function totalRegistros(): int
     {
         return (int)($this->db->fetchOne("SELECT COUNT(*) as total FROM productos")['total'] ?? 0);
     }
 
-    // Proveedores activos para el select del modal
+    /**
+     * Proveedores activos para el select del modal de edición.
+     *
+     * @return array Lista de proveedores activos (id_proveedor, nombre_empresa).
+     */
     public function proveedoresActivos(): array
     {
         return $this->db->fetchAll("SELECT id_proveedor, nombre_empresa FROM proveedores WHERE status = 'Activo' ORDER BY nombre_empresa ASC");

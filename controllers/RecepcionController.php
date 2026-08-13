@@ -7,10 +7,25 @@
 // mercancía (registrar) y renderiza el tablero
 // con las compras pendientes y últimas recepciones.
 // Toda la SQL está delegada en el Modelo.
+
+/**
+ * RecepcionController: gestiona la recepción de mercancía.
+ *
+ * Procesa el POST de recepción (accion_recepcion) delegando en el modelo
+ * Recepcion y renderiza el tablero con las compras pendientes, unidades
+ * por recibir y las últimas recepciones registradas.
+ */
 class RecepcionController extends Controller
 {
-    // GET  index.php?url=recepcion
-    // POST index.php?url=recepcion  (accion_recepcion)
+    /**
+     * Tablero de recepción y procesamiento de la recepción.
+     *
+     * POST: registra la recepción de mercancía de una compra y redirige
+     * con flash. GET: renderiza el tablero con los datos del modelo
+     * (compras pendientes, totales y recepciones recientes).
+     *
+     * @return void
+     */
     public function index(): void
     {
         Security::verificarPermisoCarga();

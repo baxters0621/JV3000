@@ -5,10 +5,25 @@
 // ==========================================
 // index(): renderiza y procesa POST de
 // registrar / editar / toggle_status.
+
+/**
+ * CategoriasController: gestiona el módulo de categorías de inventario.
+ *
+ * Atiende tanto la visualización del listado como las acciones POST de
+ * registrar, editar y cambiar el estado (Activo/Inactivo) de una categoría.
+ * Toda la lógica de datos está delegada en el modelo Categoria.
+ */
 class CategoriasController extends Controller
 {
-    // GET  index.php?url=categorias
-    // POST index.php?url=categorias
+    /**
+     * Renderiza el listado de categorías y procesa las acciones POST.
+     *
+     * GET: muestra la vista con las categorías existentes.
+     * POST: según 'accion_categoria' (registrar/editar) o 'toggle_status',
+     * ejecuta la operación en el modelo, guarda un flash y redirige.
+     *
+     * @return void
+     */
     public function index(): void
     {
         Security::verificarPermisoCarga();

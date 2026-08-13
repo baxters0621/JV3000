@@ -5,10 +5,25 @@
 // ==========================================
 // Recibe la petición, delega en el Modelo y entrega
 // los datos a la Vista. Sin SQL aquí.
+
+/**
+ * SalidasController: gestiona el módulo de salidas/ventas.
+ *
+ * Recibe la petición, delega en el modelo Salida y entrega los datos a la
+ * vista. Maneja el flujo de venta en dos pasos: validación y preview en
+ * sesión (procesarAccionSalida) y confirmación transaccional (confirm).
+ */
 class SalidasController extends Controller
 {
-    // GET  index.php?url=salidas          → vista principal
-    // POST index.php?url=salidas          → acciones del módulo original
+    /**
+     * Vista principal de salidas y acciones POST del formulario.
+     *
+     * GET: renderiza el tablero de salidas con sus KPIs y tipos de movimiento.
+     * POST: "eliminar" anula una salida (solo admin, restaura stock) y
+     * "accion_salida" valida el formulario dejando el preview en sesión.
+     *
+     * @return void
+     */
     public function index(): void
     {
         Security::verificarPermisoVenta();
@@ -61,6 +76,17 @@ class SalidasController extends Controller
     // POST index.php?url=salidas/confirm&token=...
     // Confirma la venta guardada en $_SESSION['preview_data'][$token]
     // ejecutando la transacción completa del modelo.
+
+    /**
+     * Confirma la venta guardada en sesión (transacción completa).
+     *
+     * Lee el preview indicado por el token, ejecuta la confirmación en el
+     * modelo Salida (inserta/actualiza salida, descuenta stock y lotes FEFO,
+     * registra el movimiento) y limpia el preview usado. Al final redirige
+     * con flash y, en caso de éxito, apunta al ancla de la salida creada.
+     *
+     * @return void
+     */
     public function confirm(): void
     {
         Security::verificarPermisoVenta();
@@ -99,6 +125,18 @@ class SalidasController extends Controller
 
     // Acción legacy del formulario (POST accion_salida): valida y deja el
     // preview listo en sesión para que la nota imprimible lo confirme.
+
+    /**
+     * Valida el formulario de salida y guarda el preview en sesión.
+     *
+     * Acción legacy (POST accion_salida = registrar/editar). Valida acción,
+     * producto, cantidad (límites), precio, documento fiscal, causa de ajuste
+     * y stock/vencimiento; luego guarda el preview bajo un token y redirige
+     * a la nota imprimible (preview_factura) para su confirmación.
+     *
+     * @param Salida $modelo Instancia del modelo Salida ya creada.
+     * @return void
+     */
     private function procesarAccionSalida(Salida $modelo): void
     {
         $accion = in_array($_POST['accion_salida'] ?? '', ['registrar', 'editar']) ? $_POST['accion_salida'] : '';
@@ -209,6 +247,14 @@ class SalidasController extends Controller
         $this->redirect('preview_factura', ['token' => $preview_token]);
     }
 
+    /**
+     * Lee y limpia el mensaje flash pendiente de la sesión.
+     *
+     * Obtiene el mensaje guardado por operaciones previas y lo elimina de la
+     * sesión para que solo se muestre una vez. Devuelve null si no hay mensaje.
+     *
+     * @return array|null Arreglo ['tipo'=>.., 'texto'=>..] o null si no hay.
+     */
     private function consumeFlash(): ?array
     {
         $flash = $_SESSION['flash_msg'] ?? null;

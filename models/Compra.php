@@ -8,9 +8,28 @@
 // consultas del tablero y prefill de solicitudes.
 // (El movimiento de stock/lotes NO ocurre aquí:
 //  lo gestiona el módulo Recepción.)
+
+/**
+ * Compra: modelo del módulo de compras (facturas de proveedores).
+ *
+ * Única capa autorizada para consultar la base de datos. Maneja el registro
+ * de facturas, la anulación, el marcado como pagada, las consultas del
+ * tablero (filtros, KPIs, crédito usado) y el prefill de solicitudes.
+ * NOTA: el movimiento de stock/lotes NO ocurre aquí; lo gestiona Recepción.
+ */
 class Compra extends Model
 {
-    // Facturas activas para el tablero (con filtros opcionales)
+    /**
+     * Facturas activas para el tablero, con filtros opcionales.
+     *
+     * Agrupa cada compra con el resumen de sus productos (lista, cantidad,
+     * número de ítems) y el proveedor. Aplica filtro por proveedor y por
+     * estado de pago. Limitado a las 100 facturas más recientes.
+     *
+     * @param int    $filtro_proveedor Id del proveedor (0 = sin filtro).
+     * @param string $filtro_pago      Estado de pago ('Pendiente'/'Pagada' o '').
+     * @return array Facturas activas con resumen.
+     */
     public function obtenerCompras(int $filtro_proveedor = 0, string $filtro_pago = ''): array
     {
         $sql = "
@@ -38,7 +57,14 @@ class Compra extends Model
         return $this->db->fetchAll($sql, $params);
     }
 
-    // Proveedores activos para el formulario
+    /**
+     * Proveedores activos para el formulario de compra.
+     *
+     * Devuelve los datos de contacto y crédito de los proveedores activos,
+     * ordenados alfabéticamente, para el selector del formulario.
+     *
+     * @return array Lista de proveedores activos.
+     */
     public function obtenerProveedores(): array
     {
         return $this->db->fetchAll(
@@ -47,7 +73,14 @@ class Compra extends Model
         );
     }
 
-    // Crédito consumido por proveedor (solo compras a crédito activas)
+    /**
+     * Crédito consumido por proveedor (solo compras a crédito activas).
+     *
+     * Devuelve un mapa id_proveedor → total consumido, usado para mostrar
+     * el uso de crédito en el tablero.
+     *
+     * @return array Mapa [id_proveedor => total usado].
+     */
     public function creditoUsadoPorProveedor(): array
     {
         $usado = [];
@@ -62,7 +95,14 @@ class Compra extends Model
         return $usado;
     }
 
-    // KPIs de la cabecera
+    /**
+     * KPIs de la cabecera del tablero de compras.
+     *
+     * Calcula el total de compras activas, las pendientes de pago y el
+     * monto invertido en el mes en curso.
+     *
+     * @return array ['total_compras'=>int, 'por_pagar'=>int, 'invertido_mes'=>float].
+     */
     public function kpis(): array
     {
         $total = (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM compras WHERE status = 'Activa'")['t'] ?? 0);
@@ -81,8 +121,16 @@ class Compra extends Model
         ];
     }
 
-    // Prefill de una solicitud de compra pendiente (para atenderla)
-    // @return array|null ['id_solicitud', 'motivo', 'items']
+    /**
+     * Prefill de una solicitud de compra pendiente (para atenderla).
+     *
+     * Devuelve los datos de la solicitud (motivo e ítems con sku, nombre,
+     * cantidad y precio de costo) si existe y está Pendiente. Retorna null
+     * si no existe, no está pendiente o no tiene ítems.
+     *
+     * @param int $id_solicitud Identificador de la solicitud.
+     * @return array|null ['id_solicitud'=>int, 'motivo'=>string, 'items'=>array].
+     */
     public function prefillSolicitud(int $id_solicitud): ?array
     {
         $sol = $this->db->fetchOne("SELECT id_solicitud, motivo, estado FROM solicitudes_compra WHERE id_solicitud = ?", [$id_solicitud]);
@@ -111,10 +159,20 @@ class Compra extends Model
         ];
     }
 
-    // Registrar compra (factura del proveedor + comprobante de pago).
-    // Respeta el flujo original: NO mueve stock ni crea lotes aquí
-    // (eso lo hace Recepción). La mercancía se recibe después.
-    // @return array ['ok'=>bool, 'mensaje'=>string]
+    /**
+     * Registra una compra (factura del proveedor + comprobante de pago).
+     *
+     * Valida proveedor, número de factura único por proveedor, formato de
+     * nro. de control, RIF del proveedor, ítems (cantidad y precio), límite
+     * de crédito y monto de pago. Inserta la compra con sus detalles dentro
+     * de una transacción y, si se atiende una solicitud, la marca Atendida.
+     * Respeta el flujo original: NO mueve stock ni crea lotes aquí (eso lo
+     * hace Recepción).
+     *
+     * @param array $post       Datos del formulario (proveedor, ítems, pagos...).
+     * @param int   $id_usuario Usuario que registra la compra.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     public function registrar(array $post, int $id_usuario): array
     {
         $id_proveedor = intval($post['id_proveedor'] ?? 0);
@@ -267,8 +325,15 @@ class Compra extends Model
         }
     }
 
-    // Anular compra (solo si no hay mercancía recibida en inventario)
-    // @return array ['ok'=>bool, 'mensaje'=>string]
+    /**
+     * Anula una compra (solo si no hay mercancía recibida en inventario).
+     *
+     * Verifica que la compra exista, no esté ya anulada y no tenga lotes
+     * recibidos. Si cumple, la marca Anulada y registra la auditoría.
+     *
+     * @param int $id_compra Identificador de la compra.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     public function anular(int $id_compra): array
     {
         $compra = $this->db->fetchOne("SELECT nro_factura, status FROM compras WHERE id_compra = ?", [$id_compra]);
@@ -284,8 +349,16 @@ class Compra extends Model
         return ['ok' => true, 'mensaje' => 'COMPRA ANULADA.'];
     }
 
-    // Marcar compra como pagada
-    // @return array ['ok'=>bool, 'mensaje'=>string]
+    /**
+     * Marca una compra como pagada.
+     *
+     * Valida que la compra exista, no esté anulada ni ya pagada; luego
+     * actualiza estado de pago, monto a total y fecha de pago, y registra
+     * la auditoría.
+     *
+     * @param int $id_compra Identificador de la compra.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     public function pagar(int $id_compra): array
     {
         $compra = $this->db->fetchOne("SELECT status, status_pago, total FROM compras WHERE id_compra = ?", [$id_compra]);

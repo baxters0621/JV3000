@@ -143,7 +143,16 @@ function formatearTelefono($e164)
 
 // Helpers de BD / Config
 if (!function_exists('getConfig')) {
-    // Obtener valor de configuración
+    /**
+     * Obtiene el valor de una clave de configuración.
+     *
+     * Consulta la tabla de configuración y devuelve su valor, o el valor por
+     * defecto si la clave no existe.
+     *
+     * @param string $clave   Clave de configuración a buscar.
+     * @param string $default Valor por defecto si la clave no existe.
+     * @return string Valor de la configuración o el default.
+     */
     function getConfig(string $clave, string $default = ''): string
     {
         $db = Database::getInstance();
@@ -154,6 +163,12 @@ if (!function_exists('getConfig')) {
 
 // Códigos derivados de entidades (sin estado adicional)
 if (!function_exists('codigoCliente')) {
+    /**
+     * Genera el código de un cliente a partir de su id.
+     *
+     * @param int $id_cliente Identificador del cliente.
+     * @return string Código formateado CLI-000001.
+     */
     function codigoCliente(int $id_cliente): string
     {
         return 'CLI-' . str_pad($id_cliente, 6, '0', STR_PAD_LEFT);
@@ -161,6 +176,12 @@ if (!function_exists('codigoCliente')) {
 }
 
 if (!function_exists('codigoProveedor')) {
+    /**
+     * Genera el código de un proveedor a partir de su id.
+     *
+     * @param int $id_proveedor Identificador del proveedor.
+     * @return string Código formateado PROV-000001.
+     */
     function codigoProveedor(int $id_proveedor): string
     {
         return 'PROV-' . str_pad($id_proveedor, 6, '0', STR_PAD_LEFT);
@@ -169,7 +190,15 @@ if (!function_exists('codigoProveedor')) {
 
 // Generadores de números secuenciales
 if (!function_exists('generarControlNumero')) {
-    // Generar número de control
+    /**
+     * Genera el siguiente número de control secuencial (CTRL).
+     *
+     * Lee e incrementa el contador de la tabla sku_contadores con bloqueo
+     * FOR UPDATE dentro de una transacción y devuelve el número formateado
+     * como "00-00000000". Ante un error devuelve '00-00000000'.
+     *
+     * @return string Número de control formateado.
+     */
     function generarControlNumero()
     {
         $db = Database::getInstance();
@@ -194,7 +223,15 @@ if (!function_exists('generarControlNumero')) {
 }
 
 if (!function_exists('generarFacturaNumero')) {
-    // Generar número de Nota de Entrega
+    /**
+     * Genera el siguiente número de Nota de Entrega (NDE).
+     *
+     * Lee e incrementa el contador sku_contadores con bloqueo FOR UPDATE
+     * dentro de una transacción y devuelve el número formateado como
+     * "NDE-000001". Ante un error devuelve 'NDE-ERROR'.
+     *
+     * @return string Número de Nota de Entrega formateado.
+     */
     function generarFacturaNumero()
     {
         $db = Database::getInstance();
@@ -218,7 +255,15 @@ if (!function_exists('generarFacturaNumero')) {
 }
 
 if (!function_exists('validarPasswordFuerte')) {
-    // Validar contraseña fuerte: mín 8, mayúscula, minúscula, número y símbolo
+    /**
+     * Valida que una contraseña sea fuerte.
+     *
+     * Requiere mínimo 8 caracteres, al menos una mayúscula, una minúscula,
+     * un dígito y un símbolo.
+     *
+     * @param string $password Contraseña a validar.
+     * @return bool True si cumple la política de fortaleza.
+     */
     function validarPasswordFuerte(string $password): bool
     {
         return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/', $password) === 1;
@@ -226,7 +271,14 @@ if (!function_exists('validarPasswordFuerte')) {
 }
 
 if (!function_exists('purgarPreviewsSesion')) {
-    // Elimina previews de ventas abandonados (solo queda el más reciente en sesión)
+    /**
+     * Elimina los previews de ventas abandonados de la sesión.
+     *
+     * Recorre la sesión y elimina 'preview_data' y cualquier clave que
+     * comience con 'preview_data_', dejando solo el preview más reciente.
+     *
+     * @return void
+     */
     function purgarPreviewsSesion(): void
     {
         foreach (array_keys($_SESSION) as $clave) {
@@ -238,7 +290,16 @@ if (!function_exists('purgarPreviewsSesion')) {
 }
 
 if (!function_exists('registrarAuditoria')) {
-    // Registrar acción en auditoría
+    /**
+     * Registra una acción en la tabla de auditoría.
+     *
+     * Inserta el registro con el usuario actual de la sesión (o 'Sistema' si
+     * no hay sesión) y el detalle de la acción realizada.
+     *
+     * @param string $accion  Tipo de acción (crear, editar, eliminar, anular...).
+     * @param string $detalle Descripción de la acción realizada.
+     * @return void
+     */
     function registrarAuditoria(string $accion, string $detalle = '')
     {
         $db = Database::getInstance();
@@ -250,7 +311,14 @@ if (!function_exists('registrarAuditoria')) {
 
 // Preguntas de seguridad
 if (!function_exists('getPreguntasRespuestas')) {
-// Obtener preguntas de seguridad
+/**
+ * Obtiene la lista de preguntas de seguridad disponibles.
+ *
+ * Devuelve el catálogo fijo de preguntas que el usuario puede elegir
+ * al configurar la recuperación de su cuenta.
+ *
+ * @return array Lista de preguntas de seguridad.
+ */
 function getPreguntasRespuestas(): array
 {
     return [
@@ -266,6 +334,15 @@ function getPreguntasRespuestas(): array
 }
 
 // Normalizar respuesta de seguridad (trim + minúsculas + sin acentos)
+/**
+ * Normaliza una respuesta de seguridad para compararla de forma flexible.
+ *
+ * Recorta espacios, elimina acentos y convierte a minúsculas, de modo que
+ * la misma respuesta en distintos formatos sea considerada equivalente.
+ *
+ * @param string $respuesta Respuesta del usuario.
+ * @return string Respuesta normalizada.
+ */
 function normalizarRespuestaSeguridad(string $respuesta): string
 {
     $r = trim($respuesta);
@@ -282,6 +359,15 @@ function normalizarRespuestaSeguridad(string $respuesta): string
 }
 
 // Validar respuesta de seguridad: flexible, acepta desde un solo carácter
+/**
+ * Valida que una respuesta de seguridad no esté vacía.
+ *
+ * La normaliza y comprueba que tras normalizarla no quede en blanco;
+ * acepta respuestas desde un solo carácter.
+ *
+ * @param string $respuesta Respuesta del usuario.
+ * @return bool True si la respuesta es válida (no vacía).
+ */
 function validarRespuestaSeguridad(string $respuesta): bool
 {
     return normalizarRespuestaSeguridad($respuesta) !== '';
@@ -289,6 +375,17 @@ function validarRespuestaSeguridad(string $respuesta): bool
 
 // Verificar respuesta: normaliza ambos textos antes de comparar
 // (con retro-compatibilidad para respuestas guardadas sin normalizar)
+/**
+ * Verifica una respuesta de seguridad contra su hash guardado.
+ *
+ * Normaliza la respuesta y la compara con password_verify; si eso falla,
+ * reintenta con la respuesta sin normalizar para dar retro-compatibilidad
+ * con respuestas guardadas antes de la normalización.
+ *
+ * @param string $respuesta Respuesta ingresada por el usuario.
+ * @param string $hash      Hash guardado de la respuesta correcta.
+ * @return bool True si la respuesta coincide con el hash.
+ */
 function verificarRespuestaSeguridad(string $respuesta, string $hash): bool
 {
     $normalizada = normalizarRespuestaSeguridad($respuesta);

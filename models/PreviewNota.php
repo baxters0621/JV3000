@@ -5,12 +5,29 @@
 // ==========================================
 // Única capa que consulta la base de datos y arma los
 // datos de la nota imprimible. No imprime HTML.
+
+/**
+ * PreviewNota: modelo que arma los datos de la nota imprimible.
+ *
+ * Única capa autorizada para consultar la base de datos y construir los
+ * datos del preview/nota de entrega. No imprime HTML: solo prepara la
+ * información (productos, totales, alertas, datos de empresa) que la vista
+ * imprimible consume.
+ */
 class PreviewNota extends Model
 {
     public const LIMITE_PRODUCTOS = 200;
     public const LIMITE_UNIDADES = 999999;
 
-    // Consulta una salida para reimpresión (con nombre del tipo de movimiento)
+    /**
+     * Consulta una salida para reimpresión (con nombre del tipo de movimiento).
+     *
+     * Devuelve la cabecera de la salida junto con el nombre de su tipo de
+     * movimiento, o null si no existe.
+     *
+     * @param int $idSalida Identificador de la salida.
+     * @return array|null Datos de la salida o null si no existe.
+     */
     public function obtenerPorId(int $idSalida): ?array
     {
         return $this->db->fetchOne("
@@ -21,7 +38,15 @@ class PreviewNota extends Model
         ", [$idSalida]);
     }
 
-    // Detalle de una salida para reimpresión
+    /**
+     * Detalle de una salida para reimpresión.
+     *
+     * Devuelve las líneas del detalle con nombre, sku, precios y fechas de
+     * vencimiento (del producto y del lote consumido, si aplica).
+     *
+     * @param int $idSalida Identificador de la salida.
+     * @return array Líneas de detalle de la salida.
+     */
     public function obtenerDetalles(int $idSalida): array
     {
         return $this->db->fetchAll("
@@ -33,15 +58,28 @@ class PreviewNota extends Model
         ", [$idSalida]);
     }
 
-    // Nombre de un tipo de movimiento ('' si no existe)
+    /**
+     * Nombre de un tipo de movimiento ('' si no existe).
+     *
+     * @param int $idTipoMov Identificador del tipo de movimiento.
+     * @return string Nombre del tipo o cadena vacía.
+     */
     public function obtenerTipoNombre(int $idTipoMov): string
     {
         $row = $this->db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$idTipoMov]);
         return $row['nombre'] ?? '';
     }
 
-    // Construye el detalle de la nota a partir de un preview en sesión
-    // (consulta los productos guardados en productos_data).
+    /**
+     * Construye el detalle de la nota a partir de un preview en sesión.
+     *
+     * Consulta los productos guardados en productos_data (JSON) o, como
+     * fallback para el formato antiguo de un solo producto, los campos
+     * individuales. Devuelve las líneas enriquecidas con datos del producto.
+     *
+     * @param array $data Datos del preview guardado en sesión.
+     * @return array Detalles de la nota listos para la vista.
+     */
     public function obtenerDetallesPreview(array $data): array
     {
         $productos_raw = [];
@@ -74,9 +112,18 @@ class PreviewNota extends Model
         return $detalles;
     }
 
-    // Valida los datos del formulario de venta y devuelve el preview listo
-    // para guardar en sesión. No toca $_SESSION.
-    // @return array ['ok'=>bool, 'data'?, 'error'?]
+    /**
+     * Valida el formulario de venta y devuelve el preview listo para sesión.
+     *
+     * Normaliza cliente/RIF, identifica el grupo según el tipo de movimiento
+     * (venta/regalías/merma), valida los campos obligatorios por grupo y
+     * verifica stock y vencimiento (FEFO) de cada producto. En regalías
+     * fuerza precio 0. No toca $_SESSION: solo devuelve los datos validados.
+     *
+     * @param array $input     Datos del formulario de venta.
+     * @param int   $idUsuario Usuario que genera la venta.
+     * @return array ['ok'=>bool, 'data'?=>array, 'error'?=>string].
+     */
     public function construirPreview(array $input, int $idUsuario): array
     {
         $productos_data = $input['productos_data'] ?? '';
@@ -221,9 +268,18 @@ class PreviewNota extends Model
         ];
     }
 
-    // Arma todos los valores derivados que necesita la nota imprimible:
-    // alertas de vencimiento, totales, banderas del tipo y datos de empresa.
-    // @return array (los mismos datos + valores calculados para la vista)
+    /**
+     * Arma todos los valores derivados que necesita la nota imprimible.
+     *
+     * Calcula las alertas de vencimiento por producto, identifica el tipo de
+     * movimiento (venta/regalía/merma) con sus banderas, calcula subtotal,
+     * IVA y total, y añade los datos de la empresa desde configuración.
+     *
+     * @param array  $data         Datos de la cabecera del preview/salida.
+     * @param array  $detalles     Detalles de la nota (productos).
+     * @param string $previewToken Token del preview (vacío en reimpresión).
+     * @return array Datos completos enriquecidos para la vista imprimible.
+     */
     public function armarNota(array $data, array $detalles, string $previewToken = ''): array
     {
         // Alerta de vencimiento (por cada producto)

@@ -6,10 +6,26 @@
 // index(): renderiza la vista y procesa los POST
 // de toggle / baja por vencimiento / edición.
 // Toda la SQL está delegada en el Modelo.
+
+/**
+ * ProductosController: gestiona el módulo de productos/inventario.
+ *
+ * Renderiza el listado paginado de productos y procesa las acciones POST
+ * de cambiar estado (toggle), dar de baja por vencimiento y editar.
+ * Toda la lógica de datos está delegada en el modelo Producto.
+ */
 class ProductosController extends Controller
 {
-    // GET  index.php?url=productos?p=..&producto=..&alerta=..
-    // POST index.php?url=productos  (toggle / baja_vencido / editar_producto)
+    /**
+     * Listado de productos y procesamiento de acciones POST.
+     *
+     * GET: lista paginada de productos (p / producto / alerta).
+     * POST: "toggle" y "baja_vencido" solo para admin; "editar_producto"
+     * actualiza stock mínimo/máximo, precios, estado y proveedor.
+     * Todas las acciones terminan con flash y redirección.
+     *
+     * @return void
+     */
     public function index(): void
     {
         Security::verificarPermisoCarga();

@@ -7,10 +7,27 @@
 // Incluye las reglas de negocio de recepción de
 // mercancía: registrar recepción (lotes, stock,
 // movimientos, auditoría) y datos del tablero.
+
+/**
+ * Recepcion: modelo del módulo de recepción de mercancía.
+ *
+ * Única capa autorizada para consultar la base de datos. Contiene las reglas
+ * de negocio de recepción: registrar la recepción de una compra (crea lotes,
+ * actualiza stock, registra movimientos y auditoría) y los datos del tablero.
+ */
 class Recepcion extends Model
 {
-    // Procesar la recepción de mercancía de una compra.
-    // @return array ['ok'=>bool, 'mensaje'=>string]
+    /**
+     * Procesa la recepción de mercancía de una compra.
+     *
+     * Valida la compra, los ítems recibidos (cantidad vs. pendiente) y, en
+     * una transacción, crea los lotes, actualiza cantidad_recibida y stock,
+     * registra el movimiento y marca la compra como Completa o Parcial según
+     * si quedó mercancía pendiente.
+     *
+     * @param array $post Datos del formulario (id_compra, items_data, etc.).
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     public function registrar(array $post): array
     {
         $id_compra = intval($post['id_compra'] ?? 0);
@@ -129,7 +146,14 @@ class Recepcion extends Model
         }
     }
 
-    // Compras pendientes de recepción (Pendiente o Parcial)
+    /**
+     * Compras pendientes de recepción (Pendiente o Parcial).
+     *
+     * Devuelve las compras activas no recibidas por completo, con resumen de
+     * proveedor, número de ítems y unidades pendientes por recibir.
+     *
+     * @return array Compras pendientes de recepción.
+     */
     public function comprasPendientes(): array
     {
         return $this->db->fetchAll("
@@ -147,7 +171,14 @@ class Recepcion extends Model
         ");
     }
 
-    // Ítems pendientes por compra (para el modal de recepción)
+    /**
+     * Ítems pendientes por compra (para el modal de recepción).
+     *
+     * Devuelve las líneas de detalle con saldo pendiente por recibir, con
+     * sku, nombre, cantidades, precio de costo y fecha de vencimiento.
+     *
+     * @return array Ítems pendientes de recepción.
+     */
     public function itemsPendientes(): array
     {
         return $this->db->fetchAll("
@@ -161,7 +192,14 @@ class Recepcion extends Model
         ");
     }
 
-    // Datos del modal de recepción agrupados por compra
+    /**
+     * Datos del modal de recepción agrupados por compra.
+     *
+     * Combina comprasPendientes() e itemsPendientes() en un mapa por id de
+     * compra con su factura, proveedor y la lista de ítems con saldos.
+     *
+     * @return array Mapa [id_compra => ['nro_factura', 'proveedor', 'items']].
+     */
     public function datosRecepcion(): array
     {
         $datos = [];
@@ -191,7 +229,14 @@ class Recepcion extends Model
         return $datos;
     }
 
-    // Últimas recepciones registradas (hasta 20)
+        /**
+     * Últimas recepciones registradas (hasta 20).
+     *
+     * Devuelve los movimientos de entrada de compra más recientes con
+     * operador, factura, proveedor y resumen de ítems/unidades.
+     *
+     * @return array Recepciones recientes.
+     */
     public function recepcionesRecientes(): array
     {
         return $this->db->fetchAll("
@@ -209,13 +254,24 @@ class Recepcion extends Model
         ");
     }
 
-    // Cantidad de recepciones registradas hoy
+        /**
+     * Cantidad de recepciones registradas hoy.
+     *
+     * @return int Número de movimientos de entrada de compra del día.
+     */
     public function recepcionesHoy(): int
     {
         return (int)($this->db->fetchOne("SELECT COUNT(*) AS n FROM movimientos WHERE tipo_referencia = 'compra' AND tipo = 'Entrada' AND status = 'Activo' AND fecha_movimiento >= CURDATE()")['n'] ?? 0);
     }
 
-    // Datos completos del tablero de recepción para la vista
+    /**
+     * Datos completos del tablero de recepción para la vista.
+     *
+     * Agrupa compras pendientes, totales por recibir, datos del modal,
+     * recepciones recientes y las de hoy en un solo arreglo.
+     *
+     * @return array Datos del dashboard de recepción.
+     */
     public function dashboard(): array
     {
         $compras = $this->comprasPendientes();

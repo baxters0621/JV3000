@@ -5,13 +5,27 @@
 // ==========================================
 // Única capa que consulta la base de datos.
 // No sabe de pantallas ni de peticiones web.
+
+/**
+ * Solicitud: modelo del módulo de solicitudes de reposición.
+ *
+ * Única capa autorizada para consultar la base de datos. No sabe de
+ * pantallas ni de peticiones web. Gestiona el alta y cancelación de
+ * solicitudes de reposición y la consulta de pendientes e historial.
+ */
 class Solicitud extends Model
 {
-    // Regla de negocio: un producto no puede estar en dos
-    // solicitudes Pendientes a la vez (evita compras dobles).
+    /**
+     * Regla de negocio: un producto no puede estar en dos solicitudes
+     * Pendientes a la vez (evita compras dobles).
+     */
     private const LIMITE_UNIDADES = 999999;
 
-    // Solicitudes pendientes de atención
+    /**
+     * Solicitudes pendientes de atención.
+     *
+     * @return array Solicitudes Pendientes con solicitante, nº de productos y unidades.
+     */
     public function obtenerPendientes(): array
     {
         return $this->db->fetchAll("
@@ -28,7 +42,16 @@ class Solicitud extends Model
         ");
     }
 
-    // Historial de solicitudes atendidas / canceladas
+    /**
+     * Historial de solicitudes atendidas / canceladas.
+     *
+     * Devuelve las solicitudes que ya no están Pendientes, ordenadas de más
+     * reciente a más antiguo según fecha de atención, con su número de
+     * factura asociado si fue atendida.
+     *
+     * @param int $limite Cantidad máxima de registros a devolver.
+     * @return array Historial de solicitudes procesadas.
+     */
     public function obtenerHistorial(int $limite = 30): array
     {
         return $this->db->fetchAll("
@@ -48,8 +71,18 @@ class Solicitud extends Model
         ");
     }
 
-    // Crear solicitud desde Ventas (no hay stock)
-    // @return array ['ok'=>bool, 'id_solicitud'?, 'error'?]
+    /**
+     * Crea una solicitud desde Ventas (cuando no hay stock).
+     *
+     * Normaliza y valida cantidades, verifica que los productos existan y
+     * estén activos y que no haya otra solicitud Pendiente con los mismos
+     * productos. Inserta la solicitud y sus detalles en una transacción.
+     *
+     * @param array  $itemsRaw   Ítems crudos [['id_producto'=>.., 'cantidad'=>..]].
+     * @param string $motivo     Motivo de la solicitud (por defecto 'Venta sin stock').
+     * @param int    $idUsuario  Usuario solicitante.
+     * @return array ['ok'=>bool, 'id_solicitud'?=>int, 'error'?=>string].
+     */
     public function crear(array $itemsRaw, string $motivo, int $idUsuario): array
     {
         // Normalizar y validar cantidades
@@ -119,8 +152,15 @@ class Solicitud extends Model
         }
     }
 
-    // Cancelar una solicitud que sigue Pendiente
-    // @return array ['ok'=>bool, 'error'?]
+    /**
+     * Cancela una solicitud que sigue Pendiente.
+     *
+     * Verifica que la solicitud exista y esté Pendiente, la marca como
+     * Cancelada y registra la auditoría.
+     *
+     * @param int $idSolicitud Identificador de la solicitud.
+     * @return array ['ok'=>bool, 'error'?=>string].
+     */
     public function cancelar(int $idSolicitud): array
     {
         $sol = $this->db->fetchOne("SELECT estado FROM solicitudes_compra WHERE id_solicitud = ?", [$idSolicitud]);
@@ -132,7 +172,14 @@ class Solicitud extends Model
         return ['ok' => true];
     }
 
-    // KPIs de la cabecera (derivados de las consultas)
+    /**
+     * KPIs de la cabecera (derivados de las consultas del modelo).
+     *
+     * Calcula solicitudes pendientes, productos solicitados, unidades y
+     * atenciones completadas a partir de obtenerPendientes/obtenerHistorial.
+     *
+     * @return array ['pendientes'=>int, 'productos'=>int, 'unidades'=>int, 'atendidas'=>int].
+     */
     public function kpis(): array
     {
         $pendientes = $this->obtenerPendientes();

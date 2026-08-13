@@ -5,10 +5,27 @@
 // ==========================================
 // Única capa que consulta la base de datos.
 // Incluye generación de códigos CAT-XXX con contador.
+
+/**
+ * Categoria: modelo del módulo de categorías.
+ *
+ * Única capa autorizada para consultar la base de datos. Incluye el
+ * alta/edición de categorías con validaciones, el cambio de estado, el
+ * listado y la generación de códigos CAT-XXX mediante contador (con
+ * transacción y bloqueo FOR UPDATE para evitar duplicados).
+ */
 class Categoria extends Model
 {
-    // Procesa registrar / editar según la acción recibida
-    // @return array ['ok'=>bool, 'mensaje'=>string]
+    /**
+     * Procesa registrar o editar según la acción recibida.
+     *
+     * Normaliza y valida nombre, descripción, clasificación ABC, tipo de
+     * manejo y status; luego delega en registrar() o editar() según el
+     * valor de $d['accion'].
+     *
+     * @param array $d Datos del formulario (accion, nombre, descripcion, etc.).
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     public function procesar(array $d): array
     {
         $nombre = mb_strtoupper(trim($d['nombre']));
@@ -33,6 +50,20 @@ class Categoria extends Model
         return ['ok' => false, 'mensaje' => 'ACCIÓN INVÁLIDA.'];
     }
 
+    /**
+     * Registra una nueva categoría con su código CAT-XXX.
+     *
+     * Verifica que no exista duplicado por nombre, genera el siguiente
+     * código dentro de una transacción, inserta la categoría y registra la
+     * auditoría. En caso de error revierte la transacción.
+     *
+     * @param string $nombre        Nombre normalizado (mayúsculas).
+     * @param string $descripcion   Descripción opcional.
+     * @param string $abc           Clasificación ABC ('A', 'B', 'C' o '').
+     * @param string $tipo          Tipo de manejo (normal, inflamable, etc.).
+     * @param string $status        Estado inicial ('Activo'/'Inactivo').
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     private function registrar(string $nombre, string $descripcion, string $abc, string $tipo, string $status): array
     {
         $dup = $this->db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?)", [$nombre]);
@@ -58,6 +89,21 @@ class Categoria extends Model
         }
     }
 
+/**
+     * Edita una categoría existente conservando su código original.
+     *
+     * Verifica que no haya duplicado por nombre (excluyendo el propio
+     * registro), conserva el código ya asignado y actualiza los datos,
+     * registrando la auditoría correspondiente.
+     *
+     * @param int    $idCat         Identificador de la categoría.
+     * @param string $nombre        Nombre normalizado (mayúsculas).
+     * @param string $descripcion   Descripción opcional.
+     * @param string $abc           Clasificación ABC.
+     * @param string $tipo          Tipo de manejo.
+     * @param string $status        Estado ('Activo'/'Inactivo').
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
     private function editar(int $idCat, string $nombre, string $descripcion, string $abc, string $tipo, string $status): array
     {
         $dup = $this->db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?) AND id_categoria != ?", [$nombre, $idCat]);
@@ -71,7 +117,16 @@ class Categoria extends Model
         return ['ok' => true, 'mensaje' => 'CATEGORÍA ACTUALIZADA CORRECTAMENTE.'];
     }
 
-    // Cambiar estado Activo/Inactivo
+    /**
+     * Cambia el estado Activo/Inactivo de una categoría.
+     *
+     * Consulta el estado actual, lo invierte y actualiza la categoría,
+     * registrando la auditoría correspondiente. No hace nada si la
+     * categoría no existe.
+     *
+     * @param int $idCategoria Identificador de la categoría.
+     * @return void
+     */
     public function toggleStatus(int $idCategoria): void
     {
         $row = $this->db->fetchOne("SELECT status FROM categorias WHERE id_categoria = ?", [$idCategoria]);
@@ -82,13 +137,27 @@ class Categoria extends Model
         }
     }
 
-    // Listado completo ordenado por nombre
+    /**
+     * Listado completo de categorías ordenado por nombre.
+     *
+     * Devuelve todas las categorías, sin paginar, ordenadas alfabéticamente.
+     *
+     * @return array Listado de categorías.
+     */
     public function listar(): array
     {
         return $this->db->fetchAll("SELECT * FROM categorias ORDER BY nombre ASC");
     }
 
-    // Asigna CAT-XXX a categorías cuyo código quedó nulo/vacío
+    /**
+     * Asigna CAT-XXX a categorías cuyo código quedó nulo o vacío.
+     *
+     * Operación de reparación invocada como side-effect en GET: recorre las
+     * categorías sin código y les asigna el siguiente disponible. No abre
+     * transacción propia (cada siguienteCodigo() la espera del llamador).
+     *
+     * @return void
+     */
     public function repararCodigos(): void
     {
         $nulls = $this->db->fetchAll("SELECT id_categoria FROM categorias WHERE codigo IS NULL OR codigo = '' ORDER BY id_categoria");
@@ -98,7 +167,15 @@ class Categoria extends Model
         }
     }
 
-    // Genera el siguiente CAT-XXX (asume transacción abierta por el llamador)
+    /**
+     * Genera el siguiente código CAT-XXX con bloqueo de fila.
+     *
+     * Asume que el llamador tiene una transacción abierta: lee el último
+     * número con FOR UPDATE, lo incrementa y devuelve el código formateado
+     * (ej. CAT-001). El bloqueo evita códigos duplicados concurrentes.
+     *
+     * @return string Código CAT-XXX generado.
+     */
     private function siguienteCodigo(): string
     {
         $cnt = $this->db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix='CAT' FOR UPDATE");
