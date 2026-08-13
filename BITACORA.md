@@ -28,6 +28,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-13 16:40] · Módulo: Documentación del código · Cambio: Se añaden docblocks detallados en español a toda la capa PHP del proyecto (core/, controllers/, models/, includes/helpers.php) y comentarios de sección en `assets/js/diseno.js`, para que cada clase y método explique qué hace y por qué. Solo se insertaron comentarios; ninguna línea de lógica fue modificada. · Archivos: `core/*.php` (3), `controllers/*.php` (11), `models/*.php` (11), `includes/helpers.php`, `assets/js/diseno.js` · Prueba: `php -l` sin errores en los 26 archivos PHP; `node --check` OK en diseno.js; `git diff` confirma que solo se eliminaron líneas de comentario `//` (convertidas a docblocks); smoke test HTTP de 10 rutas = 200.
 
+[2026-08-13 16:55] · Módulo: Documentación del proyecto · Cambio: Se actualiza README.md con la arquitectura MVC actual, la estructura de carpetas (core/controllers/models/views, legacy/, BITACORA.md) y la instalación mediante el auto-instalador `init.php` con `db/jv3000_portable_v4.sql`. · Archivos: `README.md` · Prueba: verificación de que `config/config.php`, `init.php` y `db/jv3000_portable_v4.sql` existen; referencias corregidas (antes apuntaban a `db/schema.sql` y `includes/config.php` inexistentes).
+
 ---
 
 ## Plantilla para futuras entradas
