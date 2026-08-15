@@ -19,7 +19,7 @@
             // NUEVA CATEGORÍA: prepara el modal en modo "crear"
             // ==========================================
             function nuevaCat() {
-                // cat_accion = "registrar" le dice al servidor que es una creación.
+                // cat_accion = "registrar" indica al servidor que la operación es una creación.
                 document.getElementById('cat_accion').value = "registrar";
                 document.getElementById('cat_id_edit').value = "";
                 document.getElementById('cat_status').value = "Activo";

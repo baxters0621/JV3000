@@ -30,7 +30,7 @@ class CategoriasController extends Controller
         //    de carga (Admin o Operador de Carga). Si no, se redirige.
         Security::verificarPermisoCarga();
 
-        // 2. Crear el modelo (el "cocinero" que habla con la base de datos).
+        // 2. Crear el modelo que consultará la base de datos.
         $modelo = new Categoria();
 
         // ==========================================

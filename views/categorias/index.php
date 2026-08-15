@@ -123,7 +123,7 @@
 <!-- Este modal sirve para CREAR y para EDITAR (el JS cambia el título y los
      campos según el caso). El formulario hace POST al mismo index.php:
      el Controlador distingue crear/editar con el campo oculto cat_accion.
-     - csrf_token: sello de seguridad exigido en todo POST (init.php lo valida).
+     - csrf_token: código de seguridad exigido en todo POST (init.php lo valida).
      - cat_id_edit: si está vacío = crear; si trae un id = editar. -->
 <div class="modal fade" id="modalCat" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
