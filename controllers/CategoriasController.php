@@ -26,11 +26,22 @@ class CategoriasController extends Controller
      */
     public function index(): void
     {
+        // 1. CONTROL DE ACCESO: solo pueden entrar quienes tienen permiso
+        //    de carga (Admin o Operador de Carga). Si no, se redirige.
         Security::verificarPermisoCarga();
+
+        // 2. Crear el modelo (el "cocinero" que habla con la base de datos).
         $modelo = new Categoria();
 
-        // --- Acciones POST ---
+        // ==========================================
+        // BLOQUE POST: cuando llega un formulario
+        // ==========================================
+
+        // --- Acción "registrar" o "editar" (vienen del modal) ---
         if (isset($_POST['accion_categoria'])) {
+            // Juntar los datos del formulario en un solo arreglo para
+            // entregárselo ordenado al modelo. Los valores que no vienen
+            // reciben un valor por defecto (?? es "si no existe, usa esto").
             $datos = [
                 'accion'           => $_POST['accion_categoria'],
                 'nombre'           => $_POST['nombre'] ?? '',
@@ -40,23 +51,35 @@ class CategoriasController extends Controller
                 'status'           => $_POST['status'] ?? 'Activo',
                 'id_categoria'     => (int)($_POST['id_categoria'] ?? 0),
             ];
+            // El modelo hace la validación y guarda/actualiza en la BD.
             $resultado = $modelo->procesar($datos);
+            // Guardar un mensaje de resultado ("flash") que se mostrará
+            // una sola vez en la siguiente página.
             $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+            // Volver al listado para que el usuario vea el mensaje.
             $this->redirect('categorias');
         }
 
+        // --- Acción "toggle_status": activar / desactivar una categoría ---
         if (isset($_POST['toggle_status'])) {
             $modelo->toggleStatus((int)$_POST['toggle_status']);
             $this->flash('success', 'ESTADO DE LA CATEGORÍA CAMBIADO.');
             $this->redirect('categorias');
         }
 
-        // Reparar códigos nulos (side-effect en GET)
+        // ==========================================
+        // BLOQUE GET: cuando solo se navega a la página
+        // ==========================================
+
+        // Reparar códigos nulos (side-effect en GET): si alguna categoría
+        // quedó sin código CAT-XXX, se le asigna uno.
         $modelo->repararCodigos();
 
+        // Leer y borrar el mensaje flash pendiente (si existe).
         $flash = $_SESSION['flash_msg'] ?? null;
         unset($_SESSION['flash_msg']);
 
+        // Entregar los datos a la vista dentro del layout principal.
         $this->view('categorias/index', [
             'titulo'       => 'Categorías | JV3000 C.A.',
             'wrapper_class'=> 'pagina-categorias',

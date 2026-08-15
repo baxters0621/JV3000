@@ -5,6 +5,8 @@
 // Solo muestra los datos. No hace consultas.
 ?>
 <!-- ENCABEZADO -->
+<!-- $categorias, $flash, $csrf los "trae" el Controlador (CategoriasController::index)
+     y el layout los deja disponibles como variables PHP. Aquí solo mostramos. -->
 <div class="card-jv d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" style="padding: 18px 24px; border-left: 4px solid #2563eb;">
     <div class="d-flex align-items-center gap-3">
         <div class="cat-header-icon"><i class="bi bi-tags"></i></div>
@@ -13,6 +15,7 @@
             <p class="module-subtitle">Organización de Catálogo</p>
         </div>
     </div>
+    <!-- El botón CREAR no navega: abre el modal de abajo (JS nuevaCat()) -->
     <div class="d-flex gap-2">
         <button class="btn-jv-primary pulse-jv module-action-btn" onclick="nuevaCat()">
             <i class="bi bi-plus-lg me-1"></i>CREAR
@@ -21,6 +24,8 @@
 </div>
 
 <!-- MENSAJES FLASH -->
+<!-- Los mensajes flash son avisos de una sola vez (ej: "CATEGORÍA REGISTRADA").
+     Vienen en $flash como ['tipo' => success|danger, 'texto' => ...]. -->
 <?php if ($flash): ?>
     <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> mb-3 px-3 py-2">
         <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
@@ -29,6 +34,7 @@
 <?php endif; ?>
 
 <!-- TABLA PRINCIPAL -->
+<!-- El input "buscar" filtra las filas en el cliente (JS filtrar()), sin recargar. -->
 <div class="card-jv card-jv-table p-0">
     <div class="buscador-wrapper d-flex align-items-center px-3 py-2">
         <i class="bi bi-search me-2" style="color: var(--jv-orange); font-size: 1rem;"></i>
@@ -49,9 +55,12 @@
             <tbody id="tablaCategorias">
                 <?php if (!empty($categorias)): ?>
                     <?php foreach ($categorias as $row): ?>
+                        <!-- Cada fila: data-nombre/data-codigo sirven al buscador local. -->
                         <tr data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre'])); ?>" data-codigo="<?php echo strtolower(htmlspecialchars($row['codigo'] ?? '')); ?>">
                             <td>
                                 <i class="bi bi-folder2-open me-2" style="color: #2563eb; font-size: 1.1rem;"></i>
+                                <!-- data-tooltip: muestra el nombre completo al pasar el mouse
+                                     (lo maneja assets/js/tooltips.js, global). -->
                                 <span class="cat-nombre text-uppercase" data-tooltip="<?php echo htmlspecialchars($row['nombre']); ?>"><?php echo htmlspecialchars($row['nombre']); ?></span>
                                 <?php if ($row['descripcion']): ?>
                                     <br><span class="cat-desc"><?php echo htmlspecialchars($row['descripcion']); ?></span>
@@ -77,10 +86,13 @@
                                 </span>
                             </td>
                             <td class="text-center">
+                                <!-- Editar: llena el modal con los datos de la fila (JS editarCat). -->
                                 <button class="btn-action btn-action-edit btn btn-sm border-0 me-1" onclick='editarCat(<?php echo json_encode($row); ?>)' title="Editar">
                                     <i class="bi bi-pencil-square" style="color: var(--jv-orange); font-size: 0.85rem;"></i>
                                 </button>
                                 <span class="actions-divider"></span>
+                                <!-- Activar/Desactivar: pregunta con SweetAlert y hace un POST
+                                     con jvPost (ver JS confirmarToggle). -->
                                 <?php if ($row['status'] == 'Activo'): ?>
                                     <button class="btn-action btn-action-toggle btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo $row['id_categoria']; ?>, '<?php echo htmlspecialchars($row['nombre']); ?>', 'desactivar')" title="Desactivar">
                                         <i class="bi bi-eye-slash-fill" style="color: var(--jv-warning); font-size: 0.85rem;"></i>
@@ -108,6 +120,11 @@
 </div>
 
 <!-- MODAL DE CATEGORÍA -->
+<!-- Este modal sirve para CREAR y para EDITAR (el JS cambia el título y los
+     campos según el caso). El formulario hace POST al mismo index.php:
+     el Controlador distingue crear/editar con el campo oculto cat_accion.
+     - csrf_token: sello de seguridad exigido en todo POST (init.php lo valida).
+     - cat_id_edit: si está vacío = crear; si trae un id = editar. -->
 <div class="modal fade" id="modalCat" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-content-jv">

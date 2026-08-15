@@ -21,30 +21,34 @@ class Categoria extends Model
      *
      * Normaliza y valida nombre, descripción, clasificación ABC, tipo de
      * manejo y status; luego delega en registrar() o editar() según el
-     * valor de $d['accion'].
+     * valor de $datos['accion'].
      *
-     * @param array $d Datos del formulario (accion, nombre, descripcion, etc.).
+     * @param array $datos Datos del formulario (accion, nombre, descripcion, etc.).
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
-    public function procesar(array $d): array
+    public function procesar(array $datos): array
     {
-        $nombre = mb_strtoupper(trim($d['nombre']));
-        $descripcion = trim($d['descripcion']);
-        $clasificacion_abc = strtoupper(trim($d['clasificacion_abc']));
+        // 1. Limpiar y normalizar cada campo del formulario
+        // (mayúsculas para el nombre, sin espacios al inicio/fin).
+        $nombre = mb_strtoupper(trim($datos['nombre']));
+        $descripcion = trim($datos['descripcion']);
+        $clasificacion_abc = strtoupper(trim($datos['clasificacion_abc']));
         if (!in_array($clasificacion_abc, ['A', 'B', 'C', ''])) $clasificacion_abc = '';
-        $tipo_manejo = in_array($d['tipo_manejo'], ['normal', 'inflamable', 'liquido', 'peligroso', 'voluminoso', 'aerosol']) ? $d['tipo_manejo'] : 'normal';
-        $status = in_array($d['status'], ['Activo', 'Inactivo']) ? $d['status'] : 'Activo';
+        $tipo_manejo = in_array($datos['tipo_manejo'], ['normal', 'inflamable', 'liquido', 'peligroso', 'voluminoso', 'aerosol']) ? $datos['tipo_manejo'] : 'normal';
+        $status = in_array($datos['status'], ['Activo', 'Inactivo']) ? $datos['status'] : 'Activo';
 
+        // 2. Regla de negocio: el nombre es obligatorio
         if (empty($nombre)) {
             return ['ok' => false, 'mensaje' => 'EL NOMBRE DE LA CATEGORÍA ES OBLIGATORIO.'];
         }
 
-        if ($d['accion'] === 'registrar') {
+        // 3. Elegir qué operación ejecutar según la acción del formulario
+        if ($datos['accion'] === 'registrar') {
             return $this->registrar($nombre, $descripcion, $clasificacion_abc, $tipo_manejo, $status);
         }
 
-        if ($d['accion'] === 'editar') {
-            return $this->editar((int)$d['id_categoria'], $nombre, $descripcion, $clasificacion_abc, $tipo_manejo, $status);
+        if ($datos['accion'] === 'editar') {
+            return $this->editar((int)$datos['id_categoria'], $nombre, $descripcion, $clasificacion_abc, $tipo_manejo, $status);
         }
 
         return ['ok' => false, 'mensaje' => 'ACCIÓN INVÁLIDA.'];
@@ -57,28 +61,32 @@ class Categoria extends Model
      * código dentro de una transacción, inserta la categoría y registra la
      * auditoría. En caso de error revierte la transacción.
      *
-     * @param string $nombre        Nombre normalizado (mayúsculas).
-     * @param string $descripcion   Descripción opcional.
-     * @param string $abc           Clasificación ABC ('A', 'B', 'C' o '').
-     * @param string $tipo          Tipo de manejo (normal, inflamable, etc.).
-     * @param string $status        Estado inicial ('Activo'/'Inactivo').
+     * @param string $nombre            Nombre normalizado (mayúsculas).
+     * @param string $descripcion       Descripción opcional.
+     * @param string $clasificacion_abc Clasificación ABC ('A', 'B', 'C' o '').
+     * @param string $tipo_manejo       Tipo de manejo (normal, inflamable, etc.).
+     * @param string $status            Estado inicial ('Activo'/'Inactivo').
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
-    private function registrar(string $nombre, string $descripcion, string $abc, string $tipo, string $status): array
+    private function registrar(string $nombre, string $descripcion, string $clasificacion_abc, string $tipo_manejo, string $status): array
     {
-        $dup = $this->db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?)", [$nombre]);
-        if ($dup) return ['ok' => false, 'mensaje' => 'YA EXISTE UNA CATEGORÍA CON ESE NOMBRE.'];
+        // Regla de negocio: no puede haber dos categorías con el mismo nombre.
+        $duplicado = $this->db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?)", [$nombre]);
+        if ($duplicado) return ['ok' => false, 'mensaje' => 'YA EXISTE UNA CATEGORÍA CON ESE NOMBRE.'];
 
+        // Transacción: si algo falla a mitad, se revierte TODO (no queda código
+        // gastado ni categoría a medias). begin() abre, commit() confirma,
+        // rollback() deshace en caso de error.
         $this->db->begin();
         try {
             $codigo = $this->siguienteCodigo();
             $this->db->insert('categorias', [
-                'nombre'          => $nombre,
-                'codigo'          => $codigo,
-                'descripcion'     => $descripcion,
-                'clasificacion_abc' => $abc,
-                'tipo_manejo'     => $tipo,
-                'status'          => $status,
+                'nombre'            => $nombre,
+                'codigo'            => $codigo,
+                'descripcion'       => $descripcion,
+                'clasificacion_abc' => $clasificacion_abc,
+                'tipo_manejo'       => $tipo_manejo,
+                'status'            => $status,
             ]);
             $this->db->commit();
             registrarAuditoria('crear', 'Categoría creada');
@@ -96,23 +104,26 @@ class Categoria extends Model
      * registro), conserva el código ya asignado y actualiza los datos,
      * registrando la auditoría correspondiente.
      *
-     * @param int    $idCat         Identificador de la categoría.
-     * @param string $nombre        Nombre normalizado (mayúsculas).
-     * @param string $descripcion   Descripción opcional.
-     * @param string $abc           Clasificación ABC.
-     * @param string $tipo          Tipo de manejo.
-     * @param string $status        Estado ('Activo'/'Inactivo').
+     * @param int    $id_categoria   Identificador de la categoría.
+     * @param string $nombre          Nombre normalizado (mayúsculas).
+     * @param string $descripcion     Descripción opcional.
+     * @param string $clasificacion_abc Clasificación ABC.
+     * @param string $tipo_manejo     Tipo de manejo.
+     * @param string $status          Estado ('Activo'/'Inactivo').
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
-    private function editar(int $idCat, string $nombre, string $descripcion, string $abc, string $tipo, string $status): array
+    private function editar(int $id_categoria, string $nombre, string $descripcion, string $clasificacion_abc, string $tipo_manejo, string $status): array
     {
-        $dup = $this->db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?) AND id_categoria != ?", [$nombre, $idCat]);
-        if ($dup) return ['ok' => false, 'mensaje' => 'YA EXISTE UNA CATEGORÍA CON ESE NOMBRE.'];
+        // No puede existir OTRA categoría con el mismo nombre
+        // (se excluye la propia, por eso el "id_categoria != ?").
+        $duplicado = $this->db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?) AND id_categoria != ?", [$nombre, $id_categoria]);
+        if ($duplicado) return ['ok' => false, 'mensaje' => 'YA EXISTE UNA CATEGORÍA CON ESE NOMBRE.'];
 
-        $existente = $this->db->fetchOne("SELECT codigo FROM categorias WHERE id_categoria = ?", [$idCat]);
+        // El código (ej. CAT-007) no cambia al editar: se conserva el actual.
+        $existente = $this->db->fetchOne("SELECT codigo FROM categorias WHERE id_categoria = ?", [$id_categoria]);
         $codigo_final = $existente['codigo'] ?? '';
         $this->db->execute("UPDATE categorias SET nombre=?, codigo=?, descripcion=?, clasificacion_abc=?, tipo_manejo=?, status=? WHERE id_categoria=?",
-            [$nombre, $codigo_final, $descripcion, $abc, $tipo, $status, $idCat]);
+            [$nombre, $codigo_final, $descripcion, $clasificacion_abc, $tipo_manejo, $status, $id_categoria]);
         registrarAuditoria('editar', 'Categoría modificada');
         return ['ok' => true, 'mensaje' => 'CATEGORÍA ACTUALIZADA CORRECTAMENTE.'];
     }
@@ -127,12 +138,14 @@ class Categoria extends Model
      * @param int $idCategoria Identificador de la categoría.
      * @return void
      */
-    public function toggleStatus(int $idCategoria): void
+    public function toggleStatus(int $id_categoria): void
     {
-        $row = $this->db->fetchOne("SELECT status FROM categorias WHERE id_categoria = ?", [$idCategoria]);
-        if ($row) {
-            $nuevo = $row['status'] === 'Activo' ? 'Inactivo' : 'Activo';
-            $this->db->execute("UPDATE categorias SET status = ? WHERE id_categoria = ?", [$nuevo, $idCategoria]);
+        // 1. Buscar el estado actual de la categoría
+        $categoria_actual = $this->db->fetchOne("SELECT status FROM categorias WHERE id_categoria = ?", [$id_categoria]);
+        if ($categoria_actual) {
+            // 2. Invertirlo: si era Activo pasa a Inactivo y viceversa
+            $nuevo_estado = $categoria_actual['status'] === 'Activo' ? 'Inactivo' : 'Activo';
+            $this->db->execute("UPDATE categorias SET status = ? WHERE id_categoria = ?", [$nuevo_estado, $id_categoria]);
             registrarAuditoria('toggle_status', 'Cambio de estado');
         }
     }
@@ -160,10 +173,12 @@ class Categoria extends Model
      */
     public function repararCodigos(): void
     {
-        $nulls = $this->db->fetchAll("SELECT id_categoria FROM categorias WHERE codigo IS NULL OR codigo = '' ORDER BY id_categoria");
-        foreach ($nulls as $n) {
+        // Buscar las categorías que quedaron sin código (dato vacío o nulo).
+        $sin_codigo = $this->db->fetchAll("SELECT id_categoria FROM categorias WHERE codigo IS NULL OR codigo = '' ORDER BY id_categoria");
+        foreach ($sin_codigo as $categoria) {
+            // A cada una le toca el siguiente código disponible (CAT-XXX).
             $codigo = $this->siguienteCodigo();
-            $this->db->execute("UPDATE categorias SET codigo=? WHERE id_categoria=?", [$codigo, (int)$n['id_categoria']]);
+            $this->db->execute("UPDATE categorias SET codigo=? WHERE id_categoria=?", [$codigo, (int)$categoria['id_categoria']]);
         }
     }
 
@@ -178,14 +193,22 @@ class Categoria extends Model
      */
     private function siguienteCodigo(): string
     {
-        $cnt = $this->db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix='CAT' FOR UPDATE");
-        if (!$cnt) {
+        // Leer el último número usado para el prefijo "CAT".
+        // FOR UPDATE "bloquea" esa fila mientras estemos trabajando,
+        // para que dos usuarios no generen el mismo código a la vez.
+        $contador = $this->db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix='CAT' FOR UPDATE");
+        if (!$contador) {
+            // No existe fila del contador: se crea desde cero (número 0)
+            // y el próximo código será el 1.
             $this->db->execute("INSERT INTO sku_contadores (sku_prefix, ultimo_numero) VALUES ('CAT', 0)");
-            $prox = 1;
+            $siguiente_numero = 1;
         } else {
-            $prox = (int)$cnt['ultimo_numero'] + 1;
+            // Sí existe: el siguiente es el actual + 1.
+            $siguiente_numero = (int)$contador['ultimo_numero'] + 1;
         }
-        $this->db->execute("UPDATE sku_contadores SET ultimo_numero=? WHERE sku_prefix='CAT'", [$prox]);
-        return 'CAT-' . str_pad($prox, 3, '0', STR_PAD_LEFT);
+        // Guardar el nuevo número para la próxima vez.
+        $this->db->execute("UPDATE sku_contadores SET ultimo_numero=? WHERE sku_prefix='CAT'", [$siguiente_numero]);
+        // Formatear con ceros a la izquierda: 7 -> "CAT-007".
+        return 'CAT-' . str_pad($siguiente_numero, 3, '0', STR_PAD_LEFT);
     }
 }
