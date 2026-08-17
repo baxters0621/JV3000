@@ -41,7 +41,7 @@ function es_activo(string $pagina, string $modulo = ''): string
         <a href="<?php echo $prefijo; ?>dashboard/index.php" class="brand-link">
             <img class="brand-mark" src="<?php echo $base_assets; ?>img/logo-mark.svg?v=1" alt="JV3000">
         </a>
-        <span class="brand-tag">Inventario y Facturación</span>
+        <span class="brand-tag">Gestión de Inventario, Compras y Ventas</span>
     </div>
 
     <!-- Menú de navegación -->

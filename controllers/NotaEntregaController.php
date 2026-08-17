@@ -1,27 +1,27 @@
-<?php
+﻿<?php
 
 // ==========================================
-// CONTROLADOR: Preview de Nota / Nota de Entrega
+// CONTROLADOR: Nota de Entrega / Salida (imprimible)
 // ==========================================
-// POST index.php?url=preview_factura/store  → guarda preview en sesión (AJAX)
-// GET  index.php?url=preview_factura&token= → nota imprimible desde preview
-// GET  index.php?url=preview_factura&id=    → reimpresión desde BD
+// POST index.php?url=nota_entrega/store  â†’ guarda preview en sesiÃ³n (AJAX)
+// GET  index.php?url=nota_entrega&token= â†’ nota imprimible desde preview
+// GET  index.php?url=nota_entrega&id=    â†’ reimpresiÃ³n desde BD
 
 /**
- * PreviewFacturaController: genera y muestra la nota imprimible.
+ * NotaEntregaController: genera y muestra la nota imprimible.
  *
- * POST AJAX (store) guarda el preview de una venta en sesión; GET con
- * token muestra la nota desde el preview en sesión y GET con id permite
- * la reimpresión desde la base de datos.
+ * POST AJAX (store) guarda el preview de una venta en sesiÃ³n; GET con
+ * token muestra la nota desde el preview en sesiÃ³n y GET con id permite
+ * la reimpresiÃ³n desde la base de datos.
  */
-class PreviewFacturaController extends Controller
+class NotaEntregaController extends Controller
 {
     /**
-     * Almacena el preview de la venta en sesión (endpoint AJAX).
+     * Almacena el preview de la venta en sesiÃ³n (endpoint AJAX).
      *
-     * Valida método POST + cabecera XMLHttpRequest, construye el preview
-     * mediante el modelo PreviewNota, purga previews previos y guarda los
-     * datos bajo un token aleatorio en la sesión. Responde el token en JSON.
+     * Valida mÃ©todo POST + cabecera XMLHttpRequest, construye el preview
+     * mediante el modelo NotaEntrega, purga previews previos y guarda los
+     * datos bajo un token aleatorio en la sesiÃ³n. Responde el token en JSON.
      *
      * @return void
      */
@@ -36,7 +36,7 @@ class PreviewFacturaController extends Controller
         }
 
         $idUsuario = (int)($_SESSION['id_usuario'] ?? 0);
-        $resultado = (new PreviewNota())->construirPreview($_POST, $idUsuario);
+        $resultado = (new NotaEntrega())->construirPreview($_POST, $idUsuario);
 
         if (!$resultado['ok']) {
             $this->json(['ok' => false, 'error' => $resultado['error'] ?? 'ERROR AL GENERAR EL PREVIEW.'], 400);
@@ -53,8 +53,8 @@ class PreviewFacturaController extends Controller
     /**
      * Muestra la nota imprimible desde preview (token) o desde BD (id).
      *
-     * GET con "id": reimpresión de una salida guardada en la base de datos.
-     * GET con "token" (o preview único en sesión): arma la nota a partir de
+     * GET con "id": reimpresiÃ³n de una salida guardada en la base de datos.
+     * GET con "token" (o preview Ãºnico en sesiÃ³n): arma la nota a partir de
      * los datos del preview. Si no hay datos, renderiza la vista de error.
      *
      * @return void
@@ -63,27 +63,27 @@ class PreviewFacturaController extends Controller
     {
         Security::verificarPermisoVenta();
 
-        $modelo = new PreviewNota();
+        $modelo = new NotaEntrega();
 
-        // Reimpresión desde la base de datos
+        // ReimpresiÃ³n desde la base de datos
         if (isset($_GET['id'])) {
             $id = (int)$_GET['id'];
             $data = $modelo->obtenerPorId($id);
             if (!$data) {
-                $this->renderRaw('preview_factura/error');
+                $this->renderRaw('nota_entrega/error');
                 return;
             }
             $detalles = $modelo->obtenerDetalles($id);
-            $this->renderRaw('preview_factura/nota', $modelo->armarNota($data, $detalles, ''));
+            $this->renderRaw('nota_entrega/nota', $modelo->armarNota($data, $detalles, ''));
         }
 
-        // Preview desde sesión
+        // Preview desde sesiÃ³n
         $preview_token = $_GET['token'] ?? '';
         $data = $preview_token !== ''
             ? ($_SESSION['preview_data'][$preview_token] ?? null)
             : ($_SESSION['preview_data'] ?? null);
         if (!$data) {
-            $this->renderRaw('preview_factura/error');
+            $this->renderRaw('nota_entrega/error');
             return;
         }
 
@@ -96,6 +96,6 @@ class PreviewFacturaController extends Controller
         $datos = $modelo->armarNota($data, $detalles, $preview_token);
         $datos['csrf'] = Security::generateToken();
 
-        $this->renderRaw('preview_factura/nota', $datos);
+        $this->renderRaw('nota_entrega/nota', $datos);
     }
 }

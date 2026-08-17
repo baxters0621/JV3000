@@ -199,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     <div class="login-card">
         <div class="login-logo">
             <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
-            <p>Sistema web de inventario y Facturación</p>
+            <p>Sistema Web para la Gestión de Inventario, Compras y Ventas</p>
         </div>
 
         <?php if ($error): ?>

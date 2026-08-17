@@ -14,7 +14,7 @@
     <title>Nota de Entrega #<?php echo $data['id_salida'] ?? 'PREVIEW'; ?> | <?php echo htmlspecialchars($empresa); ?></title>
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/bootstrap-icons.css">
-    <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/modules/preview_factura/preview_factura.css?v=4">
+    <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.css?v=5">
 </head>
 
 <body>
@@ -135,7 +135,7 @@
     </div>
 
     <script src="<?php echo BASE_PATH; ?>assets/js/tooltips.js?v=5"></script>
-<script src="<?php echo BASE_PATH; ?>assets/modules/preview_factura/preview_factura.js?v=5"></script>
+<script src="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.js?v=5"></script>
 </body>
 
 </html>

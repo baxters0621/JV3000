@@ -1,6 +1,6 @@
-# JV3000 C.A. - Sistema de Gestión Empresarial
+# JV3000 C.A. - Sistema Web para la Gestión de Inventario, Compras y Ventas
 
-Sistema web para control de inventario, compras, ventas, facturación y administración
+Sistema web para control de inventario, compras, ventas y administración
 de usuarios de JV3000 C.A. Desarrollado en PHP 8.2.12 + MySQL (MariaDB) + Bootstrap,
 bajo arquitectura **MVC**.
 
@@ -15,7 +15,7 @@ bajo arquitectura **MVC**.
 
 - Control de inventario con categorías y productos
 - Gestión de compras y ventas (salidas) con recepción de mercancía (FEFO)
-- Facturación conforme a providencia SENIAT (Nota de Entrega)
+- Emisión de Nota de Entrega (imprimible)
 - Dashboard con KPIs y gráficos en tiempo real
 - Módulo de estadísticas con proyecciones
 - Control de usuarios con roles (Admin, Operador de Ventas, Operador de Carga)
@@ -36,7 +36,6 @@ includes/                 Helpers, diseno.php, sidebar.php, AJAX activos
 assets/                   CSS, JS compartidos (diseno.js, tooltips.js) y JS por módulo
 dashboard/                Panel principal (login tras autenticación)
 login/                    Login y recuperación de contraseña
-legacy/                   Respaldo del código legacy migrado (no se usa)
 db/                       Esquema portátil de instalación limpia
 backups/                  Respaldos de la base de datos
 BITACORA.md               Historial único de cambios (obligatorio registrar cada tarea)

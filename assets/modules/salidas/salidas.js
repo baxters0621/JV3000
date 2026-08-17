@@ -612,12 +612,12 @@
 
             const fd = new FormData(document.getElementById('formSalida'));
 
-            fetch((window.JV_BASE || '') + 'index.php?url=preview_factura/store', { method:'POST', headers:{ 'X-Requested-With': 'XMLHttpRequest' }, body:fd })
+            fetch((window.JV_BASE || '') + 'index.php?url=nota_entrega/store', { method:'POST', headers:{ 'X-Requested-With': 'XMLHttpRequest' }, body:fd })
                 .then(r => r.json())
                 .then(d => {
                     btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA';
                     if (d.ok) {
-                        window.open((window.JV_BASE || '') + 'index.php?url=preview_factura&token=' + (d.token || ''), '_blank');
+                        window.open((window.JV_BASE || '') + 'index.php?url=nota_entrega&token=' + (d.token || ''), '_blank');
                         modalS.hide();
                     } else {
                         Swal.fire({icon:'error',title:'ERROR',text:d.error||'Error al generar preview.',background:'#fff',color:'#212529',confirmButtonColor:'#DC2626'});
@@ -642,7 +642,7 @@
         }
 
         function verFactura(id) {
-            window.open((window.JV_BASE || '') + 'index.php?url=preview_factura&id=' + id, '_blank');
+            window.open((window.JV_BASE || '') + 'index.php?url=nota_entrega&id=' + id, '_blank');
         }
 
         function filtrarSalidas() {

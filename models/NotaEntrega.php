@@ -1,20 +1,20 @@
 <?php
 
 // ==========================================
-// MODELO: Preview Nota / Nota de Entrega
+// MODELO: Nota de Entrega / Salida (imprimible)
 // ==========================================
 // Única capa que consulta la base de datos y arma los
 // datos de la nota imprimible. No imprime HTML.
 
 /**
- * PreviewNota: modelo que arma los datos de la nota imprimible.
+ * NotaEntrega: modelo que arma los datos de la nota imprimible.
  *
  * Única capa autorizada para consultar la base de datos y construir los
  * datos del preview/nota de entrega. No imprime HTML: solo prepara la
  * información (productos, totales, alertas, datos de empresa) que la vista
  * imprimible consume.
  */
-class PreviewNota extends Model
+class NotaEntrega extends Model
 {
     public const LIMITE_PRODUCTOS = 200;
     public const LIMITE_UNIDADES = 999999;

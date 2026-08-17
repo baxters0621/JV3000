@@ -132,7 +132,7 @@ class SalidasController extends Controller
      * Acción legacy (POST accion_salida = registrar/editar). Valida acción,
      * producto, cantidad (límites), precio, documento fiscal, causa de ajuste
      * y stock/vencimiento; luego guarda el preview bajo un token y redirige
-     * a la nota imprimible (preview_factura) para su confirmación.
+     * a la nota imprimible (nota_entrega) para su confirmación.
      *
      * @param Salida $modelo Instancia del modelo Salida ya creada.
      * @return void
@@ -244,7 +244,7 @@ class SalidasController extends Controller
             'observaciones'      => $observaciones,
             'id_usuario'         => $id_usuario,
         ];
-        $this->redirect('preview_factura', ['token' => $preview_token]);
+        $this->redirect('nota_entrega', ['token' => $preview_token]);
     }
 
     /**

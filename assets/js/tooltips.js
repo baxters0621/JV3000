@@ -5,7 +5,7 @@
 // ANTES: cada módulo JS traía su propia copia del trío
 //   mostrarTip / posicionarTip / ocultarTip (+ listeners),
 //   duplicada en salidas, historial, recepcion, compras,
-//   categorias, productos, proveedores y preview_factura.
+//   categorias, productos, proveedores y nota_entrega.
 // AHORA: este bloque se carga una sola vez (layout MVC +
 // nota imprimible) y cualquier elemento con el atributo
 // [data-tooltip] recibe el tooltip automáticamente.
