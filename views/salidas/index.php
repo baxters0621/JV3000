@@ -89,8 +89,9 @@
                 <?php if (count($salidas) > 0): ?>
                     <?php foreach ($salidas as $row): ?>
                         <?php
-                            $productos_full = $row['productos_list'] ?? '';
-                            $g = Salida::grupoDeTipo($row['tipo_mov_nombre'] ?? '');
+                            $productos_lista = $row['productos_list'] ?? '';
+                            // Grupo del tipo de movimiento: venta / regalias / merma.
+                            $grupo_mov = Salida::grupoDeTipo($row['tipo_mov_nombre'] ?? '');
                         ?>
                         <tr>
                             <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura_manual'] ?: '#' . $row['id_salida']); ?></span></td>
@@ -99,18 +100,18 @@
                                 <div class="cli-nombre"><?php echo htmlspecialchars($row['cliente'] ?? 'S/Cliente'); ?></div>
                                 <div class="cli-rif"><?php echo htmlspecialchars($row['rif_cliente'] ?? 'S/RIF'); ?></div>
                             </td>
-                            <td class="td-productos" data-tooltip="<?php echo htmlspecialchars($productos_full); ?>"><?php echo htmlspecialchars($productos_full); ?></td>
+                            <td class="td-productos" data-tooltip="<?php echo htmlspecialchars($productos_lista); ?>"><?php echo htmlspecialchars($productos_lista); ?></td>
                             <td class="text-center"><span class="badge-jv badge-danger" style="padding:6px 14px;">-<?php echo $row['total_cantidad']; ?></span></td>
                             <td class="text-center"><?php
-                                $tn = $row['tipo_mov_nombre'] ?? '';
-                                $obs = $row['observaciones'] ?? '';
-                                $causa = '';
-                                if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $obs, $m)) $causa = trim($m[1]);
-                                if ($g === 'venta') echo '<span class="badge-jv badge-success"><i class="bi bi-cart me-1"></i>Venta</span>';
-                                elseif ($g === 'regalias') echo '<span class="badge-jv badge-info"><i class="bi bi-gift me-1"></i>Regalía</span>';
-                                else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" title="' . htmlspecialchars($tn) . ($causa ? ': ' . htmlspecialchars($causa) : '') . '" onclick="verDetalleDano(\'' . htmlspecialchars($tn, ENT_QUOTES) . '\', \'' . htmlspecialchars($causa, ENT_QUOTES) . '\')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($tn) . '</span>';
+                                $nombre_tipo = $row['tipo_mov_nombre'] ?? '';
+                                $observaciones = $row['observaciones'] ?? '';
+                                $causa_ajuste = '';
+                                if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $observaciones, $m)) $causa_ajuste = trim($m[1]);
+                                if ($grupo_mov === 'venta') echo '<span class="badge-jv badge-success"><i class="bi bi-cart me-1"></i>Venta</span>';
+                                elseif ($grupo_mov === 'regalias') echo '<span class="badge-jv badge-info"><i class="bi bi-gift me-1"></i>Regalía</span>';
+                                else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" title="' . htmlspecialchars($nombre_tipo) . ($causa_ajuste ? ': ' . htmlspecialchars($causa_ajuste) : '') . '" onclick="verDetalleDano(\'' . htmlspecialchars($nombre_tipo, ENT_QUOTES) . '\', \'' . htmlspecialchars($causa_ajuste, ENT_QUOTES) . '\')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo) . '</span>';
                             ?></td>
-                            <td class="td-total" style="<?php echo $g === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($row['total_monto'] ?? 0, 2); ?></td>
+                            <td class="td-total" style="<?php echo $grupo_mov === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($row['total_monto'] ?? 0, 2); ?></td>
                             <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_salida'])); ?></td>
                             <td class="text-center" style="white-space:nowrap;">
                                 <button class="btn-action" onclick="verFactura(<?php echo $row['id_salida']; ?>)" title="Ver Nota">
@@ -162,11 +163,11 @@
                                 <label class="small fw-bold text-secondary mb-2">TIPO DE MOVIMIENTO</label>
                                 <select name="id_tipo_mov" id="s_tipo" class="input-jv" required onchange="toggleCampos()">
                                     <option value="">Seleccione tipo...</option>
-                                    <?php foreach ($tipos_mov as $tm):
-                                        $grupo = $tipos_mov_map[$tm['id_tipo_mov']];
-                                    ?>
-                                        <option value="<?php echo $tm['id_tipo_mov']; ?>" data-grupo="<?php echo $grupo; ?>"><?php echo $tm['nombre']; ?></option>
-                                    <?php endforeach; ?>
+<?php foreach ($tipos_mov as $tipo_mov):
+                        $grupo = $tipos_mov_map[$tipo_mov['id_tipo_mov']];
+                    ?>
+                        <option value="<?php echo $tipo_mov['id_tipo_mov']; ?>" data-grupo="<?php echo $grupo; ?>"><?php echo $tipo_mov['nombre']; ?></option>
+                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-6">
