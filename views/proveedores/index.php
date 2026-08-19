@@ -76,78 +76,79 @@
 <!-- Tarjetas de proveedores -->
 <div class="row g-3" id="provGrid">
     <?php if ($total_prov > 0): ?>
-        <?php foreach ($proveedores as $row): ?>
-            <div class="col-md-6 col-lg-4 prov-card" data-status="<?php echo $row['status']; ?>">
+        <?php foreach ($proveedores as $proveedor): ?>
+            <div class="col-md-6 col-lg-4 prov-card" data-status="<?php echo $proveedor['status']; ?>">
                 <div class="prov-premium">
                     <div class="prov-head">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="status-dot-jv <?php echo $row['status'] == 'Activo' ? 'active' : 'inactive'; ?>"></span>
-                            <span class="badge-jv <?php echo $row['status'] == 'Activo' ? 'badge-success' : 'badge-danger'; ?>"><?php echo $row['status']; ?></span>
+                            <span class="status-dot-jv <?php echo $proveedor['status'] == 'Activo' ? 'active' : 'inactive'; ?>"></span>
+                            <span class="badge-jv <?php echo $proveedor['status'] == 'Activo' ? 'badge-success' : 'badge-danger'; ?>"><?php echo $proveedor['status']; ?></span>
                         </div>
-                        <button class="btn-action" onclick='editarProveedor(<?php echo json_encode($row); ?>)' title="Editar">
+                        <button class="btn-action" onclick='editarProveedor(<?php echo json_encode($proveedor); ?>)' title="Editar">
                             <i class="bi bi-pencil-square"></i>
                         </button>
                         <?php if ($esAdmin): ?>
-                            <button class="btn-action" onclick="toggleStatusProveedor(<?php echo $row['id_proveedor']; ?>,'<?php echo htmlspecialchars($row['nombre_empresa'], ENT_QUOTES); ?>','<?php echo $row['status']; ?>')" title="<?php echo $row['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
-                                <i class="bi <?php echo $row['status'] == 'Activo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>" style="color:<?php echo $row['status'] == 'Activo' ? 'var(--jv-danger)' : 'var(--jv-success)'; ?>"></i>
+                            <button class="btn-action" onclick="toggleStatusProveedor(<?php echo $proveedor['id_proveedor']; ?>,'<?php echo htmlspecialchars($proveedor['nombre_empresa'], ENT_QUOTES); ?>','<?php echo $proveedor['status']; ?>')" title="<?php echo $proveedor['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
+                                <i class="bi <?php echo $proveedor['status'] == 'Activo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>" style="color:<?php echo $proveedor['status'] == 'Activo' ? 'var(--jv-danger)' : 'var(--jv-success)'; ?>"></i>
                             </button>
                         <?php endif; ?>
                     </div>
                     <div class="prov-body" onclick="toggleProv(this)">
-                        <div class="prov-name" data-tooltip="<?php echo htmlspecialchars($row['nombre_empresa']); ?>"><?php echo htmlspecialchars($row['nombre_empresa']); ?></div>
-                        <div class="prov-rif"><span class="codigo-badge"><?php echo htmlspecialchars($row['rif']); ?></span></div>
-                        <div class="prov-info"><i class="bi bi-telephone"></i><?php echo !empty($row['telefono']) ? htmlspecialchars(formatearTelefono($row['telefono'])) : ($row['contacto'] ?? 'Sin teléfono'); ?></div>
-                        <?php if (!empty($row['contacto'])): ?>
-                            <div class="prov-info"><i class="bi bi-person"></i><?php echo htmlspecialchars($row['contacto']); ?></div>
+                        <div class="prov-name" data-tooltip="<?php echo htmlspecialchars($proveedor['nombre_empresa']); ?>"><?php echo htmlspecialchars($proveedor['nombre_empresa']); ?></div>
+                        <div class="prov-rif"><span class="codigo-badge"><?php echo htmlspecialchars($proveedor['rif']); ?></span></div>
+                        <div class="prov-info"><i class="bi bi-telephone"></i><?php echo !empty($proveedor['telefono']) ? htmlspecialchars(formatearTelefono($proveedor['telefono'])) : ($proveedor['contacto'] ?? 'Sin teléfono'); ?></div>
+                        <?php if (!empty($proveedor['contacto'])): ?>
+                            <div class="prov-info"><i class="bi bi-person"></i><?php echo htmlspecialchars($proveedor['contacto']); ?></div>
                         <?php endif; ?>
-                        <?php if (!empty($row['email'])): ?>
-                            <div class="prov-info"><i class="bi bi-envelope"></i><?php echo htmlspecialchars($row['email']); ?></div>
+                        <?php if (!empty($proveedor['email'])): ?>
+                            <div class="prov-info"><i class="bi bi-envelope"></i><?php echo htmlspecialchars($proveedor['email']); ?></div>
                         <?php endif; ?>
                     </div>
                     <div class="prov-details">
                         <div class="prov-detail-row">
                             <span class="detail-label">Plazo Entrega</span>
-                            <span class="detail-value"><?php echo $row['lead_time'] ? $row['lead_time'] . ' días' : '-'; ?></span>
+                            <span class="detail-value"><?php echo $proveedor['lead_time'] ? $proveedor['lead_time'] . ' días' : '-'; ?></span>
                         </div>
                         <div class="prov-detail-row">
                             <span class="detail-label">Límite Crédito</span>
-                            <span class="detail-value" style="color:var(--jv-success);"><?php echo $row['limite_credito'] ? '$' . number_format($row['limite_credito'], 2) : '-'; ?></span>
+                            <span class="detail-value" style="color:var(--jv-success);"><?php echo $proveedor['limite_credito'] ? '$' . number_format($proveedor['limite_credito'], 2) : '-'; ?></span>
                         </div>
                         <div class="prov-detail-row">
                             <span class="detail-label">Plazo Pago</span>
-                            <span class="detail-value"><?php echo $row['dias_credito'] ? $row['dias_credito'] . ' días' : 'Contado'; ?></span>
+                            <span class="detail-value"><?php echo $proveedor['dias_credito'] ? $proveedor['dias_credito'] . ' días' : 'Contado'; ?></span>
                         </div>
                         <div class="prov-detail-row">
                             <span class="detail-label">Moneda</span>
-                            <span class="detail-value"><?php echo $row['moneda'] ?? 'USD'; ?></span>
+                            <span class="detail-value"><?php echo $proveedor['moneda'] ?? 'USD'; ?></span>
                         </div>
                         <div class="prov-detail-row">
                             <span class="detail-label">Condición Pago</span>
-                            <span class="detail-value"><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span>
+                            <span class="detail-value"><?php echo $proveedor['condiciones_pago'] ?? 'Contado'; ?></span>
                         </div>
                         <?php
-                        $usado = $credito_usado[$row['id_proveedor']] ?? 0;
-                        $limite = (float)($row['limite_credito'] ?? 0);
-                        if ($limite > 0):
-                            $disponible = $limite - $usado;
-                            $pct = min(100, max(0, round(($usado / $limite) * 100)));
-                            $bar_color = $pct >= 90 ? '#DC2626' : ($pct >= 70 ? '#D97706' : '#16A34A');
+                        // Indicadores de crédito del proveedor: monto usado, límite y % consumido
+                        $monto_credito_usado = $credito_usado[$proveedor['id_proveedor']] ?? 0;
+                        $limite_credito = (float)($proveedor['limite_credito'] ?? 0);
+                        if ($limite_credito > 0):
+                            $credito_disponible = $limite_credito - $monto_credito_usado;
+                            $porcentaje_credito = min(100, max(0, round(($monto_credito_usado / $limite_credito) * 100)));
+                            $color_barra_credito = $porcentaje_credito >= 90 ? '#DC2626' : ($porcentaje_credito >= 70 ? '#D97706' : '#16A34A');
                         ?>
                             <div class="prov-detail-row">
                                 <span class="detail-label">Crédito Usado</span>
-                                <span class="detail-value" style="color:<?php echo $bar_color; ?>;">$<?php echo number_format($usado, 2); ?></span>
+                                <span class="detail-value" style="color:<?php echo $color_barra_credito; ?>;">$<?php echo number_format($monto_credito_usado, 2); ?></span>
                             </div>
                             <div class="prov-detail-row">
                                 <span class="detail-label">Disponible</span>
-                                <span class="detail-value" style="color:var(--jv-success);">$<?php echo number_format(max(0, $disponible), 2); ?></span>
+                                <span class="detail-value" style="color:var(--jv-success);">$<?php echo number_format(max(0, $credito_disponible), 2); ?></span>
                             </div>
                             <div style="height:4px;background:rgba(15,26,46,0.08);border-radius:2px;margin:4px 12px;">
-                                <div style="height:100%;width:<?php echo $pct; ?>%;background:<?php echo $bar_color; ?>;border-radius:2px;transition:width .3s;"></div>
+                                <div style="height:100%;width:<?php echo $porcentaje_credito; ?>%;background:<?php echo $color_barra_credito; ?>;border-radius:2px;transition:width .3s;"></div>
                             </div>
                         <?php endif; ?>
                     </div>
                     <div class="prov-foot">
-                        <button class="btn btn-jv-primary w-100 py-2" onclick="verHistorial(<?php echo $row['id_proveedor']; ?>)">
+                        <button class="btn btn-jv-primary w-100 py-2" onclick="verHistorial(<?php echo $proveedor['id_proveedor']; ?>)">
                             <i class="bi bi-clock-history me-2"></i>Ver Historial
                         </button>
                     </div>

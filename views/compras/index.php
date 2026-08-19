@@ -113,25 +113,26 @@ $__base_url = APP_URL_BASE . 'index.php?url=compras';
                 </tr>
             </thead>
             <tbody id="tablaEntradas">
-                <?php if (count($compras) > 0): foreach ($compras as $row): ?>
+                <?php if (count($compras) > 0): foreach ($compras as $compra): ?>
                         <tr>
-                            <td class="text-center"><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></span></td>
-                            <td class="nro-control-cell" data-tooltip="<?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?>"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
-                            <td class="text-uppercase fw-bold proveedor-cell" data-tooltip="<?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
-                            <td class="td-prod" data-tooltip="<?php echo htmlspecialchars($row['productos_list'] ?? ''); ?>"><?php echo htmlspecialchars($row['productos_list'] ?? '-'); ?></td>
-                            <td class="text-center"><span class="cant-badge">+<?php echo (int)$row['total_cantidad']; ?></span></td>
-                            <td style="font-weight:600;">$<?php echo number_format($row['subtotal'] ?? 0, 2); ?></td>
-                            <td style="font-weight:600;">$<?php echo number_format($row['iva'] ?? 0, 2); ?></td>
-                            <td class="fw-bold text-success">$<?php echo number_format($row['total'], 2); ?></td>
-                            <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
+                            <td class="text-center"><span class="codigo-badge"><?php echo htmlspecialchars($compra['nro_factura'] ?: '-'); ?></span></td>
+                            <td class="nro-control-cell" data-tooltip="<?php echo htmlspecialchars($compra['nro_control'] ?: '-'); ?>"><?php echo htmlspecialchars($compra['nro_control'] ?: '-'); ?></td>
+                            <td class="text-uppercase fw-bold proveedor-cell" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?></td>
+                            <td class="td-prod" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? ''); ?>"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></td>
+                            <td class="text-center"><span class="cant-badge">+<?php echo (int)$compra['total_cantidad']; ?></span></td>
+                            <td style="font-weight:600;">$<?php echo number_format($compra['subtotal'] ?? 0, 2); ?></td>
+                            <td style="font-weight:600;">$<?php echo number_format($compra['iva'] ?? 0, 2); ?></td>
+                            <td class="fw-bold text-success">$<?php echo number_format($compra['total'], 2); ?></td>
+                            <td class="text-center"><span class="badge-jv <?php echo ($compra['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($compra['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $compra['condiciones_pago'] ?? 'Contado'; ?></span></td>
                             <td class="text-center">
-                                <?php $st = $row['status_pago'] ?? 'Pendiente'; ?>
-                                <span class="badge-jv <?php echo $st === 'Pagada' ? 'badge-success' : 'badge-warning'; ?>"><i class="bi <?php echo $st === 'Pagada' ? 'bi-check-circle' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $st; ?></span>
+                                <?php // Estado de pago de la compra: 'Pagada' o 'Pendiente'
+                                $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
+                                <span class="badge-jv <?php echo $status_pago === 'Pagada' ? 'badge-success' : 'badge-warning'; ?>"><i class="bi <?php echo $status_pago === 'Pagada' ? 'bi-check-circle' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $status_pago; ?></span>
                             </td>
-                            <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_compra'])); ?></td>
+                            <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
                             <td class="text-center">
                                 <?php if ($es_admin): ?>
-                                    <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo (int)$row['id_compra']; ?>)"><i class="bi bi-trash"></i></button>
+                                    <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)"><i class="bi bi-trash"></i></button>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -182,9 +183,9 @@ $__base_url = APP_URL_BASE . 'index.php?url=compras';
                                 <label class="small fw-bold text-secondary mb-1">PROVEEDOR *</label>
                                 <select name="id_proveedor" class="input-jv" id="selProveedor" required>
                                     <option value="">Seleccionar...</option>
-                                    <?php foreach ($proveedores as $p): ?>
-                                        <option value="<?php echo (int)$p['id_proveedor']; ?>" data-condicion="<?php echo htmlspecialchars($p['condiciones_pago']); ?>" data-dias="<?php echo (int)$p['dias_credito']; ?>" data-limite="<?php echo (float)($p['limite_credito'] ?? 0); ?>" data-usado="<?php echo $credito_usado[(int)$p['id_proveedor']] ?? 0; ?>" data-rif="<?php echo htmlspecialchars($p['rif']); ?>">
-                                            <?php echo htmlspecialchars($p['nombre_empresa']); ?> (<?php echo htmlspecialchars($p['rif']); ?>)
+                                    <?php foreach ($proveedores as $proveedor): ?>
+                                        <option value="<?php echo (int)$proveedor['id_proveedor']; ?>" data-condicion="<?php echo htmlspecialchars($proveedor['condiciones_pago']); ?>" data-dias="<?php echo (int)$proveedor['dias_credito']; ?>" data-limite="<?php echo (float)($proveedor['limite_credito'] ?? 0); ?>" data-usado="<?php echo $credito_usado[(int)$proveedor['id_proveedor']] ?? 0; ?>" data-rif="<?php echo htmlspecialchars($proveedor['rif']); ?>">
+                                            <?php echo htmlspecialchars($proveedor['nombre_empresa']); ?> (<?php echo htmlspecialchars($proveedor['rif']); ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>

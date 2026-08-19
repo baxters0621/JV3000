@@ -92,21 +92,22 @@
                 </tr>
             </thead>
             <tbody id="tablaPendientes">
-                <?php if (count($compras_pendientes) > 0): foreach ($compras_pendientes as $row): ?>
+                <?php if (count($compras_pendientes) > 0): foreach ($compras_pendientes as $compra_pendiente): ?>
                         <tr>
-                            <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura']); ?></span></td>
-                            <td style="color:var(--jv-text-muted);font-weight:600;"><?php echo htmlspecialchars($row['nro_control'] ?: '-'); ?></td>
-                            <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($row['proveedor'] ?? 'S/P'); ?></td>
-                            <td class="text-center"><span class="badge-jv <?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($row['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $row['condiciones_pago'] ?? 'Contado'; ?></span></td>
-                            <td class="text-center"><span class="cant-badge"><?php echo (int)$row['items_pend']; ?></span></td>
-                            <td class="text-center fw-bold"><?php echo (int)$row['unidades_pend']; ?></td>
+                            <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($compra_pendiente['nro_factura']); ?></span></td>
+                            <td style="color:var(--jv-text-muted);font-weight:600;"><?php echo htmlspecialchars($compra_pendiente['nro_control'] ?: '-'); ?></td>
+                            <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($compra_pendiente['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($compra_pendiente['proveedor'] ?? 'S/P'); ?></td>
+                            <td class="text-center"><span class="badge-jv <?php echo ($compra_pendiente['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($compra_pendiente['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $compra_pendiente['condiciones_pago'] ?? 'Contado'; ?></span></td>
+                            <td class="text-center"><span class="cant-badge"><?php echo (int)$compra_pendiente['items_pend']; ?></span></td>
+                            <td class="text-center fw-bold"><?php echo (int)$compra_pendiente['unidades_pend']; ?></td>
                             <td class="text-center">
-                                <?php $est = $row['estado_recepcion']; ?>
-                                <span class="badge-jv <?php echo $est === 'Parcial' ? 'badge-info' : 'badge-warning'; ?>"><i class="bi <?php echo $est === 'Parcial' ? 'bi-arrow-repeat' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $est; ?></span>
+                                <?php // Estado de recepción: 'Pendiente' (sin recibir) o 'Parcial' (recibida en parte)
+                                $estado_recepcion = $compra_pendiente['estado_recepcion']; ?>
+                                <span class="badge-jv <?php echo $estado_recepcion === 'Parcial' ? 'badge-info' : 'badge-warning'; ?>"><i class="bi <?php echo $estado_recepcion === 'Parcial' ? 'bi-arrow-repeat' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $estado_recepcion; ?></span>
                             </td>
-                            <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_compra'])); ?></td>
+                            <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($compra_pendiente['fecha_compra'])); ?></td>
                             <td class="text-center">
-                                <button type="button" class="btn-jv-primary btn-recibir w-100" style="border:none;padding:10px 12px;font-size:.9rem;font-weight:700;border-radius:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="abrirRecepcion(<?php echo $row['id_compra']; ?>)">
+                                <button type="button" class="btn-jv-primary btn-recibir w-100" style="border:none;padding:10px 12px;font-size:.9rem;font-weight:700;border-radius:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="abrirRecepcion(<?php echo $compra_pendiente['id_compra']; ?>)">
                                     <i class="bi bi-box-arrow-in-down me-1"></i>RECIBIR
                                 </button>
                             </td>
@@ -150,15 +151,15 @@
                 </tr>
             </thead>
             <tbody id="tablaRecepciones">
-                <?php if (count($recepciones) > 0): foreach ($recepciones as $r): ?>
+                <?php if (count($recepciones) > 0): foreach ($recepciones as $recepcion): ?>
                         <tr>
-                            <td class="fecha-cell"><?php echo date('d/m/Y H:i', strtotime($r['fecha_movimiento'])); ?></td>
-                            <td style="text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($r['nro_factura'] ?? '-'); ?></span></td>
-                            <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($r['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($r['proveedor'] ?? 'S/P'); ?></td>
-                            <td class="text-center"><span class="cant-badge">+<?php echo (int)$r['num_items']; ?></span></td>
-                            <td class="text-center fw-bold text-success">+<?php echo (int)$r['unidades']; ?></td>
-                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($r['documento_recepcion'] ?: '-'); ?></td>
-                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($r['operador'] ?? '-'); ?></td>
+                            <td class="fecha-cell"><?php echo date('d/m/Y H:i', strtotime($recepcion['fecha_movimiento'])); ?></td>
+                            <td style="text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($recepcion['nro_factura'] ?? '-'); ?></span></td>
+                            <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($recepcion['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($recepcion['proveedor'] ?? 'S/P'); ?></td>
+                            <td class="text-center"><span class="cant-badge">+<?php echo (int)$recepcion['num_items']; ?></span></td>
+                            <td class="text-center fw-bold text-success">+<?php echo (int)$recepcion['unidades']; ?></td>
+                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($recepcion['documento_recepcion'] ?: '-'); ?></td>
+                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($recepcion['operador'] ?? '-'); ?></td>
                         </tr>
                     <?php endforeach;
                 else: ?>
