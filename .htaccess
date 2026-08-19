@@ -1,0 +1,17 @@
+# ==========================================
+# SEGURIDAD — Bloqueo de acceso directo
+# ==========================================
+# El sistema solo debe consumirse por el front controller
+# (index.php?url=...) y por las páginas públicas (login/,
+# dashboard/, assets/). Estos directorios contienen código
+# fuente y datos internos que NUNCA deben servirse por HTTP.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Directorios internos de la aplicación: prohibidos por HTTP
+    RewriteRule ^(backups|db|models|controllers|views|config|includes|core)(/|$) - [F,L]
+
+    # Defensa extra: cualquier archivo .sql / .bat / .inc servido por URL se bloquea
+    RewriteRule \.(sql|bat|inc)$ - [F,L]
+</IfModule>
