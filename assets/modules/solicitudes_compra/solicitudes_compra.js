@@ -3,6 +3,7 @@
 // ==========================================
 
 // Cancelar solicitud pendiente
+// Pide confirmación para anular una solicitud de compra y la envía al servidor; recarga la página al terminar.
 function confirmarCancelar(id) {
     Swal.fire({
         title: '¿CANCELAR SOLICITUD?',

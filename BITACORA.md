@@ -44,6 +44,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-18 12:55] · Módulo: Validación de formularios · Cambio: Auditoría de validación client-side: los formularios de datos (compras, salidas, productos, proveedores, categorías, recepción) ya validaban en JS y en servidor (Compra 13, Salida 20, Proveedor 19, Producto, Categoría 6 puntos); los formularios de estadísticas/historial son filtros de búsqueda GET (no requieren validación de datos). Único refuerzo necesario: atributos nativos `required` en los 4 campos numéricos obligatorios del formulario de edición de productos (stock mínimo, capacidad máx., precio venta, precio costo) que solo dependían del JS, añadiendo la capa nativa del navegador. · Archivos: `views/productos/index.php` · Prueba: `php -l` sin errores; smoke HTTP con login real de `?url=productos` = 200 sin fatales (se verifica en F4 con las 11 rutas).
 
+[2026-08-18 13:10] · Módulo: Documentación JS de módulos · Cambio: Se documentan las 78 funciones de los 10 JS de módulos con comentarios didácticos en español (qué hace y por qué), para preparar la defensa del TEG estudiando el código a detalle. Solo se insertaron comentarios; cero cambios de lógica, strings ni valores. · Archivos: `assets/modules/{salidas,productos,compras,recepcion,categorias,proveedores,estadisticas,historial,nota_entrega,solicitudes_compra}/*.js` · Prueba: `node --check` sin errores en los 10 JS; `git diff` confirma 81 inserciones puras y ninguna línea de lógica modificada; smoke HTTP con login real de 11 rutas MVC + dashboard = 200 sin fatales; acceso sin sesión a `index.php?url=compras` y `dashboard/index.php` = 302 al login; bloqueo `.htaccess` vigente (9 rutas internas = 403).
+
 ---
 
 ## Plantilla para futuras entradas

@@ -6,6 +6,7 @@
 
     // ---------- GRÁFICO DE LÍNEAS: VENTAS VS COMPRAS ----------
     let chartFlujo = null;
+    // Dibuja o redibuja el gráfico de líneas comparando ventas y compras por periodo.
     function crearChartFlujo(labels, ventas, compras) {
         if (chartFlujo) chartFlujo.destroy();
         chartFlujo = new Chart(document.getElementById('chartFlujo'), {
@@ -33,6 +34,7 @@
 
     // ---------- GRÁFICO DE BARRAS HORIZONTALES: TOP 5 ----------
     let chartTop = null;
+    // Dibuja o redibuja el gráfico de barras horizontales con el top 5 de productos más vendidos.
     function crearChartTop(labels, cant) {
         if (chartTop) chartTop.destroy();
         const datos = (labels && labels.length > 0) ? cant : [0];
@@ -71,6 +73,7 @@
     }
 
     // ---------- ACTUALIZAR INTERFAZ DESDE DATOS ----------
+    // Actualiza los KPI, sellos de comparación y gráficos con los datos obtenidos del servidor.
     function actualizarUI(d) {
         if (!d || !d.success) return;
 
@@ -126,6 +129,7 @@
         ? '&periodo=rango&desde=' + (urlParams.get('desde') || '') + '&hasta=' + (urlParams.get('hasta') || '')
         : '&periodo=' + periodoActivo;
 
+    // Consulta los datos de estadísticas del periodo activo y actualiza la interfaz sin recargar la página.
     function refreshEstadisticas() {
         fetch((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.json())

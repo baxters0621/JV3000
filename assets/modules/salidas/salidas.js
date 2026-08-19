@@ -10,6 +10,7 @@
         let toolboxTimer = null;
         let toolboxTimerCli = null;
 
+        // Devuelve el grupo del tipo de movimiento seleccionado (venta, regalias, merma).
         function grupoActual() {
             const tipo = document.getElementById('s_tipo');
             return tipo && tipo.value ? (TIPO_MAP[tipo.value] || '') : '';
@@ -19,13 +20,16 @@
         const toolboxInput = document.getElementById('buscarProductoSal');
         const resultadosBox = document.getElementById('resultadosBusquedaSal');
 
+        // Cierra el panel de resultados de búsqueda de productos.
         function cerrarResultados() {
             if (resultadosBox) resultadosBox.classList.remove('abierto');
         }
+        // Abre el panel de resultados de búsqueda de productos.
         function abrirResultados() {
             if (resultadosBox) resultadosBox.classList.add('abierto');
         }
 
+        // Dibuja la lista de productos encontrados y bloquea los que no tienen stock.
         function renderResultados(items) {
             if (!resultadosBox) return;
             resultadosBox.innerHTML = '';
@@ -77,6 +81,7 @@
             abrirResultados();
         }
 
+        // Busca productos por AJAX con retardo y según el grupo actual del movimiento.
         function buscarProductos() {
             const q = toolboxInput.value.trim();
             if (!q) {
@@ -94,6 +99,7 @@
             }, 350);
         }
 
+        // Maneja la elección de un producto: bloquea venta sin stock y carga el precio del grupo.
         function seleccionarProducto(el) {
             if (!el || !el.dataset.id) return;
             const bloqueado = el.dataset.blocked === '1';
@@ -139,13 +145,16 @@
         const toolboxCli = document.getElementById('buscarClienteSal');
         const resultadosCli = document.getElementById('resultadosBusquedaCli');
 
+        // Cierra el panel de resultados de búsqueda de clientes.
         function cerrarResultadosCli() {
             if (resultadosCli) resultadosCli.classList.remove('abierto');
         }
+        // Abre el panel de resultados de búsqueda de clientes.
         function abrirResultadosCli() {
             if (resultadosCli) resultadosCli.classList.add('abierto');
         }
 
+        // Dibuja la lista de clientes encontrados en la búsqueda.
         function renderResultadosCli(items) {
             if (!resultadosCli) return;
             resultadosCli.innerHTML = '';
@@ -180,6 +189,7 @@
             abrirResultadosCli();
         }
 
+        // Busca clientes por AJAX con retardo según lo escrito en el campo de cliente.
         function buscarClientes() {
             const q = toolboxCli.value.trim();
             if (!q) {
@@ -195,6 +205,7 @@
             }, 350);
         }
 
+        // Rellena los campos de cliente y RIF al elegir un cliente de la lista.
         function seleccionarCliente(el) {
             if (!el || !el.dataset.id) return;
             document.getElementById('s_cliente').value = el.dataset.nombre;
@@ -211,6 +222,7 @@
         }
 
         // ---- LÍNEA DE PRODUCTO ----
+        // Valida cantidad, stock y precio del producto y lo agrega a la lista de la salida.
         function agregarProductoSalida() {
             if (!productoSeleccionado || !productoSeleccionado.id) {
                 Swal.fire({
@@ -306,6 +318,7 @@
             if (toolboxInput) toolboxInput.focus();
         }
 
+        // Quita un producto de la lista de la salida por su índice.
         function quitarProductoSalida(idx) {
             s_productos.splice(idx, 1);
             actualizarTablaSalida();
@@ -316,6 +329,7 @@
         // ==========================================
         let s_solicitud = [];
 
+        // Agrega el producto a la solicitud de compra, acumulando cantidad si ya existe.
         function agregarSolicitudCompras(prod) {
             if (!prod || !prod.id) return;
             const cant = Math.max(1, parseInt(document.getElementById('s_cant').value, 10) || 1);
@@ -343,11 +357,13 @@
             });
         }
 
+        // Quita un producto de la solicitud de compra por su índice.
         function quitarSolicitudCompras(idx) {
             s_solicitud.splice(idx, 1);
             actualizarSolicitudCompras();
         }
 
+        // Vuelve a dibujar la tabla de solicitud de compra y la oculta si no tiene productos.
         function actualizarSolicitudCompras() {
             const tbody = document.getElementById('s_solicitud_body');
             const box = document.getElementById('solicitud_compras_box');
@@ -372,6 +388,7 @@
             tbody.innerHTML = html;
         }
 
+        // Envía la solicitud de compra al servidor y muestra el resultado de la operación.
         function enviarSolicitudCompras() {
             if (!s_solicitud.length) return;
             const items = s_solicitud.map(p => ({ id_producto: p.id_producto, cantidad: p.cantidad }));
@@ -405,6 +422,7 @@
                 });
         }
 
+        // Redibuja la tabla de productos de la salida y actualiza totales de ítems y monto.
         function actualizarTablaSalida() {
             const tbody = document.getElementById('s_productos_body');
             if (!s_productos.length) {
@@ -437,6 +455,7 @@
             document.getElementById('s_total_monto').textContent = '$' + totalMonto.toFixed(2);
         }
 
+        // Muestra los campos según el tipo de movimiento y reinicia la lista de productos.
         function toggleCampos() {
             limpiarErrores();
             const sel = document.getElementById('s_tipo');
@@ -458,6 +477,7 @@
             actualizarSolicitudCompras();
         }
 
+        // Limpia el formulario para registrar una nueva salida y abre el modal.
         function nuevaSalida() {
             limpiarErrores();
             document.getElementById('s_accion').value = 'registrar';
@@ -492,6 +512,7 @@
             modalS.show();
         }
 
+        // Valida y formatea el RIF o cédula ingresado y muestra si es válido o incompleto.
         function validarRIFInput() {
             var tipo = document.getElementById('s_rif_tipo').value;
             var nums = document.getElementById('s_rif_num').value.replace(/\D/g, '');
@@ -527,6 +548,7 @@
             }
         }
 
+        // Carga los datos de una salida existente en el formulario para editarla y abre el modal.
         function editarSalida(data) {
             document.getElementById('s_accion').value = 'editar';
             document.getElementById('s_id_edit').value = data.id_salida;
@@ -558,6 +580,7 @@
             modalS.show();
         }
 
+        // Valida el formulario completo y solicita la vista previa de la nota de entrega al servidor.
         function enviarPreview() {
             limpiarErrores();
             const btn = document.getElementById('btnPreview');
@@ -629,6 +652,7 @@
                 });
         }
 
+        // Muestra el detalle del tipo de movimiento y su causa en un cuadro de diálogo.
         function verDetalleDano(tipo, causa) {
             Swal.fire({
                 icon: 'info',
@@ -641,10 +665,12 @@
             });
         }
 
+        // Abre la nota de entrega correspondiente en una ventana nueva.
         function verFactura(id) {
             window.open((window.JV_BASE || '') + 'index.php?url=nota_entrega&id=' + id, '_blank');
         }
 
+        // Filtra las filas de la tabla de salidas según el texto de búsqueda.
         function filtrarSalidas() {
             const input = document.getElementById('buscarSal');
             const filter = input ? input.value.toLowerCase() : '';
@@ -654,12 +680,14 @@
             }
         }
 
+        // Pide confirmación para anular la salida; el stock vuelve al inventario.
         function confirmarEliminar(id) {
             Swal.fire({title:'¿ANULAR?',text:'El stock volverá al inventario.',icon:'warning',showCancelButton:true,background:'#fff',color:'#212529',confirmButtonColor:'#DC2626',cancelButtonColor:'#CED4DA',confirmButtonText:'SÍ, ANULAR',cancelButtonText:'CANCELAR'}).then(r => {
                 if (r.isConfirmed) jvPost({ eliminar: id, csrf_token: window.JV_CONFIG.c1 });
             });
         }
 
+        // Carga el precio del producto seleccionado según el grupo del movimiento.
         function cargarPrecio() {
             const precio = document.getElementById('s_precio');
             if (!productoSeleccionado) { precio.value = ''; return; }

@@ -75,6 +75,7 @@
         const modalP = new bootstrap.Modal(document.getElementById('modalProveedor'));
         const formP = document.getElementById('formProveedor');
 
+        // Formatea en vivo el valor monetario con separadores de miles y un solo punto decimal.
         function formatMoney(el) {
             let val = el.value.replace(/[^0-9.]/g, '');
             let parts = val.split('.');
@@ -109,6 +110,7 @@
         // ============================
         // FUNCIÓN nuevoProveedor (con verificación de iti)
         // ============================
+        // Limpia el formulario, reinicia el selector de teléfono y abre el modal en modo registro.
         function nuevoProveedor() {
             document.getElementById('p_accion').value = "registrar";
             document.getElementById('p_id_edit').value = "";
@@ -149,6 +151,7 @@
             modalP.show();
         }
 
+        // Carga los datos de un proveedor en el formulario y abre el modal en modo edición.
         function editarProveedor(data) {
             document.getElementById('p_accion').value = "editar";
             document.getElementById('p_id_edit').value = data.id_proveedor;
@@ -180,16 +183,19 @@
             modalP.show();
         }
 
+        // Marca como activo el botón de filtro por estado y reaplica el filtrado de tarjetas.
         function filtrarProv(status) {
             document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
             document.getElementById('f-' + status).classList.add('active');
             aplicarFiltroProveedores();
         }
 
+        // Reaplica el filtrado cuando cambia el texto de búsqueda por nombre o datos del proveedor.
         function filtrarProvTexto() {
             aplicarFiltroProveedores();
         }
 
+        // Muestra u oculta las tarjetas de proveedores según el estado seleccionado y el texto de búsqueda.
         function aplicarFiltroProveedores() {
             const activo = document.querySelector('.btn-filter.active');
             const status = activo ? activo.id.replace('f-', '') : 'todos';
@@ -202,14 +208,17 @@
             });
         }
 
+        // Expande o contrae el panel de detalles de una tarjeta de proveedor premium.
         function toggleProv(el) {
             el.closest('.prov-premium').classList.toggle('expanded');
         }
 
+        // Redirige al módulo de compras prefiltrando las órdenes del proveedor indicado.
         function verHistorial(idProveedor) {
             window.location.href = 'index.php?url=compras&filtro_proveedor=' + idProveedor;
         }
 
+        // Pide confirmación para activar o desactivar un proveedor y envía la acción al servidor.
         function toggleStatusProveedor(id, nombre, statusActual) {
             var activo = statusActual === 'Activo';
             Swal.fire({

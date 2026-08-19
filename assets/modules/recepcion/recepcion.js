@@ -5,6 +5,7 @@
 
         let recepcionCompraId = null;
 
+        // Abre el modal de recepción cargando los datos de la compra y la tabla de productos pendientes por recibir.
         function abrirRecepcion(idCompra) {
             const cfg = window.JV_CONFIG || {};
             const datos = cfg.recepcionDatos && cfg.recepcionDatos[idCompra];
@@ -51,6 +52,7 @@
             modal.show();
         }
 
+        // Filtra por texto la tabla de compras con productos pendientes de recepción, sin recargar.
         function filtrarPendientes() {
             const input = document.getElementById('buscarPendientes');
             const filter = input ? input.value.toLowerCase() : '';
@@ -60,6 +62,7 @@
             }
         }
 
+        // Filtra por texto la tabla de recepciones ya registradas, sin recargar.
         function filtrarRecepciones() {
             const input = document.getElementById('buscarRecepciones');
             const filter = input ? input.value.toLowerCase() : '';
@@ -69,6 +72,8 @@
             }
         }
 
+        // Valida las cantidades a recibir (entre 1 y el restante), arma el array de items,
+        // lo guarda en el campo oculto y envía el formulario para registrar la recepción.
         function confirmarRecepcion(btn) {
             if (!recepcionCompraId) return false;
 

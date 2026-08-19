@@ -2,6 +2,7 @@
             // ==========================================
             // VALIDAR ANTES DE ENVIAR EL FORMULARIO
             // ==========================================
+            // Valida que el nombre de la categoría no esté vacío antes de enviar el formulario.
             // Se llama desde el botón "Guardar" del modal.
             // Si el nombre está vacío, marca el campo en rojo y NO envía.
             function validarCategoria(btn) {
@@ -18,6 +19,7 @@
             // ==========================================
             // NUEVA CATEGORÍA: prepara el modal en modo "crear"
             // ==========================================
+            // Limpia el formulario y abre el modal configurado para registrar una categoría nueva.
             function nuevaCat() {
                 // cat_accion = "registrar" indica al servidor que la operación es una creación.
                 document.getElementById('cat_accion').value = "registrar";
@@ -36,6 +38,7 @@
             // ==========================================
             // EDITAR CATEGORÍA: rellena el modal con datos existentes
             // ==========================================
+            // Carga los datos de la categoría elegida en el modal para modificarlos.
             // data es la fila de la tabla convertida a objeto por la vista
             // (onclick='editarCat(<?php json_encode($row) ?>)').
             function editarCat(data) {
@@ -54,6 +57,7 @@
             // ==========================================
             // ACTIVAR / DESACTIVAR con confirmación (SweetAlert)
             // ==========================================
+            // Pide confirmación al usuario y, si la acepta, envía el POST que cambia el estado de la categoría.
             function confirmarToggle(id, nombre, accion) {
                 const es_desactivar = accion === 'desactivar';
                 Swal.fire({
@@ -78,6 +82,7 @@
             // ==========================================
             // BUSCADOR LOCAL de la tabla (sin recargar)
             // ==========================================
+            // Muestra solo las filas de la tabla que contienen el texto buscado.
             function filtrar() {
                 const input = document.getElementById('buscar');
                 const filter = input.value.toLowerCase();

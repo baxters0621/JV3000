@@ -11,11 +11,13 @@
 
         const IVA_PCT = (window.JV_CONFIG && typeof window.JV_CONFIG.c1 === 'number') ? window.JV_CONFIG.c1 : 16;
 
+        // Formatea un número como moneda en dólares: $ con separador de miles y 2 decimales.
         function fmt(n) {
             return '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
         // ---- Formateo de precio en el input ----
+        // Normaliza lo escrito en el input de precio: solo dígitos y punto, separador de miles y tope de 99,999,999.99.
         function formatearPrecioCompra(el) {
             var raw = el.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
             var parts = raw.split('.');
@@ -33,6 +35,7 @@
         }
 
         // Marca que el usuario editó el monto de pago
+        // Pone montoEditado en true para que el monto no se recalcule y quita la marca de error del campo.
         function marcarMontoEditado() {
             montoEditado = true;
             var el = document.getElementById('montoPago');
@@ -45,14 +48,17 @@
         const toolboxInput = document.getElementById('buscarProducto');
         const resultadosBox = document.getElementById('resultadosBusqueda');
 
+        // Oculta el panel de resultados de búsqueda de productos.
         function cerrarResultados() {
             if (resultadosBox) resultadosBox.classList.remove('abierto');
         }
 
+        // Muestra el panel de resultados de búsqueda de productos.
         function abrirResultados() {
             if (resultadosBox) resultadosBox.classList.add('abierto');
         }
 
+        // Dibuja en el panel los productos devueltos por la búsqueda AJAX; si no hay, muestra "Sin resultados".
         function renderResultados(items) {
             if (!resultadosBox) return;
             resultadosBox.innerHTML = '';
@@ -92,6 +98,7 @@
             abrirResultados();
         }
 
+        // Ejecuta la búsqueda de productos por AJAX con debounce de 350 ms para no consultar en cada tecla.
         function buscarProductos() {
             const q = toolboxInput.value.trim();
             if (!q) {
@@ -108,6 +115,7 @@
             }, 350);
         }
 
+        // Al elegir un resultado guarda el producto seleccionado, rellena el input y sugiere el precio de costo.
         function seleccionarProducto(el) {
             if (!el || !el.dataset.id) return;
             productoSeleccionado = {
@@ -128,6 +136,7 @@
         // ==========================================
         // LÍNEA DE PRODUCTO
         // ==========================================
+        // Valida cantidad y precio y agrega el producto elegido al array 'productos' como línea de la factura.
         function agregarProducto() {
             if (!productoSeleccionado || !productoSeleccionado.id) {
                 Swal.fire({
@@ -186,11 +195,13 @@
             if (toolboxInput) toolboxInput.focus();
         }
 
+        // Elimina del array la línea de producto en la posición dada y redibuja la tabla.
         function quitarProducto(idx) {
             productos.splice(idx, 1);
             actualizarTabla();
         }
 
+        // Redibuja la tabla del carrito, calcula subtotal, IVA y total, y actualiza el campo oculto JSON y el botón Guardar.
         function actualizarTabla() {
             const body = document.getElementById('productosBody');
             if (productos.length === 0) {
@@ -261,6 +272,8 @@
         // ==========================================
         // VALIDACIÓN DEL FORMULARIO
         // ==========================================
+        // Valida todos los campos obligatorios (proveedor, factura, método, monto y líneas);
+        // si hay errores los marca, los muestra en un resumen y evita el envío.
         function validarFormulario(btn) {
             limpiarErrores();
             const errores = [];
@@ -342,6 +355,7 @@
         // ==========================================
         // LISTADO — filtro local y anulación
         // ==========================================
+        // Filtra localmente el listado de compras según el texto escrito, sin recargar la página.
         function filtrar() {
             const input = document.getElementById('buscar');
             const filter = input.value.toLowerCase();
@@ -351,6 +365,7 @@
             }
         }
 
+        // Pide confirmación con SweetAlert y, si se acepta, envía el POST para anular la factura.
         function confirmarEliminar(id) {
             Swal.fire({
                 title: '¿ANULAR?',

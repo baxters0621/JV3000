@@ -1,10 +1,12 @@
 
 
+        // Activa el filtro de vencimiento correspondiente según la alerta recibida.
         function filtrarPorAlerta(clase) {
             var btn = document.querySelector('.btn-filtro-venc[data-venc="' + clase + '"]');
             if (btn) filtrarVenc(btn);
         }
 
+        // Aplica los filtros activos (estado, vencimiento, stock bajo y búsqueda) sobre las filas.
         function aplicarFiltros() {
             var vencBtn = document.querySelector('.btn-filtro-venc.active');
             var filtroVenc = vencBtn ? vencBtn.getAttribute('data-venc') : 'todas';
@@ -26,6 +28,7 @@
                 rows[i].style.display = (searchVal === '' || texto.includes(searchVal)) ? '' : 'none';
             }
         }
+        // Marca el botón de filtro por vencimiento activo y vuelve a aplicar los filtros.
         function filtrarVenc(btn) {
             document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
                 b.classList.remove('active');
@@ -38,6 +41,7 @@
             aplicarFiltros();
         }
 
+        // Pide confirmación para dar de baja un producto vencido (marcarlo inactivo).
         function bajaVencido(id, nombre) {
             Swal.fire({
                 title: '¿DAR DE BAJA?',
@@ -86,6 +90,7 @@
             if (el) modalEditar = new bootstrap.Modal(el);
         });
 
+        // Valida los campos del formulario de edición y envía el formulario si son correctos.
         function validarEditarProducto(btn) {
             limpiarErrores();
             let primerError = null;
@@ -128,6 +133,7 @@
             return false;
         }
 
+        // Llena el modal de edición con los datos del producto de la fila seleccionada.
         function editarProducto(id) {
             limpiarErrores();
             var row = document.querySelector('tr[data-id="' + id + '"]');
@@ -146,6 +152,7 @@
             if (modalEditar) modalEditar.show();
         }
 
+        // Pide confirmación para activar o desactivar un producto según la acción solicitada.
         function toggleProducto(id, nombre, accion) {
             var esActivar = accion === 'activar';
             Swal.fire({
@@ -166,6 +173,7 @@
             });
         }
 
+        // Marca el botón de filtro por estado activo y vuelve a aplicar los filtros.
         function filtrarStatus(btn) {
             document.querySelectorAll('.btn-filter-prod').forEach(function(b) {
                 b.classList.remove('active');
@@ -174,12 +182,14 @@
             aplicarFiltros();
         }
 
+        // Vuelve a aplicar los filtros activos de la tabla.
         function filtrar() {
             aplicarFiltros();
         }
 
         var filtroBajos = false;
 
+        // Activa o desactiva el filtro de stock bajo y vuelve a aplicar los filtros.
         function filtrarBajos() {
             filtroBajos = !filtroBajos;
             document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
@@ -190,6 +200,7 @@
             aplicarFiltros();
         }
 
+        // Resalta la fila del producto en la tabla, la busca y la ubica en la vista.
         function destacarProducto(id) {
             var fila = document.querySelector('#tablaProductos tr[data-id="' + id + '"]');
             if (!fila) return;
@@ -206,6 +217,7 @@
             }, 250);
         }
 
+        // Lee los parámetros de la URL y ejecuta la acción correspondiente (destacar o filtrar).
         function iniciarDesdeURL() {
             var params = new URLSearchParams(window.location.search);
             var pid = params.get('producto');

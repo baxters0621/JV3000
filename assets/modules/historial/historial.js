@@ -1,4 +1,5 @@
 
+// Historial de movimientos: filtros y paginación (sin lógica propia).
 (function() {
     var alerts = document.querySelectorAll('.alert-jv');
     for (var i = 0; i < alerts.length; i++) {
