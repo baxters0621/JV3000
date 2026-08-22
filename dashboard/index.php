@@ -36,8 +36,16 @@ function obtenerDatosDashboard(Database $db): array
         LIMIT 1");
     $datos['ventas_dia'] = number_format((float)($vd['total'] ?? 0), 2);
 
-    $vi = $db->fetchOne("SELECT COALESCE(SUM(stock_actual * precio_costo), 0) as valor FROM productos WHERE status = 'Activo'");
-    $datos['valor_inventario'] = number_format($vi['valor'], 2);
+    $vi = $db->fetchOne("SELECT COALESCE(SUM(CASE WHEN lotes.valor_lotes IS NULL THEN p.stock_actual * p.precio_costo ELSE lotes.valor_lotes END), 0) AS valor
+        FROM productos p
+        LEFT JOIN (
+            SELECT id_producto, SUM(cantidad_restante * precio_costo) AS valor_lotes
+            FROM lotes
+            WHERE cantidad_restante > 0
+            GROUP BY id_producto
+        ) lotes ON lotes.id_producto = p.id_producto
+        WHERE p.status = 'Activo'");
+    $datos['valor_inventario'] = number_format((float)($vi['valor'] ?? 0), 2);
 
     $fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.id_salida, s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
     $datos['ultimas_facturas'] = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => number_format($r['total'], 2)], $fac);
@@ -291,7 +299,7 @@ $tabla_compras = $datos['tabla_compras'];
 
                         <div class="table-card table-card-compras">
                             <h3>Últimas Compras</h3>
-                            <p class="card-desc">Entradas de inventario más recientes.</p>
+                            <p class="card-desc">Total de factura, IVA incluido.</p>
                             <table class="data-table">
                                 <thead>
                                     <tr>
