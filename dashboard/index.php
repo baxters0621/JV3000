@@ -21,7 +21,7 @@ $alertas = jv_alertas_por_rol($rol_user_id);
 // ==========================================
 // CONSULTAS UNIFICADAS DEL DASHBOARD
 // ==========================================
-function obtenerDatosDashboard($db): array
+function obtenerDatosDashboard(Database $db): array
 {
     $datos = [];
 
