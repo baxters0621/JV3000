@@ -159,9 +159,10 @@
                             <td>
                                 <span class="prod-precio">$<?php echo number_format($productRecord['precio_venta'], 2); ?></span>
                             </td>
-                            <td class="text-center">
-                                <span class="badge-jv <?php echo $venc_badge; ?>" style="white-space:nowrap;font-size:.85rem;">
-                                    <i class="bi bi-<?php echo $venc_icono; ?>"></i> <?php echo $venc_fecha ?: '—'; ?>
+                            <td class="text-center td-vencimiento">
+                                <span class="badge-jv <?php echo $venc_badge; ?>">
+                                    <i class="bi bi-<?php echo $venc_icono; ?>"></i>
+                                    <span class="venc-fecha"><?php echo $venc_fecha ?: '—'; ?></span>
                                 </span>
                             </td>
                             <td class="text-center">
@@ -178,7 +179,7 @@
                                         </button>
                                         <?php if ($productRecord['status'] === 'Activo'): ?>
                                             <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" title="Desactivar">
-                                                <i class="bi bi-trash"></i>
+                                                <i class="bi bi-toggle-off"></i>
                                             </button>
                                             <?php if ($venc_cls === 'vencido'): ?>
                                                 <button type="button" class="btn btn-sm p-0 ms-1" style="width:38px;height:38px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Dar de baja por vencimiento">
