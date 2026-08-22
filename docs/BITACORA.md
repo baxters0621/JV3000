@@ -144,6 +144,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-21 04:00] · Módulo: Continuidad del proyecto · Cambio: Se añade a la guía la lista de tareas reservadas para la siguiente sesión: pruebas automatizadas y funcionales con base de datos de prueba, revisión de accesibilidad/responsive y preparación para despliegue. · Archivos: `docs/GUIA DE PROYECTO.md` · Prueba: sección de continuidad visible al final de la guía.
 
+[2026-08-21 04:05] · Módulo: Continuidad del proyecto · Cambio: Se crea un documento independiente con todas las tareas pendientes, su orden recomendado, validaciones necesarias y la regla de proteger la base de datos real antes de ejecutar operaciones de escritura. Se enlaza desde la guía principal. · Archivos: `docs/PLAN DE CONTINUACION.md`, `docs/GUIA DE PROYECTO.md` · Prueba: documento creado y enlace verificado.
+
 [2026-08-21 00:00] · Módulo: Login y migración de esquema · Cambio: Se define explícitamente la ruta de assets usada por la vista de login para eliminar la referencia indefinida detectada por el editor. También se eliminan duplicados históricos por IP antes de crear el índice único de `login_intentos`, evitando que la migración automática falle en instalaciones antiguas. · Archivos: `login/login.php`, `init.php` · Prueba: `php -l login/login.php`; `php -l init.php`; comprobación del diagnóstico de `$base_assets`.
 
 ---

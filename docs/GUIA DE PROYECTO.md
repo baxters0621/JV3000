@@ -58,6 +58,8 @@ Los archivos Markdown se organizan en la carpeta `docs/` para mantener la raíz 
 
 ### Convenciones de nombres
 
+- [PLAN DE CONTINUACION.md](PLAN%20DE%20CONTINUACION.md): tareas pendientes y orden recomendado para la siguiente sesión.
+
 Los nombres del código deben explicar qué representa cada dato o qué acción realiza cada función. La regla principal es preferir claridad sobre brevedad.
 
 - PHP: usar `camelCase` para variables, parámetros y métodos; elegir nombres descriptivos en español para la lógica de negocio, por ejemplo `$datosFormulario`, `$stockDisponible` o `registrarRecepcion()`.
