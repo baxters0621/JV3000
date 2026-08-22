@@ -6,6 +6,8 @@
             width: 100%;
             table-layout: fixed;
             min-width: 900px;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
         .table-jv thead {
@@ -34,10 +36,11 @@
         }
 
         .table-jv tbody td {
-            padding: 16px 16px !important;
+            padding: 14px 12px !important;
             border-bottom: 1px dashed var(--jv-border) !important;
             font-size: 1rem;
             vertical-align: middle;
+            overflow: hidden;
         }
 
         .table-jv tbody tr:last-child td {
@@ -117,14 +120,17 @@
         }
 
         .badge-jv {
-            padding: 6px 16px;
+            padding: 5px 10px;
             border-radius: 20px;
             font-weight: 800;
             font-size: .9rem;
-            letter-spacing: 0.5px;
+            letter-spacing: 0;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            max-width: 100%;
+            white-space: nowrap;
+            line-height: 1.25;
         }
 
         .badge-info {
@@ -136,6 +142,16 @@
         /* ── Columna stock ── */
         .td-stock {
             min-width: 130px;
+        }
+
+        .td-stock > .d-flex {
+            flex-wrap: wrap;
+            row-gap: 6px;
+        }
+
+        .td-stock > .d-flex .badge-jv {
+            font-size: .72rem !important;
+            padding: 4px 7px !important;
         }
 
         .td-stock .stk-num {
@@ -222,6 +238,10 @@
                 padding-left: 7px;
                 padding-right: 7px;
                 font-size: .82rem;
+            }
+
+            .pagina-productos .td-stock > .d-flex {
+                justify-content: center;
             }
         }
 
