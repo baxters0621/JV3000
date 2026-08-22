@@ -29,7 +29,7 @@ class SolicitudesController extends Controller
 
         $this->view('solicitudes/index', [
             'titulo'       => 'Solicitudes de Reposición | JV3000 C.A.',
-            'wrapper_class'=> 'pagina-solicitudes',
+            'wrapper_class' => 'pagina-solicitudes',
             'css_extra'    => ['modules/solicitudes_compra/solicitudes_compra.css?v=1'],
             'js_extra'     => ['modules/solicitudes_compra/solicitudes_compra.js?v=3'],
             'solicitudes' => $modelo->obtenerPendientes(),
@@ -58,12 +58,12 @@ class SolicitudesController extends Controller
             $this->json(['ok' => false, 'error' => 'MÉTODO NO PERMITIDO.'], 405);
         }
 
-        $itemsRaw = json_decode($_POST['items'] ?? '[]', true);
-        $motivo = trim($_POST['motivo'] ?? '');
-        $idUsuario = (int)($_SESSION['id_usuario'] ?? 0);
+        $rawRequestItems = json_decode($_POST['items'] ?? '[]', true);
+        $requestReason = trim($_POST['motivo'] ?? '');
+        $currentUserId = (int)($_SESSION['id_usuario'] ?? 0);
 
-        $resultado = (new Solicitud())->crear(is_array($itemsRaw) ? $itemsRaw : [], $motivo, $idUsuario);
-        $this->json($resultado, $resultado['ok'] ? 200 : 400);
+        $creationResult = (new Solicitud())->crear(is_array($rawRequestItems) ? $rawRequestItems : [], $requestReason, $currentUserId);
+        $this->json($creationResult, $creationResult['ok'] ? 200 : 400);
     }
 
     /**
@@ -80,13 +80,13 @@ class SolicitudesController extends Controller
             $this->redirect('solicitudes');
         }
 
-        $id = (int)($_POST['id_solicitud'] ?? 0);
-        $resultado = (new Solicitud())->cancelar($id);
+        $requestId = (int)($_POST['id_solicitud'] ?? 0);
+        $cancellationResult = (new Solicitud())->cancelar($requestId);
 
-        if ($resultado['ok']) {
+        if ($cancellationResult['ok']) {
             $this->flash('success', 'SOLICITUD CANCELADA.');
         } else {
-            $this->flash('danger', $resultado['error'] ?? 'ERROR AL CANCELAR LA SOLICITUD.');
+            $this->flash('danger', $cancellationResult['error'] ?? 'ERROR AL CANCELAR LA SOLICITUD.');
         }
         $this->redirect('solicitudes');
     }

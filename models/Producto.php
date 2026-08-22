@@ -27,11 +27,11 @@ class Producto extends Model
      */
     public function toggleStatus(int $idProducto): array
     {
-        $p = $this->db->fetchOne("SELECT status FROM productos WHERE id_producto = ?", [$idProducto]);
-        if (!$p) return ['ok' => false, 'mensaje' => 'PRODUCTO NO ENCONTRADO.'];
-        $nuevo = $p['status'] === 'Activo' ? 'Inactivo' : 'Activo';
-        $this->db->execute("UPDATE productos SET status = ? WHERE id_producto = ?", [$nuevo, $idProducto]);
-        $accion = $nuevo === 'Activo' ? 'REACTIVADO' : 'DESACTIVADO';
+        $producto = $this->db->fetchOne("SELECT status FROM productos WHERE id_producto = ?", [$idProducto]);
+        if (!$producto) return ['ok' => false, 'mensaje' => 'PRODUCTO NO ENCONTRADO.'];
+        $nuevoStatus = $producto['status'] === 'Activo' ? 'Inactivo' : 'Activo';
+        $this->db->execute("UPDATE productos SET status = ? WHERE id_producto = ?", [$nuevoStatus, $idProducto]);
+        $accion = $nuevoStatus === 'Activo' ? 'REACTIVADO' : 'DESACTIVADO';
         registrarAuditoria(strtolower($accion), "Producto $accion");
         return ['ok' => true, 'mensaje' => "PRODUCTO $accion."];
     }
@@ -68,35 +68,35 @@ class Producto extends Model
      * vencimiento y proveedor; luego actualiza el registro y registra la
      * auditoría.
      *
-     * @param array $d Datos del formulario (id_producto, stocks, precios...).
+     * @param array $datosProducto Datos del formulario (id_producto, stocks, precios...).
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
-    public function editar(array $d): array
+    public function editar(array $datosProducto): array
     {
-        $id_prod = (int)$d['id_producto'];
-        $stock_minimo = (int)$d['stock_minimo'];
-        $stock_maximo = (int)$d['stock_maximo'];
-        $precio_venta = (float)$d['precio_venta'];
-        $precio_costo = (float)$d['precio_costo'];
-        $status = $d['status'];
-        $fecha_venc = $d['fecha_vencimiento'];
-        $id_proveedor = (int)$d['id_proveedor'];
+        $idProducto = (int)$datosProducto['id_producto'];
+        $stockMinimo = (int)$datosProducto['stock_minimo'];
+        $stockMaximo = (int)$datosProducto['stock_maximo'];
+        $precioVenta = (float)$datosProducto['precio_venta'];
+        $precioCosto = (float)$datosProducto['precio_costo'];
+        $status = $datosProducto['status'];
+        $fechaVencimiento = $datosProducto['fecha_vencimiento'];
+        $idProveedor = (int)$datosProducto['id_proveedor'];
 
-        if ($id_prod <= 0) return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO.'];
-        if ($stock_minimo <= 0) return ['ok' => false, 'mensaje' => 'STOCK MÍNIMO DEBE SER MAYOR A 0.'];
-        if ($stock_maximo < 0) return ['ok' => false, 'mensaje' => 'CAPACIDAD MÁXIMA NO PUEDE SER NEGATIVA.'];
-        if ($stock_maximo > 0 && $stock_maximo < $stock_minimo) {
+        if ($idProducto <= 0) return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO.'];
+        if ($stockMinimo <= 0) return ['ok' => false, 'mensaje' => 'STOCK MÍNIMO DEBE SER MAYOR A 0.'];
+        if ($stockMaximo < 0) return ['ok' => false, 'mensaje' => 'CAPACIDAD MÁXIMA NO PUEDE SER NEGATIVA.'];
+        if ($stockMaximo > 0 && $stockMaximo < $stockMinimo) {
             return ['ok' => false, 'mensaje' => 'LA CAPACIDAD MÁXIMA DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO (O 0 PARA HEREDAR LA DE LA CATEGORÍA).'];
         }
-        if ($precio_venta <= 0) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE SER MAYOR A 0.'];
-        if ($precio_costo <= 0) return ['ok' => false, 'mensaje' => 'PRECIO COSTO DEBE SER MAYOR A 0.'];
+        if ($precioVenta <= 0) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE SER MAYOR A 0.'];
+        if ($precioCosto <= 0) return ['ok' => false, 'mensaje' => 'PRECIO COSTO DEBE SER MAYOR A 0.'];
         if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
-        if ($fecha_venc && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha_venc)) $fecha_venc = null;
-        if ($id_proveedor <= 0) return ['ok' => false, 'mensaje' => 'DEBE SELECCIONAR UN PROVEEDOR.'];
+        if ($fechaVencimiento && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) $fechaVencimiento = null;
+        if ($idProveedor <= 0) return ['ok' => false, 'mensaje' => 'DEBE SELECCIONAR UN PROVEEDOR.'];
 
         $this->db->execute(
             "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, precio_costo=?, status=?, fecha_vencimiento=?, id_proveedor=? WHERE id_producto=?",
-            [$stock_minimo, $stock_maximo, $precio_venta, $precio_costo, $status, $fecha_venc, $id_proveedor, $id_prod]
+            [$stockMinimo, $stockMaximo, $precioVenta, $precioCosto, $status, $fechaVencimiento, $idProveedor, $idProducto]
         );
         registrarAuditoria('editar', 'Producto modificado');
         return ['ok' => true, 'mensaje' => 'PRODUCTO ACTUALIZADO EN EL INVENTARIO.'];

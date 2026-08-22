@@ -1,4 +1,11 @@
 <?php
+
+/** @var array<string, mixed> $kpis */
+/** @var array<int, array<string, mixed>> $solicitudes */
+/** @var array<int, array<string, mixed>> $historial */
+/** @var array<string, string>|null $flash */
+/** @var string $csrf */
+
 // ==========================================
 // VISTA: Solicitudes de Reposición (index)
 // ==========================================
@@ -88,20 +95,20 @@
                 </tr>
             </thead>
             <tbody>
-                <?php if (count($solicitudes) > 0): foreach ($solicitudes as $row): ?>
+                <?php if (count($solicitudes) > 0): foreach ($solicitudes as $pendingRequest): ?>
                         <tr>
-                            <td><span class="codigo-badge">#<?php echo (int)$row['id_solicitud']; ?></span></td>
-                            <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['motivo'] ?? 'Solicitud de reposición'); ?></td>
-                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($row['solicitante']); ?></td>
-                            <td class="text-center"><span class="cant-badge"><?php echo (int)$row['num_productos']; ?></span></td>
-                            <td class="text-center fw-bold"><?php echo (int)$row['total_unidades']; ?></td>
-                            <td class="fecha-cell"><?php echo date('d/m/Y H:i', strtotime($row['fecha_solicitud'])); ?></td>
+                            <td><span class="codigo-badge">#<?php echo (int)$pendingRequest['id_solicitud']; ?></span></td>
+                            <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($pendingRequest['motivo'] ?? 'Solicitud de reposición'); ?></td>
+                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($pendingRequest['solicitante']); ?></td>
+                            <td class="text-center"><span class="cant-badge"><?php echo (int)$pendingRequest['num_productos']; ?></span></td>
+                            <td class="text-center fw-bold"><?php echo (int)$pendingRequest['total_unidades']; ?></td>
+                            <td class="fecha-cell"><?php echo date('d/m/Y H:i', strtotime($pendingRequest['fecha_solicitud'])); ?></td>
                             <td class="text-center">
                                 <div class="d-flex gap-2 justify-content-center">
-                                    <a class="btn-atender" href="<?php echo APP_URL_BASE; ?>index.php?url=compras&atender_solicitud=<?php echo (int)$row['id_solicitud']; ?>">
+                                    <a class="btn-atender" href="<?php echo APP_URL_BASE; ?>index.php?url=compras&atender_solicitud=<?php echo (int)$pendingRequest['id_solicitud']; ?>">
                                         <i class="bi bi-check-lg me-1"></i>ATENDER
                                     </a>
-                                    <button type="button" class="btn-cancelar" onclick="confirmarCancelar(<?php echo (int)$row['id_solicitud']; ?>)" title="Cancelar"><i class="bi bi-x-lg"></i></button>
+                                    <button type="button" class="btn-cancelar" onclick="confirmarCancelar(<?php echo (int)$pendingRequest['id_solicitud']; ?>)" title="Cancelar"><i class="bi bi-x-lg"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -142,18 +149,18 @@
                 </tr>
             </thead>
             <tbody>
-                <?php if (count($historial) > 0): foreach ($historial as $row): ?>
+                <?php if (count($historial) > 0): foreach ($historial as $processedRequest): ?>
                         <tr>
-                            <td><span class="codigo-badge">#<?php echo (int)$row['id_solicitud']; ?></span></td>
-                            <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($row['motivo'] ?? 'Solicitud de reposición'); ?></td>
-                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($row['solicitante']); ?></td>
-                            <td class="text-center"><?php echo (int)$row['num_productos']; ?></td>
-                            <td class="text-center"><?php echo (int)$row['total_unidades']; ?></td>
-                            <td class="fecha-cell"><?php echo date('d/m/Y H:i', strtotime($row['fecha_solicitud'])); ?></td>
-                            <td><?php echo htmlspecialchars($row['nro_factura'] ?: '-'); ?></td>
+                            <td><span class="codigo-badge">#<?php echo (int)$processedRequest['id_solicitud']; ?></span></td>
+                            <td class="text-uppercase fw-bold"><?php echo htmlspecialchars($processedRequest['motivo'] ?? 'Solicitud de reposición'); ?></td>
+                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($processedRequest['solicitante']); ?></td>
+                            <td class="text-center"><?php echo (int)$processedRequest['num_productos']; ?></td>
+                            <td class="text-center"><?php echo (int)$processedRequest['total_unidades']; ?></td>
+                            <td class="fecha-cell"><?php echo date('d/m/Y H:i', strtotime($processedRequest['fecha_solicitud'])); ?></td>
+                            <td><?php echo htmlspecialchars($processedRequest['nro_factura'] ?: '-'); ?></td>
                             <td class="text-center">
-                                <?php $est = $row['estado']; ?>
-                                <span class="badge-jv <?php echo $est === 'Atendida' ? 'badge-success' : 'badge-danger'; ?>"><i class="bi <?php echo $est === 'Atendida' ? 'bi-check-circle' : 'bi-x-circle'; ?> me-1"></i><?php echo $est; ?></span>
+                                <?php $requestStatus = $processedRequest['estado']; ?>
+                                <span class="badge-jv <?php echo $requestStatus === 'Atendida' ? 'badge-success' : 'badge-danger'; ?>"><i class="bi <?php echo $requestStatus === 'Atendida' ? 'bi-check-circle' : 'bi-x-circle'; ?> me-1"></i><?php echo $requestStatus; ?></span>
                             </td>
                         </tr>
                     <?php endforeach;

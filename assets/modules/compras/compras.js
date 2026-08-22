@@ -9,11 +9,11 @@
         let toolboxTimer = null;
         let productoSeleccionado = null;
 
-        const IVA_PCT = (window.JV_CONFIG && typeof window.JV_CONFIG.c1 === 'number') ? window.JV_CONFIG.c1 : 16;
+        const taxPercentage = (window.JV_CONFIG && typeof window.JV_CONFIG.taxPercentage === 'number') ? window.JV_CONFIG.taxPercentage : 16;
 
         // Formatea un número como moneda en dólares: $ con separador de miles y 2 decimales.
-        function fmt(n) {
-            return '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        function formatCurrency(amount) {
+            return '$' + Number(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
         // ---- Formateo de precio en el input ----
@@ -70,26 +70,26 @@
                 abrirResultados();
                 return;
             }
-            items.forEach(function(it) {
+            items.forEach(function(product) {
                 const div = document.createElement('div');
                 div.className = 'com-resultado';
-                div.dataset.id = it.id;
-                div.dataset.nombre = it.nombre;
-                div.dataset.precio = it.precio_costo;
+                div.dataset.id = product.id;
+                div.dataset.nombre = product.nombre;
+                div.dataset.precio = product.precio_costo;
 
                 const left = document.createElement('div');
                 const nombreEl = document.createElement('div');
                 nombreEl.className = 'r-nombre';
-                nombreEl.textContent = it.nombre;
+                nombreEl.textContent = product.nombre;
                 const skuEl = document.createElement('div');
                 skuEl.className = 'r-sku';
-                skuEl.textContent = it.sku || '';
+                skuEl.textContent = product.sku || '';
                 left.appendChild(nombreEl);
                 left.appendChild(skuEl);
 
                 const stockEl = document.createElement('span');
                 stockEl.className = 'r-stock';
-                stockEl.textContent = 'Stock: ' + it.stock;
+                stockEl.textContent = 'Stock: ' + product.stock;
 
                 div.appendChild(left);
                 div.appendChild(stockEl);
@@ -100,33 +100,33 @@
 
         // Ejecuta la búsqueda de productos por AJAX con debounce de 350 ms para no consultar en cada tecla.
         function buscarProductos() {
-            const q = toolboxInput.value.trim();
-            if (!q) {
+            const searchTerm = toolboxInput.value.trim();
+            if (!searchTerm) {
                 cerrarResultados();
                 productoSeleccionado = null;
                 return;
             }
             window.clearTimeout(toolboxTimer);
             toolboxTimer = window.setTimeout(function() {
-                jvBuscarProductos({ q: q, limit: 15 }, function(d) {
-                    if (d && d.success) renderResultados(d.items);
+                jvBuscarProductos({ q: searchTerm, limit: 15 }, function(searchResponse) {
+                    if (searchResponse && searchResponse.success) renderResultados(searchResponse.items);
                     else renderResultados([]);
                 });
             }, 350);
         }
 
         // Al elegir un resultado guarda el producto seleccionado, rellena el input y sugiere el precio de costo.
-        function seleccionarProducto(el) {
-            if (!el || !el.dataset.id) return;
+        function seleccionarProducto(productElement) {
+            if (!productElement || !productElement.dataset.id) return;
             productoSeleccionado = {
-                id: parseInt(el.dataset.id, 10),
-                nombre: el.dataset.nombre
+                id: parseInt(productElement.dataset.id, 10),
+                nombre: productElement.dataset.nombre
             };
             toolboxInput.value = productoSeleccionado.nombre;
             const precioEl = document.getElementById('inputPrecio');
             if (precioEl && !precioEl.value.trim()) {
-                const sugerido = parseFloat(el.dataset.precio) || 0;
-                precioEl.value = sugerido > 0 ? sugerido.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00';
+                const suggestedPrice = parseFloat(productElement.dataset.precio) || 0;
+                precioEl.value = suggestedPrice > 0 ? suggestedPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00';
             }
             cerrarResultados();
             const cantEl = document.getElementById('inputCant');
@@ -150,11 +150,11 @@
                 if (toolboxInput) toolboxInput.focus();
                 return;
             }
-            const cant = parseInt(document.getElementById('inputCant').value) || 0;
+            const requestedQuantity = parseInt(document.getElementById('inputCant').value) || 0;
             const precio = parseFloat(document.getElementById('inputPrecio').value.replace(/,/g, '')) || 0;
-            const venc = document.getElementById('inputVencimiento').value || '';
+            const expirationDate = document.getElementById('inputVencimiento').value || '';
 
-            if (cant < 1 || cant > 999999) {
+            if (requestedQuantity < 1 || requestedQuantity > 999999) {
                 Swal.fire({
                     title: 'Cantidad inválida',
                     text: 'Ingrese una cantidad entre 1 y 999,999',
@@ -180,10 +180,10 @@
             productos.push({
                 id: productoSeleccionado.id,
                 nombre: productoSeleccionado.nombre,
-                cantidad: cant,
+                cantidad: requestedQuantity,
                 precio: precio,
-                fecha_vencimiento: venc,
-                total: cant * precio
+                fecha_vencimiento: expirationDate,
+                total: requestedQuantity * precio
             });
             actualizarTabla();
 
@@ -196,8 +196,8 @@
         }
 
         // Elimina del array la línea de producto en la posición dada y redibuja la tabla.
-        function quitarProducto(idx) {
-            productos.splice(idx, 1);
+        function quitarProducto(productIndex) {
+            productos.splice(productIndex, 1);
             actualizarTabla();
         }
 
@@ -208,28 +208,28 @@
                 body.innerHTML = '<tr id="filaVacia"><td colspan="7" style="padding:24px 12px;text-align:center;color:var(--jv-text-muted);font-size:.85rem;border-bottom:1px solid var(--jv-border);">⬆ Busque un producto y presione + para agregarlo</td></tr>';
             } else {
                 body.innerHTML = '';
-                productos.forEach((p, i) => {
+                productos.forEach((product, productIndex) => {
                     const tr = document.createElement('tr');
-                    const fechaFmt = p.fecha_vencimiento ? p.fecha_vencimiento.split('-').reverse().join('/') : '—';
-                    tr.innerHTML = '<td style="padding:10px 12px;color:var(--jv-text-muted);text-align:center;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + (i + 1) + '</td>' +
-                        '<td style="padding:10px 12px;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + escapeHtml(p.nombre) + '</td>' +
-                        '<td style="padding:10px 12px;font-size:.95rem;text-align:center;border-bottom:1px solid var(--jv-border);">' + p.cantidad + '</td>' +
-                        '<td style="padding:10px 12px;font-size:.95rem;text-align:right;color:var(--jv-text-muted);border-bottom:1px solid var(--jv-border);">' + fmt(p.precio) + '</td>' +
-                        '<td style="padding:10px 12px;font-size:.95rem;text-align:center;color:var(--jv-text-muted);border-bottom:1px solid var(--jv-border);">' + fechaFmt + '</td>' +
-                        '<td style="padding:10px 12px;font-size:1rem;text-align:right;color:var(--jv-navy);font-weight:700;border-bottom:1px solid var(--jv-border);">' + fmt(p.total) + '</td>' +
-                        '<td style="padding:10px 12px;border-bottom:1px solid var(--jv-border);"><button type="button" class="btn btn-sm border-0" style="padding:0;color:var(--jv-danger);font-size:1rem;line-height:1;" onclick="quitarProducto(' + i + ')"><i class="bi bi-x-circle"></i></button></td>';
+                    const formattedExpirationDate = product.fecha_vencimiento ? product.fecha_vencimiento.split('-').reverse().join('/') : '—';
+                    tr.innerHTML = '<td style="padding:10px 12px;color:var(--jv-text-muted);text-align:center;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + (productIndex + 1) + '</td>' +
+                        '<td style="padding:10px 12px;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + escapeHtml(product.nombre) + '</td>' +
+                        '<td style="padding:10px 12px;font-size:.95rem;text-align:center;border-bottom:1px solid var(--jv-border);">' + product.cantidad + '</td>' +
+                        '<td style="padding:10px 12px;font-size:.95rem;text-align:right;color:var(--jv-text-muted);border-bottom:1px solid var(--jv-border);">' + formatCurrency(product.precio) + '</td>' +
+                        '<td style="padding:10px 12px;font-size:.95rem;text-align:center;color:var(--jv-text-muted);border-bottom:1px solid var(--jv-border);">' + formattedExpirationDate + '</td>' +
+                        '<td style="padding:10px 12px;font-size:1rem;text-align:right;color:var(--jv-navy);font-weight:700;border-bottom:1px solid var(--jv-border);">' + formatCurrency(product.total) + '</td>' +
+                        '<td style="padding:10px 12px;border-bottom:1px solid var(--jv-border);"><button type="button" class="btn btn-sm border-0" style="padding:0;color:var(--jv-danger);font-size:1rem;line-height:1;" onclick="quitarProducto(' + productIndex + ')"><i class="bi bi-x-circle"></i></button></td>';
                     body.appendChild(tr);
                 });
             }
-            const subtotal = productos.reduce(function(s, p) {
-                return s + p.total;
+            const subtotal = productos.reduce(function(runningSubtotal, product) {
+                return runningSubtotal + product.total;
             }, 0);
-            const iva = subtotal * IVA_PCT / 100;
+            const iva = subtotal * taxPercentage / 100;
             const total = subtotal + iva;
             document.getElementById('totalItems').textContent = productos.length;
-            document.getElementById('totalSubtotal').textContent = fmt(subtotal);
-            document.getElementById('totalIva').textContent = fmt(iva);
-            document.getElementById('totalCosto').textContent = fmt(total);
+            document.getElementById('totalSubtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('totalIva').textContent = formatCurrency(iva);
+            document.getElementById('totalCosto').textContent = formatCurrency(total);
             document.getElementById('btnGuardar').disabled = productos.length === 0;
             document.getElementById('productosData').value = JSON.stringify(productos);
         }
@@ -379,7 +379,7 @@
                 confirmButtonText: 'SÍ, ANULAR',
                 cancelButtonText: 'CANCELAR'
             }).then(r => {
-                if (r.isConfirmed) jvPost({ eliminar: id, csrf_token: window.JV_CONFIG.c0 });
+                if (r.isConfirmed) jvPost({ eliminar: id, csrf_token: window.JV_CONFIG.csrfToken });
             });
         }
 
@@ -397,14 +397,14 @@
 
             // Prefill desde una solicitud de compra (atender_solicitud)
             if (window.COMPRAS_SOLICITUD && window.COMPRAS_SOLICITUD.items && window.COMPRAS_SOLICITUD.items.length) {
-                window.COMPRAS_SOLICITUD.items.forEach(function(it) {
+                window.COMPRAS_SOLICITUD.items.forEach(function(requestItem) {
                     productos.push({
-                        id: it.id,
-                        nombre: it.nombre,
-                        cantidad: it.cantidad,
-                        precio: it.precio,
-                        fecha_vencimiento: it.fecha_vencimiento || '',
-                        total: it.cantidad * it.precio
+                        id: requestItem.id,
+                        nombre: requestItem.nombre,
+                        cantidad: requestItem.cantidad,
+                        precio: requestItem.precio,
+                        fecha_vencimiento: requestItem.fecha_vencimiento || '',
+                        total: requestItem.cantidad * requestItem.precio
                     });
                 });
                 actualizarTabla();

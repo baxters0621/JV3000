@@ -3,9 +3,9 @@
         // SALIDAS / VENTAS — registro con toolbox y validación FEFO
         // ==========================================
 
-        const modalS = new bootstrap.Modal(document.getElementById('modalSalida'));
-        const TIPO_MAP = window.JV_CONFIG.c0;
-        let s_productos = [];
+        const salidaModal = new bootstrap.Modal(document.getElementById('modalSalida'));
+        const movementTypeGroups = window.JV_CONFIG.movementTypeGroups;
+        let selectedProducts = [];
         let productoSeleccionado = null;
         let toolboxTimer = null;
         let toolboxTimerCli = null;
@@ -13,7 +13,7 @@
         // Devuelve el grupo del tipo de movimiento seleccionado (venta, regalias, merma).
         function grupoActual() {
             const tipo = document.getElementById('s_tipo');
-            return tipo && tipo.value ? (TIPO_MAP[tipo.value] || '') : '';
+            return tipo && tipo.value ? (movementTypeGroups[tipo.value] || '') : '';
         }
 
         // ---- Toolbox de PRODUCTOS (AJAX) ----
@@ -41,18 +41,18 @@
                 abrirResultados();
                 return;
             }
-            items.forEach(function(it) {
+            items.forEach(function(product) {
                 const div = document.createElement('div');
                 div.className = 'com-resultado';
-                div.dataset.id = it.id;
-                div.dataset.nombre = it.nombre;
-                div.dataset.sku = it.sku;
-                div.dataset.precioVenta = it.precio_venta;
-                div.dataset.precioCosto = it.precio_costo;
-                div.dataset.stock = it.stock;
-                div.dataset.vencido = it.vencido;
+                div.dataset.id = product.id;
+                div.dataset.nombre = product.nombre;
+                div.dataset.sku = product.sku;
+                div.dataset.precioVenta = product.precio_venta;
+                div.dataset.precioCosto = product.precio_costo;
+                div.dataset.stock = product.stock;
+                div.dataset.vencido = product.vencido;
 
-                const bloqueado = it.stock <= 0;
+                const bloqueado = product.stock <= 0;
                 if (bloqueado) {
                     div.classList.add('com-resultado-bloqueado');
                     div.dataset.blocked = '1';
@@ -61,18 +61,18 @@
                 const left = document.createElement('div');
                 const nombreEl = document.createElement('div');
                 nombreEl.className = 'r-nombre';
-                const etqBloqueo = it.stock <= 0 ? '«AGOTADO» ' : (it.vencido ? '«VENCIDO» ' : '');
-                nombreEl.dataset.tooltip = etqBloqueo + it.nombre;
-                nombreEl.textContent = etqBloqueo + it.nombre;
+                const etqBloqueo = product.stock <= 0 ? '«AGOTADO» ' : (product.vencido ? '«VENCIDO» ' : '');
+                nombreEl.dataset.tooltip = etqBloqueo + product.nombre;
+                nombreEl.textContent = etqBloqueo + product.nombre;
                 const skuEl = document.createElement('div');
                 skuEl.className = 'r-sku';
-                skuEl.textContent = it.sku || '';
+                skuEl.textContent = product.sku || '';
                 left.appendChild(nombreEl);
                 left.appendChild(skuEl);
 
                 const stockEl = document.createElement('span');
                 stockEl.className = 'r-stock';
-                stockEl.textContent = 'Stock: ' + it.stock;
+                stockEl.textContent = 'Stock: ' + product.stock;
 
                 div.appendChild(left);
                 div.appendChild(stockEl);
@@ -83,8 +83,8 @@
 
         // Busca productos por AJAX con retardo y según el grupo actual del movimiento.
         function buscarProductos() {
-            const q = toolboxInput.value.trim();
-            if (!q) {
+            const searchTerm = toolboxInput.value.trim();
+            if (!searchTerm) {
                 cerrarResultados();
                 productoSeleccionado = null;
                 return;
@@ -92,29 +92,29 @@
             const grupo = grupoActual();
             window.clearTimeout(toolboxTimer);
             toolboxTimer = window.setTimeout(function() {
-                jvBuscarProductos({ q: q, limit: 15, vencidos: grupo === 'merma' ? 1 : 0, solo_con_stock: grupo === 'merma' ? 1 : 0 }, function(d) {
-                    if (d && d.success) renderResultados(d.items);
+                jvBuscarProductos({ q: searchTerm, limit: 15, vencidos: grupo === 'merma' ? 1 : 0, solo_con_stock: grupo === 'merma' ? 1 : 0 }, function(searchResponse) {
+                    if (searchResponse && searchResponse.success) renderResultados(searchResponse.items);
                     else renderResultados([]);
                 });
             }, 350);
         }
 
         // Maneja la elección de un producto: bloquea venta sin stock y carga el precio del grupo.
-        function seleccionarProducto(el) {
-            if (!el || !el.dataset.id) return;
-            const bloqueado = el.dataset.blocked === '1';
+        function seleccionarProducto(productElement) {
+            if (!productElement || !productElement.dataset.id) return;
+            const bloqueado = productElement.dataset.blocked === '1';
             const grupo = grupoActual();
             if (bloqueado && grupo !== 'merma') {
-                const prod = {
-                    id: parseInt(el.dataset.id, 10),
-                    nombre: el.dataset.nombre,
-                    sku: el.dataset.sku,
-                    stock: parseInt(el.dataset.stock, 10) || 0
+                const productWithoutStock = {
+                    id: parseInt(productElement.dataset.id, 10),
+                    nombre: productElement.dataset.nombre,
+                    sku: productElement.dataset.sku,
+                    stock: parseInt(productElement.dataset.stock, 10) || 0
                 };
                 Swal.fire({
                     icon: 'warning',
                     title: 'SIN STOCK DISPONIBLE',
-                    html: '<div style="text-align:left;"><strong>' + escapeHtml(prod.nombre) + '</strong><br><small>' + escapeHtml(prod.sku || '') + '</small><br><span style="color:var(--jv-danger);font-weight:700;">Stock disponible: 0</span></div><div style="margin-top:10px;color:var(--jv-text-muted);font-size:.85rem;">Este producto no puede venderse. Puede solicitarlo a Compras para reponerlo.</div>',
+                    html: '<div style="text-align:left;"><strong>' + escapeHtml(productWithoutStock.nombre) + '</strong><br><small>' + escapeHtml(productWithoutStock.sku || '') + '</small><br><span style="color:var(--jv-danger);font-weight:700;">Stock disponible: 0</span></div><div style="margin-top:10px;color:var(--jv-text-muted);font-size:.85rem;">Este producto no puede venderse. Puede solicitarlo a Compras para reponerlo.</div>',
                     background: '#fff',
                     color: '#212529',
                     confirmButtonColor: '#EA580C',
@@ -122,17 +122,17 @@
                     confirmButtonText: '🚚 Pedir a Compras',
                     cancelButtonText: 'CERRAR'
                 }).then(r => {
-                    if (r.isConfirmed) agregarSolicitudCompras(prod);
+                    if (r.isConfirmed) agregarSolicitudCompras(productWithoutStock);
                 });
                 return;
             }
             productoSeleccionado = {
-                id: parseInt(el.dataset.id, 10),
-                nombre: el.dataset.nombre,
-                sku: el.dataset.sku,
-                precioVenta: parseFloat(el.dataset.precioVenta) || 0,
-                precioCosto: parseFloat(el.dataset.precioCosto) || 0,
-                stock: parseInt(el.dataset.stock, 10) || 0
+                id: parseInt(productElement.dataset.id, 10),
+                nombre: productElement.dataset.nombre,
+                sku: productElement.dataset.sku,
+                precioVenta: parseFloat(productElement.dataset.precioVenta) || 0,
+                precioCosto: parseFloat(productElement.dataset.precioCosto) || 0,
+                stock: parseInt(productElement.dataset.stock, 10) || 0
             };
             toolboxInput.value = productoSeleccionado.nombre;
             cargarPrecio();
@@ -191,31 +191,31 @@
 
         // Busca clientes por AJAX con retardo según lo escrito en el campo de cliente.
         function buscarClientes() {
-            const q = toolboxCli.value.trim();
-            if (!q) {
+            const searchTerm = toolboxCli.value.trim();
+            if (!searchTerm) {
                 cerrarResultadosCli();
                 return;
             }
             window.clearTimeout(toolboxTimerCli);
             toolboxTimerCli = window.setTimeout(function() {
-                jvBuscarClientes({ q: q, limit: 15 }, function(d) {
-                    if (d && d.success) renderResultadosCli(d.items);
+                jvBuscarClientes({ q: searchTerm, limit: 15 }, function(searchResponse) {
+                    if (searchResponse && searchResponse.success) renderResultadosCli(searchResponse.items);
                     else renderResultadosCli([]);
                 });
             }, 350);
         }
 
         // Rellena los campos de cliente y RIF al elegir un cliente de la lista.
-        function seleccionarCliente(el) {
-            if (!el || !el.dataset.id) return;
-            document.getElementById('s_cliente').value = el.dataset.nombre;
-            document.getElementById('s_id_cliente').value = el.dataset.id;
-            toolboxCli.value = el.dataset.nombre;
-            const doc = el.dataset.documento || '';
-            const m = doc.match(/^([VEJGPC])-(\d+)(?:-(\d+))?/);
-            if (m) {
-                document.getElementById('s_rif_tipo').value = m[1];
-                document.getElementById('s_rif_num').value = m[2] + (m[3] || '');
+        function seleccionarCliente(clientElement) {
+            if (!clientElement || !clientElement.dataset.id) return;
+            document.getElementById('s_cliente').value = clientElement.dataset.nombre;
+            document.getElementById('s_id_cliente').value = clientElement.dataset.id;
+            toolboxCli.value = clientElement.dataset.nombre;
+            const clientDocument = clientElement.dataset.documento || '';
+            const documentMatch = clientDocument.match(/^([VEJGPC])-(\d+)(?:-(\d+))?/);
+            if (documentMatch) {
+                document.getElementById('s_rif_tipo').value = documentMatch[1];
+                document.getElementById('s_rif_num').value = documentMatch[2] + (documentMatch[3] || '');
                 validarRIFInput();
             }
             cerrarResultadosCli();
@@ -236,8 +236,8 @@
                 if (toolboxInput) toolboxInput.focus();
                 return;
             }
-            const cant = parseInt(document.getElementById('s_cant').value) || 0;
-            if (cant < 1 || cant > 999999) {
+            const requestedQuantity = parseInt(document.getElementById('s_cant').value) || 0;
+            if (requestedQuantity < 1 || requestedQuantity > 999999) {
                 Swal.fire({
                     title: 'Cantidad inválida',
                     text: 'Ingrese una cantidad entre 1 y 999,999',
@@ -250,18 +250,18 @@
                 return;
             }
             const grupo = grupoActual();
-            const stockDisp = productoSeleccionado.stock;
-            if (cant > stockDisp) {
+            const availableStock = productoSeleccionado.stock;
+            if (requestedQuantity > availableStock) {
                 if (grupo === 'venta') {
-                    const prod = {
+                    const productWithoutStock = {
                         id: productoSeleccionado.id,
                         nombre: productoSeleccionado.nombre,
                         sku: productoSeleccionado.sku,
-                        stock: stockDisp
+                        stock: availableStock
                     };
                     Swal.fire({
                         title: 'Stock insuficiente',
-                        text: 'Disponible para este tipo de movimiento: ' + stockDisp + ', solicitado: ' + cant,
+                        text: 'Disponible para este tipo de movimiento: ' + availableStock + ', solicitado: ' + requestedQuantity,
                         icon: 'warning',
                         background: '#fff',
                         color: '#212529',
@@ -273,7 +273,7 @@
                         if (r.isConfirmed) {
                             const cantEl = document.getElementById('s_cant');
                             if (cantEl) cantEl.value = Math.max(1, parseInt(cantEl.value, 10) || 1);
-                            agregarSolicitudCompras(prod);
+                            agregarSolicitudCompras(productWithoutStock);
                         } else {
                             document.getElementById('s_cant').focus();
                         }
@@ -281,7 +281,7 @@
                 } else {
                     Swal.fire({
                         title: 'Stock insuficiente',
-                        text: 'Disponible para este tipo de movimiento: ' + stockDisp + ', solicitado: ' + cant,
+                        text: 'Disponible para este tipo de movimiento: ' + availableStock + ', solicitado: ' + requestedQuantity,
                         icon: 'warning',
                         background: '#fff',
                         color: '#212529',
@@ -303,11 +303,11 @@
                 });
                 return;
             }
-            s_productos.push({
+            selectedProducts.push({
                 id_producto: productoSeleccionado.id,
                 sku: productoSeleccionado.sku,
                 nombre_producto: productoSeleccionado.nombre,
-                cantidad: cant,
+                cantidad: requestedQuantity,
                 precio_venta: precio
             });
             actualizarTablaSalida();
@@ -319,8 +319,8 @@
         }
 
         // Quita un producto de la lista de la salida por su índice.
-        function quitarProductoSalida(idx) {
-            s_productos.splice(idx, 1);
+        function quitarProductoSalida(productIndex) {
+            selectedProducts.splice(productIndex, 1);
             actualizarTablaSalida();
         }
 
@@ -332,16 +332,16 @@
         // Agrega el producto a la solicitud de compra, acumulando cantidad si ya existe.
         function agregarSolicitudCompras(prod) {
             if (!prod || !prod.id) return;
-            const cant = Math.max(1, parseInt(document.getElementById('s_cant').value, 10) || 1);
+            const requestedQuantity = Math.max(1, parseInt(document.getElementById('s_cant').value, 10) || 1);
             const existente = s_solicitud.find(p => p.id_producto === prod.id);
             if (existente) {
-                existente.cantidad += cant;
+                existente.cantidad += requestedQuantity;
             } else {
                 s_solicitud.push({
                     id_producto: prod.id,
                     sku: prod.sku || '',
                     nombre_producto: prod.nombre || '',
-                    cantidad: cant
+                    cantidad: requestedQuantity
                 });
             }
             actualizarSolicitudCompras();
@@ -395,7 +395,7 @@
             const btn = document.getElementById('btnEnviarSolicitud');
             if (btn) { btn.disabled = true; btn.innerHTML = '⏳ ENVIANDO...'; }
             const fd = new FormData();
-            fd.append('csrf_token', window.JV_CONFIG.c1);
+            fd.append('csrf_token', window.JV_CONFIG.csrfToken);
             fd.append('items', JSON.stringify(items));
             fetch((window.JV_BASE || '') + 'index.php?url=solicitudes/crear', { method: 'POST', body: fd })
                 .then(r => r.json())
@@ -425,7 +425,7 @@
         // Redibuja la tabla de productos de la salida y actualiza totales de ítems y monto.
         function actualizarTablaSalida() {
             const tbody = document.getElementById('s_productos_body');
-            if (!s_productos.length) {
+            if (!selectedProducts.length) {
                 tbody.innerHTML = '<tr id="s_fila_vacia"><td colspan="6" class="sal-fila-vacia">⬆ Agregue productos con los controles de arriba</td></tr>';
                 document.getElementById('s_total_items').textContent = '0';
                 document.getElementById('s_total_monto').textContent = '$0.00';
@@ -434,7 +434,7 @@
             let html = '';
             let totalItems = 0;
             let totalMonto = 0;
-            s_productos.forEach((p, i) => {
+            selectedProducts.forEach((p, i) => {
                 const subtotal = p.cantidad * p.precio_venta;
                 totalItems += p.cantidad;
                 totalMonto += subtotal;
@@ -460,14 +460,14 @@
             limpiarErrores();
             const sel = document.getElementById('s_tipo');
             const tipoId = sel.value;
-            const grupo = TIPO_MAP[tipoId] || '';
+            const grupo = movementTypeGroups[tipoId] || '';
             document.querySelectorAll('.sal-field-group').forEach(el => {
                 el.classList.toggle('active', el.dataset.grupo === grupo);
             });
             const nombres = {venta:'REGISTRAR VENTA', regalias:'REGISTRAR REGALÍA', merma:'REGISTRAR AJUSTE'};
             document.getElementById('modalTitle').innerText = nombres[grupo] || 'REGISTRAR MOVIMIENTO';
             // reset productos al cambiar tipo
-            s_productos = [];
+            selectedProducts = [];
             s_solicitud = [];
             productoSeleccionado = null;
             if (toolboxInput) toolboxInput.value = '';
@@ -483,7 +483,7 @@
             document.getElementById('s_accion').value = 'registrar';
             document.getElementById('s_id_edit').value = '';
             document.getElementById('modalTitle').innerText = 'REGISTRAR MOVIMIENTO';
-            s_productos = [];
+            selectedProducts = [];
             s_solicitud = [];
             productoSeleccionado = null;
             actualizarTablaSalida();
@@ -509,7 +509,7 @@
             if (toolboxInput) toolboxInput.value = '';
             if (resultadosBox) resultadosBox.classList.remove('abierto');
             document.getElementById('s_precio').value = '';
-            modalS.show();
+            salidaModal.show();
         }
 
         // Valida y formatea el RIF o cédula ingresado y muestra si es válido o incompleto.
@@ -575,9 +575,9 @@
             // cargar productos desde JSON si existe (después de toggleCampos, que resetea la lista)
             try {
                 var prods = JSON.parse(data.productos_json || '[]');
-                if (prods.length) { s_productos = prods; actualizarTablaSalida(); }
+                if (prods.length) { selectedProducts = prods; actualizarTablaSalida(); }
             } catch(e) {}
-            modalS.show();
+            salidaModal.show();
         }
 
         // Valida el formulario completo y solicita la vista previa de la nota de entrega al servidor.
@@ -590,9 +590,9 @@
             const tipo = document.getElementById('s_tipo');
             if (!tipo.value) { marcarError(tipo, 'SELECCIONE TIPO'); valido = false; if (!primerError) primerError = tipo; }
 
-            if (!s_productos.length) { marcarError(document.getElementById('buscarProductoSal'), 'AGREGUE PRODUCTOS'); valido = false; if (!primerError) primerError = document.getElementById('buscarProductoSal'); }
+            if (!selectedProducts.length) { marcarError(document.getElementById('buscarProductoSal'), 'AGREGUE PRODUCTOS'); valido = false; if (!primerError) primerError = document.getElementById('buscarProductoSal'); }
 
-            const grupo = TIPO_MAP[tipo.value] || '';
+            const grupo = movementTypeGroups[tipo.value] || '';
             if (grupo === 'merma') {
                 const causa = document.getElementById('s_causa');
                 if (!causa.value) { marcarError(causa, 'SELECCIONE CAUSA'); valido = false; if (!primerError) primerError = causa; }
@@ -626,7 +626,7 @@
 
             let pj = document.getElementById('formSalida').querySelector('[name="productos_data"]');
             if (!pj) { pj = document.createElement('input'); pj.type = 'hidden'; pj.name = 'productos_data'; document.getElementById('formSalida').appendChild(pj); }
-            const payload = s_productos.map(p => ({
+            const payload = selectedProducts.map(p => ({
                 id_producto: parseInt(p.id_producto),
                 cantidad: parseInt(p.cantidad),
                 precio: parseFloat(p.precio_venta)
@@ -641,7 +641,7 @@
                     btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA';
                     if (d.ok) {
                         window.open((window.JV_BASE || '') + 'index.php?url=nota_entrega&token=' + (d.token || ''), '_blank');
-                        modalS.hide();
+                        salidaModal.hide();
                     } else {
                         Swal.fire({icon:'error',title:'ERROR',text:d.error||'Error al generar preview.',background:'#fff',color:'#212529',confirmButtonColor:'#DC2626'});
                     }
@@ -683,7 +683,7 @@
         // Pide confirmación para anular la salida; el stock vuelve al inventario.
         function confirmarEliminar(id) {
             Swal.fire({title:'¿ANULAR?',text:'El stock volverá al inventario.',icon:'warning',showCancelButton:true,background:'#fff',color:'#212529',confirmButtonColor:'#DC2626',cancelButtonColor:'#CED4DA',confirmButtonText:'SÍ, ANULAR',cancelButtonText:'CANCELAR'}).then(r => {
-                if (r.isConfirmed) jvPost({ eliminar: id, csrf_token: window.JV_CONFIG.c1 });
+                if (r.isConfirmed) jvPost({ eliminar: id, csrf_token: window.JV_CONFIG.csrfToken });
             });
         }
 

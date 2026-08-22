@@ -5,20 +5,20 @@
 // sessionStorage con el que genera el layout. Si no coincide, la pestaña fue
 // duplicada/reabierta y se cierra la sesión (sendBeacon + redirect al login).
 (function(){
-    var cfg = window.JV_CONFIG && window.JV_CONFIG.tab;
-    if (!cfg) return;
-    var marker = cfg.marker;
+    var tabConfiguration = window.JV_CONFIG && window.JV_CONFIG.tab;
+    if (!tabConfiguration) return;
+    var tabMarker = tabConfiguration.marker;
     var stored = sessionStorage.getItem('jv_tab');
-    if (cfg.fresh) {
-        sessionStorage.setItem('jv_tab', marker);
+    if (tabConfiguration.fresh) {
+        sessionStorage.setItem('jv_tab', tabMarker);
         return;
     }
-    if (stored !== marker) {
-        navigator.sendBeacon((cfg.base || '') + 'login/logout.php?action=tab_closed', '1');
-        window.location.replace((cfg.base || '') + 'login/login.php?error=expired');
+    if (stored !== tabMarker) {
+        navigator.sendBeacon((tabConfiguration.base || '') + 'login/logout.php?action=tab_closed', '1');
+        window.location.replace((tabConfiguration.base || '') + 'login/login.php?error=expired');
         return;
     }
-    sessionStorage.setItem('jv_tab', marker);
+    sessionStorage.setItem('jv_tab', tabMarker);
 })();
 
 // ==========================================
@@ -48,9 +48,9 @@ function jvPost(params, url) {
 // ==========================================
 // Convierte los caracteres especiales (&, <, >, comillas) de un texto en sus
 // entidades HTML para poder insertarlo de forma segura en la página.
-function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function(c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function(character) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
     });
 }
 
@@ -61,26 +61,26 @@ function escapeHtml(s) {
 // Calcula la ruta base relativa hacia la raíz del sistema: los módulos,
 // dashboard y login viven en subcarpetas y necesitan subir un nivel.
 function jvBasePath() {
-    var seg = window.location.pathname.split('/');
-    var last = seg[seg.length - 2] || '';
-    return (last === 'modules' || last === 'dashboard' || last === 'login') ? '../' : '';
+    var pathSegments = window.location.pathname.split('/');
+    var parentFolder = pathSegments[pathSegments.length - 2] || '';
+    return (parentFolder === 'modules' || parentFolder === 'dashboard' || parentFolder === 'login') ? '../' : '';
 }
 
 // Petición GET AJAX contra un endpoint del sistema (marca X-Requested-With).
 // Ignora parámetros vacíos y devuelve un JSON vacío si la petición falla.
 function jvApiGet(endpoint, params, cb) {
-    var qs = [];
-    var k;
-    for (k in (params || {})) {
-        if (Object.prototype.hasOwnProperty.call(params, k) && params[k] !== '' && params[k] !== null && params[k] !== undefined) {
-            qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+    var queryParts = [];
+    var parameterName;
+    for (parameterName in (params || {})) {
+        if (Object.prototype.hasOwnProperty.call(params, parameterName) && params[parameterName] !== '' && params[parameterName] !== null && params[parameterName] !== undefined) {
+            queryParts.push(encodeURIComponent(parameterName) + '=' + encodeURIComponent(params[parameterName]));
         }
     }
-    fetch(jvBasePath() + endpoint + (qs.length ? '?' + qs.join('&') : ''), {
+    fetch(jvBasePath() + endpoint + (queryParts.length ? '?' + queryParts.join('&') : ''), {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
-    .then(function(r) { return r.json(); })
-    .then(function(d) { cb(d); })
+    .then(function(response) { return response.json(); })
+    .then(function(responseData) { cb(responseData); })
     .catch(function() { cb({ success: false, items: [] }); });
 }
 
@@ -106,23 +106,23 @@ function jvBuscarClientes(params, cb) {
 
 // Limpia todas las marcas de error (bordes rojos y mensajes) de la página.
 function limpiarErrores() {
-    document.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); });
-    document.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+    document.querySelectorAll('.input-error').forEach(function(inputElement) { inputElement.classList.remove('input-error'); });
+    document.querySelectorAll('.field-error').forEach(function(errorElement) { errorElement.remove(); });
 }
 
 // Marca un campo como inválido: añade borde rojo y, si hay mensaje,
 // inserta un <small> con el texto del error debajo del campo.
-function marcarError(el, msg) {
-    el.classList.add('input-error');
-    if (msg && el.id) {
-        var errEl = document.getElementById(el.id + '_err');
-        if (!errEl) {
-            errEl = document.createElement('small');
-            errEl.id = el.id + '_err';
-            errEl.className = 'field-error';
-            errEl.style.cssText = 'color:#DC2626;font-size:.7rem;margin-top:2px;display:block;';
-            el.parentNode.appendChild(errEl);
+function marcarError(inputElement, errorMessage) {
+    inputElement.classList.add('input-error');
+    if (errorMessage && inputElement.id) {
+        var errorElement = document.getElementById(inputElement.id + '_err');
+        if (!errorElement) {
+            errorElement = document.createElement('small');
+            errorElement.id = inputElement.id + '_err';
+            errorElement.className = 'field-error';
+            errorElement.style.cssText = 'color:#DC2626;font-size:.7rem;margin-top:2px;display:block;';
+            inputElement.parentNode.appendChild(errorElement);
         }
-        errEl.textContent = msg;
+        errorElement.textContent = errorMessage;
     }
 }

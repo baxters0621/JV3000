@@ -5,6 +5,7 @@
 require_once __DIR__ . '/../init.php';
 
 $db = Database::getInstance();
+$base_assets = BASE_PATH . 'assets/';
 
 // ==========================================
 // VERIFICAR SESIÓN Y REDIRIGIR
@@ -166,15 +167,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 
             // Si NO hubo login exitoso y la clave no era correcta, registrar intento fallido
             if (!$login_exitoso && !$clave_correcta) {
-                $existing = $db->fetchOne("SELECT id, intentos FROM login_intentos WHERE ip_address = ?", [$ip_usuario]);
-                if ($existing) {
-                    $nuevos_intentos = (int)$existing['intentos'] + 1;
-                    $db->execute("UPDATE login_intentos SET intentos = ?, ultimo_intento = NOW() WHERE id = ?", [$nuevos_intentos, (int)$existing['id']]);
-                    $intentos_actuales = $nuevos_intentos;
-                } else {
-                    $db->execute("INSERT INTO login_intentos (ip_address, intentos) VALUES (?, 1)", [$ip_usuario]);
-                    $intentos_actuales = 1;
-                }
+                $db->execute(
+                    "INSERT INTO login_intentos (ip_address, intentos, ultimo_intento) VALUES (?, 1, NOW())
+                     ON DUPLICATE KEY UPDATE intentos = intentos + 1, ultimo_intento = NOW()",
+                    [$ip_usuario]
+                );
+                $row_intento = $db->fetchOne("SELECT intentos FROM login_intentos WHERE ip_address = ? LIMIT 1", [$ip_usuario]);
+                $intentos_actuales = (int)($row_intento['intentos'] ?? 0);
                 $restantes = $max_intentos - $intentos_actuales;
                 if ($restantes <= 0) {
                     $segundos_restantes = $tiempo_bloqueo;
@@ -189,184 +188,194 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<?php include '../includes/diseno.php'; ?>
-<title>JV3000 C.A. | Terminal de Acceso</title>
+    <?php include '../includes/diseno.php'; ?>
+    <title>JV3000 C.A. | Terminal de Acceso</title>
     <link rel="stylesheet" href="../assets/login/login.css">
 </head>
+
 <body>
-<div class="login-page">
-    <div class="login-card">
-        <div class="login-logo">
-            <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
-            <p>Sistema Web para la Gestión de Inventario, Compras y Ventas</p>
-        </div>
-
-        <?php if ($error): ?>
-        <div class="alert-card-jv <?php echo $segundos_restantes > 0 ? 'alert-card-blocked' : 'alert-card-danger flash-auto'; ?>" id="alerta-bloqueo">
-            <div class="alert-icon-box"><i class="bi bi-shield-slash-fill"></i></div>
-            <div class="alert-body">
-                <div class="alert-title"><?php echo $segundos_restantes > 0 ? 'ACCESO BLOQUEADO' : 'ERROR DE ACCESO'; ?></div>
-                <div class="alert-text"><?php echo htmlspecialchars($error); ?></div>
-                <?php if ($segundos_restantes > 0): ?>
-                <div class="alert-timer" id="alertTimer"><?php echo $segundos_restantes; ?> <small>seg</small></div>
-                <div class="alert-progress"><div class="alert-progress-fill" id="alertProgressFill"></div></div>
-                <?php endif; ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <?php if ($exito): ?>
-        <div class="alert-card-jv alert-card-success flash-auto" id="alerta-exito">
-            <div class="alert-icon-box"><i class="bi bi-shield-check-fill"></i></div>
-            <div class="alert-body">
-                <div class="alert-title">OPERACIÓN EXITOSA</div>
-                <div class="alert-text"><?php echo htmlspecialchars($exito); ?></div>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <?php // ==========================================
-        // FORMULARIO DE INICIO DE SESIÓN
-        // ========================================== ?>
-        <form action="" method="POST">
-            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-
-            <div class="field-group">
-                <i class="field-icon bi bi-person-fill"></i>
-                <input type="text" id="f-user" name="usuario" class="field-input" placeholder="ID de Operador" required autofocus maxlength="30" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+    <div class="login-page">
+        <div class="login-card">
+            <div class="login-logo">
+                <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
+                <p>Sistema Web para la Gestión de Inventario, Compras y Ventas</p>
             </div>
 
-            <div class="field-group">
-                <i class="field-icon bi bi-lock-fill"></i>
-                <input type="password" id="f-pass" name="password" class="field-input" placeholder="Clave de Acceso" required maxlength="72" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
-                <button type="button" class="field-eye" id="btnEyePass" aria-label="Mostrar contraseña">
-                    <i class="bi bi-eye-slash-fill" id="iconEyePass"></i>
-                </button>
-            </div>
+            <?php if ($error): ?>
+                <div class="alert-card-jv <?php echo $segundos_restantes > 0 ? 'alert-card-blocked' : 'alert-card-danger flash-auto'; ?>" id="alerta-bloqueo">
+                    <div class="alert-icon-box"><i class="bi bi-shield-slash-fill"></i></div>
+                    <div class="alert-body">
+                        <div class="alert-title"><?php echo $segundos_restantes > 0 ? 'ACCESO BLOQUEADO' : 'ERROR DE ACCESO'; ?></div>
+                        <div class="alert-text"><?php echo htmlspecialchars($error); ?></div>
+                        <?php if ($segundos_restantes > 0): ?>
+                            <div class="alert-timer" id="alertTimer"><?php echo $segundos_restantes; ?> <small>seg</small></div>
+                            <div class="alert-progress">
+                                <div class="alert-progress-fill" id="alertProgressFill"></div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
 
-            <button type="submit" name="btn_login" class="btn-access mt-2" id="btn-login" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
-                AUTENTICAR <i class="bi bi-cpu ms-2"></i>
-            </button>
+            <?php if ($exito): ?>
+                <div class="alert-card-jv alert-card-success flash-auto" id="alerta-exito">
+                    <div class="alert-icon-box"><i class="bi bi-shield-check-fill"></i></div>
+                    <div class="alert-body">
+                        <div class="alert-title">OPERACIÓN EXITOSA</div>
+                        <div class="alert-text"><?php echo htmlspecialchars($exito); ?></div>
+                    </div>
+                </div>
+            <?php endif; ?>
 
-            <div class="text-center mt-3">
-                <a href="recuperar.php" class="text-decoration-none text-jv-orange fw-bold" style="font-size:1rem;">
-                    <i class="bi bi-question-circle me-1"></i>¿Olvidaste tu contraseña?
-                </a>
-            </div>
-        </form>
-
-        <div class="divider">Nuevo Personal</div>
-
-        <div class="text-center">
-            <a href="#" class="text-decoration-none text-jv-orange fw-bold" style="font-size:0.95rem;" data-bs-toggle="modal" data-bs-target="#modalReg">
-                <i class="bi bi-person-plus me-1"></i>
-                <?php echo $sistema_vacio ? 'Configurar Administrador Inicial' : 'Solicitar Acceso de Personal'; ?>
-            </a>
-        </div>
-    </div>
-</div>
-
-<?php // ==========================================
-// MODAL DE REGISTRO
-// ========================================== ?>
-<div class="modal fade modal-reg" id="modalReg" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title font-brand text-jv-orange">
-                    <i class="bi bi-shield-plus me-2"></i>
-                    <?php echo $sistema_vacio ? 'INSTALACION DE SISTEMA' : 'SOLICITUD DE ACCESO'; ?>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+            <?php // ==========================================
+            // FORMULARIO DE INICIO DE SESIÓN
+            // ========================================== 
+            ?>
             <form action="" method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-                <div class="modal-body">
 
-                    <label class="form-label">Nombre de Usuario</label>
-                    <div class="field-group">
-                        <i class="field-icon bi bi-at"></i>
-                        <input type="text" name="reg_usuario" id="r-user" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Ej: admin_sistema">
-                    </div>
-                    <small class="reg-hint" id="r-user-hint">Minimo 4 caracteres, solo letras, numeros y guiones bajos.</small>
-
-                    <label class="form-label" style="margin-top:14px;">Correo Electronico</label>
-                    <div class="field-group">
-                        <i class="field-icon bi bi-envelope-fill"></i>
-                        <input type="email" name="reg_email" class="field-input" required maxlength="50" placeholder="ejemplo@jv3000.com">
-                    </div>
-
-                    <label class="form-label" style="margin-top:14px;">Contraseña</label>
-                    <div class="field-group">
-                        <i class="field-icon bi bi-key-fill"></i>
-                        <input type="password" name="reg_password" id="r-pass" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Cree una clave fuerte">
-                        <button type="button" class="field-eye" id="btnEyeR1" aria-label="Mostrar">
-                            <i class="bi bi-eye-slash-fill" id="iconEyeR1"></i>
-                        </button>
-                    </div>
-                    <div class="strength-meter">
-                        <div class="strength-fill" id="r-meter"></div>
-                    </div>
-                    <small class="reg-hint" id="r-pass-hint">Min. 8 caracteres con Mayusculas, Minusculas, Numeros y Simbolos.</small>
-
-                    <label class="form-label" style="margin-top:14px;">Confirmar Contraseña</label>
-                    <div class="field-group">
-                        <i class="field-icon bi bi-key"></i>
-                        <input type="password" name="reg_password_confirm" id="r-pass2" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Repita la contraseña">
-                        <button type="button" class="field-eye" id="btnEyeR2" aria-label="Mostrar">
-                            <i class="bi bi-eye-slash-fill" id="iconEyeR2"></i>
-                        </button>
-                    <small class="reg-match" id="r-match-hint"></small>
-                </div>
-
-                <div class="reg-section-title">Pregunta de Seguridad</div>
-                <div class="reg-section-desc">Se usará para recuperar tu contraseña si la olvidas.</div>
-
-                <label class="form-label" style="margin-top:14px;">Pregunta</label>
                 <div class="field-group">
-                    <i class="field-icon bi bi-question-circle"></i>
-                    <select name="reg_pregunta" id="r-preg" class="field-input" required onchange="validarReg()">
-                        <option value="">Seleccione una pregunta...</option>
-                        <option value="Nombre de tu mascota">Nombre de tu mascota</option>
-                        <option value="Ciudad donde naciste">Ciudad donde naciste</option>
-                        <option value="Nombre de tu mejor amigo">Nombre de tu mejor amigo</option>
-                        <option value="Comida favorita">Comida favorita</option>
-                        <option value="Nombre de tu escuela primaria">Nombre de tu escuela primaria</option>
-                        <option value="Apellido de tu abuela materna">Apellido de tu abuela materna</option>
-                        <option value="Marca de tu primer auto">Marca de tu primer auto</option>
-                        <option value="Color favorito">Color favorito</option>
-                    </select>
+                    <i class="field-icon bi bi-person-fill"></i>
+                    <input type="text" id="f-user" name="usuario" class="field-input" placeholder="ID de Operador" required autofocus maxlength="30" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
                 </div>
 
-                <label class="form-label" style="margin-top:10px;">Respuesta</label>
                 <div class="field-group">
-                    <i class="field-icon bi bi-shield-lock"></i>
-                    <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required maxlength="255" oninput="validarReg()" placeholder="Escribe tu respuesta" autocomplete="off">
-                </div>
-
-            </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-jv-outline" data-bs-dismiss="modal">CANCELAR</button>
-                    <button type="submit" name="btn_registro" id="btn-reg" class="btn btn-jv-primary" disabled>
-                        <i class="bi bi-check2 me-2"></i>
-                        <?php echo $sistema_vacio ? 'CREAR ADMINISTRADOR' : 'ENVIAR SOLICITUD'; ?>
+                    <i class="field-icon bi bi-lock-fill"></i>
+                    <input type="password" id="f-pass" name="password" class="field-input" placeholder="Clave de Acceso" required maxlength="72" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                    <button type="button" class="field-eye" id="btnEyePass" aria-label="Mostrar contraseña">
+                        <i class="bi bi-eye-slash-fill" id="iconEyePass"></i>
                     </button>
                 </div>
+
+                <button type="submit" name="btn_login" class="btn-access mt-2" id="btn-login" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                    AUTENTICAR <i class="bi bi-cpu ms-2"></i>
+                </button>
+
+                <div class="text-center mt-3">
+                    <a href="recuperar.php" class="text-decoration-none text-jv-orange fw-bold" style="font-size:1rem;">
+                        <i class="bi bi-question-circle me-1"></i>¿Olvidaste tu contraseña?
+                    </a>
+                </div>
             </form>
+
+            <div class="divider">Nuevo Personal</div>
+
+            <div class="text-center">
+                <a href="#" class="text-decoration-none text-jv-orange fw-bold" style="font-size:0.95rem;" data-bs-toggle="modal" data-bs-target="#modalReg">
+                    <i class="bi bi-person-plus me-1"></i>
+                    <?php echo $sistema_vacio ? 'Configurar Administrador Inicial' : 'Solicitar Acceso de Personal'; ?>
+                </a>
+            </div>
         </div>
     </div>
-</div>
 
-<?php // ==========================================
-// JAVASCRIPT
-// ========================================== ?>
-<script src="<?php echo $base_assets; ?>js/bootstrap.bundle.min.js?v=2"></script>
-<script>
-    window.JV_CONFIG = { c0: <?php echo $segundos_restantes; ?> };
-</script>
+    <?php // ==========================================
+    // MODAL DE REGISTRO
+    // ========================================== 
+    ?>
+    <div class="modal fade modal-reg" id="modalReg" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-brand text-jv-orange">
+                        <i class="bi bi-shield-plus me-2"></i>
+                        <?php echo $sistema_vacio ? 'INSTALACION DE SISTEMA' : 'SOLICITUD DE ACCESO'; ?>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                    <div class="modal-body">
+
+                        <label class="form-label">Nombre de Usuario</label>
+                        <div class="field-group">
+                            <i class="field-icon bi bi-at"></i>
+                            <input type="text" name="reg_usuario" id="r-user" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Ej: admin_sistema">
+                        </div>
+                        <small class="reg-hint" id="r-user-hint">Minimo 4 caracteres, solo letras, numeros y guiones bajos.</small>
+
+                        <label class="form-label" style="margin-top:14px;">Correo Electronico</label>
+                        <div class="field-group">
+                            <i class="field-icon bi bi-envelope-fill"></i>
+                            <input type="email" name="reg_email" class="field-input" required maxlength="50" placeholder="ejemplo@jv3000.com">
+                        </div>
+
+                        <label class="form-label" style="margin-top:14px;">Contraseña</label>
+                        <div class="field-group">
+                            <i class="field-icon bi bi-key-fill"></i>
+                            <input type="password" name="reg_password" id="r-pass" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Cree una clave fuerte">
+                            <button type="button" class="field-eye" id="btnEyeR1" aria-label="Mostrar">
+                                <i class="bi bi-eye-slash-fill" id="iconEyeR1"></i>
+                            </button>
+                        </div>
+                        <div class="strength-meter">
+                            <div class="strength-fill" id="r-meter"></div>
+                        </div>
+                        <small class="reg-hint" id="r-pass-hint">Min. 8 caracteres con Mayusculas, Minusculas, Numeros y Simbolos.</small>
+
+                        <label class="form-label" style="margin-top:14px;">Confirmar Contraseña</label>
+                        <div class="field-group">
+                            <i class="field-icon bi bi-key"></i>
+                            <input type="password" name="reg_password_confirm" id="r-pass2" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Repita la contraseña">
+                            <button type="button" class="field-eye" id="btnEyeR2" aria-label="Mostrar">
+                                <i class="bi bi-eye-slash-fill" id="iconEyeR2"></i>
+                            </button>
+                            <small class="reg-match" id="r-match-hint"></small>
+                        </div>
+
+                        <div class="reg-section-title">Pregunta de Seguridad</div>
+                        <div class="reg-section-desc">Se usará para recuperar tu contraseña si la olvidas.</div>
+
+                        <label class="form-label" style="margin-top:14px;">Pregunta</label>
+                        <div class="field-group">
+                            <i class="field-icon bi bi-question-circle"></i>
+                            <select name="reg_pregunta" id="r-preg" class="field-input" required onchange="validarReg()">
+                                <option value="">Seleccione una pregunta...</option>
+                                <option value="Nombre de tu mascota">Nombre de tu mascota</option>
+                                <option value="Ciudad donde naciste">Ciudad donde naciste</option>
+                                <option value="Nombre de tu mejor amigo">Nombre de tu mejor amigo</option>
+                                <option value="Comida favorita">Comida favorita</option>
+                                <option value="Nombre de tu escuela primaria">Nombre de tu escuela primaria</option>
+                                <option value="Apellido de tu abuela materna">Apellido de tu abuela materna</option>
+                                <option value="Marca de tu primer auto">Marca de tu primer auto</option>
+                                <option value="Color favorito">Color favorito</option>
+                            </select>
+                        </div>
+
+                        <label class="form-label" style="margin-top:10px;">Respuesta</label>
+                        <div class="field-group">
+                            <i class="field-icon bi bi-shield-lock"></i>
+                            <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required maxlength="255" oninput="validarReg()" placeholder="Escribe tu respuesta" autocomplete="off">
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-jv-outline" data-bs-dismiss="modal">CANCELAR</button>
+                        <button type="submit" name="btn_registro" id="btn-reg" class="btn btn-jv-primary" disabled>
+                            <i class="bi bi-check2 me-2"></i>
+                            <?php echo $sistema_vacio ? 'CREAR ADMINISTRADOR' : 'ENVIAR SOLICITUD'; ?>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <?php // ==========================================
+    // JAVASCRIPT
+    // ========================================== 
+    ?>
+    <script src="<?php echo $base_assets; ?>js/bootstrap.bundle.min.js?v=2"></script>
+    <script>
+        window.JV_CONFIG = {
+            remainingLockoutSeconds: <?php echo $segundos_restantes; ?>
+        };
+    </script>
     <script src="../assets/login/login.js"></script>
 
 
 </body>
+
 </html>

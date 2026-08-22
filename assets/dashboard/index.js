@@ -89,28 +89,28 @@
 
         function posicionarTooltip(x, y) {
             if (!tipProducto) return;
-            var r = tipProducto.getBoundingClientRect();
+            var tooltipBounds = tipProducto.getBoundingClientRect();
             var px = x + 18;
             var py = y + 20;
-            if (px + r.width > window.innerWidth - 10) px = Math.max(10, x - r.width - 18);
-            if (py + r.height > window.innerHeight - 10) py = Math.max(10, y - r.height - 14);
+            if (px + tooltipBounds.width > window.innerWidth - 10) px = Math.max(10, x - tooltipBounds.width - 18);
+            if (py + tooltipBounds.height > window.innerHeight - 10) py = Math.max(10, y - tooltipBounds.height - 14);
             tipProducto.style.left = px + 'px';
             tipProducto.style.top = py + 'px';
         }
 
         document.addEventListener('mouseover', function(e) {
-            var el = e.target.closest('.producto-tooltip');
-            if (el) {
+            var tooltipElement = e.target.closest('.producto-tooltip');
+            if (tooltipElement) {
                 crearTooltip();
-                tipProducto.textContent = el.getAttribute('data-nombre');
+                tipProducto.textContent = tooltipElement.getAttribute('data-nombre');
                 tipProducto.style.display = 'block';
                 tipVisible = true;
             }
         });
 
         document.addEventListener('mouseout', function(e) {
-            var el = e.target.closest('.producto-tooltip');
-            if (el && !el.contains(e.relatedTarget) && tipVisible) {
+            var tooltipElement = e.target.closest('.producto-tooltip');
+            if (tooltipElement && !tooltipElement.contains(e.relatedTarget) && tipVisible) {
                 tipProducto.style.display = 'none';
                 tipVisible = false;
             }
@@ -131,16 +131,16 @@
 
         function posicionarPanelAlertas() {
             var panel = $id('dashBellPanel');
-            var btn = $id('dashBellBtn');
-            if (!panel || !btn) return;
-            var r = btn.getBoundingClientRect();
-            var pw = panel.offsetWidth || 360;
-            var ph = panel.offsetHeight || 300;
-            var left = r.right - pw;
+            var alertButton = $id('dashBellBtn');
+            if (!panel || !alertButton) return;
+            var buttonBounds = alertButton.getBoundingClientRect();
+            var panelWidth = panel.offsetWidth || 360;
+            var panelHeight = panel.offsetHeight || 300;
+            var left = buttonBounds.right - panelWidth;
             if (left < 12) left = 12;
-            var top = r.bottom + 8;
-            if (top + ph > window.innerHeight - 10) {
-                top = Math.max(12, window.innerHeight - ph - 10);
+            var top = buttonBounds.bottom + 8;
+            if (top + panelHeight > window.innerHeight - 10) {
+                top = Math.max(12, window.innerHeight - panelHeight - 10);
             }
             panel.style.left = left + 'px';
             panel.style.top = top + 'px';
@@ -227,8 +227,8 @@
         document.addEventListener('click', function(e) {
             var panel = $id('dashBellPanel');
             if (panel && panel.classList.contains('open')) {
-                var btn = $id('dashBellBtn');
-                if (btn && !btn.contains(e.target)) panel.classList.remove('open');
+                var alertButton = $id('dashBellBtn');
+                if (alertButton && !alertButton.contains(e.target)) panel.classList.remove('open');
             }
         });
 

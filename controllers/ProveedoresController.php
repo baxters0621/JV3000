@@ -37,20 +37,20 @@ class ProveedoresController extends Controller
                 $this->redirect('proveedores');
             }
 
-            $accion = $_POST['accion_proveedor'];
+            $supplierAction = $_POST['accion_proveedor'];
 
-            if ($accion === 'toggle_status') {
+            if ($supplierAction === 'toggle_status') {
                 Security::soloAdmin();
                 $modelo->toggleStatus((int)($_POST['id_proveedor'] ?? 0));
                 $this->redirect('proveedores');
             }
 
             $resultado = $modelo->procesar([
-                'accion'         => $accion,
+                'accion'         => $supplierAction,
                 'rif'            => $_POST['rif'] ?? '',
                 'nombre_empresa' => $_POST['nombre_empresa'] ?? '',
                 'telefono_completo' => $_POST['telefono_completo'] ?? '',
-                'contacto_nombre'=> $_POST['contacto_nombre'] ?? '',
+                'contacto_nombre' => $_POST['contacto_nombre'] ?? '',
                 'email'          => $_POST['email'] ?? '',
                 'direccion'      => $_POST['direccion'] ?? '',
                 'lead_time'      => $_POST['lead_time'] ?? '',
@@ -71,14 +71,14 @@ class ProveedoresController extends Controller
         // Flash legacy por GET ?res= / ?err=
         $flash = null;
         if (isset($_GET['res'])) {
-            $map = ['success' => 'PROVEEDOR REGISTRADO CON ÉXITO.', 'updated' => 'DATOS ACTUALIZADOS CORRECTAMENTE.'];
-            $flash = ['tipo' => 'success', 'texto' => $map[$_GET['res']] ?? 'OPERACIÓN EXITOSA.'];
+            $successMessages = ['success' => 'PROVEEDOR REGISTRADO CON ÉXITO.', 'updated' => 'DATOS ACTUALIZADOS CORRECTAMENTE.'];
+            $flash = ['tipo' => 'success', 'texto' => $successMessages[$_GET['res']] ?? 'OPERACIÓN EXITOSA.'];
         } elseif (isset($_GET['err'])) {
-            $map = ['rif_exists' => 'EL RIF YA PERTENECE A OTRO PROVEEDOR.', 'csrf' => 'ERROR DE SEGURIDAD. INTENTE DE NUEVO.', 'rif_invalido' => 'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0', 'tel_invalido' => 'TELÉFONO INVÁLIDO. INGRESE UN NÚMERO VÁLIDO CON CÓDIGO DE PAÍS.', 'db_error' => 'ERROR EN LA BASE DE DATOS.'];
-            $flash = ['tipo' => 'danger', 'texto' => $map[$_GET['err']] ?? 'ERROR DESCONOCIDO.'];
+            $errorMessages = ['rif_exists' => 'EL RIF YA PERTENECE A OTRO PROVEEDOR.', 'csrf' => 'ERROR DE SEGURIDAD. INTENTE DE NUEVO.', 'rif_invalido' => 'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0', 'tel_invalido' => 'TELÉFONO INVÁLIDO. INGRESE UN NÚMERO VÁLIDO CON CÓDIGO DE PAÍS.', 'db_error' => 'ERROR EN LA BASE DE DATOS.'];
+            $flash = ['tipo' => 'danger', 'texto' => $errorMessages[$_GET['err']] ?? 'ERROR DESCONOCIDO.'];
         }
-        $flash_s = $_SESSION['flash_msg'] ?? $flash;
-        if ($flash_s) $flash = $flash_s;
+        $sessionFlash = $_SESSION['flash_msg'] ?? $flash;
+        if ($sessionFlash) $flash = $sessionFlash;
         unset($_SESSION['flash_msg']);
 
         $proveedores = $modelo->listar();
@@ -86,7 +86,7 @@ class ProveedoresController extends Controller
 
         $this->view('proveedores/index', [
             'titulo'       => 'Proveedores | JV3000 C.A.',
-            'wrapper_class'=> 'pagina-proveedores',
+            'wrapper_class' => 'pagina-proveedores',
             'css_extra'    => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
                 'modules/proveedores/proveedores.css?v=2',

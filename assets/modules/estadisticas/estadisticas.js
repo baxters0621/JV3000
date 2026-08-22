@@ -35,17 +35,17 @@
     // ---------- GRÁFICO DE BARRAS HORIZONTALES: TOP 5 ----------
     let chartTop = null;
     // Dibuja o redibuja el gráfico de barras horizontales con el top 5 de productos más vendidos.
-    function crearChartTop(labels, cant) {
+    function crearChartTop(labels, quantities) {
         if (chartTop) chartTop.destroy();
-        const datos = (labels && labels.length > 0) ? cant : [0];
-        const etiquetas = (labels && labels.length > 0) ? labels : ['Sin datos'];
+        const chartData = (labels && labels.length > 0) ? quantities : [0];
+        const chartLabels = (labels && labels.length > 0) ? labels : ['Sin datos'];
         chartTop = new Chart(document.getElementById('chartTop'), {
             type: 'bar',
             data: {
-                labels: etiquetas,
+                labels: chartLabels,
                 datasets: [{
                     label: 'Unidades',
-                    data: datos,
+                    data: chartData,
                     backgroundColor: ['#EA580C', '#2563EB', '#6F42C1', '#16A34A', '#D97706'],
                     borderRadius: 8,
                     barThickness: 22
@@ -74,43 +74,43 @@
 
     // ---------- ACTUALIZAR INTERFAZ DESDE DATOS ----------
     // Actualiza los KPI, sellos de comparación y gráficos con los datos obtenidos del servidor.
-    function actualizarUI(d) {
-        if (!d || !d.success) return;
+    function actualizarUI(statisticsResponse) {
+        if (!statisticsResponse || !statisticsResponse.success) return;
 
-        const fmt = n => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const formatCurrency = amount => '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        const set = (id, valor) => { const el = document.getElementById(id); if (el) el.textContent = valor; };
-        set('kpi-ventas', fmt(d.ventas));
-        set('kpi-compras', fmt(d.compras));
-        set('kpi-ganancia', fmt(d.ganancia));
+        const updateText = (elementId, value) => { const element = document.getElementById(elementId); if (element) element.textContent = value; };
+        updateText('kpi-ventas', formatCurrency(statisticsResponse.ventas));
+        updateText('kpi-compras', formatCurrency(statisticsResponse.compras));
+        updateText('kpi-ganancia', formatCurrency(statisticsResponse.ganancia));
 
-        const sellos = {
-            'kpi-ventas': d.pct_ventas,
-            'kpi-compras': d.pct_compras,
-            'kpi-ganancia': d.pct_ganancia
+        const comparisonPercentages = {
+            'kpi-ventas': statisticsResponse.pct_ventas,
+            'kpi-compras': statisticsResponse.pct_compras,
+            'kpi-ganancia': statisticsResponse.pct_ganancia
         };
-        for (const [id, pct] of Object.entries(sellos)) {
-            const wrap = document.getElementById(id)?.parentElement?.querySelector('.cmp-wrap');
-            if (!wrap) continue;
-            wrap.innerHTML = pct === null || pct === undefined
+        for (const [elementId, percentage] of Object.entries(comparisonPercentages)) {
+            const comparisonContainer = document.getElementById(elementId)?.parentElement?.querySelector('.cmp-wrap');
+            if (!comparisonContainer) continue;
+            comparisonContainer.innerHTML = percentage === null || percentage === undefined
                 ? '<span class="cmp-sello cmp-nulo">—</span>'
-                : (pct >= 0
-                    ? `<span class="cmp-sello cmp-subida" title="Aumento respecto al periodo anterior"><i class="bi bi-arrow-up-right"></i> +${pct.toFixed(1)}%</span>`
-                    : `<span class="cmp-sello cmp-bajada" title="Descenso respecto al periodo anterior"><i class="bi bi-arrow-down-right"></i> ${pct.toFixed(1)}%</span>`);
+                : (percentage >= 0
+                    ? `<span class="cmp-sello cmp-subida" title="Aumento respecto al periodo anterior"><i class="bi bi-arrow-up-right"></i> +${percentage.toFixed(1)}%</span>`
+                    : `<span class="cmp-sello cmp-bajada" title="Descenso respecto al periodo anterior"><i class="bi bi-arrow-down-right"></i> ${percentage.toFixed(1)}%</span>`);
         }
 
-        set('cmp-mensaje-texto', d.mensaje);
-        set('cmp-periodo', d.etiqueta);
+        updateText('cmp-mensaje-texto', statisticsResponse.mensaje);
+        updateText('cmp-periodo', statisticsResponse.etiqueta);
 
-        crearChartFlujo(d.labels, d.data_ventas, d.data_compras);
-        crearChartTop(d.topLabels, d.topCant);
+        crearChartFlujo(statisticsResponse.labels, statisticsResponse.data_ventas, statisticsResponse.data_compras);
+        crearChartTop(statisticsResponse.topLabels, statisticsResponse.topCant);
     }
 
     // ---------- FILTROS: BOTONES DE PERIODO ----------
-    document.querySelectorAll('.btn-filtro-periodo').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const p = btn.dataset.periodo;
-            window.location.href = (window.JV_BASE || '') + 'index.php?url=estadisticas&periodo=' + p;
+    document.querySelectorAll('.btn-filtro-periodo').forEach(periodButton => {
+        periodButton.addEventListener('click', () => {
+            const selectedPeriod = periodButton.dataset.periodo;
+            window.location.href = (window.JV_BASE || '') + 'index.php?url=estadisticas&periodo=' + selectedPeriod;
         });
     });
 
@@ -133,7 +133,7 @@
     function refreshEstadisticas() {
         fetch((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.json())
-            .then(d => { try { actualizarUI(d); } catch (e) { console.error('Stats refresh error:', e); } })
+            .then(statisticsResponse => { try { actualizarUI(statisticsResponse); } catch (error) { console.error('Stats refresh error:', error); } })
             .catch(() => {});
     }
     setInterval(refreshEstadisticas, 60000);

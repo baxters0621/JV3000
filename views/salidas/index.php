@@ -1,4 +1,11 @@
 <?php
+
+/** @var array<string, mixed> $kpis */
+/** @var array<int, array<string, mixed>> $salidas */
+/** @var string $csrf */
+/** @var array<int, array<string, mixed>> $tipos_mov */
+/** @var array<string, string> $tipos_mov_map */
+
 // ==========================================
 // VISTA: Salidas / Ventas (index)
 // ==========================================
@@ -87,41 +94,41 @@
             </thead>
             <tbody id="tablaSalidas">
                 <?php if (count($salidas) > 0): ?>
-                    <?php foreach ($salidas as $row): ?>
+                    <?php foreach ($salidas as $outgoingRecord): ?>
                         <?php
-                            $productos_lista = $row['productos_list'] ?? '';
-                            // Grupo del tipo de movimiento: venta / regalias / merma.
-                            $grupo_mov = Salida::grupoDeTipo($row['tipo_mov_nombre'] ?? '');
+                        $productos_lista = $outgoingRecord['productos_list'] ?? '';
+                        // Grupo del tipo de movimiento: venta / regalias / merma.
+                        $grupo_mov = Salida::grupoDeTipo($outgoingRecord['tipo_mov_nombre'] ?? '');
                         ?>
                         <tr>
-                            <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($row['nro_factura_manual'] ?: '#' . $row['id_salida']); ?></span></td>
-                            <td class="td-control" data-tooltip="<?php echo htmlspecialchars($row['nro_control']); ?>"><?php echo htmlspecialchars($row['nro_control']); ?></td>
-                            <td class="text-uppercase td-cliente" data-tooltip="<?php echo htmlspecialchars(($row['cliente'] ?? 'S/Cliente') . ' - ' . ($row['rif_cliente'] ?? 'S/RIF')); ?>">
-                                <div class="cli-nombre"><?php echo htmlspecialchars($row['cliente'] ?? 'S/Cliente'); ?></div>
-                                <div class="cli-rif"><?php echo htmlspecialchars($row['rif_cliente'] ?? 'S/RIF'); ?></div>
+                            <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($outgoingRecord['nro_factura_manual'] ?: '#' . $outgoingRecord['id_salida']); ?></span></td>
+                            <td class="td-control" data-tooltip="<?php echo htmlspecialchars($outgoingRecord['nro_control']); ?>"><?php echo htmlspecialchars($outgoingRecord['nro_control']); ?></td>
+                            <td class="text-uppercase td-cliente" data-tooltip="<?php echo htmlspecialchars(($outgoingRecord['cliente'] ?? 'S/Cliente') . ' - ' . ($outgoingRecord['rif_cliente'] ?? 'S/RIF')); ?>">
+                                <div class="cli-nombre"><?php echo htmlspecialchars($outgoingRecord['cliente'] ?? 'S/Cliente'); ?></div>
+                                <div class="cli-rif"><?php echo htmlspecialchars($outgoingRecord['rif_cliente'] ?? 'S/RIF'); ?></div>
                             </td>
                             <td class="td-productos" data-tooltip="<?php echo htmlspecialchars($productos_lista); ?>"><?php echo htmlspecialchars($productos_lista); ?></td>
-                            <td class="text-center"><span class="badge-jv badge-danger" style="padding:6px 14px;">-<?php echo $row['total_cantidad']; ?></span></td>
+                            <td class="text-center"><span class="badge-jv badge-danger" style="padding:6px 14px;">-<?php echo $outgoingRecord['total_cantidad']; ?></span></td>
                             <td class="text-center"><?php
-                                $nombre_tipo = $row['tipo_mov_nombre'] ?? '';
-                                $observaciones = $row['observaciones'] ?? '';
-                                $causa_ajuste = '';
-                                if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $observaciones, $m)) $causa_ajuste = trim($m[1]);
-                                if ($grupo_mov === 'venta') echo '<span class="badge-jv badge-success"><i class="bi bi-cart me-1"></i>Venta</span>';
-                                elseif ($grupo_mov === 'regalias') echo '<span class="badge-jv badge-info"><i class="bi bi-gift me-1"></i>Regalía</span>';
-                                else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" title="' . htmlspecialchars($nombre_tipo) . ($causa_ajuste ? ': ' . htmlspecialchars($causa_ajuste) : '') . '" onclick="verDetalleDano(\'' . htmlspecialchars($nombre_tipo, ENT_QUOTES) . '\', \'' . htmlspecialchars($causa_ajuste, ENT_QUOTES) . '\')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo) . '</span>';
-                            ?></td>
-                            <td class="td-total" style="<?php echo $grupo_mov === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($row['total_monto'] ?? 0, 2); ?></td>
-                            <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($row['fecha_salida'])); ?></td>
+                                                    $nombre_tipo = $outgoingRecord['tipo_mov_nombre'] ?? '';
+                                                    $observaciones = $outgoingRecord['observaciones'] ?? '';
+                                                    $causa_ajuste = '';
+                                                    if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $observaciones, $causeMatch)) $causa_ajuste = trim($causeMatch[1]);
+                                                    if ($grupo_mov === 'venta') echo '<span class="badge-jv badge-success"><i class="bi bi-cart me-1"></i>Venta</span>';
+                                                    elseif ($grupo_mov === 'regalias') echo '<span class="badge-jv badge-info"><i class="bi bi-gift me-1"></i>Regalía</span>';
+                                                    else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" title="' . htmlspecialchars($nombre_tipo . ($causa_ajuste ? ': ' . $causa_ajuste : ''), ENT_QUOTES, 'UTF-8') . '" onclick="verDetalleDano(' . htmlspecialchars(json_encode($nombre_tipo, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars(json_encode($causa_ajuste, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo, ENT_QUOTES, 'UTF-8') . '</span>';
+                                                    ?></td>
+                            <td class="td-total" style="<?php echo $grupo_mov === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($outgoingRecord['total_monto'] ?? 0, 2); ?></td>
+                            <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($outgoingRecord['fecha_salida'])); ?></td>
                             <td class="text-center" style="white-space:nowrap;">
-                                <button class="btn-action" onclick="verFactura(<?php echo $row['id_salida']; ?>)" title="Ver Nota">
+                                <button class="btn-action" onclick="verFactura(<?php echo $outgoingRecord['id_salida']; ?>)" title="Ver Nota">
                                     <i class="bi bi-receipt"></i>
                                 </button>
-                                <button class="btn-action" onclick='editarSalida(<?php echo json_encode($row); ?>)' title="Editar">
+                                <button class="btn-action" onclick='editarSalida(<?php echo json_encode($outgoingRecord); ?>)' title="Editar">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
                                 <?php if (Security::esAdmin()): ?>
-                                    <button class="btn-action" onclick="confirmarEliminar(<?php echo $row['id_salida']; ?>)" title="Anular">
+                                    <button class="btn-action" onclick="confirmarEliminar(<?php echo $outgoingRecord['id_salida']; ?>)" title="Anular">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 <?php endif; ?>
@@ -163,11 +170,11 @@
                                 <label class="small fw-bold text-secondary mb-2">TIPO DE MOVIMIENTO</label>
                                 <select name="id_tipo_mov" id="s_tipo" class="input-jv" required onchange="toggleCampos()">
                                     <option value="">Seleccione tipo...</option>
-<?php foreach ($tipos_mov as $tipo_mov):
-                        $grupo = $tipos_mov_map[$tipo_mov['id_tipo_mov']];
-                    ?>
-                        <option value="<?php echo $tipo_mov['id_tipo_mov']; ?>" data-grupo="<?php echo $grupo; ?>"><?php echo $tipo_mov['nombre']; ?></option>
-                    <?php endforeach; ?>
+                                    <?php foreach ($tipos_mov as $tipo_mov):
+                                        $grupo = $tipos_mov_map[$tipo_mov['id_tipo_mov']];
+                                    ?>
+                                        <option value="<?php echo $tipo_mov['id_tipo_mov']; ?>" data-grupo="<?php echo $grupo; ?>"><?php echo $tipo_mov['nombre']; ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -301,7 +308,9 @@
                                 </tr>
                             </thead>
                             <tbody id="s_productos_body">
-                                <tr id="s_fila_vacia"><td colspan="6" class="sal-fila-vacia">⬆ Agregue productos con los controles de arriba</td></tr>
+                                <tr id="s_fila_vacia">
+                                    <td colspan="6" class="sal-fila-vacia">⬆ Agregue productos con los controles de arriba</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

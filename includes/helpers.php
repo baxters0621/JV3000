@@ -127,18 +127,18 @@ if (!function_exists('formatearTelefono')) {
      * @param string $e164
      * @return string
      */
-function formatearTelefono($e164)
-{
-    if (str_starts_with($e164, '+58')) {
-        $num = substr($e164, 3);
-        return '(58) ' . substr($num, 0, 3) . '-' . substr($num, 3);
+    function formatearTelefono($e164)
+    {
+        if (str_starts_with($e164, '+58')) {
+            $num = substr($e164, 3);
+            return '(58) ' . substr($num, 0, 3) . '-' . substr($num, 3);
+        }
+        if (preg_match('/^\+(\d{1,3})(\d+)$/', $e164, $m)) {
+            $parts = str_split($m[2], 3);
+            return '+' . $m[1] . ' ' . implode('-', $parts);
+        }
+        return $e164;
     }
-    if (preg_match('/^\+(\d{1,3})(\d+)$/', $e164, $m)) {
-        $parts = str_split($m[2], 3);
-        return '+' . $m[1] . ' ' . implode('-', $parts);
-    }
-    return $e164;
-}
 }
 
 // Helpers de BD / Config
@@ -294,104 +294,150 @@ if (!function_exists('registrarAuditoria')) {
      * Registra una acción en la tabla de auditoría.
      *
      * Inserta el registro con el usuario actual de la sesión (o 'Sistema' si
-     * no hay sesión) y el detalle de la acción realizada.
+     * no hay sesión), además de contexto útil del request actual: IP, ruta y
+     * método HTTP. Permite pasar un arreglo opcional con información extra que
+     * se adjunta al detalle del evento.
      *
-     * @param string $accion  Tipo de acción (crear, editar, eliminar, anular...).
-     * @param string $detalle Descripción de la acción realizada.
+     * @param string     $accion  Tipo de acción (crear, editar, eliminar, anular...).
+     * @param string     $detalle Descripción de la acción realizada.
+     * @param array|null $meta    Datos adicionales de contexto opcionales.
      * @return void
      */
-    function registrarAuditoria(string $accion, string $detalle = '')
+    function registrarAuditoria(string $accion, string $detalle = '', ?array $meta = null): void
     {
         $db = Database::getInstance();
         $id_usuario = intval($_SESSION['id_usuario'] ?? 0);
         $usuario_nombre = $_SESSION['usuario'] ?? 'Sistema';
-        $db->execute("INSERT INTO auditoria (id_usuario, usuario_nombre, accion, detalle) VALUES (?, ?, ?, ?)", [$id_usuario, $usuario_nombre, $accion, $detalle]);
+        $ip_origen = $_SERVER['REMOTE_ADDR'] ?? null;
+        $ruta = $_SERVER['REQUEST_URI'] ?? null;
+        $metodo = $_SERVER['REQUEST_METHOD'] ?? null;
+
+        if (!empty($meta)) {
+            $extra = json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            $detalle = trim($detalle) !== '' ? $detalle . ' | ' . $extra : $extra;
+        }
+
+        $db->execute(
+            "INSERT INTO auditoria (id_usuario, usuario_nombre, accion, detalle, ip_origen, ruta, metodo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [$id_usuario, $usuario_nombre, $accion, $detalle, $ip_origen, $ruta, $metodo]
+        );
     }
 }
 
 // Preguntas de seguridad
 if (!function_exists('getPreguntasRespuestas')) {
-/**
- * Obtiene la lista de preguntas de seguridad disponibles.
- *
- * Devuelve el catálogo fijo de preguntas que el usuario puede elegir
- * al configurar la recuperación de su cuenta.
- *
- * @return array Lista de preguntas de seguridad.
- */
-function getPreguntasRespuestas(): array
-{
-    return [
-        'Nombre de tu mascota',
-        'Ciudad donde naciste',
-        'Nombre de tu mejor amigo',
-        'Comida favorita',
-        'Nombre de tu escuela primaria',
-        'Apellido de tu abuela materna',
-        'Marca de tu primer auto',
-        'Color favorito',
-    ];
-}
+    /**
+     * Obtiene la lista de preguntas de seguridad disponibles.
+     *
+     * Devuelve el catálogo fijo de preguntas que el usuario puede elegir
+     * al configurar la recuperación de su cuenta.
+     *
+     * @return array Lista de preguntas de seguridad.
+     */
+    function getPreguntasRespuestas(): array
+    {
+        return [
+            'Nombre de tu mascota',
+            'Ciudad donde naciste',
+            'Nombre de tu mejor amigo',
+            'Comida favorita',
+            'Nombre de tu escuela primaria',
+            'Apellido de tu abuela materna',
+            'Marca de tu primer auto',
+            'Color favorito',
+        ];
+    }
 
 // Normalizar respuesta de seguridad (trim + minúsculas + sin acentos)
-/**
- * Normaliza una respuesta de seguridad para compararla de forma flexible.
- *
- * Recorta espacios, elimina acentos y convierte a minúsculas, de modo que
- * la misma respuesta en distintos formatos sea considerada equivalente.
- *
- * @param string $respuesta Respuesta del usuario.
- * @return string Respuesta normalizada.
- */
-function normalizarRespuestaSeguridad(string $respuesta): string
-{
-    $r = trim($respuesta);
-    $r = strtr($r, [
-        'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ü' => 'u', 'Ñ' => 'n',
-        'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
-        'À' => 'a', 'È' => 'e', 'Ì' => 'i', 'Ò' => 'o', 'Ù' => 'u',
-        'à' => 'a', 'è' => 'e', 'ì' => 'i', 'ò' => 'o', 'ù' => 'u',
-        'Â' => 'a', 'Ê' => 'e', 'Î' => 'i', 'Ô' => 'o', 'Û' => 'u',
-        'â' => 'a', 'ê' => 'e', 'î' => 'i', 'ô' => 'o', 'û' => 'u',
-        'Ã' => 'a', 'Õ' => 'o', 'ã' => 'a', 'õ' => 'o',
-    ]);
-    return strtolower($r);
-}
+    /**
+     * Normaliza una respuesta de seguridad para compararla de forma flexible.
+     *
+     * Recorta espacios, elimina acentos y convierte a minúsculas, de modo que
+     * la misma respuesta en distintos formatos sea considerada equivalente.
+     *
+     * @param string $respuesta Respuesta del usuario.
+     * @return string Respuesta normalizada.
+     */
+    function normalizarRespuestaSeguridad(string $respuesta): string
+    {
+        $r = trim($respuesta);
+        $r = strtr($r, [
+            'Á' => 'a',
+            'É' => 'e',
+            'Í' => 'i',
+            'Ó' => 'o',
+            'Ú' => 'u',
+            'Ü' => 'u',
+            'Ñ' => 'n',
+            'á' => 'a',
+            'é' => 'e',
+            'í' => 'i',
+            'ó' => 'o',
+            'ú' => 'u',
+            'ü' => 'u',
+            'ñ' => 'n',
+            'À' => 'a',
+            'È' => 'e',
+            'Ì' => 'i',
+            'Ò' => 'o',
+            'Ù' => 'u',
+            'à' => 'a',
+            'è' => 'e',
+            'ì' => 'i',
+            'ò' => 'o',
+            'ù' => 'u',
+            'Â' => 'a',
+            'Ê' => 'e',
+            'Î' => 'i',
+            'Ô' => 'o',
+            'Û' => 'u',
+            'â' => 'a',
+            'ê' => 'e',
+            'î' => 'i',
+            'ô' => 'o',
+            'û' => 'u',
+            'Ã' => 'a',
+            'Õ' => 'o',
+            'ã' => 'a',
+            'õ' => 'o',
+        ]);
+        return strtolower($r);
+    }
 
 // Validar respuesta de seguridad: flexible, acepta desde un solo carácter
-/**
- * Valida que una respuesta de seguridad no esté vacía.
- *
- * La normaliza y comprueba que tras normalizarla no quede en blanco;
- * acepta respuestas desde un solo carácter.
- *
- * @param string $respuesta Respuesta del usuario.
- * @return bool True si la respuesta es válida (no vacía).
- */
-function validarRespuestaSeguridad(string $respuesta): bool
-{
-    return normalizarRespuestaSeguridad($respuesta) !== '';
-}
+    /**
+     * Valida que una respuesta de seguridad no esté vacía.
+     *
+     * La normaliza y comprueba que tras normalizarla no quede en blanco;
+     * acepta respuestas desde un solo carácter.
+     *
+     * @param string $respuesta Respuesta del usuario.
+     * @return bool True si la respuesta es válida (no vacía).
+     */
+    function validarRespuestaSeguridad(string $respuesta): bool
+    {
+        return normalizarRespuestaSeguridad($respuesta) !== '';
+    }
 
 // Verificar respuesta: normaliza ambos textos antes de comparar
 // (con retro-compatibilidad para respuestas guardadas sin normalizar)
-/**
- * Verifica una respuesta de seguridad contra su hash guardado.
- *
- * Normaliza la respuesta y la compara con password_verify; si eso falla,
- * reintenta con la respuesta sin normalizar para dar retro-compatibilidad
- * con respuestas guardadas antes de la normalización.
- *
- * @param string $respuesta Respuesta ingresada por el usuario.
- * @param string $hash      Hash guardado de la respuesta correcta.
- * @return bool True si la respuesta coincide con el hash.
- */
-function verificarRespuestaSeguridad(string $respuesta, string $hash): bool
-{
-    $normalizada = normalizarRespuestaSeguridad($respuesta);
-    if ($normalizada !== '' && password_verify($normalizada, $hash)) return true;
-    return $respuesta !== '' && password_verify($respuesta, $hash);
-}
+    /**
+     * Verifica una respuesta de seguridad contra su hash guardado.
+     *
+     * Normaliza la respuesta y la compara con password_verify; si eso falla,
+     * reintenta con la respuesta sin normalizar para dar retro-compatibilidad
+     * con respuestas guardadas antes de la normalización.
+     *
+     * @param string $respuesta Respuesta ingresada por el usuario.
+     * @param string $hash      Hash guardado de la respuesta correcta.
+     * @return bool True si la respuesta coincide con el hash.
+     */
+    function verificarRespuestaSeguridad(string $respuesta, string $hash): bool
+    {
+        $normalizada = normalizarRespuestaSeguridad($respuesta);
+        if ($normalizada !== '' && password_verify($normalizada, $hash)) return true;
+        return $respuesta !== '' && password_verify($respuesta, $hash);
+    }
 }
 
 // ==========================================
@@ -641,4 +687,3 @@ function jv_sello(?float $pct): string
     // Variación negativa → flecha abajo (el número ya lleva su signo -).
     return '<span class="cmp-sello cmp-bajada" title="Descenso respecto al periodo anterior"><i class="bi bi-arrow-down-right"></i> ' . number_format($pct, 1) . '%</span>';
 }
-

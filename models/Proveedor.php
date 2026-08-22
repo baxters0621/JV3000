@@ -28,11 +28,11 @@ class Proveedor extends Model
      */
     public function toggleStatus(int $idProveedor): void
     {
-        $prov = $this->db->fetchOne("SELECT status FROM proveedores WHERE id_proveedor = ?", [$idProveedor]);
-        if ($prov) {
-            $nuevo = $prov['status'] === 'Activo' ? 'Inactivo' : 'Activo';
-            $this->db->execute("UPDATE proveedores SET status = ? WHERE id_proveedor = ?", [$nuevo, $idProveedor]);
-            $accion = $nuevo === 'Activo' ? 'activar' : 'desactivar';
+        $proveedor = $this->db->fetchOne("SELECT status FROM proveedores WHERE id_proveedor = ?", [$idProveedor]);
+        if ($proveedor) {
+            $nuevoStatus = $proveedor['status'] === 'Activo' ? 'Inactivo' : 'Activo';
+            $this->db->execute("UPDATE proveedores SET status = ? WHERE id_proveedor = ?", [$nuevoStatus, $idProveedor]);
+            $accion = $nuevoStatus === 'Activo' ? 'activar' : 'desactivar';
             registrarAuditoria($accion, 'Proveedor ' . $accion . 'do');
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'PROVEEDOR ' . strtoupper($accion) . 'DO CON ÉXITO.'];
         }
@@ -43,28 +43,28 @@ class Proveedor extends Model
      *
      * Normaliza y valida RIF, nombre, teléfono, email, lead time, límite y
      * días de crédito, condiciones de pago, moneda y status; luego delega
-     * en registrar() o editar() según $d['accion'].
+     * en registrar() o editar() según $datosProveedor['accion'].
      *
-     * @param array $d Datos del formulario del proveedor.
+     * @param array $datosProveedor Datos del formulario del proveedor.
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
-    public function procesar(array $d): array
+    public function procesar(array $datosProveedor): array
     {
-        $rif = normalizarDocumento($d['rif']);
-        $nombre_empresa = mb_strtoupper(trim($d['nombre_empresa']));
-        $telefono = trim($d['telefono_completo']);
-        $contacto = trim($d['contacto_nombre']);
-        $email = trim($d['email']);
-        $direccion = trim($d['direccion']);
-        $lead_time = !empty($d['lead_time']) ? min(365, max(0, (int)$d['lead_time'])) : null;
+        $rif = normalizarDocumento($datosProveedor['rif']);
+        $nombre_empresa = mb_strtoupper(trim($datosProveedor['nombre_empresa']));
+        $telefono = trim($datosProveedor['telefono_completo']);
+        $contacto = trim($datosProveedor['contacto_nombre']);
+        $email = trim($datosProveedor['email']);
+        $direccion = trim($datosProveedor['direccion']);
+        $lead_time = !empty($datosProveedor['lead_time']) ? min(365, max(0, (int)$datosProveedor['lead_time'])) : null;
 
-        $limite_raw = preg_replace('/[^0-9.]/', '', str_replace(',', '', trim($d['limite_credito'])));
+        $limite_raw = preg_replace('/[^0-9.]/', '', str_replace(',', '', trim($datosProveedor['limite_credito'])));
         $limite_credito = !empty($limite_raw) ? min(999999999.99, max(0, (float)$limite_raw)) : null;
 
-        $dias_credito = !empty($d['dias_credito']) ? min(360, max(0, (int)$d['dias_credito'])) : 0;
-        $condiciones_pago = in_array($d['condiciones_pago'], ['Contado', 'Credito']) ? $d['condiciones_pago'] : 'Contado';
-        $moneda = in_array($d['moneda'], ['USD', 'EUR', 'VES']) ? $d['moneda'] : 'USD';
-        $status = in_array($d['status'], ['Activo', 'Inactivo']) ? $d['status'] : 'Activo';
+        $dias_credito = !empty($datosProveedor['dias_credito']) ? min(360, max(0, (int)$datosProveedor['dias_credito'])) : 0;
+        $condiciones_pago = in_array($datosProveedor['condiciones_pago'], ['Contado', 'Credito']) ? $datosProveedor['condiciones_pago'] : 'Contado';
+        $moneda = in_array($datosProveedor['moneda'], ['USD', 'EUR', 'VES']) ? $datosProveedor['moneda'] : 'USD';
+        $status = in_array($datosProveedor['status'], ['Activo', 'Inactivo']) ? $datosProveedor['status'] : 'Activo';
 
         if (empty($nombre_empresa)) {
             return ['ok' => false, 'mensaje' => 'EL NOMBRE DE LA EMPRESA ES OBLIGATORIO.'];
@@ -95,12 +95,12 @@ class Proveedor extends Model
         ];
         $data = array_filter($data, fn($v) => $v !== null);
 
-        if ($d['accion'] === 'registrar') {
+        if ($datosProveedor['accion'] === 'registrar') {
             return $this->registrar($data, $rif, $nombre_empresa, $email);
         }
 
-        if ($d['accion'] === 'editar') {
-            return $this->editar((int)$d['id_proveedor'], $data, $rif, $nombre_empresa, $email);
+        if ($datosProveedor['accion'] === 'editar') {
+            return $this->editar((int)$datosProveedor['id_proveedor'], $data, $rif, $nombre_empresa, $email);
         }
 
         return ['ok' => false, 'mensaje' => 'ACCIÓN INVÁLIDA.'];
@@ -139,7 +139,7 @@ class Proveedor extends Model
         }
     }
 
-/**
+    /**
      * Edita un proveedor existente verificando duplicados (excluyendo el propio).
      *
      * Rechaza si el RIF, el nombre o el email ya pertenecen a otro

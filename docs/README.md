@@ -38,7 +38,7 @@ dashboard/                Panel principal (login tras autenticación)
 login/                    Login y recuperación de contraseña
 db/                       Esquema portátil de instalación limpia
 backups/                  Respaldos de la base de datos
-BITACORA.md               Historial único de cambios (obligatorio registrar cada tarea)
+docs/                     Documentación del proyecto y bitácora de cambios
 ```
 
 ## Instalación local
@@ -52,7 +52,7 @@ BITACORA.md               Historial único de cambios (obligatorio registrar cad
 
 ## Control de cambios
 
-Todo cambio de código debe registrarse en `BITACORA.md` (regla obligatoria en `AGENTS.md`).
+Todo cambio de código debe registrarse en `docs/BITACORA.md` (regla obligatoria en `AGENTS.md`).
 
 ## Licencia
 

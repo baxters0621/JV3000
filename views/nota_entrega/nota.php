@@ -1,4 +1,24 @@
 <?php
+
+/** @var array<string, mixed> $data */
+/** @var array<int, array<string, mixed>> $detalles */
+/** @var string $empresa */
+/** @var string $rif_emp */
+/** @var string $dir_emp */
+/** @var string $tel_emp */
+/** @var string $email_emp */
+/** @var bool $es_merma */
+/** @var bool $es_regalias */
+/** @var bool $es_venta */
+/** @var string $hora_actual */
+/** @var array<int, array<string, mixed>> $alertas_venc */
+/** @var float $subtotal */
+/** @var float $iva_pct */
+/** @var float $iva */
+/** @var float $total_neto */
+/** @var string $preview_token */
+/** @var string $csrf */
+
 // ==========================================
 // VISTA: Nota de Entrega / Salida (imprimible)
 // ==========================================
@@ -43,10 +63,10 @@
             <span class="num-item"><strong>HORA:</strong> <?php echo $hora_actual; ?></span>
         </div>
 
-        <?php foreach ($alertas_venc as $av): ?>
-            <div style="padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:.75rem;font-weight:600;text-align:center;<?php echo $av['tipo'] === 'vencido' ? 'background:rgba(220,38,38,0.1);color:#DC2626;border:1px solid rgba(220,38,38,0.3);' : 'background:rgba(217,119,6,0.1);color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);'; ?>">
-                <?php echo $av['tipo'] === 'vencido' ? '⚠ VENCIDO' : '⚠ PRÓXIMO A VENCER'; ?>
-                — <?php echo htmlspecialchars($av['producto']); ?> (<?php echo date('d/m/Y', strtotime($av['fecha'])); ?>)
+        <?php foreach ($alertas_venc as $expirationAlert): ?>
+            <div style="padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:.75rem;font-weight:600;text-align:center;<?php echo $expirationAlert['tipo'] === 'vencido' ? 'background:rgba(220,38,38,0.1);color:#DC2626;border:1px solid rgba(220,38,38,0.3);' : 'background:rgba(217,119,6,0.1);color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);'; ?>">
+                <?php echo $expirationAlert['tipo'] === 'vencido' ? '⚠ VENCIDO' : '⚠ PRÓXIMO A VENCER'; ?>
+                — <?php echo htmlspecialchars($expirationAlert['producto']); ?> (<?php echo date('d/m/Y', strtotime($expirationAlert['fecha'])); ?>)
             </div>
         <?php endforeach; ?>
 
@@ -73,13 +93,13 @@
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($detalles as $det): ?>
-                    <?php $fila_total = $det['cantidad'] * $det['precio_venta']; ?>
+                <?php foreach ($detalles as $detail): ?>
+                    <?php $lineTotal = $detail['cantidad'] * $detail['precio_venta']; ?>
                     <tr>
-                        <td><?php echo $det['cantidad']; ?></td>
-                        <td><strong class="pv-nombre" data-tooltip="<?php echo htmlspecialchars($det['nombre_producto'] ?? ''); ?>"><?php echo htmlspecialchars($det['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.85rem;color:#6C757D;">SKU: <?php echo htmlspecialchars($det['sku'] ?? ''); ?></span></td>
-                        <td><?php if ($es_regalias && $det['precio_venta'] == 0 && ($det['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($det['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">GRATIS</span><?php else: ?>$ <?php echo number_format($det['precio_venta'], 2); ?><?php endif; ?></td>
-                        <td><?php if ($es_regalias && $det['precio_venta'] == 0 && ($det['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($det['cantidad'] * $det['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">$ 0.00</span><?php else: ?>$ <?php echo number_format($fila_total, 2); ?><?php endif; ?></td>
+                        <td><?php echo $detail['cantidad']; ?></td>
+                        <td><strong class="pv-nombre" data-tooltip="<?php echo htmlspecialchars($detail['nombre_producto'] ?? ''); ?>"><?php echo htmlspecialchars($detail['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.85rem;color:#6C757D;">SKU: <?php echo htmlspecialchars($detail['sku'] ?? ''); ?></span></td>
+                        <td><?php if ($es_regalias && $detail['precio_venta'] == 0 && ($detail['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($detail['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">GRATIS</span><?php else: ?>$ <?php echo number_format($detail['precio_venta'], 2); ?><?php endif; ?></td>
+                        <td><?php if ($es_regalias && $detail['precio_venta'] == 0 && ($detail['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($detail['cantidad'] * $detail['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">$ 0.00</span><?php else: ?>$ <?php echo number_format($lineTotal, 2); ?><?php endif; ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -135,7 +155,7 @@
     </div>
 
     <script src="<?php echo BASE_PATH; ?>assets/js/tooltips.js?v=5"></script>
-<script src="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.js?v=5"></script>
+    <script src="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.js?v=5"></script>
 </body>
 
 </html>

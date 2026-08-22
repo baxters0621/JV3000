@@ -1,56 +1,56 @@
 
         function validarRespuesta() {
-            var resp = document.getElementById('rec-resp').value.trim();
-            var btn = document.getElementById('rec-btn');
-            var hint = document.getElementById('rec-resp-hint');
-            if (resp.length === 0) {
-                btn.disabled = true;
-                hint.textContent = '';
+            var securityAnswer = document.getElementById('rec-resp').value.trim();
+            var submitButton = document.getElementById('rec-btn');
+            var validationHint = document.getElementById('rec-resp-hint');
+            if (securityAnswer.length === 0) {
+                submitButton.disabled = true;
+                validationHint.textContent = '';
                 document.getElementById('rec-resp').style.borderColor = '';
                 return;
             }
-            var ok = resp.length >= 1;
-            btn.disabled = !ok;
-            document.getElementById('rec-resp').style.borderColor = ok ? '#16A34A' : '';
-            hint.textContent = '';
+            var answerIsValid = securityAnswer.length >= 1;
+            submitButton.disabled = !answerIsValid;
+            document.getElementById('rec-resp').style.borderColor = answerIsValid ? '#16A34A' : '';
+            validationHint.textContent = '';
         }
 
         function validarPassRec() {
-            var p = document.getElementById('rec-pass').value;
-            var p2 = document.getElementById('rec-pass2').value;
-            var btn = document.getElementById('rec-btn-pass');
-            var meter = document.getElementById('rec-meter');
-            var hint = document.getElementById('rec-pass-hint');
+            var password = document.getElementById('rec-pass').value;
+            var passwordConfirmation = document.getElementById('rec-pass2').value;
+            var changePasswordButton = document.getElementById('rec-btn-pass');
+            var passwordMeter = document.getElementById('rec-meter');
+            var passwordHint = document.getElementById('rec-pass-hint');
 
-            var s = 0;
-            if (p.length >= 8) s++;
-            if (/[a-z]/.test(p)) s++;
-            if (/[A-Z]/.test(p)) s++;
-            if (/[0-9]/.test(p)) s++;
-            if (/[\W_]/.test(p)) s++;
+            var passwordStrength = 0;
+            if (password.length >= 8) passwordStrength++;
+            if (/[a-z]/.test(password)) passwordStrength++;
+            if (/[A-Z]/.test(password)) passwordStrength++;
+            if (/[0-9]/.test(password)) passwordStrength++;
+            if (/[\W_]/.test(password)) passwordStrength++;
 
-            var cols = ['#DC2626', '#DC2626', '#D97706', '#2563EB', '#16A34A'];
-            var wids = ['20%', '40%', '60%', '80%', '100%'];
-            var idx = Math.max(0, Math.min(s - 1, 4));
-            meter.style.width = wids[idx];
-            meter.style.backgroundColor = cols[idx];
+            var strengthColors = ['#DC2626', '#DC2626', '#D97706', '#2563EB', '#16A34A'];
+            var strengthWidths = ['20%', '40%', '60%', '80%', '100%'];
+            var strengthIndex = Math.max(0, Math.min(passwordStrength - 1, 4));
+            passwordMeter.style.width = strengthWidths[strengthIndex];
+            passwordMeter.style.backgroundColor = strengthColors[strengthIndex];
 
-            var pwdOk = p.length >= 8 && s >= 5;
-            var matchOk = p.length > 0 && p === p2;
+            var passwordIsValid = password.length >= 8 && passwordStrength >= 5;
+            var passwordsMatch = password.length > 0 && password === passwordConfirmation;
 
-            if (p.length > 0 && s < 5) {
-                hint.textContent = 'Debe tener mayúsculas, minúsculas, números y símbolos.';
-                hint.style.color = '#DC2626';
-            } else if (p2.length > 0 && !matchOk) {
-                hint.textContent = 'Las contraseñas no coinciden.';
-                hint.style.color = '#DC2626';
-            } else if (matchOk && pwdOk) {
-                hint.textContent = '✓ Contraseña segura';
-                hint.style.color = '#16A34A';
+            if (password.length > 0 && passwordStrength < 5) {
+                passwordHint.textContent = 'Debe tener mayúsculas, minúsculas, números y símbolos.';
+                passwordHint.style.color = '#DC2626';
+            } else if (passwordConfirmation.length > 0 && !passwordsMatch) {
+                passwordHint.textContent = 'Las contraseñas no coinciden.';
+                passwordHint.style.color = '#DC2626';
+            } else if (passwordsMatch && passwordIsValid) {
+                passwordHint.textContent = '✓ Contraseña segura';
+                passwordHint.style.color = '#16A34A';
             } else {
-                hint.textContent = '';
+                passwordHint.textContent = '';
             }
 
-            btn.disabled = !(pwdOk && matchOk);
+            changePasswordButton.disabled = !(passwordIsValid && passwordsMatch);
         }
     

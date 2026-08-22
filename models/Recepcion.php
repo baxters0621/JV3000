@@ -25,12 +25,12 @@ class Recepcion extends Model
      * registra el movimiento y marca la compra como Completa o Parcial según
      * si quedó mercancía pendiente.
      *
-     * @param array $post Datos del formulario (id_compra, items_data, etc.).
+     * @param array $receptionFormData Datos del formulario (id_compra, items_data, etc.).
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
-    public function registrar(array $post): array
+    public function registrar(array $receptionFormData): array
     {
-        $id_compra = intval($post['id_compra'] ?? 0);
+        $id_compra = intval($receptionFormData['id_compra'] ?? 0);
         $compra = $this->db->fetchOne(
             "SELECT id_compra, nro_factura, id_proveedor, status, estado_recepcion FROM compras WHERE id_compra = ? AND status = 'Activa'",
             [$id_compra]
@@ -39,7 +39,7 @@ class Recepcion extends Model
             return ['ok' => false, 'mensaje' => 'LA COMPRA NO EXISTE O YA FUE RECIBIDA POR COMPLETO.'];
         }
 
-        $items_raw = json_decode($post['items_data'] ?? '[]', true);
+        $items_raw = json_decode($receptionFormData['items_data'] ?? '[]', true);
         $items = is_array($items_raw) ? $items_raw : [];
         if (empty($items)) {
             return ['ok' => false, 'mensaje' => 'DEBE INDICAR AL MENOS UN PRODUCTO PARA RECIBIR.'];
@@ -81,7 +81,7 @@ class Recepcion extends Model
 
         $id_usuario_sesion = intval($_SESSION['id_usuario'] ?? 0);
         $id_proveedor = $compra['id_proveedor'] ? intval($compra['id_proveedor']) : null;
-        $documento_recepcion = trim(substr((string)($post['documento_recepcion'] ?? ''), 0, 100));
+        $documento_recepcion = trim(substr((string)($receptionFormData['documento_recepcion'] ?? ''), 0, 100));
 
         $this->db->begin();
         try {
@@ -91,7 +91,7 @@ class Recepcion extends Model
                 'tipo'               => 'Entrada',
                 'id_usuario'         => $id_usuario_sesion,
                 'status'             => 'Activo',
-                'documento_recepcion'=> $documento_recepcion !== '' ? $documento_recepcion : null,
+                'documento_recepcion' => $documento_recepcion !== '' ? $documento_recepcion : null,
             ]);
 
             $total_productos = 0;
@@ -229,7 +229,7 @@ class Recepcion extends Model
         return $datos;
     }
 
-        /**
+    /**
      * Últimas recepciones registradas (hasta 20).
      *
      * Devuelve los movimientos de entrada de compra más recientes con
@@ -254,7 +254,7 @@ class Recepcion extends Model
         ");
     }
 
-        /**
+    /**
      * Cantidad de recepciones registradas hoy.
      *
      * @return int Número de movimientos de entrada de compra del día.
@@ -282,7 +282,7 @@ class Recepcion extends Model
         return [
             'compras_pendientes'  => $compras,
             'total_por_recibir'   => count($compras),
-            'unidades_por_recibir'=> $unidades,
+            'unidades_por_recibir' => $unidades,
             'datos_recepcion'     => $this->datosRecepcion(),
             'recepciones'         => $this->recepcionesRecientes(),
             'recepciones_hoy'     => $this->recepcionesHoy(),

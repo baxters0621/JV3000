@@ -51,7 +51,8 @@ require_once __DIR__ . '/includes/helpers.php';
 // ==========================================
 
 // --- 6/7. Conectar BD (auto-restaurar backup si la BD no existe) ---
-function jv_db_error_page() {
+function jv_db_error_page()
+{
     die("<div style='background:#020617;color:#f87171;font-family:sans-serif;text-align:center;padding:100px;height:100vh;'>
             <div style='max-width:600px;margin:auto;border:1px solid rgba(248,113,113,0.3);padding:40px;border-radius:20px;background:#0f172a;'>
                 <h2 style='color:#ef4444;text-transform:uppercase;letter-spacing:2px;'>Error de Conexión</h2>
@@ -60,7 +61,8 @@ function jv_db_error_page() {
          </div>");
 }
 
-function jv_importar_sql($conn, $sql_path) {
+function jv_importar_sql($conn, $sql_path)
+{
     if (!@mysqli_query($conn, "CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci")) {
         error_log("[JV3000] No se pudo crear la BD: " . mysqli_error($conn));
         return false;
@@ -77,7 +79,9 @@ function jv_importar_sql($conn, $sql_path) {
     }
     @mysqli_multi_query($conn, $sql_content);
     do {
-        if ($res = @mysqli_store_result($conn)) { @mysqli_free_result($res); }
+        if ($res = @mysqli_store_result($conn)) {
+            @mysqli_free_result($res);
+        }
     } while (@mysqli_next_result($conn));
     $check = @mysqli_query($conn, "SELECT COUNT(*) AS total FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . DB_NAME . "'");
     $row = $check ? @mysqli_fetch_assoc($check) : null;
@@ -89,7 +93,8 @@ function jv_importar_sql($conn, $sql_path) {
     return true;
 }
 
-function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm) {
+function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm)
+{
     $demo_error = false;
     if ($showDemoForm && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['instalar_demo'])) {
         Security::validateCSRF();
@@ -99,21 +104,23 @@ function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm) {
             header('Location: dashboard/index.php');
             exit;
         }
-        if ($conn_demo) { mysqli_close($conn_demo); }
+        if ($conn_demo) {
+            mysqli_close($conn_demo);
+        }
         error_log("[JV3000] Fallo al instalar el sistema.");
         $demo_error = true;
     }
 
-    $csrf = Security::generateToken();
-    $extra = $demo_error
+    $csrfToken = Security::generateToken();
+    $additionalMessage = $demo_error
         ? "<p style='color:#fbbf24;margin-top:20px;'>La instalación falló. Revisa que exista db/jv3000_portable_v4.sql o coloca un respaldo en backups/.</p>"
         : '';
-    $form = '';
+    $installationForm = '';
     if ($showDemoForm) {
-        $form = "<hr style='border-color:rgba(148,163,184,0.2);margin:28px 0;'>
+        $installationForm = "<hr style='border-color:rgba(148,163,184,0.2);margin:28px 0;'>
                  <p style='color:#94a3b8;'>¿Es una instalación nueva? Puedes instalar el sistema en limpio (sin datos de ejemplo):</p>
                  <form method='POST' action='" . htmlspecialchars($_SERVER['REQUEST_URI'] ?? 'login.php') . "' style='margin-top:16px;'>
-                     <input type='hidden' name='csrf_token' value='" . htmlspecialchars($csrf) . "'>
+                     <input type='hidden' name='csrf_token' value='" . htmlspecialchars($csrfToken) . "'>
                      <button type='submit' name='instalar_demo' value='1' style='background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:1px;'>Instalar sistema</button>
                  </form>";
     }
@@ -121,7 +128,7 @@ function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm) {
             <div style='max-width:620px;margin:auto;border:1px solid rgba(251,191,36,0.3);padding:40px;border-radius:20px;background:#0f172a;'>
                 <h2 style='color:#fbbf24;text-transform:uppercase;letter-spacing:2px;'>" . htmlspecialchars($titulo) . "</h2>
                 <p style='color:#94a3b8;margin-top:20px;'>" . $mensaje . "</p>
-                " . $extra . $form . "
+                " . $additionalMessage . $installationForm . "
             </div>
          </div>");
 }
@@ -132,23 +139,25 @@ try {
     $installed = false;
     $noBackup = false;
     $restoreFailed = false;
-    $conn_no_db = @mysqli_connect(DB_HOST, DB_USER, DB_PASS);
-    if ($conn_no_db) {
-        $db_check = @mysqli_query($conn_no_db, "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '" . DB_NAME . "'");
-        if ($db_check && mysqli_num_rows($db_check) == 0) {
+    $connectionWithoutDatabase = @mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+    if ($connectionWithoutDatabase) {
+        $databaseCheck = @mysqli_query($connectionWithoutDatabase, "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '" . DB_NAME . "'");
+        if ($databaseCheck && mysqli_num_rows($databaseCheck) == 0) {
             $backup_files = glob(__DIR__ . '/backups/jv3000_db_*.sql');
             if (!$backup_files) {
                 $noBackup = true;
             } else {
                 usort($backup_files, fn($a, $b) => filemtime($b) <=> filemtime($a));
                 foreach ($backup_files as $candidate) {
-                    $installed = jv_importar_sql($conn_no_db, $candidate);
-                    if ($installed) { break; }
+                    $installed = jv_importar_sql($connectionWithoutDatabase, $candidate);
+                    if ($installed) {
+                        break;
+                    }
                 }
                 $restoreFailed = !$installed;
             }
         }
-        mysqli_close($conn_no_db);
+        mysqli_close($connectionWithoutDatabase);
     }
 
     if ($installed) {
@@ -186,11 +195,39 @@ try {
 // --- 7b. Normalización de documento fiscal (cédula/RIF) ---
 // Se ejecuta una única vez (flag en configuracion). Idempotente.
 $jv_db = Database::getInstance();
-$rowFlag = $jv_db->fetchOne("SELECT valor FROM configuracion WHERE clave = 'documentos_normalizados'");
-if (!$rowFlag) {
-    $mig_file = __DIR__ . '/db/migrar_documentos.php';
-    if (is_file($mig_file)) {
-        require_once $mig_file;
+
+// -- Compatibilidad de auditoría: columnas de trazabilidad del request
+foreach (
+    [
+        ['auditoria', 'ip_origen', 'VARCHAR(45) NULL'],
+        ['auditoria', 'ruta', 'VARCHAR(255) NULL'],
+        ['auditoria', 'metodo', 'VARCHAR(10) NULL'],
+        ['login_intentos', 'ultimo_intento', 'TIMESTAMP NOT NULL DEFAULT current_timestamp()'],
+    ] as [$tabla, $columna, $tipo]
+) {
+    $exists = $jv_db->fetchOne(
+        "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+        [DB_NAME, $tabla, $columna]
+    );
+    if (!$exists || (int)($exists['n'] ?? 0) === 0) {
+        $jv_db->execute("ALTER TABLE {$tabla} ADD COLUMN {$columna} {$tipo}");
+    }
+}
+
+$loginUniqueIndex = $jv_db->fetchOne(
+    "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'login_intentos' AND INDEX_NAME = 'idx_ip_unique'",
+    [DB_NAME]
+);
+if (!$loginUniqueIndex || (int)($loginUniqueIndex['n'] ?? 0) === 0) {
+    $jv_db->execute("DELETE FROM login_intentos WHERE id NOT IN (SELECT id FROM (SELECT MIN(id) AS id FROM login_intentos GROUP BY ip_address) AS intentos_unicos)");
+    $jv_db->execute("ALTER TABLE login_intentos ADD UNIQUE INDEX idx_ip_unique (ip_address)");
+}
+
+$normalizationFlag = $jv_db->fetchOne("SELECT valor FROM configuracion WHERE clave = 'documentos_normalizados'");
+if (!$normalizationFlag) {
+    $migrationFile = __DIR__ . '/db/migrar_documentos.php';
+    if (is_file($migrationFile)) {
+        require_once $migrationFile;
         if (function_exists('migrar_documentos')) {
             ob_start();
             migrar_documentos($jv_db->getConnection(), DB_NAME);
@@ -228,8 +265,8 @@ $jv_db->execute("CREATE TABLE IF NOT EXISTS detalle_solicitud_compra (
     CONSTRAINT fk_dsc_solicitud FOREIGN KEY (id_solicitud) REFERENCES solicitudes_compra (id_solicitud) ON DELETE CASCADE,
     CONSTRAINT fk_dsc_producto FOREIGN KEY (id_producto) REFERENCES productos (id_producto)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-$colMov = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'movimientos' AND COLUMN_NAME = 'documento_recepcion'");
-if (!$colMov || (int)$colMov['n'] === 0) {
+$receptionDocumentColumn = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'movimientos' AND COLUMN_NAME = 'documento_recepcion'");
+if (!$receptionDocumentColumn || (int)$receptionDocumentColumn['n'] === 0) {
     $jv_db->execute("ALTER TABLE movimientos ADD COLUMN documento_recepcion VARCHAR(100) DEFAULT NULL AFTER status");
 }
 

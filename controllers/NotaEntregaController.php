@@ -3,25 +3,25 @@
 // ==========================================
 // CONTROLADOR: Nota de Entrega / Salida (imprimible)
 // ==========================================
-// POST index.php?url=nota_entrega/store  â†’ guarda preview en sesiÃ³n (AJAX)
-// GET  index.php?url=nota_entrega&token= â†’ nota imprimible desde preview
-// GET  index.php?url=nota_entrega&id=    â†’ reimpresiÃ³n desde BD
+// POST index.php?url=nota_entrega/store  → guarda preview en sesión (AJAX)
+// GET  index.php?url=nota_entrega&token= → nota imprimible desde preview
+// GET  index.php?url=nota_entrega&id=    → reimpresión desde BD
 
 /**
  * NotaEntregaController: genera y muestra la nota imprimible.
  *
- * POST AJAX (store) guarda el preview de una venta en sesiÃ³n; GET con
- * token muestra la nota desde el preview en sesiÃ³n y GET con id permite
- * la reimpresiÃ³n desde la base de datos.
+ * POST AJAX (store) guarda el preview de una venta en sesión; GET con
+ * token muestra la nota desde el preview en sesión y GET con id permite
+ * la reimpresión desde la base de datos.
  */
 class NotaEntregaController extends Controller
 {
     /**
-     * Almacena el preview de la venta en sesiÃ³n (endpoint AJAX).
+     * Almacena el preview de la venta en sesión (endpoint AJAX).
      *
-     * Valida mÃ©todo POST + cabecera XMLHttpRequest, construye el preview
+     * Valida método POST + cabecera XMLHttpRequest, construye el preview
      * mediante el modelo NotaEntrega, purga previews previos y guarda los
-     * datos bajo un token aleatorio en la sesiÃ³n. Responde el token en JSON.
+     * datos bajo un token aleatorio en la sesión. Responde el token en JSON.
      *
      * @return void
      */
@@ -29,9 +29,11 @@ class NotaEntregaController extends Controller
     {
         Security::verificarPermisoVenta();
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST'
+        if (
+            $_SERVER['REQUEST_METHOD'] !== 'POST'
             || empty($_SERVER['HTTP_X_REQUESTED_WITH'])
-            || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
+            || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest'
+        ) {
             $this->json(['ok' => false, 'error' => 'NO_AJAX'], 403);
         }
 
@@ -53,8 +55,8 @@ class NotaEntregaController extends Controller
     /**
      * Muestra la nota imprimible desde preview (token) o desde BD (id).
      *
-     * GET con "id": reimpresiÃ³n de una salida guardada en la base de datos.
-     * GET con "token" (o preview Ãºnico en sesiÃ³n): arma la nota a partir de
+     * GET con "id": reimpresión de una salida guardada en la base de datos.
+     * GET con "token" (o preview único en sesión): arma la nota a partir de
      * los datos del preview. Si no hay datos, renderiza la vista de error.
      *
      * @return void
@@ -65,37 +67,38 @@ class NotaEntregaController extends Controller
 
         $modelo = new NotaEntrega();
 
-        // ReimpresiÃ³n desde la base de datos
+        // Reimpresión desde la base de datos
         if (isset($_GET['id'])) {
-            $id = (int)$_GET['id'];
-            $data = $modelo->obtenerPorId($id);
-            if (!$data) {
+            $outgoingId = (int)$_GET['id'];
+            $outgoingData = $modelo->obtenerPorId($outgoingId);
+            if (!$outgoingData) {
                 $this->renderRaw('nota_entrega/error');
                 return;
             }
-            $detalles = $modelo->obtenerDetalles($id);
-            $this->renderRaw('nota_entrega/nota', $modelo->armarNota($data, $detalles, ''));
+            $outgoingDetails = $modelo->obtenerDetalles($outgoingId);
+            $this->renderRaw('nota_entrega/nota', $modelo->armarNota($outgoingData, $outgoingDetails, ''));
+            return;
         }
 
-        // Preview desde sesiÃ³n
-        $preview_token = $_GET['token'] ?? '';
-        $data = $preview_token !== ''
-            ? ($_SESSION['preview_data'][$preview_token] ?? null)
+        // Preview desde sesión
+        $previewToken = $_GET['token'] ?? '';
+        $previewData = $previewToken !== ''
+            ? ($_SESSION['preview_data'][$previewToken] ?? null)
             : ($_SESSION['preview_data'] ?? null);
-        if (!$data) {
+        if (!$previewData) {
             $this->renderRaw('nota_entrega/error');
             return;
         }
 
-        $detalles = $modelo->obtenerDetallesPreview($data);
-        $tn = $modelo->obtenerTipoNombre((int)($data['id_tipo_mov'] ?? 0));
-        if ($tn !== '') {
-            $data['tipo_nombre'] = $tn;
+        $previewDetails = $modelo->obtenerDetallesPreview($previewData);
+        $movementTypeName = $modelo->obtenerTipoNombre((int)($previewData['id_tipo_mov'] ?? 0));
+        if ($movementTypeName !== '') {
+            $previewData['tipo_nombre'] = $movementTypeName;
         }
 
-        $datos = $modelo->armarNota($data, $detalles, $preview_token);
-        $datos['csrf'] = Security::generateToken();
+        $noteData = $modelo->armarNota($previewData, $previewDetails, $previewToken);
+        $noteData['csrf'] = Security::generateToken();
 
-        $this->renderRaw('nota_entrega/nota', $datos);
+        $this->renderRaw('nota_entrega/nota', $noteData);
     }
 }

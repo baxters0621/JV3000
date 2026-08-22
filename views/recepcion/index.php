@@ -1,4 +1,13 @@
 <?php
+
+/** @var array<string, string>|null $flash */
+/** @var int $total_por_recibir */
+/** @var int $unidades_por_recibir */
+/** @var int $recepciones_hoy */
+/** @var array<int, array<string, mixed>> $compras_pendientes */
+/** @var array<int, array<string, mixed>> $recepciones */
+/** @var string $csrf */
+
 // ==========================================
 // VISTA: Recepción de Mercancía (index)
 // ==========================================
@@ -233,7 +242,9 @@
                                     </tr>
                                 </thead>
                                 <tbody id="recItemsBody">
-                                    <tr><td colspan="7" style="padding:24px 12px;text-align:center;color:var(--jv-text-muted);font-size:.85rem;">Seleccione una compra para recibir</td></tr>
+                                    <tr>
+                                        <td colspan="7" style="padding:24px 12px;text-align:center;color:var(--jv-text-muted);font-size:.85rem;">Seleccione una compra para recibir</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

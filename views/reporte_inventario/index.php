@@ -1,4 +1,7 @@
 <?php
+
+/** @var array<int, array<string, mixed>> $productos */
+
 // ==========================================
 // VISTA: Reporte de Inventario (standalone imprimible)
 // ==========================================
@@ -12,6 +15,7 @@ $valor_venta_total = 0;
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Reporte de Inventario | JV3000 C.A.</title>
@@ -19,6 +23,7 @@ $valor_venta_total = 0;
     <link rel="stylesheet" href="<?php echo APP_URL_BASE; ?>assets/css/bootstrap-icons.css">
     <link rel="stylesheet" href="<?php echo APP_URL_BASE; ?>assets/modules/reporte_inventario/reporte_inventario.css">
 </head>
+
 <body class="p-4 p-md-5">
     <div class="container-fluid">
         <div class="header-report d-flex justify-content-between align-items-center">
@@ -51,22 +56,22 @@ $valor_venta_total = 0;
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($productos as $r):
-                        $gran_total_stock += $r['stock_actual'];
-                        $valor_costo_total += $r['valor_costo'];
-                        $valor_venta_total += $r['valor_venta'];
+                    <?php foreach ($productos as $producto):
+                        $gran_total_stock += $producto['stock_actual'];
+                        $valor_costo_total += $producto['valor_costo'];
+                        $valor_venta_total += $producto['valor_venta'];
                     ?>
                         <tr>
-                            <td class="text-center font-monospace small"><?php echo htmlspecialchars($r['sku']); ?></td>
-                            <td class="text-start ps-2 fw-semibold small"><?php echo htmlspecialchars($r['nombre_producto']); ?></td>
-                            <td class="text-center small text-muted"><?php echo htmlspecialchars($r['nombre_cat'] ?? '-'); ?></td>
-                            <td class="text-center small text-muted"><?php echo htmlspecialchars($r['ultimo_proveedor'] ?? '-'); ?></td>
-                            <td class="text-center <?php echo ($r['stock_actual'] <= 5) ? 'text-danger fw-bold' : ''; ?>"><?php echo number_format($r['stock_actual'], 0); ?></td>
-                            <td class="text-center small text-muted"><?php echo number_format((int)$r['capacidad'], 0); ?></td>
-                            <td class="text-center"><?php if ((int)$r['stock_actual'] >= (int)$r['capacidad']): ?><span class="badge bg-danger">COMPLETO</span><?php else: ?><span class="badge bg-success">OK</span><?php endif; ?></td>
-                            <td class="text-end pe-2 small">$<?php echo number_format($r['precio_costo'], 2); ?></td>
-                            <td class="text-end pe-2 small">$<?php echo number_format($r['precio_venta'], 2); ?></td>
-                            <td class="text-end pe-2 fw-bold">$<?php echo number_format($r['valor_venta'], 2); ?></td>
+                            <td class="text-center font-monospace small"><?php echo htmlspecialchars($producto['sku']); ?></td>
+                            <td class="text-start ps-2 fw-semibold small"><?php echo htmlspecialchars($producto['nombre_producto']); ?></td>
+                            <td class="text-center small text-muted"><?php echo htmlspecialchars($producto['nombre_cat'] ?? '-'); ?></td>
+                            <td class="text-center small text-muted"><?php echo htmlspecialchars($producto['ultimo_proveedor'] ?? '-'); ?></td>
+                            <td class="text-center <?php echo ($producto['stock_actual'] <= 5) ? 'text-danger fw-bold' : ''; ?>"><?php echo number_format($producto['stock_actual'], 0); ?></td>
+                            <td class="text-center small text-muted"><?php echo number_format((int)$producto['capacidad'], 0); ?></td>
+                            <td class="text-center"><?php if ((int)$producto['stock_actual'] >= (int)$producto['capacidad']): ?><span class="badge bg-danger">COMPLETO</span><?php else: ?><span class="badge bg-success">OK</span><?php endif; ?></td>
+                            <td class="text-end pe-2 small">$<?php echo number_format($producto['precio_costo'], 2); ?></td>
+                            <td class="text-end pe-2 small">$<?php echo number_format($producto['precio_venta'], 2); ?></td>
+                            <td class="text-end pe-2 fw-bold">$<?php echo number_format($producto['valor_venta'], 2); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -85,9 +90,18 @@ $valor_venta_total = 0;
         </div>
 
         <div class="row mt-4 pt-3 text-center d-none d-print-flex">
-            <div class="col-4"><div style="width:70%;border-top:1.5px solid #000;margin:0 auto;"></div><p class="small mt-2"><strong>Elaborado por</strong></p></div>
-            <div class="col-4"><div style="width:70%;border-top:1.5px solid #000;margin:0 auto;"></div><p class="small mt-2"><strong>Almacenista</strong></p></div>
-            <div class="col-4"><div style="width:70%;border-top:1.5px solid #000;margin:0 auto;"></div><p class="small mt-2"><strong>Gerencia</strong></p></div>
+            <div class="col-4">
+                <div style="width:70%;border-top:1.5px solid #000;margin:0 auto;"></div>
+                <p class="small mt-2"><strong>Elaborado por</strong></p>
+            </div>
+            <div class="col-4">
+                <div style="width:70%;border-top:1.5px solid #000;margin:0 auto;"></div>
+                <p class="small mt-2"><strong>Almacenista</strong></p>
+            </div>
+            <div class="col-4">
+                <div style="width:70%;border-top:1.5px solid #000;margin:0 auto;"></div>
+                <p class="small mt-2"><strong>Gerencia</strong></p>
+            </div>
         </div>
 
         <div class="mt-4 no-print d-flex justify-content-center gap-3">
@@ -96,4 +110,5 @@ $valor_venta_total = 0;
         </div>
     </div>
 </body>
+
 </html>

@@ -1,4 +1,16 @@
 <?php
+
+/** @var array<string, mixed>|null $flash */
+/** @var bool $esAdmin */
+/** @var array<int, array<string, mixed>> $productos */
+/** @var array<int, array<string, mixed>> $proveedores_list */
+/** @var int $total_paginas */
+/** @var int $offset */
+/** @var int $registros_por_pagina */
+/** @var int $total_registros */
+/** @var int $pagina_actual */
+/** @var string $csrf */
+
 // ==========================================
 // VISTA: Inventario / Productos (index)
 // ==========================================
@@ -27,7 +39,7 @@
 <div class="card-jv card-jv-table p-0">
     <div class="buscador-wrapper d-flex align-items-center flex-wrap gap-2 px-3 py-2">
         <i class="bi bi-search me-1" style="color: var(--jv-orange);"></i>
-        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nombre, cÃ³digo, proveedor, categorÃ­a, estado..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; max-width: 340px;">
+        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nombre, código, proveedor, categoría, estado..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; max-width: 340px;">
         <span class="actions-divider mx-1"></span>
         <span class="small fw-bold text-uppercase" style="color:var(--jv-text-muted);font-size:.8rem;letter-spacing:1px;">Estado:</span>
         <div class="btn-group btn-group-sm" role="group">
@@ -40,7 +52,7 @@
         <div class="btn-group btn-group-sm" role="group">
             <button type="button" class="btn btn-sm btn-filtro-venc active" data-venc="todas" onclick="filtrarVenc(this)" style="border-radius:6px 0 0 6px;background:rgba(234,88,12,0.15);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.3);">Todas</button>
             <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vencido" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-danger);border:1px solid rgba(220,38,38,0.3);">Vencidos</button>
-            <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="proximo" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">PrÃ³ximo</button>
+            <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="proximo" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">Próximo</button>
             <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="pronto" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">Pronto</button>
             <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vigente" onclick="filtrarVenc(this)" style="border-radius:0 6px 6px 0;background:transparent;color:var(--jv-success);border:1px solid rgba(22,163,74,0.3);">Vigente</button>
         </div>
@@ -49,7 +61,7 @@
         <table class="table-jv mb-0">
             <thead>
                 <tr>
-                    <th class="text-center" style="width:9%;">CÃ“DIGO</th>
+                    <th class="text-center" style="width:9%;">CÓDIGO</th>
                     <th style="width:22%;">PRODUCTO</th>
                     <th style="width:13%;">CATEGORÃA</th>
                     <th style="width:14%;">PROVEEDOR</th>
@@ -64,12 +76,12 @@
             </thead>
             <tbody id="tablaProductos">
                 <?php if (!empty($productos)): ?>
-                    <?php foreach ($productos as $row):
-                        // Estado del stock frente a sus mÃ­nimos/mÃ¡ximos:
-                        // AGOTADO (0) / BAJO (<= mÃ­nimo) / COMPLETO (>= capacidad) / OK.
-                        $stock_actual = intval($row['stock_actual']);
-                        $stock_minimo = intval($row['stock_minimo']);
-                        $capacidad = max(1, intval($row['capacidad'] ?? 100));
+                    <?php foreach ($productos as $productRecord):
+                        // Estado del stock frente a sus mínimos/máximos:
+                        // AGOTADO (0) / BAJO (<= mínimo) / COMPLETO (>= capacidad) / OK.
+                        $stock_actual = intval($productRecord['stock_actual']);
+                        $stock_minimo = intval($productRecord['stock_minimo']);
+                        $capacidad = max(1, intval($productRecord['capacidad'] ?? 100));
                         if ($stock_actual == 0) {
                             $stock_clase = 'danger';
                             $stock_etiqueta = 'AGOTADO';
@@ -90,16 +102,16 @@
                         $color_barra = $stock_clase == 'danger' ? '#DC2626' : ($stock_clase == 'info' ? '#2563EB' : '#16A34A');
                     ?>
                         <?php
-                        // Estado del vencimiento: vencido / prÃ³ximo (<=7 dÃ­as) /
-                        // pronto (<=30 dÃ­as) / vigente. Si no tiene fecha, no aplica.
-                        $venc = $row['fecha_vencimiento'] ?? '';
+                        // Estado del vencimiento: vencido / próximo (<=7 días) /
+                        // pronto (<=30 días) / vigente. Si no tiene fecha, no aplica.
+                        $expirationDate = $productRecord['fecha_vencimiento'] ?? '';
                         $venc_cls = '';
                         $venc_badge = 'badge-secondary';
                         $venc_icono = 'dash-circle';
                         $venc_fecha = '';
-                        if ($venc) {
-                            $dias_vencer = floor((strtotime($venc) - time()) / 86400);
-                            $venc_fecha = date('d/m/Y', strtotime($venc));
+                        if ($expirationDate) {
+                            $dias_vencer = floor((strtotime($expirationDate) - time()) / 86400);
+                            $venc_fecha = date('d/m/Y', strtotime($expirationDate));
                             if ($dias_vencer < 0) {
                                 $venc_cls = 'vencido';
                                 $venc_badge = 'badge-danger';
@@ -119,18 +131,18 @@
                             }
                         }
                         ?>
-                        <tr data-id="<?php echo $row['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($row['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($row['ultimo_proveedor'] ?? '')); ?>" data-prov-id="<?php echo intval($row['id_proveedor'] ?? 0); ?>" data-stock="<?php echo $row['stock_actual']; ?>" data-minimo="<?php echo $row['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($row['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $row['precio_venta']; ?>" data-costo="<?php echo $row['precio_costo']; ?>" data-status="<?php echo $row['status']; ?>" data-venc="<?php echo $row['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
+                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['ultimo_proveedor'] ?? '')); ?>" data-prov-id="<?php echo intval($productRecord['id_proveedor'] ?? 0); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
                             <td class="td-prod-sku">
-                                <span class="codigo-badge"><?php echo htmlspecialchars($row['sku']); ?></span>
+                                <span class="codigo-badge"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
                             </td>
-                            <td class="td-prod-nombre" data-tooltip="<?php echo htmlspecialchars($row['nombre_producto']); ?>">
-                                <span class="prod-nombre text-uppercase"><?php echo htmlspecialchars($row['nombre_producto']); ?></span>
+                            <td class="td-prod-nombre" data-tooltip="<?php echo htmlspecialchars($productRecord['nombre_producto']); ?>">
+                                <span class="prod-nombre text-uppercase"><?php echo htmlspecialchars($productRecord['nombre_producto']); ?></span>
                             </td>
-                            <td class="td-prod-cat" data-tooltip="<?php echo htmlspecialchars($row['nombre_cat'] ?? 'Sin categorÃ­a'); ?>">
-                                <span class="prod-cat"><?php echo htmlspecialchars($row['nombre_cat'] ?? 'Sin categorÃ­a'); ?></span>
+                            <td class="td-prod-cat" data-tooltip="<?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?>">
+                                <span class="prod-cat"><?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?></span>
                             </td>
-                            <td class="td-prod-prov" data-tooltip="<?php echo htmlspecialchars($row['ultimo_proveedor'] ?? 'â€”'); ?>">
-                                <span class="prod-prov"><?php echo htmlspecialchars($row['ultimo_proveedor'] ?? 'â€”'); ?></span>
+                            <td class="td-prod-prov" data-tooltip="<?php echo htmlspecialchars($productRecord['ultimo_proveedor'] ?? '—'); ?>">
+                                <span class="prod-prov"><?php echo htmlspecialchars($productRecord['ultimo_proveedor'] ?? '—'); ?></span>
                             </td>
                             <td class="td-stock text-center">
                                 <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
@@ -141,40 +153,40 @@
                                     <div style="height:100%;width:<?php echo $stock_porcentaje; ?>%;background:<?php echo $color_barra; ?>;border-radius:3px;transition:width 0.3s;"></div>
                                 </div>
                                 <div class="stk-meta">
-                                    MÃ­n: <?php echo $stock_minimo; ?> Â· MÃ¡x: <?php echo $capacidad; ?>
+                                    Mín: <?php echo $stock_minimo; ?> · Máx: <?php echo $capacidad; ?>
                                 </div>
                             </td>
                             <td>
-                                <span class="prod-precio">$<?php echo number_format($row['precio_venta'], 2); ?></span>
+                                <span class="prod-precio">$<?php echo number_format($productRecord['precio_venta'], 2); ?></span>
                             </td>
                             <td class="text-center">
                                 <span class="badge-jv <?php echo $venc_badge; ?>" style="white-space:nowrap;font-size:.85rem;">
-                                    <i class="bi bi-<?php echo $venc_icono; ?>"></i> <?php echo $venc_fecha ?: 'â€”'; ?>
+                                    <i class="bi bi-<?php echo $venc_icono; ?>"></i> <?php echo $venc_fecha ?: '—'; ?>
                                 </span>
                             </td>
                             <td class="text-center">
-                                <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>" style="font-size:.85rem;">
-                                    <i class="bi bi-<?php echo ($row['status'] == 'Activo') ? 'eye' : 'eye-off'; ?>"></i>
-                                    <?php echo strtoupper($row['status']); ?>
+                                <span class="badge-jv <?php echo ($productRecord['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>" style="font-size:.85rem;">
+                                    <i class="bi bi-<?php echo ($productRecord['status'] == 'Activo') ? 'eye' : 'eye-off'; ?>"></i>
+                                    <?php echo strtoupper($productRecord['status']); ?>
                                 </span>
                             </td>
                             <?php if ($esAdmin): ?>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-1">
-                                        <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(234,88,12,0.12);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="editarProducto(<?php echo $row['id_producto']; ?>)" title="Editar">
+                                        <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(234,88,12,0.12);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="editarProducto(<?php echo $productRecord['id_producto']; ?>)" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <?php if ($row['status'] === 'Activo'): ?>
-                                            <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>', 'desactivar')" title="Desactivar">
+                                        <?php if ($productRecord['status'] === 'Activo'): ?>
+                                            <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" title="Desactivar">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                             <?php if ($venc_cls === 'vencido'): ?>
-                                                <button type="button" class="btn btn-sm p-0 ms-1" style="width:38px;height:38px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>')" title="Dar de baja por vencimiento">
+                                                <button type="button" class="btn btn-sm p-0 ms-1" style="width:38px;height:38px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Dar de baja por vencimiento">
                                                     <i class="bi bi-archive"></i>
                                                 </button>
                                             <?php endif; ?>
                                         <?php else: ?>
-                                            <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo $row['id_producto']; ?>, '<?php echo htmlspecialchars($row['nombre_producto']); ?>', 'activar')" title="Reactivar">
+                                            <button type="button" class="btn btn-sm p-0" style="width:38px;height:38px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" title="Reactivar">
                                                 <i class="bi bi-play-circle"></i>
                                             </button>
                                         <?php endif; ?>
@@ -187,8 +199,8 @@
                     <tr>
                         <td colspan="<?php echo $esAdmin ? 9 : 8; ?>" class="text-center py-5">
                             <i class="bi bi-box-seam d-block mb-3 mx-auto" style="font-size: 3.5rem; color: var(--jv-text-muted);"></i>
-                            <span class="text-uppercase" style="color: var(--jv-text-primary); font-weight: 700; font-size: 1.1rem;">Inventario vacÃ­o</span>
-                            <p class="mt-2" style="color: var(--jv-text-muted); font-size: 1rem;">Registra entradas desde <strong style="color: var(--jv-orange);">Compras</strong> para ver productos aquÃ­</p>
+                            <span class="text-uppercase" style="color: var(--jv-text-primary); font-weight: 700; font-size: 1.1rem;">Inventario vacío</span>
+                            <p class="mt-2" style="color: var(--jv-text-muted); font-size: 1rem;">Registra entradas desde <strong style="color: var(--jv-orange);">Compras</strong> para ver productos aquí</p>
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -209,10 +221,10 @@
                     <?php
                     $inicio_p = max(1, $pagina_actual - 2);
                     $fin_p = min($total_paginas, $pagina_actual + 2);
-                    for ($i = $inicio_p; $i <= $fin_p; $i++):
+                    for ($pageNumber = $inicio_p; $pageNumber <= $fin_p; $pageNumber++):
                     ?>
-                        <li class="page-item <?php echo ($i == $pagina_actual) ? 'active' : ''; ?>">
-                            <a class="page-link" style="<?php echo ($i == $pagina_actual) ? 'background:var(--jv-orange); border-color:var(--jv-orange); color:#fff;' : 'background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);'; ?>" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        <li class="page-item <?php echo ($pageNumber == $pagina_actual) ? 'active' : ''; ?>">
+                            <a class="page-link" style="<?php echo ($pageNumber == $pagina_actual) ? 'background:var(--jv-orange); border-color:var(--jv-orange); color:#fff;' : 'background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);'; ?>" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pageNumber; ?>"><?php echo $pageNumber; ?></a>
                         </li>
                     <?php endfor; ?>
                     <li class="page-item <?php echo ($pagina_actual >= $total_paginas) ? 'disabled' : ''; ?>">
@@ -247,7 +259,7 @@
                             <input type="text" class="input-jv" id="edit_nombre" readonly disabled style="color:var(--jv-text-muted);">
                         </div>
                         <div class="mb-2">
-                            <label class="small fw-bold text-secondary mb-1">CÃ³digo</label>
+                            <label class="small fw-bold text-secondary mb-1">Código</label>
                             <input type="text" class="input-jv" id="edit_sku" readonly disabled style="color:var(--jv-text-muted);">
                         </div>
                         <div class="row g-2 mb-2">
@@ -260,7 +272,7 @@
                                 <input type="number" class="input-jv" id="edit_minimo" name="stock_minimo" min="0" max="99999" required>
                             </div>
                             <div class="col-4">
-                                <label class="small fw-bold text-secondary mb-1">CAPACIDAD MÃX. <span class="text-jv-muted" style="font-weight:400;">(0 = categorÃ­a)</span></label>
+                                <label class="small fw-bold text-secondary mb-1">CAPACIDAD MÁX. <span class="text-jv-muted" style="font-weight:400;">(0 = categoría)</span></label>
                                 <input type="number" class="input-jv" id="edit_maximo" name="stock_maximo" min="0" max="999999" required>
                             </div>
                         </div>

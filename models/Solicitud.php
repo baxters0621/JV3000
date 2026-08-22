@@ -88,9 +88,9 @@ class Solicitud extends Model
         // Normalizar y validar cantidades
         $vistos = [];
         $detalles = [];
-        foreach ($itemsRaw as $it) {
-            $id_producto = intval($it['id_producto'] ?? 0);
-            $cantidad = intval($it['cantidad'] ?? 0);
+        foreach ($itemsRaw as $requestItem) {
+            $id_producto = intval($requestItem['id_producto'] ?? 0);
+            $cantidad = intval($requestItem['cantidad'] ?? 0);
             if ($id_producto <= 0 || $cantidad < 1 || $cantidad > self::LIMITE_UNIDADES) continue;
             if (isset($vistos[$id_producto])) continue;
             $vistos[$id_producto] = true;
@@ -113,17 +113,21 @@ class Solicitud extends Model
         }
 
         // Evitar duplicados pendientes
-        $dups = $this->db->fetchAll("
+        $duplicateItems = $this->db->fetchAll("
             SELECT d.id_producto FROM detalle_solicitud_compra d
             JOIN solicitudes_compra s ON d.id_solicitud = s.id_solicitud
             WHERE s.estado = 'Pendiente' AND d.id_producto IN ($placeholders)
         ", $ids);
 
-        if (!empty($dups)) {
-            $mapa = [];
-            foreach ($productos as $p) { $mapa[(int)$p['id_producto']] = $p['nombre_producto']; }
+        if (!empty($duplicateItems)) {
+            $productNamesById = [];
+            foreach ($productos as $product) {
+                $productNamesById[(int)$product['id_producto']] = $product['nombre_producto'];
+            }
             $nombres = [];
-            foreach ($dups as $d) { if (isset($mapa[(int)$d['id_producto']])) $nombres[] = $mapa[(int)$d['id_producto']]; }
+            foreach ($duplicateItems as $duplicateItem) {
+                if (isset($productNamesById[(int)$duplicateItem['id_producto']])) $nombres[] = $productNamesById[(int)$duplicateItem['id_producto']];
+            }
             return ['ok' => false, 'error' => 'YA HAY UNA SOLICITUD PENDIENTE PARA: ' . implode(', ', array_slice($nombres, 0, 3)) . (count($nombres) > 3 ? '...' : '')];
         }
 
@@ -136,11 +140,11 @@ class Solicitud extends Model
                 'motivo'                 => substr($motivoFinal, 0, 150),
                 'estado'                 => 'Pendiente',
             ]);
-            foreach ($detalles as $idProd => $cant) {
+            foreach ($detalles as $productId => $requestedQuantity) {
                 $this->db->insert('detalle_solicitud_compra', [
                     'id_solicitud'        => $id_solicitud,
-                    'id_producto'         => $idProd,
-                    'cantidad_solicitada' => $cant,
+                    'id_producto'         => $productId,
+                    'cantidad_solicitada' => $requestedQuantity,
                 ]);
             }
             registrarAuditoria('crear', "Solicitud de reposición #$id_solicitud (" . count($detalles) . " producto(s), $motivoFinal)");

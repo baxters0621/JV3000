@@ -1,4 +1,19 @@
 <?php
+
+/** @var array<string, string>|null $flash */
+/** @var int $total_registros */
+/** @var string $filtro_usuario */
+/** @var string[] $acciones_disponibles */
+/** @var string $filtro_accion */
+/** @var string $filtro_desde */
+/** @var string $filtro_hasta */
+/** @var string $filtro_detalle */
+/** @var array<string, string> $accion_nombres */
+/** @var array<int, array<string, mixed>> $registros */
+/** @var int $total_paginas */
+/** @var string $query_string */
+/** @var int $page */
+
 // ==========================================
 // VISTA: Historial de Auditoría (index)
 // ==========================================
@@ -34,8 +49,8 @@
             <label class="small fw-bold text-secondary mb-1">ACCIÓN</label>
             <select name="accion" class="input-jv">
                 <option value="">Todas</option>
-                <?php foreach ($acciones_disponibles as $a): ?>
-                    <option value="<?php echo htmlspecialchars($a); ?>" <?php echo $filtro_accion === $a ? 'selected' : ''; ?>><?php echo htmlspecialchars($accion_nombres[$a] ?? $a); ?></option>
+                <?php foreach ($acciones_disponibles as $actionKey): ?>
+                    <option value="<?php echo htmlspecialchars($actionKey); ?>" <?php echo $filtro_accion === $actionKey ? 'selected' : ''; ?>><?php echo htmlspecialchars($accion_nombres[$actionKey] ?? $actionKey); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -72,25 +87,27 @@
             </thead>
             <tbody>
                 <?php if (!empty($registros)): ?>
-                    <?php foreach ($registros as $r):
+                    <?php foreach ($registros as $auditRecord):
                         $badge_class = 'b-default';
-                        if ($r['accion'] === 'crear') $badge_class = 'b-crear';
-                        elseif ($r['accion'] === 'editar') $badge_class = 'b-editar';
-                        elseif ($r['accion'] === 'eliminar' || $r['accion'] === 'anular') $badge_class = 'b-eliminar';
-                        elseif (in_array($r['accion'], ['toggle_status', 'desactivar', 'activar'])) $badge_class = 'b-toggle';
-                        elseif ($r['accion'] === 'login') $badge_class = 'b-login';
-                        elseif ($r['accion'] === 'logout') $badge_class = 'b-logout';
+                        if ($auditRecord['accion'] === 'crear') $badge_class = 'b-crear';
+                        elseif ($auditRecord['accion'] === 'editar') $badge_class = 'b-editar';
+                        elseif ($auditRecord['accion'] === 'eliminar' || $auditRecord['accion'] === 'anular') $badge_class = 'b-eliminar';
+                        elseif (in_array($auditRecord['accion'], ['toggle_status', 'desactivar', 'activar'])) $badge_class = 'b-toggle';
+                        elseif ($auditRecord['accion'] === 'login') $badge_class = 'b-login';
+                        elseif ($auditRecord['accion'] === 'logout') $badge_class = 'b-logout';
                     ?>
                         <tr>
-                            <td class="fw-bold text-jv-muted">#<?php echo $r['id_auditoria']; ?></td>
-                            <td class="fw-bold"><?php echo htmlspecialchars($r['usuario_nombre'] ?? '?'); ?></td>
-                            <td><span class="badge-accion <?php echo $badge_class; ?>"><?php echo htmlspecialchars($accion_nombres[$r['accion']] ?? $r['accion']); ?></span></td>
-                            <td class="td-detalle" data-tooltip="<?php echo htmlspecialchars($r['detalle'] ?? ''); ?>"><?php echo htmlspecialchars($r['detalle'] ?? ''); ?></td>
-                            <td class="td-fecha"><?php echo date('d/m/Y H:i', strtotime($r['fecha_hora'])); ?></td>
+                            <td class="fw-bold text-jv-muted">#<?php echo $auditRecord['id_auditoria']; ?></td>
+                            <td class="fw-bold"><?php echo htmlspecialchars($auditRecord['usuario_nombre'] ?? '?'); ?></td>
+                            <td><span class="badge-accion <?php echo $badge_class; ?>"><?php echo htmlspecialchars($accion_nombres[$auditRecord['accion']] ?? $auditRecord['accion']); ?></span></td>
+                            <td class="td-detalle" data-tooltip="<?php echo htmlspecialchars($auditRecord['detalle'] ?? ''); ?>"><?php echo htmlspecialchars($auditRecord['detalle'] ?? ''); ?></td>
+                            <td class="td-fecha"><?php echo date('d/m/Y H:i', strtotime($auditRecord['fecha_hora'])); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan="5" class="text-center py-5 text-jv-muted">No hay registros de auditoría</td></tr>
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-jv-muted">No hay registros de auditoría</td>
+                    </tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -101,8 +118,8 @@
 <?php if ($total_paginas > 1): ?>
     <div class="pagination-jv">
         <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=1<?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $page <= 1 ? 'disabled' : ''; ?>">&laquo;</a>
-        <?php for ($i = max(1, $page - 3); $i <= min($total_paginas, $page + 3); $i++): ?>
-            <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=<?php echo $i; ?><?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $i === $page ? 'active' : ''; ?>"><?php echo $i; ?></a>
+        <?php for ($pageNumber = max(1, $page - 3); $pageNumber <= min($total_paginas, $page + 3); $pageNumber++): ?>
+            <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=<?php echo $pageNumber; ?><?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $pageNumber === $page ? 'active' : ''; ?>"><?php echo $pageNumber; ?></a>
         <?php endfor; ?>
         <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=<?php echo $total_paginas; ?><?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $page >= $total_paginas ? 'disabled' : ''; ?>">&raquo;</a>
     </div>

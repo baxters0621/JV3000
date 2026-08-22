@@ -1,4 +1,13 @@
 <?php
+
+/** @var array<string, string>|null $flash */
+/** @var int $total_prov */
+/** @var int $activos_prov */
+/** @var float $limite_credito_total */
+/** @var array<int, array<string, mixed>> $proveedores */
+/** @var bool $esAdmin */
+/** @var string $csrf */
+
 // ==========================================
 // VISTA: Proveedores (index)
 // ==========================================
@@ -84,11 +93,11 @@
                             <span class="status-dot-jv <?php echo $proveedor['status'] == 'Activo' ? 'active' : 'inactive'; ?>"></span>
                             <span class="badge-jv <?php echo $proveedor['status'] == 'Activo' ? 'badge-success' : 'badge-danger'; ?>"><?php echo $proveedor['status']; ?></span>
                         </div>
-                        <button class="btn-action" onclick='editarProveedor(<?php echo json_encode($proveedor); ?>)' title="Editar">
+                        <button class="btn-action" onclick="editarProveedor(<?php echo htmlspecialchars(json_encode($proveedor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Editar">
                             <i class="bi bi-pencil-square"></i>
                         </button>
                         <?php if ($esAdmin): ?>
-                            <button class="btn-action" onclick="toggleStatusProveedor(<?php echo $proveedor['id_proveedor']; ?>,'<?php echo htmlspecialchars($proveedor['nombre_empresa'], ENT_QUOTES); ?>','<?php echo $proveedor['status']; ?>')" title="<?php echo $proveedor['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
+                            <button class="btn-action" onclick="toggleStatusProveedor(<?php echo (int)$proveedor['id_proveedor']; ?>, <?php echo htmlspecialchars(json_encode($proveedor['nombre_empresa'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($proveedor['status'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="<?php echo $proveedor['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
                                 <i class="bi <?php echo $proveedor['status'] == 'Activo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>" style="color:<?php echo $proveedor['status'] == 'Activo' ? 'var(--jv-danger)' : 'var(--jv-success)'; ?>"></i>
                             </button>
                         <?php endif; ?>

@@ -18,7 +18,7 @@ function confirmarToggle(id, nombre, accion) {
         background: '#fff',
         color: '#212529'
     }).then((result) => {
-        if (result.isConfirmed) jvPost({ toggle_status: id, csrf_token: window.JV_CONFIG.c1 });
+        if (result.isConfirmed) jvPost({ toggle_status: id, csrf_token: window.JV_CONFIG.csrfToken });
     });
 }
 

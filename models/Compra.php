@@ -84,13 +84,13 @@ class Compra extends Model
     public function creditoUsadoPorProveedor(): array
     {
         $usado = [];
-        $rows = $this->db->fetchAll(
+        $supplierCreditRows = $this->db->fetchAll(
             "SELECT id_proveedor, COALESCE(SUM(total),0) as usado
              FROM compras WHERE status = 'Activa' AND condiciones_pago = 'Credito' AND id_proveedor IS NOT NULL
              GROUP BY id_proveedor"
         );
-        foreach ($rows as $r) {
-            $usado[(int)$r['id_proveedor']] = (float)$r['usado'];
+        foreach ($supplierCreditRows as $supplierCreditRow) {
+            $usado[(int)$supplierCreditRow['id_proveedor']] = (float)$supplierCreditRow['usado'];
         }
         return $usado;
     }
@@ -133,29 +133,29 @@ class Compra extends Model
      */
     public function prefillSolicitud(int $id_solicitud): ?array
     {
-        $sol = $this->db->fetchOne("SELECT id_solicitud, motivo, estado FROM solicitudes_compra WHERE id_solicitud = ?", [$id_solicitud]);
-        if (!$sol || $sol['estado'] !== 'Pendiente') return null;
+        $purchaseRequest = $this->db->fetchOne("SELECT id_solicitud, motivo, estado FROM solicitudes_compra WHERE id_solicitud = ?", [$id_solicitud]);
+        if (!$purchaseRequest || $purchaseRequest['estado'] !== 'Pendiente') return null;
 
-        $det = $this->db->fetchAll(
+        $requestDetails = $this->db->fetchAll(
             "SELECT d.id_producto, d.cantidad_solicitada, p.sku, p.nombre_producto, p.precio_costo
              FROM detalle_solicitud_compra d
              JOIN productos p ON d.id_producto = p.id_producto
              WHERE d.id_solicitud = ?",
             [$id_solicitud]
         );
-        if (empty($det)) return null;
+        if (empty($requestDetails)) return null;
 
         return [
-            'id_solicitud' => (int)$sol['id_solicitud'],
-            'motivo'       => $sol['motivo'],
-            'items'        => array_map(function ($d) {
+            'id_solicitud' => (int)$purchaseRequest['id_solicitud'],
+            'motivo'       => $purchaseRequest['motivo'],
+            'items'        => array_map(function ($requestDetail) {
                 return [
-                    'id'       => (int)$d['id_producto'],
-                    'nombre'   => $d['nombre_producto'],
-                    'cantidad' => (int)$d['cantidad_solicitada'],
-                    'precio'   => (float)$d['precio_costo'],
+                    'id'       => (int)$requestDetail['id_producto'],
+                    'nombre'   => $requestDetail['nombre_producto'],
+                    'cantidad' => (int)$requestDetail['cantidad_solicitada'],
+                    'precio'   => (float)$requestDetail['precio_costo'],
                 ];
-            }, $det),
+            }, $requestDetails),
         ];
     }
 
@@ -169,20 +169,20 @@ class Compra extends Model
      * Respeta el flujo original: NO mueve stock ni crea lotes aquí (eso lo
      * hace Recepción).
      *
-     * @param array $post       Datos del formulario (proveedor, ítems, pagos...).
+     * @param array $purchaseFormData Datos del formulario (proveedor, ítems, pagos...).
      * @param int   $id_usuario Usuario que registra la compra.
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
-    public function registrar(array $post, int $id_usuario): array
+    public function registrar(array $purchaseFormData, int $id_usuario): array
     {
-        $id_proveedor = intval($post['id_proveedor'] ?? 0);
+        $id_proveedor = intval($purchaseFormData['id_proveedor'] ?? 0);
         if ($id_proveedor <= 0) {
             return ['ok' => false, 'mensaje' => 'SELECCIONE UN PROVEEDOR.'];
         }
-        $id_solicitud = intval($post['id_solicitud'] ?? 0);
+        $id_solicitud = intval($purchaseFormData['id_solicitud'] ?? 0);
 
         // Número de factura: manual, única por proveedor
-        $nro_factura = trim($post['nro_factura'] ?? '');
+        $nro_factura = trim($purchaseFormData['nro_factura'] ?? '');
         if ($nro_factura === '') {
             return ['ok' => false, 'mensaje' => 'EL NÚMERO DE FACTURA ES OBLIGATORIO.'];
         }
@@ -191,12 +191,12 @@ class Compra extends Model
         }
 
         // Número de control: manual y opcional
-        $nro_control = trim($post['nro_control'] ?? '');
+        $nro_control = trim($purchaseFormData['nro_control'] ?? '');
         if ($nro_control !== '' && !preg_match('/^\d{2}-\d{8}$/', $nro_control)) {
             return ['ok' => false, 'mensaje' => 'NRO. CONTROL INVÁLIDO. Formato: 00-00000000'];
         }
 
-        $observaciones = trim($post['observaciones'] ?? '');
+        $observaciones = trim($purchaseFormData['observaciones'] ?? '');
 
         $prov = $this->db->fetchOne("SELECT condiciones_pago, dias_credito, limite_credito, rif FROM proveedores WHERE id_proveedor = ?", [$id_proveedor]);
         if (!$prov) {
@@ -209,7 +209,7 @@ class Compra extends Model
         $dias_credito = intval($prov['dias_credito'] ?? 0);
 
         // Ítems de la factura
-        $productos_raw = json_decode($post['productos_data'] ?? '[]', true);
+        $productos_raw = json_decode($purchaseFormData['productos_data'] ?? '[]', true);
         $productos = is_array($productos_raw) ? $productos_raw : [];
         if (count($productos) > 200) {
             return ['ok' => false, 'mensaje' => 'MÁXIMO 200 PRODUCTOS POR FACTURA.'];
@@ -261,8 +261,8 @@ class Compra extends Model
         }
 
         // Comprobante de pago
-        $metodo_pago = in_array(trim($post['metodo_pago'] ?? ''), ['Efectivo', 'Transferencia', 'Cheque', 'Otro'], true) ? trim($post['metodo_pago']) : 'Efectivo';
-        $monto_pago = round((float)($post['monto_pago'] ?? 0), 2);
+        $metodo_pago = in_array(trim($purchaseFormData['metodo_pago'] ?? ''), ['Efectivo', 'Transferencia', 'Cheque', 'Otro'], true) ? trim($purchaseFormData['metodo_pago']) : 'Efectivo';
+        $monto_pago = round((float)($purchaseFormData['monto_pago'] ?? 0), 2);
         if ($monto_pago < 0) $monto_pago = 0;
         if ($monto_pago > 99999999.99) {
             return ['ok' => false, 'mensaje' => 'MONTO DE PAGO INVÁLIDO. MÁXIMO 99,999,999.99.'];

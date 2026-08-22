@@ -94,24 +94,24 @@ class EstadisticasController extends Controller
             $periodo = 'semana';
         }
 
-        $d = (new Estadistica())->obtenerDatos($periodo, $desde, $hasta);
+        $statisticsData = (new Estadistica())->obtenerDatos($periodo, $desde, $hasta);
 
         $this->json([
             'success'      => true,
-            'periodo'      => $d['periodo'],
-            'etiqueta'     => $d['etiqueta'],
-            'mensaje'      => $d['mensaje'],
-            'ventas'       => number_format($d['ventas'], 2),
-            'compras'      => number_format($d['compras'], 2),
-            'ganancia'     => number_format($d['ganancia'], 2),
-            'pct_ventas'   => $d['pct_ventas'],
-            'pct_compras'  => $d['pct_compras'],
-            'pct_ganancia' => $d['pct_ganancia'],
-            'labels'       => $d['labels_ventas'],
-            'data_ventas'  => $d['data_ventas'],
-            'data_compras' => $d['data_compras'],
-            'topLabels'    => $d['top_labels'],
-            'topCant'      => $d['top_cant'],
+            'periodo'      => $statisticsData['periodo'],
+            'etiqueta'     => $statisticsData['etiqueta'],
+            'mensaje'      => $statisticsData['mensaje'],
+            'ventas'       => (float)$statisticsData['ventas'],
+            'compras'      => (float)$statisticsData['compras'],
+            'ganancia'     => (float)$statisticsData['ganancia'],
+            'pct_ventas'   => $statisticsData['pct_ventas'],
+            'pct_compras'  => $statisticsData['pct_compras'],
+            'pct_ganancia' => $statisticsData['pct_ganancia'],
+            'labels'       => $statisticsData['labels_ventas'],
+            'data_ventas'  => $statisticsData['data_ventas'],
+            'data_compras' => $statisticsData['data_compras'],
+            'topLabels'    => $statisticsData['top_labels'],
+            'topCant'      => $statisticsData['top_cant'],
         ]);
     }
 }

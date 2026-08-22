@@ -41,20 +41,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // --- Step 1: Search by email or username ---
     if ($action === 'buscar') {
-        $input = trim($_POST['rec_input'] ?? '');
-        if ($input === '') {
+        $recoveryInput = trim($_POST['rec_input'] ?? '');
+        if ($recoveryInput === '') {
             $error = "INGRESE SU CORREO O NOMBRE DE USUARIO.";
         } else {
-            if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
-                $input_lower = strtolower($input);
-                $row = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(correo) = ? LIMIT 1", [$input_lower]);
+            if (filter_var($recoveryInput, FILTER_VALIDATE_EMAIL)) {
+                $normalizedRecoveryInput = strtolower($recoveryInput);
+                $userAccount = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(correo) = ? LIMIT 1", [$normalizedRecoveryInput]);
             } else {
-                $row = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(usuario) = ? LIMIT 1", [strtolower($input)]);
+                $userAccount = $db->fetchOne("SELECT id_usuario, usuario, pregunta_seguridad FROM usuarios WHERE LOWER(usuario) = ? LIMIT 1", [strtolower($recoveryInput)]);
             }
-            if ($row && !empty($row['pregunta_seguridad'])) {
-                $_SESSION['rec_id'] = $row['id_usuario'];
-                $_SESSION['rec_user'] = $row['usuario'];
-                $_SESSION['rec_pregunta'] = $row['pregunta_seguridad'];
+            if ($userAccount && !empty($userAccount['pregunta_seguridad'])) {
+                $_SESSION['rec_id'] = $userAccount['id_usuario'];
+                $_SESSION['rec_user'] = $userAccount['usuario'];
+                $_SESSION['rec_pregunta'] = $userAccount['pregunta_seguridad'];
                 $_SESSION['rec_step'] = 2;
                 $_SESSION['rec_intentos'] = 0;
             } else {
@@ -69,27 +69,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
             $_SESSION['rec_step'] = 1;
         } else {
-                $respuesta = trim($_POST['rec_respuesta'] ?? '');
-                $preg_user = $_SESSION['rec_pregunta'] ?? '';
-                if (!validarRespuestaSeguridad($respuesta)) {
-                    $error = "RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.";
+            $securityAnswer = trim($_POST['rec_respuesta'] ?? '');
+            if (!validarRespuestaSeguridad($securityAnswer)) {
+                $error = "RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.";
+            } else {
+                $securityAnswerRecord = $db->fetchOne("SELECT respuesta_seguridad FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
+                if ($securityAnswerRecord && verificarRespuestaSeguridad($securityAnswer, $securityAnswerRecord['respuesta_seguridad'])) {
+                    $_SESSION['rec_step'] = 3;
                 } else {
-                    $row = $db->fetchOne("SELECT respuesta_seguridad FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
-                    if ($row && verificarRespuestaSeguridad($respuesta, $row['respuesta_seguridad'])) {
-                        $_SESSION['rec_step'] = 3;
+                    $_SESSION['rec_intentos'] = ($_SESSION['rec_intentos'] ?? 0) + 1;
+                    if ($_SESSION['rec_intentos'] >= 3) {
+                        $error = "DEMASIADOS INTENTOS. INICIE EL PROCESO DE NUEVO.";
+                        $_SESSION['rec_step'] = 1;
+                        $_SESSION['rec_id'] = 0;
                     } else {
-                        $_SESSION['rec_intentos'] = ($_SESSION['rec_intentos'] ?? 0) + 1;
-                        if ($_SESSION['rec_intentos'] >= 3) {
-                            $error = "DEMASIADOS INTENTOS. INICIE EL PROCESO DE NUEVO.";
-                            $_SESSION['rec_step'] = 1;
-                            $_SESSION['rec_id'] = 0;
-                        } else {
-                            $rest = 3 - $_SESSION['rec_intentos'];
-                            $error = "RESPUESTA INCORRECTA. INTENTOS RESTANTES: $rest";
-                        }
+                        $remainingAttempts = 3 - $_SESSION['rec_intentos'];
+                        $error = "RESPUESTA INCORRECTA. INTENTOS RESTANTES: $remainingAttempts";
                     }
                 }
             }
+        }
     }
 
     // --- Step 3: Change password ---
@@ -98,15 +97,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
             $_SESSION['rec_step'] = 1;
         } else {
-            $new_pass = $_POST['rec_password'] ?? '';
-            $new_pass2 = $_POST['rec_password2'] ?? '';
-            if (!validarPasswordFuerte($new_pass)) {
+            $newPassword = $_POST['rec_password'] ?? '';
+            $newPasswordConfirmation = $_POST['rec_password2'] ?? '';
+            if (!validarPasswordFuerte($newPassword)) {
                 $error = "CONTRASEÑA DÉBIL: MÍN 8 CARACTERES, MAYÚSCULAS, NÚMEROS Y SÍMBOLOS.";
-            } elseif ($new_pass !== $new_pass2) {
+            } elseif ($newPassword !== $newPasswordConfirmation) {
                 $error = "LAS CONTRASEÑAS NO COINCIDEN.";
             } else {
-                $pass_hash = password_hash($new_pass, PASSWORD_BCRYPT);
-                $db->execute("UPDATE usuarios SET password = ? WHERE id_usuario = ?", [$pass_hash, $_SESSION['rec_id']]);
+                $passwordHash = password_hash($newPassword, PASSWORD_BCRYPT);
+                $db->execute("UPDATE usuarios SET password = ? WHERE id_usuario = ?", [$passwordHash, $_SESSION['rec_id']]);
                 registrarAuditoria('editar', 'Contraseña recuperada por pregunta de seguridad');
                 $exito = "CONTRASEÑA ACTUALIZADA. YA PUEDES INICIAR SESIÓN.";
                 $_SESSION['rec_step'] = 4;
@@ -132,13 +131,15 @@ if ($step == 4) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Contraseña | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
-        <link rel="stylesheet" href="../assets/login/recuperar.css?v=3">
+    <link rel="stylesheet" href="../assets/login/recuperar.css?v=3">
 </head>
+
 <body class="rec-page">
     <div class="rec-card">
         <img class="rec-logo" src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
@@ -157,12 +158,13 @@ if ($step == 4) {
 
         <?php // ==========================================
         // PASO 1: BUSCAR POR CORREO O USUARIO
-        // ========================================== ?>
+        // ========================================== 
+        ?>
         <div class="rec-step <?php echo $show_buscar ? 'active' : ''; ?>">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="buscar">
-                <label class="small fw-bold mb-1 d-block"><span class="text-jv-warning"><i class="bi bi-envelope me-1"></i>Correo</span>  <span class="text-jv-muted">o</span>  <span class="text-jv-info"><i class="bi bi-person me-1"></i>Usuario</span></label>
+                <label class="small fw-bold mb-1 d-block"><span class="text-jv-warning"><i class="bi bi-envelope me-1"></i>Correo</span> <span class="text-jv-muted">o</span> <span class="text-jv-info"><i class="bi bi-person me-1"></i>Usuario</span></label>
                 <input type="text" name="rec_input" class="rec-input mb-3" required placeholder="admin@correo.com  o  Usuario" autofocus>
                 <button type="submit" class="rec-btn"><i class="bi bi-search me-2"></i>BUSCAR</button>
                 <a href="login.php" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Volver al inicio</a>
@@ -171,7 +173,8 @@ if ($step == 4) {
 
         <?php // ==========================================
         // PASO 2: RESPONDER PREGUNTA
-        // ========================================== ?>
+        // ========================================== 
+        ?>
         <div id="rec-step-pregunta" class="rec-step <?php echo $show_pregunta ? 'active' : ''; ?>">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
@@ -187,7 +190,8 @@ if ($step == 4) {
 
         <?php // ==========================================
         // PASO 3: NUEVA CONTRASEÑA
-        // ========================================== ?>
+        // ========================================== 
+        ?>
         <div class="rec-step <?php echo $show_cambiar ? 'active' : ''; ?>">
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
@@ -207,7 +211,8 @@ if ($step == 4) {
 
         <?php // ==========================================
         // PASO 4: ÉXITO
-        // ========================================== ?>
+        // ========================================== 
+        ?>
         <div class="rec-step <?php echo $show_exito ? 'active' : ''; ?>">
             <div class="text-center">
                 <div style="font-size:3rem;color:var(--jv-success);margin-bottom:12px;"><i class="bi bi-check-circle-fill"></i></div>
@@ -218,7 +223,8 @@ if ($step == 4) {
         </div>
     </div>
 
-        <script src="../assets/login/recuperar.js"></script>
+    <script src="../assets/login/recuperar.js"></script>
     <script src="../assets/js/bootstrap.bundle.min.js?v=2"></script>
 </body>
+
 </html>

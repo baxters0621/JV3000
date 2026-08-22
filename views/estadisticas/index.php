@@ -1,4 +1,9 @@
 <?php
+
+/** @var array<string, string>|null $flash */
+/** @var array<string, array<string, mixed>> $periodos */
+/** @var array<string, mixed> $datos */
+
 // ==========================================
 // VISTA: Estadísticas (index)
 // ==========================================
@@ -30,9 +35,9 @@
 <!-- FILTROS DE TIEMPO -->
 <div class="filtros-stats mb-4">
     <div class="filtros-botones">
-        <?php foreach ($periodos as $clave => $p): ?>
-            <button type="button" class="btn-filtro-periodo <?php echo $datos['periodo'] === $clave ? 'activo' : ''; ?>" data-periodo="<?php echo htmlspecialchars($clave); ?>">
-                <?php echo htmlspecialchars($p['label']); ?>
+        <?php foreach ($periodos as $periodKey => $period): ?>
+            <button type="button" class="btn-filtro-periodo <?php echo $datos['periodo'] === $periodKey ? 'activo' : ''; ?>" data-periodo="<?php echo htmlspecialchars($periodKey); ?>">
+                <?php echo htmlspecialchars($period['label']); ?>
             </button>
         <?php endforeach; ?>
     </div>

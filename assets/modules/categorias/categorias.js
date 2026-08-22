@@ -5,13 +5,13 @@
             // Valida que el nombre de la categoría no esté vacío antes de enviar el formulario.
             // Se llama desde el botón "Guardar" del modal.
             // Si el nombre está vacío, marca el campo en rojo y NO envía.
-            function validarCategoria(btn) {
+            function validarCategoria(submitButton) {
                 limpiarErrores(); // quita marcas rojas previas (helper global en diseno.js)
-                const nom = document.getElementById('cat_nombre');
-                if (!nom.value.trim()) { marcarError(nom, 'NOMBRE REQUERIDO'); nom.focus(); return false; }
+                const categoryNameInput = document.getElementById('cat_nombre');
+                if (!categoryNameInput.value.trim()) { marcarError(categoryNameInput, 'NOMBRE REQUERIDO'); categoryNameInput.focus(); return false; }
                 // Anti-doble-click: deshabilita el botón y muestra "GUARDANDO..."
-                btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
-                btn.form.submit(); return false;
+                submitButton.disabled = true; submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
+                submitButton.form.submit(); return false;
             }
             // Instancia del modal de Bootstrap (se usa en nuevaCat/editarCat para abrirlo).
             const modalC = new bootstrap.Modal(document.getElementById('modalCat'));
@@ -59,23 +59,23 @@
             // ==========================================
             // Pide confirmación al usuario y, si la acepta, envía el POST que cambia el estado de la categoría.
             function confirmarToggle(id, nombre, accion) {
-                const es_desactivar = accion === 'desactivar';
+                const isDeactivation = accion === 'desactivar';
                 Swal.fire({
-                    title: es_desactivar ? '¿DESACTIVAR CATEGORÍA?' : '¿REACTIVAR CATEGORÍA?',
-                    text: es_desactivar ? `Se desactivará '${nombre}'` : `Se reactivará '${nombre}'`,
-                    icon: es_desactivar ? 'warning' : 'info',
+                    title: isDeactivation ? '¿DESACTIVAR CATEGORÍA?' : '¿REACTIVAR CATEGORÍA?',
+                    text: isDeactivation ? `Se desactivará '${nombre}'` : `Se reactivará '${nombre}'`,
+                    icon: isDeactivation ? 'warning' : 'info',
                     showCancelButton: true,
-                    confirmButtonColor: es_desactivar ? '#DC2626' : '#16A34A',
+                    confirmButtonColor: isDeactivation ? '#DC2626' : '#16A34A',
                     cancelButtonColor: '#CED4DA',
-                    confirmButtonText: es_desactivar ? 'SÍ, DESACTIVAR' : 'SÍ, ACTIVAR',
+                    confirmButtonText: isDeactivation ? 'SÍ, DESACTIVAR' : 'SÍ, ACTIVAR',
                     cancelButtonText: 'CANCELAR',
                     background: '#fff',
                     color: '#212529'
                 }).then((result) => {
                     // Si el usuario confirma, se envía un POST con el id y el
-                    // token CSRF (window.JV_CONFIG.c0 lo inyecta el layout).
+                    // token CSRF (window.JV_CONFIG.csrfToken lo inyecta el layout).
                     // jvPost es un helper global (diseno.js) que arma un form.
-                    if (result.isConfirmed) jvPost({ toggle_status: id, csrf_token: window.JV_CONFIG.c0 });
+                    if (result.isConfirmed) jvPost({ toggle_status: id, csrf_token: window.JV_CONFIG.csrfToken });
                 });
             }
 
@@ -84,12 +84,12 @@
             // ==========================================
             // Muestra solo las filas de la tabla que contienen el texto buscado.
             function filtrar() {
-                const input = document.getElementById('buscar');
-                const filter = input.value.toLowerCase();
-                const rows = document.getElementById('tablaCategorias').getElementsByTagName('tr');
-                for (let i = 0; i < rows.length; i++) {
+                const searchInput = document.getElementById('buscar');
+                const searchValue = searchInput.value.toLowerCase();
+                const categoryRows = document.getElementById('tablaCategorias').getElementsByTagName('tr');
+                for (let rowIndex = 0; rowIndex < categoryRows.length; rowIndex++) {
                     // Mostrar la fila solo si su texto contiene lo buscado.
-                    rows[i].style.display = rows[i].textContent.toLowerCase().includes(filter) ? '' : 'none';
+                    categoryRows[rowIndex].style.display = categoryRows[rowIndex].textContent.toLowerCase().includes(searchValue) ? '' : 'none';
                 }
             }
 

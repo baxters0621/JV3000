@@ -42,17 +42,17 @@ class CategoriasController extends Controller
             // Juntar los datos del formulario en un solo arreglo para
             // entregárselo ordenado al modelo. Los valores que no vienen
             // reciben un valor por defecto (?? es "si no existe, usa esto").
-            $datos = [
+            $categoryFormData = [
                 'accion'           => $_POST['accion_categoria'],
                 'nombre'           => $_POST['nombre'] ?? '',
                 'descripcion'      => $_POST['descripcion'] ?? '',
-                'clasificacion_abc'=> $_POST['clasificacion_abc'] ?? '',
+                'clasificacion_abc' => $_POST['clasificacion_abc'] ?? '',
                 'tipo_manejo'      => $_POST['tipo_manejo'] ?? 'normal',
                 'status'           => $_POST['status'] ?? 'Activo',
                 'id_categoria'     => (int)($_POST['id_categoria'] ?? 0),
             ];
             // El modelo hace la validación y guarda/actualiza en la BD.
-            $resultado = $modelo->procesar($datos);
+            $resultado = $modelo->procesar($categoryFormData);
             // Guardar un mensaje de resultado ("flash") que se mostrará
             // una sola vez en la siguiente página.
             $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
@@ -82,7 +82,7 @@ class CategoriasController extends Controller
         // Entregar los datos a la vista dentro del layout principal.
         $this->view('categorias/index', [
             'titulo'       => 'Categorías | JV3000 C.A.',
-            'wrapper_class'=> 'pagina-categorias',
+            'wrapper_class' => 'pagina-categorias',
             'css_extra'    => ['modules/categorias/categorias.css?v=6'],
             'js_extra'     => ['modules/categorias/categorias.js?v=5'],
             'csrf'         => Security::generateToken(),

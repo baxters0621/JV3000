@@ -38,12 +38,12 @@ class SalidasController extends Controller
                 if (!Security::esAdmin()) {
                     $this->redirect('salidas');
                 }
-                $id_salida = (int)$_POST['eliminar'];
-                $resultado = $modelo->anular($id_salida);
-                if ($resultado['ok']) {
+                $outgoingId = (int)$_POST['eliminar'];
+                $cancellationResult = $modelo->anular($outgoingId);
+                if ($cancellationResult['ok']) {
                     $this->flash('success', 'SALIDA ANULADA. STOCK RESTAURADO.');
                 } else {
-                    $this->flash('danger', $resultado['error'] ?? 'ERROR EN LA BASE DE DATOS.');
+                    $this->flash('danger', $cancellationResult['error'] ?? 'ERROR EN LA BASE DE DATOS.');
                 }
                 $this->redirect('salidas');
             }
@@ -64,7 +64,7 @@ class SalidasController extends Controller
             'css_extra'     => ['modules/salidas/salidas.css?v=4'],
             'js_extra'      => ['modules/salidas/salidas.js?v=5'],
             'csrf'          => $csrf,
-            'js_config'     => ['c0' => $tipos_mov_map, 'c1' => $csrf],
+            'js_config'     => ['movementTypeGroups' => $tipos_mov_map, 'csrfToken' => $csrf],
             'salidas'       => $modelo->obtenerSalidas(),
             'tipos_mov'     => $modelo->obtenerTiposMov(),
             'tipos_mov_map' => $tipos_mov_map,
@@ -95,31 +95,31 @@ class SalidasController extends Controller
             $this->redirect('salidas');
         }
 
-        $preview_token = $_GET['token'] ?? '';
-        $data = $preview_token !== ''
-            ? ($_SESSION['preview_data'][$preview_token] ?? null)
+        $previewToken = $_GET['token'] ?? '';
+        $previewData = $previewToken !== ''
+            ? ($_SESSION['preview_data'][$previewToken] ?? null)
             : ($_SESSION['preview_data'] ?? null);
 
-        if (!$data) {
+        if (!$previewData) {
             $this->redirect('salidas');
         }
 
-        $resultado = (new Salida())->confirmar($data);
+        $confirmationResult = (new Salida())->confirmar($previewData);
 
         // Limpiar el preview usado (éxito o error), como hacía el original
-        if ($preview_token !== '') {
-            unset($_SESSION['preview_data'][$preview_token]);
+        if ($previewToken !== '') {
+            unset($_SESSION['preview_data'][$previewToken]);
         } else {
             unset($_SESSION['preview_data']);
         }
 
-        if ($resultado['ok']) {
-            $this->flash('success', $resultado['edicion'] ? 'SALIDA ACTUALIZADA CORRECTAMENTE.' : 'VENTA REGISTRADA EXITOSAMENTE.');
-            header('Location: ' . APP_URL_BASE . 'index.php?url=salidas#salida-' . (int)$resultado['id_salida']);
+        if ($confirmationResult['ok']) {
+            $this->flash('success', $confirmationResult['edicion'] ? 'SALIDA ACTUALIZADA CORRECTAMENTE.' : 'VENTA REGISTRADA EXITOSAMENTE.');
+            header('Location: ' . APP_URL_BASE . 'index.php?url=salidas#salida-' . (int)$confirmationResult['id_salida']);
             exit;
         }
 
-        $this->flash('danger', $resultado['error'] ?? 'ERROR AL REGISTRAR LA SALIDA.');
+        $this->flash('danger', $confirmationResult['error'] ?? 'ERROR AL REGISTRAR LA SALIDA.');
         $this->redirect('salidas');
     }
 

@@ -19,7 +19,7 @@ function confirmarCancelar(id) {
     }).then(r => {
         if (r.isConfirmed) {
             const fd = new FormData();
-            fd.append('csrf_token', window.JV_CONFIG.c0);
+            fd.append('csrf_token', window.JV_CONFIG.csrfToken);
             fd.append('accion_cancelar_solicitud', '1');
             fd.append('id_solicitud', id);
             fetch((window.JV_BASE || '') + 'index.php?url=solicitudes/cancelar', { method: 'POST', body: fd })

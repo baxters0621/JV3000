@@ -2,42 +2,43 @@
 
         // Activa el filtro de vencimiento correspondiente según la alerta recibida.
         function filtrarPorAlerta(clase) {
-            var btn = document.querySelector('.btn-filtro-venc[data-venc="' + clase + '"]');
-            if (btn) filtrarVenc(btn);
+            var alertFilterButton = document.querySelector('.btn-filtro-venc[data-venc="' + clase + '"]');
+            if (alertFilterButton) filtrarVenc(alertFilterButton);
         }
 
         // Aplica los filtros activos (estado, vencimiento, stock bajo y búsqueda) sobre las filas.
         function aplicarFiltros() {
-            var vencBtn = document.querySelector('.btn-filtro-venc.active');
-            var filtroVenc = vencBtn ? vencBtn.getAttribute('data-venc') : 'todas';
-            var statusBtn = document.querySelector('.btn-filter-prod.active');
-            var filtroStatus = statusBtn ? statusBtn.getAttribute('data-status') : 'todas';
-            var searchVal = document.getElementById('buscar').value.toLowerCase();
-            var rows = document.getElementById('tablaProductos').getElementsByTagName('tr');
-            for (var i = 0; i < rows.length; i++) {
-                var st = rows[i].getAttribute('data-status') || '';
-                if (filtroStatus !== 'todas' && st !== filtroStatus) { rows[i].style.display = 'none'; continue; }
-                var vc = rows[i].getAttribute('data-venc-cls') || '';
-                if (filtroVenc !== 'todas' && vc !== filtroVenc) { rows[i].style.display = 'none'; continue; }
+            var activeExpirationButton = document.querySelector('.btn-filtro-venc.active');
+            var expirationFilter = activeExpirationButton ? activeExpirationButton.getAttribute('data-venc') : 'todas';
+            var activeStatusButton = document.querySelector('.btn-filter-prod.active');
+            var statusFilter = activeStatusButton ? activeStatusButton.getAttribute('data-status') : 'todas';
+            var searchValue = document.getElementById('buscar').value.toLowerCase();
+            var productRows = document.getElementById('tablaProductos').getElementsByTagName('tr');
+            for (var rowIndex = 0; rowIndex < productRows.length; rowIndex++) {
+                var productRow = productRows[rowIndex];
+                var productStatus = productRow.getAttribute('data-status') || '';
+                if (statusFilter !== 'todas' && productStatus !== statusFilter) { productRow.style.display = 'none'; continue; }
+                var expirationClass = productRow.getAttribute('data-venc-cls') || '';
+                if (expirationFilter !== 'todas' && expirationClass !== expirationFilter) { productRow.style.display = 'none'; continue; }
                 if (filtroBajos) {
-                    var stk = parseInt(rows[i].getAttribute('data-stock') || '', 10);
-                    var min = parseInt(rows[i].getAttribute('data-minimo') || '', 10);
-                    if (isNaN(stk) || stk > min) { rows[i].style.display = 'none'; continue; }
+                    var currentStock = parseInt(productRow.getAttribute('data-stock') || '', 10);
+                    var minimumStock = parseInt(productRow.getAttribute('data-minimo') || '', 10);
+                    if (isNaN(currentStock) || currentStock > minimumStock) { productRow.style.display = 'none'; continue; }
                 }
-                var texto = rows[i].textContent.toLowerCase();
-                rows[i].style.display = (searchVal === '' || texto.includes(searchVal)) ? '' : 'none';
+                var rowText = productRow.textContent.toLowerCase();
+                productRow.style.display = (searchValue === '' || rowText.includes(searchValue)) ? '' : 'none';
             }
         }
         // Marca el botón de filtro por vencimiento activo y vuelve a aplicar los filtros.
-        function filtrarVenc(btn) {
+        function filtrarVenc(expirationButton) {
             document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
                 b.classList.remove('active');
                 b.style.background = 'transparent';
                 b.style.color = b.dataset.venc === 'vencido' ? '#DC2626' : b.dataset.venc === 'proximo' ? '#D97706' : b.dataset.venc === 'pronto' ? '#D97706' : b.dataset.venc === 'vigente' ? '#16A34A' : '#EA580C';
             });
-            btn.classList.add('active');
-            btn.style.background = 'rgba(234,88,12,0.15)';
-            btn.style.color = '#EA580C';
+            expirationButton.classList.add('active');
+            expirationButton.style.background = 'rgba(234,88,12,0.15)';
+            expirationButton.style.color = '#EA580C';
             aplicarFiltros();
         }
 
@@ -55,7 +56,7 @@
                 confirmButtonText: 'SÍ, DAR DE BAJA',
                 cancelButtonText: 'CANCELAR'
             }).then(function(r) {
-                if (r.isConfirmed) jvPost({ baja_vencido: id, csrf_token: window.JV_CONFIG.c0 });
+                if (r.isConfirmed) jvPost({ baja_vencido: id, csrf_token: window.JV_CONFIG.csrfToken });
             });
         }
 
@@ -168,7 +169,7 @@
                 cancelButtonText: 'CANCELAR'
             }).then(function(r) {
                 if (r.isConfirmed) {
-                    jvPost({ toggle: id, csrf_token: window.JV_CONFIG.c1 });
+                    jvPost({ toggle: id, csrf_token: window.JV_CONFIG.csrfToken });
                 }
             });
         }

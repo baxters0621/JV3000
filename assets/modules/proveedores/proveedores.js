@@ -76,12 +76,12 @@
         const formP = document.getElementById('formProveedor');
 
         // Formatea en vivo el valor monetario con separadores de miles y un solo punto decimal.
-        function formatMoney(el) {
-            let val = el.value.replace(/[^0-9.]/g, '');
-            let parts = val.split('.');
-            if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            el.value = parts.join('.');
+        function formatMoney(moneyInput) {
+            let rawValue = moneyInput.value.replace(/[^0-9.]/g, '');
+            let valueParts = rawValue.split('.');
+            if (valueParts.length > 2) valueParts = [valueParts[0], valueParts.slice(1).join('')];
+            valueParts[0] = valueParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            moneyInput.value = valueParts.join('.');
         }
 
         document.getElementById('p_limite_credito').addEventListener('input', function() {
@@ -209,8 +209,8 @@
         }
 
         // Expande o contrae el panel de detalles de una tarjeta de proveedor premium.
-        function toggleProv(el) {
-            el.closest('.prov-premium').classList.toggle('expanded');
+        function toggleProv(providerElement) {
+            providerElement.closest('.prov-premium').classList.toggle('expanded');
         }
 
         // Redirige al módulo de compras prefiltrando las órdenes del proveedor indicado.
@@ -240,7 +240,7 @@
                     form.innerHTML = `
                         <input type="hidden" name="accion_proveedor" value="toggle_status">
                         <input type="hidden" name="id_proveedor" value="${id}">
-                        <input type="hidden" name="csrf_token" value="${window.JV_CONFIG.c0}">
+                        <input type="hidden" name="csrf_token" value="${window.JV_CONFIG.csrfToken}">
                     `;
                     document.body.appendChild(form);
                     form.submit();

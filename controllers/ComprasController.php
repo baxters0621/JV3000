@@ -86,7 +86,7 @@ class ComprasController extends Controller
             'es_admin'          => Security::esAdmin(),
             'flash'             => $this->consumeFlash(),
             'csrf'              => Security::generateToken(),
-            'js_config'         => ['c1' => $iva_pct],
+            'js_config'         => ['taxPercentage' => $iva_pct],
         ]);
     }
 

@@ -1,4 +1,9 @@
 <?php
+
+/** @var array<int, array<string, mixed>> $categorias */
+/** @var array<string, string>|null $flash */
+/** @var string $csrf */
+
 // ==========================================
 // VISTA: Categorías (index)
 // ==========================================
@@ -54,51 +59,51 @@
             </thead>
             <tbody id="tablaCategorias">
                 <?php if (!empty($categorias)): ?>
-                    <?php foreach ($categorias as $row): ?>
+                    <?php foreach ($categorias as $category): ?>
                         <!-- Cada fila: data-nombre/data-codigo sirven al buscador local. -->
-                        <tr data-nombre="<?php echo strtolower(htmlspecialchars($row['nombre'])); ?>" data-codigo="<?php echo strtolower(htmlspecialchars($row['codigo'] ?? '')); ?>">
+                        <tr data-nombre="<?php echo strtolower(htmlspecialchars($category['nombre'])); ?>" data-codigo="<?php echo strtolower(htmlspecialchars($category['codigo'] ?? '')); ?>">
                             <td>
                                 <i class="bi bi-folder2-open me-2" style="color: #2563eb; font-size: 1.1rem;"></i>
                                 <!-- data-tooltip: muestra el nombre completo al pasar el mouse
                                      (lo maneja assets/js/tooltips.js, global). -->
-                                <span class="cat-nombre text-uppercase" data-tooltip="<?php echo htmlspecialchars($row['nombre']); ?>"><?php echo htmlspecialchars($row['nombre']); ?></span>
-                                <?php if ($row['descripcion']): ?>
-                                    <br><span class="cat-desc"><?php echo htmlspecialchars($row['descripcion']); ?></span>
+                                <span class="cat-nombre text-uppercase" data-tooltip="<?php echo htmlspecialchars($category['nombre']); ?>"><?php echo htmlspecialchars($category['nombre']); ?></span>
+                                <?php if ($category['descripcion']): ?>
+                                    <br><span class="cat-desc"><?php echo htmlspecialchars($category['descripcion']); ?></span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <span class="codigo-badge"><?php echo htmlspecialchars($row['codigo'] ?? '—'); ?></span>
+                                <span class="codigo-badge"><?php echo htmlspecialchars($category['codigo'] ?? '—'); ?></span>
                             </td>
                             <td class="text-center">
-                                <?php if ($row['clasificacion_abc']): ?>
-                                    <span class="abc-badge abc-<?php echo strtolower($row['clasificacion_abc']); ?>"><?php echo $row['clasificacion_abc']; ?></span>
+                                <?php if ($category['clasificacion_abc']): ?>
+                                    <span class="abc-badge abc-<?php echo strtolower($category['clasificacion_abc']); ?>"><?php echo $category['clasificacion_abc']; ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">-</span>
                                 <?php endif; ?>
                             </td>
                             <td class="text-center">
-                                <span class="manejo-badge manejo-<?php echo htmlspecialchars($row['tipo_manejo'] ?? 'normal'); ?>"><?php echo htmlspecialchars(ucfirst($row['tipo_manejo'] ?? 'Normal')); ?></span>
+                                <span class="manejo-badge manejo-<?php echo htmlspecialchars($category['tipo_manejo'] ?? 'normal'); ?>"><?php echo htmlspecialchars(ucfirst($category['tipo_manejo'] ?? 'Normal')); ?></span>
                             </td>
                             <td class="text-center">
-                                <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>">
-                                    <i class="bi bi-<?php echo ($row['status'] == 'Activo') ? 'eye' : 'eye-off'; ?>"></i>
-                                    <?php echo strtoupper($row['status']); ?>
+                                <span class="badge-jv <?php echo ($category['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>">
+                                    <i class="bi bi-<?php echo ($category['status'] == 'Activo') ? 'eye' : 'eye-off'; ?>"></i>
+                                    <?php echo strtoupper($category['status']); ?>
                                 </span>
                             </td>
                             <td class="text-center">
                                 <!-- Editar: llena el modal con los datos de la fila (JS editarCat). -->
-                                <button class="btn-action btn-action-edit btn btn-sm border-0 me-1" onclick='editarCat(<?php echo json_encode($row); ?>)' title="Editar">
+                                <button class="btn-action btn-action-edit btn btn-sm border-0 me-1" onclick="editarCat(<?php echo htmlspecialchars(json_encode($category, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Editar">
                                     <i class="bi bi-pencil-square" style="color: var(--jv-orange); font-size: 0.85rem;"></i>
                                 </button>
                                 <span class="actions-divider"></span>
                                 <!-- Activar/Desactivar: pregunta con SweetAlert y hace un POST
                                      con jvPost (ver JS confirmarToggle). -->
-                                <?php if ($row['status'] == 'Activo'): ?>
-                                    <button class="btn-action btn-action-toggle btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo $row['id_categoria']; ?>, '<?php echo htmlspecialchars($row['nombre']); ?>', 'desactivar')" title="Desactivar">
+                                <?php if ($category['status'] == 'Activo'): ?>
+                                    <button class="btn-action btn-action-toggle btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo (int)$category['id_categoria']; ?>, <?php echo htmlspecialchars(json_encode($category['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" title="Desactivar">
                                         <i class="bi bi-eye-slash-fill" style="color: var(--jv-warning); font-size: 0.85rem;"></i>
                                     </button>
                                 <?php else: ?>
-                                    <button class="btn-action btn-action-reactivate btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo $row['id_categoria']; ?>, '<?php echo htmlspecialchars($row['nombre']); ?>', 'activar')" title="Activar">
+                                    <button class="btn-action btn-action-reactivate btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo (int)$category['id_categoria']; ?>, <?php echo htmlspecialchars(json_encode($category['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" title="Activar">
                                         <i class="bi bi-eye-fill" style="color: var(--jv-success); font-size: 0.85rem;"></i>
                                     </button>
                                 <?php endif; ?>
@@ -107,7 +112,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <i class="bi bi-tags d-block mb-3 mx-auto" style="font-size: 3rem; color: var(--jv-orange); opacity: 0.5;"></i>
                             <span class="text-uppercase" style="color: var(--jv-text-primary); font-weight: 700; font-size: 0.95rem;">No hay categorías registradas</span>
                             <p class="mt-2" style="color: var(--jv-text-muted); font-size: 0.85rem;">Crea una categoría usando el botón <strong style="color: var(--jv-orange);">CREAR</strong></p>

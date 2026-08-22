@@ -37,17 +37,17 @@ class ProductosController extends Controller
         $modelo = new Producto();
 
         // --- Acciones POST ---
-        $id_toggle = (int)($_POST['toggle'] ?? 0);
-        $id_baja = (int)($_POST['baja_vencido'] ?? 0);
+        $toggleProductId = (int)($_POST['toggle'] ?? 0);
+        $expiredProductId = (int)($_POST['baja_vencido'] ?? 0);
 
-        if ($id_toggle && $esAdmin) {
-            $ok = $modelo->toggleStatus($id_toggle);
-            $this->flash($ok['ok'] ? 'success' : 'danger', $ok['mensaje']);
+        if ($toggleProductId && $esAdmin) {
+            $toggleResult = $modelo->toggleStatus($toggleProductId);
+            $this->flash($toggleResult['ok'] ? 'success' : 'danger', $toggleResult['mensaje']);
             $this->redirect('productos');
         }
 
-        if ($id_baja && $esAdmin) {
-            $modelo->bajaVencido($id_baja);
+        if ($expiredProductId && $esAdmin) {
+            $modelo->bajaVencido($expiredProductId);
             $this->flash('success', 'PRODUCTO DADO DE BAJA POR VENCIMIENTO. LOTES VENCIDOS PUESTOS EN CERO.');
             $this->redirect('productos');
         }
@@ -74,7 +74,7 @@ class ProductosController extends Controller
 
         $this->view('productos/index', [
             'titulo'       => 'Inventario | JV3000 C.A.',
-            'wrapper_class'=> 'pagina-productos',
+            'wrapper_class' => 'pagina-productos',
             'css_extra'    => ['modules/productos/productos.css?v=7'],
             'js_extra'     => ['modules/productos/productos.js?v=5'],
             'csrf'         => Security::generateToken(),
@@ -87,7 +87,6 @@ class ProductosController extends Controller
             'pagina_actual'    => $pagina_actual,
             'offset'           => $offset,
             'registros_por_pagina' => $registros_por_pagina,
-            'js_config' => ['c1' => Security::generateToken()],
         ]);
     }
 }

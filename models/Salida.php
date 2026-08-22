@@ -79,7 +79,7 @@ class Salida extends Model
             foreach ($detalle_all as $d) {
                 $mapa_det[$d['id_salida']][] = [
                     'id_producto'    => (int)$d['id_producto'],
-                    'nombre_producto'=> $d['nombre_producto'],
+                    'nombre_producto' => $d['nombre_producto'],
                     'sku'            => $d['sku'] ?? '',
                     'cantidad'       => (int)$d['cantidad'],
                     'precio_venta'   => (float)$d['precio_venta'],
@@ -112,8 +112,8 @@ class Salida extends Model
      */
     public function obtenerTipoNombre(int $idTipoMov): string
     {
-        $row = $this->db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$idTipoMov]);
-        return $row['nombre'] ?? '';
+        $movementType = $this->db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$idTipoMov]);
+        return $movementType['nombre'] ?? '';
     }
 
     /**
@@ -128,17 +128,17 @@ class Salida extends Model
     }
 
     /**
-     * Mapa id_tipo_mov → grupo (para el JS: window.JV_CONFIG.c0).
+     * Mapa id_tipo_mov → grupo (para el JS: window.JV_CONFIG.movementTypeGroups).
      *
      * @return array Mapa [id_tipo_mov => grupo].
      */
     public function mapaTiposGrupo(): array
     {
-        $map = [];
-        foreach ($this->obtenerTiposMov() as $tm) {
-            $map[$tm['id_tipo_mov']] = self::grupoDeTipo($tm['nombre']);
+        $movementTypeGroups = [];
+        foreach ($this->obtenerTiposMov() as $movementType) {
+            $movementTypeGroups[$movementType['id_tipo_mov']] = self::grupoDeTipo($movementType['nombre']);
         }
-        return $map;
+        return $movementTypeGroups;
     }
 
     /**

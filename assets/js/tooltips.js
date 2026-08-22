@@ -42,11 +42,11 @@ function posicionarTip(e) {
     const pad = 16; // separación respecto al cursor
     let x = e.clientX + pad;
     let y = e.clientY + pad;
-    const r = jvTip.getBoundingClientRect();
+    const tooltipBounds = jvTip.getBoundingClientRect();
     // Si se desborda a la derecha, colócalo a la izquierda del cursor.
-    if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - pad;
+    if (x + tooltipBounds.width > window.innerWidth - 8) x = e.clientX - tooltipBounds.width - pad;
     // Si se desborda abajo, colócalo arriba del cursor.
-    if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - pad;
+    if (y + tooltipBounds.height > window.innerHeight - 8) y = e.clientY - tooltipBounds.height - pad;
     jvTip.style.left = Math.max(8, x) + 'px';
     jvTip.style.top = Math.max(8, y) + 'px';
 }

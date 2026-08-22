@@ -1,9 +1,20 @@
 <?php
+
+/** @var array<string, mixed>|null $solicitud_prefill */
+/** @var array<string, mixed>|null $flash */
+/** @var array<string, mixed> $kpis */
+/** @var string $filtro_pago */
+/** @var array<int, array<string, mixed>> $compras */
+/** @var bool $es_admin */
+/** @var string $csrf */
+/** @var array<int, array<string, mixed>> $proveedores */
+/** @var float|int $iva_pct */
+
 // ==========================================
 // VISTA: Compras (index)
 // ==========================================
 // Solo muestra los datos. No hace consultas.
-$__base_url = APP_URL_BASE . 'index.php?url=compras';
+$purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 ?>
 <!-- Encabezado -->
 <div class="card-jv d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 header-card">
@@ -88,7 +99,7 @@ $__base_url = APP_URL_BASE . 'index.php?url=compras';
     <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
         <i class="bi bi-search me-1" style="font-size:1.1rem;color:var(--jv-orange);"></i>
         <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por factura, control, proveedor, productos, estado..." id="buscar" onkeyup="filtrar()" style="box-shadow:none;font-size:1rem;padding:8px 6px;max-width:340px;">
-        <select class="input-jv ms-auto" id="filtroPago" onchange="window.location='<?php echo $__base_url; ?>&filtro_pago='+this.value" style="width:auto;padding:6px 10px;font-size:.95rem;">
+        <select class="input-jv ms-auto" id="filtroPago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value" style="width:auto;padding:6px 10px;font-size:.95rem;">
             <option value="">Todos los pagos</option>
             <option value="Pendiente" <?php echo $filtro_pago === 'Pendiente' ? 'selected' : ''; ?>>Pendiente</option>
             <option value="Pagada" <?php echo $filtro_pago === 'Pagada' ? 'selected' : ''; ?>>Pagada</option>

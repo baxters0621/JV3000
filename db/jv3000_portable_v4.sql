@@ -22,9 +22,15 @@ CREATE TABLE `auditoria` (
   `accion` varchar(50) NOT NULL,
   `detalle` text DEFAULT NULL,
   `fecha_hora` timestamp NOT NULL DEFAULT current_timestamp(),
+  `ip_origen` varchar(45) DEFAULT NULL,
+  `ruta` varchar(255) DEFAULT NULL,
+  `metodo` varchar(10) DEFAULT NULL,
   PRIMARY KEY (`id_auditoria`),
   KEY `idx_usuario` (`id_usuario`),
-  KEY `idx_fecha` (`fecha_hora`)
+  KEY `idx_fecha` (`fecha_hora`),
+  KEY `idx_ip` (`ip_origen`),
+  KEY `idx_ruta` (`ruta`),
+  KEY `idx_accion_fecha` (`accion`,`fecha_hora`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Tabla: categorias
@@ -80,6 +86,7 @@ CREATE TABLE `login_intentos` (
   `intentos` int(11) DEFAULT 0,
   `ultimo_intento` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_ip_unique` (`ip_address`),
   KEY `idx_ip` (`ip_address`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
