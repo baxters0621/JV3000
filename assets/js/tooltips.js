@@ -14,6 +14,7 @@
 // Estado compartido del tooltip (un solo <div> por página).
 let jvTip = null;
 let jvTipTimer = null;
+let jvTipTarget = null;
 
 /**
  * Muestra el tooltip con el texto dado, creándolo la primera vez.
@@ -66,13 +67,16 @@ function ocultarTip() {
 document.addEventListener('mouseover', function (e) {
     const t = e.target.closest('[data-tooltip]');
     if (t) {
+        if (jvTipTarget === t) return;
+        jvTipTarget = t;
         window.clearTimeout(jvTipTimer);
         mostrarTip(e, t.dataset.tooltip);
     }
 });
-document.addEventListener('mousemove', function (e) {
-    if (jvTip && jvTip.classList.contains('jv-tooltip-visible')) posicionarTip(e);
-});
 document.addEventListener('mouseout', function (e) {
-    if (e.target.closest('[data-tooltip]')) ocultarTip();
+    const t = e.target.closest('[data-tooltip]');
+    if (t && (!e.relatedTarget || !t.contains(e.relatedTarget))) {
+        jvTipTarget = null;
+        ocultarTip();
+    }
 });

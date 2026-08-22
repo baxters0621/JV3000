@@ -5,7 +5,7 @@
         .table-jv {
             width: 100%;
             table-layout: fixed;
-            min-width: 1000px;
+            min-width: 940px;
         }
 
         .table-jv thead {
@@ -170,6 +170,60 @@
             border-top: 4px solid #22d3ee;
             border-radius: var(--jv-radius) !important;
             overflow: hidden;
+        }
+
+        .card-jv-table .table-responsive {
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 768px) {
+            .pagina-productos {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+
+            .pagina-productos > .card-jv:first-child {
+                margin-left: 0;
+                margin-right: 0;
+                padding: 14px 16px !important;
+            }
+
+            .pagina-productos .buscador-wrapper {
+                align-items: stretch !important;
+                padding: 12px !important;
+            }
+
+            .pagina-productos .buscador-wrapper input {
+                flex: 1 1 100%;
+                max-width: none !important;
+                min-width: 0;
+            }
+
+            .pagina-productos .buscador-wrapper .actions-divider,
+            .pagina-productos .buscador-wrapper > .small {
+                display: none;
+            }
+
+            .pagina-productos .buscador-wrapper .btn-group {
+                flex: 1 1 auto;
+                min-width: 0;
+                display: flex;
+            }
+
+            .pagina-productos .buscador-wrapper .btn-group .btn,
+            .pagina-productos .buscador-wrapper .btn-group .btn-filter-prod {
+                flex: 1 1 0;
+                min-width: 0;
+                padding-left: 8px;
+                padding-right: 8px;
+                white-space: nowrap;
+            }
+
+            .pagina-productos .table-responsive {
+                border-top: 1px solid var(--jv-border);
+            }
         }
 
         .codigo-badge {
