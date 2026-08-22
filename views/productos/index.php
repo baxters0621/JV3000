@@ -240,21 +240,21 @@
 <?php if ($esAdmin): ?>
     <!-- Modal: Editar producto -->
     <div class="modal fade" id="modalEditar" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modal-content-jv">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content modal-content-jv modal-producto-edit">
                 <form method="POST" id="formEditar">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                     <input type="hidden" name="accion" value="editar_producto">
                     <input type="hidden" name="id_producto" id="edit_id">
-                    <div class="p-3" style="border-bottom:1px solid var(--jv-border);">
+                    <div class="p-3 modal-producto-edit-header">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="fw-bold mb-0 font-brand" style="color:var(--jv-navy);font-size:.95rem;letter-spacing:-.5px;">
+                            <h5 class="fw-bold mb-0 font-brand">
                                 <i class="bi bi-pencil-square me-2"></i>EDITAR PRODUCTO
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                     </div>
-                    <div class="p-3">
+                    <div class="p-4 modal-producto-edit-body">
                         <div class="mb-2">
                             <label class="small fw-bold text-secondary mb-1">PRODUCTO</label>
                             <input type="text" class="input-jv" id="edit_nombre" readonly disabled style="color:var(--jv-text-muted);">

@@ -75,7 +75,7 @@ class ProductosController extends Controller
         $this->view('productos/index', [
             'titulo'       => 'Inventario | JV3000 C.A.',
             'wrapper_class' => 'pagina-productos',
-            'css_extra'    => ['modules/productos/productos.css?v=10'],
+            'css_extra'    => ['modules/productos/productos.css?v=11'],
             'js_extra'     => ['modules/productos/productos.js?v=5'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,

@@ -220,6 +220,81 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        .modal-producto-edit {
+            border: 0;
+            overflow: hidden;
+            box-shadow: 0 20px 55px rgba(15, 26, 46, 0.22);
+        }
+
+        .modal-producto-edit-header {
+            color: #ffffff;
+            background: linear-gradient(135deg, #0e7490, #155e75);
+            border-bottom: 4px solid #22d3ee;
+        }
+
+        .modal-producto-edit-header h5 {
+            color: #ffffff;
+            font-size: 1rem;
+            letter-spacing: .3px;
+        }
+
+        .modal-producto-edit-header .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: .85;
+        }
+
+        .modal-producto-edit-body {
+            background: #f8fafc;
+        }
+
+        .modal-producto-edit-body > .mb-2,
+        .modal-producto-edit-body > .row {
+            margin-bottom: 14px !important;
+        }
+
+        .modal-producto-edit-body label {
+            display: block;
+            color: #334155 !important;
+            font-size: .72rem;
+            letter-spacing: .45px;
+        }
+
+        .modal-producto-edit-body .input-jv {
+            min-height: 42px;
+            padding: 9px 12px;
+            background: #ffffff;
+            border-color: #cbd5e1;
+            box-shadow: 0 1px 2px rgba(15, 26, 46, .04);
+        }
+
+        .modal-producto-edit-body .input-jv:disabled {
+            background: #e2e8f0;
+            color: #64748b !important;
+            cursor: not-allowed;
+        }
+
+        .modal-producto-edit > form > .d-flex:last-child {
+            padding: 16px 24px !important;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0 !important;
+        }
+
+        .modal-producto-edit > form > .d-flex:last-child .btn {
+            min-height: 40px;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 576px) {
+            .modal-producto-edit-body {
+                padding: 16px !important;
+            }
+
+            .modal-producto-edit-body .row > [class*="col-"] {
+                width: 100%;
+            }
+        }
+
         .pagina-productos,
         .pagina-productos > .card-jv {
             max-width: 100%;
