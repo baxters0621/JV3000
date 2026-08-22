@@ -16,6 +16,10 @@ Validaciones ya realizadas:
 - Los recursos CDN de proveedores cargan correctamente.
 - La guía y la documentación están organizadas en `docs/`.
 
+## Actualización de cierre
+
+Las tareas descritas a continuación ya fueron ejecutadas y validadas en la base de prueba. También se completaron la automatización del validador, la preparación productiva, la protección HTTP y el endurecimiento ACL de las carpetas internas. La configuración productiva apunta a `jv3000_db`; por seguridad, no se ejecutan nuevas operaciones de escritura sobre esa base sin un respaldo restaurable y confirmación previa.
+
 ## Tareas para la siguiente sesión
 
 ### 1. Pruebas funcionales con base de datos de prueba
