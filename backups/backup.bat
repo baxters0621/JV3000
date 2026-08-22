@@ -51,15 +51,16 @@ echo  Respaldando base de datos: %DB_NAME%
 echo ============================================
 echo.
 
-"%MYSQLDUMP%" -u%DB_USER% --databases %DB_NAME% > "%FILENAME%"
+"%MYSQLDUMP%" -u%DB_USER% --databases %DB_NAME% --single-transaction --routines --triggers --events --result-file="%FILENAME%"
 
-if %ERRORLEVEL% equ 0 (
+if errorlevel 1 (
+    echo [ERROR] Fallo al crear el backup.
+    if exist "%FILENAME%" del /q "%FILENAME%" >nul 2>&1
+) else (
     echo [OK] Backup creado exitosamente:
     echo      %FILENAME%
     echo.
     for %%A in ("%FILENAME%") do echo      Tamanio: %%~zA bytes
-) else (
-    echo [ERROR] Fallo al crear el backup.
 )
 
 echo.
