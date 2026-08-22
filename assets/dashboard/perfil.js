@@ -43,6 +43,7 @@
     }
 })();
 const observer = new MutationObserver(function() {
+    if (typeof mainWrapper === 'undefined' || !mainWrapper) return;
     if (document.body.classList.contains('sidebar-open')) mainWrapper.classList.add('sidebar-open');
     else mainWrapper.classList.remove('sidebar-open');
 });

@@ -219,4 +219,31 @@
         opacity:1;
         transform:translateY(0);
     }
+
+    @media (max-width: 768px) {
+        .provider-header {
+            flex-wrap: wrap;
+            gap: 12px !important;
+        }
+        .provider-header > .ms-auto {
+            width: 100%;
+            margin-left: 0 !important;
+            gap: 10px !important;
+        }
+        .provider-header .prov-search {
+            flex: 1 1 100%;
+            min-width: 0;
+        }
+        .provider-header .prov-search .input-jv {
+            width: 100%;
+            max-width: none !important;
+        }
+        .provider-header .filter-group {
+            flex: 1 1 auto;
+            flex-wrap: wrap;
+        }
+        .provider-header #btnNuevoProv {
+            flex: 0 0 auto;
+        }
+    }
     

@@ -4,9 +4,20 @@ REM  BACKUP DE BASE DE DATOS - JV3000 C.A.
 REM  Genera un .sql con fecha y hora
 REM ============================================
 
-set DB_USER=root
-set DB_PASS=
-set DB_NAME=jv3000_db
+if not defined JV_DB_USER set JV_DB_USER=root
+if not defined JV_DB_PASS set JV_DB_PASS=
+if not defined JV_DB_NAME set JV_DB_NAME=jv3000_db
+set ENV_FILE=%~dp0..\config\.env
+if exist "%ENV_FILE%" (
+    for /f "usebackq tokens=1,* delims==" %%A in ("%ENV_FILE%") do (
+        if /i "%%A"=="JV_DB_USER" set JV_DB_USER=%%B
+        if /i "%%A"=="JV_DB_PASS" set JV_DB_PASS=%%B
+        if /i "%%A"=="JV_DB_NAME" set JV_DB_NAME=%%B
+    )
+)
+set DB_USER=%JV_DB_USER%
+set DB_PASS=%JV_DB_PASS%
+set DB_NAME=%JV_DB_NAME%
 set BACKUP_DIR=%~dp0
 
 REM --- Detectar mysqldump.exe (XAMPP o PATH) ---

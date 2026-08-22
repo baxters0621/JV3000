@@ -14,7 +14,7 @@
 // Solo muestra los datos. No hace consultas.
 ?>
 <!-- Encabezado -->
-<div class="d-flex align-items-center gap-4 mb-4">
+<div class="d-flex align-items-center gap-4 mb-4 provider-header">
     <div class="prov-header-icon">
         <i class="bi bi-building"></i>
     </div>

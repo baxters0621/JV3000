@@ -25,8 +25,16 @@ function obtenerDatosDashboard($db): array
 {
     $datos = [];
 
-    $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' AND s.fecha_salida >= CURRENT_DATE");
-    $datos['ventas_dia'] = number_format($vd['total'], 2);
+    // El KPI de ventas del panel debe reflejar la última venta registrada, no solo
+    // las ventas del día actual; de ese modo la tarjeta y la tabla muestran un
+    // mismo criterio de "reciente" incluso cuando la última nota no pertenece a hoy.
+    $vd = $db->fetchOne("SELECT COALESCE(ds.cantidad * ds.precio_venta, 0) as total
+        FROM salidas s
+        JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
+        WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'
+        ORDER BY s.fecha_salida DESC, s.id_salida DESC
+        LIMIT 1");
+    $datos['ventas_dia'] = number_format((float)($vd['total'] ?? 0), 2);
 
     $vi = $db->fetchOne("SELECT COALESCE(SUM(stock_actual * precio_costo), 0) as valor FROM productos WHERE status = 'Activo'");
     $datos['valor_inventario'] = number_format($vi['valor'], 2);
@@ -57,7 +65,8 @@ function obtenerDatosDashboard($db): array
 if (isset($_GET['ajax_dashboard'])) {
     header('Content-Type: application/json');
     if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
-        echo json_encode(['success' => false, 'error' => 'acceso_denegado']); exit;
+        echo json_encode(['success' => false, 'error' => 'acceso_denegado']);
+        exit;
     }
     echo json_encode(['success' => true] + obtenerDatosDashboard($db));
     exit();
@@ -87,7 +96,7 @@ $tabla_compras = $datos['tabla_compras'];
     <title>Panel de Inicio | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
 
-        <link rel="stylesheet" href="../assets/dashboard/index.css?v=21">
+    <link rel="stylesheet" href="../assets/dashboard/index.css?v=21">
 </head>
 
 <?php
@@ -142,27 +151,29 @@ $tabla_compras = $datos['tabla_compras'];
                                     $secciones['bajos'] = ['titulo' => 'STOCK BAJO', 'clase' => 'bajo', 'alerta' => 'bajos', 'count' => $alertas['counts']['bajos'], 'items' => $alertas['bajos']];
                                 }
                                 foreach ($secciones as $clave => $sec):
-                                    if ($sec['count'] <= 0) { continue; }
+                                    if ($sec['count'] <= 0) {
+                                        continue;
+                                    }
                                 ?>
-                                <div class="dash-bell-sec dash-bell-<?php echo $sec['clase']; ?>">
-                                    <div class="dash-bell-sec-titulo">
-                                        <span><?php echo $sec['titulo']; ?> (<?php echo $sec['count']; ?>)</span>
-                                        <a href="<?php echo BASE_PATH; ?>index.php?url=productos&alerta=<?php echo $sec['alerta']; ?>" class="dash-bell-ver">Ver todos</a>
+                                    <div class="dash-bell-sec dash-bell-<?php echo $sec['clase']; ?>">
+                                        <div class="dash-bell-sec-titulo">
+                                            <span><?php echo $sec['titulo']; ?> (<?php echo $sec['count']; ?>)</span>
+                                            <a href="<?php echo BASE_PATH; ?>index.php?url=productos&alerta=<?php echo $sec['alerta']; ?>" class="dash-bell-ver">Ver todos</a>
+                                        </div>
+                                        <?php foreach ($sec['items'] as $it): ?>
+                                            <a class="dash-bell-item" href="<?php echo BASE_PATH; ?>index.php?url=productos&producto=<?php echo (int)$it['id']; ?>">
+                                                <i class="bi bi-<?php echo $clave === 'bajos' ? 'exclamation-triangle' : ($clave === 'proximos' ? 'clock-history' : ($clave === 'prontos' ? 'calendar3' : 'x-octagon')); ?>"></i>
+                                                <span class="dash-bell-item-nombre"><?php echo htmlspecialchars($it['nombre']); ?></span>
+                                                <span class="dash-bell-item-meta">
+                                                    <?php if ($clave === 'bajos'): ?>
+                                                        <?php echo (int)$it['stock']; ?> / mín <?php echo (int)$it['minimo']; ?>
+                                                    <?php else: ?>
+                                                        <?php echo htmlspecialchars($it['fecha']); ?>
+                                                    <?php endif; ?>
+                                                </span>
+                                            </a>
+                                        <?php endforeach; ?>
                                     </div>
-                                    <?php foreach ($sec['items'] as $it): ?>
-                                        <a class="dash-bell-item" href="<?php echo BASE_PATH; ?>index.php?url=productos&producto=<?php echo (int)$it['id']; ?>">
-                                            <i class="bi bi-<?php echo $clave === 'bajos' ? 'exclamation-triangle' : ($clave === 'proximos' ? 'clock-history' : ($clave === 'prontos' ? 'calendar3' : 'x-octagon')); ?>"></i>
-                                            <span class="dash-bell-item-nombre"><?php echo htmlspecialchars($it['nombre']); ?></span>
-                                            <span class="dash-bell-item-meta">
-                                                <?php if ($clave === 'bajos'): ?>
-                                                    <?php echo (int)$it['stock']; ?> / mín <?php echo (int)$it['minimo']; ?>
-                                                <?php else: ?>
-                                                    <?php echo htmlspecialchars($it['fecha']); ?>
-                                                <?php endif; ?>
-                                            </span>
-                                        </a>
-                                    <?php endforeach; ?>
-                                </div>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </div>
@@ -202,7 +213,7 @@ $tabla_compras = $datos['tabla_compras'];
                 <div class="kpi-grid">
                     <div class="kpi-card">
                         <div class="kpi-icon kpi-icon-verde"><i class="bi bi-currency-dollar"></i></div>
-                        <div class="kpi-label">Ventas de Hoy</div>
+                        <div class="kpi-label">Última Venta</div>
                         <div class="kpi-value" id="kpi-ventas-dia">$<?php echo $ventas_dia; ?></div>
                     </div>
                     <div class="kpi-card">
@@ -218,76 +229,94 @@ $tabla_compras = $datos['tabla_compras'];
                 <h2 class="sec-title"><i class="bi bi-clock-history"></i> Actividad Reciente</h2>
                 <div class="tables-grid">
                     <?php if ($esAdmin || $esOpVentas): ?>
-                    <div class="table-card table-card-ventas">
-                        <h3>Últimas Notas de Entrega</h3>
-                        <p class="card-desc">Ventas registradas más recientes.</p>
-                        <table class="data-table">
-                            <thead>
-                                <tr><th>Cliente</th><th>Fecha</th><th>Total</th></tr>
-                            </thead>
-                            <tbody id="tabla-facturas">
-                                <?php if (!empty($ultimas_facturas)): ?>
-                                    <?php foreach ($ultimas_facturas as $f): ?>
+                        <div class="table-card table-card-ventas">
+                            <h3>Últimas Notas de Entrega</h3>
+                            <p class="card-desc">Ventas registradas más recientes.</p>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Fecha</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-facturas">
+                                    <?php if (!empty($ultimas_facturas)): ?>
+                                        <?php foreach ($ultimas_facturas as $f): ?>
+                                            <tr>
+                                                <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($f['cliente'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($f['cliente']); ?></td>
+                                                <td><?php echo $f['fecha']; ?></td>
+                                                <td class="monto">$<?php echo $f['total']; ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
                                         <tr>
-                                            <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($f['cliente'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($f['cliente']); ?></td>
-                                            <td><?php echo $f['fecha']; ?></td>
-                                            <td class="monto">$<?php echo $f['total']; ?></td>
+                                            <td colspan="3" class="vacio">Sin ventas registradas</td>
                                         </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="3" class="vacio">Sin ventas registradas</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     <?php endif; ?>
 
                     <?php if ($esAdmin || $esOpCarga): ?>
-                    <div class="table-card table-card-criticos">
-                        <h3>Productos Críticos</h3>
-                        <p class="card-desc">Stock agotado o bajo el mínimo: reponer o reparar lo antes posible.</p>
-                        <table class="data-table">
-                            <thead>
-                                <tr><th>Producto</th><th>Stock</th><th>Estado</th></tr>
-                            </thead>
-                            <tbody id="tabla-criticos">
-                                <?php if (!empty($tabla_criticos)): ?>
-                                    <?php foreach ($tabla_criticos as $c): ?>
+                        <div class="table-card table-card-criticos">
+                            <h3>Productos Críticos</h3>
+                            <p class="card-desc">Stock agotado o bajo el mínimo: reponer o reparar lo antes posible.</p>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Stock</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-criticos">
+                                    <?php if (!empty($tabla_criticos)): ?>
+                                        <?php foreach ($tabla_criticos as $c): ?>
+                                            <tr>
+                                                <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($c['producto'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($c['producto']); ?></td>
+                                                <td><?php echo $c['stock']; ?></td>
+                                                <td><span class="stock-badge <?php echo $c['estado']; ?>"><?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?></span></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
                                         <tr>
-                                            <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($c['producto'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($c['producto']); ?></td>
-                                            <td><?php echo $c['stock']; ?></td>
-                                            <td><span class="stock-badge <?php echo $c['estado']; ?>"><?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?></span></td>
+                                            <td colspan="3" class="vacio">Sin productos críticos</td>
                                         </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="3" class="vacio">Sin productos críticos</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
 
-                    <div class="table-card table-card-compras">
-                        <h3>Últimas Compras</h3>
-                        <p class="card-desc">Entradas de inventario más recientes.</p>
-                        <table class="data-table">
-                            <thead>
-                                <tr><th>Proveedor</th><th>Fecha</th><th>Total</th></tr>
-                            </thead>
-                            <tbody id="tabla-compras">
-                                <?php if (!empty($tabla_compras)): ?>
-                                    <?php foreach ($tabla_compras as $co): ?>
+                        <div class="table-card table-card-compras">
+                            <h3>Últimas Compras</h3>
+                            <p class="card-desc">Entradas de inventario más recientes.</p>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Proveedor</th>
+                                        <th>Fecha</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-compras">
+                                    <?php if (!empty($tabla_compras)): ?>
+                                        <?php foreach ($tabla_compras as $co): ?>
+                                            <tr>
+                                                <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($co['proveedor'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($co['proveedor']); ?></td>
+                                                <td><?php echo $co['fecha']; ?></td>
+                                                <td class="monto">$<?php echo $co['total']; ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
                                         <tr>
-                                            <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($co['proveedor'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($co['proveedor']); ?></td>
-                                            <td><?php echo $co['fecha']; ?></td>
-                                            <td class="monto">$<?php echo $co['total']; ?></td>
+                                            <td colspan="3" class="vacio">Sin compras registradas</td>
                                         </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr><td colspan="3" class="vacio">Sin compras registradas</td></tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     <?php endif; ?>
                 </div>
             </section>

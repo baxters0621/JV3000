@@ -1,17 +1,13 @@
-# ==========================================
-# SEGURIDAD — Bloqueo de acceso directo
-# ==========================================
-# El sistema solo debe consumirse por el front controller
-# (index.php?url=...) y por las páginas públicas (login/,
-# dashboard/, assets/). Estos directorios contienen código
-# fuente y datos internos que NUNCA deben servirse por HTTP.
+RewriteEngine On
 
-<IfModule mod_rewrite.c>
-    RewriteEngine On
+# Exception: protected AJAX endpoint.
 
-    # Directorios internos de la aplicación: prohibidos por HTTP
-    RewriteRule ^(backups|db|models|controllers|views|config|includes|core)(/|$) - [F,L]
+RewriteRule ^includes/ajax/alertas_ajax\.php$ - [L]
 
-    # Defensa extra: cualquier archivo .sql / .bat / .inc servido por URL se bloquea
-    RewriteRule \.(sql|bat|inc)$ - [F,L]
-</IfModule>
+# Block internal directories and sensitive file types.
+
+RewriteRule ^(?:backups|db|models|controllers|views|config|includes|core)(?:/|$) - [F,L,NC]
+
+<FilesMatch "\.(?:sql|bat|inc)$">
+Require all denied
+</FilesMatch>

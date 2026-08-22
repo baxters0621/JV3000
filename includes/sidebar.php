@@ -56,7 +56,7 @@ function es_activo(string $pagina, string $modulo = ''): string
 
         <!-- --- Inventory (All operators) --- -->
         <!-- Inventario -->
-        <?php if ($es_admin || $es_op_carga || $es_op_ventas): ?>
+        <?php if ($es_admin || $es_op_carga): ?>
             <div class="nav-item nav-inventario <?php echo $mvc_activa('productos') ? 'active' : ''; ?>">
                 <a href="<?php echo $prefijo; ?>index.php?url=productos" class="nav-link">
                     <i class="bi bi-box-seam"></i>
@@ -131,7 +131,7 @@ function es_activo(string $pagina, string $modulo = ''): string
         <!-- --- Admin-only menu items --- -->
         <!-- --- Suppliers --- -->
         <!-- Proveedores -->
-        <?php if ($es_admin): ?>
+        <?php if ($es_admin || $es_op_carga): ?>
             <div class="nav-item nav-clientes <?php echo $mvc_activa('proveedores') ? 'active' : ''; ?>">
                 <a href="<?php echo $prefijo; ?>index.php?url=proveedores" class="nav-link">
                     <i class="bi bi-building"></i>
@@ -142,7 +142,7 @@ function es_activo(string $pagina, string $modulo = ''): string
 
         <!-- --- Categories --- -->
         <!-- Categorías -->
-        <?php if ($es_admin): ?>
+        <?php if ($es_admin || $es_op_carga): ?>
             <div class="nav-item nav-categorias <?php echo $mvc_activa('categorias') ? 'active' : ''; ?>">
                 <a href="<?php echo $prefijo; ?>index.php?url=categorias" class="nav-link">
                     <i class="bi bi-grid-3x3-gap"></i>
@@ -217,4 +217,4 @@ function es_activo(string $pagina, string $modulo = ''): string
     window.JV_CONFIG = window.JV_CONFIG || {};
     window.JV_CONFIG.prefijo = <?php echo json_encode($prefijo); ?>;
 </script>
-<script src="<?php echo $base_assets; ?>js/sidebar.js?v=3"></script>
+<script src="<?php echo $base_assets; ?>js/sidebar.js?v=4"></script>

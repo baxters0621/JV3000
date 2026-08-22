@@ -17,7 +17,7 @@ if (isset($_SESSION['id_usuario'])) {
 // ==========================================
 // INICIAR PROCESO DE RECUPERACIÓN
 // ==========================================
-if (isset($_GET['reset'])) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['reset'])) {
     $_SESSION['rec_step'] = 1;
     $_SESSION['rec_id'] = 0;
     unset($_SESSION['rec_user'], $_SESSION['rec_pregunta'], $_SESSION['rec_intentos']);

@@ -89,7 +89,7 @@ class ProveedoresController extends Controller
             'wrapper_class' => 'pagina-proveedores',
             'css_extra'    => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
-                'modules/proveedores/proveedores.css?v=2',
+                'modules/proveedores/proveedores.css?v=3',
             ],
             'js_extra'     => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',

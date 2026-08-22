@@ -24,6 +24,7 @@ function confirmarToggle(id, nombre, accion) {
 
 // Sincronizar main-wrapper con sidebar
 const observer = new MutationObserver(() => {
+    if (typeof mainWrapper === 'undefined' || !mainWrapper) return;
     if (document.body.classList.contains('sidebar-open')) {
         mainWrapper.classList.add('sidebar-open');
     } else {

@@ -640,8 +640,7 @@
                 .then(d => {
                     btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA';
                     if (d.ok) {
-                        window.open((window.JV_BASE || '') + 'index.php?url=nota_entrega&token=' + (d.token || ''), '_blank');
-                        salidaModal.hide();
+                        window.location.href = (window.JV_BASE || '') + 'index.php?url=nota_entrega&token=' + (d.token || '');
                     } else {
                         Swal.fire({icon:'error',title:'ERROR',text:d.error||'Error al generar preview.',background:'#fff',color:'#212529',confirmButtonColor:'#DC2626'});
                     }
@@ -752,6 +751,10 @@
                     if (!e.target.closest('.com-toolbox')) cerrarResultadosCli();
                 });
                 // Sincronizar nombre manual si no se eligió de la lista
+                toolboxCli.addEventListener('input', function() {
+                    document.getElementById('s_id_cliente').value = '';
+                    document.getElementById('s_cliente').value = this.value.trim();
+                });
                 toolboxCli.addEventListener('blur', function() {
                     if (!document.getElementById('s_id_cliente').value) {
                         document.getElementById('s_cliente').value = this.value.trim();

@@ -63,7 +63,7 @@
                 <tr>
                     <th class="text-center" style="width:9%;">CÓDIGO</th>
                     <th style="width:22%;">PRODUCTO</th>
-                    <th style="width:13%;">CATEGORÃA</th>
+                    <th style="width:13%;">CATEGORÍA</th>
                     <th style="width:14%;">PROVEEDOR</th>
                     <th class="text-center" style="width:8%;">STOCK</th>
                     <th style="width:9%;">PRECIO</th>
@@ -268,7 +268,7 @@
                                 <input type="text" class="input-jv" id="edit_stock" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
                             <div class="col-4">
-                                <label class="small fw-bold text-secondary mb-1">STOCK MÃNIMO</label>
+                                <label class="small fw-bold text-secondary mb-1">STOCK MÍNIMO</label>
                                 <input type="number" class="input-jv" id="edit_minimo" name="stock_minimo" min="0" max="99999" required>
                             </div>
                             <div class="col-4">

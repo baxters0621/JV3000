@@ -9,7 +9,7 @@ function abrirSidebar() {
     sidebarOpen = true;
     sidebar.classList.add('open');
     document.body.classList.add('sidebar-open');
-    if (backdrop) backdrop.classList.add('visible');
+    if (backdrop) backdrop.classList.toggle('visible', window.innerWidth <= 768);
     if (mainWrapper) mainWrapper.style.marginLeft = '260px';
 }
 
@@ -32,6 +32,12 @@ toggleBtn.addEventListener('click', (e) => {
 
 // Cerrar al hacer clic fuera (móvil) o en backdrop
 if (backdrop) backdrop.addEventListener('click', cerrarSidebar);
+
+window.addEventListener('resize', () => {
+    if (backdrop && sidebarOpen) {
+        backdrop.classList.toggle('visible', window.innerWidth <= 768);
+    }
+});
 
 // Cerrar sidebar en móvil al hacer clic en un enlace
 document.querySelectorAll('.sidebar .nav-link').forEach(link => {
