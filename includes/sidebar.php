@@ -47,7 +47,7 @@ function es_activo(string $pagina, string $modulo = ''): string
     <!-- Menú de navegación -->
     <nav class="sidebar-nav">
         <!-- Panel de Inicio -->
-        <div class="nav-item nav-dashboard <?php echo ($archivo_actual === 'index.php') ? 'active' : ''; ?>">
+        <div class="nav-item nav-dashboard <?php echo ($archivo_actual === 'index.php' && $ruta_mvc === '') ? 'active' : ''; ?>">
             <a href="<?php echo $prefijo; ?>dashboard/index.php" class="nav-link">
                 <i class="bi bi-house-door"></i>
                 <span>Panel de Inicio</span>
