@@ -90,6 +90,7 @@ class Producto extends Model
         }
         if ($precioVenta <= 0) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE SER MAYOR A 0.'];
         if ($precioCosto <= 0) return ['ok' => false, 'mensaje' => 'PRECIO COSTO DEBE SER MAYOR A 0.'];
+        if ($precioVenta < $precioCosto) return ['ok' => false, 'mensaje' => 'EL PRECIO DE VENTA DEBE SER MAYOR O IGUAL AL PRECIO COSTO.'];
         if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
         if ($fechaVencimiento && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) $fechaVencimiento = null;
         if ($idProveedor <= 0) return ['ok' => false, 'mensaje' => 'DEBE SELECCIONAR UN PROVEEDOR.'];

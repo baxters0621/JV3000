@@ -120,6 +120,10 @@
                 marcarError(costo, 'OBLIGATORIO (> 0)');
                 if (!primerError) primerError = costo;
             }
+            if (pvp.value && costo.value && parseFloat(pvp.value) < parseFloat(costo.value)) {
+                marcarError(pvp, 'DEBE SER MAYOR O IGUAL AL PRECIO COSTO');
+                if (!primerError) primerError = pvp;
+            }
             if (!proveedor.value || parseInt(proveedor.value) <= 0) {
                 marcarError(proveedor, 'OBLIGATORIO');
                 if (!primerError) primerError = proveedor;

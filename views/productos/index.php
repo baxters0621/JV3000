@@ -273,18 +273,18 @@
                                 <input type="number" class="input-jv" id="edit_minimo" name="stock_minimo" min="0" max="99999" required>
                             </div>
                             <div class="col-4">
-                                <label class="small fw-bold text-secondary mb-1">CAPACIDAD MÁX. <span class="text-jv-muted" style="font-weight:400;">(0 = categoría)</span></label>
+                                <label class="small fw-bold text-secondary mb-1">CAPACIDAD MÁX.</label>
                                 <input type="number" class="input-jv" id="edit_maximo" name="stock_maximo" min="0" max="999999" required>
                             </div>
                         </div>
                         <div class="row g-2 mb-2">
                             <div class="col-6">
                                 <label class="small fw-bold text-secondary mb-1">PRECIO VENTA ($)</label>
-                                <input type="number" class="input-jv" id="edit_pvp" name="precio_venta" step="0.01" min="0" max="999999" required>
+                                <input type="number" class="input-jv" id="edit_pvp" name="precio_venta" step="0.01" min="0.01" max="999999" required>
                             </div>
                             <div class="col-6">
                                 <label class="small fw-bold text-secondary mb-1">PRECIO COSTO ($)</label>
-                                <input type="number" class="input-jv" id="edit_costo" name="precio_costo" step="0.01" min="0" max="999999" required>
+                                <input type="number" class="input-jv" id="edit_costo" name="precio_costo" step="0.01" min="0.01" max="999999" required>
                             </div>
                         </div>
                         <div class="row g-2 mb-2">
