@@ -105,13 +105,24 @@
             return Number(texto);
         }
 
+        // Elimina letras sin reformatear durante la escritura ni mover el cursor.
+        function limpiarEntradaPrecio(input) {
+            var cursor = input.selectionStart || 0;
+            var valorOriginal = input.value;
+            var antesDelCursor = valorOriginal.slice(0, cursor);
+            var valorLimpio = valorOriginal.replace(/[^0-9.,]/g, '');
+            var antesLimpio = antesDelCursor.replace(/[^0-9.,]/g, '');
+            input.value = valorLimpio;
+            var nuevoCursor = Math.min(antesLimpio.length, valorLimpio.length);
+            input.setSelectionRange(nuevoCursor, nuevoCursor);
+        }
+
         // Muestra precios con separador de miles y dos decimales.
         function formatearPrecioEdicion(input) {
             if (!input || input.value.trim() === '') return;
             var valor = leerPrecioEdicion(input.value);
             var maximo = Number(input.dataset.max || 999999);
-            if (Number.isFinite(valor) && valor > 0) {
-                valor = Math.min(valor, maximo);
+            if (Number.isFinite(valor) && valor > 0 && valor <= maximo) {
                 input.value = valor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
         }
@@ -126,7 +137,7 @@
                 var input = document.getElementById(id);
                 if (input) {
                     input.addEventListener('input', function() {
-                        if (!/[,.]$/.test(this.value.trim())) formatearPrecioEdicion(this);
+                        limpiarEntradaPrecio(this);
                     });
                     input.addEventListener('blur', function() {
                         formatearPrecioEdicion(this);
