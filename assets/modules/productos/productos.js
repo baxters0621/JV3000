@@ -91,26 +91,56 @@
             if (el) modalEditar = new bootstrap.Modal(el);
         });
 
-        // Normaliza los precios a dos decimales sin convertirlos en texto.
+        // Convierte un precio local (1.000,00) a número para validarlo o enviarlo.
+        function leerPrecioEdicion(valor) {
+            var texto = String(valor || '').trim().replace(/\s/g, '');
+            if (!texto) return NaN;
+            if (texto.includes(',') && texto.includes('.')) {
+                texto = texto.replace(/\./g, '').replace(',', '.');
+            } else if (texto.includes(',')) {
+                texto = texto.replace(',', '.');
+            } else if (/^\d{1,3}(\.\d{3})+$/.test(texto)) {
+                texto = texto.replace(/\./g, '');
+            }
+            return Number(texto);
+        }
+
+        // Muestra precios con separador de miles y dos decimales.
         function formatearPrecioEdicion(input) {
-            if (!input || input.value === '') return;
-            var valor = Number(input.value);
-            if (Number.isFinite(valor) && valor > 0) input.value = valor.toFixed(2);
+            if (!input || input.value.trim() === '') return;
+            var valor = leerPrecioEdicion(input.value);
+            var maximo = Number(input.dataset.max || 999999);
+            if (Number.isFinite(valor) && valor > 0) {
+                valor = Math.min(valor, maximo);
+                input.value = valor.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        }
+
+        function precioCanonicoEdicion(input) {
+            var valor = leerPrecioEdicion(input.value);
+            return Number.isFinite(valor) ? valor.toFixed(2) : input.value;
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             ['edit_pvp', 'edit_costo'].forEach(function(id) {
                 var input = document.getElementById(id);
-                if (input) input.addEventListener('blur', function() {
-                    formatearPrecioEdicion(this);
-                });
+                if (input) {
+                    input.addEventListener('input', function() {
+                        if (!/[,.]$/.test(this.value.trim())) formatearPrecioEdicion(this);
+                    });
+                    input.addEventListener('blur', function() {
+                        formatearPrecioEdicion(this);
+                    });
+                }
             });
         });
 
         // Valida los campos del formulario de edición y envía el formulario si son correctos.
         function validarEditarProducto(btn) {
-            formatearPrecioEdicion(document.getElementById('edit_pvp'));
-            formatearPrecioEdicion(document.getElementById('edit_costo'));
+            var precioVenta = document.getElementById('edit_pvp');
+            var precioCosto = document.getElementById('edit_costo');
+            var valorVenta = leerPrecioEdicion(precioVenta.value);
+            var valorCosto = leerPrecioEdicion(precioCosto.value);
             limpiarErrores();
             let primerError = null;
             const minimo = document.getElementById('edit_minimo');
@@ -130,15 +160,15 @@
                 marcarError(maximo, 'DEBE SER ≥ STOCK MÍNIMO');
                 if (!primerError) primerError = maximo;
             }
-            if (!pvp.value || parseFloat(pvp.value) <= 0) {
-                marcarError(pvp, 'OBLIGATORIO (> 0)');
+            if (!pvp.value || !Number.isFinite(valorVenta) || valorVenta <= 0 || valorVenta > 999999) {
+                marcarError(pvp, valorVenta > 999999 ? 'MÁXIMO 999.999,00' : 'OBLIGATORIO (> 0)');
                 if (!primerError) primerError = pvp;
             }
-            if (!costo.value || parseFloat(costo.value) <= 0) {
-                marcarError(costo, 'OBLIGATORIO (> 0)');
+            if (!costo.value || !Number.isFinite(valorCosto) || valorCosto <= 0 || valorCosto > 999999) {
+                marcarError(costo, valorCosto > 999999 ? 'MÁXIMO 999.999,00' : 'OBLIGATORIO (> 0)');
                 if (!primerError) primerError = costo;
             }
-            if (pvp.value && costo.value && parseFloat(pvp.value) < parseFloat(costo.value)) {
+            if (Number.isFinite(valorVenta) && Number.isFinite(valorCosto) && valorVenta < valorCosto) {
                 marcarError(pvp, 'DEBE SER MAYOR O IGUAL AL PRECIO COSTO');
                 if (!primerError) primerError = pvp;
             }
@@ -150,6 +180,8 @@
                 primerError.focus();
                 return false;
             }
+            pvp.value = precioCanonicoEdicion(pvp);
+            costo.value = precioCanonicoEdicion(costo);
             btn.disabled = true;
             btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';
             btn.form.submit();

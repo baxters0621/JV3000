@@ -53,12 +53,24 @@ class ProductosController extends Controller
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'editar_producto' && $esAdmin) {
+            $parsePrice = static function ($value): float {
+                $text = trim((string)$value);
+                if (str_contains($text, ',') && str_contains($text, '.')) {
+                    $text = str_replace('.', '', $text);
+                    $text = str_replace(',', '.', $text);
+                } elseif (str_contains($text, ',')) {
+                    $text = str_replace(',', '.', $text);
+                } elseif (preg_match('/^\d{1,3}(\.\d{3})+$/', $text)) {
+                    $text = str_replace('.', '', $text);
+                }
+                return (float)$text;
+            };
             $resultado = $modelo->editar([
                 'id_producto'     => (int)($_POST['id_producto'] ?? 0),
                 'stock_minimo'    => (int)($_POST['stock_minimo'] ?? 5),
                 'stock_maximo'    => (int)($_POST['stock_maximo'] ?? 0),
-                'precio_venta'    => (float)($_POST['precio_venta'] ?? 0),
-                'precio_costo'    => (float)($_POST['precio_costo'] ?? 0),
+                'precio_venta'    => $parsePrice($_POST['precio_venta'] ?? 0),
+                'precio_costo'    => $parsePrice($_POST['precio_costo'] ?? 0),
                 'status'          => $_POST['status'] ?? 'Activo',
                 'fecha_vencimiento' => !empty($_POST['fecha_vencimiento']) ? $_POST['fecha_vencimiento'] : null,
                 'id_proveedor'    => (int)($_POST['id_proveedor'] ?? 0),

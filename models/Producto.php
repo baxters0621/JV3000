@@ -88,8 +88,8 @@ class Producto extends Model
         if ($stockMaximo > 0 && $stockMaximo < $stockMinimo) {
             return ['ok' => false, 'mensaje' => 'LA CAPACIDAD MÁXIMA DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO (O 0 PARA HEREDAR LA DE LA CATEGORÍA).'];
         }
-        if ($precioVenta <= 0) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE SER MAYOR A 0.'];
-        if ($precioCosto <= 0) return ['ok' => false, 'mensaje' => 'PRECIO COSTO DEBE SER MAYOR A 0.'];
+        if (!is_finite($precioVenta) || $precioVenta <= 0 || $precioVenta > 999999) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE ESTAR ENTRE 0,01 Y 999.999,00.'];
+        if (!is_finite($precioCosto) || $precioCosto <= 0 || $precioCosto > 999999) return ['ok' => false, 'mensaje' => 'PRECIO COSTO DEBE ESTAR ENTRE 0,01 Y 999.999,00.'];
         if ($precioVenta < $precioCosto) return ['ok' => false, 'mensaje' => 'EL PRECIO DE VENTA DEBE SER MAYOR O IGUAL AL PRECIO COSTO.'];
         if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
         if ($fechaVencimiento && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) $fechaVencimiento = null;
