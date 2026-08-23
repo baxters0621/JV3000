@@ -90,8 +90,8 @@ class Producto extends Model
         if ($stockMaximo > 0 && $stockMaximo < $stockMinimo) {
             return ['ok' => false, 'mensaje' => 'LA CAPACIDAD MÁXIMA DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO (O 0 PARA HEREDAR LA DE LA CATEGORÍA).'];
         }
-        if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioVentaRaw) || !is_finite($precioVenta) || $precioVenta < 0 || $precioVenta > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,00 Y 99.999,99.'];
-        if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioCostoRaw) || !is_finite($precioCosto) || $precioCosto < 0 || $precioCosto > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO COSTO DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,00 Y 99.999,99.'];
+        if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioVentaRaw) || !is_finite($precioVenta) || $precioVenta < 0.01 || $precioVenta > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,01 Y 99.999,99.'];
+        if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioCostoRaw) || !is_finite($precioCosto) || $precioCosto < 0.01 || $precioCosto > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO COSTO DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,01 Y 99.999,99.'];
         if ($precioVenta < $precioCosto) return ['ok' => false, 'mensaje' => 'EL PRECIO DE VENTA DEBE SER MAYOR O IGUAL AL PRECIO COSTO.'];
         if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
         if ($fechaVencimiento && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) $fechaVencimiento = null;

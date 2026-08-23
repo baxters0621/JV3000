@@ -158,8 +158,9 @@
         }
 
         function precioTieneFormatoValido(valor) {
-            return /^(?:0|[1-9]\d{0,4})\.\d{2}$/.test(valor)
+            return /^(?:0\.(?:0[1-9]|[1-9]\d)|[1-9]\d{0,4}\.\d{2})$/.test(valor)
                 && Number.isFinite(Number(valor))
+                && Number(valor) >= 0.01
                 && Number(valor) <= 99999.99;
         }
 
@@ -224,8 +225,8 @@
                 primerError.focus();
                 return false;
             }
-            pvp.value = canonicoVenta;
-            costo.value = canonicoCosto;
+            document.getElementById('edit_pvp_valor').value = canonicoVenta;
+            document.getElementById('edit_costo_valor').value = canonicoCosto;
             btn.disabled = true;
             btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';
             btn.form.submit();
