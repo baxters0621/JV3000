@@ -105,15 +105,40 @@
             return Number(texto);
         }
 
-        // Elimina letras sin reformatear durante la escritura ni mover el cursor.
-        function limpiarEntradaPrecio(input) {
+        // Limpia letras y agrupa miles sin convertir la captura en un salto brusco.
+        function formatearEntradaPrecio(input) {
             var cursor = input.selectionStart || 0;
-            var valorOriginal = input.value;
-            var antesDelCursor = valorOriginal.slice(0, cursor);
-            var valorLimpio = valorOriginal.replace(/[^0-9.,]/g, '');
-            var antesLimpio = antesDelCursor.replace(/[^0-9.,]/g, '');
-            input.value = valorLimpio;
-            var nuevoCursor = Math.min(antesLimpio.length, valorLimpio.length);
+            var original = input.value;
+            var antesCursor = original.slice(0, cursor);
+            var limpio = original.replace(/[^0-9.,]/g, '');
+            var digitosAntes = (antesCursor.match(/\d/g) || []).length;
+            var salida = limpio;
+            var tieneComa = limpio.includes(',');
+            var puntoDecimal = !tieneComa && (limpio.endsWith('.') || /\d+\.\d{1,2}$/.test(limpio));
+
+            if (tieneComa || puntoDecimal) {
+                var separador = tieneComa ? ',' : '.';
+                var separadorIndex = limpio.lastIndexOf(separador);
+                var entero = limpio.slice(0, separadorIndex).replace(/\D/g, '') || '0';
+                var decimales = limpio.slice(separadorIndex + 1).replace(/\D/g, '').slice(0, 2);
+                entero = entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                salida = entero + separador + decimales;
+            } else {
+                salida = limpio.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+
+            input.value = salida;
+            if (!salida) {
+                input.setSelectionRange(0, 0);
+                return;
+            }
+            var nuevoCursor = 0;
+            var vistos = 0;
+            while (nuevoCursor < salida.length && vistos < digitosAntes) {
+                if (/\d/.test(salida[nuevoCursor])) vistos++;
+                nuevoCursor++;
+            }
+            if (digitosAntes === 0 && antesCursor.match(/[,.]$/)) nuevoCursor = Math.min(1, salida.length);
             input.setSelectionRange(nuevoCursor, nuevoCursor);
         }
 
@@ -132,12 +157,18 @@
             return Number.isFinite(valor) ? valor.toFixed(2) : input.value;
         }
 
+        function precioTieneFormatoValido(valor) {
+            return /^(?:0|[1-9]\d{0,4})\.\d{2}$/.test(valor)
+                && Number.isFinite(Number(valor))
+                && Number(valor) <= 99999.99;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             ['edit_pvp', 'edit_costo'].forEach(function(id) {
                 var input = document.getElementById(id);
                 if (input) {
                     input.addEventListener('input', function() {
-                        limpiarEntradaPrecio(this);
+                        formatearEntradaPrecio(this);
                     });
                     input.addEventListener('blur', function() {
                         formatearPrecioEdicion(this);
@@ -152,6 +183,8 @@
             var precioCosto = document.getElementById('edit_costo');
             var valorVenta = leerPrecioEdicion(precioVenta.value);
             var valorCosto = leerPrecioEdicion(precioCosto.value);
+            var canonicoVenta = Number.isFinite(valorVenta) ? valorVenta.toFixed(2) : '';
+            var canonicoCosto = Number.isFinite(valorCosto) ? valorCosto.toFixed(2) : '';
             limpiarErrores();
             let primerError = null;
             const minimo = document.getElementById('edit_minimo');
@@ -171,12 +204,12 @@
                 marcarError(maximo, 'DEBE SER ≥ STOCK MÍNIMO');
                 if (!primerError) primerError = maximo;
             }
-            if (!pvp.value || !Number.isFinite(valorVenta) || valorVenta <= 0 || valorVenta > 999999) {
-                marcarError(pvp, valorVenta > 999999 ? 'MÁXIMO 999.999,00' : 'OBLIGATORIO (> 0)');
+            if (!precioTieneFormatoValido(canonicoVenta)) {
+                marcarError(pvp, valorVenta > 99999.99 ? 'MÁXIMO 99.999,99' : 'FORMATO: 0,00 (MÁXIMO 99.999,99)');
                 if (!primerError) primerError = pvp;
             }
-            if (!costo.value || !Number.isFinite(valorCosto) || valorCosto <= 0 || valorCosto > 999999) {
-                marcarError(costo, valorCosto > 999999 ? 'MÁXIMO 999.999,00' : 'OBLIGATORIO (> 0)');
+            if (!precioTieneFormatoValido(canonicoCosto)) {
+                marcarError(costo, valorCosto > 99999.99 ? 'MÁXIMO 99.999,99' : 'FORMATO: 0,00 (MÁXIMO 99.999,99)');
                 if (!primerError) primerError = costo;
             }
             if (Number.isFinite(valorVenta) && Number.isFinite(valorCosto) && valorVenta < valorCosto) {
@@ -191,8 +224,8 @@
                 primerError.focus();
                 return false;
             }
-            pvp.value = precioCanonicoEdicion(pvp);
-            costo.value = precioCanonicoEdicion(costo);
+            pvp.value = canonicoVenta;
+            costo.value = canonicoCosto;
             btn.disabled = true;
             btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';
             btn.form.submit();

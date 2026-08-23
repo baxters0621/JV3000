@@ -53,8 +53,9 @@ class ProductosController extends Controller
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'editar_producto' && $esAdmin) {
-            $parsePrice = static function ($value): float {
+            $parsePrice = static function ($value): string {
                 $text = trim((string)$value);
+                if ($text === '' || preg_match('/[^0-9.,]/', $text)) return $text;
                 if (str_contains($text, ',') && str_contains($text, '.')) {
                     $text = str_replace('.', '', $text);
                     $text = str_replace(',', '.', $text);
@@ -63,7 +64,7 @@ class ProductosController extends Controller
                 } elseif (preg_match('/^\d{1,3}(\.\d{3})+$/', $text)) {
                     $text = str_replace('.', '', $text);
                 }
-                return (float)$text;
+                return is_numeric($text) ? number_format((float)$text, 2, '.', '') : $text;
             };
             $resultado = $modelo->editar([
                 'id_producto'     => (int)($_POST['id_producto'] ?? 0),
@@ -88,7 +89,7 @@ class ProductosController extends Controller
             'titulo'       => 'Inventario | JV3000 C.A.',
             'wrapper_class' => 'pagina-productos',
             'css_extra'    => ['modules/productos/productos.css?v=12'],
-            'js_extra'     => ['modules/productos/productos.js?v=8'],
+            'js_extra'     => ['modules/productos/productos.js?v=9'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,
             'esAdmin'      => $esAdmin,

@@ -273,11 +273,11 @@
                         <div class="row g-2 mb-2">
                             <div class="col-6">
                                 <label class="small fw-bold text-secondary mb-1">PRECIO VENTA ($)</label>
-                                <input type="text" class="input-jv precio-edicion" id="edit_pvp" name="precio_venta" inputmode="decimal" autocomplete="off" data-max="999999" required>
+                                <input type="text" class="input-jv precio-edicion" id="edit_pvp" name="precio_venta" inputmode="decimal" autocomplete="off" data-max="99999.99" required>
                             </div>
                             <div class="col-6">
                                 <label class="small fw-bold text-secondary mb-1">PRECIO COSTO ($)</label>
-                                <input type="text" class="input-jv precio-edicion" id="edit_costo" name="precio_costo" inputmode="decimal" autocomplete="off" data-max="999999" required>
+                                <input type="text" class="input-jv precio-edicion" id="edit_costo" name="precio_costo" inputmode="decimal" autocomplete="off" data-max="99999.99" required>
                             </div>
                         </div>
                         <div class="row g-2 mb-2">
