@@ -77,29 +77,23 @@
             <tbody id="tablaProductos">
                 <?php if (!empty($productos)): ?>
                     <?php foreach ($productos as $productRecord):
-                        // Estado del stock frente a sus mínimos/máximos:
-                        // AGOTADO (0) / BAJO (<= mínimo) / COMPLETO (>= capacidad) / OK.
+                        // Porcentaje visual del stock frente a su capacidad efectiva.
                         $stock_actual = intval($productRecord['stock_actual']);
                         $stock_minimo = intval($productRecord['stock_minimo']);
                         $capacidad = max(1, intval($productRecord['capacidad'] ?? 100));
                         if ($stock_actual == 0) {
                             $stock_clase = 'danger';
-                            $stock_etiqueta = 'AGOTADO';
                             $stock_porcentaje = 0;
                         } elseif ($stock_actual <= $stock_minimo) {
                             $stock_clase = 'danger';
-                            $stock_etiqueta = 'BAJO';
                             $stock_porcentaje = max(5, ($stock_actual / $capacidad) * 100);
                         } elseif ($stock_actual >= $capacidad) {
                             $stock_clase = 'info';
-                            $stock_etiqueta = 'COMPLETO';
                             $stock_porcentaje = 100;
                         } else {
                             $stock_porcentaje = ($stock_actual / $capacidad) * 100;
                             $stock_clase = 'success';
-                            $stock_etiqueta = 'OK';
                         }
-                        $color_barra = $stock_clase == 'danger' ? '#DC2626' : ($stock_clase == 'info' ? '#2563EB' : '#16A34A');
                     ?>
                         <?php
                         // Estado del vencimiento: vencido / próximo (<=7 días) /
@@ -145,15 +139,14 @@
                                 <span class="prod-prov"><?php echo htmlspecialchars($productRecord['ultimo_proveedor'] ?? '—'); ?></span>
                             </td>
                             <td class="td-stock text-center">
-                                <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                                <div class="stock-summary">
                                     <span class="stk-num"><?php echo $stock_actual; ?></span>
-                                    <span class="badge-jv badge-<?php echo $stock_clase; ?>" style="font-size:0.75rem;padding:3px 10px;"><?php echo $stock_etiqueta; ?></span>
                                 </div>
-                                <div style="height:6px;background:rgba(15,26,46,0.08);border-radius:3px;overflow:hidden;margin:0 auto;max-width:100px;">
-                                    <div style="height:100%;width:<?php echo $stock_porcentaje; ?>%;background:<?php echo $color_barra; ?>;border-radius:3px;transition:width 0.3s;"></div>
+                                <div class="stock-meter" role="progressbar" aria-valuenow="<?php echo $stock_actual; ?>" aria-valuemin="0" aria-valuemax="<?php echo $capacidad; ?>" aria-label="Nivel de stock">
+                                    <div class="stock-meter-fill stock-meter-<?php echo $stock_clase; ?>" style="width:<?php echo $stock_porcentaje; ?>%;"></div>
                                 </div>
                                 <div class="stk-meta">
-                                    Mín: <?php echo $stock_minimo; ?> · Máx: <?php echo $capacidad; ?>
+                                    Mín <?php echo $stock_minimo; ?> · Máx <?php echo $capacidad; ?>
                                 </div>
                             </td>
                             <td>

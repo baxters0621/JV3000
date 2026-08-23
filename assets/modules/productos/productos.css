@@ -169,22 +169,38 @@
             min-width: 130px;
         }
 
-        .td-stock > .d-flex {
-            flex-wrap: wrap;
-            row-gap: 6px;
-        }
-
-        .td-stock > .d-flex .badge-jv {
-            font-size: .72rem !important;
-            padding: 4px 7px !important;
-        }
-
         .td-stock .stk-num {
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             font-weight: 900;
             color: var(--jv-text-primary);
             line-height: 1;
         }
+
+        .stock-summary {
+            display: flex;
+            justify-content: center;
+            min-width: 0;
+            margin-bottom: 7px;
+        }
+
+        .stock-meter {
+            width: min(100%, 112px);
+            height: 5px;
+            margin: 0 auto 5px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e2e8f0;
+        }
+
+        .stock-meter-fill {
+            height: 100%;
+            border-radius: inherit;
+            transition: width .25s ease;
+        }
+
+        .stock-meter-danger { background: var(--jv-danger); }
+        .stock-meter-success { background: var(--jv-success); }
+        .stock-meter-info { background: var(--jv-info); }
 
         .td-stock .stk-meta {
             font-size: .8rem;
@@ -344,9 +360,6 @@
                 font-size: .82rem;
             }
 
-            .pagina-productos .td-stock > .d-flex {
-                justify-content: center;
-            }
         }
 
         @media (max-width: 768px) {
