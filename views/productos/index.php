@@ -160,7 +160,7 @@
                                 <span class="prod-precio">$<?php echo number_format($productRecord['precio_venta'], 2); ?></span>
                             </td>
                             <td class="text-center td-vencimiento">
-                                <span class="badge-jv <?php echo $venc_badge; ?>">
+                                <span class="badge-jv <?php echo $venc_badge; ?>" data-tooltip="<?php echo htmlspecialchars($venc_fecha ?: 'Sin fecha de vencimiento', ENT_QUOTES, 'UTF-8'); ?>">
                                     <i class="bi bi-<?php echo $venc_icono; ?>"></i>
                                     <span class="venc-fecha"><?php echo $venc_fecha ?: '—'; ?></span>
                                 </span>
