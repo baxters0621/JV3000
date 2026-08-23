@@ -61,7 +61,7 @@ function jv_db_error_page()
          </div>");
 }
 
-function jv_importar_sql($conn, $sql_path)
+function jv_importar_sql(mysqli $conn, string $sql_path): bool
 {
     if (!@mysqli_query($conn, "CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci")) {
         error_log("[JV3000] No se pudo crear la BD: " . mysqli_error($conn));
