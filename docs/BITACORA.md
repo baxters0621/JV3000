@@ -231,6 +231,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-23 19:22] · Módulo: Documentación del agente · Cambio: Se unifican las reglas del agente en una sola fuente: las convenciones útiles de `docs/Instrucciones_Agente_IA.md` (modo de trabajo directo/quirúrgico, separación Vista-JS-Backend, flujo AJAX) se integran a `AGENTS.md` como nueva sección "Convenciones de código", corregidas para reflejar el estándar real verificado en el código (funciones JS camelCase sin prefijos, IDs descriptivos sin prefijos cmb/txt/btn — 0 usos detectados, variables PHP snake_case, controladores MVC `[Modulo]Controller.php`, solo fetch nativo sin jQuery). El archivo original quedó obsoleto (nunca commiteado, previo a la migración MVC) y se elimina. No se modifica código. · Archivos: `AGENTS.md`, `docs/Instrucciones_Agente_IA.md` (eliminado), `docs/BITACORA.md` · Prueba: verificación con búsqueda de prefijos (`cmb_`, `txt_`, `btn_`, `fn_` = 0 coincidencias) y muestra de funciones reales (`abrirRecepcion`, IDs `edit_pvp`, `formEditar`) antes de redactar las reglas.
 
+[2026-08-23 19:46] · Módulo: Documentación · Cambio: Se elimina definitivamente `docs/GUIA DE PROYECTO.md` del repositorio (borrado previo en el working tree, ahora commiteado). Su contenido normativo quedó cubierto por `AGENTS.md` y la sección "Convenciones de código". No se modifica código ni datos. · Archivos: `docs/GUIA DE PROYECTO.md` (eliminado), `docs/BITACORA.md` · Prueba: `Test-Path docs/GUIA DE PROYECTO.md` = False; `git status` confirma la eliminación registrada.
+
 ---
 
 ## Plantilla para futuras entradas
