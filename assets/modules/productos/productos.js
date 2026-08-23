@@ -245,6 +245,8 @@
             document.getElementById('edit_maximo').value = row.getAttribute('data-maximo');
             document.getElementById('edit_pvp').value = parseFloat(row.getAttribute('data-pvp')).toFixed(2);
             document.getElementById('edit_costo').value = parseFloat(row.getAttribute('data-costo')).toFixed(2);
+            formatearPrecioEdicion(document.getElementById('edit_pvp'));
+            formatearPrecioEdicion(document.getElementById('edit_costo'));
             document.getElementById('edit_status').value = row.getAttribute('data-status');
             document.getElementById('edit_vencimiento').value = row.getAttribute('data-venc');
             document.getElementById('edit_proveedor').value = row.getAttribute('data-prov-id');
