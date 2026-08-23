@@ -19,6 +19,29 @@ _Nota de seguridad: Nunca recortes en validaciones de seguridad, accesibilidad o
 - `Security::esAdmin()` → `id_rol === 1`, `puedeCargar()` → `id_rol === 1 || id_rol === 2`, `puedeVender()` → `id_rol === 1 || id_rol === 3`
 - Para mostrar el nombre del rol: JOIN con `roles` o usar el mapa inline `$roles_map = [1=>'Administrador', 2=>'Operador de Carga', 3=>'Operador de Ventas']`
 
+## Convenciones de código (estándar real del proyecto)
+
+### Modo de trabajo
+- Respuestas directas: sin introducciones, saludos ni resúmenes innecesarios.
+- Modo quirúrgico: al modificar algo existente, entregar solo el bloque afectado, no reescribir el archivo completo.
+- Separación estricta de responsabilidades:
+  - **Vistas** (`views/`): estructura HTML + clases Bootstrap, sin lógica pesada.
+  - **JavaScript** (`assets/`): eventos/listeners, validaciones cliente y peticiones al backend.
+  - **Backend** (`controllers/`, `models/`): procesamiento, validación servidor y respuesta JSON (`Controller::json()`).
+
+### Nomenclatura
+- **Funciones JS:** camelCase descriptivo — `abrirRecepcion()`, `aplicarFiltroProveedores()`. Sin prefijos tipo `fn_`.
+- **IDs/clases HTML:** descriptivos simples — `edit_pvp`, `formEditar`, `modalEditar`, `tablaProductos`. Sin prefijos de tipo (`cmb_`, `txt_`, `btn_`).
+- **Variables PHP:** snake_case descriptivo — `$stock_actual`, `$credito_disponible`. Prohibidas abreviaturas crípticas (`$st`, `$pct`, `$row` en vistas con múltiples filas).
+- **Controladores:** `controllers/[Modulo]Controller.php` con acciones camelCase; rutas MVC `index.php?url=modulo/accion/param`.
+- **Modelos:** `models/[Entidad].php`.
+
+### AJAX
+- Solo `fetch` nativo (el proyecto NO usa jQuery). Flujo obligatorio: listeners → validaciones cliente → fetch → manejo JSON success/error.
+
+### Documentación
+- Docblocks en español en toda clase/método PHP; comentarios didácticos en funciones JS. Estándar ya alcanzado en 100% del código — mantenerlo en cambios nuevos.
+
 ## DB
 
 - Portable: `db/jv3000_portable_v4.sql` — seed de **instalación limpia** (esquema completo + solo datos de sistema: roles, tipos de movimiento, configuración, usuarios, contadores en 0). **No incluye datos demo**.
