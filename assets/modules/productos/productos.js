@@ -91,8 +91,26 @@
             if (el) modalEditar = new bootstrap.Modal(el);
         });
 
+        // Normaliza los precios a dos decimales sin convertirlos en texto.
+        function formatearPrecioEdicion(input) {
+            if (!input || input.value === '') return;
+            var valor = Number(input.value);
+            if (Number.isFinite(valor) && valor > 0) input.value = valor.toFixed(2);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            ['edit_pvp', 'edit_costo'].forEach(function(id) {
+                var input = document.getElementById(id);
+                if (input) input.addEventListener('blur', function() {
+                    formatearPrecioEdicion(this);
+                });
+            });
+        });
+
         // Valida los campos del formulario de edición y envía el formulario si son correctos.
         function validarEditarProducto(btn) {
+            formatearPrecioEdicion(document.getElementById('edit_pvp'));
+            formatearPrecioEdicion(document.getElementById('edit_costo'));
             limpiarErrores();
             let primerError = null;
             const minimo = document.getElementById('edit_minimo');
