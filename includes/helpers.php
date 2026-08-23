@@ -448,7 +448,7 @@ if (!function_exists('capacidadProducto')) {
      * Capacidad de almacenamiento efectiva de un producto:
      * propia (stock_maximo) si > 0; si no, la de su categoría; si no, 100.
      */
-    function capacidadProducto($db, int $id_producto): int
+    function capacidadProducto(Database $db, int $id_producto): int
     {
         $r = $db->fetchOne(
             "SELECT COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as cap
@@ -466,7 +466,7 @@ if (!function_exists('lotesConsumibles')) {
      * $solo_vencidos = true  → solo lotes vencidos (para ajustes por vencimiento).
      * $solo_vencidos = false → solo lotes vigentes (para ventas/regalías).
      */
-    function lotesConsumibles($db, int $id_producto, bool $solo_vencidos = false): array
+    function lotesConsumibles(Database $db, int $id_producto, bool $solo_vencidos = false): array
     {
         if ($solo_vencidos) {
             return $db->fetchAll(
@@ -491,7 +491,7 @@ if (!function_exists('lotesConsumibles')) {
 
 if (!function_exists('stockLoteDisponible')) {
     /** Stock total disponible de un producto según el modo (solo vencidos o vigentes). */
-    function stockLoteDisponible($db, int $id_producto, bool $solo_vencidos = false): int
+    function stockLoteDisponible(Database $db, int $id_producto, bool $solo_vencidos = false): int
     {
         $total = 0;
         foreach (lotesConsumibles($db, $id_producto, $solo_vencidos) as $l) {
@@ -507,7 +507,7 @@ if (!function_exists('consumirLotes')) {
      * [ ['id_lote' => int, 'cantidad' => int], ... ].
      * Lanza Exception si no hay stock suficiente en los lotes permitidos.
      */
-    function consumirLotes($db, int $id_producto, int $cantidad, bool $solo_vencidos = false): array
+    function consumirLotes(Database $db, int $id_producto, int $cantidad, bool $solo_vencidos = false): array
     {
         $restante = $cantidad;
         $usados = [];
@@ -529,7 +529,7 @@ if (!function_exists('consumirLotes')) {
 
 if (!function_exists('devolverLote')) {
     /** Devuelve unidades a un lote (anulación/edición de salida). */
-    function devolverLote($db, int $id_lote, int $cantidad): void
+    function devolverLote(Database $db, int $id_lote, int $cantidad): void
     {
         $db->execute("UPDATE lotes SET cantidad_restante = cantidad_restante + ? WHERE id_lote = ?", [$cantidad, $id_lote]);
     }
