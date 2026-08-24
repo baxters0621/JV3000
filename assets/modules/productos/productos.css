@@ -133,6 +133,13 @@
             line-height: 1.25;
         }
 
+        /* ── Unidades de filtro: etiqueta + botones siempre juntos ── */
+        .filtro-unidad {
+            flex-wrap: nowrap;
+            white-space: nowrap;
+            flex: 0 0 auto;
+        }
+
         .td-vencimiento {
             min-width: 104px;
         }
@@ -383,6 +390,15 @@
                 flex: 1 1 100%;
                 max-width: none !important;
                 min-width: 0;
+            }
+
+            /* En movil cada filtro ocupa su propia linea, como antes */
+            .pagina-productos .buscador-wrapper .filtro-unidad {
+                flex: 1 1 100%;
+            }
+
+            .pagina-productos .buscador-wrapper .filtro-unidad > .small {
+                display: none;
             }
 
             .pagina-productos .buscador-wrapper .actions-divider,
