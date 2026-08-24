@@ -264,6 +264,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-24 01:40] · Módulo: Diseño global · Cambio: Se renueva el fondo del sistema manteniendo el patrón de puntos idéntico: base crema más cálida (#FBF9F4) y dos halos suaves FIJOS al fondo (naranja cálido arriba-izquierda, teal frío abajo-derecha, opacidades .07/.08) que dan profundidad mientras se hace scroll sin brillantez ni parpadeo, pensados para no cansar la vista. Los puntos siguen en 28px con sus opacidades originales. diseno.css sube a v=7. · Archivos: assets/css/diseno.css, includes/diseno.php, docs/BITACORA.md · Prueba: php -l OK; diseno.css?v=7 servido = 200 con las capas de halo presentes.
 
+[2026-08-24 01:45] · Módulo: Diseño global · Cambio: Por feedback del usuario los halos del fondo se hacen NOTABLES pero sin llegar a competir con el contenido: opacidad del naranja .08 a .14 y del teal .07 a .13, con radio de difusión ampliado (50%/55%). El patrón de puntos sigue intacto. diseno.css sube a v=8. · Archivos: assets/css/diseno.css, includes/diseno.php, docs/BITACORA.md · Prueba: CSS v=8 servido = 200 con las opacidades nuevas.
+
 ---
 
 ## Plantilla para futuras entradas
