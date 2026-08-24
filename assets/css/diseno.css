@@ -47,12 +47,18 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
-    background-color: #FAFAF9;
+    /* Fondo con el patron de puntos de siempre + dos halos suaves fijos
+       (calido arriba-izquierda, frio abajo-derecha) que dan profundidad
+       sin brillantez para no cansar la vista */
+    background-color: #FBF9F4;
     background-image:
-        radial-gradient(rgba(234,88,12,0.09) 1.6px, transparent 1.7px),
-        radial-gradient(rgba(15,26,46,0.05) 1.2px, transparent 1.3px);
-    background-size: 28px 28px;
-    background-position: 0 0, 14px 14px;
+        radial-gradient(circle at 12% -5%, rgba(234,88,12,0.08), transparent 42%),
+        radial-gradient(circle at 90% 105%, rgba(14,116,144,0.07), transparent 45%),
+        radial-gradient(rgba(234,88,12,0.10) 1.7px, transparent 1.8px),
+        radial-gradient(rgba(15,26,46,0.06) 1.2px, transparent 1.3px);
+    background-size: auto, auto, 28px 28px, 28px 28px;
+    background-position: 0 0, 0 0, 0 0, 14px 14px;
+    background-attachment: fixed, fixed, scroll, scroll;
     color: var(--jv-text-primary);
     font-family: var(--jv-font-main);
     font-size: 0.95rem;
