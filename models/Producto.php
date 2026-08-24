@@ -120,6 +120,12 @@ class Producto extends Model
     {
         return $this->db->fetchAll(
             "SELECT p.*, c.nombre as nombre_cat, COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
+                -- Vencimiento real del producto = el lote con stock que vence primero (FEFO);
+                -- si no tiene lotes activos se usa la fecha legacy del producto
+                COALESCE((
+                    SELECT MIN(l.fecha_vencimiento) FROM lotes l
+                    WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0
+                ), p.fecha_vencimiento) as fecha_vencimiento,
                 COALESCE(pr.nombre_empresa, (
                     SELECT pr2.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr2 ON co.id_proveedor = pr2.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1
                 )) as ultimo_proveedor
