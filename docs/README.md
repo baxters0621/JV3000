@@ -50,6 +50,44 @@ docs/                     Documentación del proyecto y bitácora de cambios
 4. Usuario inicial: `Administrador` / `Admin123*` (cambiar tras el primer inicio)
 5. Acceder via `http://localhost/JV3000_db`
 
+## Orden operativo del sistema
+
+El menú lateral sigue las fases reales de trabajo. Este es el procedimiento estándar:
+
+### Fase 1 — Configuración inicial (solo la primera vez, Administrador)
+1. **Categorías** → crear las clasificaciones de productos
+2. **Proveedores** → registrar proveedores con su RIF y condiciones de crédito
+3. **Usuarios** → crear los operadores y asignarles rol (2 = Carga, 3 = Ventas)
+
+### Fase 2 — Ciclo diario de abastecimiento (Operador de Carga)
+4. **Solicitudes de Reposición** → detectar qué producto falta
+5. **Compras** → comprar al proveedor (la solicitud queda Atendida; toda fecha de vencimiento es obligatoria)
+6. **Recepción** → confirmar lo recibido: crea lotes, sube el stock y genera el movimiento Entrada
+7. **Inventario** → verificar el resultado
+
+### Fase 3 — Ventas (Operador de Ventas)
+8. **Ventas / Salidas** → validar y confirmar: descuenta por FEFO, genera NDE y movimiento Salida
+
+### Fase 4 — Análisis (todos según rol)
+9. **Estadísticas** → ventas y comportamiento (Admin y Operador de Ventas)
+10. **Imprimir** → reporte de inventario (todos los roles)
+
+### Fase 5 — Control (Administrador)
+11. **Historial** → auditoría de todas las operaciones
+
+### Permisos por rol
+
+| Módulo | Admin | Op. Carga | Op. Ventas |
+|---|---|---|---|
+| Categorías, Proveedores | ✔ gestionar | ✔ gestionar | ✖ |
+| Usuarios | ✔ | ✖ | ✖ |
+| Solicitudes, Compras, Recepción | ✔ | ✔ | ✖ |
+| Inventario | ✔ editar | ✔ consultar | ✔ solo consulta |
+| Ventas / Salidas | ✔ (además anular) | ✖ | ✔ |
+| Estadísticas | ✔ | ✖ | ✔ |
+| Imprimir reporte | ✔ | ✔ | ✔ |
+| Historial | ✔ | ✖ | ✖ |
+
 ## Control de cambios
 
 Todo cambio de código debe registrarse en `docs/BITACORA.md` (regla obligatoria en `AGENTS.md`).

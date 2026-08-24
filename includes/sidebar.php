@@ -45,6 +45,7 @@ function es_activo(string $pagina, string $modulo = ''): string
     </div>
 
     <!-- Menú de navegación -->
+    <!-- Orden operativo: Configuración -> Abastecimiento -> Ventas -> Análisis -> Control -->
     <nav class="sidebar-nav">
         <!-- Panel de Inicio -->
         <div class="nav-item nav-dashboard <?php echo ($archivo_actual === 'index.php' && $ruta_mvc === '') ? 'active' : ''; ?>">
@@ -54,9 +55,80 @@ function es_activo(string $pagina, string $modulo = ''): string
             </a>
         </div>
 
-        <!-- --- Inventory (All operators) --- -->
-        <!-- Inventario -->
-        <?php if ($es_admin || $es_op_carga): ?>
+        <?php
+        // Visibilidad por módulo según el rol de la sesión
+        $ver_config     = $es_admin || $es_op_carga;                    // Categorías, Proveedores
+        $ver_usuarios   = $es_admin;                                    // Usuarios
+        $ver_abasto     = $es_admin || $es_op_carga;                    // Solicitudes, Compras, Recepción
+        $ver_inventario = $es_admin || $es_op_carga || $es_op_ventas;   // Inventario (consulta)
+        $ver_ventas     = $es_admin || $es_op_ventas;                   // Ventas/Salidas
+        $ver_estadisticas = $es_admin || $es_op_ventas;
+        ?>
+
+        <!-- ═══ FASE 1: CONFIGURACIÓN INICIAL ═══ -->
+        <?php if ($ver_config || $ver_usuarios): ?>
+            <div class="nav-section-title">Configuraci&oacute;n</div>
+
+            <?php if ($ver_config): ?>
+                <!-- Categorías: primero se crean las clasificaciones -->
+                <div class="nav-item nav-categorias <?php echo $mvc_activa('categorias') ? 'active' : ''; ?>">
+                    <a href="<?php echo $prefijo; ?>index.php?url=categorias" class="nav-link">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                        <span>Categor&iacute;as</span>
+                    </a>
+                </div>
+
+                <!-- Proveedores: luego se registran los proveedores -->
+                <div class="nav-item nav-clientes <?php echo $mvc_activa('proveedores') ? 'active' : ''; ?>">
+                    <a href="<?php echo $prefijo; ?>index.php?url=proveedores" class="nav-link">
+                        <i class="bi bi-building"></i>
+                        <span>Proveedores</span>
+                    </a>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($ver_usuarios): ?>
+                <!-- Usuarios: por último se crean los operadores con su rol -->
+                <div class="nav-item nav-usuarios <?php echo ($archivo_actual === 'usuarios.php') ? 'active' : ''; ?>">
+                    <a href="<?php echo $prefijo; ?>dashboard/usuarios.php" class="nav-link">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Usuarios</span>
+                    </a>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+
+        <!-- ═══ FASE 2: OPERACIONES (ciclo diario) ═══ -->
+        <div class="nav-section-title">Operaciones</div>
+
+        <?php if ($ver_abasto): ?>
+            <!-- Paso 1 del ciclo: detectar qué falta -->
+            <div class="nav-item nav-solicitudes <?php echo ($archivo_actual === 'solicitudes_compra.php' || $mvc_activa('solicitudes')) ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=solicitudes" class="nav-link">
+                    <i class="bi bi-cart-check"></i>
+                    <span>Solicitudes de Reposici&oacute;n</span>
+                </a>
+            </div>
+
+            <!-- Paso 2: comprar al proveedor -->
+            <div class="nav-item nav-entradas <?php echo $mvc_activa('compras') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=compras" class="nav-link">
+                    <i class="bi bi-truck"></i>
+                    <span>Compras</span>
+                </a>
+            </div>
+
+            <!-- Paso 3: recibir la mercancía (crea lotes y sube stock) -->
+            <div class="nav-item nav-recepcion <?php echo $mvc_activa('recepcion') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>index.php?url=recepcion" class="nav-link">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                    <span>Recepci&oacute;n</span>
+                </a>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($ver_inventario): ?>
+            <!-- Paso 4: verificar el inventario resultante (consulta para todos) -->
             <div class="nav-item nav-inventario <?php echo $mvc_activa('productos') ? 'active' : ''; ?>">
                 <a href="<?php echo $prefijo; ?>index.php?url=productos" class="nav-link">
                     <i class="bi bi-box-seam"></i>
@@ -65,28 +137,8 @@ function es_activo(string $pagina, string $modulo = ''): string
             </div>
         <?php endif; ?>
 
-        <!-- --- Purchases (Admin / Load) --- -->
-        <!-- Compras -->
-        <?php if ($es_admin || $es_op_carga): ?>
-            <div class="nav-item nav-entradas <?php echo $mvc_activa('compras') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>index.php?url=compras" class="nav-link">
-                    <i class="bi bi-truck"></i>
-                    <span>Compras</span>
-                </a>
-            </div>
-
-            <!-- Recepción de mercancía -->
-            <div class="nav-item nav-recepcion <?php echo $mvc_activa('recepcion') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>index.php?url=recepcion" class="nav-link">
-                    <i class="bi bi-box-arrow-in-down"></i>
-                    <span>Recepción</span>
-                </a>
-            </div>
-        <?php endif; ?>
-
-        <!-- --- Sales / Outputs (Admin / Sales) --- -->
-        <!-- Ventas / Salidas -->
-        <?php if ($es_admin || $es_op_ventas): ?>
+        <?php if ($ver_ventas): ?>
+            <!-- Paso 5: vender (descuenta por FEFO y genera nota de entrega) -->
             <div class="nav-item nav-salidas <?php echo $mvc_activa('salidas') ? 'active' : ''; ?>">
                 <a href="<?php echo $prefijo; ?>index.php?url=salidas" class="nav-link">
                     <i class="bi bi-receipt"></i>
@@ -95,76 +147,30 @@ function es_activo(string $pagina, string $modulo = ''): string
             </div>
         <?php endif; ?>
 
-        <!-- --- Purchases: Solicitudes (Admin / Load) --- -->
-        <!-- Solicitudes de reposición -->
-        <?php if ($es_admin || $es_op_carga): ?>
-            <div class="nav-item nav-solicitudes <?php echo ($archivo_actual === 'solicitudes_compra.php' || $mvc_activa('solicitudes')) ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>index.php?url=solicitudes" class="nav-link">
-                    <i class="bi bi-cart-check"></i>
-                    <span>Solicitudes de Reposición</span>
-                </a>
-            </div>
-        <?php endif; ?>
+        <!-- ═══ FASE 3: ANÁLISIS Y REPORTES ═══ -->
+        <div class="nav-section-title">An&aacute;lisis</div>
 
-        <!-- --- Statistics (Admin / Sales) --- -->
-        <!-- Estadísticas -->
-        <?php if ($es_admin || $es_op_ventas): ?>
+        <?php if ($ver_estadisticas): ?>
             <div class="nav-item nav-estadisticas <?php echo $mvc_activa('estadisticas') ? 'active' : ''; ?>">
                 <a href="<?php echo $prefijo; ?>index.php?url=estadisticas" class="nav-link">
                     <i class="bi bi-graph-up-arrow"></i>
-                    <span>Estadísticas</span>
+                    <span>Estad&iacute;sticas</span>
                 </a>
             </div>
         <?php endif; ?>
 
-        <!-- --- Print (Admin / Sales) --- -->
-        <!-- Imprimir -->
-        <?php if ($es_admin || $es_op_ventas): ?>
-            <div class="nav-item nav-reportes <?php echo ($archivo_actual === 'reporte_inventario.php') ? 'active' : ''; ?>">
-                <a href="#" class="nav-link" onclick="imprimirReporte(event)">
-                    <i class="bi bi-printer"></i>
-                    <span>Imprimir</span>
-                </a>
-            </div>
-        <?php endif; ?>
+        <!-- Reporte de inventario imprimible (los tres roles) -->
+        <div class="nav-item nav-reportes <?php echo ($archivo_actual === 'reporte_inventario.php') ? 'active' : ''; ?>">
+            <a href="#" class="nav-link" onclick="imprimirReporte(event)">
+                <i class="bi bi-printer"></i>
+                <span>Imprimir</span>
+            </a>
+        </div>
 
-        <!-- --- Admin-only menu items --- -->
-        <!-- --- Suppliers --- -->
-        <!-- Proveedores -->
-        <?php if ($es_admin || $es_op_carga): ?>
-            <div class="nav-item nav-clientes <?php echo $mvc_activa('proveedores') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>index.php?url=proveedores" class="nav-link">
-                    <i class="bi bi-building"></i>
-                    <span>Proveedores</span>
-                </a>
-            </div>
-        <?php endif; ?>
-
-        <!-- --- Categories --- -->
-        <!-- Categorías -->
-        <?php if ($es_admin || $es_op_carga): ?>
-            <div class="nav-item nav-categorias <?php echo $mvc_activa('categorias') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>index.php?url=categorias" class="nav-link">
-                    <i class="bi bi-grid-3x3-gap"></i>
-                    <span>Categorías</span>
-                </a>
-            </div>
-        <?php endif; ?>
-
-        <!-- --- Users --- -->
-        <!-- Usuarios -->
+        <!-- ═══ FASE 4: CONTROL (solo admin) ═══ -->
         <?php if ($es_admin): ?>
-            <div class="nav-item nav-usuarios <?php echo ($archivo_actual === 'usuarios.php') ? 'active' : ''; ?>">
-                <a href="<?php echo $prefijo; ?>dashboard/usuarios.php" class="nav-link">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Usuarios</span>
-                </a>
-            </div>
-        <?php endif; ?>
+            <div class="nav-section-title">Control</div>
 
-        <!-- --- History --- -->
-        <!-- Historial -->
-        <?php if ($es_admin): ?>
             <div class="nav-item nav-historial <?php echo $mvc_activa('historial') ? 'active' : ''; ?>">
                 <a href="<?php echo $prefijo; ?>index.php?url=historial" class="nav-link">
                     <i class="bi bi-clock-history"></i>
@@ -173,7 +179,7 @@ function es_activo(string $pagina, string $modulo = ''): string
             </div>
         <?php endif; ?>
 
-        <!-- Mi Perfil -->
+        <!-- Mi Perfil (siempre al final) -->
         <div class="nav-item nav-perfil <?php echo ($archivo_actual === 'perfil.php') ? 'active' : ''; ?>">
             <a href="<?php echo $prefijo; ?>dashboard/perfil.php" class="nav-link">
                 <i class="bi bi-person-gear"></i>
@@ -209,7 +215,7 @@ function es_activo(string $pagina, string $modulo = ''): string
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 <!-- ESTILOS DEL SIDEBAR -->
-<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=9">
+<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=10">
 
 <script src="<?php echo $base_assets; ?>js/sweetalert2.all.min.js"></script>
 <script>

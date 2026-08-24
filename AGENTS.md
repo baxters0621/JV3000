@@ -18,6 +18,12 @@ _Nota de seguridad: Nunca recortes en validaciones de seguridad, accesibilidad o
 - Roles desde tabla `roles` con FK en `usuarios.id_rol`
 - `Security::esAdmin()` → `id_rol === 1`, `puedeCargar()` → `id_rol === 1 || id_rol === 2`, `puedeVender()` → `id_rol === 1 || id_rol === 3`
 - Para mostrar el nombre del rol: JOIN con `roles` o usar el mapa inline `$roles_map = [1=>'Administrador', 2=>'Operador de Carga', 3=>'Operador de Ventas']`
+- Accesos por módulo (el sidebar refleja exactamente esto, ordenado por fases):
+  - Categorías/Proveedores: admin + carga · Usuarios/Historial: solo admin
+  - Solicitudes/Compras/Recepción: admin + carga · Ventas/Salidas: admin + ventas
+  - Inventario: los tres roles en CONSULTA; toda escritura exige admin (`$esAdmin` gates)
+  - Estadísticas: admin + ventas · Imprimir reporte: los tres roles
+- El sidebar (`includes/sidebar.php`) está ordenado por fases operativas con títulos de sección: Configuración → Operaciones → Análisis → Control. Mantener ese orden en cambios nuevos.
 
 ## Convenciones de código (estándar real del proyecto)
 

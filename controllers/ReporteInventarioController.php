@@ -25,8 +25,8 @@ class ReporteInventarioController extends Controller
      */
     public function index(): void
     {
-        Security::verificarPermisoVenta();
-
+        // Reporte de solo lectura: disponible a los tres roles
+        // (el Operador de Carga gestiona el inventario y necesita imprimirlo).
         $modelo = new ReporteInventario();
 
         $this->renderRaw('reporte_inventario/index', [

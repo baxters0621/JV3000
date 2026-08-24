@@ -28,7 +28,8 @@ class ProductosController extends Controller
      */
     public function index(): void
     {
-        Security::verificarPermisoCarga();
+        // El inventario es de CONSULTA para los tres roles; toda ESCRITURA
+        // (editar, desactivar, dar de baja) exige Administrador mas abajo.
         $esAdmin = Security::esAdmin();
 
         $registros_por_pagina = (isset($_GET['producto']) || isset($_GET['alerta'])) ? 1000 : 30;
