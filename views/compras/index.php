@@ -98,8 +98,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="card-jv card-jv-table p-0">
     <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
         <i class="bi bi-search me-1" style="font-size:1.1rem;color:var(--jv-orange);"></i>
-        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por factura, control, proveedor, productos, estado..." id="buscar" onkeyup="filtrar()" style="box-shadow:none;font-size:1rem;padding:8px 6px;max-width:340px;">
-        <select class="input-jv ms-auto" id="filtroPago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value" style="width:auto;padding:6px 10px;font-size:.95rem;">
+        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por factura, control, proveedor, productos, estado..." id="buscar" aria-label="Buscar compra" onkeyup="filtrar()" style="box-shadow:none;font-size:1rem;padding:8px 6px;max-width:340px;">
+        <select class="input-jv ms-auto" id="filtroPago" aria-label="Filtrar por estado de pago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value" style="width:auto;padding:6px 10px;font-size:.95rem;">
             <option value="">Todos los pagos</option>
             <option value="Pendiente" <?php echo $filtro_pago === 'Pendiente' ? 'selected' : ''; ?>>Pendiente</option>
             <option value="Pagada" <?php echo $filtro_pago === 'Pagada' ? 'selected' : ''; ?>>Pagada</option>
@@ -192,7 +192,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">PROVEEDOR *</label>
-                                <select name="id_proveedor" class="input-jv" id="selProveedor" required>
+                                <select name="id_proveedor" class="input-jv" id="selProveedor" aria-label="Proveedor de la compra" required>
                                     <option value="">Seleccionar...</option>
                                     <?php foreach ($proveedores as $proveedor): ?>
                                         <option value="<?php echo (int)$proveedor['id_proveedor']; ?>" data-condicion="<?php echo htmlspecialchars($proveedor['condiciones_pago']); ?>" data-dias="<?php echo (int)$proveedor['dias_credito']; ?>" data-limite="<?php echo (float)($proveedor['limite_credito'] ?? 0); ?>" data-usado="<?php echo $credito_usado[(int)$proveedor['id_proveedor']] ?? 0; ?>" data-rif="<?php echo htmlspecialchars($proveedor['rif']); ?>">
@@ -203,29 +203,29 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
                             <div class="col-md-3">
                                 <label class="small fw-bold text-secondary mb-1">RIF</label>
-                                <input type="text" class="input-jv" id="displayRif" value="-" readonly disabled style="color:var(--jv-text-muted);">
+                                <input type="text" class="input-jv" id="displayRif" aria-label="RIF del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
                             <div class="col-md-3">
                                 <label class="small fw-bold text-secondary mb-1">CONDICIÓN</label>
-                                <input type="text" class="input-jv" id="displayCondicion" value="-" readonly disabled style="color:var(--jv-text-muted);">
+                                <input type="text" class="input-jv" id="displayCondicion" aria-label="Condicion de pago del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
                             <div class="col-md-3">
                                 <label class="small fw-bold text-secondary mb-1">DÍAS</label>
-                                <input type="text" class="input-jv" id="displayDias" value="-" readonly disabled style="color:var(--jv-text-muted);">
+                                <input type="text" class="input-jv" id="displayDias" aria-label="Dias de credito del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
                         </div>
                         <div class="row g-2 mt-1" id="rowCredito" style="display:none;">
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">LÍMITE CRÉDITO</label>
-                                <input type="text" class="input-jv" id="displayLimite" value="-" readonly disabled style="color:var(--jv-text-muted);">
+                                <input type="text" class="input-jv" id="displayLimite" aria-label="Limite de credito del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">CRÉDITO USADO</label>
-                                <input type="text" class="input-jv" id="displayUsado" value="-" readonly disabled style="color:var(--jv-text-muted);">
+                                <input type="text" class="input-jv" id="displayUsado" aria-label="Credito usado por el proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">DISPONIBLE</label>
-                                <input type="text" class="input-jv" id="displayDisponible" value="-" readonly disabled style="color:var(--jv-text-muted);font-weight:700;">
+                                <input type="text" class="input-jv" id="displayDisponible" aria-label="Credito disponible del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);font-weight:700;">
                             </div>
                         </div>
                     </div>
@@ -235,15 +235,15 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="row g-2">
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">NRO. FACTURA (PROVEEDOR) *</label>
-                                <input type="text" name="nro_factura" class="input-jv" placeholder="Ej: 001254" required>
+                                <input type="text" name="nro_factura" aria-label="Numero de factura" class="input-jv" placeholder="Ej: 001254" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">NRO. CONTROL <span class="fw-normal">(opcional)</span></label>
-                                <input type="text" name="nro_control" class="input-jv" value="" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11">
+                                <input type="text" name="nro_control" aria-label="Numero de control" class="input-jv" value="" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11">
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">FECHA</label>
-                                <input type="date" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
+                                <input type="date" class="input-jv" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha de la compra" disabled>
                                 <input type="hidden" name="fecha_compra" value="<?php echo date('Y-m-d'); ?>">
                             </div>
                         </div>
@@ -254,7 +254,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="row g-2">
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">MÉTODO *</label>
-                                <select name="metodo_pago" class="input-jv" id="selMetodo">
+                                <select name="metodo_pago" class="input-jv" id="selMetodo" aria-label="Metodo de pago">
                                     <option value="">Seleccionar...</option>
                                     <option value="Efectivo">Efectivo</option>
                                     <option value="Transferencia">Transferencia</option>
@@ -264,11 +264,11 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">MONTO PAGADO $</label>
-                                <input type="text" inputmode="decimal" name="monto_pago" class="input-jv" id="montoPago" value="0.00" oninput="marcarMontoEditado();formatearPrecioCompra(this)">
+                                <input type="text" inputmode="decimal" name="monto_pago" class="input-jv" id="montoPago" aria-label="Monto pagado" value="0.00" oninput="marcarMontoEditado();formatearPrecioCompra(this)">
                             </div>
                             <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">FECHA PAGO</label>
-                                <input type="date" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
+                                <input type="date" class="input-jv" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha del pago" disabled>
                                 <small class="text-muted d-block mt-1" style="font-size:.68rem;">Si el monto es menor al total, la factura queda PENDIENTE.</small>
                             </div>
                         </div>
@@ -281,7 +281,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <div class="col-md-5">
                                 <label class="small fw-bold text-secondary mb-1">Producto</label>
                                 <div class="com-toolbox">
-                                    <input type="text" class="input-jv w-100" id="buscarProducto" placeholder="Buscar por nombre o SKU..." autocomplete="off">
+                                    <input type="text" class="input-jv w-100" id="buscarProducto" aria-label="Buscar producto para agregar" placeholder="Buscar por nombre o SKU..." autocomplete="off">
                                     <input type="hidden" id="selProductoId">
                                     <input type="hidden" id="selProductoNombre">
                                     <div class="com-resultados" id="resultadosBusqueda"></div>
@@ -289,15 +289,15 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
                             <div class="col-md-2">
                                 <label class="small fw-bold text-secondary mb-1">Cant</label>
-                                <input type="number" class="input-jv" id="inputCant" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
+                                <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
                             </div>
                             <div class="col-md-2">
                                 <label class="small fw-bold text-secondary mb-1">Precio $</label>
-                                <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" placeholder="0.00" oninput="formatearPrecioCompra(this)">
+                                <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" aria-label="Precio unitario del producto" placeholder="0.00" oninput="formatearPrecioCompra(this)">
                             </div>
                             <div class="col-md-2">
                                 <label class="small fw-bold text-secondary mb-1">Vence <span class="text-muted fw-normal">(opcional)</span></label>
-                                <input type="date" class="input-jv" id="inputVencimiento">
+                                <input type="date" class="input-jv" id="inputVencimiento" aria-label="Fecha de vencimiento del lote">
                             </div>
                             <div class="col-md-1">
                                 <button type="button" class="btn-jv-primary w-100" style="padding:14px;" onclick="agregarProducto()">
@@ -349,7 +349,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
                     <div class="section-bg" style="margin-bottom:0;">
                         <div class="section-label"><i class="bi bi-chat-text me-1"></i>Observaciones</div>
-                        <input type="text" name="observaciones" class="input-jv" placeholder="Notas opcionales...">
+                        <input type="text" name="observaciones" aria-label="Observaciones de la compra" class="input-jv" placeholder="Notas opcionales...">
                     </div>
                 </div>
 

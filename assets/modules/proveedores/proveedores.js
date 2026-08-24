@@ -40,6 +40,28 @@
                     });
                 }
 
+                // Marcar el campo con error cuando el servidor rechazó el formulario:
+                // el flash de peligro trae su texto en data-texto y aquí se traduce
+                // ese mensaje al input exacto que lo causó, pintándolo con marcarError().
+                var flashEl = document.getElementById('flashMsg');
+                if (flashEl && flashEl.classList.contains('alert-jv-danger')) {
+                    var texto = (flashEl.dataset.texto || '').toUpperCase();
+                    var mapaCampoError = [
+                        ['RIF', 'p_rif'],
+                        ['NOMBRE', 'p_empresa'],
+                        ['CORREO', 'p_email'],
+                        ['EMAIL', 'p_email'],
+                        ['TELÉFONO', 'p_tel']
+                    ];
+                    for (var i = 0; i < mapaCampoError.length; i++) {
+                        if (texto.indexOf(mapaCampoError[i][0]) !== -1) {
+                            var campo = document.getElementById(mapaCampoError[i][1]);
+                            if (campo) marcarError(campo, texto);
+                            break;
+                        }
+                    }
+                }
+
                 // Auto-cierre de flash messages
                 document.querySelectorAll('.flash-auto').forEach(function(el) {
                     setTimeout(function() {

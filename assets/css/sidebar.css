@@ -207,3 +207,14 @@ body.sidebar-open .sidebar-toggle-btn i { transform: rotate(180deg); }
 .sidebar-nav::-webkit-scrollbar { width: 4px; }
 .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
 .sidebar-nav::-webkit-scrollbar-thumb { background: var(--jv-border); border-radius: 4px; }
+
+/* =============================================
+   ESCRITORIO (>768px): sidebar SIEMPRE visible
+   El colapso con botón queda reservado al móvil.
+   ============================================= */
+@media (min-width: 769px) {
+    .sidebar { transform: translateX(0) !important; }
+    .main-wrapper { margin-left: 260px !important; }
+    .sidebar-toggle-btn { display: none; }
+    .sidebar-backdrop.visible { opacity: 0 !important; pointer-events: none !important; }
+}

@@ -526,18 +526,21 @@
                 msg.innerHTML = ''; numInput.style.borderColor = ''; hidden.value = ''; numInput.value = '';
                 return;
             }
+            // Tanto RIF como cédula usan 9 dígitos fijos. Formato unificado SIN puntos:
+            // el RIF jurídico muestra guión antes del dígito verificador (12345678-9)
+            // y la cédula va seguida (123456789), igual que en Proveedores.
             var cuerpo, verif, formatted;
             if (esRif) {
                 cuerpo = nums.slice(0, 8);
                 verif = nums.slice(8);
-                formatted = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + (verif ? '-' + verif : '');
+                formatted = cuerpo + (verif ? '-' + verif : '');
                 hidden.value = tipo + '-' + cuerpo + (verif ? '-' + verif : '');
             } else {
                 cuerpo = nums;
-                formatted = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                formatted = cuerpo;
                 hidden.value = tipo + '-' + cuerpo;
             }
-            var valido = esRif ? nums.length === 9 : nums.length >= 6;
+            var valido = nums.length === 9;
             numInput.value = formatted;
             if (valido) {
                 msg.innerHTML = '<span style="color:var(--jv-success);">✓ Válido</span>';

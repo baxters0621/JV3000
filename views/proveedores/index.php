@@ -38,9 +38,9 @@
     </div>
 </div>
 
-<!-- Mensajes flash -->
+<!-- Mensajes flash (data-texto permite al JS marcar el campo con error) -->
 <?php if ($flash): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4">
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
         <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($flash['texto']); ?>
     </div>
 <?php endif; ?>
@@ -93,14 +93,17 @@
                             <span class="status-dot-jv <?php echo $proveedor['status'] == 'Activo' ? 'active' : 'inactive'; ?>"></span>
                             <span class="badge-jv <?php echo $proveedor['status'] == 'Activo' ? 'badge-success' : 'badge-danger'; ?>"><?php echo $proveedor['status']; ?></span>
                         </div>
-                        <button class="btn-action" onclick="editarProveedor(<?php echo htmlspecialchars(json_encode($proveedor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Editar">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <?php if ($esAdmin): ?>
-                            <button class="btn-action" onclick="toggleStatusProveedor(<?php echo (int)$proveedor['id_proveedor']; ?>, <?php echo htmlspecialchars(json_encode($proveedor['nombre_empresa'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($proveedor['status'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="<?php echo $proveedor['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
-                                <i class="bi <?php echo $proveedor['status'] == 'Activo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>" style="color:<?php echo $proveedor['status'] == 'Activo' ? 'var(--jv-danger)' : 'var(--jv-success)'; ?>"></i>
+                        <!-- Acciones agrupadas a la derecha para que no queden dispersas en la cabecera -->
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn-action" onclick="editarProveedor(<?php echo htmlspecialchars(json_encode($proveedor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Editar">
+                                <i class="bi bi-pencil-square"></i>
                             </button>
-                        <?php endif; ?>
+                            <?php if ($esAdmin): ?>
+                                <button class="btn-action" onclick="toggleStatusProveedor(<?php echo (int)$proveedor['id_proveedor']; ?>, <?php echo htmlspecialchars(json_encode($proveedor['nombre_empresa'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($proveedor['status'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="<?php echo $proveedor['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
+                                    <i class="bi <?php echo $proveedor['status'] == 'Activo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>" style="color:<?php echo $proveedor['status'] == 'Activo' ? 'var(--jv-danger)' : 'var(--jv-success)'; ?>"></i>
+                                </button>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="prov-body" onclick="toggleProv(this)">
                         <div class="prov-name" data-tooltip="<?php echo htmlspecialchars($proveedor['nombre_empresa']); ?>"><?php echo htmlspecialchars($proveedor['nombre_empresa']); ?></div>
@@ -193,7 +196,8 @@
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
                                 <label for="p_rif" class="small fw-bold text-secondary mb-2">RIF</label>
-                                <input type="text" name="rif" id="p_rif" class="input-jv" required placeholder="Ej: J-12345678-0" maxlength="13">
+                                <input type="text" name="rif" id="p_rif" class="input-jv" required placeholder="Ej: J-12345678-0" maxlength="13" pattern="[VEJGPC]-\d{8}-\d" title="Formato: J-12345678-0">
+                                <small style="color:var(--jv-text-secondary);font-size:.7rem;display:block;margin-top:4px;">Formato: J-12345678-0</small>
                             </div>
                             <div class="col-md-8">
                                 <label for="p_empresa" class="small fw-bold text-secondary mb-2">NOMBRE EMPRESA</label>

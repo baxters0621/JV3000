@@ -75,7 +75,7 @@
 <div class="card-jv p-0">
     <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
         <i class="bi bi-search me-1" style="font-size:1rem;color:var(--jv-orange);"></i>
-        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nota, control, cliente, RIF, productos, tipo..." id="buscarSal" onkeyup="filtrarSalidas()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;max-width:340px;">
+        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nota, control, cliente, RIF, productos, tipo..." id="buscarSal" aria-label="Buscar salida" onkeyup="filtrarSalidas()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;max-width:340px;">
     </div>
     <div class="table-responsive">
         <table class="table-jv mb-0">
@@ -168,7 +168,7 @@
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-2">TIPO DE MOVIMIENTO</label>
-                                <select name="id_tipo_mov" id="s_tipo" class="input-jv" required onchange="toggleCampos()">
+                                <select name="id_tipo_mov" id="s_tipo" aria-label="Tipo de movimiento" class="input-jv" required onchange="toggleCampos()">
                                     <option value="">Seleccione tipo...</option>
                                     <?php foreach ($tipos_mov as $tipo_mov):
                                         $grupo = $tipos_mov_map[$tipo_mov['id_tipo_mov']];
@@ -179,7 +179,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-2">FECHA</label>
-                                <input type="date" id="s_fecha" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
+                                <input type="date" id="s_fecha" aria-label="Fecha de la salida" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
                                 <input type="hidden" name="fecha_salida" id="s_fecha_hidden" value="<?php echo date('Y-m-d'); ?>">
                             </div>
                         </div>
@@ -192,7 +192,7 @@
                                 <div class="col-md-6">
                                     <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
                                     <div class="com-toolbox">
-                                        <input type="text" class="input-jv w-100" id="buscarClienteSal" placeholder="Buscar o escribir cliente..." autocomplete="off">
+                                        <input type="text" class="input-jv w-100" id="buscarClienteSal" aria-label="Buscar cliente" placeholder="Buscar o escribir cliente..." autocomplete="off">
                                         <input type="hidden" name="id_cliente" id="s_id_cliente">
                                         <input type="hidden" name="cliente" id="s_cliente">
                                         <div class="com-resultados" id="resultadosBusquedaCli"></div>
@@ -201,7 +201,7 @@
                                 <div class="col-md-6">
                                     <label class="small fw-bold text-secondary mb-2">RIF / CÉDULA <span style="color:var(--jv-danger);">*</span></label>
                                     <div class="d-flex gap-2">
-                                        <select id="s_rif_tipo" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="validarRIFInput()">
+                                        <select id="s_rif_tipo" aria-label="Tipo de RIF o cedula" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="validarRIFInput()">
                                             <option value="V">V-</option>
                                             <option value="J">J-</option>
                                             <option value="E">E-</option>
@@ -209,7 +209,7 @@
                                             <option value="G">G-</option>
                                             <option value="C">C-</option>
                                         </select>
-                                        <input type="text" id="s_rif_num" class="input-jv" placeholder="Número de identificación" oninput="validarRIFInput()" style="flex:1;" inputmode="numeric">
+                                        <input type="text" id="s_rif_num" aria-label="Numero de RIF o cedula" class="input-jv" placeholder="Número de identificación" oninput="validarRIFInput()" style="flex:1;" inputmode="numeric">
                                         <input type="hidden" name="rif_cliente" id="s_rif">
                                     </div>
                                     <div id="s-rif-msg" class="small mt-1" style="min-height:18px;"></div>
@@ -224,7 +224,7 @@
                             <div class="row g-2">
                                 <div class="col-md-5">
                                     <label class="small fw-bold text-secondary mb-1">MOTIVO *</label>
-                                    <select name="motivo_regalia" id="s_motivo_reg" class="input-jv">
+                                    <select name="motivo_regalia" id="s_motivo_reg" aria-label="Motivo de la regalia" class="input-jv">
                                         <option value="">Seleccionar...</option>
                                         <option>Promoción</option>
                                         <option>Cortesía / Fidelización</option>
@@ -235,7 +235,7 @@
                                 </div>
                                 <div class="col-md-7">
                                     <label class="small fw-bold text-secondary mb-2">CLIENTE</label>
-                                    <input type="text" id="s_cliente_reg" class="input-jv" placeholder="Nombre o Razón Social" oninput="document.getElementById('s_cliente').value=this.value">
+                                    <input type="text" id="s_cliente_reg" aria-label="Cliente que recibe la regalia" class="input-jv" placeholder="Nombre o Razón Social" oninput="document.getElementById('s_cliente').value=this.value">
                                 </div>
                             </div>
                         </div>
@@ -247,7 +247,7 @@
                             <div class="row g-2">
                                 <div class="col-md-5">
                                     <label class="small fw-bold text-secondary mb-1">CAUSA *</label>
-                                    <select name="causa_ajuste" id="s_causa" class="input-jv">
+                                    <select name="causa_ajuste" id="s_causa" aria-label="Causa del ajuste" class="input-jv">
                                         <option value="">Seleccionar...</option>
                                         <option>Producto vencido</option>
                                         <option>Dañado/Averiado</option>
@@ -259,7 +259,7 @@
                                 </div>
                                 <div class="col-md-7">
                                     <label class="small fw-bold text-secondary mb-1">MOTIVO <span class="fw-normal">(opcional)</span></label>
-                                    <textarea name="descripcion_motivo" id="s_desc_motivo" class="input-jv" rows="2" placeholder="Detalle adicional..."></textarea>
+                                    <textarea name="descripcion_motivo" id="s_desc_motivo" aria-label="Descripcion del motivo" class="input-jv" rows="2" placeholder="Detalle adicional..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -272,7 +272,7 @@
                             <div class="col-md-5">
                                 <label class="small fw-bold text-secondary mb-1">Producto</label>
                                 <div class="com-toolbox">
-                                    <input type="text" class="input-jv w-100" id="buscarProductoSal" placeholder="Buscar por nombre o SKU..." autocomplete="off">
+                                    <input type="text" class="input-jv w-100" id="buscarProductoSal" aria-label="Buscar producto para agregar" placeholder="Buscar por nombre o SKU..." autocomplete="off">
                                     <input type="hidden" id="selProductoSalId">
                                     <input type="hidden" id="selProductoSalNombre">
                                     <div class="com-resultados" id="resultadosBusquedaSal"></div>
@@ -280,11 +280,11 @@
                             </div>
                             <div class="col-md-2">
                                 <label class="small fw-bold text-secondary mb-1">Cant</label>
-                                <input type="number" id="s_cant" class="input-jv" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999">
+                                <input type="number" id="s_cant" aria-label="Cantidad del producto" class="input-jv" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999">
                             </div>
                             <div class="col-md-3">
                                 <label class="small fw-bold text-secondary mb-1">Precio $</label>
-                                <input type="text" inputmode="decimal" id="s_precio" class="input-jv" placeholder="0.00" readonly style="background:var(--jv-bg-primary);cursor:not-allowed;color:var(--jv-text-muted);">
+                                <input type="text" inputmode="decimal" id="s_precio" aria-label="Precio unitario del producto" class="input-jv" placeholder="0.00" readonly style="background:var(--jv-bg-primary);cursor:not-allowed;color:var(--jv-text-muted);">
                             </div>
                             <div class="col-md-2">
                                 <button type="button" class="btn-jv-primary w-100" style="margin-top:22px;padding:12px 8px;" onclick="agregarProductoSalida()">
@@ -347,7 +347,7 @@
                     <!-- OBSERVACIONES -->
                     <div class="section-bg">
                         <label class="small fw-bold text-secondary mb-2">OBSERVACIONES</label>
-                        <textarea name="observaciones" id="s_obs" class="input-jv" rows="1" placeholder="Notas adicionales..."></textarea>
+                        <textarea name="observaciones" id="s_obs" aria-label="Observaciones de la salida" class="input-jv" rows="1" placeholder="Notas adicionales..."></textarea>
                     </div>
 
                     <button type="button" class="btn btn-jv-primary w-100 py-2 fw-bolder text-uppercase mt-1" id="btnPreview" onclick="enviarPreview()">

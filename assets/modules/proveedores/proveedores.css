@@ -107,6 +107,7 @@
     }
     .prov-premium .prov-head {
         display:flex;justify-content:space-between;align-items:center;
+        gap:10px;flex-wrap:wrap;
         padding:14px 18px;
         background:rgba(15,26,46,0.03);
         border-bottom:1px solid rgba(168,85,247,0.08);
