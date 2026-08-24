@@ -104,7 +104,7 @@ $tabla_compras = $datos['tabla_compras'];
     <title>Panel de Inicio | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
 
-    <link rel="stylesheet" href="../assets/dashboard/index.css?v=23">
+    <link rel="stylesheet" href="../assets/dashboard/index.css?v=24">
 </head>
 
 <?php
@@ -219,13 +219,13 @@ $tabla_compras = $datos['tabla_compras'];
             <section class="dash-section">
                 <h2 class="sec-title"><i class="bi bi-speedometer2"></i> Indicadores Clave</h2>
                 <div class="kpi-grid">
-                    <div class="kpi-card">
+                    <div class="kpi-card kpi-card-verde">
                         <div class="kpi-icon kpi-icon-verde"><i class="bi bi-currency-dollar"></i></div>
                         <div class="kpi-label">Última Venta</div>
                         <div class="kpi-value" id="kpi-ventas-dia">$<?php echo $ventas_dia; ?></div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon kpi-icon-azul"><i class="bi bi-box-seam"></i></div>
+                    <div class="kpi-card kpi-card-teal">
+                        <div class="kpi-icon kpi-icon-teal"><i class="bi bi-box-seam"></i></div>
                         <div class="kpi-label">Valor del Inventario</div>
                         <div class="kpi-value" id="kpi-valor-inv">$<?php echo $valor_inventario; ?></div>
                     </div>

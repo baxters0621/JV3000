@@ -276,6 +276,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-24 02:25] · Módulo: Dashboard · Cambio: Por feedback (tarjetas se veían pegadas y ajustadas) se da más aire: separación entre tarjetas 20px a 30px, padding interior 28 a 30px, altura útil 500 a 520px, más margen bajo el título, descripción con interlineado propio y filas de tabla más espaciadas (td 15px a 18px verticales). CSS sube a v=23. · Archivos: assets/dashboard/index.css, dashboard/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado dashboard/index.php = 200 sirviendo index.css?v=23.
 
+[2026-08-24 02:35] · Módulo: Dashboard · Cambio: Dos mejoras. (1) Las KPI "Última Venta" y "Valor del Inventario" reciben identidad de color sutil coherente con Actividad Reciente: banda lateral de 6px y tinte degradado — verde para la venta, TEAL (#0E7490) para el inventario, que es el color del módulo Inventario (su icono cambia de azul a teal para combinar con el sistema). (2) Los datos de las tres tarjetas grandes seguían viéndose pegados (fecha junto al total): columnas rebalanceadas (40/32/28), la columna de monto ahora va ALINEADA A LA DERECHA con padding extra, la de fecha centrada, y padding horizontal de celdas sube a 14px. Se elimina una regla posterior que forzaba todo al centro y deshacia la corrección. CSS sube a v=24. · Archivos: assets/dashboard/index.css, dashboard/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado dashboard = 200 sirviendo index.css?v=24 con kpi-card-teal presente; CSS confirma alineación derecha en la columna de montos.
+
 ---
 
 ## Plantilla para futuras entradas
