@@ -70,14 +70,14 @@
         <table class="table-jv mb-0">
             <thead>
                 <tr>
-                    <th class="text-center" style="width:11%;">CÓDIGO</th>
-                    <th style="width:17%;">PRODUCTO</th>
-                    <th style="width:11%;">CATEGORÍA</th>
-                    <th style="width:12%;">PROVEEDOR</th>
-                    <th class="text-center" style="width:10%;">STOCK</th>
-                    <th style="width:8%;">PRECIO</th>
-                    <th class="text-center" style="width:12%;">VENCE</th>
-                    <th class="text-center" style="width:9%;">ESTADO</th>
+                    <th class="text-center" style="width:9%;">CÓDIGO</th>
+                    <th style="width:27%;">PRODUCTO</th>
+                    <th style="width:10%;">CATEGORÍA</th>
+                    <th style="width:11%;">PROVEEDOR</th>
+                    <th class="text-center" style="width:9%;">STOCK</th>
+                    <th style="width:7%;">PRECIO</th>
+                    <th class="text-center" style="width:9%;">VENCE</th>
+                    <th class="text-center" style="width:8%;">ESTADO</th>
                     <?php if ($esAdmin): ?>
                         <th class="text-center" style="width:10%;">ACCIONES</th>
                     <?php endif; ?>
@@ -168,7 +168,7 @@
                                 </span>
                             </td>
                             <td class="text-center">
-                                <span class="badge-jv <?php echo ($productRecord['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>" style="font-size:.78rem;">
+                                <span class="badge-jv <?php echo ($productRecord['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>" style="font-size:.75rem;">
                                     <i class="bi bi-<?php echo ($productRecord['status'] == 'Activo') ? 'eye' : 'eye-off'; ?>"></i>
                                     <?php echo strtoupper($productRecord['status']); ?>
                                 </span>
@@ -176,20 +176,20 @@
                             <?php if ($esAdmin): ?>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-1">
-                                        <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;border-radius:8px;background:rgba(234,88,12,0.12);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="editarProducto(<?php echo $productRecord['id_producto']; ?>)" title="Editar">
+                                        <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(234,88,12,0.12);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="editarProducto(<?php echo $productRecord['id_producto']; ?>)" title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <?php if ($productRecord['status'] === 'Activo'): ?>
-                                            <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" title="Desactivar">
+                                            <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" title="Desactivar">
                                                 <i class="bi bi-power"></i>
                                             </button>
                                             <?php if ($venc_cls === 'vencido'): ?>
-                                                <button type="button" class="btn btn-sm p-0 ms-1" style="width:34px;height:34px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Dar de baja por vencimiento">
+                                                <button type="button" class="btn btn-sm p-0 ms-1" style="width:30px;height:30px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Dar de baja por vencimiento">
                                                     <i class="bi bi-archive"></i>
                                                 </button>
                                             <?php endif; ?>
                                         <?php else: ?>
-                                            <button type="button" class="btn btn-sm p-0" style="width:34px;height:34px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" title="Reactivar">
+                                            <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" title="Reactivar">
                                                 <i class="bi bi-play-circle"></i>
                                             </button>
                                         <?php endif; ?>
