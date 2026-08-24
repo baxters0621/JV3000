@@ -71,13 +71,13 @@
             <thead>
                 <tr>
                     <th class="text-center" style="width:10%;">CÓDIGO</th>
-                    <th style="width:21%;">PRODUCTO</th>
+                    <th style="width:20%;">PRODUCTO</th>
                     <th style="width:11%;">CATEGORÍA</th>
                     <th style="width:12%;">PROVEEDOR</th>
                     <th class="text-center" style="width:10%;">STOCK</th>
                     <th style="width:8%;">PRECIO</th>
                     <th class="text-center" style="width:10%;">VENCE</th>
-                    <th class="text-center" style="width:8%;">ESTADO</th>
+                    <th class="text-center" style="width:9%;">ESTADO</th>
                     <?php if ($esAdmin): ?>
                         <th class="text-center" style="width:10%;">ACCIONES</th>
                     <?php endif; ?>

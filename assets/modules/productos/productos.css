@@ -169,6 +169,13 @@
             font-size: .9rem;
         }
 
+        /* Badges de tabla compactos para que ACTIVO/INACTIVO no se corten */
+        .table-jv .badge-jv {
+            padding: 4px 7px;
+            gap: 4px;
+            font-size: .74rem !important;
+        }
+
         .td-vencimiento {
             min-width: 104px;
             /* Menos padding lateral: la fecha necesita todo el ancho posible */

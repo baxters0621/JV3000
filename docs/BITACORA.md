@@ -7,6 +7,7 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 ```
 [YYYY-MM-DD HH:MM] · Módulo: <módulo> · Cambio: <qué se hizo y por qué> · Archivos: <ruta(s)> · Prueba: <verificación realizada>
 ```
+[2026-08-24 00:18] · Módulo: Inventario · Cambio: Se corrige el badge de estado ACTIVO/INACTIVO cortado: la columna ESTADO al 8% no daba el ancho necesario. ESTADO sube a 9% (PRODUCTO 21% a 20%) y los badges de tabla se compactan con padding 4px 7px y fuente .74rem para caber holgados. CSS sube a v=18. Sin cambios de lógica ni JS. · Archivos: views/productos/index.php, assets/modules/productos/productos.css, controllers/ProductosController.php, docs/BITACORA.md · Prueba: php -l OK en vista y controlador; HTTP autenticado ?url=productos = 200 sirviendo productos.css?v=18 con ESTADO al 9%; suma de anchos verificada = 100%.
 
 ---
 
