@@ -1,8 +1,8 @@
 RewriteEngine On
 
-# Exception: protected AJAX endpoint.
+# Exception: protected AJAX endpoints (usados por diseno.js y el dashboard).
 
-RewriteRule ^includes/ajax/alertas_ajax\.php$ - [L]
+RewriteRule ^includes/ajax/(alertas_ajax|clientes_buscar|productos_buscar)\.php$ - [L]
 
 # Block internal directories and sensitive file types.
 
