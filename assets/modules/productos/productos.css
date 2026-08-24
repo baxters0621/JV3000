@@ -5,7 +5,9 @@
         .table-jv {
             width: 100%;
             table-layout: fixed;
-            min-width: 900px;
+            /* Minimo sano para que ninguna columna recorte su contenido:
+               por debajo, la tabla se desplaza horizontalmente */
+            min-width: 1040px;
             border-collapse: separate;
             border-spacing: 0;
         }
@@ -140,18 +142,33 @@
             flex: 0 0 auto;
         }
 
+        /* ── Buscador en dos filas: busqueda arriba, filtros abajo ── */
+        .buscador-wrapper .buscador-fila input {
+            flex: 1 1 auto;
+            max-width: 480px;
+        }
+
+        .pagina-productos .buscador-wrapper .actions-divider {
+            width: 1px;
+            height: 22px;
+            background: var(--jv-border);
+            padding: 0;
+            margin: 0 4px;
+        }
+
         .td-vencimiento {
             min-width: 104px;
         }
 
+        /* Badge de vencimiento: icono + fecha SIEMPRE lado a lado, sin recorte */
         .td-vencimiento .badge-jv {
-            width: 100%;
+            display: inline-flex;
             justify-content: center;
             gap: 4px;
-            padding-left: 6px;
-            padding-right: 6px;
+            padding: 4px 8px;
+            white-space: nowrap;
             font-size: .78rem !important;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .td-vencimiento .badge-jv > i {
@@ -159,9 +176,6 @@
         }
 
         .td-vencimiento .venc-fecha {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
         }
 
@@ -339,8 +353,8 @@
                 gap: 6px !important;
             }
 
-            .pagina-productos .buscador-wrapper input {
-                max-width: 260px !important;
+            .pagina-productos .buscador-fila input {
+                max-width: 340px !important;
                 min-width: 180px;
             }
 
@@ -399,9 +413,7 @@
 
             .pagina-productos .buscador-wrapper .filtro-unidad > .small {
                 display: none;
-            }
-
-            .pagina-productos .buscador-wrapper .actions-divider,
+            }            .pagina-productos .buscador-wrapper .actions-divider,
             .pagina-productos .buscador-wrapper > .small {
                 display: none;
             }
