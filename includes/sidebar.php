@@ -215,7 +215,7 @@ function es_activo(string $pagina, string $modulo = ''): string
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 <!-- ESTILOS DEL SIDEBAR -->
-<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=10">
+<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=11">
 
 <script src="<?php echo $base_assets; ?>js/sweetalert2.all.min.js"></script>
 <script>

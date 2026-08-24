@@ -63,15 +63,15 @@
 /* Navigation */
 .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
 
-/* Títulos de fase del menu (Configuración / Operaciones / Análisis / Control) */
+/* Títulos de fase del menu (Configuración / Operaciones / Análisis / Control)
+   Grandes y en color de marca para no fatigar la vista */
 .nav-section-title {
-    padding: 14px 20px 4px;
-    font-size: .62rem;
+    padding: 16px 20px 6px;
+    font-size: .82rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--jv-text-muted);
-    opacity: .75;
+    letter-spacing: 1.5px;
+    color: var(--jv-orange);
 }
 
 /* Module Colors */
