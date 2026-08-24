@@ -70,13 +70,13 @@
         <table class="table-jv mb-0">
             <thead>
                 <tr>
-                    <th class="text-center" style="width:9%;">CÓDIGO</th>
-                    <th style="width:27%;">PRODUCTO</th>
-                    <th style="width:10%;">CATEGORÍA</th>
-                    <th style="width:11%;">PROVEEDOR</th>
-                    <th class="text-center" style="width:9%;">STOCK</th>
-                    <th style="width:7%;">PRECIO</th>
-                    <th class="text-center" style="width:9%;">VENCE</th>
+                    <th class="text-center" style="width:10%;">CÓDIGO</th>
+                    <th style="width:21%;">PRODUCTO</th>
+                    <th style="width:11%;">CATEGORÍA</th>
+                    <th style="width:12%;">PROVEEDOR</th>
+                    <th class="text-center" style="width:10%;">STOCK</th>
+                    <th style="width:8%;">PRECIO</th>
+                    <th class="text-center" style="width:10%;">VENCE</th>
                     <th class="text-center" style="width:8%;">ESTADO</th>
                     <?php if ($esAdmin): ?>
                         <th class="text-center" style="width:10%;">ACCIONES</th>
