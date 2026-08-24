@@ -266,6 +266,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-24 01:45] · Módulo: Diseño global · Cambio: Por feedback del usuario los halos del fondo se hacen NOTABLES pero sin llegar a competir con el contenido: opacidad del naranja .08 a .14 y del teal .07 a .13, con radio de difusión ampliado (50%/55%). El patrón de puntos sigue intacto. diseno.css sube a v=8. · Archivos: assets/css/diseno.css, includes/diseno.php, docs/BITACORA.md · Prueba: CSS v=8 servido = 200 con las opacidades nuevas.
 
+[2026-08-24 01:55] · Módulo: Diseño global · Cambio: El fondo nuevo no se veía en Login ni Dashboard por dos causas: (1) la clase .login-page define su PROPIO fondo opaco que tapaba el del body — se reescribe con el mismo lenguaje visual (halos naranja/teal centrados + puntos + base crema #FBF9F4); (2) el halo naranja estaba posicionado en la esquina superior-izquierda, oculto detrás del sidebar blanco de 260px — se reposiciona al centro-superior (62% -8%) donde es visible junto al contenido, y el teal sube un poco de intensidad (.14). · Archivos: assets/css/diseno.css, docs/BITACORA.md · Prueba: CSS v=8 servido = 200 con posiciones nuevas; login/login.php confirma que carga diseno.css?v=8.
+
 ---
 
 ## Plantilla para futuras entradas
