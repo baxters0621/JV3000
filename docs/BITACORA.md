@@ -268,6 +268,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-24 01:55] · Módulo: Diseño global · Cambio: El fondo nuevo no se veía en Login ni Dashboard por dos causas: (1) la clase .login-page define su PROPIO fondo opaco que tapaba el del body — se reescribe con el mismo lenguaje visual (halos naranja/teal centrados + puntos + base crema #FBF9F4); (2) el halo naranja estaba posicionado en la esquina superior-izquierda, oculto detrás del sidebar blanco de 260px — se reposiciona al centro-superior (62% -8%) donde es visible junto al contenido, y el teal sube un poco de intensidad (.14). · Archivos: assets/css/diseno.css, docs/BITACORA.md · Prueba: CSS v=8 servido = 200 con posiciones nuevas; login/login.php confirma que carga diseno.css?v=8.
 
+[2026-08-24 02:00] · Módulo: Categorías · Cambio: El buscador del módulo estaba recortado a 340px y se veía corto dentro de la barra. Se elimina el tope: ahora crece hasta cubrir todo el ancho disponible (flex-grow-1), con tipografía y padding acordes. Sin cambios de lógica ni JS. · Archivos: views/categorias/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado ?url=categorias = 200 renderizando max-width:none + flex-grow-1 en el buscador.
+
 ---
 
 ## Plantilla para futuras entradas

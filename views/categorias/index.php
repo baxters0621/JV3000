@@ -43,7 +43,7 @@
 <div class="card-jv card-jv-table p-0">
     <div class="buscador-wrapper d-flex align-items-center px-3 py-2">
         <i class="bi bi-search me-2" style="color: var(--jv-orange); font-size: 1rem;"></i>
-        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nombre, código, descripción, ABC, manejo..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; font-size: 0.85rem; padding: 8px 6px; max-width: 340px;">
+        <input type="text" class="input-jv border-0 bg-transparent py-1 flex-grow-1" placeholder="Buscar por nombre, código, descripción, ABC, manejo..." id="buscar" onkeyup="filtrar()" style="box-shadow: none; font-size: 0.95rem; padding: 10px 8px; max-width: none;">
     </div>
     <div class="table-responsive">
         <table class="table-jv mb-0">
