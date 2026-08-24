@@ -25,7 +25,7 @@
     <div class="ms-auto d-flex align-items-center gap-3 flex-wrap">
         <div class="prov-search">
             <i class="bi bi-search"></i>
-            <input type="text" class="input-jv" id="buscarProv" placeholder="Buscar proveedor..." onkeyup="filtrarProvTexto()" style="padding:10px 16px 10px 38px;max-width:280px;font-size:1rem;">
+            <input type="text" class="input-jv flex-grow-1" id="buscarProv" placeholder="Buscar proveedor..." onkeyup="filtrarProvTexto()" style="padding:10px 16px 10px 38px;max-width:none;font-size:1rem;">
         </div>
         <div class="filter-group">
             <button class="btn-filter active" onclick="filtrarProv('todos')" id="f-todos">Todos</button>

@@ -270,6 +270,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-24 02:00] · Módulo: Categorías · Cambio: El buscador del módulo estaba recortado a 340px y se veía corto dentro de la barra. Se elimina el tope: ahora crece hasta cubrir todo el ancho disponible (flex-grow-1), con tipografía y padding acordes. Sin cambios de lógica ni JS. · Archivos: views/categorias/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado ?url=categorias = 200 renderizando max-width:none + flex-grow-1 en el buscador.
 
+[2026-08-24 02:05] · Módulo: Proveedores · Cambio: Mismo tratamiento que en Categorías: el buscador estaba recortado a 280px; ahora crece hasta cubrir todo el ancho de la barra (flex-grow-1). Sin cambios de lógica ni JS. · Archivos: views/proveedores/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado ?url=proveedores = 200 con el buscador a ancho completo.
+
 ---
 
 ## Plantilla para futuras entradas
