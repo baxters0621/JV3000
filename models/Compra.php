@@ -229,10 +229,16 @@ class Compra extends Model
                 return ['ok' => false, 'mensaje' => "PRECIO DE COSTO INVÁLIDO PARA PRODUCTO #$id_producto. RANGO: 0 A 99,999,999.99."];
             }
             if ($id_producto <= 0) continue;
-            if (!$this->db->fetchOne("SELECT id_producto FROM productos WHERE id_producto = ?", [$id_producto])) continue;
+            $prod_fila = $this->db->fetchOne("SELECT sku, nombre_producto FROM productos WHERE id_producto = ?", [$id_producto]);
+            if (!$prod_fila) continue;
+            // REGLA DE NEGOCIO: todo lote nace de una compra y TODO lote exige
+            // fecha de vencimiento. Sin ella se rompe el control FEFO del inventario.
             $lote_venc = null;
             if (!empty($prod['fecha_vencimiento']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($prod['fecha_vencimiento']))) {
                 $lote_venc = trim($prod['fecha_vencimiento']);
+            }
+            if (!$lote_venc) {
+                return ['ok' => false, 'mensaje' => "FECHA DE VENCIMIENTO REQUERIDA PARA: {$prod_fila['nombre_producto']} ({$prod_fila['sku']})."];
             }
             $items_validos[] = ['id' => $id_producto, 'cantidad' => $cantidad, 'precio' => $precio_costo, 'fecha_vencimiento' => $lote_venc];
             $subtotal += $cantidad * $precio_costo;

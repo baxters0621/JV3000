@@ -176,6 +176,19 @@
                 });
                 return;
             }
+            // REGLA DE NEGOCIO: todo lote exige fecha de vencimiento (control FEFO)
+            if (!expirationDate) {
+                Swal.fire({
+                    title: 'Fecha de vencimiento requerida',
+                    text: 'Indique la fecha de vencimiento del lote para agregar el producto',
+                    icon: 'warning',
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#EA580C'
+                });
+                document.getElementById('inputVencimiento').focus();
+                return;
+            }
 
             productos.push({
                 id: productoSeleccionado.id,

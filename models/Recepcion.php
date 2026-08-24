@@ -72,6 +72,19 @@ class Recepcion extends Model
             return ['ok' => false, 'mensaje' => 'ALGUNO DE LOS PRODUCTOS NO PERTENECE A LA COMPRA.'];
         }
 
+        // REGLA DE NEGOCIO: todo lote exige fecha de vencimiento (la indicada en la
+        // recepción o, en su defecto, la guardada al registrar la compra). Sin ella
+        // el control FEFO del inventario se rompe, así que la recepción se rechaza.
+        foreach ($filas as $f) {
+            $venc_final = trim((string)($solicitado[(int)$f['id_detalle']]['fecha_vencimiento'] ?? ''));
+            if ($venc_final === '') {
+                $venc_final = trim((string)($f['fecha_vencimiento'] ?? ''));
+            }
+            if ($venc_final === '') {
+                return ['ok' => false, 'mensaje' => "FECHA DE VENCIMIENTO REQUERIDA PARA: {$f['nombre_producto']}."];
+            }
+        }
+
         foreach ($filas as $f) {
             $restante = (int)$f['cantidad'] - (int)$f['cantidad_recibida'];
             if ($solicitado[(int)$f['id_detalle']]['cantidad'] > $restante) {

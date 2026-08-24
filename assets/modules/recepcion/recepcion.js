@@ -91,6 +91,11 @@
                     quantityInput.classList.add('input-error');
                 } else {
                     const expirationInput = receivingRow.querySelector('.rec-venc');
+                    // REGLA DE NEGOCIO: todo lote exige fecha de vencimiento (control FEFO)
+                    if (!expirationInput || !expirationInput.value) {
+                        errores.push('Indique la fecha de vencimiento de todos los productos a recibir.');
+                        if (expirationInput) expirationInput.classList.add('input-error');
+                    }
                     items.push({
                         id_detalle: parseInt(quantityInput.dataset.id, 10),
                         cantidad: receivedQuantity,
