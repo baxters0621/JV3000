@@ -274,6 +274,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-24 02:15] · Módulo: Dashboard · Cambio: Las tres tarjetas de Actividad Reciente (Últimas Notas de Entrega, Productos Críticos, Últimas Compras) se agrandan y ganan identidad de color propia: padding mayor (28px), altura útil 430 a 500px, títulos 1.2rem a 1.45rem, descripciones y celdas más grandes (th .92rem a 1rem, td 1.1rem a 1.2rem) y banda lateral de 6px. Cada tarjeta lleva ahora un tinte de fondo degradado con su color representativo — verde para notas/ventas, ámbar para críticos, naranja de marca para compras — que se desvanece hacia blanco para no cansar la vista. CSS sube a v=22. · Archivos: assets/dashboard/index.css, dashboard/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado dashboard/index.php = 200 sirviendo index.css?v=22; CSS confirma los tintes por tarjeta.
 
+[2026-08-24 02:25] · Módulo: Dashboard · Cambio: Por feedback (tarjetas se veían pegadas y ajustadas) se da más aire: separación entre tarjetas 20px a 30px, padding interior 28 a 30px, altura útil 500 a 520px, más margen bajo el título, descripción con interlineado propio y filas de tabla más espaciadas (td 15px a 18px verticales). CSS sube a v=23. · Archivos: assets/dashboard/index.css, dashboard/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado dashboard/index.php = 200 sirviendo index.css?v=23.
+
 ---
 
 ## Plantilla para futuras entradas
