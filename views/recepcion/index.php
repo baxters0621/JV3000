@@ -152,7 +152,7 @@
                 <tr>
                     <th style="width:14%;">Fecha</th>
                     <th style="width:14%;">Factura</th>
-                    <th style="width:26%;">Proveedor</th>
+                    <th style="width:22%;">Proveedor</th>
                     <th class="text-center" style="width:11%;">Productos</th>
                     <th class="text-center" style="width:11%;">Unidades</th>
                     <th style="width:16%;">Guía/Recibo</th>

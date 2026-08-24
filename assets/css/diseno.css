@@ -649,6 +649,50 @@ select.input-jv { appearance: auto; cursor: pointer; }
     100% { box-shadow: 0 0 0 0 rgba(234,88,12,0); }
 }
 
+/* ==========================================
+   PULIDO GLOBAL — alineación y anti-recorte
+   Aplica a todos los módulos por igual.
+   ========================================== */
+
+/* Badges: icono y texto SIEMPRE lado a lado, sin salto ni corte */
+.badge-jv {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* Grupos de botones de filtro: nunca se parten entre líneas */
+.btn-group {
+    flex-wrap: nowrap;
+}
+
+.btn-group .btn,
+.btn-group .btn-filter-prod,
+.btn-group .btn-filtro-venc {
+    white-space: nowrap;
+}
+
+/* Separador vertical entre filtros */
+.actions-divider {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: var(--jv-border);
+}
+
+/* Inputs dentro de barras de búsqueda/filtro: altura consistente */
+.buscador-wrapper .input-jv {
+    min-height: 38px;
+}
+
+/* Celdas de acciones y estado centradas y sin apretarse */
+.table-jv td .btn-group {
+    vertical-align: middle;
+}
+
+
 .navbar-jv {
     background: var(--jv-navy);
 }

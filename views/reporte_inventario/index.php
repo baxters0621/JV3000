@@ -43,15 +43,15 @@ $valor_venta_total = 0;
             <table class="table table-bordered table-sm align-middle mt-2">
                 <thead class="text-center">
                     <tr class="text-uppercase small fw-bold">
-                        <th width="9%">SKU</th>
-                        <th width="24%">Producto</th>
-                        <th width="12%">Categoría</th>
-                        <th width="14%">Proveedor</th>
+                        <th width="8%">SKU</th>
+                        <th width="22%">Producto</th>
+                        <th width="11%">Categoría</th>
+                        <th width="13%">Proveedor</th>
                         <th width="7%">Stock</th>
-                        <th width="7%">Cap.</th>
-                        <th width="9%">Estado</th>
-                        <th width="9%">P. Costo</th>
-                        <th width="9%">P. Venta</th>
+                        <th width="6%">Cap.</th>
+                        <th width="8%">Estado</th>
+                        <th width="8%">P. Costo</th>
+                        <th width="8%">P. Venta</th>
                         <th width="9%">Valor Total</th>
                     </tr>
                 </thead>
