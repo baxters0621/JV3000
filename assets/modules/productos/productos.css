@@ -7,7 +7,7 @@
             table-layout: fixed;
             /* Minimo sano para que ninguna columna recorte su contenido:
                por debajo, la tabla se desplaza horizontalmente */
-            min-width: 1040px;
+            min-width: 1240px;
             border-collapse: separate;
             border-spacing: 0;
         }
@@ -142,10 +142,11 @@
             flex: 0 0 auto;
         }
 
-        /* ── Buscador en dos filas: busqueda arriba, filtros abajo ── */
+        /* ── Buscador en dos filas: busqueda arriba (ancho completo), filtros abajo ── */
         .buscador-wrapper .buscador-fila input {
             flex: 1 1 auto;
-            max-width: 480px;
+            width: 100%;
+            max-width: none;
         }
 
         .pagina-productos .buscador-wrapper .actions-divider {
@@ -156,8 +157,22 @@
             margin: 0 4px;
         }
 
+        /* Padding horizontal compacto: libera espacio para badges en columnas angostas */
+        .table-jv thead th {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+
+        .table-jv tbody td {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+
         .td-vencimiento {
             min-width: 104px;
+            /* Menos padding lateral: la fecha necesita todo el ancho posible */
+            padding-left: 6px !important;
+            padding-right: 6px !important;
         }
 
         /* Badge de vencimiento: icono + fecha SIEMPRE lado a lado, sin recorte */
@@ -205,7 +220,7 @@
         }
 
         .stock-meter {
-            width: min(100%, 112px);
+            width: min(100%, 96px);
             height: 5px;
             margin: 0 auto 5px;
             overflow: hidden;
