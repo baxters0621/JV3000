@@ -272,6 +272,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-24 02:05] · Módulo: Proveedores · Cambio: Mismo tratamiento que en Categorías: el buscador estaba recortado a 280px; ahora crece hasta cubrir todo el ancho de la barra (flex-grow-1). Sin cambios de lógica ni JS. · Archivos: views/proveedores/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado ?url=proveedores = 200 con el buscador a ancho completo.
 
+[2026-08-24 02:15] · Módulo: Dashboard · Cambio: Las tres tarjetas de Actividad Reciente (Últimas Notas de Entrega, Productos Críticos, Últimas Compras) se agrandan y ganan identidad de color propia: padding mayor (28px), altura útil 430 a 500px, títulos 1.2rem a 1.45rem, descripciones y celdas más grandes (th .92rem a 1rem, td 1.1rem a 1.2rem) y banda lateral de 6px. Cada tarjeta lleva ahora un tinte de fondo degradado con su color representativo — verde para notas/ventas, ámbar para críticos, naranja de marca para compras — que se desvanece hacia blanco para no cansar la vista. CSS sube a v=22. · Archivos: assets/dashboard/index.css, dashboard/index.php, docs/BITACORA.md · Prueba: php -l OK; HTTP autenticado dashboard/index.php = 200 sirviendo index.css?v=22; CSS confirma los tintes por tarjeta.
+
 ---
 
 ## Plantilla para futuras entradas

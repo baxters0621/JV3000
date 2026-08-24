@@ -475,14 +475,14 @@
     background: var(--jv-bg-card);
     border: 1px solid var(--jv-border);
     border-radius: var(--jv-radius-lg);
-    padding: 24px;
-    max-height: 430px;
+    padding: 28px 26px;
+    max-height: 500px;
     overflow-y: auto;
     box-shadow: var(--jv-shadow-sm);
 }
 
 .table-card h3 {
-    font-size: 1.2rem;
+    font-size: 1.45rem;
     font-weight: 800;
     color: var(--jv-navy);
     margin: 0 0 16px;
@@ -490,8 +490,10 @@
     border-bottom: 1px solid var(--jv-border);
 }
 
+/* Cada tarjeta con su color identitario: tinte de fondo + banda lateral fuerte */
 .table-card-ventas {
-    border-left: 4px solid #16A34A;
+    border-left: 6px solid #16A34A;
+    background: linear-gradient(180deg, rgba(22,163,74,0.07), rgba(22,163,74,0.02) 120px, #fff 220px);
 }
 
 .table-card-ventas h3 {
@@ -499,7 +501,8 @@
 }
 
 .table-card-criticos {
-    border-left: 4px solid #D97706;
+    border-left: 6px solid #D97706;
+    background: linear-gradient(180deg, rgba(217,119,6,0.09), rgba(217,119,6,0.02) 120px, #fff 220px);
 }
 
 .table-card-criticos h3 {
@@ -507,7 +510,8 @@
 }
 
 .table-card-compras {
-    border-left: 4px solid #EA580C;
+    border-left: 6px solid #EA580C;
+    background: linear-gradient(180deg, rgba(234,88,12,0.08), rgba(234,88,12,0.02) 120px, #fff 220px);
 }
 
 .table-card-compras h3 {
@@ -516,8 +520,8 @@
 
 .card-desc {
     margin: 2px 0 14px;
-    font-size: 0.98rem;
-    color: var(--jv-text-muted);
+    font-size: 1.05rem;
+    color: var(--jv-text-secondary);
     font-weight: 600;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--jv-border);
@@ -530,7 +534,7 @@
 }
 
 .data-table th {
-    font-size: 0.92rem;
+    font-size: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.8px;
     color: var(--jv-text-muted);
@@ -543,8 +547,8 @@
 }
 
 .data-table td {
-    padding: 14px 12px;
-    font-size: 1.1rem;
+    padding: 15px 12px;
+    font-size: 1.2rem;
     border-bottom: 1px solid var(--jv-border);
     color: var(--jv-text-primary);
     vertical-align: middle;
