@@ -105,26 +105,38 @@
             return Number(texto);
         }
 
-        // Limpia letras y agrupa miles sin convertir la captura en un salto brusco.
+        // Convierte lo tecleado en un precio ordenado con reglas fijas:
+        // - El punto SIEMPRE es separador de miles (nunca decimal): borrar
+        //   "1.000,00" deja "1.000" y sigue valiendo mil, no se corrompe a "1,00".
+        // - La coma (o un punto final recien tecleado) activa los decimales (max 2).
+        // - Maximo 5 digitos enteros: imposible escribir numeros infinitos.
         function formatearEntradaPrecio(input) {
             var cursor = input.selectionStart || 0;
             var original = input.value;
             var antesCursor = original.slice(0, cursor);
-            var limpio = original.replace(/[^0-9.,]/g, '');
             var digitosAntes = (antesCursor.match(/\d/g) || []).length;
-            var salida = limpio;
-            var tieneComa = limpio.includes(',');
-            var puntoDecimal = !tieneComa && (limpio.endsWith('.') || /\d+\.\d{1,2}$/.test(limpio));
+            var limpio = original.replace(/[^0-9.,]/g, '');
+            var salida = '';
 
-            if (tieneComa || puntoDecimal) {
-                var separador = tieneComa ? ',' : '.';
-                var separadorIndex = limpio.lastIndexOf(separador);
-                var entero = limpio.slice(0, separadorIndex).replace(/\D/g, '') || '0';
-                var decimales = limpio.slice(separadorIndex + 1).replace(/\D/g, '').slice(0, 2);
-                entero = entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                salida = entero + separador + decimales;
+            function grupoEntero(digitos) {
+                // Sin ceros a la izquierda sobrantes y tope de 5 digitos (99.999)
+                var entero = digitos.replace(/^0+(?=\d)/, '').slice(0, 5);
+                return entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+
+            if (/[.,]$/.test(limpio)) {
+                // El usuario acaba de teclear el separador decimal: entra en modo decimales
+                var idxFin = limpio.length - 1;
+                salida = grupoEntero(limpio.slice(0, idxFin).replace(/\D/g, '')) + ',';
+            } else if (limpio.indexOf(',') !== -1) {
+                // Modo decimal activo: coma como separador y hasta 2 decimales
+                var idxComa = limpio.indexOf(',');
+                var enteroDec = grupoEntero(limpio.slice(0, idxComa).replace(/\D/g, ''));
+                var decimales = limpio.slice(idxComa + 1).replace(/\D/g, '').slice(0, 2);
+                salida = enteroDec + ',' + decimales;
             } else {
-                salida = limpio.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                // Solo enteros: todos los puntos son miles
+                salida = grupoEntero(limpio.replace(/\D/g, ''));
             }
 
             input.value = salida;
@@ -132,6 +144,7 @@
                 input.setSelectionRange(0, 0);
                 return;
             }
+            // Reubica el cursor segun la cantidad de digitos que tenia a su espalda
             var nuevoCursor = 0;
             var vistos = 0;
             while (nuevoCursor < salida.length && vistos < digitosAntes) {
@@ -176,6 +189,17 @@
                     });
                 }
             });
+            // Stocks: SOLO digitos enteros (bloquea decimales, negativos y numeros infinitos)
+            ['edit_minimo', 'edit_maximo'].forEach(function(id) {
+                var input = document.getElementById(id);
+                if (input) {
+                    input.setAttribute('inputmode', 'numeric');
+                    input.addEventListener('input', function() {
+                        var limpio = this.value.replace(/\D/g, '').slice(0, 6);
+                        if (limpio !== this.value) this.value = limpio;
+                    });
+                }
+            });
         });
 
         // Valida los campos del formulario de edición y envía el formulario si son correctos.
@@ -193,16 +217,17 @@
             const pvp = document.getElementById('edit_pvp');
             const costo = document.getElementById('edit_costo');
             const proveedor = document.getElementById('edit_proveedor');
-            if (!minimo.value || parseInt(minimo.value) <= 0) {
-                marcarError(minimo, 'OBLIGATORIO (> 0)');
+            if (!/^\d{1,5}$/.test(minimo.value.trim()) || parseInt(minimo.value, 10) <= 0) {
+                marcarError(minimo, 'STOCK MÍNIMO: ENTERO ENTRE 1 Y 99.999');
                 if (!primerError) primerError = minimo;
             }
-            if (maximo && (maximo.value === '' || parseInt(maximo.value) < 0)) {
-                marcarError(maximo, 'MÍNIMO 0 (0 = heredar categoría)');
+            if (maximo && !/^\d{1,6}$/.test(maximo.value.trim())) {
+                marcarError(maximo, 'CAPACIDAD MÁXIMA: 0 (HEREDAR CATEGORÍA) O ENTERO HASTA 999.999');
                 if (!primerError) primerError = maximo;
             }
-            if (maximo && parseInt(maximo.value) > 0 && parseInt(maximo.value) < parseInt(minimo.value)) {
-                marcarError(maximo, 'DEBE SER ≥ STOCK MÍNIMO');
+            if (maximo && /^\d{1,6}$/.test(maximo.value.trim()) && parseInt(maximo.value, 10) > 0
+                && /^\d{1,5}$/.test(minimo.value.trim()) && parseInt(maximo.value, 10) < parseInt(minimo.value, 10)) {
+                marcarError(maximo, 'DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO');
                 if (!primerError) primerError = maximo;
             }
             if (!precioTieneFormatoValido(canonicoVenta)) {

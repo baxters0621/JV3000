@@ -68,8 +68,9 @@ class ProductosController extends Controller
             };
             $resultado = $modelo->editar([
                 'id_producto'     => (int)($_POST['id_producto'] ?? 0),
-                'stock_minimo'    => (int)($_POST['stock_minimo'] ?? 5),
-                'stock_maximo'    => (int)($_POST['stock_maximo'] ?? 0),
+                // Stocks crudos: el modelo valida que sean enteros puros en rango
+                'stock_minimo'    => trim((string)($_POST['stock_minimo'] ?? '')),
+                'stock_maximo'    => trim((string)($_POST['stock_maximo'] ?? '')),
                 'precio_venta'    => $parsePrice($_POST['precio_venta'] ?? 0),
                 'precio_costo'    => $parsePrice($_POST['precio_costo'] ?? 0),
                 'status'          => $_POST['status'] ?? 'Activo',
@@ -89,7 +90,7 @@ class ProductosController extends Controller
             'titulo'       => 'Inventario | JV3000 C.A.',
             'wrapper_class' => 'pagina-productos',
             'css_extra'    => ['modules/productos/productos.css?v=18'],
-            'js_extra'     => ['modules/productos/productos.js?v=11'],
+            'js_extra'     => ['modules/productos/productos.js?v=12'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,
             'esAdmin'      => $esAdmin,

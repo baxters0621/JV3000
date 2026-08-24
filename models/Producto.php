@@ -85,8 +85,13 @@ class Producto extends Model
         $idProveedor = (int)$datosProducto['id_proveedor'];
 
         if ($idProducto <= 0) return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO.'];
-        if ($stockMinimo <= 0) return ['ok' => false, 'mensaje' => 'STOCK MÍNIMO DEBE SER MAYOR A 0.'];
-        if ($stockMaximo < 0) return ['ok' => false, 'mensaje' => 'CAPACIDAD MÁXIMA NO PUEDE SER NEGATIVA.'];
+        // Stocks: enteros puros en rango (rechaza decimales, negativos y desbordes)
+        if (!preg_match('/^\d{1,5}$/', trim((string)$datosProducto['stock_minimo'])) || $stockMinimo <= 0) {
+            return ['ok' => false, 'mensaje' => 'STOCK MÍNIMO DEBE SER UN ENTERO ENTRE 1 Y 99.999.'];
+        }
+        if (!preg_match('/^\d{1,6}$/', trim((string)$datosProducto['stock_maximo']))) {
+            return ['ok' => false, 'mensaje' => 'CAPACIDAD MÁXIMA DEBE SER 0 (HEREDAR CATEGORÍA) O UN ENTERO HASTA 999.999.'];
+        }
         if ($stockMaximo > 0 && $stockMaximo < $stockMinimo) {
             return ['ok' => false, 'mensaje' => 'LA CAPACIDAD MÁXIMA DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO (O 0 PARA HEREDAR LA DE LA CATEGORÍA).'];
         }
