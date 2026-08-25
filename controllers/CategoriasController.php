@@ -83,7 +83,7 @@ class CategoriasController extends Controller
         $this->view('categorias/index', [
             'titulo'       => 'Categorías | JV3000 C.A.',
             'wrapper_class' => 'pagina-categorias',
-            'css_extra'    => ['modules/categorias/categorias.css?v=6'],
+            'css_extra'    => ['modules/categorias/categorias.css?v=7'],
             'js_extra'     => ['modules/categorias/categorias.js?v=5'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,

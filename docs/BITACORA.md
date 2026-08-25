@@ -286,6 +286,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 [2026-08-24 03:20] · Módulo: Dashboard · Cambio: Como las celdas ahora se truncan con puntos suspensivos, se pide ver el dato completo al pasar el mouse. Se extiende el tooltip nativo del dashboard (#tip-producto, clase producto-tooltip + data-nombre) a TODAS las celdas de las tres tarjetas — antes solo la primera columna (cliente/producto/proveedor) lo tenía: fecha, monto, stock y estado ahora muestran su valor completo al hover, tanto en las filas renderizadas por PHP como en las que refresca el AJAX (index.js sube a v=12). El handler ya era delegado, así que cubre filas nuevas sin código extra. · Archivos: dashboard/index.php, assets/dashboard/index.js, docs/BITACORA.md · Prueba: php -l OK; node --check OK en index.js; HTTP autenticado dashboard = 200 con index.js?v=12 y los data-nombre nuevos presentes en las tres tablas.
 
+[2026-08-24 03:30] · Módulo: Categorías · Cambio: Por feedback (la descripción forzaba la vista), se agrandan el nombre y la descripción de cada categoría en la tabla: nombre 1.05rem a 1.25rem y descripción .85rem a 1.02rem con interlineado 1.5 para lectura cómoda. CSS sube a v=7. Sin cambios de lógica ni JS. · Archivos: assets/modules/categorias/categorias.css, controllers/CategoriasController.php, docs/BITACORA.md · Prueba: php -l OK en vista y controlador; HTTP autenticado ?url=categorias = 200 sirviendo categorias.css?v=7 con los nuevos tamaños.
+
 ---
 
 ## Plantilla para futuras entradas

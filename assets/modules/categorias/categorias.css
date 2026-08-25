@@ -33,8 +33,8 @@
         .table-jv tbody tr:hover td:first-child { border-left-color: #93c5fd; }
         .table-jv tbody td:first-child { border-left: 3px solid transparent; transition: border-color 0.2s ease; }
         /* Nombre categoria */
-        .cat-nombre { font-size: 1.05rem; font-weight: 800; color: var(--jv-navy); }
-        .cat-desc { font-size: .85rem; color: var(--jv-text-secondary); }
+        .cat-nombre { font-size: 1.25rem; font-weight: 800; color: var(--jv-navy); }
+        .cat-desc { font-size: 1.02rem; line-height: 1.5; color: var(--jv-text-secondary); }
         /* Botones accion grandes */
         .btn-action { transition: all 0.2s ease; border-radius: 10px; min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
         .btn-action i { font-size: 1.1rem !important; }
