@@ -46,51 +46,6 @@
         }
         .cat-desc { font-size: 1.02rem; line-height: 1.5; color: var(--jv-text-secondary); }
 
-        /* ── Modal de plantillas: tarjeta seleccionable ── */
-        .plantilla-card {
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-            background: var(--jv-bg-primary);
-            border: 2px solid var(--jv-border);
-            border-radius: 12px;
-            padding: 16px 18px;
-            margin-bottom: 14px;
-            cursor: pointer;
-            transition: all .2s ease;
-        }
-        .plantilla-card:hover { border-color: var(--jv-orange); background: rgba(234,88,12,0.04); }
-        .plantilla-card:has(.plantilla-radio:checked) {
-            border-color: var(--jv-orange);
-            background: rgba(234,88,12,0.06);
-            box-shadow: 0 0 0 3px rgba(234,88,12,0.12);
-        }
-        .plantilla-radio { width: 20px; height: 20px; margin-top: 4px; accent-color: var(--jv-orange); cursor: pointer; }
-        .plantilla-conteo {
-            background: rgba(234,88,12,0.12);
-            color: var(--jv-orange-dark);
-            border-radius: 20px;
-            padding: 2px 12px;
-            font-size: .78rem;
-            font-weight: 700;
-            margin-left: 8px;
-        }
-
-        /* Badges ABC dentro del preview de la plantilla */
-        .plantilla-abc {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            font-weight: 800;
-            font-size: .85rem;
-        }
-        .plantilla-abc-a { background: rgba(22,163,74,0.15); color: #15803D; }
-        .plantilla-abc-b { background: rgba(217,119,6,0.15); color: #B45309; }
-        .plantilla-abc-c { background: rgba(100,116,139,0.15); color: #475569; }
-        .plantilla-abc-n { background: rgba(100,116,139,0.1); color: var(--jv-text-muted); }
         /* Botones accion grandes */
         .btn-action { transition: all 0.2s ease; border-radius: 10px; min-width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; }
         .btn-action i { font-size: 1.1rem !important; }

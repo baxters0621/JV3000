@@ -168,61 +168,6 @@ class Categoria extends Model
     }
 
     /**
-     * Carga en bloque una plantilla de rubro (categorías con reglas).
-     *
-     * Recibe las categorías normalizadas de la plantilla y las inserta
-     * dentro de UNA transacción: las que ya existen (por nombre) se omiten
-     * sin duplicar, las nuevas obtienen su código CAT-XXX correlativo y
-     * sus reglas (ABC, manejo, stocks). Devuelve un resumen del resultado.
-     *
-     * @param array $items Categorías de la plantilla: nombre, descripcion,
-     *                     abc, manejo, stock_min, stock_max.
-     * @return array ['ok'=>bool, 'mensaje'=>string].
-     */
-    public function cargarPlantilla(array $items): array
-    {
-        if (empty($items)) {
-            return ['ok' => false, 'mensaje' => 'LA PLANTILLA NO TIENE CATEGORÍAS.'];
-        }
-
-        $this->db->begin();
-        try {
-            $creadas = 0;
-            $omitidas = 0;
-            foreach ($items as $item) {
-                $nombre = mb_strtoupper(trim((string)($item['nombre'] ?? '')));
-                if ($nombre === '') { $omitidas++; continue; }
-
-                // Omitir sin duplicar: si el nombre ya existe, no se toca
-                $duplicado = $this->db->fetchOne("SELECT id_categoria FROM categorias WHERE LOWER(nombre) = LOWER(?)", [$nombre]);
-                if ($duplicado) { $omitidas++; continue; }
-
-                $abc = strtoupper(trim((string)($item['abc'] ?? '')));
-                if (!in_array($abc, ['A', 'B', 'C', ''])) $abc = '';
-                $manejo = in_array($item['manejo'] ?? '', ['normal', 'inflamable', 'liquido', 'peligroso', 'voluminoso', 'aerosol']) ? $item['manejo'] : 'normal';
-
-                $this->db->insert('categorias', [
-                    'nombre'            => $nombre,
-                    'codigo'            => $this->siguienteCodigo(),
-                    'descripcion'       => trim((string)($item['descripcion'] ?? '')),
-                    'clasificacion_abc' => $abc,
-                    'tipo_manejo'       => $manejo,
-                    'stock_minimo'      => max(0, (int)($item['stock_min'] ?? 5)),
-                    'stock_maximo'      => max(0, (int)($item['stock_max'] ?? 0)),
-                    'status'            => 'Activo',
-                ]);
-                $creadas++;
-            }
-            $this->db->commit();
-            registrarAuditoria('crear', "Plantilla de rubro cargada: {$creadas} categorías creadas, {$omitidas} ya existían");
-            return ['ok' => true, 'mensaje' => "PLANTILLA CARGADA: {$creadas} CATEGORÍAS CREADAS, {$omitidas} YA EXISTÍAN."];
-        } catch (Exception $e) {
-            $this->db->rollback();
-            return ['ok' => false, 'mensaje' => 'ERROR EN LA BASE DE DATOS AL CARGAR LA PLANTILLA.'];
-        }
-    }
-
-    /**
      * Asigna CAT-XXX a categorías cuyo código quedó nulo o vacío.
      *
      * Operación de reparación invocada como side-effect en GET: recorre las
