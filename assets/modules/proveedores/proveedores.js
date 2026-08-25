@@ -295,7 +295,7 @@
                 html: `Se quitará <strong>${escapeHtml(nombreProducto)}</strong> del catálogo de este proveedor.`,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#DB2777',
+                confirmButtonColor: '#EA580C',
                 cancelButtonColor: '#CED4DA',
                 confirmButtonText: 'Sí, quitar',
                 cancelButtonText: 'Cancelar',

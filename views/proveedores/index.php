@@ -50,7 +50,7 @@
 <div class="row g-3 mb-4">
     <div class="col-md-6">
         <div class="widget-card">
-            <div class="widget-icon" style="background:rgba(219,39,119,0.12);color:var(--jv-prov,#DB2777);">
+            <div class="widget-icon" style="background:rgba(234,88,12,0.12);color:var(--jv-orange);">
                 <i class="bi bi-building"></i>
             </div>
             <div>
@@ -177,55 +177,70 @@
                 <input type="hidden" name="accion_proveedor" id="p_accion" value="registrar">
                 <input type="hidden" name="id_proveedor" id="p_id_edit">
                 <div class="modal-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-bolder font-brand m-0" id="modalTitle" style="color:var(--jv-navy);font-size:1.3rem;letter-spacing:-.5px;">REGISTRAR PROVEEDOR</h5>
+                    <div class="modal-header-jv">
+                        <div>
+                            <h5 class="font-brand" id="modalTitle"><i class="bi bi-building me-2"></i>REGISTRAR PROVEEDOR</h5>
+                            <small>Datos fiscales, contacto y condiciones comerciales</small>
+                        </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="section-bg">
-                        <div class="section-label"><i class="bi bi-building"></i> Información Fiscal</div>
+                    <div class="section-bg sec-fiscal">
+                        <div class="section-label">
+                            <span class="section-chip chip-fiscal"><i class="bi bi-file-earmark-text"></i></span>
+                            Información Fiscal
+                            <span class="section-ayuda">Datos legales de la empresa</span>
+                        </div>
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
-                                <label for="p_rif" class="small fw-bold text-secondary mb-2">RIF</label>
+                                <label for="p_rif" class="small fw-bold text-secondary mb-2">RIF *</label>
                                 <input type="text" name="rif" id="p_rif" class="input-jv" required placeholder="Ej: J-12345678-0" maxlength="13" pattern="[VEJGPC]-\d{8}-\d" title="Formato: J-12345678-0">
                                 <small style="color:var(--jv-text-secondary);font-size:.7rem;display:block;margin-top:4px;">Formato: J-12345678-0</small>
                             </div>
                             <div class="col-md-8">
-                                <label for="p_empresa" class="small fw-bold text-secondary mb-2">NOMBRE EMPRESA</label>
+                                <label for="p_empresa" class="small fw-bold text-secondary mb-2">NOMBRE EMPRESA *</label>
                                 <input type="text" name="nombre_empresa" id="p_empresa" class="input-jv text-uppercase" required placeholder="Nombre legal de la empresa" oninput="this.value = this.value.toUpperCase()">
                             </div>
                         </div>
                         <div class="mt-3 mb-0">
-                            <label for="p_direccion" class="small fw-bold text-secondary mb-2">DIRECCIÓN</label>
+                            <label for="p_direccion" class="small fw-bold text-secondary mb-2">DIRECCIÓN FISCAL</label>
                             <textarea name="direccion" id="p_direccion" class="input-jv" rows="2" placeholder="Dirección fiscal"></textarea>
                         </div>
                     </div>
 
-                    <div class="section-bg">
-                        <div class="section-label"><i class="bi bi-person-lines-fill"></i> Contacto</div>
+                    <div class="section-bg sec-contacto">
+                        <div class="section-label">
+                            <span class="section-chip chip-contacto"><i class="bi bi-person-lines-fill"></i></span>
+                            Contacto
+                            <span class="section-ayuda">¿Con quién hablamos?</span>
+                        </div>
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
-                                <label for="p_tel" class="small fw-bold text-secondary mb-2">TELÉFONO</label>
+                                <label for="p_tel" class="small fw-bold text-secondary mb-2">TELÉFONO *</label>
                                 <input type="tel" name="telefono" id="p_tel" class="input-jv" required>
                                 <input type="hidden" name="telefono_completo" id="p_tel_full">
                             </div>
                             <div class="col-md-4">
-                                <label for="p_contacto_nombre" class="small fw-bold text-secondary mb-2">CONTACTO NOMBRE</label>
+                                <label for="p_contacto_nombre" class="small fw-bold text-secondary mb-2">PERSONA DE CONTACTO</label>
                                 <input type="text" name="contacto_nombre" id="p_contacto_nombre" class="input-jv" placeholder="Nombre del contacto">
                             </div>
                             <div class="col-md-4">
-                                <label for="p_email" class="small fw-bold text-secondary mb-2">EMAIL</label>
+                                <label for="p_email" class="small fw-bold text-secondary mb-2">CORREO ELECTRÓNICO</label>
                                 <input type="email" name="email" id="p_email" class="input-jv" placeholder="correo@ejemplo.com">
                             </div>
                         </div>
                     </div>
 
-                    <div class="section-bg mb-4">
-                        <div class="section-label"><i class="bi bi-gear"></i> Condiciones Comerciales</div>
+                    <div class="section-bg sec-comercial mb-4">
+                        <div class="section-label">
+                            <span class="section-chip chip-comercial"><i class="bi bi-gear"></i></span>
+                            Condiciones Comerciales
+                            <span class="section-ayuda">Entregas y moneda de trabajo</span>
+                        </div>
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
                                 <label for="p_lead_time" class="small fw-bold text-secondary mb-2">PLAZO DE ENTREGA (DÍAS)</label>
-                                <input type="number" name="lead_time" id="p_lead_time" class="input-jv" placeholder="Días" min="0" max="365">
+                                <input type="number" name="lead_time" id="p_lead_time" class="input-jv" placeholder="Ej: 7" min="0" max="365">
                             </div>
                             <div class="col-md-4">
                                 <label for="p_moneda" class="small fw-bold text-secondary mb-2">MONEDA</label>
@@ -238,8 +253,8 @@
                             <div class="col-md-4">
                                 <label for="p_status" class="small fw-bold text-secondary mb-2">ESTADO</label>
                                 <select name="status" id="p_status" class="input-jv">
-                                    <option value="Activo">Activo</option>
-                                    <option value="Inactivo">Inactivo</option>
+                                    <option value="Activo">Activo — puede venderme</option>
+                                    <option value="Inactivo">Inactivo — pausado</option>
                                 </select>
                             </div>
                         </div>
@@ -265,15 +280,20 @@
                 <input type="hidden" name="accion_catalogo" id="cat_accion" value="registrar">
                 <input type="hidden" name="id_catalogo" id="cat_id_edit">
                 <div class="modal-body p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <h5 class="fw-bolder font-brand m-0" style="color:var(--jv-navy);font-size:1.25rem;">
-                            <i class="bi bi-box-seam me-2"></i><span id="catTitulo">AGREGAR PRODUCTO</span>
-                        </h5>
+                    <div class="modal-header-jv">
+                        <div>
+                            <h5 class="font-brand"><i class="bi bi-box-seam me-2"></i><span id="catTitulo">AGREGAR PRODUCTO</span></h5>
+                            <small id="catSubtitulo"></small>
+                        </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <p class="mb-4" style="color:var(--jv-text-muted);font-size:.85rem;" id="catSubtitulo"></p>
 
-                    <div class="section-bg mb-4">
+                    <div class="section-bg sec-comercial mb-4">
+                        <div class="section-label">
+                            <span class="section-chip chip-comercial"><i class="bi bi-tag"></i></span>
+                            Datos del producto
+                            <span class="section-ayuda">Costo con el que este proveedor te lo vende</span>
+                        </div>
                         <div class="row g-3 mb-0">
                             <div class="col-12">
                                 <label for="cat_proveedor_nombre" class="small fw-bold text-secondary mb-2">PROVEEDOR</label>
