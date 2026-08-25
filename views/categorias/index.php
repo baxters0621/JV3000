@@ -67,9 +67,6 @@
                                 <!-- data-tooltip: muestra el nombre completo al pasar el mouse
                                      (lo maneja assets/js/tooltips.js, global). -->
                                 <span class="cat-nombre text-uppercase" data-tooltip="<?php echo htmlspecialchars($category['nombre']); ?>"><?php echo htmlspecialchars($category['nombre']); ?></span>
-                                <?php if ($category['descripcion']): ?>
-                                    <span class="cat-desc"><?php echo htmlspecialchars($category['descripcion']); ?></span>
-                                <?php endif; ?>
                             </td>
                             <td>
                                 <span class="codigo-badge"><?php echo htmlspecialchars($category['codigo'] ?? '—'); ?></span>
