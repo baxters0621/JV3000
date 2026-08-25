@@ -210,62 +210,74 @@
 <!-- Crea en bloque un conjunto completo de categorías con sus reglas
      (ABC, manejo, stocks). Las que ya existan se omiten sin duplicar. -->
 <div class="modal fade" id="modalPlantillas" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content-jv modal-content">
             <form method="POST" id="formPlantilla" action="">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="cargar_plantilla" value="1">
-                <div class="modal-header">
-                    <h5 class="fw-bold mb-0 font-brand" style="color: var(--jv-navy); font-size: 1.3rem;">
-                        <i class="bi bi-collection me-2"></i>CARGAR PLANTILLA DE RUBRO
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header" style="background: linear-gradient(135deg, #0F1A2E, #1E2A3E); border-bottom: 4px solid var(--jv-orange);">
+                    <div>
+                        <h5 class="fw-bold mb-0 font-brand text-white" style="font-size: 1.4rem;">
+                            <i class="bi bi-collection me-2"></i>CARGAR PLANTILLA DE RUBRO
+                        </h5>
+                        <span style="color: rgba(255,255,255,0.7); font-size: .9rem;">Configura tu cat&aacute;logo completo en un solo paso</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: brightness(0) invert(1);"></button>
                 </div>
                 <div class="modal-body p-4">
-                    <p style="color: var(--jv-text-secondary); font-size: 1rem;">
-                        Crea de una sola vez un conjunto completo de categorías con sus reglas
-                        (clasificaci&oacute;n ABC, tipo de manejo y stocks). Las que ya existan
-                        <strong>no se duplican</strong>.
-                    </p>
-                    <?php foreach ($plantillas as $clave => $plantilla): ?>
-                        <div class="section-bg">
-                            <div class="form-check" style="margin:0;">
-                                <input class="form-check-input" type="radio" name="plantilla" id="plantilla_<?php echo $clave; ?>" value="<?php echo $clave; ?>" required>
-                                <label class="form-check-label fw-bolder" for="plantilla_<?php echo $clave; ?>" style="color: var(--jv-navy); font-size: 1.1rem; cursor: pointer;">
-                                    <?php echo htmlspecialchars($plantilla['nombre']); ?>
-                                    <span style="color: var(--jv-text-muted); font-weight: 600; font-size: .85rem;">(<?php echo count($plantilla['categorias']); ?> categor&iacute;as)</span>
-                                </label>
-                            </div>
-                            <p class="mb-2 mt-1" style="color: var(--jv-text-secondary); font-size: .92rem;"><?php echo htmlspecialchars($plantilla['descripcion']); ?></p>
-                            <div style="max-height: 180px; overflow-y: auto; border: 1px solid var(--jv-border); border-radius: 8px; background: #fff;">
-                                <table class="table table-sm mb-0" style="font-size: .85rem;">
-                                    <thead>
-                                        <tr style="color: var(--jv-text-muted);">
-                                            <th style="padding: 6px 10px;">CATEGOR&Iacute;A</th>
-                                            <th style="padding: 6px 10px; text-align: center;">ABC</th>
-                                            <th style="padding: 6px 10px;">MANEJO</th>
-                                            <th style="padding: 6px 10px; text-align: center;">M&Iacute;N/M&Aacute;X</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($plantilla['categorias'] as $catPlantilla): ?>
-                                            <tr>
-                                                <td style="padding: 5px 10px;" class="fw-bold text-uppercase"><?php echo htmlspecialchars($catPlantilla['nombre']); ?></td>
-                                                <td style="padding: 5px 10px; text-align: center;"><?php echo $catPlantilla['abc'] ?: '-'; ?></td>
-                                                <td style="padding: 5px 10px;"><?php echo ucfirst($catPlantilla['manejo']); ?></td>
-                                                <td style="padding: 5px 10px; text-align: center;"><?php echo $catPlantilla['stock_min']; ?>/<?php echo $catPlantilla['stock_max']; ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                    <!-- Banner didactico: explica que es un rubro y que hace esta herramienta -->
+                    <div style="background: rgba(37,99,235,0.07); border: 1px solid rgba(37,99,235,0.25); border-left: 5px solid var(--jv-info); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px;">
+                        <div class="fw-bold" style="color: #1E40AF; font-size: 1rem; margin-bottom: 4px;">
+                            <i class="bi bi-lightbulb me-1"></i>&iquest;Qu&eacute; es un rubro?
                         </div>
+                        <div style="color: var(--jv-text-secondary); font-size: .95rem; line-height: 1.6;">
+                            Es el <strong>conjunto completo de categor&iacute;as que necesita un tipo de negocio</strong>
+                            (ej. una tienda automotriz). Al cargar la plantilla se crean todas de una vez,
+                            ya configuradas con su clasificaci&oacute;n ABC, tipo de manejo y stocks por defecto.
+                            Las que ya existan <strong>no se duplican</strong> — solo se agregan las faltantes.
+                        </div>
+                    </div>
+                    <?php foreach ($plantillas as $clave => $plantilla): ?>
+                        <label class="plantilla-card" for="plantilla_<?php echo $clave; ?>">
+                            <input class="form-check-input plantilla-radio" type="radio" name="plantilla" id="plantilla_<?php echo $clave; ?>" value="<?php echo $clave; ?>" required>
+                            <div class="flex-grow-1">
+                                <div class="fw-bolder" style="color: var(--jv-navy); font-size: 1.15rem;">
+                                    <?php echo htmlspecialchars($plantilla['nombre']); ?>
+                                    <span class="plantilla-conteo"><?php echo count($plantilla['categorias']); ?> categor&iacute;as</span>
+                                </div>
+                                <div style="color: var(--jv-text-secondary); font-size: .95rem; margin: 2px 0 10px;"><?php echo htmlspecialchars($plantilla['descripcion']); ?></div>
+                                <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--jv-border); border-radius: 8px; background: #fff;">
+                                    <table class="table table-sm mb-0" style="font-size: .88rem;">
+                                        <thead>
+                                            <tr style="color: var(--jv-text-muted); position: sticky; top: 0; background: #fff;">
+                                                <th style="padding: 8px 12px;">CATEGOR&Iacute;A</th>
+                                                <th style="padding: 8px 12px; text-align: center;">ABC</th>
+                                                <th style="padding: 8px 12px;">MANEJO</th>
+                                                <th style="padding: 8px 12px; text-align: center;">STOCK M&Iacute;N/M&Aacute;X</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($plantilla['categorias'] as $catPlantilla): ?>
+                                                <tr>
+                                                    <td style="padding: 7px 12px;" class="fw-bold text-uppercase"><?php echo htmlspecialchars($catPlantilla['nombre']); ?></td>
+                                                    <td style="padding: 7px 12px; text-align: center;">
+                                                        <span class="plantilla-abc plantilla-abc-<?php echo strtolower($catPlantilla['abc'] ?: 'n'); ?>"><?php echo $catPlantilla['abc'] ?: '-'; ?></span>
+                                                    </td>
+                                                    <td style="padding: 7px 12px;"><?php echo ucfirst($catPlantilla['manejo']); ?></td>
+                                                    <td style="padding: 7px 12px; text-align: center;"><?php echo $catPlantilla['stock_min']; ?>/<?php echo $catPlantilla['stock_max']; ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </label>
                     <?php endforeach; ?>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn-jv-secondary" style="padding: 12px 28px; font-size: 1rem;" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn-jv-primary module-action-btn" onclick="return confirmarPlantilla(this)">
-                        <i class="bi bi-cloud-download me-1"></i> CARGAR
+                        <i class="bi bi-cloud-download me-1"></i> CARGAR CATEGOR&Iacute;AS
                     </button>
                 </div>
             </form>
