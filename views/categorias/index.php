@@ -52,8 +52,8 @@
         <table class="table-jv mb-0">
             <thead>
                 <tr>
-                    <th style="width: 28%;">NOMBRE</th>
-                    <th style="width: 14%;">CÓDIGO</th>
+                    <th style="width: 16%;">NOMBRE</th>
+                    <th style="width: 13%;">CÓDIGO</th>
                     <th style="width: 8%;" class="text-center">ABC</th>
                     <th style="width: 13%;" class="text-center">MANEJO</th>
                     <th style="width: 12%;" class="text-center">ESTADO</th>

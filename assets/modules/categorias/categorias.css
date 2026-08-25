@@ -33,7 +33,17 @@
         .table-jv tbody tr:hover td:first-child { border-left-color: #93c5fd; }
         .table-jv tbody td:first-child { border-left: 3px solid transparent; transition: border-color 0.2s ease; }
         /* Nombre categoria */
-        .cat-nombre { font-size: 1.25rem; font-weight: 800; color: var(--jv-navy); }
+        /* Nombre truncado a una linea: el tooltip [data-tooltip] muestra el completo */
+        .cat-nombre {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--jv-navy);
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         .cat-desc { font-size: 1.02rem; line-height: 1.5; color: var(--jv-text-secondary); }
 
         /* ── Modal de plantillas: tarjeta seleccionable ── */
