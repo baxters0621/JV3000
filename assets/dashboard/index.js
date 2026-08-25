@@ -14,7 +14,7 @@
                             if ($id('tabla-facturas')) {
                                 let htmlFacturas = '';
                                 data.ultimas_facturas.forEach(f => {
-                                    htmlFacturas += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(f.cliente)}">${escapeHtml(f.cliente)}</td><td>${f.fecha}</td><td class="monto">$${f.total}</td></tr>`;
+                                    htmlFacturas += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(f.cliente)}">${escapeHtml(f.cliente)}</td><td class="producto-tooltip" data-nombre="${escapeHtml(f.fecha)}">${f.fecha}</td><td class="monto producto-tooltip" data-nombre="$${f.total}">$${f.total}</td></tr>`;
                                 });
                                 $id('tabla-facturas').innerHTML = htmlFacturas || '<tr><td colspan="3" class="vacio">Sin ventas registradas</td></tr>';
                             }
@@ -23,7 +23,7 @@
                                 let htmlCriticos = '';
                                 data.tabla_criticos.forEach(c => {
                                     let badge = c.estado === 'critico' ? 'Crítico' : 'Bajo';
-                                    htmlCriticos += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(c.producto)}">${escapeHtml(c.producto)}</td><td>${c.stock}</td><td><span class="stock-badge ${c.estado}">${badge}</span></td></tr>`;
+                                    htmlCriticos += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(c.producto)}">${escapeHtml(c.producto)}</td><td class="producto-tooltip" data-nombre="Stock: ${c.stock}">${c.stock}</td><td class="producto-tooltip" data-nombre="Estado: ${badge}"><span class="stock-badge ${c.estado}">${badge}</span></td></tr>`;
                                 });
                                 $id('tabla-criticos').innerHTML = htmlCriticos || '<tr><td colspan="3" class="vacio">Sin productos críticos</td></tr>';
                             }
@@ -31,7 +31,7 @@
                             if ($id('tabla-compras')) {
                                 let htmlCompras = '';
                                 (data.tabla_compras || []).forEach(c => {
-                                    htmlCompras += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(c.proveedor)}">${escapeHtml(c.proveedor)}</td><td>${c.fecha}</td><td class="monto">$${c.total}</td></tr>`;
+                                    htmlCompras += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(c.proveedor)}">${escapeHtml(c.proveedor)}</td><td class="producto-tooltip" data-nombre="${escapeHtml(c.fecha)}">${c.fecha}</td><td class="monto producto-tooltip" data-nombre="$${c.total}">$${c.total}</td></tr>`;
                                 });
                                 $id('tabla-compras').innerHTML = htmlCompras || '<tr><td colspan="3" class="vacio">Sin compras registradas</td></tr>';
                             }

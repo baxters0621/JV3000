@@ -104,7 +104,7 @@ $tabla_compras = $datos['tabla_compras'];
     <title>Panel de Inicio | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
 
-    <link rel="stylesheet" href="../assets/dashboard/index.css?v=27">
+    <link rel="stylesheet" href="../assets/dashboard/index.css?v=28">
 </head>
 
 <?php
@@ -253,8 +253,8 @@ $tabla_compras = $datos['tabla_compras'];
                                         <?php foreach ($ultimas_facturas as $f): ?>
                                             <tr>
                                                 <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($f['cliente'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($f['cliente']); ?></td>
-                                                <td><?php echo $f['fecha']; ?></td>
-                                                <td class="monto">$<?php echo $f['total']; ?></td>
+                                                <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($f['fecha'], ENT_QUOTES); ?>"><?php echo $f['fecha']; ?></td>
+                                                <td class="monto producto-tooltip" data-nombre="$<?php echo $f['total']; ?>">$<?php echo $f['total']; ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
@@ -284,8 +284,8 @@ $tabla_compras = $datos['tabla_compras'];
                                         <?php foreach ($tabla_criticos as $c): ?>
                                             <tr>
                                                 <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($c['producto'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($c['producto']); ?></td>
-                                                <td><?php echo $c['stock']; ?></td>
-                                                <td><span class="stock-badge <?php echo $c['estado']; ?>"><?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?></span></td>
+                                                <td class="producto-tooltip" data-nombre="Stock: <?php echo $c['stock']; ?>"><?php echo $c['stock']; ?></td>
+                                                <td class="producto-tooltip" data-nombre="Estado: <?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?>"><span class="stock-badge <?php echo $c['estado']; ?>"><?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?></span></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
@@ -313,8 +313,8 @@ $tabla_compras = $datos['tabla_compras'];
                                         <?php foreach ($tabla_compras as $co): ?>
                                             <tr>
                                                 <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($co['proveedor'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($co['proveedor']); ?></td>
-                                                <td><?php echo $co['fecha']; ?></td>
-                                                <td class="monto">$<?php echo $co['total']; ?></td>
+                                                <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($co['fecha'], ENT_QUOTES); ?>"><?php echo $co['fecha']; ?></td>
+                                                <td class="monto producto-tooltip" data-nombre="$<?php echo $co['total']; ?>">$<?php echo $co['total']; ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
@@ -337,7 +337,7 @@ $tabla_compras = $datos['tabla_compras'];
     // ========================================== 
     ?>
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/dashboard/index.js?v=11"></script>
+    <script src="../assets/dashboard/index.js?v=12"></script>
 </body>
 
 </html>
