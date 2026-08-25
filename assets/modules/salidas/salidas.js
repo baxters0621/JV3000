@@ -704,9 +704,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.flash-auto').forEach(el => {
-                setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 4000);
-            });
+            // (El auto-cierre de mensajes flash lo maneja diseno.js globalmente.)
 
             document.querySelectorAll('#formSalida input, #formSalida select, #formSalida textarea').forEach(function(el) {
                 el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id+'_err'); if(e) e.remove(); });

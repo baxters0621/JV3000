@@ -126,3 +126,26 @@ function marcarError(inputElement, errorMessage) {
         errorElement.textContent = errorMessage;
     }
 }
+
+// ==========================================
+// MENSAJES FLASH AUTO-CERRABLES
+// ==========================================
+// Cualquier .flash-auto se cierra solo a los 4 segundos, sincronizado con la
+// barra de tiempo que dibuja el CSS (::after con animación jvFlashBarra).
+(function() {
+    function jvAutoCerrarAlertas() {
+        document.querySelectorAll('.flash-auto').forEach(function(alerta) {
+            if (alerta.dataset.flashListo) return;
+            alerta.dataset.flashListo = '1';
+            window.setTimeout(function() {
+                alerta.classList.add('jv-flash-out');
+                window.setTimeout(function() { alerta.remove(); }, 500);
+            }, 4000);
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', jvAutoCerrarAlertas);
+    } else {
+        jvAutoCerrarAlertas();
+    }
+})();

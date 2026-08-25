@@ -32,7 +32,7 @@
 <!-- Los mensajes flash son avisos de una sola vez (ej: "CATEGORÍA REGISTRADA").
      Vienen en $flash como ['tipo' => success|danger, 'texto' => ...]. -->
 <?php if ($flash): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> mb-3 px-3 py-2">
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3 px-3 py-2">
         <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
         <?php echo htmlspecialchars($flash['texto']); ?>
     </div>
@@ -68,7 +68,7 @@
                                      (lo maneja assets/js/tooltips.js, global). -->
                                 <span class="cat-nombre text-uppercase" data-tooltip="<?php echo htmlspecialchars($category['nombre']); ?>"><?php echo htmlspecialchars($category['nombre']); ?></span>
                                 <?php if ($category['descripcion']): ?>
-                                    <br><span class="cat-desc"><?php echo htmlspecialchars($category['descripcion']); ?></span>
+                                    <span class="cat-desc"><?php echo htmlspecialchars($category['descripcion']); ?></span>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -92,18 +92,18 @@
                             </td>
                             <td class="text-center">
                                 <!-- Editar: llena el modal con los datos de la fila (JS editarCat). -->
-                                <button class="btn-action btn-action-edit btn btn-sm border-0 me-1" onclick="editarCat(<?php echo htmlspecialchars(json_encode($category, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Editar">
+                                <button class="btn-action btn-action-edit btn btn-sm border-0 me-1" onclick="editarCat(<?php echo htmlspecialchars(json_encode($category, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" data-tooltip="Editar">
                                     <i class="bi bi-pencil-square" style="color: var(--jv-orange); font-size: 0.85rem;"></i>
                                 </button>
                                 <span class="actions-divider"></span>
                                 <!-- Activar/Desactivar: pregunta con SweetAlert y hace un POST
                                      con jvPost (ver JS confirmarToggle). -->
                                 <?php if ($category['status'] == 'Activo'): ?>
-                                    <button class="btn-action btn-action-toggle btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo (int)$category['id_categoria']; ?>, <?php echo htmlspecialchars(json_encode($category['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" title="Desactivar">
+                                    <button class="btn-action btn-action-toggle btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo (int)$category['id_categoria']; ?>, <?php echo htmlspecialchars(json_encode($category['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" data-tooltip="Desactivar">
                                         <i class="bi bi-eye-slash-fill" style="color: var(--jv-warning); font-size: 0.85rem;"></i>
                                     </button>
                                 <?php else: ?>
-                                    <button class="btn-action btn-action-reactivate btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo (int)$category['id_categoria']; ?>, <?php echo htmlspecialchars(json_encode($category['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" title="Activar">
+                                    <button class="btn-action btn-action-reactivate btn btn-sm border-0 ms-1" onclick="confirmarToggle(<?php echo (int)$category['id_categoria']; ?>, <?php echo htmlspecialchars(json_encode($category['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" data-tooltip="Activar">
                                         <i class="bi bi-eye-fill" style="color: var(--jv-success); font-size: 0.85rem;"></i>
                                     </button>
                                 <?php endif; ?>

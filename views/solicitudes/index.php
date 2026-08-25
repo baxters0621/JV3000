@@ -108,7 +108,7 @@
                                     <a class="btn-atender" href="<?php echo APP_URL_BASE; ?>index.php?url=compras&atender_solicitud=<?php echo (int)$pendingRequest['id_solicitud']; ?>">
                                         <i class="bi bi-check-lg me-1"></i>ATENDER
                                     </a>
-                                    <button type="button" class="btn-cancelar" onclick="confirmarCancelar(<?php echo (int)$pendingRequest['id_solicitud']; ?>)" title="Cancelar"><i class="bi bi-x-lg"></i></button>
+                                    <button type="button" class="btn-cancelar" onclick="confirmarCancelar(<?php echo (int)$pendingRequest['id_solicitud']; ?>)" data-tooltip="Cancelar"><i class="bi bi-x-lg"></i></button>
                                 </div>
                             </td>
                         </tr>

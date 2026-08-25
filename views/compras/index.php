@@ -141,7 +141,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
                             <td class="text-center">
                                 <?php if ($es_admin): ?>
-                                    <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)"><i class="bi bi-trash"></i></button>
+                                    <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="Anular compra"><i class="bi bi-trash"></i></button>
                                 <?php endif; ?>
                             </td>
                         </tr>

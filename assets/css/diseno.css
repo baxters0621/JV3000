@@ -318,6 +318,72 @@ select.input-jv { appearance: auto; cursor: pointer; }
     border: 1px solid;
     font-weight: 600;
     font-size: 0.85rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(15, 26, 46, 0.08);
+}
+
+/* Mensaje flash auto-cerrable: animación de entrada + barra de tiempo */
+.flash-auto {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 14px;
+    padding: 14px 20px;
+    animation: jvFlashIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+}
+.flash-auto::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+    background: currentColor;
+    opacity: 0.35;
+    transform-origin: left;
+    animation: jvFlashBarra 4s linear forwards;
+}
+@keyframes jvFlashIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes jvFlashBarra {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+.flash-auto.jv-flash-out {
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+/* ==========================================
+   TOOLTIP GLOBAL ([data-tooltip])
+   ==========================================
+   Cualquier elemento con data-tooltip muestra su texto al pasar el mouse.
+   La lógica vive en js/tooltips.js (cargado en todas las páginas). */
+.jv-tooltip {
+    position: fixed;
+    z-index: 2000;
+    max-width: 320px;
+    background: var(--jv-navy);
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 7px 12px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity .15s ease, transform .15s ease;
+    white-space: normal;
+}
+.jv-tooltip.jv-tooltip-visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .alert-jv-success {

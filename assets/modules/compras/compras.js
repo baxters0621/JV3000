@@ -395,13 +395,7 @@
         // INICIALIZACIÓN
         // ==========================================
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.flash-auto').forEach(el => {
-                setTimeout(() => {
-                    el.style.transition = 'opacity .5s';
-                    el.style.opacity = '0';
-                    setTimeout(() => el.remove(), 500);
-                }, 4000);
-            });
+            // (El auto-cierre de mensajes flash lo maneja diseno.js globalmente.)
 
             // Prefill desde una solicitud de compra (atender_solicitud)
             if (window.COMPRAS_SOLICITUD && window.COMPRAS_SOLICITUD.items && window.COMPRAS_SOLICITUD.items.length) {

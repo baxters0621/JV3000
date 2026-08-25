@@ -85,11 +85,11 @@
                         </div>
                         <!-- Acciones agrupadas a la derecha para que no queden dispersas en la cabecera -->
                         <div class="d-flex align-items-center gap-2">
-                            <button class="btn-action" onclick="editarProveedor(<?php echo htmlspecialchars(json_encode($proveedor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="Editar">
+                            <button class="btn-action" onclick="editarProveedor(<?php echo htmlspecialchars(json_encode($proveedor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" data-tooltip="Editar">
                                 <i class="bi bi-pencil-square"></i>
                             </button>
                             <?php if ($esAdmin): ?>
-                                <button class="btn-action" onclick="toggleStatusProveedor(<?php echo (int)$proveedor['id_proveedor']; ?>, <?php echo htmlspecialchars(json_encode($proveedor['nombre_empresa'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($proveedor['status'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" title="<?php echo $proveedor['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
+                                <button class="btn-action" onclick="toggleStatusProveedor(<?php echo (int)$proveedor['id_proveedor']; ?>, <?php echo htmlspecialchars(json_encode($proveedor['nombre_empresa'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, <?php echo htmlspecialchars(json_encode($proveedor['status'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" data-tooltip="<?php echo $proveedor['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
                                     <i class="bi <?php echo $proveedor['status'] == 'Activo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>" style="color:<?php echo $proveedor['status'] == 'Activo' ? 'var(--jv-danger)' : 'var(--jv-success)'; ?>"></i>
                                 </button>
                             <?php endif; ?>
@@ -135,10 +135,10 @@
                                         <small class="cat-item-meta"><?php echo htmlspecialchars($entrada['sku']); ?><?php echo !empty($entrada['codigo_proveedor']) ? ' · Cód. prov: ' . htmlspecialchars($entrada['codigo_proveedor']) : ''; ?></small>
                                     </div>
                                     <span class="cat-item-costo">$<?php echo number_format((float)$entrada['costo'], 2); ?></span>
-                                    <button type="button" class="btn-cat-icon" onclick="editarProductoCatalogo(<?php echo htmlspecialchars(json_encode($entrada, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo htmlspecialchars(addslashes($proveedor['nombre_empresa'])); ?>')" title="Editar costo">
+                                    <button type="button" class="btn-cat-icon" onclick="editarProductoCatalogo(<?php echo htmlspecialchars(json_encode($entrada, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo htmlspecialchars(addslashes($proveedor['nombre_empresa'])); ?>')" data-tooltip="Editar costo">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
-                                    <button type="button" class="btn-cat-icon btn-cat-del" onclick="confirmarEliminarCatalogo(<?php echo (int)$entrada['id_catalogo']; ?>, '<?php echo htmlspecialchars(addslashes($entrada['nombre_producto'])); ?>')" title="Quitar del catálogo">
+                                    <button type="button" class="btn-cat-icon btn-cat-del" onclick="confirmarEliminarCatalogo(<?php echo (int)$entrada['id_catalogo']; ?>, '<?php echo htmlspecialchars(addslashes($entrada['nombre_producto'])); ?>')" data-tooltip="Quitar del catálogo">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </div>

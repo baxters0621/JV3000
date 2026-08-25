@@ -116,19 +116,19 @@
                                                     if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $observaciones, $causeMatch)) $causa_ajuste = trim($causeMatch[1]);
                                                     if ($grupo_mov === 'venta') echo '<span class="badge-jv badge-success"><i class="bi bi-cart me-1"></i>Venta</span>';
                                                     elseif ($grupo_mov === 'regalias') echo '<span class="badge-jv badge-info"><i class="bi bi-gift me-1"></i>Regalía</span>';
-                                                    else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" title="' . htmlspecialchars($nombre_tipo . ($causa_ajuste ? ': ' . $causa_ajuste : ''), ENT_QUOTES, 'UTF-8') . '" onclick="verDetalleDano(' . htmlspecialchars(json_encode($nombre_tipo, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars(json_encode($causa_ajuste, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo, ENT_QUOTES, 'UTF-8') . '</span>';
+                                                    else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" data-tooltip="' . htmlspecialchars($nombre_tipo . ($causa_ajuste ? ': ' . $causa_ajuste : ''), ENT_QUOTES, 'UTF-8') . '" onclick="verDetalleDano(' . htmlspecialchars(json_encode($nombre_tipo, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars(json_encode($causa_ajuste, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo, ENT_QUOTES, 'UTF-8') . '</span>';
                                                     ?></td>
                             <td class="td-total" style="<?php echo $grupo_mov === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($outgoingRecord['total_monto'] ?? 0, 2); ?></td>
                             <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($outgoingRecord['fecha_salida'])); ?></td>
                             <td class="text-center" style="white-space:nowrap;">
-                                <button class="btn-action" onclick="verFactura(<?php echo $outgoingRecord['id_salida']; ?>)" title="Ver Nota">
+                                <button class="btn-action" onclick="verFactura(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Ver Nota">
                                     <i class="bi bi-receipt"></i>
                                 </button>
-                                <button class="btn-action" onclick='editarSalida(<?php echo json_encode($outgoingRecord); ?>)' title="Editar">
+                                <button class="btn-action" onclick='editarSalida(<?php echo json_encode($outgoingRecord); ?>)' data-tooltip="Editar">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
                                 <?php if (Security::esAdmin()): ?>
-                                    <button class="btn-action" onclick="confirmarEliminar(<?php echo $outgoingRecord['id_salida']; ?>)" title="Anular">
+                                    <button class="btn-action" onclick="confirmarEliminar(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Anular">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 <?php endif; ?>

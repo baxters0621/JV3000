@@ -16,7 +16,7 @@
 ?>
 <!-- MENSAJE FLASH -->
 <?php if ($flash): ?>
-    <div class="alert-jv alert-jv-<?php echo htmlspecialchars($flash['tipo']); ?>" style="padding:12px 18px;font-size:.85rem;font-weight:600;">
+    <div class="alert-jv alert-jv-<?php echo htmlspecialchars($flash['tipo']); ?> flash-auto" style="padding:12px 18px;font-size:.85rem;font-weight:600;">
         <?php echo htmlspecialchars($flash['texto']); ?>
     </div>
 <?php endif; ?>

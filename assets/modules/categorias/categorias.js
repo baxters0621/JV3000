@@ -97,15 +97,7 @@
             // AL CARGAR LA PÁGINA
             // ==========================================
             document.addEventListener('DOMContentLoaded', function() {
-                // Los mensajes flash (alert-jv) se desvanecen solos a los 4 seg.
-                const alerts = document.querySelectorAll('.alert-jv');
-                alerts.forEach(function(a) {
-                    setTimeout(function() {
-                        a.style.transition = 'opacity 0.6s';
-                        a.style.opacity = '0';
-                        setTimeout(function() { a.remove(); }, 600);
-                    }, 4000);
-                });
+                // (El auto-cierre de mensajes flash lo maneja diseno.js globalmente.)
                 // Mientras el usuario escribe/cambia un campo del modal,
                 // se quita la marca de error de ese campo automáticamente.
                 document.querySelectorAll('#formCat input, #formCat select, #formCat textarea').forEach(function(el) {

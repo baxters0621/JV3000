@@ -62,16 +62,7 @@
                     }
                 }
 
-                // Auto-cierre de flash messages
-                document.querySelectorAll('.flash-auto').forEach(function(el) {
-                    setTimeout(function() {
-                        el.style.transition = 'opacity .5s';
-                        el.style.opacity = '0';
-                        setTimeout(function() {
-                            el.remove();
-                        }, 500);
-                    }, 4000);
-                });
+                // (El auto-cierre de flash messages lo maneja diseno.js globalmente.)
 
                 // Limpiar errores al hacer focus/change
                 document.querySelectorAll('#formProveedor input, #formProveedor select, #formProveedor textarea')
