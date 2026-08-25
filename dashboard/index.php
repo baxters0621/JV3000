@@ -104,7 +104,7 @@ $tabla_compras = $datos['tabla_compras'];
     <title>Panel de Inicio | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
 
-    <link rel="stylesheet" href="../assets/dashboard/index.css?v=24">
+    <link rel="stylesheet" href="../assets/dashboard/index.css?v=26">
 </head>
 
 <?php
