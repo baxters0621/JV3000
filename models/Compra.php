@@ -14,7 +14,7 @@
  *
  * Única capa autorizada para consultar la base de datos. Maneja el registro
  * de facturas, la anulación, el marcado como pagada, las consultas del
- * tablero (filtros, KPIs, crédito usado) y el prefill de solicitudes.
+ * tablero (filtros y KPIs) y el prefill de solicitudes.
  * NOTA: el movimiento de stock/lotes NO ocurre aquí; lo gestiona Recepción.
  */
 class Compra extends Model
@@ -60,39 +60,35 @@ class Compra extends Model
     /**
      * Proveedores activos para el formulario de compra.
      *
-     * Devuelve los datos de contacto y crédito de los proveedores activos,
-     * ordenados alfabéticamente, para el selector del formulario.
+     * Devuelve id, nombre y RIF de los proveedores activos, ordenados
+     * alfabéticamente, para el selector del formulario.
      *
      * @return array Lista de proveedores activos.
      */
     public function obtenerProveedores(): array
     {
         return $this->db->fetchAll(
-            "SELECT id_proveedor, nombre_empresa, rif, condiciones_pago, dias_credito, limite_credito
+            "SELECT id_proveedor, nombre_empresa, rif
              FROM proveedores WHERE status = 'Activo' ORDER BY nombre_empresa"
         );
     }
 
     /**
-     * Crédito consumido por proveedor (solo compras a crédito activas).
+     * Mapa de costos del catálogo de proveedores [id_proveedor][id_producto].
      *
-     * Devuelve un mapa id_proveedor → total consumido, usado para mostrar
-     * el uso de crédito en el tablero.
+     * Lo usa la vista de compras para autocompletar el costo de cada línea
+     * según el proveedor seleccionado. Si el proveedor no tiene el producto
+     * en su catálogo, el costo se ingresa a mano.
      *
-     * @return array Mapa [id_proveedor => total usado].
+     * @return array Mapa anidado con el costo por combinación.
      */
-    public function creditoUsadoPorProveedor(): array
+    public function mapaCostosCatalogo(): array
     {
-        $usado = [];
-        $supplierCreditRows = $this->db->fetchAll(
-            "SELECT id_proveedor, COALESCE(SUM(total),0) as usado
-             FROM compras WHERE status = 'Activa' AND condiciones_pago = 'Credito' AND id_proveedor IS NOT NULL
-             GROUP BY id_proveedor"
-        );
-        foreach ($supplierCreditRows as $supplierCreditRow) {
-            $usado[(int)$supplierCreditRow['id_proveedor']] = (float)$supplierCreditRow['usado'];
+        $mapa = [];
+        foreach ($this->db->fetchAll("SELECT id_proveedor, id_producto, costo FROM catalogo_costos") as $fila) {
+            $mapa[(int)$fila['id_proveedor']][(int)$fila['id_producto']] = (float)$fila['costo'];
         }
-        return $usado;
+        return $mapa;
     }
 
     /**
@@ -162,10 +158,11 @@ class Compra extends Model
     /**
      * Registra una compra (factura del proveedor + comprobante de pago).
      *
-     * Valida proveedor, número de factura único por proveedor, formato de
-     * nro. de control, RIF del proveedor, ítems (cantidad y precio), límite
-     * de crédito y monto de pago. Inserta la compra con sus detalles dentro
-     * de una transacción y, si se atiende una solicitud, la marca Atendida.
+     * Valida proveedor (activo, RIF válido), número de factura único por
+     * proveedor, formato de nro. de control, ítems (cantidad, precio y
+     * vencimiento) y monto de pago. Inserta la compra con sus detalles
+     * dentro de una transacción y, si se atiende una solicitud, la marca
+     * Atendida.
      * Respeta el flujo original: NO mueve stock ni crea lotes aquí (eso lo
      * hace Recepción).
      *
@@ -198,15 +195,16 @@ class Compra extends Model
 
         $observaciones = trim($purchaseFormData['observaciones'] ?? '');
 
-        $prov = $this->db->fetchOne("SELECT condiciones_pago, dias_credito, limite_credito, rif FROM proveedores WHERE id_proveedor = ?", [$id_proveedor]);
+        $prov = $this->db->fetchOne("SELECT rif, status FROM proveedores WHERE id_proveedor = ?", [$id_proveedor]);
         if (!$prov) {
             return ['ok' => false, 'mensaje' => 'PROVEEDOR INVÁLIDO.'];
+        }
+        if ($prov['status'] !== 'Activo') {
+            return ['ok' => false, 'mensaje' => 'EL PROVEEDOR ESTÁ INACTIVO. NO SE PUEDE REGISTRAR LA COMPRA.'];
         }
         if (!validarRIF(normalizarDocumento($prov['rif'] ?? ''))) {
             return ['ok' => false, 'mensaje' => 'EL PROVEEDOR SELECCIONADO NO TIENE UN RIF VÁLIDO. CORRÍJALO EN PROVEEDORES.'];
         }
-        $condiciones_pago = $prov['condiciones_pago'] ?? 'Contado';
-        $dias_credito = intval($prov['dias_credito'] ?? 0);
 
         // Ítems de la factura
         $productos_raw = json_decode($purchaseFormData['productos_data'] ?? '[]', true);
@@ -251,21 +249,6 @@ class Compra extends Model
         $iva = round($subtotal * $iva_pct / 100, 2);
         $total = round($subtotal + $iva, 2);
 
-        // Validar límite de crédito
-        if ($condiciones_pago === 'Credito') {
-            $limite = (float)($prov['limite_credito'] ?? 0);
-            if ($limite > 0) {
-                $usado = (float)($this->db->fetchOne(
-                    "SELECT COALESCE(SUM(total),0) as t FROM compras WHERE id_proveedor = ? AND status = 'Activa' AND condiciones_pago = 'Credito'",
-                    [$id_proveedor]
-                )['t'] ?? 0);
-                if (($usado + $total) > $limite) {
-                    $disponible = $limite - $usado;
-                    return ['ok' => false, 'mensaje' => "CRÉDITO INSUFICIENTE. Límite: \$" . number_format($limite, 2) . ", usado: \$" . number_format($usado, 2) . ", disponible: \$" . number_format(max(0, $disponible), 2) . "."];
-                }
-            }
-        }
-
         // Comprobante de pago
         $metodo_pago = in_array(trim($purchaseFormData['metodo_pago'] ?? ''), ['Efectivo', 'Transferencia', 'Cheque', 'Otro'], true) ? trim($purchaseFormData['metodo_pago']) : 'Efectivo';
         $monto_pago = round((float)($purchaseFormData['monto_pago'] ?? 0), 2);
@@ -285,8 +268,6 @@ class Compra extends Model
                 'id_usuario'       => $id_usuario,
                 'fecha_compra'     => $fecha_compra,
                 'nro_control'      => $nro_control !== '' ? $nro_control : null,
-                'condiciones_pago' => $condiciones_pago,
-                'dias_plazo'       => $dias_credito,
                 'subtotal'         => $subtotal,
                 'iva'              => $iva,
                 'total'            => $total,

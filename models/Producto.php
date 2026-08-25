@@ -64,9 +64,9 @@ class Producto extends Model
     /**
      * Edición de un producto (solo admin).
      *
-     * Valida producto, stock mínimo/máximo, precios, estado, fecha de
-     * vencimiento y proveedor; luego actualiza el registro y registra la
-     * auditoría.
+     * Valida producto, stock mínimo/máximo, precios y estado; luego
+     * actualiza el registro y registra la auditoría. El costo se recalcula
+     * solo en la recepción de mercancía (promedio ponderado), no aquí.
      *
      * @param array $datosProducto Datos del formulario (id_producto, stocks, precios...).
      * @return array ['ok'=>bool, 'mensaje'=>string].
@@ -77,12 +77,9 @@ class Producto extends Model
         $stockMinimo = (int)$datosProducto['stock_minimo'];
         $stockMaximo = (int)$datosProducto['stock_maximo'];
         $precioVentaRaw = trim((string)$datosProducto['precio_venta']);
-        $precioCostoRaw = trim((string)$datosProducto['precio_costo']);
         $precioVenta = (float)$precioVentaRaw;
-        $precioCosto = (float)$precioCostoRaw;
         $status = $datosProducto['status'];
-        $fechaVencimiento = $datosProducto['fecha_vencimiento'];
-        $idProveedor = (int)$datosProducto['id_proveedor'];
+        $fechaVencimiento = $datosProducto['fecha_vencimiento'] ?? null;
 
         if ($idProducto <= 0) return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO.'];
         // Stocks: enteros puros en rango (rechaza decimales, negativos y desbordes)
@@ -96,26 +93,24 @@ class Producto extends Model
             return ['ok' => false, 'mensaje' => 'LA CAPACIDAD MÁXIMA DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO (O 0 PARA HEREDAR LA DE LA CATEGORÍA).'];
         }
         if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioVentaRaw) || !is_finite($precioVenta) || $precioVenta < 0.01 || $precioVenta > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,01 Y 99.999,99.'];
-        if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioCostoRaw) || !is_finite($precioCosto) || $precioCosto < 0.01 || $precioCosto > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO COSTO DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,01 Y 99.999,99.'];
-        if ($precioVenta < $precioCosto) return ['ok' => false, 'mensaje' => 'EL PRECIO DE VENTA DEBE SER MAYOR O IGUAL AL PRECIO COSTO.'];
         if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
         if ($fechaVencimiento && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) $fechaVencimiento = null;
-        if ($idProveedor <= 0) return ['ok' => false, 'mensaje' => 'DEBE SELECCIONAR UN PROVEEDOR.'];
 
         $this->db->execute(
-            "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, precio_costo=?, status=?, fecha_vencimiento=?, id_proveedor=? WHERE id_producto=?",
-            [$stockMinimo, $stockMaximo, $precioVenta, $precioCosto, $status, $fechaVencimiento, $idProveedor, $idProducto]
+            "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=? WHERE id_producto=?",
+            [$stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $idProducto]
         );
         registrarAuditoria('editar', 'Producto modificado');
         return ['ok' => true, 'mensaje' => 'PRODUCTO ACTUALIZADO EN EL INVENTARIO.'];
     }
 
     /**
-     * Listado paginado con categoría, capacidad y último proveedor.
+     * Listado paginado con categoría, capacidad y proveedores del catálogo.
      *
      * Devuelve los productos ordenados (activos primero) con el nombre de la
-     * categoría, la capacidad efectiva (propia, de categoría o 100) y el
-     * último proveedor (directo o por compras). Paginado con LIMIT/OFFSET.
+     * categoría, la capacidad efectiva (propia, de categoría o 100) y la
+     * lista de proveedores que lo suministran según el catálogo de costos.
+     * Paginado con LIMIT/OFFSET.
      *
      * @param int $limit  Registros por página.
      * @param int $offset Desplazamiento para la paginación.
@@ -131,10 +126,12 @@ class Producto extends Model
                     SELECT MIN(l.fecha_vencimiento) FROM lotes l
                     WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0
                 ), p.fecha_vencimiento) as fecha_vencimiento,
-                COALESCE(pr.nombre_empresa, (
-                    SELECT pr2.nombre_empresa FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra LEFT JOIN proveedores pr2 ON co.id_proveedor = pr2.id_proveedor WHERE dc.id_producto = p.id_producto AND co.status = 'Activa' ORDER BY co.fecha_compra DESC LIMIT 1
-                )) as ultimo_proveedor
-            FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor ORDER BY p.status DESC, p.nombre_producto ASC LIMIT ? OFFSET ?",
+                -- Proveedores que lo suministran según el catálogo de costos
+                (SELECT GROUP_CONCAT(pr.nombre_empresa SEPARATOR ', ')
+                    FROM catalogo_costos cc JOIN proveedores pr ON cc.id_proveedor = pr.id_proveedor
+                    WHERE cc.id_producto = p.id_producto AND pr.status = 'Activo'
+                ) as proveedores
+            FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.status DESC, p.nombre_producto ASC LIMIT ? OFFSET ?",
             [$limit, $offset]
         );
     }
@@ -147,15 +144,5 @@ class Producto extends Model
     public function totalRegistros(): int
     {
         return (int)($this->db->fetchOne("SELECT COUNT(*) as total FROM productos")['total'] ?? 0);
-    }
-
-    /**
-     * Proveedores activos para el select del modal de edición.
-     *
-     * @return array Lista de proveedores activos (id_proveedor, nombre_empresa).
-     */
-    public function proveedoresActivos(): array
-    {
-        return $this->db->fetchAll("SELECT id_proveedor, nombre_empresa FROM proveedores WHERE status = 'Activo' ORDER BY nombre_empresa ASC");
     }
 }

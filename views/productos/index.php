@@ -3,7 +3,6 @@
 /** @var array<string, mixed>|null $flash */
 /** @var bool $esAdmin */
 /** @var array<int, array<string, mixed>> $productos */
-/** @var array<int, array<string, mixed>> $proveedores_list */
 /** @var int $total_paginas */
 /** @var int $offset */
 /** @var int $registros_por_pagina */
@@ -134,7 +133,7 @@
                             }
                         }
                         ?>
-                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['ultimo_proveedor'] ?? '')); ?>" data-prov-id="<?php echo intval($productRecord['id_proveedor'] ?? 0); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
+                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
                             <td class="td-prod-sku">
                                 <span class="codigo-badge"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
                             </td>
@@ -144,8 +143,8 @@
                             <td class="td-prod-cat" data-tooltip="<?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?>">
                                 <span class="prod-cat"><?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?></span>
                             </td>
-                            <td class="td-prod-prov" data-tooltip="<?php echo htmlspecialchars($productRecord['ultimo_proveedor'] ?? '—'); ?>">
-                                <span class="prod-prov"><?php echo htmlspecialchars($productRecord['ultimo_proveedor'] ?? '—'); ?></span>
+                            <td class="td-prod-prov" data-tooltip="<?php echo htmlspecialchars($productRecord['proveedores'] ?? 'Sin proveedor en catálogo'); ?>">
+                                <span class="prod-prov"><?php echo htmlspecialchars($productRecord['proveedores'] ?? '—'); ?></span>
                             </td>
                             <td class="td-stock text-center">
                                 <div class="stock-summary">
@@ -286,32 +285,23 @@
                                 <input type="hidden" id="edit_pvp_valor" name="precio_venta">
                             </div>
                             <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">PRECIO COSTO ($)</label>
-                                <input type="text" class="input-jv precio-edicion" id="edit_costo" inputmode="decimal" autocomplete="off" data-max="99999.99" required>
-                                <input type="hidden" id="edit_costo_valor" name="precio_costo">
+                                <label class="small fw-bold text-secondary mb-1">COSTO PROMEDIO ($)</label>
+                                <input type="text" class="input-jv" id="edit_costo" readonly disabled style="color:var(--jv-text-muted);background:rgba(15,26,46,0.04);" data-tooltip="Se calcula automáticamente al recibir mercancía (costo promedio ponderado)">
                             </div>
                         </div>
                         <div class="row g-2 mb-2">
-                            <div class="col-4">
+                            <div class="col-6">
                                 <label class="small fw-bold text-secondary mb-1">ESTADO</label>
                                 <select class="input-jv" id="edit_status" name="status">
                                     <option value="Activo">Activo</option>
                                     <option value="Inactivo">Inactivo</option>
                                 </select>
                             </div>
-                            <div class="col-4">
+                            <div class="col-6">
                                 <label class="small fw-bold text-secondary mb-1">VENCIMIENTO</label>
                                 <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento">
                             </div>
-                            <div class="col-4">
-                                <label class="small fw-bold text-secondary mb-1">PROVEEDOR <span style="color:var(--jv-danger);">*</span></label>
-                                <select class="input-jv" id="edit_proveedor" name="id_proveedor" required>
-                                    <option value="">SELECCIONE...</option>
-                                    <?php foreach ($proveedores_list as $prov): ?>
-                                        <option value="<?php echo $prov['id_proveedor']; ?>"><?php echo htmlspecialchars($prov['nombre_empresa']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+                        </div>
                         </div>
                     </div>
                     <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">

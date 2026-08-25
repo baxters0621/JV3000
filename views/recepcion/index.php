@@ -92,7 +92,6 @@
                     <th style="width:12%;">Factura</th>
                     <th style="width:10%;">Nro. Control</th>
                     <th style="width:17%;">Proveedor</th>
-                    <th class="text-center" style="width:12%;">Condiciones</th>
                     <th class="text-center" style="width:7%;">Items</th>
                     <th class="text-center" style="width:8%;">Unds</th>
                     <th class="text-center" style="width:11%;">Estado</th>
@@ -106,7 +105,6 @@
                             <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($compra_pendiente['nro_factura']); ?></span></td>
                             <td style="color:var(--jv-text-muted);font-weight:600;"><?php echo htmlspecialchars($compra_pendiente['nro_control'] ?: '-'); ?></td>
                             <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($compra_pendiente['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($compra_pendiente['proveedor'] ?? 'S/P'); ?></td>
-                            <td class="text-center"><span class="badge-jv <?php echo ($compra_pendiente['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($compra_pendiente['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $compra_pendiente['condiciones_pago'] ?? 'Contado'; ?></span></td>
                             <td class="text-center"><span class="cant-badge"><?php echo (int)$compra_pendiente['items_pend']; ?></span></td>
                             <td class="text-center fw-bold"><?php echo (int)$compra_pendiente['unidades_pend']; ?></td>
                             <td class="text-center">
@@ -215,11 +213,7 @@
                                 <label class="small fw-bold text-secondary mb-1">PROVEEDOR</label>
                                 <input type="text" class="input-jv" id="recProveedor" readonly disabled style="color:var(--jv-text-muted);">
                             </div>
-                            <div class="col-md-3">
-                                <label class="small fw-bold text-secondary mb-1">CONDICIONES</label>
-                                <input type="text" class="input-jv" id="recCondiciones" readonly disabled style="color:var(--jv-text-muted);">
-                            </div>
-                            <div class="col-md-3">
+                            <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">N° GUÍA / RECIBO <span class="fw-normal">(opcional)</span></label>
                                 <input type="text" name="documento_recepcion" class="input-jv" id="recDocumento" maxlength="100" placeholder="Documento físico de entrega...">
                             </div>

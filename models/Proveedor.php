@@ -12,8 +12,8 @@
  *
  * Única capa autorizada para consultar la base de datos. Aquí viven las
  * validaciones de RIF, teléfono y duplicados, el registro/edición, el
- * cambio de estado y los KPIs de crédito, además de la migración de
- * teléfonos legacy.
+ * cambio de estado y el catálogo de costos (entidad asociativa
+ * Proveedor ↔ Producto con su costo y código interno).
  */
 class Proveedor extends Model
 {
@@ -41,9 +41,8 @@ class Proveedor extends Model
     /**
      * Procesa registrar o editar según la acción recibida.
      *
-     * Normaliza y valida RIF, nombre, teléfono, email, lead time, límite y
-     * días de crédito, condiciones de pago, moneda y status; luego delega
-     * en registrar() o editar() según $datosProveedor['accion'].
+     * Normaliza y valida RIF, nombre, teléfono, email y lead time; luego
+     * delega en registrar() o editar() según $datosProveedor['accion'].
      *
      * @param array $datosProveedor Datos del formulario del proveedor.
      * @return array ['ok'=>bool, 'mensaje'=>string].
@@ -58,12 +57,6 @@ class Proveedor extends Model
         $direccion = trim($datosProveedor['direccion']);
         $lead_time = !empty($datosProveedor['lead_time']) ? min(365, max(0, (int)$datosProveedor['lead_time'])) : null;
 
-        $limite_raw = preg_replace('/[^0-9.]/', '', str_replace(',', '', trim($datosProveedor['limite_credito'])));
-        $limite_credito = !empty($limite_raw) ? min(999999999.99, max(0, (float)$limite_raw)) : null;
-
-        $dias_credito = !empty($datosProveedor['dias_credito']) ? min(360, max(0, (int)$datosProveedor['dias_credito'])) : 0;
-        $condiciones_pago = in_array($datosProveedor['condiciones_pago'], ['Contado', 'Credito']) ? $datosProveedor['condiciones_pago'] : 'Contado';
-        $moneda = in_array($datosProveedor['moneda'], ['USD', 'EUR', 'VES']) ? $datosProveedor['moneda'] : 'USD';
         $status = in_array($datosProveedor['status'], ['Activo', 'Inactivo']) ? $datosProveedor['status'] : 'Activo';
 
         if (empty($nombre_empresa)) {
@@ -87,10 +80,7 @@ class Proveedor extends Model
             'email' => $email,
             'direccion' => $direccion,
             'lead_time' => $lead_time,
-            'limite_credito' => $limite_credito,
-            'dias_credito' => $dias_credito,
-            'condiciones_pago' => $condiciones_pago,
-            'moneda' => $moneda,
+            'moneda' => in_array($datosProveedor['moneda'], ['USD', 'EUR', 'VES']) ? $datosProveedor['moneda'] : 'USD',
             'status' => $status,
         ];
         $data = array_filter($data, fn($v) => $v !== null);
@@ -193,48 +183,128 @@ class Proveedor extends Model
         return (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM proveedores WHERE status='Activo'")['t'] ?? 0);
     }
 
-    /**
-     * KPI: límite de crédito total de los proveedores activos.
-     *
-     * Suma los límites de crédito de los proveedores activos con límite > 0.
-     *
-     * @return float Límite de crédito total.
-     */
-    public function limiteCreditoTotal(): float
-    {
-        return (float)($this->db->fetchOne("SELECT COALESCE(SUM(limite_credito),0) as t FROM proveedores WHERE limite_credito > 0 AND status = 'Activo'")['t'] ?? 0);
-    }
+    // ==========================================
+    // CATÁLOGO DE COSTOS (entidad asociativa)
+    // ==========================================
+    // La relación Proveedor ↔ Producto vive aquí: cada entrada dice qué
+    // producto suministra el proveedor, a qué costo y con qué código interno.
 
     /**
-     * Mapa id_proveedor → crédito usado (compras Activas a crédito).
+     * Mapa id_proveedor → entradas de su catálogo de costos.
      *
-     * @return array Mapa [id_proveedor => total usado en crédito].
+     * Cada entrada trae producto, sku, costo y código interno del proveedor,
+     * ordenado por nombre de producto. Usado para pintar la sección
+     * "Productos que suministra" en cada tarjeta.
+     *
+     * @return array Mapa [id_proveedor => [entradas]].
      */
-    public function creditoUsado(): array
+    public function catalogoPorProveedor(): array
     {
         $mapa = [];
-        foreach ($this->db->fetchAll("SELECT id_proveedor, COALESCE(SUM(total),0) as usado FROM compras WHERE status = 'Activa' AND condiciones_pago = 'Credito' AND id_proveedor IS NOT NULL GROUP BY id_proveedor") as $r) {
-            $mapa[$r['id_proveedor']] = (float)$r['usado'];
+        foreach ($this->db->fetchAll(
+            "SELECT cc.id_catalogo, cc.id_proveedor, cc.id_producto, cc.costo, cc.codigo_proveedor,
+                    p.nombre_producto, p.sku
+             FROM catalogo_costos cc
+             JOIN productos p ON cc.id_producto = p.id_producto
+             ORDER BY p.nombre_producto ASC"
+        ) as $entrada) {
+            $mapa[(int)$entrada['id_proveedor']][] = $entrada;
         }
         return $mapa;
     }
 
     /**
-     * Migra teléfonos legacy (04XX... / (0...) a formato E.164 +58.
+     * Productos activos disponibles para asociar al catálogo.
      *
-     * Recorre los proveedores cuyo teléfono empieza con "(0", le quita los
-     * caracteres no numéricos y el 0 inicial, y lo convierte a +58 seguido
-     * del número, actualizando el registro.
-     *
-     * @return void
+     * @return array Lista [id_producto, sku, nombre_producto].
      */
-    public function migrarTelefonosLegacy(): void
+    public function productosActivos(): array
     {
-        foreach ($this->db->fetchAll("SELECT id_proveedor, telefono FROM proveedores WHERE telefono LIKE '(0%'") as $p) {
-            $limpio = preg_replace('/[^0-9]/', '', $p['telefono']);
-            $limpio = ltrim($limpio, '0');
-            $e164 = '+58' . $limpio;
-            $this->db->execute("UPDATE proveedores SET telefono = ? WHERE id_proveedor = ?", [$e164, $p['id_proveedor']]);
+        return $this->db->fetchAll(
+            "SELECT id_producto, sku, nombre_producto FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC"
+        );
+    }
+
+    /**
+     * Registra o edita una entrada del catálogo de costos.
+     *
+     * Validaciones: proveedor y producto existen y activos, costo entre 0.01
+     * y 99,999.99, código interno opcional (máx. 50) y sin duplicar la
+     * combinación proveedor+producto al registrar o al editar (excluyendo la
+     * propia entrada).
+     *
+     * @param array $datos ['accion', 'id_catalogo', 'id_proveedor', 'id_producto', 'costo', 'codigo_proveedor'].
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
+    public function procesarCatalogo(array $datos): array
+    {
+        $accion = ($datos['accion'] ?? '') === 'editar' ? 'editar' : 'registrar';
+        $id_catalogo = (int)($datos['id_catalogo'] ?? 0);
+        $id_proveedor = (int)($datos['id_proveedor'] ?? 0);
+        $id_producto = (int)($datos['id_producto'] ?? 0);
+        $codigo = trim((string)($datos['codigo_proveedor'] ?? ''));
+        if (mb_strlen($codigo) > 50) {
+            return ['ok' => false, 'mensaje' => 'EL CÓDIGO DEL PROVEEDOR NO PUEDE EXCEDER 50 CARACTERES.'];
         }
+        $costo_raw = str_replace(',', '', trim((string)($datos['costo'] ?? '')));
+        if (!preg_match('/^(?:0|[1-9]\d{0,4})(\.\d{1,2})?$/', $costo_raw) || (float)$costo_raw < 0.01 || (float)$costo_raw > 99999.99) {
+            return ['ok' => false, 'mensaje' => 'COSTO INVÁLIDO. DEBE ESTAR ENTRE 0,01 Y 99.999,99.'];
+        }
+        $costo = round((float)$costo_raw, 2);
+
+        if (!$this->db->fetchOne("SELECT id_proveedor FROM proveedores WHERE id_proveedor = ? AND status = 'Activo'", [$id_proveedor])) {
+            return ['ok' => false, 'mensaje' => 'PROVEEDOR INVÁLIDO O INACTIVO.'];
+        }
+        if (!$this->db->fetchOne("SELECT id_producto FROM productos WHERE id_producto = ? AND status = 'Activo'", [$id_producto])) {
+            return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO O INACTIVO.'];
+        }
+
+        $duplicado = $this->db->fetchOne(
+            "SELECT id_catalogo FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?" . ($accion === 'editar' ? " AND id_catalogo != ?" : ""),
+            $accion === 'editar' ? [$id_proveedor, $id_producto, $id_catalogo] : [$id_proveedor, $id_producto]
+        );
+        if ($duplicado) {
+            return ['ok' => false, 'mensaje' => 'ESE PRODUCTO YA ESTÁ EN EL CATÁLOGO DE ESTE PROVEEDOR. EDÍTALO SI DESEAS CAMBIAR SU COSTO.'];
+        }
+
+        try {
+            if ($accion === 'registrar') {
+                $this->db->insert('catalogo_costos', [
+                    'id_proveedor' => $id_proveedor,
+                    'id_producto' => $id_producto,
+                    'costo' => $costo,
+                    'codigo_proveedor' => $codigo !== '' ? $codigo : null,
+                ]);
+                registrarAuditoria('crear', 'Entrada de catálogo de costos creada');
+            } else {
+                if ($id_catalogo <= 0) {
+                    return ['ok' => false, 'mensaje' => 'ENTRADA DE CATÁLOGO INVÁLIDA.'];
+                }
+                $this->db->execute(
+                    "UPDATE catalogo_costos SET id_proveedor=?, id_producto=?, costo=?, codigo_proveedor=? WHERE id_catalogo=?",
+                    [$id_proveedor, $id_producto, $costo, $codigo !== '' ? $codigo : null, $id_catalogo]
+                );
+                registrarAuditoria('editar', 'Entrada de catálogo de costos modificada');
+            }
+            return ['ok' => true, 'mensaje' => 'CATÁLOGO ACTUALIZADO CORRECTAMENTE.'];
+        } catch (Exception $e) {
+            return ['ok' => false, 'mensaje' => 'ERROR AL GUARDAR LA ENTRADA DEL CATÁLOGO.'];
+        }
+    }
+
+    /**
+     * Elimina una entrada del catálogo de costos.
+     *
+     * @param int $id_catalogo Identificador de la entrada.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
+    public function eliminarCatalogo(int $id_catalogo): array
+    {
+        if ($id_catalogo <= 0 || !$this->db->fetchOne("SELECT id_catalogo FROM catalogo_costos WHERE id_catalogo = ?", [$id_catalogo])) {
+            return ['ok' => false, 'mensaje' => 'LA ENTRADA DEL CATÁLOGO NO EXISTE.'];
+        }
+        $this->db->execute("DELETE FROM catalogo_costos WHERE id_catalogo = ?", [$id_catalogo]);
+        registrarAuditoria('eliminar', 'Entrada de catálogo de costos eliminada');
+        return ['ok' => true, 'mensaje' => 'ENTRADA ELIMINADA DEL CATÁLOGO.'];
     }
 }

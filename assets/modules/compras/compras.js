@@ -116,21 +116,34 @@
         }
 
         // Al elegir un resultado guarda el producto seleccionado, rellena el input y sugiere el precio de costo.
+        // Prioridad de la sugerencia: catálogo del proveedor elegido → costo referencial del producto.
         function seleccionarProducto(productElement) {
             if (!productElement || !productElement.dataset.id) return;
+            const idProducto = parseInt(productElement.dataset.id, 10);
             productoSeleccionado = {
-                id: parseInt(productElement.dataset.id, 10),
+                id: idProducto,
                 nombre: productElement.dataset.nombre
             };
             toolboxInput.value = productoSeleccionado.nombre;
             const precioEl = document.getElementById('inputPrecio');
             if (precioEl && !precioEl.value.trim()) {
-                const suggestedPrice = parseFloat(productElement.dataset.precio) || 0;
+                let suggestedPrice = costoDesdeCatalogo(idProducto);
+                if (suggestedPrice === null) suggestedPrice = parseFloat(productElement.dataset.precio) || 0;
                 precioEl.value = suggestedPrice > 0 ? suggestedPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00';
             }
             cerrarResultados();
             const cantEl = document.getElementById('inputCant');
             if (cantEl) cantEl.focus();
+        }
+
+        // Busca el costo del producto en el catálogo del proveedor seleccionado.
+        // Devuelve el costo (number) o null si no hay proveedor/entrada en catálogo.
+        function costoDesdeCatalogo(idProducto) {
+            if (!window.JV_CATALOGO) return null;
+            const provSel = document.getElementById('selProveedor');
+            if (!provSel || !provSel.value) return null;
+            const catalogoProv = window.JV_CATALOGO[provSel.value] || {};
+            return Object.prototype.hasOwnProperty.call(catalogoProv, idProducto) ? catalogoProv[idProducto] : null;
         }
 
         // ==========================================
@@ -248,37 +261,19 @@
         }
 
         // ==========================================
-        // PROVEEDOR — condición / crédito
+        // PROVEEDOR — RIF del proveedor elegido
         // ==========================================
         document.getElementById('selProveedor').addEventListener('change', function() {
             const opt = this.options[this.selectedIndex];
-            const credRow = document.getElementById('rowCredito');
+            const rifEl = document.getElementById('displayRif');
             if (opt && opt.value) {
-                const cond = opt.dataset.condicion || 'Contado';
-                const dias = opt.dataset.dias || '0';
                 const rif = opt.dataset.rif || '';
-                document.getElementById('displayRif').value = rif;
-                document.getElementById('displayCondicion').value = cond;
-                document.getElementById('displayDias').value = dias;
+                rifEl.value = rif;
                 const rifOk = /^[VEJGPC]-\d{8}-\d$/.test(rif);
-                document.getElementById('displayRif').style.color = rifOk ? 'var(--jv-text-muted)' : '#DC2626';
-                const limite = parseFloat(opt.dataset.limite) || 0;
-                const usado = parseFloat(opt.dataset.usado) || 0;
-                if (limite > 0 && cond === 'Credito') {
-                    credRow.style.display = '';
-                    document.getElementById('displayLimite').value = '$ ' + limite.toFixed(2);
-                    document.getElementById('displayUsado').value = '$ ' + usado.toFixed(2);
-                    const disp = Math.max(0, limite - usado);
-                    document.getElementById('displayDisponible').value = '$ ' + disp.toFixed(2);
-                    document.getElementById('displayDisponible').style.color = disp > 0 ? (disp < limite * 0.3 ? '#DC2626' : '#16A34A') : '#DC2626';
-                } else {
-                    credRow.style.display = 'none';
-                }
+                rifEl.style.color = rifOk ? 'var(--jv-text-muted)' : '#DC2626';
             } else {
-                document.getElementById('displayRif').value = '-';
-                document.getElementById('displayCondicion').value = '-';
-                document.getElementById('displayDias').value = '-';
-                credRow.style.display = 'none';
+                rifEl.value = '-';
+                rifEl.style.color = 'var(--jv-text-muted)';
             }
         });
 

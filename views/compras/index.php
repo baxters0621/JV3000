@@ -117,7 +117,6 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <th style="width:8%;">Subtotal</th>
                     <th style="width:7%;">IVA</th>
                     <th style="width:9%;">Total</th>
-                    <th class="text-center" style="width:9%;">Condición</th>
                     <th class="text-center" style="width:8%;">Pago</th>
                     <th style="width:7%;">Fecha</th>
                     <th class="text-center" style="width:120px;">Acciones</th>
@@ -134,7 +133,6 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <td style="font-weight:600;">$<?php echo number_format($compra['subtotal'] ?? 0, 2); ?></td>
                             <td style="font-weight:600;">$<?php echo number_format($compra['iva'] ?? 0, 2); ?></td>
                             <td class="fw-bold text-success">$<?php echo number_format($compra['total'], 2); ?></td>
-                            <td class="text-center"><span class="badge-jv <?php echo ($compra['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'badge-success' : 'badge-warning'; ?>"><i class="<?php echo ($compra['condiciones_pago'] ?? 'Contado') === 'Contado' ? 'bi bi-cash-stack' : 'bi bi-calendar-check'; ?> me-1"></i><?php echo $compra['condiciones_pago'] ?? 'Contado'; ?></span></td>
                             <td class="text-center">
                                 <?php // Estado de pago de la compra: 'Pagada' o 'Pendiente'
                                 $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
@@ -150,7 +148,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <?php endforeach;
                 else: ?>
                     <tr>
-                        <td colspan="12">
+                        <td colspan="11">
                             <div class="estado-vacio">
                                 <i class="bi bi-cart-x"></i>
                                 <span>No hay compras registradas</span>
@@ -164,6 +162,9 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 </div>
 
 <!-- Modal: Registrar compra -->
+<!-- Mapa de costos del catálogo [id_proveedor][id_producto] = costo:
+     compras.js lo usa para autocompletar el costo al elegir proveedor. -->
+<script>window.JV_CATALOGO = <?php echo $catalogo_costos; ?>;</script>
 <div class="modal fade" id="modalCompra" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-content-jv">
@@ -190,42 +191,20 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <div class="comp-proveedor-section section-bg">
                         <div class="section-label"><i class="bi bi-building me-1"></i>Proveedor</div>
                         <div class="row g-2">
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                                 <label class="small fw-bold text-secondary mb-1">PROVEEDOR *</label>
                                 <select name="id_proveedor" class="input-jv" id="selProveedor" aria-label="Proveedor de la compra" required>
                                     <option value="">Seleccionar...</option>
                                     <?php foreach ($proveedores as $proveedor): ?>
-                                        <option value="<?php echo (int)$proveedor['id_proveedor']; ?>" data-condicion="<?php echo htmlspecialchars($proveedor['condiciones_pago']); ?>" data-dias="<?php echo (int)$proveedor['dias_credito']; ?>" data-limite="<?php echo (float)($proveedor['limite_credito'] ?? 0); ?>" data-usado="<?php echo $credito_usado[(int)$proveedor['id_proveedor']] ?? 0; ?>" data-rif="<?php echo htmlspecialchars($proveedor['rif']); ?>">
+                                        <option value="<?php echo (int)$proveedor['id_proveedor']; ?>" data-rif="<?php echo htmlspecialchars($proveedor['rif']); ?>">
                                             <?php echo htmlspecialchars($proveedor['nombre_empresa']); ?> (<?php echo htmlspecialchars($proveedor['rif']); ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">RIF</label>
                                 <input type="text" class="input-jv" id="displayRif" aria-label="RIF del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="small fw-bold text-secondary mb-1">CONDICIÓN</label>
-                                <input type="text" class="input-jv" id="displayCondicion" aria-label="Condicion de pago del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="small fw-bold text-secondary mb-1">DÍAS</label>
-                                <input type="text" class="input-jv" id="displayDias" aria-label="Dias de credito del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
-                            </div>
-                        </div>
-                        <div class="row g-2 mt-1" id="rowCredito" style="display:none;">
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">LÍMITE CRÉDITO</label>
-                                <input type="text" class="input-jv" id="displayLimite" aria-label="Limite de credito del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">CRÉDITO USADO</label>
-                                <input type="text" class="input-jv" id="displayUsado" aria-label="Credito usado por el proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">DISPONIBLE</label>
-                                <input type="text" class="input-jv" id="displayDisponible" aria-label="Credito disponible del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);font-weight:700;">
                             </div>
                         </div>
                     </div>

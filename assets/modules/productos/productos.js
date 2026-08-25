@@ -205,18 +205,13 @@
         // Valida los campos del formulario de edición y envía el formulario si son correctos.
         function validarEditarProducto(btn) {
             var precioVenta = document.getElementById('edit_pvp');
-            var precioCosto = document.getElementById('edit_costo');
             var valorVenta = leerPrecioEdicion(precioVenta.value);
-            var valorCosto = leerPrecioEdicion(precioCosto.value);
             var canonicoVenta = Number.isFinite(valorVenta) ? valorVenta.toFixed(2) : '';
-            var canonicoCosto = Number.isFinite(valorCosto) ? valorCosto.toFixed(2) : '';
             limpiarErrores();
             let primerError = null;
             const minimo = document.getElementById('edit_minimo');
             const maximo = document.getElementById('edit_maximo');
             const pvp = document.getElementById('edit_pvp');
-            const costo = document.getElementById('edit_costo');
-            const proveedor = document.getElementById('edit_proveedor');
             if (!/^\d{1,5}$/.test(minimo.value.trim()) || parseInt(minimo.value, 10) <= 0) {
                 marcarError(minimo, 'STOCK MÍNIMO: ENTERO ENTRE 1 Y 99.999');
                 if (!primerError) primerError = minimo;
@@ -234,24 +229,11 @@
                 marcarError(pvp, valorVenta > 99999.99 ? 'MÁXIMO 99.999,99' : 'FORMATO: 0,00 (MÁXIMO 99.999,99)');
                 if (!primerError) primerError = pvp;
             }
-            if (!precioTieneFormatoValido(canonicoCosto)) {
-                marcarError(costo, valorCosto > 99999.99 ? 'MÁXIMO 99.999,99' : 'FORMATO: 0,00 (MÁXIMO 99.999,99)');
-                if (!primerError) primerError = costo;
-            }
-            if (Number.isFinite(valorVenta) && Number.isFinite(valorCosto) && valorVenta < valorCosto) {
-                marcarError(pvp, 'DEBE SER MAYOR O IGUAL AL PRECIO COSTO');
-                if (!primerError) primerError = pvp;
-            }
-            if (!proveedor.value || parseInt(proveedor.value) <= 0) {
-                marcarError(proveedor, 'OBLIGATORIO');
-                if (!primerError) primerError = proveedor;
-            }
             if (primerError) {
                 primerError.focus();
                 return false;
             }
             document.getElementById('edit_pvp_valor').value = canonicoVenta;
-            document.getElementById('edit_costo_valor').value = canonicoCosto;
             btn.disabled = true;
             btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';
             btn.form.submit();
@@ -275,7 +257,6 @@
             formatearPrecioEdicion(document.getElementById('edit_costo'));
             document.getElementById('edit_status').value = row.getAttribute('data-status');
             document.getElementById('edit_vencimiento').value = row.getAttribute('data-venc');
-            document.getElementById('edit_proveedor').value = row.getAttribute('data-prov-id');
             if (modalEditar) modalEditar.show();
         }
 

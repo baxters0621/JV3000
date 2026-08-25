@@ -24,7 +24,6 @@
             document.getElementById('recIdCompra').value = idCompra;
             document.getElementById('recFactura').value = purchaseData.nro_factura;
             document.getElementById('recProveedor').value = purchaseData.proveedor;
-            document.getElementById('recCondiciones').value = purchaseData.condiciones;
 
             const body = document.getElementById('recItemsBody');
             body.innerHTML = '';

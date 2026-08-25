@@ -21,9 +21,10 @@ class Recepcion extends Model
      * Procesa la recepción de mercancía de una compra.
      *
      * Valida la compra, los ítems recibidos (cantidad vs. pendiente) y, en
-     * una transacción, crea los lotes, actualiza cantidad_recibida y stock,
-     * registra el movimiento y marca la compra como Completa o Parcial según
-     * si quedó mercancía pendiente.
+     * una transacción, crea los lotes, recalcula el costo promedio ponderado
+     * de cada producto, actualiza cantidad_recibida y stock, registra el
+     * movimiento y marca la compra como Completa o Parcial según quedó
+     * mercancía pendiente.
      *
      * @param array $receptionFormData Datos del formulario (id_compra, items_data, etc.).
      * @return array ['ok'=>bool, 'mensaje'=>string].
@@ -116,21 +117,38 @@ class Recepcion extends Model
                 $recibir = $solicitado[$id_detalle]['cantidad'];
                 $venc = $solicitado[$id_detalle]['fecha_vencimiento'] ?? $f['fecha_vencimiento'];
 
+                // Costo promedio ponderado: mezcla el costo del inventario existente
+                // con el de la mercancía que entra, para reflejar el costo real.
+                // Fórmula: (stock_viejo × costo_viejo + unidades × costo_lote) / total.
+                $producto_actual = $this->db->fetchOne(
+                    "SELECT stock_actual, precio_costo FROM productos WHERE id_producto = ?",
+                    [(int)$f['id_producto']]
+                );
+                $stock_anterior = (float)($producto_actual['stock_actual'] ?? 0);
+                $costo_anterior = (float)($producto_actual['precio_costo'] ?? 0);
+                $costo_lote = (float)$f['precio_costo'];
+                $stock_total = $stock_anterior + $recibir;
+                if ($stock_anterior <= 0 || $costo_anterior <= 0) {
+                    $costo_promedio = $costo_lote;
+                } else {
+                    $costo_promedio = round((($stock_anterior * $costo_anterior) + ($recibir * $costo_lote)) / $stock_total, 2);
+                }
+
                 $this->db->insert('lotes', [
                     'id_producto'       => (int)$f['id_producto'],
                     'id_proveedor'      => $id_proveedor,
                     'id_compra'         => $id_compra,
                     'cantidad'          => $recibir,
                     'cantidad_restante' => $recibir,
-                    'precio_costo'      => (float)$f['precio_costo'],
+                    'precio_costo'      => $costo_lote,
                     'fecha_vencimiento' => $venc,
                 ]);
 
                 $this->db->execute("UPDATE detalle_compras SET cantidad_recibida = cantidad_recibida + ? WHERE id_detalle = ?", [$recibir, $id_detalle]);
-                $this->db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [$recibir, (int)$f['id_producto']]);
-                if ($id_proveedor) {
-                    $this->db->execute("UPDATE productos SET id_proveedor = ? WHERE id_producto = ? AND (id_proveedor IS NULL OR id_proveedor = 0)", [$id_proveedor, (int)$f['id_producto']]);
-                }
+                $this->db->execute(
+                    "UPDATE productos SET stock_actual = stock_actual + ?, precio_costo = ? WHERE id_producto = ?",
+                    [$recibir, $costo_promedio, (int)$f['id_producto']]
+                );
 
                 $this->db->insert('detalle_movimientos', [
                     'id_movimiento'   => $mov_id,
@@ -170,7 +188,7 @@ class Recepcion extends Model
     public function comprasPendientes(): array
     {
         return $this->db->fetchAll("
-            SELECT c.id_compra, c.nro_factura, c.nro_control, c.fecha_compra, c.condiciones_pago, c.estado_recepcion, c.total,
+            SELECT c.id_compra, c.nro_factura, c.nro_control, c.fecha_compra, c.estado_recepcion, c.total,
                    pr.nombre_empresa AS proveedor,
                    COUNT(dc.id_detalle) AS num_items,
                    SUM(dc.cantidad - dc.cantidad_recibida) AS unidades_pend,
@@ -220,7 +238,6 @@ class Recepcion extends Model
             $datos[$cp['id_compra']] = [
                 'nro_factura' => $cp['nro_factura'],
                 'proveedor'   => $cp['proveedor'] ?? 'S/P',
-                'condiciones' => $cp['condiciones_pago'] ?? 'Contado',
                 'items'       => [],
             ];
         }

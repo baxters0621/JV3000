@@ -104,7 +104,7 @@ function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm)
     if ($showDemoForm && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['instalar_demo'])) {
         Security::validateCSRF();
         $conn_demo = @mysqli_connect(DB_HOST, DB_USER, DB_PASS);
-        if ($conn_demo && jv_importar_sql($conn_demo, __DIR__ . '/db/jv3000_portable_v4.sql')) {
+        if ($conn_demo && jv_importar_sql($conn_demo, __DIR__ . '/db/jv3000_portable_v5.sql')) {
             mysqli_close($conn_demo);
             header('Location: dashboard/index.php');
             exit;
@@ -118,7 +118,7 @@ function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm)
 
     $csrfToken = Security::generateToken();
     $additionalMessage = $demo_error
-        ? "<p style='color:#fbbf24;margin-top:20px;'>La instalación falló. Revisa que exista db/jv3000_portable_v4.sql o coloca un respaldo en backups/.</p>"
+        ? "<p style='color:#fbbf24;margin-top:20px;'>La instalación falló. Revisa que exista db/jv3000_portable_v5.sql o coloca un respaldo en backups/.</p>"
         : '';
     $installationForm = '';
     if ($showDemoForm) {

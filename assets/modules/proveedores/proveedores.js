@@ -96,6 +96,7 @@
 
         const modalP = new bootstrap.Modal(document.getElementById('modalProveedor'));
         const formP = document.getElementById('formProveedor');
+        const modalCat = new bootstrap.Modal(document.getElementById('modalCatalogo'));
 
         // Formatea en vivo el valor monetario con separadores de miles y un solo punto decimal.
         function formatMoney(moneyInput) {
@@ -106,7 +107,7 @@
             moneyInput.value = valueParts.join('.');
         }
 
-        document.getElementById('p_limite_credito').addEventListener('input', function() {
+        document.getElementById('cat_costo').addEventListener('input', function() {
             formatMoney(this);
         });
 
@@ -143,9 +144,6 @@
             document.getElementById('p_email').value = "";
             document.getElementById('p_direccion').value = "";
             document.getElementById('p_lead_time').value = "";
-            document.getElementById('p_limite_credito').value = "";
-            document.getElementById('p_dias_credito').value = "0";
-            document.getElementById('p_condiciones_pago').value = "Contado";
             document.getElementById('p_moneda').value = "USD";
             document.getElementById('p_status').value = "Activo";
             document.getElementById('btn-prov-submit').disabled = false;
@@ -184,12 +182,6 @@
             document.getElementById('p_email').value = data.email || "";
             document.getElementById('p_direccion').value = data.direccion || "";
             document.getElementById('p_lead_time').value = data.lead_time || "";
-            document.getElementById('p_limite_credito').value = data.limite_credito || "";
-            if (document.getElementById('p_limite_credito').value) {
-                formatMoney(document.getElementById('p_limite_credito'));
-            }
-            document.getElementById('p_dias_credito').value = data.dias_credito || 0;
-            document.getElementById('p_condiciones_pago').value = data.condiciones_pago || "Contado";
             document.getElementById('p_moneda').value = data.moneda || "USD";
             document.getElementById('p_status').value = data.status || "Activo";
             document.getElementById('btn-prov-submit').disabled = false;
@@ -269,6 +261,84 @@
                 }
             });
         }
+
+        // ============================
+        // CATÁLOGO DE COSTOS: agregar / editar / eliminar entradas
+        // ============================
+
+        // Abre el modal de catálogo en modo registro para el proveedor indicado.
+        function agregarProductoCatalogo(idProveedor, nombreProveedor) {
+            document.getElementById('cat_accion').value = "registrar";
+            document.getElementById('cat_id_edit').value = "";
+            document.getElementById('cat_id_prov').value = idProveedor;
+            document.getElementById('cat_proveedor_nombre').value = nombreProveedor;
+            document.getElementById('catTitulo').innerText = 'AGREGAR PRODUCTO';
+            document.getElementById('catSubtitulo').innerText = 'Asocia un producto a este proveedor con su costo de compra.';
+            document.getElementById('cat_producto').value = "";
+            document.getElementById('cat_costo').value = "";
+            document.getElementById('cat_codigo_prov').value = "";
+            document.getElementById('btn-cat-submit').disabled = false;
+            modalCat.show();
+        }
+
+        // Abre el modal de catálogo en modo edición con los datos de la entrada.
+        function editarProductoCatalogo(entrada, nombreProveedor) {
+            document.getElementById('cat_accion').value = "editar";
+            document.getElementById('cat_id_edit').value = entrada.id_catalogo;
+            document.getElementById('cat_id_prov').value = entrada.id_proveedor;
+            document.getElementById('cat_proveedor_nombre').value = nombreProveedor;
+            document.getElementById('catTitulo').innerText = 'EDITAR PRODUCTO DEL CATÁLOGO';
+            document.getElementById('catSubtitulo').innerText = 'Actualiza el costo o el código interno del producto.';
+            document.getElementById('cat_producto').value = entrada.id_producto;
+            document.getElementById('cat_costo').value = parseFloat(entrada.costo).toFixed(2);
+            formatMoney(document.getElementById('cat_costo'));
+            document.getElementById('cat_codigo_prov').value = entrada.codigo_proveedor || "";
+            document.getElementById('btn-cat-submit').disabled = false;
+            modalCat.show();
+        }
+
+        // Confirma quitar un producto del catálogo y envía la acción al servidor.
+        function confirmarEliminarCatalogo(idCatalogo, nombreProducto) {
+            Swal.fire({
+                title: '¿QUITAR DEL CATÁLOGO?',
+                html: `Se quitará <strong>${escapeHtml(nombreProducto)}</strong> del catálogo de este proveedor.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#DB2777',
+                cancelButtonColor: '#CED4DA',
+                confirmButtonText: 'Sí, quitar',
+                cancelButtonText: 'Cancelar',
+                background: '#fff',
+                color: '#212529',
+                reverseButtons: true
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    jvPost({ eliminar_catalogo: idCatalogo, csrf_token: window.JV_CONFIG.csrfToken });
+                }
+            });
+        }
+
+        // Validación del formulario de catálogo (anti-doble-click incluido).
+        document.getElementById('formCatalogo').addEventListener('submit', function(e) {
+            limpiarErrores();
+            const prodEl = document.getElementById('cat_producto');
+            if (!prodEl.value) {
+                marcarError(prodEl, 'SELECCIONA UN PRODUCTO');
+                e.preventDefault();
+                prodEl.focus();
+                return;
+            }
+            const costoRaw = document.getElementById('cat_costo').value.replace(/,/g, '');
+            if (!(parseFloat(costoRaw) > 0)) {
+                marcarError(document.getElementById('cat_costo'), 'COSTO REQUERIDO (MAYOR A 0)');
+                e.preventDefault();
+                document.getElementById('cat_costo').focus();
+                return;
+            }
+            const btn = document.getElementById('btn-cat-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
+        });
 
         // ============================
         // Validación del formulario (con anti-doble-click)

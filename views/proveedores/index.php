@@ -3,8 +3,9 @@
 /** @var array<string, string>|null $flash */
 /** @var int $total_prov */
 /** @var int $activos_prov */
-/** @var float $limite_credito_total */
 /** @var array<int, array<string, mixed>> $proveedores */
+/** @var array<int, array<int, array<string, mixed>>> $catalogo */
+/** @var array<int, array<string, mixed>> $productos_activos */
 /** @var bool $esAdmin */
 /** @var string $csrf */
 
@@ -47,9 +48,9 @@
 
 <!-- Widgets de estadísticas -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="widget-card">
-            <div class="widget-icon" style="background:rgba(37,99,235,0.12);color:var(--jv-info);">
+            <div class="widget-icon" style="background:rgba(219,39,119,0.12);color:var(--jv-prov,#DB2777);">
                 <i class="bi bi-building"></i>
             </div>
             <div>
@@ -58,7 +59,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="widget-card">
             <div class="widget-icon" style="background:rgba(22,163,74,0.12);color:var(--jv-success);">
                 <i class="bi bi-check-circle"></i>
@@ -66,17 +67,6 @@
             <div>
                 <div class="widget-label">Proveedores Activos</div>
                 <div class="widget-value"><?php echo $activos_prov; ?></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="widget-card">
-            <div class="widget-icon" style="background:rgba(217,119,6,0.12);color:var(--jv-warning);">
-                <i class="bi bi-credit-card"></i>
-            </div>
-            <div>
-                <div class="widget-label">Límite Crédito Total</div>
-                <div class="widget-value">$<?php echo number_format($limite_credito_total, 0); ?></div>
             </div>
         </div>
     </div>
@@ -118,44 +108,45 @@
                     </div>
                     <div class="prov-details">
                         <div class="prov-detail-row">
-                            <span class="detail-label">Plazo Entrega</span>
-                            <span class="detail-value"><?php echo $proveedor['lead_time'] ? $proveedor['lead_time'] . ' días' : '-'; ?></span>
+                            <span class="detail-label"><i class="bi bi-truck me-1"></i>Plazo de Entrega</span>
+                            <span class="detail-value"><?php echo $proveedor['lead_time'] ? $proveedor['lead_time'] . ' días' : 'A convenir'; ?></span>
                         </div>
                         <div class="prov-detail-row">
-                            <span class="detail-label">Límite Crédito</span>
-                            <span class="detail-value" style="color:var(--jv-success);"><?php echo $proveedor['limite_credito'] ? '$' . number_format($proveedor['limite_credito'], 2) : '-'; ?></span>
-                        </div>
-                        <div class="prov-detail-row">
-                            <span class="detail-label">Plazo Pago</span>
-                            <span class="detail-value"><?php echo $proveedor['dias_credito'] ? $proveedor['dias_credito'] . ' días' : 'Contado'; ?></span>
-                        </div>
-                        <div class="prov-detail-row">
-                            <span class="detail-label">Moneda</span>
+                            <span class="detail-label"><i class="bi bi-cash-coin me-1"></i>Moneda</span>
                             <span class="detail-value"><?php echo $proveedor['moneda'] ?? 'USD'; ?></span>
                         </div>
-                        <div class="prov-detail-row">
-                            <span class="detail-label">Condición Pago</span>
-                            <span class="detail-value"><?php echo $proveedor['condiciones_pago'] ?? 'Contado'; ?></span>
-                        </div>
+
                         <?php
-                        // Indicadores de crédito del proveedor: monto usado, límite y % consumido
-                        $monto_credito_usado = $credito_usado[$proveedor['id_proveedor']] ?? 0;
-                        $limite_credito = (float)($proveedor['limite_credito'] ?? 0);
-                        if ($limite_credito > 0):
-                            $credito_disponible = $limite_credito - $monto_credito_usado;
-                            $porcentaje_credito = min(100, max(0, round(($monto_credito_usado / $limite_credito) * 100)));
-                            $color_barra_credito = $porcentaje_credito >= 90 ? '#DC2626' : ($porcentaje_credito >= 70 ? '#D97706' : '#16A34A');
+                        // Catálogo de costos del proveedor: productos que suministra,
+                        // a qué costo y con qué código interno lo identifica él.
+                        $entradas_catalogo = $catalogo[$proveedor['id_proveedor']] ?? [];
                         ?>
-                            <div class="prov-detail-row">
-                                <span class="detail-label">Crédito Usado</span>
-                                <span class="detail-value" style="color:<?php echo $color_barra_credito; ?>;">$<?php echo number_format($monto_credito_usado, 2); ?></span>
-                            </div>
-                            <div class="prov-detail-row">
-                                <span class="detail-label">Disponible</span>
-                                <span class="detail-value" style="color:var(--jv-success);">$<?php echo number_format(max(0, $credito_disponible), 2); ?></span>
-                            </div>
-                            <div style="height:4px;background:rgba(15,26,46,0.08);border-radius:2px;margin:4px 12px;">
-                                <div style="height:100%;width:<?php echo $porcentaje_credito; ?>%;background:<?php echo $color_barra_credito; ?>;border-radius:2px;transition:width .3s;"></div>
+                        <div class="prov-catalogo-head">
+                            <span><i class="bi bi-box-seam me-1"></i>PRODUCTOS QUE SUMINISTRA</span>
+                            <button type="button" class="btn-cat-add" onclick="agregarProductoCatalogo(<?php echo (int)$proveedor['id_proveedor']; ?>, '<?php echo htmlspecialchars(addslashes($proveedor['nombre_empresa'])); ?>')">
+                                <i class="bi bi-plus-lg"></i> Agregar
+                            </button>
+                        </div>
+                        <?php if (!empty($entradas_catalogo)): ?>
+                            <?php foreach ($entradas_catalogo as $entrada): ?>
+                                <div class="prov-cat-item">
+                                    <div class="cat-item-info">
+                                        <span class="cat-item-nombre" data-tooltip="<?php echo htmlspecialchars($entrada['nombre_producto']); ?>"><?php echo htmlspecialchars($entrada['nombre_producto']); ?></span>
+                                        <small class="cat-item-meta"><?php echo htmlspecialchars($entrada['sku']); ?><?php echo !empty($entrada['codigo_proveedor']) ? ' · Cód. prov: ' . htmlspecialchars($entrada['codigo_proveedor']) : ''; ?></small>
+                                    </div>
+                                    <span class="cat-item-costo">$<?php echo number_format((float)$entrada['costo'], 2); ?></span>
+                                    <button type="button" class="btn-cat-icon" onclick="editarProductoCatalogo(<?php echo htmlspecialchars(json_encode($entrada, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo htmlspecialchars(addslashes($proveedor['nombre_empresa'])); ?>')" title="Editar costo">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                    <button type="button" class="btn-cat-icon btn-cat-del" onclick="confirmarEliminarCatalogo(<?php echo (int)$entrada['id_catalogo']; ?>, '<?php echo htmlspecialchars(addslashes($entrada['nombre_producto'])); ?>')" title="Quitar del catálogo">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="prov-catalogo-vacio">
+                                <i class="bi bi-inbox"></i>
+                                Aún no tiene productos en su catálogo.
                             </div>
                         <?php endif; ?>
                     </div>
@@ -232,33 +223,16 @@
                     <div class="section-bg mb-4">
                         <div class="section-label"><i class="bi bi-gear"></i> Condiciones Comerciales</div>
                         <div class="row g-3 mb-0">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="p_lead_time" class="small fw-bold text-secondary mb-2">PLAZO DE ENTREGA (DÍAS)</label>
                                 <input type="number" name="lead_time" id="p_lead_time" class="input-jv" placeholder="Días" min="0" max="365">
                             </div>
-                            <div class="col-md-3">
-                                <label for="p_limite_credito" class="small fw-bold text-secondary mb-2">LÍMITE CRÉDITO ($)</label>
-                                <input type="text" name="limite_credito" id="p_limite_credito" class="input-jv" placeholder="0.00" maxlength="15" inputmode="decimal">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="p_dias_credito" class="small fw-bold text-secondary mb-2">DÍAS DE CRÉDITO</label>
-                                <input type="number" name="dias_credito" id="p_dias_credito" class="input-jv" placeholder="Días" min="0" max="360" value="0">
-                            </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="p_moneda" class="small fw-bold text-secondary mb-2">MONEDA</label>
                                 <select name="moneda" id="p_moneda" class="input-jv">
                                     <option value="USD">USD - Dólar</option>
                                     <option value="EUR">EUR - Euro</option>
                                     <option value="VES">VES - Bolívar</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row g-3 mt-2 mb-0">
-                            <div class="col-md-4">
-                                <label for="p_condiciones_pago" class="small fw-bold text-secondary mb-2">CONDICIÓN PAGO</label>
-                                <select name="condiciones_pago" id="p_condiciones_pago" class="input-jv">
-                                    <option value="Contado">Contado</option>
-                                    <option value="Credito">Crédito</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -273,6 +247,63 @@
 
                     <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase">
                         <i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: CATÁLOGO DE COSTOS -->
+<!-- Asocia un producto a este proveedor con su costo de compra y el código
+     interno con el que él identifica el producto. Sirve para crear y editar. -->
+<div class="modal fade" id="modalCatalogo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--jv-bg-secondary); border:1px solid var(--jv-border); border-radius:var(--jv-radius-xl);">
+            <form action="" method="POST" id="formCatalogo">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                <input type="hidden" name="accion_catalogo" id="cat_accion" value="registrar">
+                <input type="hidden" name="id_catalogo" id="cat_id_edit">
+                <div class="modal-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h5 class="fw-bolder font-brand m-0" style="color:var(--jv-navy);font-size:1.25rem;">
+                            <i class="bi bi-box-seam me-2"></i><span id="catTitulo">AGREGAR PRODUCTO</span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <p class="mb-4" style="color:var(--jv-text-muted);font-size:.85rem;" id="catSubtitulo"></p>
+
+                    <div class="section-bg mb-4">
+                        <div class="row g-3 mb-0">
+                            <div class="col-12">
+                                <label for="cat_proveedor_nombre" class="small fw-bold text-secondary mb-2">PROVEEDOR</label>
+                                <input type="text" id="cat_proveedor_nombre" class="input-jv" readonly style="background:rgba(15,26,46,0.04);">
+                                <input type="hidden" name="id_proveedor" id="cat_id_prov">
+                            </div>
+                            <div class="col-12">
+                                <label for="cat_producto" class="small fw-bold text-secondary mb-2">PRODUCTO *</label>
+                                <select name="id_producto" id="cat_producto" class="input-jv" required>
+                                    <option value="">— Selecciona un producto —</option>
+                                    <?php foreach ($productos_activos as $prod_activo): ?>
+                                        <option value="<?php echo (int)$prod_activo['id_producto']; ?>">
+                                            <?php echo htmlspecialchars($prod_activo['nombre_producto'] . ' (' . $prod_activo['sku'] . ')'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cat_costo" class="small fw-bold text-secondary mb-2">COSTO DE COMPRA ($) *</label>
+                                <input type="text" name="costo" id="cat_costo" class="input-jv" required placeholder="0.00" maxlength="12" inputmode="decimal">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cat_codigo_prov" class="small fw-bold text-secondary mb-2">CÓDIGO INTERNO DEL PROVEEDOR</label>
+                                <input type="text" name="codigo_proveedor" id="cat_codigo_prov" class="input-jv" placeholder="Opcional" maxlength="50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-cat-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase">
+                        <i class="bi bi-check-lg me-2"></i>GUARDAR EN CATÁLOGO
                     </button>
                 </div>
             </form>
