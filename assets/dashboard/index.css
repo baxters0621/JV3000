@@ -567,6 +567,11 @@
     border-bottom: 1px solid var(--jv-border);
     color: var(--jv-text-primary);
     vertical-align: middle;
+    /* Ningun dato puede desbordar hacia la columna vecina:
+       se corta con puntos suspensivos dentro de su espacio */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Separador vertical sutil entre columnas: ningun dato se ve pegado a su vecino */
@@ -582,14 +587,14 @@
 
 .data-table th:first-child,
 .data-table td:first-child {
-    width: 40%;
+    width: 37%;
     text-align: left !important;
     padding-left: 14px;
 }
 
 .data-table th:nth-child(2),
 .data-table td:nth-child(2) {
-    width: 32%;
+    width: 35%;
     text-align: center;
 }
 
