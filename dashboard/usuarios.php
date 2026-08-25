@@ -153,7 +153,7 @@ unset($_SESSION['flash_msg']);
 <head>
     <?php include '../includes/diseno.php'; ?>
     <title>Colaboradores | JV3000</title>
-    <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=6">
+    <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=7">
 </head>
 
 <body class="usuarios-page">
@@ -209,11 +209,11 @@ unset($_SESSION['flash_msg']);
                     </div>
                     <div class="col-md-4">
                         <div class="widget-card">
-                            <div class="widget-icon" style="background:rgba(234,88,12,0.12);color:var(--jv-orange);">
+                            <div class="widget-icon" style="background:rgba(245,158,11,0.12);color:var(--jv-warning);">
                                 <i class="bi bi-hourglass-split"></i>
                             </div>
                             <div>
-                                <div class="widget-label">Pendientes</div>
+                                <div class="widget-label">Pendientes de Aprobación</div>
                                 <div class="widget-value"><?php echo $pendientes; ?></div>
                             </div>
                         </div>
@@ -227,7 +227,7 @@ unset($_SESSION['flash_msg']);
                 <!-- Tabla Premium -->
                 <div class="card-jv p-0 overflow-hidden">
                     <div class="header-card d-flex align-items-center gap-2">
-                        <i class="bi bi-person-lines-fill" style="color:var(--jv-navy);"></i>
+                        <i class="bi bi-person-lines-fill" style="color:#7c3aed;"></i>
                         <span class="fw-bold small text-secondary text-uppercase">Listado de Accesos</span>
                         <span class="codigo-badge ms-auto"><?php echo $total_users; ?> registros</span>
                     </div>
@@ -247,23 +247,22 @@ unset($_SESSION['flash_msg']);
                             <tbody>
                                 <?php if (!empty($usuarios)): ?>
                                     <?php foreach ($usuarios as $row): ?>
-                                        <tr>
+                                        <tr <?php echo ((int)$row['aprobado'] === 0) ? 'class="fila-pendiente"' : ''; ?>>
                                             <td class="text-secondary small"><span class="codigo-badge">#<?php echo $row['id_usuario']; ?></span></td>
-                                            <td class="fw-bold usuario-cell" title="<?php echo htmlspecialchars($row['usuario']); ?>">
+                                            <td class="fw-bold usuario-cell" data-tooltip="<?php echo htmlspecialchars($row['usuario']); ?>">
                                                 <?php echo htmlspecialchars($row['usuario']); ?>
                                             </td>
-                                            <td class="text-secondary small correo-cell" title="<?php echo htmlspecialchars($row['correo'] ?? 'N/A'); ?>"><?php echo htmlspecialchars($row['correo'] ?? 'N/A'); ?></td>
+                                            <td class="text-secondary correo-cell" data-tooltip="<?php echo htmlspecialchars($row['correo'] ?? 'Sin correo'); ?>"><?php echo htmlspecialchars($row['correo'] ?? 'N/A'); ?></td>
                                             <td>
                                                 <?php
-                                                $role_class = 'badge-secondary';
+                                                // Badge de rol con icono y color propio para identificar de un vistazo
                                                 $role_text = $row['nombre_rol'] ?? '';
-                                                if (empty($role_text)) {
-                                                    $role_text = 'SIN ROL';
-                                                }
-                                                if ($row['id_rol'] == 1) $role_class = 'badge-warning';
-                                                if ($row['id_rol'] == 2 || $row['id_rol'] == 3) $role_class = 'badge-success';
+                                                if ($row['id_rol'] == 1)      { $role_class = 'badge-rol-admin';  $role_icon = 'bi-shield-lock-fill'; }
+                                                elseif ($row['id_rol'] == 2)  { $role_class = 'badge-rol-carga';  $role_icon = 'bi-truck'; }
+                                                elseif ($row['id_rol'] == 3)  { $role_class = 'badge-rol-ventas'; $role_icon = 'bi-cart-check'; }
+                                                else                          { $role_class = 'badge-rol-sinrol'; $role_icon = 'bi-person-slash'; $role_text = 'SIN ROL'; }
                                                 ?>
-                                                <span class="role-badge <?php echo $role_class; ?>" title="<?php echo htmlspecialchars($role_text); ?>"><?php echo $role_text; ?></span>
+                                                <span class="role-badge <?php echo $role_class; ?>" data-tooltip="<?php echo htmlspecialchars($role_text); ?>"><i class="bi <?php echo $role_icon; ?>"></i><?php echo htmlspecialchars($role_text); ?></span>
                                             </td>
                                             <td class="text-center">
                                                 <?php if ($row['aprobado'] == 1): ?>
@@ -292,7 +291,7 @@ unset($_SESSION['flash_msg']);
                                                                 <?php endif;
                                                                 endforeach; ?>
                                                             </select>
-                                                            <button type="submit" class="btn-suspend btn-aprobar" title="Aprobar usuario">
+                                                            <button type="submit" class="btn-suspend btn-aprobar" data-tooltip="Aprobar este acceso">
                                                                 <i class="bi bi-person-check-fill me-1"></i>APROBAR
                                                             </button>
                                                         </form>

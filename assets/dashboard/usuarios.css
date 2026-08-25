@@ -1,17 +1,17 @@
 
-    /* === THEME: USUARIOS (Orange) ======================= */
+    /* === THEME: COLABORADORES (Violeta — zona Admin/Control) ===== */
     html:has(body.usuarios-page), body.usuarios-page { overflow-x:hidden; }
 
     .user-header-icon {
         width:56px;height:56px;border-radius:14px;
-        background:linear-gradient(135deg,#ea580c,#c2410c);
+        background:linear-gradient(135deg,#7c3aed,#5b21b6);
         display:flex;align-items:center;justify-content:center;
         color:#fff;font-size:1.6rem;flex-shrink:0;
-        box-shadow:0 0 30px rgba(234,88,12,0.3);
+        box-shadow:0 0 30px rgba(124, 58, 237,0.3);
     }
 
     .codigo-badge {
-        background:rgba(234,88,12,0.12);color:var(--jv-orange);
+        background:rgba(124, 58, 237,0.12);color:var(--jv-orange);
         font-size:.8rem;font-weight:800;padding:4px 12px;
         border-radius:20px;display:inline-block;
         letter-spacing:.5px;
@@ -24,13 +24,13 @@
         color:var(--jv-text-secondary);transition:.15s;font-size:1rem;
     }
     .btn-action:hover {
-        background:rgba(234,88,12,0.08);border-color:var(--jv-orange);
+        background:rgba(124, 58, 237,0.08);border-color:var(--jv-orange);
         color:var(--jv-orange);
     }
 
     .estado-vacio { padding:60px 20px;text-align:center; }
     .estado-vacio i {
-        font-size:3.5rem;color:rgba(234,88,12,0.2);display:block;margin-bottom:16px;
+        font-size:3.5rem;color:rgba(124, 58, 237,0.2);display:block;margin-bottom:16px;
     }
     .estado-vacio span {
         font-size:.85rem;font-weight:700;text-transform:uppercase;
@@ -38,10 +38,10 @@
     }
 
     .pagina-usuarios .card-jv {
-        border-color:rgba(234,88,12,0.25);
-        box-shadow:var(--jv-shadow), inset 0 0 0 1px rgba(234,88,12,0.06);
+        border-color:rgba(124, 58, 237,0.25);
+        box-shadow:var(--jv-shadow), inset 0 0 0 1px rgba(124, 58, 237,0.06);
     }
-    .pagina-usuarios .card-jv:hover { border-color:rgba(234,88,12,0.45); }
+    .pagina-usuarios .card-jv:hover { border-color:rgba(124, 58, 237,0.45); }
     .pagina-usuarios { max-width:100%; overflow-x:hidden; }
     .pagina-usuarios .table-jv {
         table-layout:fixed;
@@ -49,9 +49,9 @@
         min-width:900px;
     }
     .pagina-usuarios .table-jv thead th {
-        background:linear-gradient(135deg,#c2410c,#ea580c);
+        background:linear-gradient(135deg,#5b21b6,#7c3aed);
         color:#fff;
-        border-bottom:2px solid rgba(234,88,12,0.3);
+        border-bottom:2px solid rgba(124, 58, 237,0.3);
         font-size:.95rem;
         font-weight:900;
         letter-spacing:.5px;
@@ -61,7 +61,7 @@
         text-transform:uppercase;
     }
     .pagina-usuarios .table-jv tbody td {
-        border-bottom:1px solid rgba(234,88,12,0.07);
+        border-bottom:1px solid rgba(124, 58, 237,0.07);
         font-size:1rem;
         padding:16px;
         vertical-align:middle;
@@ -73,22 +73,22 @@
         white-space:nowrap;
     }
     .pagina-usuarios .table-jv tbody tr:hover {
-        background:rgba(234,88,12,0.03);
+        background:rgba(124, 58, 237,0.03);
     }
     .pagina-usuarios .btn-jv-primary {
-        background:linear-gradient(135deg,#ea580c,#c2410c);
+        background:linear-gradient(135deg,#7c3aed,#5b21b6);
     }
     .pagina-usuarios .btn-jv-primary:hover {
-        box-shadow:0 8px 25px -5px rgba(234,88,12,0.4);
+        box-shadow:0 8px 25px -5px rgba(124, 58, 237,0.4);
         transform:translateY(-2px);
     }
     .pagina-usuarios .input-jv:focus {
-        border-color:#ea580c;
-        box-shadow:0 0 0 3px rgba(234,88,12,0.15);
+        border-color:#7c3aed;
+        box-shadow:0 0 0 3px rgba(124, 58, 237,0.15);
     }
     .pagina-usuarios .header-card {
         padding:18px 24px;
-        border-left:4px solid #ea580c;
+        border-left:4px solid #7c3aed;
     }
     .pagina-usuarios .header-card i { font-size:1.1rem; }
     .pagina-usuarios .header-card span { font-size:.85rem; }
@@ -144,7 +144,7 @@
         font-size:.8rem;font-weight:800;text-transform:uppercase;
         letter-spacing:1px;color:var(--jv-navy);
         margin-bottom:8px;padding-bottom:6px;
-        border-bottom:1px solid rgba(234,88,12,0.2);
+        border-bottom:1px solid rgba(124, 58, 237,0.2);
         display:flex;align-items:center;gap:4px;
     }
     .pagina-usuarios .input-jv { font-size:1rem; }
@@ -154,10 +154,11 @@
         display:inline-flex;
         align-items:center;
         justify-content:center;
+        gap:6px;
         max-width:100%;
-        font-size:.8rem;
-        font-weight:700;
-        padding:5px 14px;
+        font-size:.85rem;
+        font-weight:800;
+        padding:6px 14px;
         border-radius:50px;
         white-space:nowrap;
         overflow:hidden;
@@ -165,6 +166,24 @@
         letter-spacing:.3px;
         border:1px solid;
     }
+    /* Color e icono propios por rol: se identifica de un vistazo */
+    .pagina-usuarios .role-badge .bi { font-size:.9rem; }
+    .badge-rol-admin  { background:rgba(124,58,237,0.12); color:#6D28D9; border-color:rgba(124,58,237,0.35); }
+    .badge-rol-carga  { background:rgba(37,99,235,0.12);  color:#1D4ED8; border-color:rgba(37,99,235,0.35); }
+    .badge-rol-ventas { background:rgba(5,150,105,0.12);  color:#047857; border-color:rgba(5,150,105,0.35); }
+    .badge-rol-sinrol { background:rgba(100,116,139,0.12);color:#475569; border-color:rgba(100,116,139,0.35); }
+
+    /* Fila de solicitud pendiente: fondo ámbar suave para que salte a la vista */
+    .pagina-usuarios tr.fila-pendiente {
+        background:rgba(245,158,11,0.06);
+    }
+    .pagina-usuarios tr.fila-pendiente td:first-child {
+        box-shadow:inset 3px 0 0 #f59e0b;
+    }
+
+    /* Tipografía cómoda: celdas y etiquetas legibles sin esfuerzo */
+    .pagina-usuarios .table-jv tbody td.usuario-cell { font-size:1.05rem; }
+    .pagina-usuarios .table-jv tbody td.correo-cell { font-size:.95rem; }
 
     /* ── Strength meter ── */
     .strength-meter { height:6px;background:rgba(15,26,46,0.08);border-radius:10px;overflow:hidden; }

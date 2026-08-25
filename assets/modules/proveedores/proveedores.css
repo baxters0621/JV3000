@@ -81,7 +81,7 @@
         font-size:1.4rem;flex-shrink:0;
     }
     .widget-card .widget-label {
-        font-size:.75rem;text-transform:uppercase;
+        font-size:.85rem;text-transform:uppercase;
         letter-spacing:1px;font-weight:700;
         color:var(--jv-text-muted);
         margin-bottom:4px;
@@ -125,7 +125,7 @@
         margin-bottom:10px;
     }
     .prov-premium .prov-info {
-        font-size:.9rem;color:var(--jv-text-secondary);margin-bottom:4px;
+        font-size:.98rem;color:var(--jv-text-secondary);margin-bottom:4px;
     }
     .prov-premium .prov-info i { width:18px;color:#EA580C; }
     .prov-premium .prov-details {
@@ -141,7 +141,7 @@
     }
     .prov-premium .prov-detail-row {
         display:flex;justify-content:space-between;
-        padding:6px 0;font-size:.9rem;
+        padding:6px 0;font-size:.98rem;
         border-bottom:1px solid rgba(15,26,46,0.05);
     }
     .prov-premium .prov-detail-row:last-child { border-bottom:none; }
@@ -181,12 +181,12 @@
     }
     .cat-item-info { flex:1;min-width:0; }
     .cat-item-nombre {
-        display:block;font-size:.88rem;font-weight:700;color:var(--jv-navy);
+        display:block;font-size:.95rem;font-weight:700;color:var(--jv-navy);
         overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     }
-    .cat-item-meta { font-size:.72rem;color:var(--jv-text-muted); }
+    .cat-item-meta { font-size:.82rem;color:var(--jv-text-muted); }
     .cat-item-costo {
-        font-size:.9rem;font-weight:800;color:#16A34A;white-space:nowrap;
+        font-size:.95rem;font-weight:800;color:#16A34A;white-space:nowrap;
         background:rgba(22,163,74,0.1);padding:3px 10px;border-radius:14px;
     }
     .btn-cat-icon {
@@ -230,7 +230,7 @@
     .sec-comercial { border-left:4px solid #EA580C; }
 
     .section-label {
-        font-size:.8rem;font-weight:800;text-transform:uppercase;
+        font-size:.95rem;font-weight:800;text-transform:uppercase;
         letter-spacing:1px;color:var(--jv-navy);
         margin-bottom:10px;padding-bottom:6px;
         border-bottom:1px solid rgba(234, 88, 12,0.2);
@@ -238,16 +238,16 @@
     }
     /* Chip del icono de sección: cuadrito de color que hace el formulario escaneable */
     .section-chip {
-        width:26px;height:26px;border-radius:8px;flex-shrink:0;
+        width:30px;height:30px;border-radius:9px;flex-shrink:0;
         display:inline-flex;align-items:center;justify-content:center;
-        color:#fff;font-size:.85rem;
+        color:#fff;font-size:1rem;
     }
     .section-chip.chip-fiscal    { background:#2563EB; }
     .section-chip.chip-contacto  { background:#0D9488; }
     .section-chip.chip-comercial { background:#EA580C; }
     /* Texto de ayuda a la derecha del título de la sección */
     .section-ayuda {
-        font-size:.72rem;font-weight:500;letter-spacing:0;text-transform:none;
+        font-size:.82rem;font-weight:500;letter-spacing:0;text-transform:none;
         color:var(--jv-text-muted);margin-left:auto;text-align:right;
     }
     /* Cabecera degradada del modal (mismo lenguaje visual del sistema).
@@ -259,9 +259,26 @@
         background:linear-gradient(135deg,#0F1A2E,#1E2A3E);
         border-bottom:4px solid #EA580C;
     }
-    .modal-header-jv h5 { font-size:1.25rem;color:#fff;margin:0;font-weight:800; }
-    .modal-header-jv small { color:rgba(255,255,255,0.65);font-size:.82rem;display:block;margin-top:2px;font-weight:500; }
+    .modal-header-jv h5 { font-size:1.35rem;color:#fff;margin:0;font-weight:800; }
+    .modal-header-jv small { color:rgba(255,255,255,0.75);font-size:.92rem;display:block;margin-top:2px;font-weight:500; }
     .modal-header-jv .btn-close { filter:brightness(0) invert(1); }
+
+    /* ── Tipografía ampliada: legible sin esfuerzo ── */
+    /* Labels de los formularios: más grandes y en color pleno (anula el "small" de Bootstrap) */
+    .pagina-proveedores #formProveedor label,
+    .pagina-proveedores #formCatalogo label {
+        font-size:.98rem !important;
+        color:var(--jv-text-primary) !important;
+    }
+    /* Campos: texto grande y cómodo de tocar/escribir */
+    .pagina-proveedores #formProveedor .input-jv,
+    .pagina-proveedores #formCatalogo .input-jv {
+        font-size:1.05rem;
+        padding:12px 14px;
+    }
+    /* Botones guardar con presencia */
+    .pagina-proveedores #btn-prov-submit,
+    .pagina-proveedores #btn-cat-submit { font-size:1.05rem; letter-spacing:.5px; }
 
     /* ── Filter btn group ── */
     .filter-group { display:flex;gap:6px; }
