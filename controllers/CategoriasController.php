@@ -67,6 +67,19 @@ class CategoriasController extends Controller
             $this->redirect('categorias');
         }
 
+        // --- Acción "cargar_plantilla": crear en bloque un rubro completo ---
+        if (isset($_POST['cargar_plantilla'])) {
+            $plantillas = require APP_ROOT . '/config/plantillas_categorias.php';
+            $clave = $_POST['plantilla'] ?? '';
+            if (!isset($plantillas[$clave])) {
+                $this->flash('danger', 'PLANTILLA NO VÁLIDA.');
+            } else {
+                $resultado = $modelo->cargarPlantilla($plantillas[$clave]['categorias']);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+            }
+            $this->redirect('categorias');
+        }
+
         // ==========================================
         // BLOQUE GET: cuando solo se navega a la página
         // ==========================================
@@ -84,10 +97,11 @@ class CategoriasController extends Controller
             'titulo'       => 'Categorías | JV3000 C.A.',
             'wrapper_class' => 'pagina-categorias',
             'css_extra'    => ['modules/categorias/categorias.css?v=7'],
-            'js_extra'     => ['modules/categorias/categorias.js?v=5'],
+            'js_extra'     => ['modules/categorias/categorias.js?v=6'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,
             'categorias'   => $modelo->listar(),
+            'plantillas'   => require APP_ROOT . '/config/plantillas_categorias.php',
         ]);
     }
 }

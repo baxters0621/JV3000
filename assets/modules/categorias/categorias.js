@@ -15,6 +15,45 @@
             }
             // Instancia del modal de Bootstrap (se usa en nuevaCat/editarCat para abrirlo).
             const modalC = new bootstrap.Modal(document.getElementById('modalCat'));
+            // Instancia del modal de plantillas de rubro (carga en bloque).
+            let modalPlantillas = null;
+
+            // ==========================================
+            // CARGAR PLANTILLA: abre el modal de plantillas
+            // ==========================================
+            function abrirPlantillas() {
+                if (!modalPlantillas) modalPlantillas = new bootstrap.Modal(document.getElementById('modalPlantillas'));
+                modalPlantillas.show();
+            }
+
+            // Confirma la carga del rubro: exige una plantilla seleccionada,
+            // pide confirmacion con SweetAlert y envia el formulario.
+            function confirmarPlantilla(submitButton) {
+                const seleccionada = document.querySelector('input[name="plantilla"]:checked');
+                if (!seleccionada) {
+                    Swal.fire({ title: 'SELECCIONA UNA PLANTILLA', text: 'Elige primero el rubro que deseas cargar.', icon: 'warning', background: '#fff', color: '#212529', confirmButtonColor: '#EA580C' });
+                    return false;
+                }
+                Swal.fire({
+                    title: '¿CARGAR PLANTILLA?',
+                    html: 'Se crearán las categorías que no existan. Las que ya estén <strong>no se duplican</strong>.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#16A34A',
+                    cancelButtonColor: '#CED4DA',
+                    confirmButtonText: 'SÍ, CARGAR',
+                    cancelButtonText: 'CANCELAR'
+                }).then(function(resultado) {
+                    if (resultado.isConfirmed) {
+                        submitButton.disabled = true;
+                        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> CARGANDO...';
+                        submitButton.form.submit();
+                    }
+                });
+                return false;
+            }
 
             // ==========================================
             // NUEVA CATEGORÍA: prepara el modal en modo "crear"
