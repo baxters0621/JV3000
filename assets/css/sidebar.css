@@ -78,12 +78,10 @@
 .nav-dashboard  { --mod-color: #94A3B8; }
 .nav-estadisticas { --mod-color: #3B82F6; }
 .nav-inventario { --mod-color: var(--jv-orange); }
-.nav-categorias { --mod-color: #2563EB; }
 .nav-entradas   { --mod-color: var(--jv-success); }
 .nav-recepcion  { --mod-color: #F59E0B; }
 .nav-salidas    { --mod-color: var(--jv-danger); }
 .nav-solicitudes { --mod-color: #6366F1; }
-.nav-clientes   { --mod-color: #8B5CF6; }
 .nav-usuarios   { --mod-color: #F59E0B; }
 .nav-reportes   { --mod-color: var(--jv-warning); }
 .nav-historial  { --mod-color: #7C3AED; }

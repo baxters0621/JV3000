@@ -45,7 +45,7 @@ function es_activo(string $pagina, string $modulo = ''): string
     </div>
 
     <!-- Menú de navegación -->
-    <!-- Orden operativo: Configuración -> Abastecimiento -> Ventas -> Análisis -> Control -->
+    <!-- Orden: Operaciones → Análisis → Control -->
     <nav class="sidebar-nav">
         <!-- Panel de Inicio -->
         <div class="nav-item nav-dashboard <?php echo ($archivo_actual === 'index.php' && $ruta_mvc === '') ? 'active' : ''; ?>">
