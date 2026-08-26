@@ -57,42 +57,16 @@ function es_activo(string $pagina, string $modulo = ''): string
 
         <?php
         // Visibilidad por módulo según el rol de la sesión
-        $ver_config     = $es_admin || $es_op_carga;                    // Categorías, Proveedores
-        $ver_usuarios   = $es_admin;                                    // Usuarios
+        // Nota: Proveedores se gestiona desde Compras y Categorías desde
+        // Inventario (pop-ups); ya no tienen entrada propia en el menú.
+        $ver_usuarios   = $es_admin;                                    // Usuarios (Control)
         $ver_abasto     = $es_admin || $es_op_carga;                    // Solicitudes, Compras, Recepción
         $ver_inventario = $es_admin || $es_op_carga || $es_op_ventas;   // Inventario (consulta)
         $ver_ventas     = $es_admin || $es_op_ventas;                   // Ventas/Salidas
         $ver_estadisticas = $es_admin || $es_op_ventas;
         ?>
 
-        <!-- ═══ FASE 1: CONFIGURACIÓN INICIAL ═══ -->
-        <?php if ($ver_config || $ver_usuarios): ?>
-            <div class="nav-section-title">Configuraci&oacute;n</div>
-
-            <?php if ($ver_config): ?>
-                <!-- Categorías: primero se crean las clasificaciones -->
-                <div class="nav-item nav-categorias <?php echo $mvc_activa('categorias') ? 'active' : ''; ?>">
-                    <a href="<?php echo $prefijo; ?>index.php?url=categorias" class="nav-link">
-                        <i class="bi bi-grid-3x3-gap"></i>
-                        <span>Categor&iacute;as</span>
-                    </a>
-                </div>
-
-                <!-- Proveedores: ahora se gestionan desde el botón PROVEEDORES dentro de Compras -->
-            <?php endif; ?>
-
-            <?php if ($ver_usuarios): ?>
-                <!-- Usuarios: por último se crean los operadores con su rol -->
-                <div class="nav-item nav-usuarios <?php echo ($archivo_actual === 'usuarios.php') ? 'active' : ''; ?>">
-                    <a href="<?php echo $prefijo; ?>dashboard/usuarios.php" class="nav-link">
-                        <i class="bi bi-people-fill"></i>
-                        <span>Usuarios</span>
-                    </a>
-                </div>
-            <?php endif; ?>
-        <?php endif; ?>
-
-        <!-- ═══ FASE 2: OPERACIONES (ciclo diario) ═══ -->
+        <!-- ═══ OPERACIONES (ciclo diario) ═══ -->
         <div class="nav-section-title">Operaciones</div>
 
         <?php if ($ver_abasto): ?>
@@ -141,7 +115,7 @@ function es_activo(string $pagina, string $modulo = ''): string
             </div>
         <?php endif; ?>
 
-        <!-- ═══ FASE 3: ANÁLISIS Y REPORTES ═══ -->
+        <!-- ═══ ANÁLISIS Y REPORTES ═══ -->
         <div class="nav-section-title">An&aacute;lisis</div>
 
         <?php if ($ver_estadisticas): ?>
@@ -161,7 +135,7 @@ function es_activo(string $pagina, string $modulo = ''): string
             </a>
         </div>
 
-        <!-- ═══ FASE 4: CONTROL (solo admin) ═══ -->
+        <!-- ═══ CONTROL (solo admin) ═══ -->
         <?php if ($es_admin): ?>
             <div class="nav-section-title">Control</div>
 
@@ -169,6 +143,14 @@ function es_activo(string $pagina, string $modulo = ''): string
                 <a href="<?php echo $prefijo; ?>index.php?url=historial" class="nav-link">
                     <i class="bi bi-clock-history"></i>
                     <span>Historial</span>
+                </a>
+            </div>
+
+            <!-- Usuarios: cuentas del personal que usa el sistema -->
+            <div class="nav-item nav-usuarios <?php echo ($archivo_actual === 'usuarios.php') ? 'active' : ''; ?>">
+                <a href="<?php echo $prefijo; ?>dashboard/usuarios.php" class="nav-link">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Usuarios</span>
                 </a>
             </div>
         <?php endif; ?>

@@ -80,16 +80,51 @@ class ProductosController extends Controller
             $this->redirect('productos');
         }
 
+        // --- Gestión integrada de categorías (pop-up dentro de Inventario) ---
+        // Mismo permiso que tenía el módulo independiente: admin o carga
+        // (verificarPermisoCarga ya cubrió el acceso completo a esta página).
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_categoria'])) {
+            Security::verificarPermisoCarga();
+            $resultado = (new Categoria())->procesar([
+                'accion'            => $_POST['accion_categoria'],
+                'nombre'            => $_POST['nombre'] ?? '',
+                'descripcion'       => $_POST['descripcion'] ?? '',
+                'clasificacion_abc' => $_POST['clasificacion_abc'] ?? '',
+                'tipo_manejo'       => $_POST['tipo_manejo'] ?? 'normal',
+                'status'            => $_POST['status'] ?? 'Activo',
+                'id_categoria'      => (int)($_POST['id_categoria'] ?? 0),
+            ]);
+            $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+            $this->redirect('productos');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_categoria'])) {
+            Security::verificarPermisoCarga();
+            (new Categoria())->toggleStatus((int)$_POST['toggle_categoria']);
+            $this->flash('success', 'ESTADO DE LA CATEGORÍA CAMBIADO.');
+            $this->redirect('productos');
+        }
+
         // --- Datos para la vista ---
         $offset = ($pagina_actual - 1) * $registros_por_pagina;
         $flash = $_SESSION['flash_msg'] ?? null;
         unset($_SESSION['flash_msg']);
 
+        // Gestión integrada de categorías: solo admin o carga la administran.
+        // El inventario sigue siendo de consulta para los tres roles, así que
+        // al rol de ventas simplemente no se le envían datos del gestor.
+        $categorias_gestion = [];
+        if ($esAdmin || (int)$_SESSION['id_rol'] === 2) {
+            $categoriaModelo = new Categoria();
+            $categoriaModelo->repararCodigos();
+            $categorias_gestion = $categoriaModelo->listar();
+        }
+
         $this->view('productos/index', [
             'titulo'       => 'Inventario | JV3000 C.A.',
             'wrapper_class' => 'pagina-productos',
-            'css_extra'    => ['modules/productos/productos.css?v=18'],
-            'js_extra'     => ['modules/productos/productos.js?v=12'],
+            'css_extra'    => ['modules/productos/productos.css?v=19'],
+            'js_extra'     => ['modules/productos/productos.js?v=13'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,
             'esAdmin'      => $esAdmin,
@@ -99,6 +134,7 @@ class ProductosController extends Controller
             'pagina_actual'    => $pagina_actual,
             'offset'           => $offset,
             'registros_por_pagina' => $registros_por_pagina,
+            'categorias_gestion' => $categorias_gestion,
         ]);
     }
 }

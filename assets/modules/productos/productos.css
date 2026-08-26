@@ -632,3 +632,113 @@
             100% { background-color: transparent; }
         }
     
+        /* ============================================================
+           GESTIÓN INTEGRADA DE CATEGORÍAS (pop-ups dentro de Inventario)
+           ============================================================ */
+
+        /* ── Cabecera degradada azul (identidad Categorías) ── */
+        .pagina-productos .cat-modal-header-jv {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 22px;
+            margin: -1rem -1rem 1rem;
+            border-radius: calc(var(--jv-radius-xl, 18px) - 1px) calc(var(--jv-radius-xl, 18px) - 1px) 0 0;
+            background: linear-gradient(135deg, #0F1A2E, #1E2A3E);
+            border-bottom: 3px solid #2563eb;
+        }
+        .pagina-productos .cat-modal-header-jv h5 { font-size: 1.25rem; color: #fff; margin: 0; font-weight: 800; }
+        .pagina-productos .cat-modal-header-jv small { color: rgba(255,255,255,0.75); font-size: .88rem; display: block; margin-top: 2px; }
+        .pagina-productos .cat-modal-header-jv .btn-close { filter: brightness(0) invert(1); }
+
+        /* ── Secciones del formulario con acento ── */
+        .pagina-productos #modalCat .section-bg {
+            background: var(--jv-bg-primary);
+            border: 1px solid var(--jv-border);
+            border-radius: var(--jv-radius);
+            padding: 14px 16px;
+        }
+        .pagina-productos #modalCat .section-label {
+            font-size: .8rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--jv-navy);
+            margin-bottom: 10px; padding-bottom: 6px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .pagina-productos #modalCat .cat-sec-general    { border-left: 4px solid #2563EB; }
+        .pagina-productos #modalCat .cat-sec-parametros { border-left: 4px solid #0D9488; }
+
+        /* ── Toolbar: búsqueda ── */
+        .pagina-productos .cat-search { position: relative; flex: 1; min-width: 220px; max-width: 320px; }
+        .pagina-productos .cat-search > i {
+            position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: var(--jv-text-muted); font-size: .9rem; pointer-events: none;
+        }
+        .pagina-productos .cat-search .input-jv { padding-left: 36px; border-radius: 20px; }
+
+        /* ── Tabla del listado dentro del pop-up ── */
+        .pagina-productos #modalCategorias .table-jv thead th {
+            background: var(--jv-bg-primary);
+            color: var(--jv-navy);
+            border-bottom: 2px solid rgba(37, 99, 235, 0.35);
+        }
+        .pagina-productos #modalCategorias .table-jv tbody tr.cat-fila:hover { background: rgba(37, 99, 235, 0.06); }
+
+        /* Botones de acción compactos (editar/toggle) */
+        .pagina-productos #modalCategorias .btn-action,
+        .pagina-productos #modalCat .btn-action {
+            width: 32px; height: 32px; min-width: 32px; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all .2s ease;
+            border: 1px solid var(--jv-border);
+            background: transparent;
+            color: var(--jv-text-secondary);
+            cursor: pointer;
+        }
+        .pagina-productos #modalCategorias .btn-action:hover {
+            border-color: #2563eb; color: #2563eb; background: rgba(37, 99, 235, 0.08);
+        }
+
+        /* Código CAT-XXX */
+        .pagina-productos .codigo-badge-cat {
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.25);
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: .8rem; font-weight: 700;
+            color: #1e3a8a;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+        }
+
+        /* Badges ABC y manejo (migrados del módulo independiente) */
+        .pagina-productos .abc-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; border-radius: 50%;
+            font-size: .85rem; font-weight: 900; border: 2px solid;
+        }
+        .pagina-productos .abc-a { background: rgba(22,163,74,0.12); color: var(--jv-success); border-color: rgba(22,163,74,0.4); }
+        .pagina-productos .abc-b { background: rgba(217,119,6,0.12); color: var(--jv-warning); border-color: rgba(217,119,6,0.4); }
+        .pagina-productos .abc-c { background: rgba(220,38,38,0.12); color: var(--jv-danger); border-color: rgba(220,38,38,0.4); }
+
+        .pagina-productos .manejo-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: .75rem; font-weight: 800; letter-spacing: .5px;
+            text-transform: uppercase; white-space: nowrap;
+        }
+        .pagina-productos .manejo-normal     { background: rgba(37,99,235,0.1);   color: #1e3a8a; }
+        .pagina-productos .manejo-inflamable { background: rgba(239,68,68,0.12);  color: #DC2626; }
+        .pagina-productos .manejo-liquido    { background: rgba(59,130,246,0.12); color: #2563EB; }
+        .pagina-productos .manejo-peligroso  { background: rgba(251,191,36,0.12); color: #92400E; }
+        .pagina-productos .manejo-voluminoso { background: rgba(168,85,247,0.12); color: #7C3AED; }
+        .pagina-productos .manejo-aerosol    { background: rgba(251,146,60,0.12); color: #C2410C; }
+
+        /* Estado vacío dentro de pop-ups */
+        .pagina-productos .estado-vacio { padding: 40px 20px; text-align: center; }
+        .pagina-productos .estado-vacio i {
+            font-size: 3rem; color: rgba(37, 99, 235, 0.25);
+            display: block; margin-bottom: 12px;
+        }
+        .pagina-productos .estado-vacio span {
+            font-size: .9rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--jv-text-muted);
+        }

@@ -346,4 +346,138 @@
         document.addEventListener('DOMContentLoaded', function() {
             iniciarDesdeURL();
         });
+
+        // ==========================================
+        // GESTIÓN INTEGRADA DE CATEGORÍAS (pop-ups)
+        // Registrar / modificar / desactivar categorías
+        // sin salir de Inventario.
+        // ==========================================
+
+        let catEstadoFiltro = 'todos';
+        let catDesdeLista = false;
+
+        // Abre el pop-up del gestor reiniciando búsqueda y filtro.
+        function abrirGestorCat() {
+            const buscadorCategorias = document.getElementById('buscarCat');
+            if (buscadorCategorias) buscadorCategorias.value = '';
+            catEstadoFiltro = 'todos';
+            catFiltrar();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias')).show();
+        }
+
+        // Filtra las filas por texto (nombre/código) y estado seleccionado.
+        function catFiltrar() {
+            const textoBusqueda = ((document.getElementById('buscarCat') || {}).value || '').toLowerCase().trim();
+            document.querySelectorAll('#tablaCategoriasPop .cat-fila').forEach(function(fila) {
+                const visible = (catEstadoFiltro === 'todos' || fila.dataset.status === catEstadoFiltro)
+                    && (!textoBusqueda || (fila.dataset.texto || '').indexOf(textoBusqueda) !== -1);
+                fila.style.display = visible ? '' : 'none';
+            });
+        }
+
+        // Prepara y abre el formulario de categoría (null = modo registro).
+        function catAbrirForm(categoriaData) {
+            const esEdicion = !!categoriaData;
+            document.getElementById('cat_accion').value = esEdicion ? 'editar' : 'registrar';
+            document.getElementById('cat_id_edit').value = esEdicion ? categoriaData.id_categoria : '';
+            document.getElementById('cat_status').value = esEdicion ? (categoriaData.status || 'Activo') : 'Activo';
+            document.getElementById('modalTitleCat').innerHTML = esEdicion ? '<i class="bi bi-tag-fill me-2"></i>EDITAR CATEGOR\u00cdA' : '<i class="bi bi-tag-fill me-2"></i>NUEVA CATEGOR\u00cdA';
+            document.getElementById('cat_nombre').value = esEdicion ? categoriaData.nombre : '';
+            document.getElementById('cat_desc').value = esEdicion ? (categoriaData.descripcion || '') : '';
+            document.getElementById('cat_abc').value = esEdicion ? (categoriaData.clasificacion_abc || '') : '';
+            document.getElementById('cat_manejo').value = esEdicion ? (categoriaData.tipo_manejo || 'normal') : 'normal';
+
+            const btnGuardarCat = document.getElementById('btn-cat-guardar');
+            btnGuardarCat.disabled = false;
+            btnGuardarCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR CATEGOR\u00cdA';
+
+            catDesdeLista = true;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias')).hide();
+            setTimeout(function() {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat')).show();
+                document.getElementById('cat_nombre').focus();
+            }, 300);
+        }
+
+        // Modo registro (botón NUEVA del listado).
+        function nuevaCat() {
+            catAbrirForm(null);
+        }
+
+        // Modo edición: recibe la categoría como objeto (desde onclick con JSON).
+        function editarCat(categoriaData) {
+            catAbrirForm(categoriaData);
+        }
+
+        // Confirma activar/desactivar una categoría y envía la acción al servidor.
+        function catToggleStatus(idCategoria, nombre, statusActual) {
+            const activa = statusActual === 'Activo';
+            Swal.fire({
+                title: activa ? '\u00bfDESACTIVAR CATEGOR\u00cdA?' : '\u00bfREACTIVAR CATEGOR\u00cdA?',
+                text: activa ? 'Se desactivar\u00e1 \'' + nombre + '\'' : 'Se reactivar\u00e1 \'' + nombre + '\'',
+                icon: activa ? 'warning' : 'info',
+                showCancelButton: true,
+                confirmButtonColor: activa ? '#DC2626' : '#16A34A',
+                cancelButtonColor: '#CED4DA',
+                confirmButtonText: activa ? 'S\u00cd, DESACTIVAR' : 'S\u00cd, ACTIVAR',
+                cancelButtonText: 'CANCELAR',
+                background: '#fff',
+                color: '#212529'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    jvPost({ toggle_categoria: idCategoria, csrf_token: window.JV_CONFIG.csrfToken });
+                }
+            });
+        }
+
+        // Inicialización exclusiva del gestor de categorías.
+        document.addEventListener('DOMContentLoaded', function() {
+            const formCategorias = document.getElementById('formCat');
+
+            if (formCategorias) {
+                // Validación antes de enviar (anti-doble-click incluido)
+                formCategorias.addEventListener('submit', function(e) {
+                    limpiarErrores();
+                    const nombreCategoria = document.getElementById('cat_nombre');
+                    if (!nombreCategoria.value.trim()) {
+                        marcarError(nombreCategoria, 'NOMBRE REQUERIDO');
+                        e.preventDefault();
+                        nombreCategoria.focus();
+                        return;
+                    }
+                    const btnGuardarCat = document.getElementById('btn-cat-guardar');
+                    btnGuardarCat.disabled = true;
+                    btnGuardarCat.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
+                });
+
+                // Limpia marcas de error al escribir o cambiar cualquier campo
+                formCategorias.querySelectorAll('input, select, textarea').forEach(function(el) {
+                    el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id + '_err'); if (e) e.remove(); });
+                    el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id + '_err'); if (e) e.remove(); });
+                });
+
+                // Si el usuario cierra el formulario sin guardar, vuelve al listado
+                document.getElementById('modalCat').addEventListener('hidden.bs.modal', function() {
+                    if (catDesdeLista) {
+                        catDesdeLista = false;
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias')).show();
+                    }
+                });
+            }
+
+            // Si el servidor rechazó el guardado (nombre duplicado), reabre el
+            // formulario marcando el campo exacto que lo causó.
+            const flashCat = document.getElementById('flashMsg');
+            if (flashCat && flashCat.classList.contains('alert-jv-danger')) {
+                const textoFlashCat = (flashCat.dataset.texto || '').toUpperCase();
+                if (textoFlashCat.indexOf('NOMBRE') !== -1 || textoFlashCat.indexOf('CATEGOR\u00cdA') !== -1) {
+                    const campoNombre = document.getElementById('cat_nombre');
+                    if (campoNombre) {
+                        marcarError(campoNombre, textoFlashCat);
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat')).show();
+                    }
+                }
+            }
+        });
+
     
