@@ -78,13 +78,7 @@ function es_activo(string $pagina, string $modulo = ''): string
                     </a>
                 </div>
 
-                <!-- Proveedores: luego se registran los proveedores -->
-                <div class="nav-item nav-clientes <?php echo $mvc_activa('proveedores') ? 'active' : ''; ?>">
-                    <a href="<?php echo $prefijo; ?>index.php?url=proveedores" class="nav-link">
-                        <i class="bi bi-building"></i>
-                        <span>Proveedores</span>
-                    </a>
-                </div>
+                <!-- Proveedores: ahora se gestionan desde el botón PROVEEDORES dentro de Compras -->
             <?php endif; ?>
 
             <?php if ($ver_usuarios): ?>

@@ -392,6 +392,365 @@
         }
 
         // ==========================================
+        // GESTIÓN INTEGRADA DE PROVEEDORES (pop-ups)
+        // Registrar / modificar / desactivar proveedores y
+        // administrar su catálogo de costos sin salir de Compras.
+        // ==========================================
+
+        let provEstado = 'todos';
+        let provDesdeLista = false;
+
+        // Abre el pop-up del gestor reiniciando búsqueda y filtro de estado.
+        function abrirGestorProv() {
+            const buscadorProv = document.getElementById('buscarProv');
+            if (buscadorProv) buscadorProv.value = '';
+            provEstado = 'todos';
+            document.querySelectorAll('#modalProvList .btn-filter').forEach(function(b) { b.classList.remove('active'); });
+            const btnTodos = document.querySelector('#modalProvList .btn-filter');
+            if (btnTodos) btnTodos.classList.add('active');
+            provFiltrar();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProvList')).show();
+        }
+
+        // Cambia el filtro por estado (todos/Activo/Inactivo) y reaplica el filtrado.
+        function provSetFiltro(status, boton) {
+            provEstado = status;
+            document.querySelectorAll('#modalProvList .btn-filter').forEach(function(b) { b.classList.remove('active'); });
+            boton.classList.add('active');
+            provFiltrar();
+        }
+
+        // Filtra las filas por texto (empresa/RIF/teléfono) y estado seleccionado;
+        // al ocultar un proveedor también oculta su panel de catálogo expandido.
+        function provFiltrar() {
+            const texto = (document.getElementById('buscarProv').value || '').toLowerCase().trim();
+            document.querySelectorAll('#provTbody .prov-fila').forEach(function(fila) {
+                const visible = (provEstado === 'todos' || fila.dataset.status === provEstado)
+                    && (!texto || (fila.dataset.texto || '').indexOf(texto) !== -1);
+                fila.style.display = visible ? '' : 'none';
+                const detalle = fila.nextElementSibling;
+                if (detalle && detalle.classList.contains('prov-detalle-row') && !visible) {
+                    detalle.style.display = 'none';
+                }
+            });
+        }
+
+        // Muestra u oculta el panel con los productos que suministra un proveedor.
+        function provToggleDetalle(idProveedor) {
+            const detalle = document.getElementById('prov-detalle-' + idProveedor);
+            if (detalle) detalle.style.display = (detalle.style.display === 'none') ? '' : 'none';
+        }
+
+        // Prepara y abre el formulario en modo registro (viene desde el listado).
+        function nuevoProv() {
+            provDesdeLista = true;
+            provAbrirForm(null);
+        }
+
+        // Prepara y abre el formulario en modo edición con los datos recibidos.
+        function editarProv(proveedorData) {
+            provDesdeLista = true;
+            provAbrirForm(proveedorData);
+        }
+
+        // Rellena el formulario de proveedor y cambia del listado al formulario
+        // (oculta el listado para evitar modales apilados).
+        function provAbrirForm(proveedorData) {
+            const esEdicion = !!proveedorData;
+            document.getElementById('p_accion').value = esEdicion ? 'editar' : 'registrar';
+            document.getElementById('p_id_edit').value = esEdicion ? proveedorData.id_proveedor : '';
+            document.getElementById('modalTitle').innerText = esEdicion ? 'EDITAR PROVEEDOR' : 'REGISTRAR PROVEEDOR';
+            document.getElementById('p_rif').value = esEdicion ? proveedorData.rif : '';
+            document.getElementById('p_empresa').value = esEdicion ? proveedorData.nombre_empresa : '';
+            document.getElementById('p_contacto_nombre').value = esEdicion ? (proveedorData.contacto || '') : '';
+            document.getElementById('p_email').value = esEdicion ? (proveedorData.email || '') : '';
+            document.getElementById('p_direccion').value = esEdicion ? (proveedorData.direccion || '') : '';
+            document.getElementById('p_lead_time').value = esEdicion ? (proveedorData.lead_time || '') : '';
+            document.getElementById('p_moneda').value = esEdicion ? (proveedorData.moneda || 'USD') : 'USD';
+            document.getElementById('p_status').value = esEdicion ? (proveedorData.status || 'Activo') : 'Activo';
+
+            const btnSubmit = document.getElementById('btn-prov-submit');
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR';
+            document.getElementById('p_rif').dispatchEvent(new Event('input'));
+
+            if (window.provIti && typeof window.provIti.setNumber === 'function') {
+                window.provIti.setNumber(esEdicion ? (proveedorData.telefono || '') : '');
+                document.getElementById('p_tel_full').value = window.provIti.getNumber();
+            } else if (window.provIti && typeof window.provIti.reset === 'function') {
+                window.provIti.reset();
+                document.getElementById('p_tel_full').value = '';
+            }
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProvList')).hide();
+            setTimeout(function() {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProveedor')).show();
+            }, 300);
+        }
+
+        // Confirma activar/desactivar un proveedor y envía la acción al servidor.
+        function provToggleStatus(idProveedor, nombre, statusActual) {
+            const activo = statusActual === 'Activo';
+            Swal.fire({
+                title: activo ? '\u00bfDesactivar proveedor?' : '\u00bfActivar proveedor?',
+                html: activo ? 'Se desactivar\u00e1 <strong>' + escapeHtml(nombre) + '</strong>.' : 'Se reactivar\u00e1 <strong>' + escapeHtml(nombre) + '</strong>.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: activo ? '#DC2626' : '#16A34A',
+                cancelButtonColor: '#CED4DA',
+                confirmButtonText: activo ? 'S\u00ed, desactivar' : 'S\u00ed, activar',
+                cancelButtonText: 'Cancelar',
+                background: '#fff',
+                color: '#212529',
+                reverseButtons: true
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    jvPost({
+                        accion_proveedor: 'toggle_status',
+                        id_proveedor: idProveedor,
+                        csrf_token: window.JV_CONFIG.csrfToken
+                    });
+                }
+            });
+        }
+
+        // Formatea en vivo el costo con separador de miles y un solo punto decimal.
+        function provFormatMoney(inputElement) {
+            let rawValue = inputElement.value.replace(/[^0-9.]/g, '');
+            let valueParts = rawValue.split('.');
+            if (valueParts.length > 2) valueParts = [valueParts[0], valueParts.slice(1).join('')];
+            valueParts[0] = valueParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            inputElement.value = valueParts.join('.');
+        }
+
+        // Abre el pop-up de catálogo en modo registro para el proveedor indicado.
+        function provAgregarCat(idProveedor, nombreProveedor) {
+            document.getElementById('cat_accion').value = 'registrar';
+            document.getElementById('cat_id_edit').value = '';
+            document.getElementById('cat_id_prov').value = idProveedor;
+            document.getElementById('cat_proveedor_nombre').value = nombreProveedor;
+            document.getElementById('catTitulo').innerText = 'AGREGAR PRODUCTO';
+            document.getElementById('catSubtitulo').innerText = 'Asocia un producto a este proveedor con su costo de compra.';
+            document.getElementById('cat_producto').value = '';
+            document.getElementById('cat_costo').value = '';
+            document.getElementById('cat_codigo_prov').value = '';
+            const btnCat = document.getElementById('btn-cat-submit');
+            btnCat.disabled = false;
+            btnCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR EN CAT\u00c1LOGO';
+            provDesdeLista = true;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProvList')).hide();
+            setTimeout(function() {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCatalogo')).show();
+            }, 300);
+        }
+
+        // Abre el pop-up de catálogo en modo edición con los datos de la entrada.
+        function editarProductoCatalogo(entradaData) {
+            document.getElementById('cat_accion').value = 'editar';
+            document.getElementById('cat_id_edit').value = entradaData.id_catalogo;
+            document.getElementById('cat_id_prov').value = entradaData.id_proveedor;
+            const proveedorOrigen = (window.JV_PROVS || []).find(function(p) { return parseInt(p.id_proveedor, 10) === parseInt(entradaData.id_proveedor, 10); });
+            document.getElementById('cat_proveedor_nombre').value = proveedorOrigen ? proveedorOrigen.nombre_empresa : '';
+            document.getElementById('catTitulo').innerText = 'EDITAR PRODUCTO DEL CAT\u00c1LOGO';
+            document.getElementById('catSubtitulo').innerText = 'Actualiza el costo o el c\u00f3digo interno del producto.';
+            document.getElementById('cat_producto').value = entradaData.id_producto;
+            document.getElementById('cat_costo').value = parseFloat(entradaData.costo).toFixed(2);
+            provFormatMoney(document.getElementById('cat_costo'));
+            document.getElementById('cat_codigo_prov').value = entradaData.codigo_proveedor || '';
+            const btnCat = document.getElementById('btn-cat-submit');
+            btnCat.disabled = false;
+            btnCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR EN CAT\u00c1LOGO';
+            provDesdeLista = true;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProvList')).hide();
+            setTimeout(function() {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCatalogo')).show();
+            }, 300);
+        }
+
+        // Confirma quitar un producto del catálogo y envía la acción al servidor.
+        function provEliminarCat(idCatalogo, nombreProducto) {
+            Swal.fire({
+                title: '\u00bfQUITAR DEL CAT\u00c1LOGO?',
+                html: 'Se quitar\u00e1 <strong>' + escapeHtml(nombreProducto) + '</strong> del cat\u00e1logo de este proveedor.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EA580C',
+                cancelButtonColor: '#CED4DA',
+                confirmButtonText: 'S\u00ed, quitar',
+                cancelButtonText: 'Cancelar',
+                background: '#fff',
+                color: '#212529',
+                reverseButtons: true
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    jvPost({ eliminar_catalogo: idCatalogo, csrf_token: window.JV_CONFIG.csrfToken });
+                }
+            });
+        }
+
+        // Inicialización exclusiva del gestor de proveedores.
+        document.addEventListener('DOMContentLoaded', function() {
+            // Selector internacional de teléfono del formulario de proveedor
+            const telInputProv = document.getElementById('p_tel');
+            if (telInputProv && window.intlTelInput) {
+                window.provIti = window.intlTelInput(telInputProv, {
+                    initialCountry: 've',
+                    preferredCountries: ['ve', 'us', 'co', 'es', 'mx', 'pa'],
+                    separateDialCode: true,
+                    utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
+                });
+                const sincronizarTel = function() {
+                    document.getElementById('p_tel_full').value = window.provIti.getNumber();
+                };
+                telInputProv.addEventListener('countrychange', sincronizarTel);
+                telInputProv.addEventListener('input', sincronizarTel);
+            }
+
+            // Máscara en vivo del RIF: letra-tipo + cuerpo de 8 dígitos + dígito verificador
+            const rifInput = document.getElementById('p_rif');
+            if (rifInput) {
+                rifInput.addEventListener('input', function(e) {
+                    let valor = e.target.value.toUpperCase().replace(/[^VEJGPC0-9]/g, '');
+                    let formateado = '';
+                    if (valor.length > 0) {
+                        formateado += valor[0];
+                        if (valor.length > 1) {
+                            formateado += '-';
+                            const cuerpo = valor.substring(1).slice(0, 9);
+                            formateado += cuerpo.length > 8 ? cuerpo.substring(0, 8) + '-' + cuerpo.substring(8) : cuerpo;
+                        }
+                    }
+                    e.target.value = formateado.substring(0, 13);
+                });
+            }
+
+            // Formateo en vivo del costo del catálogo
+            const costoCat = document.getElementById('cat_costo');
+            if (costoCat) costoCat.addEventListener('input', function() { provFormatMoney(this); });
+
+            // Validación del formulario de proveedor (con anti-doble-click)
+            const formProv = document.getElementById('formProveedor');
+            if (formProv) {
+                formProv.addEventListener('submit', function(e) {
+                    limpiarErrores();
+                    let primerError = null;
+
+                    const empresaEl = document.getElementById('p_empresa');
+                    if (!empresaEl.value.trim()) {
+                        marcarError(empresaEl, 'NOMBRE REQUERIDO');
+                        e.preventDefault();
+                        if (!primerError) primerError = empresaEl;
+                    }
+
+                    const rifValidar = document.getElementById('p_rif');
+                    if (!/^[VEJGPC]-\d{8}-\d$/.test(rifValidar.value)) {
+                        marcarError(rifValidar, 'RIF INV\u00c1LIDO (J-12345678-0)');
+                        e.preventDefault();
+                        if (!primerError) primerError = rifValidar;
+                    }
+
+                    if (window.provIti) {
+                        document.getElementById('p_tel_full').value = window.provIti.getNumber();
+                        if (!window.provIti.isValidNumber() && window.provIti.getNumber().replace(/\D/g, '').length < 8) {
+                            const telValidar = document.getElementById('p_tel');
+                            marcarError(telValidar, 'TEL\u00c9FONO INV\u00c1LIDO');
+                            e.preventDefault();
+                            if (!primerError) primerError = telValidar;
+                        }
+                    }
+
+                    const emailValidar = document.getElementById('p_email');
+                    if (emailValidar.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValidar.value.trim())) {
+                        marcarError(emailValidar, 'EMAIL INV\u00c1LIDO');
+                        e.preventDefault();
+                        if (!primerError) primerError = emailValidar;
+                    }
+
+                    if (primerError) {
+                        primerError.focus();
+                        return;
+                    }
+
+                    const btnGuardarProv = document.getElementById('btn-prov-submit');
+                    btnGuardarProv.disabled = true;
+                    btnGuardarProv.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
+                });
+            }
+
+            // Validación del formulario de catálogo (anti-doble-click incluido)
+            const formCat = document.getElementById('formCatalogo');
+            if (formCat) {
+                formCat.addEventListener('submit', function(e) {
+                    limpiarErrores();
+                    const prodSel = document.getElementById('cat_producto');
+                    if (!prodSel.value) {
+                        marcarError(prodSel, 'SELECCIONA UN PRODUCTO');
+                        e.preventDefault();
+                        prodSel.focus();
+                        return;
+                    }
+                    const costoRaw = document.getElementById('cat_costo').value.replace(/,/g, '');
+                    if (!(parseFloat(costoRaw) > 0)) {
+                        marcarError(document.getElementById('cat_costo'), 'COSTO REQUERIDO (MAYOR A 0)');
+                        e.preventDefault();
+                        document.getElementById('cat_costo').focus();
+                        return;
+                    }
+                    const btnGuardarCat = document.getElementById('btn-cat-submit');
+                    btnGuardarCat.disabled = true;
+                    btnGuardarCat.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
+                });
+            }
+
+            // Si el usuario cierra el formulario/catálogo sin guardar, vuelve al listado
+            ['modalProveedor', 'modalCatalogo'].forEach(function(idModal) {
+                const elemento = document.getElementById(idModal);
+                if (elemento) {
+                    elemento.addEventListener('hidden.bs.modal', function() {
+                        if (provDesdeLista) {
+                            provDesdeLista = false;
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProvList')).show();
+                        }
+                    });
+                }
+            });
+
+            // Si el servidor rechazó el guardado, marca el campo exacto que lo causó
+            // traduciendo el texto del flash de peligro al input correspondiente.
+            const flashProv = document.getElementById('flashMsg');
+            if (flashProv && flashProv.classList.contains('alert-jv-danger')) {
+                const textoFlash = (flashProv.dataset.texto || '').toUpperCase();
+                const mapaCampos = [
+                    ['RIF', 'p_rif'],
+                    ['NOMBRE', 'p_empresa'],
+                    ['CORREO', 'p_email'],
+                    ['EMAIL', 'p_email'],
+                    ['TEL\u00c9FONO', 'p_tel']
+                ];
+                for (let i = 0; i < mapaCampos.length; i++) {
+                    if (textoFlash.indexOf(mapaCampos[i][0]) !== -1) {
+                        const campoFallido = document.getElementById(mapaCampos[i][1]);
+                        if (campoFallido) {
+                            marcarError(campoFallido, textoFlash);
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProveedor')).show();
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Limpia marcas de error del formulario de proveedor al escribir
+            document.querySelectorAll('#formProveedor input, #formProveedor select, #formProveedor textarea, #formCatalogo input, #formCatalogo select')
+                .forEach(function(elementoForm) {
+                    elementoForm.addEventListener('input', function() {
+                        this.classList.remove('input-error');
+                        const err = document.getElementById(this.id + '_err');
+                        if (err) err.remove();
+                    });
+                });
+        });
+
+        // ==========================================
         // INICIALIZACIÓN
         // ==========================================
         document.addEventListener('DOMContentLoaded', function() {

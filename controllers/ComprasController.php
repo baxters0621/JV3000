@@ -6,7 +6,8 @@
 // Recibe la petición, delega en el Modelo y
 // entrega los datos a la Vista. Sin SQL aquí.
 //   GET  index.php?url=compras
-//   POST index.php?url=compras  (accion_compra | eliminar)
+//   POST index.php?url=compras  (accion_compra | eliminar |
+//          accion_proveedor | accion_catalogo | eliminar_catalogo)
 
 /**
  * ComprasController: gestiona el módulo de compras (facturas de proveedores).
@@ -14,6 +15,10 @@
  * Recibe la petición, delega en el modelo Compra y entrega los datos a la
  * vista. Aquí no hay SQL: solo orquestación de acciones (registrar, anular,
  * atender solicitud) y preparación de los datos para el tablero.
+ *
+ * Además integra la gestión de proveedores como sub-módulo del propio
+ * módulo de compras (pop-up): registrar/editar/activar-desactivar y su
+ * catálogo de costos, delegando en el modelo Proveedor.
  */
 class ComprasController extends Controller
 {
@@ -45,6 +50,52 @@ class ComprasController extends Controller
 
         // --- Acciones POST ---
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Gestión integrada de proveedores (pop-up dentro de Compras)
+            if (isset($_POST['accion_proveedor'])) {
+                $provModelo = new Proveedor();
+                if ($_POST['accion_proveedor'] === 'toggle_status') {
+                    Security::soloAdmin();
+                    $provModelo->toggleStatus((int)($_POST['id_proveedor'] ?? 0));
+                    $this->redirect('compras');
+                }
+                $resultado = $provModelo->procesar([
+                    'accion'            => $_POST['accion_proveedor'],
+                    'rif'               => $_POST['rif'] ?? '',
+                    'nombre_empresa'    => $_POST['nombre_empresa'] ?? '',
+                    'telefono_completo' => $_POST['telefono_completo'] ?? '',
+                    'contacto_nombre'   => $_POST['contacto_nombre'] ?? '',
+                    'email'             => $_POST['email'] ?? '',
+                    'direccion'         => $_POST['direccion'] ?? '',
+                    'lead_time'         => $_POST['lead_time'] ?? '',
+                    'moneda'            => $_POST['moneda'] ?? '',
+                    'status'            => $_POST['status'] ?? '',
+                    'id_proveedor'      => (int)($_POST['id_proveedor'] ?? 0),
+                ]);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->redirect('compras');
+            }
+
+            // Catálogo de costos: asociar/editar producto de un proveedor
+            if (isset($_POST['accion_catalogo'])) {
+                $resultado = (new Proveedor())->procesarCatalogo([
+                    'accion'           => $_POST['accion_catalogo'],
+                    'id_catalogo'      => (int)($_POST['id_catalogo'] ?? 0),
+                    'id_proveedor'     => (int)($_POST['id_proveedor'] ?? 0),
+                    'id_producto'      => (int)($_POST['id_producto'] ?? 0),
+                    'costo'            => $_POST['costo'] ?? '',
+                    'codigo_proveedor' => $_POST['codigo_proveedor'] ?? '',
+                ]);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->redirect('compras');
+            }
+
+            // Quitar entrada del catálogo
+            if (isset($_POST['eliminar_catalogo'])) {
+                $resultado = (new Proveedor())->eliminarCatalogo((int)$_POST['eliminar_catalogo']);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->redirect('compras');
+            }
+
             if (isset($_POST['accion_compra'])) {
                 $resultado = $modelo->registrar($_POST, (int)($_SESSION['id_usuario'] ?? 0));
                 if ($resultado['ok']) {
@@ -71,11 +122,21 @@ class ComprasController extends Controller
         $sol_seleccionada = $_SESSION['sol_seleccionada'] ?? null;
         $iva_pct = (float)getConfig('iva_porcentaje', '16');
 
+        // Gestión integrada de proveedores: listado completo, catálogo y productos
+        // para los pop-ups de administración dentro del módulo de compras.
+        $provModelo = new Proveedor();
+
         $this->view('compras/index', [
             'titulo'            => 'Compras | JV3000 C.A.',
             'wrapper_class'     => 'pagina-compras',
-            'css_extra'         => ['modules/compras/compras.css?v=5'],
-            'js_extra'          => ['modules/compras/compras.js?v=6'],
+            'css_extra'         => [
+                'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
+                'modules/compras/compras.css?v=6',
+            ],
+            'js_extra'          => [
+                'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
+                'modules/compras/compras.js?v=7',
+            ],
             'compras'           => $modelo->obtenerCompras($filtro_proveedor, $filtro_pago),
             'proveedores'       => $modelo->obtenerProveedores(),
             'catalogo_costos'   => json_encode($modelo->mapaCostosCatalogo()),
@@ -87,6 +148,10 @@ class ComprasController extends Controller
             'flash'             => $this->consumeFlash(),
             'csrf'              => Security::generateToken(),
             'js_config'         => ['taxPercentage' => $iva_pct],
+            'prov_gestion'      => $provModelo->listar(),
+            'prov_activos'      => $provModelo->totalActivos(),
+            'prov_catalogo'     => $provModelo->catalogoPorProveedor(),
+            'productos_activos' => $provModelo->productosActivos(),
         ]);
     }
 

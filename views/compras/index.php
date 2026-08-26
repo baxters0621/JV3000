@@ -9,6 +9,10 @@
 /** @var string $csrf */
 /** @var array<int, array<string, mixed>> $proveedores */
 /** @var float|int $iva_pct */
+/** @var array<int, array<string, mixed>> $prov_gestion Listado completo para el gestor integrado */
+/** @var int $prov_activos */
+/** @var array<int, array<int, array<string, mixed>>> $prov_catalogo Mapa id_proveedor => entradas */
+/** @var array<int, array<string, mixed>> $productos_activos */
 
 // ==========================================
 // VISTA: Compras (index)
@@ -28,6 +32,9 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         </div>
     </div>
     <div class="d-flex gap-2">
+        <button type="button" class="btn btn-jv-primary module-action-btn" onclick="abrirGestorProv()" data-tooltip="Registrar, modificar o desactivar proveedores">
+            <i class="bi bi-building me-1"></i>PROVEEDORES
+        </button>
         <button class="btn btn-jv-success pulse-jv module-action-btn" data-bs-toggle="modal" data-bs-target="#modalCompra">
             <i class="bi bi-plus-lg me-1"></i>NUEVA COMPRA
         </button>
@@ -49,9 +56,9 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
     </div>
 <?php endif; ?>
 
-<!-- Mensajes flash -->
+<!-- Mensajes flash (id/data-texto permiten al JS de proveedores marcar el campo con error) -->
 <?php if (!empty($flash)): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3 px-3 py-2">
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3 px-3 py-2" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
         <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
         <?php echo htmlspecialchars($flash['texto']); ?>
     </div>
@@ -335,6 +342,293 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
                     <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
                     <button type="submit" class="btn btn-jv-success module-action-btn" id="btnGuardar" disabled onclick="return validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     GESTIÓN INTEGRADA DE PROVEEDORES (pop-ups dentro de Compras)
+     Datos para compras.js: listado completo en JV_PROVS.
+     ============================================================ -->
+<script>
+    window.JV_PROVS = <?php echo json_encode(array_values($prov_gestion), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+</script>
+
+<!-- POP-UP 1: Listado de proveedores -->
+<div class="modal fade" id="modalProvList" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content modal-content-jv">
+            <div class="modal-header-jv">
+                <div>
+                    <h5 class="font-brand"><i class="bi bi-building me-2"></i>PROVEEDORES</h5>
+                    <small>Registrar, modificar o desactivar · Total <strong><?php echo count($prov_gestion); ?></strong> · Activos <strong><?php echo $prov_activos; ?></strong></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                    <div class="prov-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="input-jv" id="buscarProv" placeholder="Buscar por empresa, RIF o teléfono..." oninput="provFiltrar()" aria-label="Buscar proveedor">
+                    </div>
+                    <div class="filter-group ms-auto">
+                        <button type="button" class="btn-filter active" onclick="provSetFiltro('todos', this)">Todos</button>
+                        <button type="button" class="btn-filter" onclick="provSetFiltro('Activo', this)">Activos</button>
+                        <button type="button" class="btn-filter" onclick="provSetFiltro('Inactivo', this)">Inactivos</button>
+                    </div>
+                    <button type="button" class="btn btn-jv-primary module-action-btn" onclick="nuevoProv()">
+                        <i class="bi bi-plus-lg me-1"></i>NUEVO
+                    </button>
+                </div>
+
+                <div style="border:1px solid var(--jv-border);border-radius:10px;overflow:hidden;">
+                    <table class="table-jv mb-0" style="--jv-min-w:0;">
+                        <thead>
+                            <tr>
+                                <th style="width:26%;">Empresa</th>
+                                <th style="width:15%;">RIF</th>
+                                <th style="width:16%;">Tel&eacute;fono</th>
+                                <th class="text-center" style="width:13%;">Productos</th>
+                                <th class="text-center" style="width:12%;">Estado</th>
+                                <th class="text-center" style="width:18%;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="provTbody">
+                            <?php if (!empty($prov_gestion)): ?>
+                                <?php foreach ($prov_gestion as $gestion_prov): ?>
+                                    <?php
+                                    $entradas_cat = $prov_catalogo[$gestion_prov['id_proveedor']] ?? [];
+                                    $prov_json = htmlspecialchars(json_encode($gestion_prov, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8');
+                                    ?>
+                                    <tr class="prov-fila" data-status="<?php echo $gestion_prov['status']; ?>" data-texto="<?php echo strtolower(htmlspecialchars($gestion_prov['nombre_empresa'] . ' ' . $gestion_prov['rif'] . ' ' . ($gestion_prov['telefono'] ?? ''))); ?>">
+                                        <td class="fw-bold text-uppercase"><?php echo htmlspecialchars($gestion_prov['nombre_empresa']); ?></td>
+                                        <td><span class="codigo-badge"><?php echo htmlspecialchars($gestion_prov['rif']); ?></span></td>
+                                        <td class="text-secondary"><?php echo !empty($gestion_prov['telefono']) ? htmlspecialchars(formatearTelefono($gestion_prov['telefono'])) : '&mdash;'; ?></td>
+                                        <td class="text-center">
+                                            <button type="button" class="cant-badge border-0" style="cursor:pointer;" onclick="provToggleDetalle(<?php echo (int)$gestion_prov['id_proveedor']; ?>)" data-tooltip="Ver productos que suministra">
+                                                <i class="bi bi-box-seam me-1"></i><?php echo count($entradas_cat); ?>
+                                            </button>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge-jv <?php echo $gestion_prov['status'] === 'Activo' ? 'badge-success' : 'badge-danger'; ?>"><?php echo $gestion_prov['status']; ?></span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <button type="button" class="btn-action" onclick='editarProv(<?php echo $prov_json; ?>)' data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
+                                                <?php if ($es_admin): ?>
+                                                    <button type="button" class="btn-action" onclick="provToggleStatus(<?php echo (int)$gestion_prov['id_proveedor']; ?>, '<?php echo htmlspecialchars(addslashes($gestion_prov['nombre_empresa'])); ?>', '<?php echo $gestion_prov['status']; ?>')" data-tooltip="<?php echo $gestion_prov['status'] === 'Activo' ? 'Desactivar' : 'Activar'; ?>">
+                                                        <i class="bi <?php echo $gestion_prov['status'] === 'Activo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>" style="color:<?php echo $gestion_prov['status'] === 'Activo' ? 'var(--jv-danger)' : 'var(--jv-success)'; ?>"></i>
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="prov-detalle-row" id="prov-detalle-<?php echo (int)$gestion_prov['id_proveedor']; ?>" style="display:none;">
+                                        <td colspan="6" style="background:var(--jv-bg-primary);padding:12px 18px;">
+                                            <div class="prov-catalogo-head">
+                                                <span><i class="bi bi-box-seam me-1"></i>PRODUCTOS QUE SUMINISTRA</span>
+                                                <button type="button" class="btn-cat-add" onclick="provAgregarCat(<?php echo (int)$gestion_prov['id_proveedor']; ?>, '<?php echo htmlspecialchars(addslashes($gestion_prov['nombre_empresa'])); ?>')">
+                                                    <i class="bi bi-plus-lg"></i> Agregar
+                                                </button>
+                                            </div>
+                                            <?php if (!empty($entradas_cat)): ?>
+                                                <?php foreach ($entradas_cat as $entrada_cat): ?>
+                                                    <div class="prov-cat-item">
+                                                        <div class="cat-item-info">
+                                                            <span class="cat-item-nombre" data-tooltip="<?php echo htmlspecialchars($entrada_cat['nombre_producto']); ?>"><?php echo htmlspecialchars($entrada_cat['nombre_producto']); ?></span>
+                                                            <small class="cat-item-meta"><?php echo htmlspecialchars($entrada_cat['sku']); ?><?php echo !empty($entrada_cat['codigo_proveedor']) ? ' · C&oacute;d. prov: ' . htmlspecialchars($entrada_cat['codigo_proveedor']) : ''; ?></small>
+                                                        </div>
+                                                        <span class="cat-item-costo">$<?php echo number_format((float)$entrada_cat['costo'], 2); ?></span>
+                                                        <button type="button" class="btn-cat-icon" onclick='editarProductoCatalogo(<?php echo htmlspecialchars(json_encode($entrada_cat, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, "UTF-8"); ?>)' data-tooltip="Editar costo"><i class="bi bi-pencil-square"></i></button>
+                                                        <button type="button" class="btn-cat-icon btn-cat-del" onclick="provEliminarCat(<?php echo (int)$entrada_cat['id_catalogo']; ?>, '<?php echo htmlspecialchars(addslashes($entrada_cat['nombre_producto'])); ?>')" data-tooltip="Quitar del cat&aacute;logo"><i class="bi bi-trash3"></i></button>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <div class="prov-catalogo-vacio">
+                                                    <i class="bi bi-inbox"></i>A&uacute;n no tiene productos en su cat&aacute;logo.
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="estado-vacio">
+                                            <i class="bi bi-building"></i>
+                                            <span>No hay proveedores registrados</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <small class="text-secondary d-block mt-2" style="font-size:.8rem;">
+                    <i class="bi bi-info-circle me-1"></i>El costo del cat&aacute;logo autocompleta el precio al registrar una compra con ese proveedor.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- POP-UP 2: Formulario de proveedor (registrar / editar) -->
+<div class="modal fade" id="modalProveedor" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content modal-content-jv">
+            <form action="" method="POST" id="formProveedor">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                <input type="hidden" name="accion_proveedor" id="p_accion" value="registrar">
+                <input type="hidden" name="id_proveedor" id="p_id_edit">
+                <div class="modal-body p-4">
+                    <div class="modal-header-jv">
+                        <div>
+                            <h5 class="font-brand" id="modalTitle"><i class="bi bi-building me-2"></i>REGISTRAR PROVEEDOR</h5>
+                            <small>Datos fiscales, contacto y condiciones comerciales</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="section-bg sec-fiscal">
+                        <div class="section-label">
+                            <span class="section-chip chip-fiscal"><i class="bi bi-file-earmark-text"></i></span>
+                            Informaci&oacute;n Fiscal
+                            <span class="section-ayuda">Datos legales de la empresa</span>
+                        </div>
+                        <div class="row g-3 mb-0">
+                            <div class="col-md-4">
+                                <label for="p_rif" class="small fw-bold text-secondary mb-2">RIF *</label>
+                                <input type="text" name="rif" id="p_rif" class="input-jv" required placeholder="Ej: J-12345678-0" maxlength="13">
+                                <small style="color:var(--jv-text-secondary);font-size:.85rem;display:block;margin-top:4px;">Formato: J-12345678-0</small>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="p_empresa" class="small fw-bold text-secondary mb-2">NOMBRE EMPRESA *</label>
+                                <input type="text" name="nombre_empresa" id="p_empresa" class="input-jv text-uppercase" required placeholder="Nombre legal de la empresa" oninput="this.value = this.value.toUpperCase()">
+                            </div>
+                        </div>
+                        <div class="mt-3 mb-0">
+                            <label for="p_direccion" class="small fw-bold text-secondary mb-2">DIRECCI&Oacute;N FISCAL</label>
+                            <textarea name="direccion" id="p_direccion" class="input-jv" rows="2" placeholder="Direcci&oacute;n fiscal"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="section-bg sec-contacto">
+                        <div class="section-label">
+                            <span class="section-chip chip-contacto"><i class="bi bi-person-lines-fill"></i></span>
+                            Contacto
+                            <span class="section-ayuda">&iquest;Con qui&eacute;n hablamos?</span>
+                        </div>
+                        <div class="row g-3 mb-0">
+                            <div class="col-md-4">
+                                <label for="p_tel" class="small fw-bold text-secondary mb-2">TEL&Eacute;FONO *</label>
+                                <input type="tel" name="telefono" id="p_tel" class="input-jv" required>
+                                <input type="hidden" name="telefono_completo" id="p_tel_full">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="p_contacto_nombre" class="small fw-bold text-secondary mb-2">PERSONA DE CONTACTO</label>
+                                <input type="text" name="contacto_nombre" id="p_contacto_nombre" class="input-jv" placeholder="Nombre del contacto">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="p_email" class="small fw-bold text-secondary mb-2">CORREO ELECTR&Oacute;NICO</label>
+                                <input type="email" name="email" id="p_email" class="input-jv" placeholder="correo@ejemplo.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-bg sec-comercial mb-4">
+                        <div class="section-label">
+                            <span class="section-chip chip-comercial"><i class="bi bi-gear"></i></span>
+                            Condiciones Comerciales
+                            <span class="section-ayuda">Entregas y moneda de trabajo</span>
+                        </div>
+                        <div class="row g-3 mb-0">
+                            <div class="col-md-4">
+                                <label for="p_lead_time" class="small fw-bold text-secondary mb-2">PLAZO DE ENTREGA (D&Iacute;AS)</label>
+                                <input type="number" name="lead_time" id="p_lead_time" class="input-jv" placeholder="Ej: 7" min="0" max="365">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="p_moneda" class="small fw-bold text-secondary mb-2">MONEDA</label>
+                                <select name="moneda" id="p_moneda" class="input-jv">
+                                    <option value="USD">USD - D&oacute;lar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="VES">VES - Bol&iacute;var</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="p_status" class="small fw-bold text-secondary mb-2">ESTADO</label>
+                                <select name="status" id="p_status" class="input-jv">
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase">
+                        <i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- POP-UP 3: Catálogo de costos (asociar producto a proveedor) -->
+<div class="modal fade" id="modalCatalogo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <form action="" method="POST" id="formCatalogo">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                <input type="hidden" name="accion_catalogo" id="cat_accion" value="registrar">
+                <input type="hidden" name="id_catalogo" id="cat_id_edit">
+                <div class="modal-body p-4">
+                    <div class="modal-header-jv">
+                        <div>
+                            <h5 class="font-brand"><i class="bi bi-box-seam me-2"></i><span id="catTitulo">AGREGAR PRODUCTO</span></h5>
+                            <small id="catSubtitulo"></small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="section-bg sec-comercial mb-4">
+                        <div class="section-label">
+                            <span class="section-chip chip-comercial"><i class="bi bi-tag"></i></span>
+                            Datos del producto
+                            <span class="section-ayuda">Costo con el que este proveedor te lo vende</span>
+                        </div>
+                        <div class="row g-3 mb-0">
+                            <div class="col-12">
+                                <label for="cat_proveedor_nombre" class="small fw-bold text-secondary mb-2">PROVEEDOR</label>
+                                <input type="text" id="cat_proveedor_nombre" class="input-jv" readonly style="background:rgba(15,26,46,0.04);">
+                                <input type="hidden" name="id_proveedor" id="cat_id_prov">
+                            </div>
+                            <div class="col-12">
+                                <label for="cat_producto" class="small fw-bold text-secondary mb-2">PRODUCTO *</label>
+                                <select name="id_producto" id="cat_producto" class="input-jv" required>
+                                    <option value="">&mdash; Selecciona un producto &mdash;</option>
+                                    <?php foreach ($productos_activos as $prod_activo): ?>
+                                        <option value="<?php echo (int)$prod_activo['id_producto']; ?>">
+                                            <?php echo htmlspecialchars($prod_activo['nombre_producto'] . ' (' . $prod_activo['sku'] . ')'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cat_costo" class="small fw-bold text-secondary mb-2">COSTO DE COMPRA ($) *</label>
+                                <input type="text" name="costo" id="cat_costo" class="input-jv" required placeholder="0.00" maxlength="12" inputmode="decimal">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cat_codigo_prov" class="small fw-bold text-secondary mb-2">C&Oacute;DIGO INTERNO DEL PROVEEDOR</label>
+                                <input type="text" name="codigo_proveedor" id="cat_codigo_prov" class="input-jv" placeholder="Opcional" maxlength="50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-cat-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase">
+                        <i class="bi bi-check-lg me-2"></i>GUARDAR EN CAT&Aacute;LOGO
+                    </button>
                 </div>
             </form>
         </div>
