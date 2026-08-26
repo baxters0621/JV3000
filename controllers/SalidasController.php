@@ -53,16 +53,35 @@ class SalidasController extends Controller
             if (isset($_POST['accion_salida'])) {
                 $this->procesarAccionSalida($modelo);
             }
+
+            // Gestión de clientes (solo admin): registrar/editar
+            if (isset($_POST['accion_cliente'])) {
+                if (!Security::esAdmin()) {
+                    $this->redirect('salidas');
+                }
+                $resultado = (new Cliente())->procesar($_POST);
+                $this->redirect('salidas');
+            }
+
+            // Toggle status cliente (solo admin)
+            if (isset($_POST['toggle_cliente'])) {
+                if (!Security::esAdmin()) {
+                    $this->redirect('salidas');
+                }
+                (new Cliente())->toggleStatus((int)$_POST['toggle_cliente']);
+                $this->redirect('salidas');
+            }
         }
 
+        $esAdmin = Security::esAdmin();
         $csrf = Security::generateToken();
         $tipos_mov_map = $modelo->mapaTiposGrupo();
 
         $this->view('salidas/index', [
             'titulo'        => 'Salidas / Ventas | JV3000 C.A.',
             'wrapper_class' => 'pagina-salidas',
-            'css_extra'     => ['modules/salidas/salidas.css?v=4'],
-            'js_extra'      => ['modules/salidas/salidas.js?v=7'],
+            'css_extra'     => ['modules/salidas/salidas.css?v=5'],
+            'js_extra'      => ['modules/salidas/salidas.js?v=8'],
             'csrf'          => $csrf,
             'js_config'     => ['movementTypeGroups' => $tipos_mov_map, 'csrfToken' => $csrf],
             'salidas'       => $modelo->obtenerSalidas(),
@@ -70,6 +89,9 @@ class SalidasController extends Controller
             'tipos_mov_map' => $tipos_mov_map,
             'kpis'          => $modelo->kpis(),
             'flash'         => $this->consumeFlash(),
+            'cli_gestion'   => $esAdmin ? (new Cliente())->listar() : [],
+            'cli_activos'   => $esAdmin ? (new Cliente())->totalActivos() : 0,
+            'es_admin'      => $esAdmin,
         ]);
     }
 

@@ -5,6 +5,9 @@
 /** @var string $csrf */
 /** @var array<int, array<string, mixed>> $tipos_mov */
 /** @var array<string, string> $tipos_mov_map */
+/** @var array<int, array<string, mixed>> $cli_gestion Clientes para gestión (admin) */
+/** @var int $cli_activos Total de clientes activos */
+/** @var bool $es_admin Es administrador */
 
 // ==========================================
 // VISTA: Salidas / Ventas (index)
@@ -20,7 +23,13 @@
         <h1 class="module-title">SALIDAS / VENTAS</h1>
         <p class="module-subtitle">Notas de Entrega y Despacho</p>
     </div>
-    <div class="ms-auto">
+    <div class="ms-auto d-flex align-items-center gap-2">
+        <?php if ($es_admin): ?>
+            <button class="btn btn-outline-secondary module-action-btn d-flex align-items-center gap-2" onclick="abrirGestorCli()" style="border-color:#059669;color:#059669;font-weight:700;font-size:.88rem;padding:10px 18px;border-radius:10px;">
+                <i class="bi bi-people-fill"></i>CLIENTES
+                <span class="badge rounded-pill" style="background:#059669;color:#fff;font-size:.78rem;padding:4px 10px;margin-left:2px;"><?php echo $cli_activos; ?></span>
+            </button>
+        <?php endif; ?>
         <button class="btn btn-jv-primary module-action-btn" onclick="nuevaSalida()">
             <i class="bi bi-cart-plus-fill me-2"></i>NUEVA VENTA
         </button>
@@ -29,9 +38,25 @@
 
 <!-- Mensajes flash -->
 <?php if (!empty($flash)): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4">
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" id="flash<?php echo ucfirst($flash['tipo']); ?>" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
         <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($flash['texto']); ?>
     </div>
+<?php endif; ?>
+
+<!-- Script: datos de clientes para gestión (JSON) -->
+<?php if ($es_admin): ?>
+<script>
+window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
+    return [
+        'id_cliente' => (int)$c['id_cliente'],
+        'nombre'     => (string)$c['nombre'],
+        'documento'  => (string)($c['documento'] ?? ''),
+        'telefono'   => (string)($c['telefono'] ?? ''),
+        'direccion'  => (string)($c['direccion'] ?? ''),
+        'status'     => (string)$c['status'],
+    ];
+}, $cli_gestion), JSON_UNESCAPED_UNICODE); ?>;
+</script>
 <?php endif; ?>
 
 <!-- Estadísticas / Widgets -->
@@ -196,8 +221,170 @@
                                         <input type="hidden" name="id_cliente" id="s_id_cliente">
                                         <input type="hidden" name="cliente" id="s_cliente">
                                         <div class="com-resultados" id="resultadosBusquedaCli"></div>
-                                    </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: GESTIÓN DE CLIENTES (listado ABC) -->
+<!-- ========================================== -->
+<?php if ($es_admin): ?>
+<div class="modal fade" id="modalCliList" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <div class="cli-modal-header-jv">
+                <h5 class="fw-bolder font-brand text-uppercase m-0"><i class="bi bi-people-fill me-2"></i>Gestión de Clientes</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <!-- Filtros -->
+                <div class="section-bg">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-search" style="font-size:1rem;color:#059669;"></i>
+                                <input type="text" class="input-jv border-0 bg-transparent" id="cliBuscar" placeholder="Buscar por nombre o documento..." style="box-shadow:none;font-size:.95rem;padding:8px 6px;flex:1;" oninput="cliFiltrar()">
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-action-sm" onclick="cliSetFiltro('todos')" id="cliFiltTodos" style="background:#059669;color:#fff;">Todos</button>
+                            <button class="btn btn-action-sm" onclick="cliSetFiltro('Activo')" id="cliFiltAct" style="background:#d1fae5;color:#065f46;">Activos</button>
+                            <button class="btn btn-action-sm" onclick="cliSetFiltro('Inactivo')" id="cliFiltInact" style="background:#fee2e2;color:#991b1b;">Inactivos</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-bg" style="margin-top:10px;">
+                    <div class="section-label"><i class="bi bi-list-ul me-1"></i>Clientes Registrados <span class="badge rounded-pill ms-2" style="background:#059669;color:#fff;font-size:.75rem;" id="cliTotalBadge"><?php echo count($cli_gestion); ?></span></div>
+                    <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;">
+                        <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
+                            <thead>
+                                <tr style="background:#065f46;">
+                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;width:30px;text-align:center;">#</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;">Cliente</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;width:140px;">Documento</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;width:120px;">Teléfono</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;text-align:center;width:90px;">Estado</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;text-align:center;width:80px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cliTablaBody">
+                                <?php if (count($cli_gestion) > 0): ?>
+                                    <?php foreach ($cli_gestion as $idx => $cli): ?>
+                                        <tr class="cli-fila" data-status="<?php echo $cli['status']; ?>" data-nombre="<?php echo htmlspecialchars(strtolower($cli['nombre'])); ?>" data-documento="<?php echo htmlspecialchars(strtolower($cli['documento'] ?? '')); ?>">
+                                            <td style="text-align:center;color:var(--jv-text-muted);padding:10px 12px;font-size:.85rem;"><?php echo $idx + 1; ?></td>
+                                            <td style="padding:10px 12px;">
+                                                <div style="font-weight:700;font-size:1rem;color:var(--jv-text-primary);"><?php echo htmlspecialchars($cli['nombre']); ?></div>
+                                                <?php if (!empty($cli['direccion'])): ?>
+                                                    <div style="font-size:.85rem;color:var(--jv-text-secondary);margin-top:2px;"><i class="bi bi-geo-alt me-1"></i><?php echo htmlspecialchars($cli['direccion']); ?></div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td style="padding:10px 12px;font-size:.95rem;color:var(--jv-text-primary);white-space:nowrap;"><?php echo htmlspecialchars($cli['documento'] ?: '—'); ?></td>
+                                            <td style="padding:10px 12px;font-size:.95rem;color:var(--jv-text-primary);white-space:nowrap;"><?php echo htmlspecialchars($cli['telefono'] ?: '—'); ?></td>
+                                            <td style="text-align:center;padding:10px 12px;">
+                                                <?php if ($cli['status'] === 'Activo'): ?>
+                                                    <span class="abc-badge abc-abc">Activo</span>
+                                                <?php else: ?>
+                                                    <span class="manejo-badge manejo-directa" style="background:#fee2e2;color:#991b1b;">Inactivo</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td style="text-align:center;padding:10px 12px;white-space:nowrap;">
+                                                <button class="btn-action" onclick="cliEditar(<?php echo $cli['id_cliente']; ?>)" data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
+                                                <button class="btn-action" onclick="cliToggleStatus(<?php echo $cli['id_cliente']; ?>, '<?php echo $cli['status']; ?>')" data-tooltip="<?php echo $cli['status'] === 'Activo' ? 'Desactivar' : 'Activar'; ?>" style="<?php echo $cli['status'] === 'Activo' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">
+                                                    <i class="bi bi-<?php echo $cli['status'] === 'Activo' ? 'x-circle' : 'check-circle'; ?>"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr id="cliVacio">
+                                        <td colspan="6" style="text-align:center;padding:30px;color:var(--jv-text-muted);">
+                                            <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.4;"></i>
+                                            No hay clientes registrados
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0 pb-3 px-3">
+                <button class="btn btn-action-sm fw-bold" onclick="nuevaCli()" style="background:#059669;color:#fff;padding:10px 20px;border-radius:8px;font-size:.9rem;">
+                    <i class="bi bi-plus-lg me-1"></i>NUEVO CLIENTE
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: FORMULARIO CLIENTE (crear/editar) -->
+<div class="modal fade" id="modalCli" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <form id="formCli" onsubmit="return false;">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                <input type="hidden" name="accion_cliente" id="cliAccion" value="registrar">
+                <input type="hidden" name="id_cliente" id="cliIdEdit">
+                <div class="modal-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bolder font-brand text-uppercase m-0 modal-title-jv" id="cliFormTitle">REGISTRAR CLIENTE</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" id="btnCerrarCliForm"></button>
+                    </div>
+
+                    <div class="section-bg">
+                        <div class="section-label"><i class="bi bi-person-badge me-1"></i>Datos del Cliente</div>
+                        <div class="row g-2">
+                            <div class="col-md-8">
+                                <label class="small fw-bold text-secondary mb-2">NOMBRE / RAZÓN SOCIAL <span style="color:var(--jv-danger);">*</span></label>
+                                <input type="text" name="nombre" id="cliNombre" class="input-jv" placeholder="Nombre completo o razón social" maxlength="150" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small fw-bold text-secondary mb-2">ESTADO</label>
+                                <select name="status" id="cliStatus" class="input-jv">
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-5">
+                                <label class="small fw-bold text-secondary mb-2">DOCUMENTO (RIF/Cédula)</label>
+                                <div class="d-flex gap-2">
+                                    <select id="cliDocTipo" aria-label="Tipo de documento" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="cliValidarDoc()">
+                                        <option value="V">V-</option>
+                                        <option value="J">J-</option>
+                                        <option value="E">E-</option>
+                                        <option value="P">P-</option>
+                                        <option value="G">G-</option>
+                                        <option value="C">C-</option>
+                                    </select>
+                                    <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="Número" oninput="cliValidarDoc()" style="flex:1;" inputmode="numeric" maxlength="12">
                                 </div>
+                                <div id="cliDocMsg" class="small mt-1" style="min-height:18px;"></div>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="small fw-bold text-secondary mb-2">TELÉFONO</label>
+                                <input type="text" name="telefono" id="cliTelefono" class="input-jv" placeholder="0414-1234567" maxlength="20">
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-1">
+                            <div class="col-12">
+                                <label class="small fw-bold text-secondary mb-2">DIRECCIÓN</label>
+                                <input type="text" name="direccion" id="cliDireccion" class="input-jv" placeholder="Dirección completa" maxlength="255">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-jv-primary w-100 py-2 fw-bolder text-uppercase mt-2" id="btnGuardarCli" onclick="cliEnviarForm()">
+                        <i class="bi bi-check-circle me-1"></i>GUARDAR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
                                 <div class="col-md-6">
                                     <label class="small fw-bold text-secondary mb-2">RIF / CÉDULA <span style="color:var(--jv-danger);">*</span></label>
                                     <div class="d-flex gap-2">

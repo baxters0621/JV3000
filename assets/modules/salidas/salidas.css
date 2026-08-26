@@ -566,3 +566,91 @@
         .jv-tooltip.jv-tooltip-visible {
             opacity: 1;
         }
+
+        /* ============================================================
+           GESTIÓN DE CLIENTES — modal header y estilos (verde #059669)
+           ============================================================ */
+        .cli-modal-header-jv {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #065f46, #059669);
+            border-bottom: 3px solid #10b981;
+            border-radius: var(--jv-radius-lg) var(--jv-radius-lg) 0 0;
+        }
+
+        .cli-modal-header-jv h5 {
+            color: #fff;
+            font-size: 1.15rem;
+            letter-spacing: .5px;
+        }
+
+        .cli-modal-header-jv .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: .8;
+        }
+
+        .cli-modal-header-jv .btn-close:hover {
+            opacity: 1;
+        }
+
+        /* Botón de acción pequeño (filtro, etc.) */
+        .btn-action-sm {
+            padding: 6px 14px;
+            font-size: .8rem;
+            font-weight: 700;
+            border-radius: 8px;
+            border: 1px solid var(--jv-border);
+            cursor: pointer;
+            transition: .15s;
+        }
+
+        .btn-action-sm:hover {
+            opacity: .8 !important;
+            transform: translateY(-1px);
+        }
+
+        /* Fila de tabla de clientes */
+        #cliTablaBody tr:hover {
+            background: rgba(5, 150, 105, 0.04);
+        }
+
+        /* Badge estado activo (verde) */
+        .cli-active-badge {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: .8rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        /* Badge estado inactivo (rojo) — reutiliza manejo-badge */
+        .cli-inactive-badge {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: .8rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        /* Resultado toolbox cliente — estilo verde para coincidir con módulo */
+        .pagina-salidas .com-resultados .com-resultado:hover {
+            background: rgba(5, 150, 105, 0.08);
+        }
+
+        /* Botón CLIENTES en header — outline verde */
+        .pagina-salidas .module-action-btn[onclick="abrirGestorCli()"] {
+            transition: .15s;
+        }
+
+        .pagina-salidas .module-action-btn[onclick="abrirGestorCli()"]:hover {
+            background: #059669 !important;
+            color: #fff !important;
+            box-shadow: 0 6px 20px -4px rgba(5, 150, 105, 0.45);
+            transform: translateY(-1px);
+        }

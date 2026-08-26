@@ -703,7 +703,214 @@
             }
         }
 
+        // ============================================================
+        // GESTIÓN DE CLIENTES (pop-up desde Ventas — solo admin)
+        // ============================================================
+        let cliListModal = null;
+        let cliFormModal = null;
+        let cliFiltroActual = 'todos';
+        let cliDesdeLista = false;
+
+        // Inicializa los modales de clientes (solo si existen — admin).
+        function _initCliModals() {
+            if (typeof bootstrap === 'undefined') return;
+            const elList = document.getElementById('modalCliList');
+            const elForm = document.getElementById('modalCli');
+            if (elList) cliListModal = new bootstrap.Modal(elList);
+            if (elForm) cliFormModal = new bootstrap.Modal(elForm);
+            if (elForm) {
+                elForm.addEventListener('hidden.bs.modal', function() {
+                    if (cliDesdeLista) {
+                        cliDesdeLista = false;
+                        setTimeout(function() { if (cliListModal) cliListModal.show(); }, 300);
+                    }
+                });
+            }
+        }
+
+        // Abre el listado de clientes con búsqueda y tabla.
+        function abrirGestorCli() {
+            if (!cliListModal) _initCliModals();
+            if (!cliListModal) return;
+            cliFiltrar();
+            cliListModal.show();
+        }
+
+        // Filtra filas de la tabla de clientes por texto de búsqueda y chip de estado.
+        function cliFiltrar() {
+            const busq = (document.getElementById('cliBuscar')?.value || '').toLowerCase().trim();
+            const filas = document.querySelectorAll('#cliTablaBody .cli-fila');
+            let count = 0;
+            filas.forEach(function(fila) {
+                const nombre = fila.dataset.nombre || '';
+                const doc = fila.dataset.documento || '';
+                const st = fila.dataset.status || '';
+                const matchBusq = !busq || nombre.includes(busq) || doc.includes(busq);
+                const matchFiltro = cliFiltroActual === 'todos' || st === cliFiltroActual;
+                if (matchBusq && matchFiltro) {
+                    fila.style.display = '';
+                    count++;
+                } else {
+                    fila.style.display = 'none';
+                }
+            });
+            const badge = document.getElementById('cliTotalBadge');
+            if (badge) badge.textContent = count;
+            const vacio = document.getElementById('cliVacio');
+            if (vacio) vacio.style.display = count === 0 ? '' : 'none';
+        }
+
+        // Cambia el filtro de estado activo (todos/Activo/Inactivo).
+        function cliSetFiltro(filtro) {
+            cliFiltroActual = filtro;
+            ['cliFiltTodos','cliFiltAct','cliFiltInact'].forEach(function(id) {
+                const b = document.getElementById(id);
+                if (b) b.style.opacity = '.5';
+            });
+            const activo = filtro === 'todos' ? 'cliFiltTodos' : filtro === 'Activo' ? 'cliFiltAct' : 'cliFiltInact';
+            const bActivo = document.getElementById(activo);
+            if (bActivo) bActivo.style.opacity = '1';
+            cliFiltrar();
+        }
+
+        // Abre el formulario para crear un nuevo cliente.
+        function nuevaCli() {
+            cliDesdeLista = true;
+            if (cliListModal) cliListModal.hide();
+            setTimeout(function() {
+                if (!cliFormModal) _initCliModals();
+                if (!cliFormModal) return;
+                document.getElementById('cliFormTitle').textContent = 'REGISTRAR CLIENTE';
+                document.getElementById('cliAccion').value = 'registrar';
+                document.getElementById('cliIdEdit').value = '';
+                document.getElementById('cliNombre').value = '';
+                document.getElementById('cliDocTipo').value = 'V';
+                document.getElementById('cliDocNum').value = '';
+                document.getElementById('cliTelefono').value = '';
+                document.getElementById('cliDireccion').value = '';
+                document.getElementById('cliStatus').value = 'Activo';
+                var msg = document.getElementById('cliDocMsg'); if (msg) msg.innerHTML = '';
+                cliFormModal.show();
+            }, 300);
+        }
+
+        // Abre el formulario para editar un cliente existente.
+        function cliEditar(id) {
+            var cliente = (window.JV_CLIENTES || []).find(function(c) { return c.id_cliente === id; });
+            if (!cliente) return;
+            cliDesdeLista = true;
+            if (cliListModal) cliListModal.hide();
+            setTimeout(function() {
+                if (!cliFormModal) _initCliModals();
+                if (!cliFormModal) return;
+                document.getElementById('cliFormTitle').textContent = 'EDITAR CLIENTE';
+                document.getElementById('cliAccion').value = 'editar';
+                document.getElementById('cliIdEdit').value = cliente.id_cliente;
+                document.getElementById('cliNombre').value = cliente.nombre;
+                document.getElementById('cliTelefono').value = cliente.telefono;
+                document.getElementById('cliDireccion').value = cliente.direccion;
+                document.getElementById('cliStatus').value = cliente.status;
+                var docMatch = (cliente.documento || '').match(/^([VEJGPC])-(\d+)(?:-(\d+))?/);
+                if (docMatch) {
+                    document.getElementById('cliDocTipo').value = docMatch[1];
+                    document.getElementById('cliDocNum').value = docMatch[2] + (docMatch[3] || '');
+                } else {
+                    document.getElementById('cliDocTipo').value = 'V';
+                    document.getElementById('cliDocNum').value = cliente.documento || '';
+                }
+                cliValidarDoc();
+                cliFormModal.show();
+            }, 300);
+        }
+
+        // Valida y formatea el documento fiscal del cliente.
+        function cliValidarDoc() {
+            var tipo = document.getElementById('cliDocTipo').value;
+            var nums = document.getElementById('cliDocNum').value.replace(/\D/g, '');
+            var msg = document.getElementById('cliDocMsg');
+            var numInput = document.getElementById('cliDocNum');
+            var esRif = (tipo === 'J' || tipo === 'G' || tipo === 'P' || tipo === 'C');
+            var maxDig = esRif ? 9 : 9;
+            if (nums.length > maxDig) nums = nums.slice(0, maxDig);
+            if (nums === '') {
+                msg.innerHTML = '';
+                numInput.style.borderColor = '';
+                numInput.value = '';
+                return;
+            }
+            var cuerpo, verif, formatted;
+            if (esRif) {
+                cuerpo = nums.slice(0, 8);
+                verif = nums.slice(8);
+                formatted = cuerpo + (verif ? '-' + verif : '');
+            } else {
+                formatted = nums;
+            }
+            var valido = nums.length === 9;
+            numInput.value = formatted;
+            if (valido) {
+                msg.innerHTML = '<span style="color:var(--jv-success);">✓ Válido</span>';
+                numInput.style.borderColor = '#16A34A';
+            } else {
+                msg.innerHTML = '<span style="color:var(--jv-danger);">Documento incompleto</span>';
+                numInput.style.borderColor = '#DC2626';
+            }
+        }
+
+        // Envía el formulario de cliente (registrar o editar).
+        function cliEnviarForm() {
+            limpiarErrores();
+            var valido = true;
+            var primerError = null;
+
+            var nombre = document.getElementById('cliNombre');
+            if (!nombre.value.trim()) {
+                marcarError(nombre, 'NOMBRE OBLIGATORIO');
+                valido = false;
+                if (!primerError) primerError = nombre;
+            }
+
+            if (!valido) {
+                if (primerError) primerError.focus();
+                return;
+            }
+
+            var docNum = document.getElementById('cliDocNum').value.trim();
+            var hiddenDoc = document.getElementById('formCli').querySelector('[name="documento"]');
+            if (docNum) {
+                var tipo = document.getElementById('cliDocTipo').value;
+                hiddenDoc.value = tipo + '-' + docNum;
+            } else {
+                hiddenDoc.value = '';
+            }
+
+            var fd = new FormData(document.getElementById('formCli'));
+            jvPost(Object.fromEntries(fd));
+        }
+
+        // Toggle status de cliente con confirmación SweetAlert.
+        function cliToggleStatus(id, estadoActual) {
+            var accion = estadoActual === 'Activo' ? 'DESACTIVAR' : 'ACTIVAR';
+            Swal.fire({
+                title: accion + ' CLIENTE',
+                text: '¿Está seguro que desea ' + accion.toLowerCase() + ' este cliente?',
+                icon: 'warning',
+                showCancelButton: true,
+                background: '#fff',
+                color: '#212529',
+                confirmButtonColor: estadoActual === 'Activo' ? '#DC2626' : '#16A34A',
+                cancelButtonColor: '#CED4DA',
+                confirmButtonText: 'SÍ, ' + accion,
+                cancelButtonText: 'CANCELAR'
+            }).then(function(r) {
+                if (r.isConfirmed) {
+                    jvPost({ toggle_cliente: id, csrf_token: window.JV_CONFIG.csrfToken });
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            _initCliModals();
             // (El auto-cierre de mensajes flash lo maneja diseno.js globalmente.)
 
             document.querySelectorAll('#formSalida input, #formSalida select, #formSalida textarea').forEach(function(el) {
