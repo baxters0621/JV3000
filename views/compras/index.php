@@ -28,7 +28,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         </div>
         <div>
             <h1 class="module-title">COMPRAS</h1>
-            <p class="module-subtitle">Facturas de Proveedores</p>
+            <p class="module-subtitle">&Oacute;rdenes de Compra y Reposici&oacute;n</p>
         </div>
     </div>
     <div class="d-flex gap-2">
