@@ -206,6 +206,7 @@ CREATE TABLE `productos` (
   `id_producto` int(11) NOT NULL AUTO_INCREMENT,
   `sku` varchar(50) NOT NULL,
   `nombre_producto` varchar(150) NOT NULL,
+  `descripcion` varchar(500) DEFAULT NULL,
   `precio_venta` decimal(10,2) NOT NULL,
   `precio_costo` decimal(10,2) DEFAULT 0.00,
   `stock_actual` int(11) DEFAULT 0,

@@ -472,13 +472,14 @@
         }
 
         .pagina-compras .modal-header-jv small {
-            color: rgba(255, 255, 255, 0.82);
-            font-size: .9rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-size: .95rem;
             display: block;
-            margin-top: 6px;
+            margin-top: 8px;
             line-height: 1.6;
             position: relative;
             z-index: 1;
+            font-weight: 500;
         }
 
         .pagina-compras .modal-header-jv .btn-close { filter: brightness(0) invert(1); }
