@@ -203,7 +203,7 @@ class Proveedor extends Model
         $mapa = [];
         foreach ($this->db->fetchAll(
             "SELECT cc.id_catalogo, cc.id_proveedor, cc.id_producto, cc.costo, cc.codigo_proveedor,
-                    p.nombre_producto, p.sku
+                    p.nombre_producto, p.sku, p.descripcion
              FROM catalogo_costos cc
              JOIN productos p ON cc.id_producto = p.id_producto
              ORDER BY p.nombre_producto ASC"

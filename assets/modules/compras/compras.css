@@ -782,9 +782,13 @@
             font-size: 1rem;
             font-weight: 700;
             color: var(--jv-navy);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        }
+        .pagina-compras .cat-item-desc {
+            display: block;
+            font-size: .85rem;
+            color: var(--jv-text-muted);
+            margin-top: 2px;
+            line-height: 1.4;
         }
         .pagina-compras .cat-item-meta { font-size: .85rem; color: var(--jv-text-muted); }
         .pagina-compras .cat-item-costo {

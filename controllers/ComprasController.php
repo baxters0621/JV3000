@@ -131,7 +131,7 @@ class ComprasController extends Controller
             'wrapper_class'     => 'pagina-compras',
             'css_extra'         => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
-                'modules/compras/compras.css?v=9',
+                'modules/compras/compras.css?v=10',
             ],
             'js_extra'          => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',

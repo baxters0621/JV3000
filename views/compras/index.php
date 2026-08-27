@@ -387,12 +387,12 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <table class="table-jv mb-0" style="--jv-min-w:0;">
                         <thead>
                             <tr>
-                                <th style="width:26%;">Empresa</th>
-                                <th style="width:15%;">RIF</th>
-                                <th style="width:16%;">Tel&eacute;fono</th>
-                                <th class="text-center" style="width:13%;">Productos</th>
-                                <th class="text-center" style="width:12%;">Estado</th>
-                                <th class="text-center" style="width:18%;">Acciones</th>
+                                <th>Empresa</th>
+                                <th>RIF</th>
+                                <th>Tel&eacute;fono</th>
+                                <th class="text-center">Productos</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="provTbody">
@@ -438,6 +438,9 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                                     <div class="prov-cat-item">
                                                         <div class="cat-item-info">
                                                             <span class="cat-item-nombre" data-tooltip="<?php echo htmlspecialchars($entrada_cat['nombre_producto']); ?>"><?php echo htmlspecialchars($entrada_cat['nombre_producto']); ?></span>
+                                                            <?php if (!empty($entrada_cat['descripcion'])): ?>
+                                                                <small class="cat-item-desc"><?php echo htmlspecialchars($entrada_cat['descripcion']); ?></small>
+                                                            <?php endif; ?>
                                                             <small class="cat-item-meta"><?php echo htmlspecialchars($entrada_cat['sku']); ?><?php echo !empty($entrada_cat['codigo_proveedor']) ? ' · C&oacute;d. prov: ' . htmlspecialchars($entrada_cat['codigo_proveedor']) : ''; ?></small>
                                                         </div>
                                                         <span class="cat-item-costo">$<?php echo number_format((float)$entrada_cat['costo'], 2); ?></span>
