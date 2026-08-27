@@ -342,8 +342,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
                     <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
                     <button type="submit" class="btn btn-jv-success module-action-btn" id="btnGuardar" disabled onclick="return validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar</button>
-                </div>
             </form>
+                </div>
         </div>
     </div>
 </div>
@@ -481,11 +481,11 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalProveedor" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
+            <div class="modal-body p-4">
             <form action="" method="POST" id="formProveedor">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_proveedor" id="p_accion" value="registrar">
                 <input type="hidden" name="id_proveedor" id="p_id_edit">
-                <div class="modal-body p-4">
                     <div class="modal-header-jv">
                         <div>
                             <h5 class="font-brand" id="modalTitle"><i class="bi bi-building me-2"></i>Registrar Nuevo Proveedor</h5>
@@ -572,8 +572,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase">
                         <i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR
                     </button>
-                </div>
             </form>
+                </div>
         </div>
     </div>
 </div>
@@ -632,8 +632,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <button type="submit" id="btn-cat-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase">
                         <i class="bi bi-check-lg me-2"></i>GUARDAR EN CAT&Aacute;LOGO
                     </button>
-                </div>
             </form>
+                </div>
         </div>
     </div>
 </div>
