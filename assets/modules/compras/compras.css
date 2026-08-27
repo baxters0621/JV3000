@@ -313,22 +313,22 @@
             background: var(--jv-bg-primary);
             border: 1px solid var(--jv-border);
             border-radius: var(--jv-radius);
-            padding: 14px 16px;
-            margin-bottom: 12px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
         }
 
         .section-label {
-            font-size: .8rem;
+            font-size: .85rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--jv-navy);
-            margin-bottom: 6px;
-            padding-bottom: 4px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
             border-bottom: 1px solid rgba(16, 185, 129, 0.2);
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 8px;
         }
 
         /* ── Toolbox autocomplete ── */
@@ -429,26 +429,28 @@
         .pagina-compras .modal-header-jv {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 16px 22px;
-            margin: -1rem -1rem 1rem;
+            align-items: flex-start;
+            padding: 22px 28px;
+            margin: -1rem -1rem 1.2rem;
             border-radius: calc(var(--jv-radius-xl, 18px) - 1px) calc(var(--jv-radius-xl, 18px) - 1px) 0 0;
             background: linear-gradient(135deg, #0F1A2E, #1E2A3E);
             border-bottom: 3px solid #10b981;
         }
 
         .pagina-compras .modal-header-jv h5 {
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             color: #fff;
             margin: 0;
             font-weight: 800;
+            letter-spacing: .3px;
         }
 
         .pagina-compras .modal-header-jv small {
             color: rgba(255, 255, 255, 0.75);
-            font-size: .88rem;
+            font-size: .9rem;
             display: block;
-            margin-top: 2px;
+            margin-top: 4px;
+            line-height: 1.5;
         }
 
         .pagina-compras .modal-header-jv .btn-close { filter: brightness(0) invert(1); }
@@ -459,15 +461,15 @@
         .pagina-compras .sec-comercial { border-left: 4px solid #EA580C; }
 
         .pagina-compras .section-chip {
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             border-radius: 8px;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: .95rem;
+            font-size: 1rem;
         }
 
         .pagina-compras .section-chip.chip-fiscal    { background: #2563EB; }
@@ -475,7 +477,7 @@
         .pagina-compras .section-chip.chip-comercial { background: #EA580C; }
 
         .pagina-compras .section-ayuda {
-            font-size: .78rem;
+            font-size: .82rem;
             font-weight: 500;
             letter-spacing: 0;
             text-transform: none;
@@ -519,17 +521,27 @@
         }
 
         /* ── Tabla del listado dentro del pop-up ── */
+        .pagina-compras #modalProvList .table-jv {
+            table-layout: auto;
+        }
+
         .pagina-compras #modalProvList .table-jv thead th {
-            background: var(--jv-bg-primary);
-            color: var(--jv-navy);
+            background: var(--jv-navy);
+            color: #fff;
             border-bottom: 2px solid rgba(16, 185, 129, 0.35);
             font-size: .85rem;
-            padding: 12px 14px;
+            padding: 14px 16px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            font-weight: 700;
+            white-space: nowrap;
         }
         .pagina-compras #modalProvList .table-jv tbody td {
-            padding: 12px 14px;
-            font-size: .95rem;
+            padding: 16px 18px;
+            font-size: 1rem;
             border-bottom: 1px solid var(--jv-border);
+            vertical-align: middle;
+            line-height: 1.5;
         }
         .pagina-compras #modalProvList .table-jv tbody tr.prov-fila:hover {
             background: rgba(16, 185, 129, 0.05);
@@ -537,20 +549,30 @@
         .pagina-compras #modalProvList .table-jv tbody tr:last-child .prov-catalogo-vacio,
         .pagina-compras #modalProvList .table-jv tbody tr:last-child td { border-bottom: none; }
 
-        /* Botón-contador de productos que expande el catálogo */
-        .pagina-compras .cant-badge { border: 1px solid rgba(16, 185, 129, 0.3); }
+        /* Nombre del proveedor en la tabla */
+        .pagina-compras #modalProvList .table-jv tbody td.fw-bold {
+            font-size: 1.05rem;
+            letter-spacing: .3px;
+        }
+
+        /* ── Botón-contador de productos que expande el catálogo ── */
+        .pagina-compras .cant-badge {
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-size: .9rem;
+            padding: 6px 14px;
+        }
 
         /* ── Panel de catálogo expandido ── */
         .pagina-compras .prov-catalogo-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            padding: 7px 12px;
+            margin-bottom: 12px;
+            padding: 10px 14px;
             background: rgba(16, 185, 129, 0.07);
             border-left: 3px solid #10b981;
             border-radius: 6px;
-            font-size: .72rem;
+            font-size: .78rem;
             font-weight: 800;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -561,55 +583,59 @@
             border: none;
             background: #10b981;
             color: #fff;
-            font-size: .68rem;
+            font-size: .75rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: .5px;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             transition: all .15s ease;
             cursor: pointer;
         }
         .pagina-compras .btn-cat-add:hover { background: #059669; transform: scale(1.05); }
-        .pagina-compras .btn-cat-add i { font-size: .75rem; }
+        .pagina-compras .btn-cat-add i { font-size: .8rem; }
 
         .pagina-compras .prov-cat-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            margin-bottom: 6px;
+            gap: 12px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
             background: var(--jv-bg-card);
             border: 1px solid var(--jv-border);
-            border-radius: 8px;
+            border-radius: 10px;
+            transition: border-color .15s;
+        }
+        .pagina-compras .prov-cat-item:hover {
+            border-color: rgba(16, 185, 129, 0.35);
         }
         .pagina-compras .cat-item-info { flex: 1; min-width: 0; }
         .pagina-compras .cat-item-nombre {
             display: block;
-            font-size: .95rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--jv-navy);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .pagina-compras .cat-item-meta { font-size: .8rem; color: var(--jv-text-muted); }
+        .pagina-compras .cat-item-meta { font-size: .85rem; color: var(--jv-text-muted); }
         .pagina-compras .cat-item-costo {
-            font-size: .95rem;
+            font-size: 1rem;
             font-weight: 800;
             color: #16A34A;
             white-space: nowrap;
             background: rgba(22, 163, 74, 0.1);
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 14px;
         }
 
         .pagina-compras .btn-cat-icon {
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             border-radius: 8px;
             flex-shrink: 0;
             display: inline-flex;
@@ -623,17 +649,17 @@
         }
         .pagina-compras .btn-cat-icon:hover { border-color: #10b981; color: #047857; background: rgba(16, 185, 129, 0.08); }
         .pagina-compras .btn-cat-del:hover { border-color: #DC2626; color: #DC2626; background: rgba(220, 38, 38, 0.08); }
-        .pagina-compras .btn-cat-icon i { font-size: .85rem; }
+        .pagina-compras .btn-cat-icon i { font-size: .9rem; }
 
         .pagina-compras .prov-catalogo-vacio {
             text-align: center;
-            padding: 14px 10px;
-            font-size: .85rem;
+            padding: 18px 14px;
+            font-size: .9rem;
             color: var(--jv-text-muted);
             border: 1px dashed var(--jv-border);
-            border-radius: 8px;
+            border-radius: 10px;
         }
-        .pagina-compras .prov-catalogo-vacio i { display: block; font-size: 1.4rem; margin-bottom: 6px; opacity: .5; }
+        .pagina-compras .prov-catalogo-vacio i { display: block; font-size: 1.6rem; margin-bottom: 8px; opacity: .5; }
 
         /* ── Selector internacional de teléfono dentro del modal ── */
         .modal .iti__country-list { z-index: 1080; }

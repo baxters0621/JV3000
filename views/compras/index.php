@@ -501,7 +501,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <div class="col-md-4">
                                 <label for="p_rif" class="small fw-bold text-secondary mb-2">RIF *</label>
                                 <input type="text" name="rif" id="p_rif" class="input-jv" required placeholder="Ej: J-12345678-0" maxlength="13">
-                                <small style="color:var(--jv-text-secondary);font-size:.85rem;display:block;margin-top:4px;">Formato: J-12345678-0</small>
+                                <small style="color:var(--jv-text-secondary);font-size:.85rem;display:block;margin-top:6px;">Formato: J-12345678-0</small>
                             </div>
                             <div class="col-md-8">
                                 <label for="p_empresa" class="small fw-bold text-secondary mb-2">NOMBRE EMPRESA *</label>
