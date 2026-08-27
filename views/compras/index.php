@@ -469,9 +469,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         </tbody>
                     </table>
                 </div>
-                <small class="text-secondary d-block mt-2" style="font-size:.8rem;">
-                    <i class="bi bi-info-circle me-1"></i>Los precios de este cat&aacute;logo se aplican autom&aacute;ticamente al crear una compra con este proveedor.
-                </small>
+
             </div>
         </div>
     </div>
