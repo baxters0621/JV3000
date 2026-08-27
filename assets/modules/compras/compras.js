@@ -459,7 +459,7 @@
             const esEdicion = !!proveedorData;
             document.getElementById('p_accion').value = esEdicion ? 'editar' : 'registrar';
             document.getElementById('p_id_edit').value = esEdicion ? proveedorData.id_proveedor : '';
-            document.getElementById('modalTitle').innerText = esEdicion ? 'EDITAR PROVEEDOR' : 'REGISTRAR PROVEEDOR';
+            document.getElementById('modalTitle').innerText = esEdicion ? 'Editar Proveedor' : 'Registrar Nuevo Proveedor';
             document.getElementById('p_rif').value = esEdicion ? proveedorData.rif : '';
             document.getElementById('p_empresa').value = esEdicion ? proveedorData.nombre_empresa : '';
             document.getElementById('p_contacto_nombre').value = esEdicion ? (proveedorData.contacto || '') : '';

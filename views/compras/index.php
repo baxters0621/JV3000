@@ -32,7 +32,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         </div>
     </div>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-jv-primary module-action-btn" onclick="abrirGestorProv()" data-tooltip="Registrar, modificar o desactivar proveedores">
+        <button type="button" class="btn btn-jv-primary module-action-btn" onclick="abrirGestorProv()" data-tooltip="Gestionar proveedores registrados y sus catálogos de costos">
             <i class="bi bi-building me-1"></i>PROVEEDORES
         </button>
         <button class="btn btn-jv-success pulse-jv module-action-btn" data-bs-toggle="modal" data-bs-target="#modalCompra">
@@ -362,8 +362,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         <div class="modal-content modal-content-jv">
             <div class="modal-header-jv">
                 <div>
-                    <h5 class="font-brand"><i class="bi bi-building me-2"></i>PROVEEDORES</h5>
-                    <small>Registrar, modificar o desactivar · Total <strong><?php echo count($prov_gestion); ?></strong> · Activos <strong><?php echo $prov_activos; ?></strong></small>
+                    <h5 class="font-brand"><i class="bi bi-building me-2"></i>Proveedores Registrados</h5>
+                    <small>Administra tus proveedores, sus datos de contacto y cat&aacute;logos de precios · Total <strong><?php echo count($prov_gestion); ?></strong> · Activos <strong><?php echo $prov_activos; ?></strong></small>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -467,7 +467,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     </table>
                 </div>
                 <small class="text-secondary d-block mt-2" style="font-size:.8rem;">
-                    <i class="bi bi-info-circle me-1"></i>El costo del cat&aacute;logo autocompleta el precio al registrar una compra con ese proveedor.
+                    <i class="bi bi-info-circle me-1"></i>Los precios de este cat&aacute;logo se aplican autom&aacute;ticamente al crear una compra con este proveedor.
                 </small>
             </div>
         </div>
@@ -485,8 +485,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <div class="modal-body p-4">
                     <div class="modal-header-jv">
                         <div>
-                            <h5 class="font-brand" id="modalTitle"><i class="bi bi-building me-2"></i>REGISTRAR PROVEEDOR</h5>
-                            <small>Datos fiscales, contacto y condiciones comerciales</small>
+                            <h5 class="font-brand" id="modalTitle"><i class="bi bi-building me-2"></i>Registrar Nuevo Proveedor</h5>
+                            <small>Completa los datos del proveedor para asociarlo a tus compras</small>
                         </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>

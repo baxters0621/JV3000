@@ -522,6 +522,20 @@
     color: #B45309;
 }
 
+/* Columnas de la tabla de críticos: Stock reduce, Estado amplía para el badge */
+.table-card-criticos .data-table th:nth-child(2),
+.table-card-criticos .data-table td:nth-child(2) {
+    width: 25%;
+    text-align: center;
+}
+
+.table-card-criticos .data-table th:nth-child(3),
+.table-card-criticos .data-table td:nth-child(3) {
+    width: 35%;
+    text-align: center;
+    overflow: visible;
+}
+
 .table-card-compras {
     border-left: 6px solid #EA580C;
     background: linear-gradient(180deg, rgba(234,88,12,0.08), rgba(234,88,12,0.02) 120px, #fff 220px);
