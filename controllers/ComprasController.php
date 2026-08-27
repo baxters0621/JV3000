@@ -131,11 +131,11 @@ class ComprasController extends Controller
             'wrapper_class'     => 'pagina-compras',
             'css_extra'         => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
-                'modules/compras/compras.css?v=6',
+                'modules/compras/compras.css?v=7',
             ],
             'js_extra'          => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
-                'modules/compras/compras.js?v=7',
+                'modules/compras/compras.js?v=8',
             ],
             'compras'           => $modelo->obtenerCompras($filtro_proveedor, $filtro_pago),
             'proveedores'       => $modelo->obtenerProveedores(),
