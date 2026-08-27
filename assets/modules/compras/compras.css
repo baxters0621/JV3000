@@ -422,35 +422,63 @@
 
         /* ============================================================
            GESTIÓN INTEGRADA DE PROVEEDORES (pop-ups dentro de Compras)
-           Reutiliza section-bg/section-label/badges del propio módulo.
+           Rediseño: card-based rows, vibrant green theme, life & color.
            ============================================================ */
 
-        /* ── Cabecera degradada compartida por los 3 pop-ups ── */
+        /* ── Cabecera degradada: verde vibrante con ornamento ── */
         .pagina-compras .modal-header-jv {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            padding: 22px 28px;
-            margin: -1rem -1rem 1.2rem;
+            padding: 28px 34px;
+            margin: -1rem -1rem 1.4rem;
             border-radius: calc(var(--jv-radius-xl, 18px) - 1px) calc(var(--jv-radius-xl, 18px) - 1px) 0 0;
-            background: linear-gradient(135deg, #0F1A2E, #1E2A3E);
-            border-bottom: 3px solid #10b981;
+            background: linear-gradient(135deg, #065F46, #047857 45%, #059669);
+            border-bottom: 3px solid #34d399;
+            position: relative;
+            overflow: hidden;
+        }
+        .pagina-compras .modal-header-jv::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            right: -8%;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            pointer-events: none;
+        }
+        .pagina-compras .modal-header-jv::after {
+            content: '';
+            position: absolute;
+            bottom: -70%;
+            left: 15%;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            pointer-events: none;
         }
 
         .pagina-compras .modal-header-jv h5 {
-            font-size: 1.35rem;
+            font-size: 1.5rem;
             color: #fff;
             margin: 0;
-            font-weight: 800;
+            font-weight: 900;
             letter-spacing: .3px;
+            position: relative;
+            z-index: 1;
         }
 
         .pagina-compras .modal-header-jv small {
-            color: rgba(255, 255, 255, 0.75);
+            color: rgba(255, 255, 255, 0.82);
             font-size: .9rem;
             display: block;
-            margin-top: 4px;
-            line-height: 1.5;
+            margin-top: 6px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
         }
 
         .pagina-compras .modal-header-jv .btn-close { filter: brightness(0) invert(1); }
@@ -461,15 +489,16 @@
         .pagina-compras .sec-comercial { border-left: 4px solid #EA580C; }
 
         .pagina-compras .section-chip {
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 1rem;
+            font-size: 1.05rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
         }
 
         .pagina-compras .section-chip.chip-fiscal    { background: #2563EB; }
@@ -486,80 +515,208 @@
             text-align: right;
         }
 
-        /* ── Toolbar del listado: búsqueda + filtros ── */
+        /* ── Toolbar: búsqueda + filtros + NUEVO ── */
         .pagina-compras .prov-search { position: relative; flex: 1; min-width: 220px; max-width: 340px; }
         .pagina-compras .prov-search > i {
             position: absolute;
-            left: 12px;
+            left: 14px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--jv-text-muted);
-            font-size: .9rem;
+            color: #10b981;
+            font-size: 1rem;
             pointer-events: none;
         }
-        .pagina-compras .prov-search .input-jv { padding-left: 36px; border-radius: 20px; }
+        .pagina-compras .prov-search .input-jv {
+            padding-left: 42px;
+            border-radius: 24px;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.03);
+            transition: all .25s;
+        }
+        .pagina-compras .prov-search .input-jv:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+            background: #fff;
+        }
 
         .pagina-compras .filter-group { display: flex; gap: 6px; }
         .pagina-compras .filter-group .btn-filter {
-            padding: 7px 14px;
-            border-radius: 20px;
-            border: 1px solid var(--jv-border);
+            padding: 8px 18px;
+            border-radius: 24px;
+            border: 2px solid var(--jv-border);
             background: transparent;
             color: var(--jv-text-secondary);
-            font-size: .82rem;
-            font-weight: 700;
+            font-size: .8rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: .5px;
-            transition: all .2s ease;
+            letter-spacing: .8px;
+            transition: all .25s ease;
             cursor: pointer;
         }
-        .pagina-compras .filter-group .btn-filter:hover { border-color: #10b981; color: #047857; }
-        .pagina-compras .filter-group .btn-filter.active {
-            background: rgba(16, 185, 129, 0.15);
+        .pagina-compras .filter-group .btn-filter:hover {
             border-color: #10b981;
             color: #047857;
+            background: rgba(16, 185, 129, 0.05);
         }
-
-        /* ── Tabla del listado dentro del pop-up ── */
-        .pagina-compras #modalProvList .table-jv {
-            table-layout: auto;
-        }
-
-        .pagina-compras #modalProvList .table-jv thead th {
-            background: var(--jv-navy);
+        .pagina-compras .filter-group .btn-filter.active {
+            background: linear-gradient(135deg, #059669, #047857);
+            border-color: #059669;
             color: #fff;
-            border-bottom: 2px solid rgba(16, 185, 129, 0.35);
-            font-size: .85rem;
-            padding: 14px 16px;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+        }
+
+        /* ── Override del wrapper inline-styled ── */
+        .pagina-compras #modalProvList .modal-body > div:nth-child(2) {
+            border: none !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
+            padding: 0 !important;
+        }
+
+        /* ── Tabla como grid de cards ── */
+        .pagina-compras #modalProvList .table-jv {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            background: transparent;
+            table-layout: auto;
+            min-width: 0;
+        }
+
+        /* ── Header de tabla: verde degradado ── */
+        .pagina-compras #modalProvList .table-jv thead th {
+            background: linear-gradient(135deg, #065F46, #047857);
+            color: #fff;
+            border: none;
+            padding: 14px 22px;
+            font-size: .78rem;
             text-transform: uppercase;
-            letter-spacing: .5px;
-            font-weight: 700;
+            letter-spacing: 1.2px;
+            font-weight: 800;
             white-space: nowrap;
         }
-        .pagina-compras #modalProvList .table-jv tbody td {
-            padding: 16px 18px;
-            font-size: 1rem;
-            border-bottom: 1px solid var(--jv-border);
+        .pagina-compras #modalProvList .table-jv thead th:first-child {
+            border-radius: 12px 0 0 12px;
+            padding-left: 26px;
+        }
+        .pagina-compras #modalProvList .table-jv thead th:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        /* ── Fila proveedor: card blanca ── */
+        .pagina-compras #modalProvList .table-jv tbody tr.prov-fila {
+            background: var(--jv-bg-card);
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04), inset 0 0 0 1px rgba(0,0,0,0.03);
+            transition: all .25s cubic-bezier(.4,0,.2,1);
+        }
+        .pagina-compras #modalProvList .table-jv tbody tr.prov-fila:hover {
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.12), inset 0 0 0 1px rgba(16, 185, 129, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Celdas: transparentes, sin bordes */
+        .pagina-compras #modalProvList .table-jv tbody tr.prov-fila > td {
+            background: transparent;
+            border: none;
+            padding: 20px 22px;
             vertical-align: middle;
             line-height: 1.5;
         }
-        .pagina-compras #modalProvList .table-jv tbody tr.prov-fila:hover {
-            background: rgba(16, 185, 129, 0.05);
+        /* Primera celda: acento verde + radius */
+        .pagina-compras #modalProvList .table-jv tbody tr.prov-fila > td:first-child {
+            border-left: 4px solid #10b981;
+            border-radius: 14px 0 0 14px;
+            padding-left: 24px;
         }
-        .pagina-compras #modalProvList .table-jv tbody tr:last-child .prov-catalogo-vacio,
-        .pagina-compras #modalProvList .table-jv tbody tr:last-child td { border-bottom: none; }
+        /* Última celda: radius derecho */
+        .pagina-compras #modalProvList .table-jv tbody tr.prov-fila > td:last-child {
+            border-radius: 0 14px 14px 0;
+        }
 
-        /* Nombre del proveedor en la tabla */
+        /* Nombre del proveedor */
         .pagina-compras #modalProvList .table-jv tbody td.fw-bold {
-            font-size: 1.05rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #065F46;
             letter-spacing: .3px;
         }
 
-        /* ── Botón-contador de productos que expande el catálogo ── */
-        .pagina-compras .cant-badge {
-            border: 1px solid rgba(16, 185, 129, 0.3);
+        /* ── Fila detalle catálogo (expandido) ── */
+        .pagina-compras #modalProvList .table-jv tbody tr.prov-detalle-row > td {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.04), rgba(16, 185, 129, 0.08));
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            border-radius: 14px;
+            padding: 18px 22px;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.06);
+        }
+
+        .pagina-compras #modalProvList .table-jv tbody tr:last-child .prov-catalogo-vacio,
+        .pagina-compras #modalProvList .table-jv tbody tr:last-child td { border-bottom: none; }
+
+        /* ── Badges ── */
+        .pagina-compras .codigo-badge {
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.15), rgba(5, 150, 105, 0.08));
+            color: #047857;
             font-size: .9rem;
-            padding: 6px 14px;
+            font-weight: 800;
+            padding: 7px 16px;
+            border-radius: 10px;
+            display: inline-block;
+            vertical-align: middle;
+            white-space: nowrap;
+            letter-spacing: .8px;
+            line-height: 1.5;
+            font-family: 'Courier New', monospace;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .pagina-compras .cant-badge {
+            background: linear-gradient(135deg, #EA580C, #DC2626);
+            color: #fff;
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: .85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            line-height: 1.5;
+            border: none;
+            box-shadow: 0 3px 10px rgba(234, 88, 12, 0.25);
+            transition: all .2s;
+        }
+        .pagina-compras .cant-badge:hover {
+            transform: scale(1.08);
+            box-shadow: 0 5px 16px rgba(234, 88, 12, 0.35);
+        }
+
+        .pagina-compras .badge-jv {
+            padding: 7px 18px;
+            font-size: .82rem;
+            line-height: 1.5;
+            white-space: nowrap;
+            display: inline-block;
+            font-weight: 700;
+            border-radius: 20px;
+            letter-spacing: .5px;
+        }
+
+        .pagina-compras .badge-success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0.12));
+            color: #047857;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .pagina-compras .badge-warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.12));
+            color: #92400E;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .pagina-compras .badge-danger {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(220, 38, 38, 0.1));
+            color: #991B1B;
+            border: 1px solid rgba(220, 38, 38, 0.25);
         }
 
         /* ── Panel de catálogo expandido ── */
@@ -567,50 +724,57 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            padding: 10px 14px;
-            background: rgba(16, 185, 129, 0.07);
-            border-left: 3px solid #10b981;
-            border-radius: 6px;
+            margin-bottom: 14px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.05));
+            border-left: 4px solid #10b981;
+            border-radius: 8px;
             font-size: .78rem;
             font-weight: 800;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
             color: #047857;
         }
 
         .pagina-compras .btn-cat-add {
             border: none;
-            background: #10b981;
+            background: linear-gradient(135deg, #059669, #047857);
             color: #fff;
             font-size: .75rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: .5px;
-            padding: 6px 14px;
+            letter-spacing: .8px;
+            padding: 8px 18px;
             border-radius: 20px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            transition: all .15s ease;
+            gap: 6px;
+            transition: all .2s ease;
             cursor: pointer;
+            box-shadow: 0 3px 12px rgba(5, 150, 105, 0.25);
         }
-        .pagina-compras .btn-cat-add:hover { background: #059669; transform: scale(1.05); }
+        .pagina-compras .btn-cat-add:hover {
+            background: linear-gradient(135deg, #047857, #065F46);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.35);
+        }
         .pagina-compras .btn-cat-add i { font-size: .8rem; }
 
         .pagina-compras .prov-cat-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
+            gap: 14px;
+            padding: 12px 18px;
             margin-bottom: 8px;
             background: var(--jv-bg-card);
-            border: 1px solid var(--jv-border);
-            border-radius: 10px;
-            transition: border-color .15s;
+            border: 1px solid rgba(16, 185, 129, 0.12);
+            border-radius: 12px;
+            transition: all .2s;
         }
         .pagina-compras .prov-cat-item:hover {
             border-color: rgba(16, 185, 129, 0.35);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.08);
+            transform: translateX(3px);
         }
         .pagina-compras .cat-item-info { flex: 1; min-width: 0; }
         .pagina-compras .cat-item-nombre {
@@ -624,19 +788,20 @@
         }
         .pagina-compras .cat-item-meta { font-size: .85rem; color: var(--jv-text-muted); }
         .pagina-compras .cat-item-costo {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 800;
-            color: #16A34A;
+            color: #fff;
             white-space: nowrap;
-            background: rgba(22, 163, 74, 0.1);
-            padding: 4px 12px;
-            border-radius: 14px;
+            background: linear-gradient(135deg, #059669, #047857);
+            padding: 6px 14px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
         }
 
         .pagina-compras .btn-cat-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
@@ -644,22 +809,37 @@
             border: 1px solid var(--jv-border);
             background: transparent;
             color: var(--jv-text-secondary);
-            transition: all .15s ease;
+            transition: all .2s ease;
             cursor: pointer;
         }
-        .pagina-compras .btn-cat-icon:hover { border-color: #10b981; color: #047857; background: rgba(16, 185, 129, 0.08); }
-        .pagina-compras .btn-cat-del:hover { border-color: #DC2626; color: #DC2626; background: rgba(220, 38, 38, 0.08); }
+        .pagina-compras .btn-cat-icon:hover {
+            border-color: #10b981;
+            color: #047857;
+            background: rgba(16, 185, 129, 0.08);
+            transform: scale(1.08);
+        }
+        .pagina-compras .btn-cat-del:hover {
+            border-color: #DC2626;
+            color: #DC2626;
+            background: rgba(220, 38, 38, 0.08);
+        }
         .pagina-compras .btn-cat-icon i { font-size: .9rem; }
 
         .pagina-compras .prov-catalogo-vacio {
             text-align: center;
-            padding: 18px 14px;
+            padding: 28px 18px;
             font-size: .9rem;
             color: var(--jv-text-muted);
-            border: 1px dashed var(--jv-border);
-            border-radius: 10px;
+            border: 2px dashed rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.02);
         }
-        .pagina-compras .prov-catalogo-vacio i { display: block; font-size: 1.6rem; margin-bottom: 8px; opacity: .5; }
+        .pagina-compras .prov-catalogo-vacio i {
+            display: block;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: rgba(16, 185, 129, 0.3);
+        }
 
         /* ── Selector internacional de teléfono dentro del modal ── */
         .modal .iti__country-list { z-index: 1080; }
