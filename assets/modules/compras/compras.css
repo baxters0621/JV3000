@@ -436,7 +436,6 @@
             background: linear-gradient(135deg, #065F46, #047857 45%, #059669);
             border-bottom: 3px solid #34d399;
             position: relative;
-            overflow: hidden;
         }
         .pagina-compras .modal-header-jv::before {
             content: '';
