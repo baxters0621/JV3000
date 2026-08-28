@@ -1,5 +1,6 @@
 /* ==========================================
    RECUPERAR CONTRASEÑA — TEMA CLARO
+   Coherente con login.css (field-group, field-input, btn-access, login-link-pill)
    ========================================== */
 
 .rec-page {
@@ -16,23 +17,17 @@
     background: var(--jv-bg-card);
     border: 1px solid var(--jv-border);
     border-radius: var(--jv-radius-xl);
-    padding: 36px 32px;
+    padding: 36px 34px;
     box-shadow: var(--jv-shadow);
-}
-
-.rec-logo {
-    display: block;
-    width: 300px;
-    height: auto;
-    margin: 0 auto 14px;
 }
 
 .rec-step { display: none; }
 .rec-step.active { display: block; }
 
+/* --- Header con icono --- */
 .rec-header {
     text-align: center;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 }
 
 .rec-header .icon {
@@ -51,75 +46,62 @@
 
 .rec-header h1 {
     font-family: var(--jv-font-brand);
-    font-size: 1.2rem;
-    font-weight: 700;
+    font-size: 1.3rem;
+    font-weight: 800;
     color: var(--jv-navy);
     margin: 0;
+    letter-spacing: 1px;
 }
 
 .rec-header p {
     color: var(--jv-text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 500;
     margin: 4px 0 0;
 }
 
-.rec-input {
-    width: 100%;
-    padding: 14px 16px;
-    border-radius: var(--jv-radius);
-    background: var(--jv-bg-secondary);
-    border: 1.5px solid var(--jv-border);
-    color: var(--jv-text-primary);
-    font-size: 0.9rem;
-    transition: 0.15s;
+/* --- Labels (estilo reg-label del registro) --- */
+.rec-label {
+    display: block;
+    font-size: .88rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: #1e293b;
+    margin-bottom: 6px;
 }
+.rec-label .rec-label-or { text-transform: none; font-weight: 600; color: var(--jv-text-muted); }
 
-.rec-input:focus {
-    outline: none;
-    border-color: var(--jv-orange);
-    box-shadow: 0 0 0 3px rgba(234,88,12,0.15);
-}
-
-.rec-btn {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: var(--jv-radius);
-    font-weight: 700;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    background: linear-gradient(135deg, var(--jv-orange), var(--jv-orange-dark));
-    color: #fff;
-    transition: 0.2s;
-    cursor: pointer;
-}
-
-.rec-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px -5px rgba(234,88,12,0.4);
-}
-
-.rec-btn:disabled { opacity: 0.5; pointer-events: none; }
-
-.rec-back {
+/* --- Usuario mostrado en paso 2 --- */
+.rec-user {
     display: block;
     text-align: center;
-    margin-top: 16px;
-    color: var(--jv-text-secondary);
-    font-size: 0.8rem;
-    text-decoration: none;
+    font-size: .85rem;
+    color: var(--jv-text-muted);
+    margin-bottom: 10px;
 }
+.rec-user strong { color: var(--jv-text-primary); }
 
-.rec-back:hover { color: var(--jv-orange); }
-
+/* --- Pregunta de seguridad --- */
 .rec-question {
     background: rgba(217,119,6,0.08);
-    border: 1px solid rgba(217,119,6,0.2);
+    border: 1px solid rgba(217,119,6,0.25);
+    border-left: 4px solid #d97706;
     border-radius: var(--jv-radius);
     padding: 14px 16px;
     margin-bottom: 16px;
     color: #92400E;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: .95rem;
+    font-weight: 700;
     text-align: center;
+}
+
+/* --- Hint de respuesta (paso 2) --- */
+.rec-hint-msg {
+    display: block;
+    font-size: .85rem;
+    font-weight: 700;
+    height: 18px;
+    text-align: center;
+    margin: 2px 0 8px;
 }

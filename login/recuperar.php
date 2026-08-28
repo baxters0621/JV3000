@@ -142,12 +142,17 @@ if ($step == 4) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Contraseña | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
-    <link rel="stylesheet" href="../assets/login/recuperar.css?v=3">
+    <link rel="stylesheet" href="../assets/login/login.css?v=2">
+    <link rel="stylesheet" href="../assets/login/recuperar.css?v=4">
 </head>
 
 <body class="rec-page">
     <div class="rec-card">
-        <img class="rec-logo" src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
+        <div class="login-logo">
+            <img class="rec-logo" src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
+            <p>Recuperación de Acceso</p>
+        </div>
+
         <div class="rec-header">
             <div class="icon"><i class="bi bi-key"></i></div>
             <h1>RECUPERAR ACCESO</h1>
@@ -169,10 +174,13 @@ if ($step == 4) {
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="buscar">
-                <label class="small fw-bold mb-1 d-block"><span class="text-jv-warning"><i class="bi bi-envelope me-1"></i>Correo</span> <span class="text-jv-muted">o</span> <span class="text-jv-info"><i class="bi bi-person me-1"></i>Usuario</span></label>
-                <input type="text" name="rec_input" class="rec-input mb-3" required placeholder="admin@correo.com  o  Usuario" autofocus>
-                <button type="submit" class="rec-btn"><i class="bi bi-search me-2"></i>BUSCAR</button>
-                <a href="login.php" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Volver al inicio</a>
+                <label class="rec-label"><i class="bi bi-envelope me-1"></i>Correo Electrónico <span class="rec-label-or">o</span> <i class="bi bi-person me-1"></i>Usuario</label>
+                <div class="field-group">
+                    <i class="field-icon bi bi-person-badge"></i>
+                    <input type="text" name="rec_input" class="field-input" required placeholder="ejemplo@correo.com o Usuario" autofocus>
+                </div>
+                <button type="submit" class="btn-access"><span><i class="bi bi-search me-2"></i>BUSCAR</span></button>
+                <a href="login.php" class="login-link-pill login-link-pill--outline"><i class="bi bi-arrow-left"></i>Volver al inicio</a>
             </form>
         </div>
 
@@ -184,12 +192,15 @@ if ($step == 4) {
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="responder">
-                <div class="small text-jv-muted mb-2">Usuario: <strong style="color:var(--jv-text-primary)"><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
+                <div class="rec-user">Usuario: <strong><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
                 <div class="rec-question"><i class="bi bi-question-circle me-2"></i><?php echo htmlspecialchars($_SESSION['rec_pregunta'] ?? ''); ?></div>
-                <input type="text" name="rec_respuesta" id="rec-resp" class="rec-input mb-3" required maxlength="255" autofocus placeholder="Escribe tu respuesta" autocomplete="off" oninput="validarRespuesta()">
-                <small id="rec-resp-hint" style="color:#DC2626;font-size:.7rem;display:block;height:14px;text-align:center;"></small>
-                <button type="submit" id="rec-btn" class="rec-btn"><i class="bi bi-shield-check me-2"></i>VERIFICAR</button>
-                <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Intentar con otro correo</a>
+                <div class="field-group">
+                    <i class="field-icon bi bi-shield-check"></i>
+                    <input type="text" name="rec_respuesta" id="rec-resp" class="field-input" required maxlength="255" autofocus placeholder="Escribe tu respuesta" autocomplete="off" oninput="validarRespuesta()">
+                </div>
+                <small id="rec-resp-hint" class="rec-hint-msg"></small>
+                <button type="submit" id="rec-btn" class="btn-access"><span><i class="bi bi-shield-check me-2"></i>VERIFICAR</span></button>
+                <a href="recuperar.php?reset=1" class="login-link-pill login-link-pill--outline"><i class="bi bi-arrow-left"></i>Intentar con otro correo</a>
             </form>
         </div>
 
@@ -201,26 +212,24 @@ if ($step == 4) {
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="cambiar">
-                <label class="small fw-bold text-jv-muted mb-1 d-block">Nueva contraseña</label>
-                <div style="position:relative;">
-                    <input type="password" name="rec_password" id="rec-pass" class="rec-input mb-1" required minlength="8" placeholder="Mín. 8 caracteres, mayús, minús, núm, símbolo" autofocus oninput="validarPassRec()" style="width:100%;padding-right:40px;">
-                    <button type="button" class="field-eye" id="btnEyeRec1" aria-label="Mostrar" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;">
-                        <i class="bi bi-eye-slash-fill" id="iconEyeRec1"></i>
-                    </button>
+                <label class="rec-label"><i class="bi bi-lock-fill me-1"></i>Nueva contraseña</label>
+                <div class="field-group">
+                    <i class="field-icon bi bi-key-fill"></i>
+                    <input type="password" name="rec_password" id="rec-pass" class="field-input" required minlength="8" placeholder="Mín. 8 caracteres, mayús, minús, núm, símbolo" autofocus oninput="validarPassRec()">
+                    <button type="button" class="field-eye" id="btnEyeRec1" aria-label="Mostrar"><i class="bi bi-eye-slash-fill" id="iconEyeRec1"></i></button>
                 </div>
-                <div class="strength-meter mb-3" style="height:4px;background:var(--jv-border);border-radius:4px;overflow:hidden;">
+                <div class="strength-meter mb-3" style="height:5px;background:var(--jv-border);border-radius:4px;overflow:hidden;">
                     <div class="strength-fill" id="rec-meter" style="height:100%;width:0%;border-radius:4px;transition:all .35s ease;"></div>
                 </div>
-                <label class="small fw-bold text-jv-muted mb-1 d-block">Confirmar contraseña</label>
-                <div style="position:relative;">
-                    <input type="password" name="rec_password2" id="rec-pass2" class="rec-input mb-3" required minlength="8" placeholder="Repite la contraseña" oninput="validarPassRec()" style="width:100%;padding-right:40px;">
-                    <button type="button" class="field-eye" id="btnEyeRec2" aria-label="Mostrar" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;">
-                        <i class="bi bi-eye-slash-fill" id="iconEyeRec2"></i>
-                    </button>
+                <small id="rec-pass-hint" style="color:var(--jv-text-muted);font-size:.8rem;font-weight:600;display:block;height:16px;text-align:center;margin-top:-10px;margin-bottom:10px;"></small>
+                <label class="rec-label"><i class="bi bi-key me-1"></i>Confirmar contraseña</label>
+                <div class="field-group">
+                    <i class="field-icon bi bi-lock"></i>
+                    <input type="password" name="rec_password2" id="rec-pass2" class="field-input" required minlength="8" placeholder="Repite la contraseña" oninput="validarPassRec()">
+                    <button type="button" class="field-eye" id="btnEyeRec2" aria-label="Mostrar"><i class="bi bi-eye-slash-fill" id="iconEyeRec2"></i></button>
                 </div>
-                <small id="rec-pass-hint" style="color:var(--jv-text-muted);font-size:.7rem;display:block;height:16px;text-align:center;margin-top:-10px;margin-bottom:10px;"></small>
-                <button type="submit" id="rec-btn-pass" class="rec-btn"><i class="bi bi-check2 me-2"></i>CAMBIAR CONTRASEÑA</button>
-                <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>
+                <button type="submit" id="rec-btn-pass" class="btn-access"><span><i class="bi bi-check2 me-2"></i>CAMBIAR CONTRASEÑA</span></button>
+                <a href="recuperar.php?reset=1" class="login-link-pill login-link-pill--outline"><i class="bi bi-arrow-left"></i>Cancelar</a>
             </form>
         </div>
 
@@ -231,8 +240,8 @@ if ($step == 4) {
         <div class="rec-step <?php echo $show_exito ? 'active' : ''; ?>">
             <div class="text-center">
                 <div style="font-size:3rem;color:var(--jv-success);margin-bottom:12px;"><i class="bi bi-check-circle-fill"></i></div>
-                <a href="login.php" class="rec-btn text-decoration-none d-inline-block" style="width:auto;padding:12px 32px;">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>IR AL INICIO
+                <a href="login.php" class="btn-access text-decoration-none d-inline-flex" style="width:auto;padding:14px 36px;">
+                    <span>IR AL INICIO</span> <i class="bi bi-box-arrow-in-right"></i>
                 </a>
             </div>
         </div>
