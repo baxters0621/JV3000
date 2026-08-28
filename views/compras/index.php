@@ -717,7 +717,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
                                 <label class="comp-label">Tel&eacute;fono <span class="text-danger">*</span></label>
-                                <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input" required maxlength="10" inputmode="numeric" placeholder="0412-1234567" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                                <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input" required maxlength="10" inputmode="numeric" placeholder="0412-1234567">
                                 <input type="hidden" name="telefono_completo" id="p_tel_full">
                             </div>
                             <div class="col-md-4">

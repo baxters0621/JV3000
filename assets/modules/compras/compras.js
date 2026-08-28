@@ -737,11 +737,6 @@
                 };
                 telInputProv.addEventListener('countrychange', sincronizarTel);
                 telInputProv.addEventListener('input', sincronizarTel);
-                // Limitar a 10 dígitos (formato Venezuela)
-                telInputProv.addEventListener('input', function() {
-                    var val = this.value.replace(/[^0-9]/g, '').slice(0, 10);
-                    if (this.value !== val) this.value = val;
-                });
             }
 
             // Máscara en vivo del RIF: letra-tipo + cuerpo de 8 dígitos + dígito verificador
@@ -789,10 +784,11 @@
 
                     if (window.provIti) {
                         document.getElementById('p_tel_full').value = window.provIti.getNumber();
-                        var telNum = window.provIti.getNumber().replace(/\D/g, '');
-                        if (!window.provIti.isValidNumber() || telNum.length < 11) {
+                        var telRaw = window.provIti.getNumber().replace(/\D/g, '');
+                        // Venezuela: +58 + 10 dígitos = 12 dígitos totales
+                        if (telRaw.length < 12) {
                             const telValidar = document.getElementById('p_tel');
-                            marcarError(telValidar, 'TEL\u00c9FONO INV\u00c1LIDO (10 d\u00edgitos)');
+                            marcarError(telValidar, 'TEL\u00c9FONO INV\u00c1LIDO (10 d\u00edgitos requeridos)');
                             e.preventDefault();
                             if (!primerError) primerError = telValidar;
                         }
