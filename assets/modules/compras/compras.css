@@ -510,6 +510,17 @@
             margin-top: 2px;
             font-weight: 400;
         }
+        .comp-step-help {
+            margin-left: auto;
+            font-size: 1.1rem;
+            color: #94a3b8;
+            cursor: help;
+            transition: color .2s;
+            flex-shrink: 0;
+        }
+        .comp-step-help:hover {
+            color: #059669;
+        }
         .comp-step-body {
             padding: 18px 20px;
         }

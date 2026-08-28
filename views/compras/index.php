@@ -222,6 +222,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="comp-step-title">Seleccionar Proveedor</div>
                                 <div class="comp-step-desc">Indica qui&eacute;n te est&aacute; suministrando la mercanc&iacute;a</div>
                             </div>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="El proveedor debe estar registrado y activo. El RIF se completa autom&aacute;ticamente al seleccionarlo."></i>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">
@@ -252,6 +253,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="comp-step-title">Datos de la Factura</div>
                                 <div class="comp-step-desc">Informaci&oacute;n fiscal del comprobante recibido</div>
                             </div>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="El n&uacute;mero de factura es &uacute;nico por proveedor. El control es opcional. La fecha se registra autom&aacute;ticamente."></i>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">
@@ -280,6 +282,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="comp-step-title">Forma de Pago</div>
                                 <div class="comp-step-desc">Indica c&oacute;mo se est&aacute; cancelando esta compra</div>
                             </div>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Si el monto pagado es menor al total, la factura queda como Pendiente. Si es igual o mayor, queda como Pagada."></i>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">
@@ -300,7 +303,6 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="col-md-4">
                                     <label class="comp-label">Fecha de Pago</label>
                                     <input type="date" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha del pago" disabled>
-                                    <small class="comp-hint">Si el monto es menor al total de la compra, la factura queda como <strong>Pendiente</strong>.</small>
                                 </div>
                             </div>
                         </div>
@@ -314,6 +316,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="comp-step-title">Agregar Productos</div>
                                 <div class="comp-step-desc">Busca y a&ntilde;ade cada producto que est&aacute;s comprando</div>
                             </div>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Busca por nombre o SKU, indica cantidad, precio y fecha de vencimiento. El costo total se calcula autom&aacute;ticamente."></i>
                         </div>
                         <div class="comp-step-body">
 
