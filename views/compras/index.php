@@ -742,7 +742,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
                                 <label class="comp-label">Plazo de Entrega (D&iacute;as)</label>
-                                <input type="number" name="lead_time" id="p_lead_time" class="input-jv comp-input" placeholder="Ej: 7" min="0" max="365">
+                                <input type="number" name="lead_time" id="p_lead_time" class="input-jv comp-input" placeholder="Ej: 7" min="0" max="365" maxlength="3" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3)">
                             </div>
                             <div class="col-md-4">
                                 <label class="comp-label">Moneda</label>
