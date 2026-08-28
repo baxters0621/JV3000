@@ -1004,6 +1004,28 @@
 
         .pagina-compras .modal-header-jv .btn-close { filter: brightness(0) invert(1); }
 
+        /* ── Botón cerrar visible en headers verdes ── */
+        .pagina-compras .prov-close-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all .2s;
+            flex-shrink: 0;
+        }
+        .pagina-compras .prov-close-btn:hover {
+            background: rgba(255,255,255,0.35);
+            border-color: #fff;
+            transform: scale(1.1);
+        }
+
         /* ── Secciones del formulario de proveedor ── */
         .pagina-compras .comp-section {
             background: #f8fafc;

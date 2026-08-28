@@ -782,27 +782,29 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <div class="modal-body p-4">
                     <div class="modal-header-jv">
                         <div>
-                            <h5 class="font-brand"><i class="bi bi-box-seam me-2"></i><span id="catTitulo">AGREGAR PRODUCTO</span></h5>
-                            <small id="catSubtitulo"></small>
+                            <h5 class="font-brand" style="font-size:1.1rem;"><i class="bi bi-box-seam me-2"></i><span id="catTitulo">AGREGAR PRODUCTO</span></h5>
+                            <small id="catSubtitulo" style="color:#065f46;"></small>
                         </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="prov-close-btn" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                     </div>
 
-                    <div class="section-bg sec-comercial mb-4">
-                        <div class="section-label">
-                            <span class="section-chip chip-comercial"><i class="bi bi-tag"></i></span>
-                            Datos del producto
-                            <span class="section-ayuda">Costo con el que este proveedor te lo vende</span>
+                    <div class="comp-section sec-comercial mb-4">
+                        <div class="comp-section-header">
+                            <span class="comp-section-chip chip-comercial"><i class="bi bi-tag"></i></span>
+                            <div>
+                                <div class="comp-section-title">Datos del Producto</div>
+                                <div class="comp-section-sub">Costo con el que este proveedor te lo vende</div>
+                            </div>
                         </div>
                         <div class="row g-3 mb-0">
                             <div class="col-12">
-                                <label for="cat_proveedor_nombre" class="small fw-bold text-secondary mb-2">PROVEEDOR</label>
-                                <input type="text" id="cat_proveedor_nombre" class="input-jv" readonly style="background:rgba(15,26,46,0.04);">
+                                <label class="comp-label">Proveedor</label>
+                                <input type="text" id="cat_proveedor_nombre" class="input-jv comp-input" readonly style="background:rgba(15,26,46,0.04);">
                                 <input type="hidden" name="id_proveedor" id="cat_id_prov">
                             </div>
                             <div class="col-12">
-                                <label for="cat_producto" class="small fw-bold text-secondary mb-2">PRODUCTO *</label>
-                                <select name="id_producto" id="cat_producto" class="input-jv" required>
+                                <label class="comp-label">Producto <span class="text-danger">*</span></label>
+                                <select name="id_producto" id="cat_producto" class="input-jv comp-input" required>
                                     <option value="">&mdash; Selecciona un producto &mdash;</option>
                                     <?php foreach ($productos_activos as $prod_activo): ?>
                                         <option value="<?php echo (int)$prod_activo['id_producto']; ?>">
@@ -812,12 +814,12 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label for="cat_costo" class="small fw-bold text-secondary mb-2">COSTO DE COMPRA ($) *</label>
-                                <input type="text" name="costo" id="cat_costo" class="input-jv" required placeholder="0.00" maxlength="12" inputmode="decimal">
+                                <label class="comp-label">Costo de Compra ($) <span class="text-danger">*</span></label>
+                                <input type="text" name="costo" id="cat_costo" class="input-jv comp-input" required placeholder="0.00" maxlength="12" inputmode="decimal">
                             </div>
                             <div class="col-md-6">
-                                <label for="cat_codigo_prov" class="small fw-bold text-secondary mb-2">C&Oacute;DIGO INTERNO DEL PROVEEDOR</label>
-                                <input type="text" name="codigo_proveedor" id="cat_codigo_prov" class="input-jv" placeholder="Opcional" maxlength="50">
+                                <label class="comp-label">C&oacute;digo Interno del Proveedor</label>
+                                <input type="text" name="codigo_proveedor" id="cat_codigo_prov" class="input-jv comp-input" placeholder="Opcional" maxlength="50">
                             </div>
                         </div>
                     </div>
