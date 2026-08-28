@@ -1004,36 +1004,50 @@
 
         .pagina-compras .modal-header-jv .btn-close { filter: brightness(0) invert(1); }
 
-        /* ── Acento por sección del formulario ── */
-        .pagina-compras .sec-fiscal    { border-left: 4px solid #2563EB; }
-        .pagina-compras .sec-contacto  { border-left: 4px solid #0D9488; }
-        .pagina-compras .sec-comercial { border-left: 4px solid #EA580C; }
+        /* ── Secciones del formulario de proveedor ── */
+        .pagina-compras .comp-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 18px 14px;
+            margin-bottom: 14px;
+            position: relative;
+        }
+        .pagina-compras .comp-section.sec-fiscal    { border-left: 4px solid #2563EB; }
+        .pagina-compras .comp-section.sec-contacto  { border-left: 4px solid #0D9488; }
+        .pagina-compras .comp-section.sec-comercial { border-left: 4px solid #EA580C; }
 
-        .pagina-compras .section-chip {
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
+        .pagina-compras .comp-section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .pagina-compras .comp-section-chip {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             flex-shrink: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 1.05rem;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            font-size: .95rem;
         }
+        .pagina-compras .comp-section-chip.chip-fiscal    { background: #2563EB; }
+        .pagina-compras .comp-section-chip.chip-contacto  { background: #0D9488; }
+        .pagina-compras .comp-section-chip.chip-comercial { background: #EA580C; }
 
-        .pagina-compras .section-chip.chip-fiscal    { background: #2563EB; }
-        .pagina-compras .section-chip.chip-contacto  { background: #0D9488; }
-        .pagina-compras .section-chip.chip-comercial { background: #EA580C; }
-
-        .pagina-compras .section-ayuda {
-            font-size: .82rem;
-            font-weight: 500;
-            letter-spacing: 0;
-            text-transform: none;
-            color: var(--jv-text-muted);
-            margin-left: auto;
-            text-align: right;
+        .pagina-compras .comp-section-title {
+            font-size: .88rem;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+        .pagina-compras .comp-section-sub {
+            font-size: .75rem;
+            color: #64748b;
+            font-weight: 400;
         }
 
         /* ── Toolbar: búsqueda + filtros + NUEVO ── */

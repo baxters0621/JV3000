@@ -682,74 +682,79 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
 
-                    <div class="section-bg sec-fiscal">
-                        <div class="section-label">
-                            <span class="section-chip chip-fiscal"><i class="bi bi-file-earmark-text"></i></span>
-                            Informaci&oacute;n Fiscal
-                            <span class="section-ayuda">Datos legales de la empresa</span>
+                    <div class="comp-section sec-fiscal">
+                        <div class="comp-section-header">
+                            <span class="comp-section-chip chip-fiscal"><i class="bi bi-file-earmark-text"></i></span>
+                            <div>
+                                <div class="comp-section-title">Informaci&oacute;n Fiscal</div>
+                                <div class="comp-section-sub">Datos legales de la empresa</div>
+                            </div>
                         </div>
                         <div class="row g-3 mb-0">
-                            <div class="col-md-4">
-                                <label for="p_rif" class="small fw-bold text-secondary mb-2">RIF *</label>
-                                <input type="text" name="rif" id="p_rif" class="input-jv" required placeholder="Ej: J-12345678-0" maxlength="13">
-                                <small style="color:var(--jv-text-secondary);font-size:.85rem;display:block;margin-top:6px;">Formato: J-12345678-0</small>
+                            <div class="col-md-3">
+                                <label class="comp-label">RIF <span class="text-danger">*</span></label>
+                                <input type="text" name="rif" id="p_rif" class="input-jv comp-input" required placeholder="J-12345678-0" maxlength="13">
                             </div>
-                            <div class="col-md-8">
-                                <label for="p_empresa" class="small fw-bold text-secondary mb-2">NOMBRE EMPRESA *</label>
-                                <input type="text" name="nombre_empresa" id="p_empresa" class="input-jv text-uppercase" required placeholder="Nombre legal de la empresa" oninput="this.value = this.value.toUpperCase()">
+                            <div class="col-md-9">
+                                <label class="comp-label">Nombre de la Empresa <span class="text-danger">*</span></label>
+                                <input type="text" name="nombre_empresa" id="p_empresa" class="input-jv comp-input text-uppercase" required placeholder="NOMBRE LEGAL DE LA EMPRESA" oninput="this.value = this.value.toUpperCase()">
                             </div>
                         </div>
                         <div class="mt-3 mb-0">
-                            <label for="p_direccion" class="small fw-bold text-secondary mb-2">DIRECCI&Oacute;N FISCAL</label>
-                            <textarea name="direccion" id="p_direccion" class="input-jv" rows="2" placeholder="Direcci&oacute;n fiscal"></textarea>
+                            <label class="comp-label">Direcci&oacute;n Fiscal</label>
+                            <textarea name="direccion" id="p_direccion" class="input-jv comp-input" rows="2" placeholder="Direcci&oacute;n fiscal completa"></textarea>
                         </div>
                     </div>
 
-                    <div class="section-bg sec-contacto">
-                        <div class="section-label">
-                            <span class="section-chip chip-contacto"><i class="bi bi-person-lines-fill"></i></span>
-                            Contacto
-                            <span class="section-ayuda">&iquest;Con qui&eacute;n hablamos?</span>
+                    <div class="comp-section sec-contacto">
+                        <div class="comp-section-header">
+                            <span class="comp-section-chip chip-contacto"><i class="bi bi-person-lines-fill"></i></span>
+                            <div>
+                                <div class="comp-section-title">Contacto</div>
+                                <div class="comp-section-sub">&iquest;Con qui&eacute;n hablamos?</div>
+                            </div>
                         </div>
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
-                                <label for="p_tel" class="small fw-bold text-secondary mb-2">TEL&Eacute;FONO *</label>
-                                <input type="tel" name="telefono" id="p_tel" class="input-jv" required>
+                                <label class="comp-label">Tel&eacute;fono <span class="text-danger">*</span></label>
+                                <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input" required>
                                 <input type="hidden" name="telefono_completo" id="p_tel_full">
                             </div>
                             <div class="col-md-4">
-                                <label for="p_contacto_nombre" class="small fw-bold text-secondary mb-2">PERSONA DE CONTACTO</label>
-                                <input type="text" name="contacto_nombre" id="p_contacto_nombre" class="input-jv" placeholder="Nombre del contacto">
+                                <label class="comp-label">Persona de Contacto</label>
+                                <input type="text" name="contacto_nombre" id="p_contacto_nombre" class="input-jv comp-input" placeholder="Nombre del contacto">
                             </div>
                             <div class="col-md-4">
-                                <label for="p_email" class="small fw-bold text-secondary mb-2">CORREO ELECTR&Oacute;NICO</label>
-                                <input type="email" name="email" id="p_email" class="input-jv" placeholder="correo@ejemplo.com">
+                                <label class="comp-label">Correo Electr&oacute;nico</label>
+                                <input type="email" name="email" id="p_email" class="input-jv comp-input" placeholder="correo@ejemplo.com">
                             </div>
                         </div>
                     </div>
 
-                    <div class="section-bg sec-comercial mb-4">
-                        <div class="section-label">
-                            <span class="section-chip chip-comercial"><i class="bi bi-gear"></i></span>
-                            Condiciones Comerciales
-                            <span class="section-ayuda">Entregas y moneda de trabajo</span>
+                    <div class="comp-section sec-comercial">
+                        <div class="comp-section-header">
+                            <span class="comp-section-chip chip-comercial"><i class="bi bi-gear"></i></span>
+                            <div>
+                                <div class="comp-section-title">Condiciones Comerciales</div>
+                                <div class="comp-section-sub">Entregas y moneda de trabajo</div>
+                            </div>
                         </div>
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
-                                <label for="p_lead_time" class="small fw-bold text-secondary mb-2">PLAZO DE ENTREGA (D&Iacute;AS)</label>
-                                <input type="number" name="lead_time" id="p_lead_time" class="input-jv" placeholder="Ej: 7" min="0" max="365">
+                                <label class="comp-label">Plazo de Entrega (D&iacute;as)</label>
+                                <input type="number" name="lead_time" id="p_lead_time" class="input-jv comp-input" placeholder="Ej: 7" min="0" max="365">
                             </div>
                             <div class="col-md-4">
-                                <label for="p_moneda" class="small fw-bold text-secondary mb-2">MONEDA</label>
-                                <select name="moneda" id="p_moneda" class="input-jv">
+                                <label class="comp-label">Moneda</label>
+                                <select name="moneda" id="p_moneda" class="input-jv comp-input">
                                     <option value="USD">USD - D&oacute;lar</option>
                                     <option value="EUR">EUR - Euro</option>
                                     <option value="VES">VES - Bol&iacute;var</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label for="p_status" class="small fw-bold text-secondary mb-2">ESTADO</label>
-                                <select name="status" id="p_status" class="input-jv">
+                                <label class="comp-label">Estado</label>
+                                <select name="status" id="p_status" class="input-jv comp-input">
                                     <option value="Activo">Activo</option>
                                     <option value="Inactivo">Inactivo</option>
                                 </select>
@@ -757,7 +762,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         </div>
                     </div>
 
-                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase">
+                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase mt-3">
                         <i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR
                     </button>
             </form>
