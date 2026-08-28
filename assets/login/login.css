@@ -120,7 +120,7 @@
     border: 1px solid var(--jv-border);
     border-radius: var(--jv-radius-xl);
     color: var(--jv-text-primary);
-    max-width: 480px;
+    max-width: 520px;
     margin: 0 auto;
     overflow: hidden;
 }
@@ -159,7 +159,7 @@
     pointer-events: none;
 }
 .reg-header h5 {
-    font-size: 1.35rem;
+    font-size: 1.55rem;
     color: #fff;
     font-weight: 900;
     margin: 0;
@@ -168,7 +168,7 @@
 }
 .reg-header small {
     color: rgba(255,255,255,0.92);
-    font-size: .88rem;
+    font-size: 1rem;
     display: block;
     margin-top: 6px;
 }
@@ -176,13 +176,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     border: 2px solid rgba(255,255,255,0.5);
     border-radius: 10px;
     background: rgba(255,255,255,0.15);
     color: #fff;
-    font-size: 1rem;
+    font-size: 1.15rem;
     cursor: pointer;
     transition: all .2s;
     flex-shrink: 0;
@@ -208,7 +208,7 @@
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    padding: 16px 18px 14px;
+    padding: 18px 20px 16px;
     margin-bottom: 14px;
 }
 .reg-section:last-child { margin-bottom: 0; }
@@ -223,34 +223,34 @@
     margin-bottom: 14px;
 }
 .reg-section-chip {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 8px;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: .95rem;
+    font-size: 1.1rem;
 }
 .reg-section-chip.chip-cuenta    { background: #EA580C; }
 .reg-section-chip.chip-pass      { background: #DC2626; }
 .reg-section-chip.chip-seguridad { background: #7C3AED; }
 
 .reg-section-title {
-    font-size: .88rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #1e293b;
 }
 .reg-section-sub {
-    font-size: .75rem;
+    font-size: .85rem;
     color: #64748b;
 }
 
 /* --- Labels --- */
 .reg-label {
     display: block;
-    font-size: .78rem;
+    font-size: .88rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .8px;
@@ -269,7 +269,7 @@
     top: 50%;
     transform: translateY(-50%);
     color: var(--jv-text-muted);
-    font-size: 1rem;
+    font-size: 1.15rem;
     z-index: 2;
     pointer-events: none;
     transition: color .2s;
@@ -279,9 +279,9 @@
     background: #fff;
     border: 1.5px solid var(--jv-border);
     border-radius: var(--jv-radius);
-    padding: 13px 42px 13px 40px;
+    padding: 14px 42px 14px 42px;
     color: var(--jv-text-primary);
-    font-size: .95rem;
+    font-size: 1.05rem;
     transition: all 0.2s ease;
 }
 .reg-input::placeholder { color: #94a3b8; opacity: .8; }
@@ -310,7 +310,7 @@
     right: 14px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1.15rem;
+    font-size: 1.3rem;
     pointer-events: none;
     z-index: 2;
     transition: all .2s;
@@ -329,7 +329,7 @@
     color: var(--jv-text-muted);
     cursor: pointer;
     padding: 4px 6px;
-    font-size: 1.15rem;
+    font-size: 1.3rem;
     transition: color 0.2s ease;
     z-index: 3;
 }
@@ -338,7 +338,7 @@
 /* --- Hints --- */
 .reg-hint {
     display: block;
-    font-size: .73rem;
+    font-size: .82rem;
     color: #64748b;
     margin-top: 4px;
     margin-bottom: 12px;
@@ -349,7 +349,7 @@
 
 /* --- Strength meter --- */
 .reg-meter {
-    height: 4px;
+    height: 5px;
     background: rgba(15,26,46,0.08);
     border-radius: 3px;
     overflow: hidden;
@@ -368,7 +368,7 @@
     border-top: 1px solid var(--jv-border);
     padding: 12px 26px 20px;
 }
-.reg-footer .btn { font-size: .95rem; padding: 11px 26px; }
+.reg-footer .btn { font-size: 1rem; padding: 12px 28px; }
 
 /* ==========================================
    ALERTAS MEJORADAS — TEMA CLARO
