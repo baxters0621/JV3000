@@ -355,31 +355,386 @@
 
         /* ── Badges ── */
 
-        /* ── Modal section groups ── */
-        .section-bg {
-            background: var(--jv-bg-primary);
-            border: 1px solid var(--jv-border);
-            border-radius: var(--jv-radius);
-            padding: 18px 20px;
-            margin-bottom: 16px;
+        /* ============================================================
+           MODAL REGISTRAR COMPRA — Rediseño completo
+           ============================================================ */
+
+        /* ── Header verdegradado ── */
+        .comp-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 30px;
+            background: linear-gradient(135deg, #065F46, #047857 45%, #059669);
+            border-bottom: 3px solid #34d399;
+            position: relative;
+            overflow: hidden;
+        }
+        .comp-modal-header::before {
+            content: '';
+            position: absolute;
+            top: -60%;
+            right: -8%;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            pointer-events: none;
+        }
+        .comp-modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: -70%;
+            left: 12%;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            pointer-events: none;
+        }
+        .comp-modal-header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .comp-modal-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            backdrop-filter: blur(4px);
+        }
+        .comp-modal-title {
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: #fff;
+            margin: 0;
+            letter-spacing: -.3px;
+        }
+        .comp-modal-subtitle {
+            font-size: .88rem;
+            color: rgba(255,255,255,0.88);
+            margin: 4px 0 0;
+            font-weight: 400;
+        }
+        .comp-modal-header .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: .8;
+        }
+        .comp-modal-header .btn-close:hover { opacity: 1; }
+
+        /* ── Alert solicitud ── */
+        .comp-alert-solicitud {
+            margin: 16px 24px 0;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, rgba(14,165,233,0.1), rgba(14,165,233,0.05));
+            border: 1px solid rgba(14,165,233,0.25);
+            border-left: 4px solid #0ea5e9;
+            border-radius: 10px;
+            font-size: .9rem;
+            color: #0369a1;
         }
 
-        .section-label {
+        /* ── Body scrollable ── */
+        .comp-modal-body {
+            padding: 20px 24px;
+            max-height: 65vh;
+            overflow-y: auto;
+        }
+
+        /* ── Step (sección numerada) ── */
+        .comp-step {
+            background: var(--jv-bg-card);
+            border: 1px solid var(--jv-border);
+            border-radius: 14px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+        .comp-step:hover {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .comp-step-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 20px;
+            background: rgba(15,26,46,0.02);
+            border-bottom: 1px solid var(--jv-border);
+        }
+        .comp-step-chip {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
             font-size: .85rem;
+            font-weight: 900;
+            flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+        .chip-green  { background: linear-gradient(135deg, #059669, #047857); }
+        .chip-blue   { background: linear-gradient(135deg, #2563EB, #1D4ED8); }
+        .chip-amber  { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .chip-orange { background: linear-gradient(135deg, #EA580C, #C2410C); }
+        .comp-step-title {
+            font-size: .95rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            color: var(--jv-navy);
+        }
+        .comp-step-desc {
+            font-size: .82rem;
+            color: var(--jv-text-muted);
+            margin-top: 2px;
+        }
+        .comp-step-body {
+            padding: 18px 20px;
+        }
+        .comp-step-main .comp-step-body {
+            padding: 18px 20px 20px;
+        }
+
+        /* ── Labels ── */
+        .comp-label {
+            display: block;
+            font-size: .82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            color: var(--jv-text-secondary);
+            margin-bottom: 6px;
+        }
+        .comp-label-optional {
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
+            color: var(--jv-text-muted);
+        }
+        .comp-label-sm {
+            font-size: .75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: var(--jv-text-muted);
+            margin-bottom: 4px;
+            display: block;
+        }
+        .comp-input {
+            width: 100%;
+        }
+        .comp-hint {
+            font-size: .72rem;
+            color: var(--jv-text-muted);
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* ── Add product row ── */
+        .comp-add-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, rgba(16,185,129,0.04), rgba(16,185,129,0.08));
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 12px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .comp-add-product {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+        .comp-add-product > i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #10b981;
+            font-size: .95rem;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .comp-add-product .input-jv {
+            padding-left: 36px;
+            width: 100%;
+        }
+        .comp-add-field {
+            flex: 0 0 auto;
+            min-width: 80px;
+        }
+        .comp-add-field .input-jv {
+            width: 100%;
+        }
+        .comp-add-btn {
+            width: 48px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #059669, #047857);
+            color: #fff;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all .2s;
+            box-shadow: 0 4px 14px rgba(5,150,105,0.3);
+        }
+        .comp-add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(5,150,105,0.4);
+        }
+
+        /* ── Cart table ── */
+        .comp-cart-table {
+            border: 1px solid var(--jv-border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .comp-cart-table .table-jv {
+            table-layout: fixed;
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--jv-bg-card);
+        }
+        .comp-cart-table .table-jv thead th {
+            background: linear-gradient(135deg, #065f46, #047857);
+            color: #fff;
+            padding: 10px 12px;
+            font-size: .78rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
+            border: none;
+        }
+        .comp-cart-table .table-jv tbody td {
+            padding: 12px;
+            border-bottom: 1px solid var(--jv-border);
+            font-size: .92rem;
+            vertical-align: middle;
+        }
+        .comp-cart-table .table-jv tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .comp-empty-cart {
+            text-align: center;
+            padding: 28px 12px !important;
+            color: var(--jv-text-muted);
+            font-size: .92rem;
+        }
+        .comp-empty-cart i {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            color: rgba(16,185,129,0.25);
+        }
+
+        /* ── Cart summary ── */
+        .comp-cart-summary {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 24px;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(16,185,129,0.02));
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+        .comp-summary-item {
+            text-align: center;
+        }
+        .comp-summary-label {
+            display: block;
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            color: var(--jv-text-muted);
+            margin-bottom: 2px;
+        }
+        .comp-summary-value {
+            font-size: 1.15rem;
+            font-weight: 800;
             color: var(--jv-navy);
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .comp-summary-total {
+            padding-left: 18px;
+            border-left: 2px solid rgba(16,185,129,0.3);
+        }
+        .comp-total-big {
+            font-size: 1.35rem;
+            color: #059669;
+        }
+
+        /* ── Observaciones ── */
+        .comp-obs-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--jv-bg-card);
+            border: 1px solid var(--jv-border);
+            border-radius: 12px;
+            margin-bottom: 0;
+        }
+        .comp-obs-row i {
+            color: var(--jv-text-muted);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .comp-obs-row .input-jv {
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            padding: 0;
+            font-size: .92rem;
+        }
+        .comp-obs-row .input-jv:focus {
+            box-shadow: none;
+            border: none;
+        }
+
+        /* ── Footer ── */
+        .comp-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--jv-border);
+            background: rgba(15,26,46,0.02);
+        }
+        .comp-btn-footer {
+            padding: 10px 24px;
+            font-size: .9rem;
+            font-weight: 700;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .comp-btn-save {
+            box-shadow: 0 4px 14px rgba(5,150,105,0.3);
         }
 
         /* ── Toolbox autocomplete ── */
-        .com-toolbox {
+        .com-toolbox, .comp-add-product {
             position: relative;
             flex: 1;
             min-width: 0;

@@ -180,8 +180,6 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 </div>
 
 <!-- Modal: Registrar compra -->
-<!-- Mapa de costos del catálogo [id_proveedor][id_producto] = costo:
-     compras.js lo usa para autocompletar el costo al elegir proveedor. -->
 <script>window.JV_CATALOGO = <?php echo $catalogo_costos; ?>;</script>
 <div class="modal fade" id="modalCompra" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -192,169 +190,229 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <input type="hidden" name="productos_data" id="productosData">
                 <?php if (!empty($solicitud_prefill)): ?>
                     <input type="hidden" name="id_solicitud" id="idSolicitud" value="<?php echo (int)$solicitud_prefill['id_solicitud']; ?>">
-                    <div class="alert-jv alert-jv-info mb-3 px-3 py-2" style="margin:16px 20px 0;">
+                <?php endif; ?>
+
+                <!-- Header verdegradado -->
+                <div class="comp-modal-header">
+                    <div class="comp-modal-header-content">
+                        <div class="comp-modal-icon"><i class="bi bi-cart-plus"></i></div>
+                        <div>
+                            <h5 class="comp-modal-title">REGISTRAR COMPRA</h5>
+                            <p class="comp-modal-subtitle">Complete los datos paso a paso para registrar una nueva compra</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <?php if (!empty($solicitud_prefill)): ?>
+                    <div class="comp-alert-solicitud">
                         <i class="bi bi-cart-check me-2"></i>
-                        <strong>SOLICITUD #<?php echo (int)$solicitud_prefill['id_solicitud']; ?></strong> — <?php echo htmlspecialchars($solicitud_prefill['motivo'] ?? 'Solicitud de reposición'); ?>. Los productos ya fueron precargados.
+                        <strong>SOLICITUD #<?php echo (int)$solicitud_prefill['id_solicitud']; ?></strong>
+                        — <?php echo htmlspecialchars($solicitud_prefill['motivo'] ?? 'Solicitud de reposición'); ?>. Los productos ya fueron precargados.
                     </div>
                 <?php endif; ?>
 
-                <div class="p-3" style="border-bottom:1px solid var(--jv-border);">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold mb-0 font-brand" style="color:var(--jv-navy);font-size:1.3rem;letter-spacing:-.5px;"><i class="bi bi-cart-plus me-2"></i>REGISTRAR COMPRA</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                </div>
+                <div class="comp-modal-body">
 
-                <div class="p-3" style="padding:16px 20px;">
-                    <div class="comp-proveedor-section section-bg">
-                        <div class="section-label"><i class="bi bi-building me-1"></i>Proveedor</div>
-                        <div class="row g-2">
-                            <div class="col-md-8">
-                                <label class="small fw-bold text-secondary mb-1">PROVEEDOR *</label>
-                                <select name="id_proveedor" class="input-jv" id="selProveedor" aria-label="Proveedor de la compra" required>
-                                    <option value="">Seleccionar...</option>
-                                    <?php foreach ($proveedores as $proveedor): ?>
-                                        <option value="<?php echo (int)$proveedor['id_proveedor']; ?>" data-rif="<?php echo htmlspecialchars($proveedor['rif']); ?>">
-                                            <?php echo htmlspecialchars($proveedor['nombre_empresa']); ?> (<?php echo htmlspecialchars($proveedor['rif']); ?>)
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                    <!-- PASO 1: Proveedor -->
+                    <div class="comp-step">
+                        <div class="comp-step-header">
+                            <div class="comp-step-chip chip-green">1</div>
+                            <div class="comp-step-info">
+                                <div class="comp-step-title">Proveedor</div>
+                                <div class="comp-step-desc">¿Quién le está vendiendo?</div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">RIF</label>
-                                <input type="text" class="input-jv" id="displayRif" aria-label="RIF del proveedor" value="-" readonly disabled style="color:var(--jv-text-muted);">
+                        </div>
+                        <div class="comp-step-body">
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="comp-label">Proveedor <span class="text-danger">*</span></label>
+                                    <select name="id_proveedor" class="input-jv comp-input" id="selProveedor" aria-label="Proveedor de la compra" required>
+                                        <option value="">Seleccionar proveedor...</option>
+                                        <?php foreach ($proveedores as $proveedor): ?>
+                                            <option value="<?php echo (int)$proveedor['id_proveedor']; ?>" data-rif="<?php echo htmlspecialchars($proveedor['rif']); ?>">
+                                                <?php echo htmlspecialchars($proveedor['nombre_empresa']); ?> (<?php echo htmlspecialchars($proveedor['rif']); ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="comp-label">RIF</label>
+                                    <input type="text" class="input-jv comp-input" id="displayRif" aria-label="RIF del proveedor" value="-" readonly disabled>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="section-bg">
-                        <div class="section-label"><i class="bi bi-receipt me-1"></i>Factura del Proveedor</div>
-                        <div class="row g-2">
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">NRO. FACTURA (PROVEEDOR) *</label>
-                                <input type="text" name="nro_factura" aria-label="Numero de factura" class="input-jv" placeholder="Ej: 001254" required>
+                    <!-- PASO 2: Factura -->
+                    <div class="comp-step">
+                        <div class="comp-step-header">
+                            <div class="comp-step-chip chip-blue">2</div>
+                            <div class="comp-step-info">
+                                <div class="comp-step-title">Factura del Proveedor</div>
+                                <div class="comp-step-desc">Datos del comprobante fiscal</div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">NRO. CONTROL <span class="fw-normal">(opcional)</span></label>
-                                <input type="text" name="nro_control" aria-label="Numero de control" class="input-jv" value="" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">FECHA</label>
-                                <input type="date" class="input-jv" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha de la compra" disabled>
-                                <input type="hidden" name="fecha_compra" value="<?php echo date('Y-m-d'); ?>">
+                        </div>
+                        <div class="comp-step-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="comp-label">Nro. Factura <span class="text-danger">*</span></label>
+                                    <input type="text" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Ej: 001254" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="comp-label">Nro. Control <span class="comp-label-optional">(opcional)</span></label>
+                                    <input type="text" name="nro_control" aria-label="Numero de control" class="input-jv comp-input" value="" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="comp-label">Fecha</label>
+                                    <input type="date" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha de la compra" disabled>
+                                    <input type="hidden" name="fecha_compra" value="<?php echo date('Y-m-d'); ?>">
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="section-bg">
-                        <div class="section-label"><i class="bi bi-cash-coin me-1"></i>Comprobante de Pago</div>
-                        <div class="row g-2">
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">MÉTODO *</label>
-                                <select name="metodo_pago" class="input-jv" id="selMetodo" aria-label="Metodo de pago">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="Efectivo">Efectivo</option>
-                                    <option value="Transferencia">Transferencia</option>
-                                    <option value="Cheque">Cheque</option>
-                                    <option value="Otro">Otro</option>
-                                </select>
+                    <!-- PASO 3: Pago -->
+                    <div class="comp-step">
+                        <div class="comp-step-header">
+                            <div class="comp-step-chip chip-amber">3</div>
+                            <div class="comp-step-info">
+                                <div class="comp-step-title">Comprobante de Pago</div>
+                                <div class="comp-step-desc">¿Cómo está pagando?</div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">MONTO PAGADO $</label>
-                                <input type="text" inputmode="decimal" name="monto_pago" class="input-jv" id="montoPago" aria-label="Monto pagado" value="0.00" oninput="marcarMontoEditado();formatearPrecioCompra(this)">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="small fw-bold text-secondary mb-1">FECHA PAGO</label>
-                                <input type="date" class="input-jv" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha del pago" disabled>
-                                <small class="text-muted d-block mt-1" style="font-size:.68rem;">Si el monto es menor al total, la factura queda PENDIENTE.</small>
+                        </div>
+                        <div class="comp-step-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="comp-label">Método <span class="text-danger">*</span></label>
+                                    <select name="metodo_pago" class="input-jv comp-input" id="selMetodo" aria-label="Metodo de pago">
+                                        <option value="">Seleccionar método...</option>
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Cheque">Cheque</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="comp-label">Monto Pagado $</label>
+                                    <input type="text" inputmode="decimal" name="monto_pago" class="input-jv comp-input" id="montoPago" aria-label="Monto pagado" value="0.00" oninput="marcarMontoEditado();formatearPrecioCompra(this)">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="comp-label">Fecha Pago</label>
+                                    <input type="date" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha del pago" disabled>
+                                    <small class="comp-hint">Si el monto es menor al total, queda PENDIENTE.</small>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="section-bg">
-                        <div class="section-label"><i class="bi bi-box-seam me-1"></i>Productos</div>
+                    <!-- PASO 4: Productos -->
+                    <div class="comp-step comp-step-main">
+                        <div class="comp-step-header">
+                            <div class="comp-step-chip chip-orange">4</div>
+                            <div class="comp-step-info">
+                                <div class="comp-step-title">Productos</div>
+                                <div class="comp-step-desc">¿Qué está comprando?</div>
+                            </div>
+                        </div>
+                        <div class="comp-step-body">
 
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-5">
-                                <label class="small fw-bold text-secondary mb-1">Producto</label>
-                                <div class="com-toolbox">
-                                    <input type="text" class="input-jv w-100" id="buscarProducto" aria-label="Buscar producto para agregar" placeholder="Buscar por nombre o SKU..." autocomplete="off">
+                            <!-- Toolbar de agregar -->
+                            <div class="comp-add-row">
+                                <div class="comp-add-product">
+                                    <i class="bi bi-search"></i>
+                                    <input type="text" class="input-jv" id="buscarProducto" aria-label="Buscar producto para agregar" placeholder="Buscar por nombre o SKU..." autocomplete="off">
                                     <input type="hidden" id="selProductoId">
                                     <input type="hidden" id="selProductoNombre">
                                     <div class="com-resultados" id="resultadosBusqueda"></div>
                                 </div>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="small fw-bold text-secondary mb-1">Cant</label>
-                                <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="small fw-bold text-secondary mb-1">Precio $</label>
-                                <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" aria-label="Precio unitario del producto" placeholder="0.00" oninput="formatearPrecioCompra(this)">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="small fw-bold text-secondary mb-1">Vence <span class="text-danger">*</span></label>
-                                <input type="date" class="input-jv" id="inputVencimiento" aria-label="Fecha de vencimiento del lote" required>
-                            </div>
-                            <div class="col-md-1">
-                                <button type="button" class="btn-jv-primary w-100" style="padding:14px;" onclick="agregarProducto()">
+                                <div class="comp-add-field">
+                                    <label class="comp-label-sm">Cant</label>
+                                    <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
+                                </div>
+                                <div class="comp-add-field">
+                                    <label class="comp-label-sm">Precio $</label>
+                                    <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" aria-label="Precio unitario del producto" placeholder="0.00" oninput="formatearPrecioCompra(this)">
+                                </div>
+                                <div class="comp-add-field">
+                                    <label class="comp-label-sm">Vence <span class="text-danger">*</span></label>
+                                    <input type="date" class="input-jv" id="inputVencimiento" aria-label="Fecha de vencimiento del lote" required>
+                                </div>
+                                <button type="button" class="comp-add-btn" onclick="agregarProducto()">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
                             </div>
-                        </div>
 
-                        <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;margin-top:10px;">
-                            <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
-                                <thead>
-                                    <tr style="background:var(--jv-navy);">
-                                        <th style="padding:10px 8px;width:28px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">#</th>
-                                        <th style="padding:10px 8px;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Producto</th>
-                                        <th style="padding:10px 8px;width:55px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Cant</th>
-                                        <th style="padding:10px 8px;width:90px;text-align:right;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Precio</th>
-                                        <th style="padding:10px 8px;width:110px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Vence</th>
-                                        <th style="padding:10px 8px;width:90px;text-align:right;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Total</th>
-                                        <th style="width:28px;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="productosBody">
-                                    <tr id="filaVacia">
-                                        <td colspan="7" style="padding:24px 12px;text-align:center;color:var(--jv-text-muted);font-size:.95rem;border-bottom:1px solid var(--jv-border);">⬆ Busque un producto y presione + para agregarlo</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                            <!-- Tabla de productos -->
+                            <div class="comp-cart-table">
+                                <table class="table-jv mb-0">
+                                    <colgroup>
+                                        <col style="width:36px;">
+                                        <col>
+                                        <col style="width:60px;">
+                                        <col style="width:90px;">
+                                        <col style="width:110px;">
+                                        <col style="width:90px;">
+                                        <col style="width:36px;">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Producto</th>
+                                            <th class="text-center">Cant</th>
+                                            <th class="text-end">Precio</th>
+                                            <th class="text-center">Vence</th>
+                                            <th class="text-end">Total</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productosBody">
+                                        <tr id="filaVacia">
+                                            <td colspan="7" class="comp-empty-cart">
+                                                <i class="bi bi-cart-x"></i>
+                                                <span>Busque un producto y presione <strong>+</strong> para agregarlo</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        <div style="display:flex;justify-content:flex-end;gap:24px;align-items:center;padding:12px 16px;margin-top:8px;background:var(--jv-bg-card);border:1px solid var(--jv-border);border-radius:8px;flex-wrap:wrap;">
-                            <div>
-                                <span class="text-secondary" style="font-weight:700;font-size:1rem;">Productos</span>
-                                <span class="fw-bold ms-2" id="totalItems" style="color:var(--jv-navy);font-size:1.3rem;">0</span>
-                            </div>
-                            <div>
-                                <span class="text-secondary" style="font-weight:700;font-size:1rem;">Subtotal</span>
-                                <span class="fw-bold ms-2" id="totalSubtotal" style="color:var(--jv-text-primary);font-size:1.3rem;">$0.00</span>
-                            </div>
-                            <div>
-                                <span class="text-secondary" style="font-weight:700;font-size:1rem;">IVA (<?php echo $iva_pct; ?>%)</span>
-                                <span class="fw-bold ms-2" id="totalIva" style="color:var(--jv-text-primary);font-size:1.3rem;">$0.00</span>
-                            </div>
-                            <div>
-                                <span class="text-secondary" style="font-weight:700;font-size:1rem;">Total</span>
-                                <span class="fw-bold ms-2" id="totalCosto" style="color:var(--jv-warning);font-size:1.4rem;">$0.00</span>
+                            <!-- Resumen -->
+                            <div class="comp-cart-summary">
+                                <div class="comp-summary-item">
+                                    <span class="comp-summary-label">Productos</span>
+                                    <span class="comp-summary-value" id="totalItems">0</span>
+                                </div>
+                                <div class="comp-summary-item">
+                                    <span class="comp-summary-label">Subtotal</span>
+                                    <span class="comp-summary-value" id="totalSubtotal">$0.00</span>
+                                </div>
+                                <div class="comp-summary-item">
+                                    <span class="comp-summary-label">IVA (<?php echo $iva_pct; ?>%)</span>
+                                    <span class="comp-summary-value" id="totalIva">$0.00</span>
+                                </div>
+                                <div class="comp-summary-item comp-summary-total">
+                                    <span class="comp-summary-label">Total</span>
+                                    <span class="comp-summary-value comp-total-big" id="totalCosto">$0.00</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="section-bg" style="margin-bottom:0;">
-                        <div class="section-label"><i class="bi bi-chat-text me-1"></i>Observaciones</div>
-                        <input type="text" name="observaciones" aria-label="Observaciones de la compra" class="input-jv" placeholder="Notas opcionales...">
+                    <!-- Observaciones -->
+                    <div class="comp-obs-row">
+                        <i class="bi bi-chat-text"></i>
+                        <input type="text" name="observaciones" aria-label="Observaciones de la compra" class="input-jv" placeholder="Observaciones opcionales...">
                     </div>
+
                 </div>
 
-                <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
-                    <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                    <button type="submit" class="btn btn-jv-success module-action-btn" id="btnGuardar" disabled onclick="return validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar</button>
+                <!-- Footer -->
+                <div class="comp-modal-footer">
+                    <button type="button" class="btn btn-jv-danger comp-btn-footer" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
+                    <button type="submit" class="btn btn-jv-success comp-btn-footer comp-btn-save" id="btnGuardar" disabled onclick="return validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar Compra</button>
+                </div>
             </form>
-                </div>
         </div>
     </div>
 </div>
