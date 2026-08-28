@@ -557,10 +557,26 @@
             width: 100%;
         }
         .comp-hint {
-            font-size: .75rem;
+            font-size: .72rem;
             color: #64748b;
             margin-top: 4px;
             display: block;
+        }
+        .comp-tasa-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: .72rem;
+            color: #475569;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 3px 8px;
+            margin-top: 4px;
+        }
+        .comp-tasa-info i {
+            color: #059669;
+            font-size: .8rem;
         }
 
         /* ── Tasa de cambio wrapper ── */

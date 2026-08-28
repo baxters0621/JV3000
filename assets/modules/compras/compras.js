@@ -57,27 +57,27 @@
                 btn.innerHTML = '<i class="bi bi-pencil"></i>';
                 btn.setAttribute('data-tooltip', 'Clic para editar manualmente');
             }
-            if (infoEl) infoEl.textContent = 'Consultando tasa BCV...';
+            if (infoEl) infoEl.innerHTML = '<i class="bi bi-hourglass-split"></i> Consultando tasa BCV...';
 
             fetch('index.php?url=tasas/obtener')
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (!data.ok) {
-                        if (infoEl) infoEl.textContent = 'Error al obtener tasa. Edita manualmente.';
+                        if (infoEl) infoEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error al obtener tasa. Edita manualmente.';
                         return;
                     }
                     var tasa = tipo === 'Dolar' ? data.usd_oficial : data.eur_oficial;
                     if (!tasa || tasa <= 0) {
-                        if (infoEl) infoEl.textContent = 'Tasa no disponible. Edita manualmente.';
+                        if (infoEl) infoEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Tasa no disponible. Edita manualmente.';
                         return;
                     }
                     tasaEl.value = Number(tasa).toFixed(4);
                     var moneda = tipo === 'Dolar' ? 'USD' : 'EUR';
-                    if (infoEl) infoEl.textContent = 'Tasa BCV al ' + data.fecha + ' — 1 ' + moneda + ' = ' + Number(tasa).toFixed(2) + ' VES';
+                    if (infoEl) infoEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> BCV ' + data.fecha + ' &mdash; 1 ' + moneda + ' = ' + Number(tasa).toFixed(2) + ' VES';
                     calcularEquivalenteVES();
                 })
                 .catch(function() {
-                    if (infoEl) infoEl.textContent = 'Sin conexión. Edita la tasa manualmente.';
+                    if (infoEl) infoEl.innerHTML = '<i class="bi bi-wifi-off"></i> Sin conexión. Edita la tasa manualmente.';
                 });
         }
 

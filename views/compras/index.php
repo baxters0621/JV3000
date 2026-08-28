@@ -323,14 +323,14 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div id="divDivisaExtranjera" style="display:none;">
                                     <div class="row g-3 mt-2">
                                         <div class="col-md-4">
-                                            <label class="comp-label">Tasa BCV <small class="comp-label-optional">(auto)</small></label>
+                                            <label class="comp-label">Tasa BCV</label>
                                             <div class="comp-tasa-wrapper">
                                                 <input type="text" name="tasa_cambio" class="input-jv comp-input comp-tasa-auto" id="tasaCambio" readonly>
                                                 <button type="button" class="comp-tasa-edit-btn" id="btnEditarTasa" data-tooltip="Clic para editar manualmente">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                             </div>
-                                            <small class="comp-hint" id="tasaInfo"></small>
+                                            <small class="comp-tasa-info" id="tasaInfo"></small>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="comp-label" id="labelMontoOriginal">Monto en USD <span class="text-danger">*</span></label>
