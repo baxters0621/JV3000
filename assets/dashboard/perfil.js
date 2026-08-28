@@ -3,6 +3,20 @@
 // PERFIL — JS DEL MÓDULO
 // ==========================================
 
+// Toggle ver contraseña
+function togglePass(inputId, btn) {
+    var input = document.getElementById(inputId);
+    var icon = btn.querySelector('i');
+    if (!input || !icon) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash-fill';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye-fill';
+    }
+}
+
 // Confirmación antes de guardar los cambios del perfil
 (function() {
     var form = document.getElementById('formPerfil');

@@ -197,12 +197,22 @@ if ($step == 4) {
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="cambiar">
                 <label class="small fw-bold text-jv-muted mb-1 d-block">Nueva contraseña</label>
-                <input type="password" name="rec_password" id="rec-pass" class="rec-input mb-1" required minlength="8" placeholder="Min. 8 caracteres" autofocus oninput="validarPassRec()">
+                <div style="position:relative;">
+                    <input type="password" name="rec_password" id="rec-pass" class="rec-input mb-1" required minlength="8" placeholder="Mín. 8 caracteres, mayús, minús, núm, símbolo" autofocus oninput="validarPassRec()" style="width:100%;padding-right:40px;">
+                    <button type="button" class="field-eye" id="btnEyeRec1" aria-label="Mostrar" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;">
+                        <i class="bi bi-eye-slash-fill" id="iconEyeRec1"></i>
+                    </button>
+                </div>
                 <div class="strength-meter mb-3" style="height:4px;background:var(--jv-border);border-radius:4px;overflow:hidden;">
                     <div class="strength-fill" id="rec-meter" style="height:100%;width:0%;border-radius:4px;transition:all .35s ease;"></div>
                 </div>
                 <label class="small fw-bold text-jv-muted mb-1 d-block">Confirmar contraseña</label>
-                <input type="password" name="rec_password2" id="rec-pass2" class="rec-input mb-3" required minlength="8" placeholder="Repite la contraseña" oninput="validarPassRec()">
+                <div style="position:relative;">
+                    <input type="password" name="rec_password2" id="rec-pass2" class="rec-input mb-3" required minlength="8" placeholder="Repite la contraseña" oninput="validarPassRec()" style="width:100%;padding-right:40px;">
+                    <button type="button" class="field-eye" id="btnEyeRec2" aria-label="Mostrar" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;">
+                        <i class="bi bi-eye-slash-fill" id="iconEyeRec2"></i>
+                    </button>
+                </div>
                 <small id="rec-pass-hint" style="color:var(--jv-text-muted);font-size:.7rem;display:block;height:16px;text-align:center;margin-top:-10px;margin-bottom:10px;"></small>
                 <button type="submit" id="rec-btn-pass" class="rec-btn"><i class="bi bi-check2 me-2"></i>CAMBIAR CONTRASEÑA</button>
                 <a href="recuperar.php?reset=1" class="rec-back"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>

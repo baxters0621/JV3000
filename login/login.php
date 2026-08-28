@@ -23,7 +23,7 @@ $error = "";
 $exito = "";
 $intentos_actuales = 0;
 $max_intentos = 3;
-$tiempo_bloqueo = 120; // segundos (2 minutos)
+$tiempo_bloqueo = 30; // segundos
 
 // ==========================================
 // MENSAJES DE ERROR DESDE URL
@@ -61,7 +61,13 @@ $db->execute("DELETE FROM login_intentos WHERE TIMESTAMPDIFF(SECOND, ultimo_inte
 // ==========================================
 $segundos_restantes = 0;
 $ip_actual = $_SERVER['REMOTE_ADDR'];
-$row_rest = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE ip_address = ? AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ?", [$ip_actual, $max_intentos, $tiempo_bloqueo]);
+$user_check = trim($_POST['usuario'] ?? '');
+// Lockout dual: verificar por IP O por usuario
+if ($user_check !== '') {
+    $row_rest = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE (ip_address = ? OR usuario = ?) AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ? ORDER BY restante DESC LIMIT 1", [$ip_actual, $user_check, $max_intentos, $tiempo_bloqueo]);
+} else {
+    $row_rest = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE ip_address = ? AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ?", [$ip_actual, $max_intentos, $tiempo_bloqueo]);
+}
 if ($row_rest && $row_rest['restante'] > 0) {
     $segundos_restantes = (int)$row_rest['restante'];
     $error = "ACCESO BLOQUEADO - Espere $segundos_restantes segundos";
@@ -84,7 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
     } elseif (!filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
         $error = "CORREO: FORMATO INVALIDO";
     } elseif (!validarPasswordFuerte($new_pass)) {
-        $error = "CONTRASEÑA DÉBIL: MÍN 8 CARACTERES, MAYÚSCULAS, NÚMEROS Y SÍMBOLOS.";
+        $faltan = requisitosFaltantesPassword($new_pass);
+        $error = "CONTRASEÑA DÉBIL: FALTA $faltan.";
     } elseif ($new_pass !== $_POST['reg_password_confirm']) {
         $error = "LAS CONTRASEÑAS NO COINCIDEN";
     } else {
@@ -126,25 +133,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     $ip_usuario = $_SERVER['REMOTE_ADDR'];
+    $user_login = trim($_POST['usuario']);
 
-    $blocked = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE ip_address = ? AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ?", [$ip_usuario, $max_intentos, $tiempo_bloqueo]);
+    // Lockout dual: verificar por IP O por usuario
+    $blocked = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE (ip_address = ? OR usuario = ?) AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ? ORDER BY restante DESC LIMIT 1", [$ip_usuario, $user_login, $max_intentos, $tiempo_bloqueo]);
     if ($blocked) {
         $segundos_restantes = max(1, (int)$blocked['restante']);
         $error = "ACCESO BLOQUEADO - Espere $segundos_restantes segundos";
     } else {
-        $user = trim($_POST['usuario']);
         $pass = $_POST['password'];
 
-        if (strlen($user) > 30) {
+        if (strlen($user_login) > 30) {
             $error = "USUARIO DEMASIADO LARGO (MAX 30 CARACTERES)";
         } else {
             $login_exitoso = false;
             $clave_correcta = false;
-            $row = $db->fetchOne("SELECT * FROM usuarios WHERE BINARY usuario = ? LIMIT 1", [$user]);
+            $row = $db->fetchOne("SELECT * FROM usuarios WHERE BINARY usuario = ? LIMIT 1", [$user_login]);
             if ($row) {
                 if (password_verify($pass, $row['password'])) {
                     $clave_correcta = true;
-                    $db->execute("DELETE FROM login_intentos WHERE ip_address = ?", [$ip_usuario]);
+                    // Limpiar intentos por IP Y por usuario
+                    $db->execute("DELETE FROM login_intentos WHERE ip_address = ? OR usuario = ?", [$ip_usuario, $user_login]);
                     $aprobado = $row['aprobado'] ?? 0;
                     if ($aprobado == 0) {
                         $error = "TU CUENTA ESTA PENDIENTE DE APROBACION. CONTACTA AL ADMINISTRADOR.";
@@ -165,19 +174,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                 }
             }
 
-            // Si NO hubo login exitoso y la clave no era correcta, registrar intento fallido
-            if (!$login_exitoso && !$clave_correcta) {
+            // Registrar intento fallido si NO hubo login exitoso (incluye cuentas inactivas/pendientes)
+            if (!$login_exitoso) {
+                // Registrar por IP
                 $db->execute(
-                    "INSERT INTO login_intentos (ip_address, intentos, ultimo_intento) VALUES (?, 1, NOW())
+                    "INSERT INTO login_intentos (ip_address, usuario, intentos, ultimo_intento) VALUES (?, NULL, 1, NOW())
                      ON DUPLICATE KEY UPDATE intentos = intentos + 1, ultimo_intento = NOW()",
                     [$ip_usuario]
                 );
-                $row_intento = $db->fetchOne("SELECT intentos FROM login_intentos WHERE ip_address = ? LIMIT 1", [$ip_usuario]);
-                $intentos_actuales = (int)($row_intento['intentos'] ?? 0);
+                // Registrar por usuario si existe
+                if ($user_login !== '') {
+                    $db->execute(
+                        "INSERT INTO login_intentos (ip_address, usuario, intentos, ultimo_intento) VALUES ('0.0.0.0', ?, 1, NOW())
+                         ON DUPLICATE KEY UPDATE intentos = intentos + 1, ultimo_intento = NOW()",
+                        [$user_login]
+                    );
+                }
+                // Obtener intentos (el mayor entre IP y usuario)
+                $row_ip = $db->fetchOne("SELECT intentos FROM login_intentos WHERE ip_address = ? LIMIT 1", [$ip_usuario]);
+                $row_user = $user_login !== '' ? $db->fetchOne("SELECT intentos FROM login_intentos WHERE usuario = ? LIMIT 1", [$user_login]) : null;
+                $intentos_actuales = max((int)($row_ip['intentos'] ?? 0), (int)($row_user['intentos'] ?? 0));
                 $restantes = $max_intentos - $intentos_actuales;
                 if ($restantes <= 0) {
                     $segundos_restantes = $tiempo_bloqueo;
-                    $error = "ACCESO BLOQUEADO POR 2 MINUTOS (3 intentos fallidos)";
+                    $error = "ACCESO BLOQUEADO POR 30 SEGUNDOS (3 intentos fallidos)";
                 } else {
                     $error = "CREDENCIALES INVÁLIDAS (intento $intentos_actuales de $max_intentos)";
                 }
@@ -313,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                         <div class="strength-meter">
                             <div class="strength-fill" id="r-meter"></div>
                         </div>
-                        <small class="reg-hint" id="r-pass-hint">Min. 8 caracteres con Mayusculas, Minusculas, Numeros y Simbolos.</small>
+                        <small class="reg-hint" id="r-pass-hint">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 símbolo.</small>
 
                         <label class="form-label" style="margin-top:14px;">Confirmar Contraseña</label>
                         <div class="field-group">

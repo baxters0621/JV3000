@@ -52,7 +52,8 @@ if (isset($_POST['accion_usuario'])) {
 
         if (!empty($password)) {
             if (!validarPasswordFuerte($password)) {
-                $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'CONTRASEÑA DÉBIL: MÍN 8 CARACTERES, MAYÚSCULAS, NÚMEROS Y SÍMBOLOS.'];
+                $faltan = requisitosFaltantesPassword($password);
+                $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => "CONTRASEÑA DÉBIL: FALTA $faltan."];
                 header("Location: usuarios.php");
                 exit();
             }

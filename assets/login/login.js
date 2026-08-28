@@ -48,18 +48,18 @@ function validarReg() {
         if (/[A-Z]/.test(password)) passwordStrength++;
         if (/[0-9]/.test(password)) passwordStrength++;
         if (/[\W_]/.test(password)) passwordStrength++;
-        var strengthColors = ['var(--jv-danger)', 'var(--jv-danger)', 'var(--jv-warning)', 'var(--jv-info)', 'var(--jv-success)'];
-        var strengthWidths = ['20%', '40%', '60%', '80%', '100%'];
-        var strengthIndex = Math.max(0, Math.min(passwordStrength - 1, 4));
+        if (password.length >= 12) passwordStrength++;
+        var strengthColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a', '#16a34a'];
+        var strengthWidths = ['15%', '35%', '55%', '80%', '100%', '100%'];
+        var strengthTexts = ['Muy débil', 'Débil', 'Media', 'Fuerte', 'Muy fuerte', 'Muy fuerte'];
+        var strengthIndex = Math.max(0, Math.min(passwordStrength, 5));
         passwordMeter.style.width = strengthWidths[strengthIndex];
         passwordMeter.style.backgroundColor = strengthColors[strengthIndex];
-        if (passwordStrength < 3) { passwordHint.textContent = 'Contraseña debil'; passwordHint.style.color = 'var(--jv-danger)'; }
-        else if (passwordStrength < 4) { passwordHint.textContent = 'Contraseña aceptable'; passwordHint.style.color = 'var(--jv-warning)'; }
-        else if (passwordStrength < 5) { passwordHint.textContent = 'Contraseña buena'; passwordHint.style.color = 'var(--jv-info)'; }
-        else { passwordHint.textContent = 'Contraseña fuerte'; passwordHint.style.color = 'var(--jv-success)'; }
+        passwordHint.textContent = strengthTexts[strengthIndex];
+        passwordHint.style.color = strengthColors[strengthIndex];
     } else {
         passwordMeter.style.width = '0%';
-        passwordHint.textContent = 'Min. 8 caracteres con letras, numeros y simbolos.';
+        passwordHint.textContent = 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 símbolo.';
         passwordHint.style.color = 'var(--jv-text-muted)';
     }
 

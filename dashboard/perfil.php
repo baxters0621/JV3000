@@ -181,15 +181,24 @@ unset($_SESSION['flash_msg']);
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label-jv" for="perfil_password_actual">CONTRASEÑA ACTUAL *</label>
-                                        <input type="password" id="perfil_password_actual" name="password_actual" class="input-jv" required autocomplete="current-password" placeholder="Necesaria para guardar cambios">
+                                        <div style="position:relative;">
+                                            <input type="password" id="perfil_password_actual" name="password_actual" class="input-jv" required autocomplete="current-password" placeholder="Necesaria para guardar cambios" style="padding-right:40px;">
+                                            <button type="button" onclick="togglePass('perfil_password_actual', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                                        </div>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label-jv" for="perfil_password_nueva">NUEVA CONTRASEÑA</label>
-                                        <input type="password" id="perfil_password_nueva" name="password_nueva" class="input-jv" autocomplete="new-password" placeholder="••••••••">
+                                        <div style="position:relative;">
+                                            <input type="password" id="perfil_password_nueva" name="password_nueva" class="input-jv" autocomplete="new-password" placeholder="••••••••" style="padding-right:40px;">
+                                            <button type="button" onclick="togglePass('perfil_password_nueva', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                                        </div>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label-jv" for="perfil_password_confirm">CONFIRMAR NUEVA</label>
-                                        <input type="password" id="perfil_password_confirm" name="password_confirm" class="input-jv" autocomplete="new-password" placeholder="••••••••">
+                                        <div style="position:relative;">
+                                            <input type="password" id="perfil_password_confirm" name="password_confirm" class="input-jv" autocomplete="new-password" placeholder="••••••••" style="padding-right:40px;">
+                                            <button type="button" onclick="togglePass('perfil_password_confirm', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

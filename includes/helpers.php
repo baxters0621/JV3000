@@ -268,6 +268,56 @@ if (!function_exists('validarPasswordFuerte')) {
     {
         return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/', $password) === 1;
     }
+
+    /**
+     * Clasifica la fortaleza de una contraseña en niveles 0-4.
+     *
+     * Retorna un arreglo con nivel (0-4), texto descriptivo y porcentaje
+     * para la barra de indicador visual. La puntuación es:
+     * ≥8 chars (+1), minúscula (+1), mayúscula (+1), número (+1), símbolo (+1), ≥12 chars (+1 bonus).
+     *
+     * @param string $password Contraseña a clasificar.
+     * @return array{nivel: int, texto: string, color: string, porcentaje: int}
+     */
+    function clasificarFortalezaPassword(string $password): array
+    {
+        $puntos = 0;
+        if (strlen($password) >= 8)  $puntos++;
+        if (preg_match('/[a-z]/', $password)) $puntos++;
+        if (preg_match('/[A-Z]/', $password)) $puntos++;
+        if (preg_match('/\d/', $password))    $puntos++;
+        if (preg_match('/[\W_]/', $password)) $puntos++;
+        if (strlen($password) >= 12) $puntos++;
+
+        if ($puntos <= 1) {
+            return ['nivel' => 0, 'texto' => 'Muy débil',   'color' => '#ef4444', 'porcentaje' => 15];
+        } elseif ($puntos === 2) {
+            return ['nivel' => 1, 'texto' => 'Débil',       'color' => '#f97316', 'porcentaje' => 35];
+        } elseif ($puntos === 3) {
+            return ['nivel' => 2, 'texto' => 'Media',       'color' => '#eab308', 'porcentaje' => 55];
+        } elseif ($puntos === 4) {
+            return ['nivel' => 3, 'texto' => 'Fuerte',      'color' => '#22c55e', 'porcentaje' => 80];
+        } else {
+            return ['nivel' => 4, 'texto' => 'Muy fuerte',  'color' => '#16a34a', 'porcentaje' => 100];
+        }
+    }
+
+    /**
+     * Retorna los requisitos faltantes de una contraseña como texto legible.
+     *
+     * @param string $password Contraseña a evaluar.
+     * @return string Lista de requisitos faltantes o cadena vacía si cumple todos.
+     */
+    function requisitosFaltantesPassword(string $password): string
+    {
+        $faltan = [];
+        if (strlen($password) < 8)          $faltan[] = 'mínimo 8 caracteres';
+        if (!preg_match('/[a-z]/', $password)) $faltan[] = '1 minúscula';
+        if (!preg_match('/[A-Z]/', $password)) $faltan[] = '1 mayúscula';
+        if (!preg_match('/\d/', $password))    $faltan[] = '1 número';
+        if (!preg_match('/[\W_]/', $password)) $faltan[] = '1 símbolo';
+        return $faltan ? implode(', ', $faltan) : '';
+    }
 }
 
 if (!function_exists('purgarPreviewsSesion')) {
