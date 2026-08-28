@@ -575,25 +575,40 @@ select.input-jv { appearance: auto; cursor: pointer; }
     border: 1px solid var(--jv-border);
     border-radius: var(--jv-radius-xl);
     box-shadow: var(--jv-shadow);
-    padding: 0;
+    padding: 40px 36px;
     width: 100%;
     max-width: 420px;
     position: relative;
     z-index: 1;
-    overflow: hidden;
 }
 
 .login-logo {
-    display: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+    position: relative;
 }
 
 .login-logo img {
-    width: 380px;
+    width: 300px;
     height: auto;
-    max-width: none;
     margin: 0 -26px;
     filter: drop-shadow(0 10px 24px rgba(234,88,12,0.25));
     animation: loginLogoIn 0.7s ease-out both;
+}
+
+.login-logo::after {
+    content: '';
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 24px;
+    background: radial-gradient(ellipse at center, rgba(234,88,12,0.18), transparent 70%);
+    filter: blur(4px);
+    pointer-events: none;
 }
 
 @keyframes loginLogoIn {
@@ -607,7 +622,7 @@ select.input-jv { appearance: auto; cursor: pointer; }
     color: var(--jv-text-muted);
     text-transform: uppercase;
     letter-spacing: 2px;
-    margin: 4px 0 0;
+    margin: 12px 0 0;
     text-align: center;
     line-height: 1.3;
 }

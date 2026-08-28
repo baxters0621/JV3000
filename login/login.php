@@ -224,18 +224,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 <body>
     <div class="login-page">
         <div class="login-card">
-
-            <!-- HEADER CON LOGO -->
-            <div class="login-header">
-                <div class="login-header-ornament login-header-ornament--top" aria-hidden="true"></div>
-                <div class="login-header-ornament login-header-ornament--bottom" aria-hidden="true"></div>
-                <div class="login-header-logo">
-                    <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
-                </div>
+            <div class="login-logo">
+                <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
+                <p>Sistema Web para la Gestión de Inventario, Compras y Ventas</p>
             </div>
-
-            <!-- CUERPO DEL FORMULARIO -->
-            <div class="login-body">
 
                 <?php if ($error): ?>
                     <div class="alert-card-jv <?php echo $segundos_restantes > 0 ? 'alert-card-blocked' : 'alert-card-danger flash-auto'; ?>" id="alerta-bloqueo">
@@ -296,10 +288,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                     <i class="bi bi-person-plus-fill"></i>
                     <?php echo $sistema_vacio ? 'Configurar Administrador Inicial' : 'Solicitar Acceso de Personal'; ?>
                 </a>
-
-            </div>
         </div>
     </div>
+</div>
 
     <?php // ==========================================
     // MODAL DE REGISTRO

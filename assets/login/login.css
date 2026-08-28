@@ -3,48 +3,6 @@
    LOGIN — TEMA CLARO
    ========================================== */
 
-/* --- Header con logo sobre fondo naranja --- */
-.login-header {
-    background: linear-gradient(135deg, #c2410c, #EA580C 50%, #f97316);
-    padding: 36px 28px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--jv-radius-xl) var(--jv-radius-xl) 0 0;
-}
-.login-header-ornament {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.07);
-    pointer-events: none;
-}
-.login-header-ornament--top {
-    width: 160px;
-    height: 160px;
-    top: -60px;
-    right: -40px;
-}
-.login-header-ornament--bottom {
-    width: 120px;
-    height: 120px;
-    bottom: -50px;
-    left: -30px;
-}
-.login-header-logo {
-    position: relative;
-    z-index: 1;
-}
-.login-header-logo img {
-    width: 160px;
-    height: auto;
-    filter: drop-shadow(0 6px 20px rgba(0,0,0,0.2));
-}
-
-/* --- Body del login --- */
-.login-body {
-    padding: 28px 30px 30px;
-}
-
 /* --- Field groups --- */
 .field-group {
     position: relative;
@@ -599,8 +557,6 @@
 .alert-card-jv.alert-card-warning .alert-text { color: #92400E; }
 
 @media (max-width: 420px) {
-    .login-header { padding: 28px 20px; }
-    .login-header-logo img { width: 130px; }
-    .login-body { padding: 22px 22px 26px; }
+    .login-logo img { width: 240px; }
     .modal-reg .modal-content { max-width: 100%; margin: 0 8px; }
 }
