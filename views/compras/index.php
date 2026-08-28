@@ -116,15 +116,24 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
     </div>
     <div class="table-responsive">
         <table class="table-jv mb-0">
+            <colgroup>
+                <col class="col-factura">
+                <col class="col-proveedor">
+                <col class="col-detalle">
+                <col class="col-total">
+                <col class="col-pago">
+                <col class="col-fecha">
+                <col class="col-acciones">
+            </colgroup>
             <thead>
                 <tr>
                     <th>Factura</th>
                     <th>Proveedor</th>
                     <th>Detalle</th>
-                    <th class="text-end">Total</th>
-                    <th class="text-center">Pago</th>
+                    <th>Total</th>
+                    <th>Pago</th>
                     <th>Fecha</th>
-                    <th class="text-center">Acciones</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="tablaEntradas">

@@ -75,13 +75,22 @@
         }
 
         .pagina-compras .table-jv {
-            table-layout: auto;
+            table-layout: fixed;
             width: 100%;
             min-width: 0;
             border-collapse: separate;
             border-spacing: 0 10px;
             background: transparent;
         }
+
+        /* Column widths (7 columns) */
+        .pagina-compras .table-jv colgroup .col-factura   { width: 10%; }
+        .pagina-compras .table-jv colgroup .col-proveedor { width: 20%; }
+        .pagina-compras .table-jv colgroup .col-detalle   { width: 28%; }
+        .pagina-compras .table-jv colgroup .col-total     { width: 12%; }
+        .pagina-compras .table-jv colgroup .col-pago      { width: 12%; }
+        .pagina-compras .table-jv colgroup .col-fecha     { width: 10%; }
+        .pagina-compras .table-jv colgroup .col-acciones  { width: 8%; }
 
         .pagina-compras .table-jv thead th {
             background: linear-gradient(135deg, #065f46, #047857);
@@ -91,27 +100,20 @@
             font-weight: 800;
             letter-spacing: 1.2px;
             text-transform: uppercase;
-            padding: 14px 22px;
-            text-align: left;
+            padding: 14px 16px;
+            text-align: center;
             vertical-align: middle;
             white-space: nowrap;
         }
 
         .pagina-compras .table-jv thead th:first-child {
             border-radius: 12px 0 0 12px;
-            padding-left: 26px;
+            padding-left: 20px;
+            text-align: left;
         }
 
         .pagina-compras .table-jv thead th:last-child {
             border-radius: 0 12px 12px 0;
-        }
-
-        .pagina-compras .table-jv thead th.text-center {
-            text-align: center;
-        }
-
-        .pagina-compras .table-jv thead th.text-end {
-            text-align: right;
         }
 
         /* ── Fila = card blanca ── */
@@ -131,29 +133,23 @@
         .pagina-compras .table-jv tbody td {
             background: transparent;
             border: none;
-            padding: 20px 22px;
+            padding: 20px 16px;
             font-size: 1rem;
             vertical-align: middle;
             color: var(--jv-text-primary);
             line-height: 1.5;
+            text-align: center;
         }
 
         .pagina-compras .table-jv tbody td:first-child {
             border-left: 4px solid #10b981;
             border-radius: 14px 0 0 14px;
-            padding-left: 26px;
+            padding-left: 20px;
+            text-align: left;
         }
 
         .pagina-compras .table-jv tbody td:last-child {
             border-radius: 0 14px 14px 0;
-        }
-
-        .pagina-compras .table-jv tbody td.text-center {
-            text-align: center;
-        }
-
-        .pagina-compras .table-jv tbody td.text-end {
-            text-align: right;
         }
 
         /* ── Celda factura: badge + tooltip N° Control ── */
@@ -205,6 +201,7 @@
         /* ── Celda total ── */
         .pagina-compras .td-total {
             white-space: nowrap;
+            text-align: right;
         }
         .pagina-compras .total-monto {
             font-weight: 800;
@@ -253,7 +250,6 @@
             position: relative;
             flex: 1;
             min-width: 220px;
-            max-width: 380px;
         }
         .pagina-compras .compras-search > i {
             position: absolute;
@@ -265,6 +261,7 @@
             pointer-events: none;
         }
         .pagina-compras .compras-search .input-jv {
+            width: 100%;
             padding-left: 42px;
             border-radius: 24px;
             border: 2px solid rgba(16, 185, 129, 0.2);
