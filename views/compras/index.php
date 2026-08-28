@@ -253,13 +253,13 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="comp-step-title">Datos de la Factura</div>
                                 <div class="comp-step-desc">Informaci&oacute;n fiscal del comprobante recibido</div>
                             </div>
-                            <i class="bi bi-question-circle comp-step-help" data-tooltip="El n&uacute;mero de factura y control son obligatorios. La factura debe ser &uacute;nica por proveedor. La fecha se registra autom&aacute;ticamente."></i>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Factura: 6 a 8 d&iacute;gitos (la define el comercio). Control: 2 d&iacute;gitos de serie + 8 d&iacute;gitos (lo fija la imprenta autorizada por el SENIAT). Ambos son obligatorios."></i>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="comp-label">N&uacute;mero de Factura <span class="text-danger">*</span></label>
-                                    <input type="text" inputmode="numeric" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Solo n&uacute;meros, Ej: 001254" oninput="this.value=this.value.replace(/[^0-9]/g,'')" maxlength="20" required>
+                                    <input type="text" inputmode="numeric" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Ej: 00001234 (6 a 8 d&iacute;gitos)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" maxlength="8" required>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="comp-label">N&uacute;mero de Control <span class="text-danger">*</span></label>

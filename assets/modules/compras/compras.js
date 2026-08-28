@@ -308,8 +308,8 @@
                 errores.push('EL NÚMERO DE FACTURA ES OBLIGATORIO');
                 marcarError(fac);
                 if (!primerError) primerError = fac;
-            } else if (!/^\d{1,20}$/.test(facVal)) {
-                errores.push('NRO. FACTURA: SOLO DÍGITOS (1 A 20 NÚMEROS)');
+            } else if (!/^\d{6,8}$/.test(facVal)) {
+                errores.push('NRO. FACTURA: DEBE TENER ENTRE 6 Y 8 DÍGITOS');
                 marcarError(fac);
                 if (!primerError) primerError = fac;
             }
