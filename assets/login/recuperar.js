@@ -15,6 +15,26 @@
             validationHint.textContent = '';
         }
 
+        // Validar PIN de emergencia: exactamente 6 dígitos numéricos
+        function validarPin() {
+            var pinInput = document.getElementById('rec-pin');
+            if (!pinInput) return;
+            var pin = pinInput.value;
+            var submitBtn = document.getElementById('rec-btn-pin');
+            var hint = document.getElementById('rec-pin-hint');
+            if (pin.length === 0) {
+                submitBtn.disabled = true;
+                hint.textContent = '';
+                pinInput.style.borderColor = '';
+                return;
+            }
+            var esValido = /^[0-9]{6}$/.test(pin);
+            submitBtn.disabled = !esValido;
+            pinInput.style.borderColor = esValido ? '#16A34A' : '#ef4444';
+            hint.textContent = esValido ? '' : 'El PIN debe tener exactamente 6 dígitos numéricos.';
+            hint.style.color = '#ef4444';
+        }
+
         function validarPassRec() {
             var password = document.getElementById('rec-pass').value;
             var passwordConfirmation = document.getElementById('rec-pass2').value;
@@ -80,4 +100,5 @@
         }
         setupEyeRec('btnEyeRec1', 'iconEyeRec1', 'rec-pass');
         setupEyeRec('btnEyeRec2', 'iconEyeRec2', 'rec-pass2');
+        setupEyeRec('btnEyePin', 'iconEyePin', 'rec-pin');
     

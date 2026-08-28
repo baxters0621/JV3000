@@ -20,7 +20,18 @@ if (isset($_SESSION['id_usuario'])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['reset'])) {
     $_SESSION['rec_step'] = 1;
     $_SESSION['rec_id'] = 0;
-    unset($_SESSION['rec_user'], $_SESSION['rec_pregunta'], $_SESSION['rec_intentos']);
+    unset($_SESSION['rec_user'], $_SESSION['rec_pregunta'], $_SESSION['rec_intentos'], $_SESSION['rec_modo'], $_SESSION['rec_pin_intentos']);
+}
+
+// Cambio de método de verificación en el paso 2 (pregunta <-> PIN de emergencia)
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['modo']) && isset($_SESSION['rec_step']) && $_SESSION['rec_step'] == 2) {
+    $modo_solicitado = $_GET['modo'];
+    if (in_array($modo_solicitado, ['pregunta', 'pin'], true)) {
+        $_SESSION['rec_modo'] = $modo_solicitado;
+        if ($modo_solicitado === 'pin') {
+            $_SESSION['rec_pin_intentos'] = 0;
+        }
+    }
 }
 
 $error = '';
@@ -57,13 +68,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['rec_pregunta'] = $userAccount['pregunta_seguridad'];
                 $_SESSION['rec_step'] = 2;
                 $_SESSION['rec_intentos'] = 0;
+                unset($_SESSION['rec_modo'], $_SESSION['rec_pin_intentos']);
+            } elseif ($userAccount) {
+                // Cuenta encontrada PERO sin pregunta de seguridad: solo se puede avanzar con PIN de emergencia
+                $pinRow = $db->fetchOne("SELECT pin_emergencia FROM usuarios WHERE id_usuario = ? LIMIT 1", [$userAccount['id_usuario']]);
+                $tiene_pin = $pinRow && !empty($pinRow['pin_emergencia']);
+                if ($tiene_pin) {
+                    $_SESSION['rec_id'] = $userAccount['id_usuario'];
+                    $_SESSION['rec_user'] = $userAccount['usuario'];
+                    unset($_SESSION['rec_pregunta']);
+                    $_SESSION['rec_modo'] = 'pin';
+                    $_SESSION['rec_step'] = 2;
+                    $_SESSION['rec_pin_intentos'] = 0;
+                } else {
+                    $error = "NO SE ENCONTRÓ UNA CUENTA CON ESE DATO. VERIFÍQUELO O CONTACTE AL ADMINISTRADOR.";
+                }
             } else {
                 $error = "NO SE ENCONTRÓ UNA CUENTA CON ESE DATO. VERIFÍQUELO O CONTACTE AL ADMINISTRADOR.";
             }
         }
     }
 
-    // --- Step 2: Answer security question ---
+    // --- Step 2a: Answer security question ---
     elseif ($action === 'responder') {
         if ($_SESSION['rec_step'] != 2 || $_SESSION['rec_id'] == 0) {
             $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
@@ -76,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $securityAnswerRecord = $db->fetchOne("SELECT respuesta_seguridad FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
                 if ($securityAnswerRecord && verificarRespuestaSeguridad($securityAnswer, $securityAnswerRecord['respuesta_seguridad'])) {
                     $_SESSION['rec_step'] = 3;
+                    unset($_SESSION['rec_modo'], $_SESSION['rec_pin_intentos']);
                 } else {
                     $_SESSION['rec_intentos'] = ($_SESSION['rec_intentos'] ?? 0) + 1;
                     if ($_SESSION['rec_intentos'] >= 3) {
@@ -85,6 +112,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     } else {
                         $remainingAttempts = 3 - $_SESSION['rec_intentos'];
                         $error = "RESPUESTA INCORRECTA. INTENTOS RESTANTES: $remainingAttempts";
+                    }
+                }
+            }
+        }
+    }
+
+    // --- Step 2b: Verify emergency PIN (fallback) ---
+    elseif ($action === 'pin') {
+        if ($_SESSION['rec_step'] != 2 || $_SESSION['rec_id'] == 0) {
+            $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
+            $_SESSION['rec_step'] = 1;
+        } else {
+            $pin = trim($_POST['rec_pin'] ?? '');
+            if (!preg_match('/^[0-9]{6}$/', $pin)) {
+                $error = "PIN DE EMERGENCIA INVÁLIDO. DEBE SER DE 6 DÍGITOS NUMÉRICOS.";
+            } else {
+                $pinRecord = $db->fetchOne("SELECT pin_emergencia FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
+                if (!$pinRecord || empty($pinRecord['pin_emergencia'])) {
+                    $error = "ESTA CUENTA NO TIENE PIN DE EMERGENCIA CONFIGURADO. CONTACTE AL ADMINISTRADOR.";
+                    $_SESSION['rec_step'] = 1;
+                } elseif (password_verify($pin, $pinRecord['pin_emergencia'])) {
+                    $_SESSION['rec_step'] = 3;
+                    unset($_SESSION['rec_modo'], $_SESSION['rec_pin_intentos']);
+                } else {
+                    $_SESSION['rec_pin_intentos'] = ($_SESSION['rec_pin_intentos'] ?? 0) + 1;
+                    if ($_SESSION['rec_pin_intentos'] >= 3) {
+                        $error = "DEMASIADOS INTENTOS. INICIE EL PROCESO DE NUEVO.";
+                        $_SESSION['rec_step'] = 1;
+                        $_SESSION['rec_id'] = 0;
+                    } else {
+                        $remainingAttempts = 3 - $_SESSION['rec_pin_intentos'];
+                        $error = "PIN INCORRECTO. INTENTOS RESTANTES: $remainingAttempts";
                     }
                 }
             }
@@ -123,10 +182,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // LÓGICA DE VISTAS
 // ==========================================
 $step = $_SESSION['rec_step'] ?? 1;
+$modo_rec = $_SESSION['rec_modo'] ?? 'pregunta';
 $show_buscar = ($step == 1);
-$show_pregunta = ($step == 2);
+$show_pregunta = ($step == 2 && $modo_rec === 'pregunta' && !empty($_SESSION['rec_pregunta']));
+$show_pin = ($step == 2 && $modo_rec === 'pin');
 $show_cambiar = ($step == 3);
 $show_exito = ($step == 4);
+
+// ¿La cuenta tiene PIN de emergencia configurado para poder enlazar al modo PIN?
+$rec_tiene_pin = false;
+if (($_SESSION['rec_id'] ?? 0) > 0) {
+    $pinCheck = $db->fetchOne("SELECT pin_emergencia FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
+    $rec_tiene_pin = !empty($pinCheck['pin_emergencia']);
+}
 
 // Reset session on successful completion or error redirect
 if ($step == 4) {
@@ -185,7 +253,7 @@ if ($step == 4) {
         </div>
 
         <?php // ==========================================
-        // PASO 2: RESPONDER PREGUNTA
+        // PASO 2a: RESPONDER PREGUNTA DE SEGURIDAD
         // ========================================== 
         ?>
         <div id="rec-step-pregunta" class="rec-step <?php echo $show_pregunta ? 'active' : ''; ?>">
@@ -201,6 +269,34 @@ if ($step == 4) {
                 <small id="rec-resp-hint" class="rec-hint-msg"></small>
                 <button type="submit" id="rec-btn" class="btn-access"><span><i class="bi bi-shield-check me-2"></i>VERIFICAR</span></button>
                 <a href="recuperar.php?reset=1" class="login-link-pill login-link-pill--outline"><i class="bi bi-arrow-left"></i>Intentar con otro correo</a>
+                <?php if ($rec_tiene_pin): ?>
+                    <a href="recuperar.php?modo=pin" class="login-link-pill login-link-pill--outline"><i class="bi bi-key me-2"></i>¿Olvidó también la respuesta? Usar PIN de emergencia</a>
+                <?php endif; ?>
+            </form>
+        </div>
+
+        <?php // ==========================================
+        // PASO 2b: VERIFICAR PIN DE EMERGENCIA (fallback)
+        // ========================================== 
+        ?>
+        <div class="rec-step <?php echo $show_pin ? 'active' : ''; ?>">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                <input type="hidden" name="rec_action" value="pin">
+                <div class="rec-user">Usuario: <strong><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
+                <label class="rec-label"><i class="bi bi-key me-1"></i>PIN de Emergencia</label>
+                <div class="field-group">
+                    <i class="field-icon bi bi-shield-lock"></i>
+                    <input type="password" name="rec_pin" id="rec-pin" class="field-input" required maxlength="6" inputmode="numeric" autofocus placeholder="6 dígitos" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6); validarPin()">
+                    <button type="button" class="field-eye" id="btnEyePin" aria-label="Mostrar"><i class="bi bi-eye-slash-fill" id="iconEyePin"></i></button>
+                </div>
+                <small id="rec-pin-hint" class="rec-hint-msg"></small>
+                <button type="submit" id="rec-btn-pin" class="btn-access"><span><i class="bi bi-key me-2"></i>VERIFICAR PIN</span></button>
+                <?php if (!empty($_SESSION['rec_pregunta'])): ?>
+                    <a href="recuperar.php?modo=pregunta" class="login-link-pill login-link-pill--outline"><i class="bi bi-arrow-left"></i>Volver a mi respuesta de seguridad</a>
+                <?php else: ?>
+                    <a href="recuperar.php?reset=1" class="login-link-pill login-link-pill--outline"><i class="bi bi-arrow-left"></i>Intentar con otro correo</a>
+                <?php endif; ?>
             </form>
         </div>
 

@@ -9,7 +9,7 @@ $csrf_token = Security::generateToken();
 $base_assets = BASE_PATH . 'assets/';
 
 $id_usuario = (int)$_SESSION['id_usuario'];
-        $usuario_data = $db->fetchOne("SELECT id_usuario, usuario, correo, password, password_check, pregunta_seguridad FROM usuarios WHERE id_usuario = ?", [$id_usuario]);
+$usuario_data = $db->fetchOne("SELECT id_usuario, usuario, correo, password, password_check, pregunta_seguridad, pin_emergencia FROM usuarios WHERE id_usuario = ?", [$id_usuario]);
 if (!$usuario_data) {
     header("Location: ../dashboard/index.php");
     exit();
@@ -32,6 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'actua
     $confirm = $_POST['password_confirm'] ?? '';
     $pregunta  = trim($_POST['pregunta_seguridad'] ?? '');
     $respuesta = trim($_POST['respuesta_seguridad'] ?? '');
+    $pin = trim($_POST['pin_emergencia'] ?? '');
+    $pin_confirm = trim($_POST['pin_emergencia_confirm'] ?? '');
+    $pin_eliminar = ($_POST['pin_emergencia_eliminar'] ?? '') === '1';
 
     // Credencial requerida para cualquier cambio
     if (!password_verify($actual, $usuario_data['password'])) {
@@ -76,6 +79,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'actua
         $errores[] = 'RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.';
     }
 
+    // PIN de emergencia (opcional: solo si se escribe algo o se pide eliminar)
+    $pin_final_hash = $usuario_data['pin_emergencia'] ?? null;
+    if ($pin_eliminar) {
+        $pin_final_hash = null;
+    } elseif ($pin !== '' || $pin_confirm !== '') {
+        if (!preg_match('/^[0-9]{6}$/', $pin)) {
+            $errores[] = 'EL PIN DE EMERGENCIA DEBE SER EXACTAMENTE 6 DÍGITOS NUMÉRICOS.';
+        } elseif ($pin !== $pin_confirm) {
+            $errores[] = 'LOS PIN DE EMERGENCIA NO COINCIDEN.';
+        } else {
+            $pin_final_hash = password_hash($pin, PASSWORD_BCRYPT);
+        }
+    }
+
     if (empty($errores)) {
         $hash_final = $usuario_data['password'];
         $check_final = $usuario_data['password_check'] ?? null;
@@ -85,13 +102,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'actua
         }
         $resp_hash = password_hash(normalizarRespuestaSeguridad($respuesta), PASSWORD_BCRYPT);
         $db->execute(
-            "UPDATE usuarios SET usuario = ?, correo = ?, password = ?, password_check = ?, pregunta_seguridad = ?, respuesta_seguridad = ? WHERE id_usuario = ?",
-            [$usuario, $correo, $hash_final, $check_final, $pregunta, $resp_hash, $id_usuario]
+            "UPDATE usuarios SET usuario = ?, correo = ?, password = ?, password_check = ?, pregunta_seguridad = ?, respuesta_seguridad = ?, pin_emergencia = ? WHERE id_usuario = ?",
+            [$usuario, $correo, $hash_final, $check_final, $pregunta, $resp_hash, $pin_final_hash, $id_usuario]
         );
 
         // Refrescar datos de sesión (nombre visible en el sidebar)
         $_SESSION['usuario'] = $usuario;
-$usuario_data = $db->fetchOne("SELECT id_usuario, usuario, correo, password, password_check, pregunta_seguridad FROM usuarios WHERE id_usuario = ?", [$id_usuario]);
+$usuario_data = $db->fetchOne("SELECT id_usuario, usuario, correo, password, password_check, pregunta_seguridad, pin_emergencia FROM usuarios WHERE id_usuario = ?", [$id_usuario]);
 
         registrarAuditoria('editar', 'Perfil actualizado por el propio usuario.');
         $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'TUS DATOS SE ACTUALIZARON CORRECTAMENTE.'];
@@ -227,6 +244,35 @@ unset($_SESSION['flash_msg']);
                                     <div class="col-md-6">
                                         <label class="form-label-jv" for="perfil_respuesta">TU RESPUESTA</label>
                                         <input type="text" id="perfil_respuesta" name="respuesta_seguridad" class="input-jv" required maxlength="255" autocomplete="off" placeholder="Escribe tu respuesta">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-12">
+                                        <hr style="border-color:rgba(30,58,138,0.15);">
+                                        <span class="fw-bold small text-secondary text-uppercase"><i class="bi bi-shield-exclamation me-1"></i>PIN de Emergencia <span class="text-jv-muted">(6 dígitos, para recuperar tu contraseña si olvidas la respuesta)</span></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-jv" for="perfil_pin">PIN DE EMERGENCIA</label>
+                                        <div style="position:relative;">
+                                            <input type="password" id="perfil_pin" name="pin_emergencia" class="input-jv" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="<?php echo !empty($usuario_data['pin_emergencia']) ? '•••••• (configurado)' : '6 dígitos'; ?>" style="padding-right:40px;">
+                                            <button type="button" onclick="togglePass('perfil_pin', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label-jv" for="perfil_pin_confirm">CONFIRMAR PIN</label>
+                                        <div style="position:relative;">
+                                            <input type="password" id="perfil_pin_confirm" name="pin_emergencia_confirm" class="input-jv" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Repite el PIN" style="padding-right:40px;">
+                                            <button type="button" onclick="togglePass('perfil_pin_confirm', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end pb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="perfil_pin_eliminar" name="pin_emergencia_eliminar" value="1">
+                                            <label class="form-check-label small text-secondary" for="perfil_pin_eliminar">Eliminar PIN</label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
