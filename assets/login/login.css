@@ -3,20 +3,20 @@
    LOGIN — TEMA CLARO
    ========================================== */
 
-/* --- Header degradado naranja --- */
+/* --- Header con logo sobre fondo oscuro --- */
 .login-header {
-    background: linear-gradient(135deg, #9a3412, #c2410c 45%, #EA580C);
-    padding: 32px 28px 28px;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    padding: 32px 28px;
     text-align: center;
     position: relative;
     overflow: hidden;
     border-radius: var(--jv-radius-xl) var(--jv-radius-xl) 0 0;
-    border-bottom: 3px solid #fb923c;
+    border-bottom: 3px solid #334155;
 }
 .login-header-ornament {
     position: absolute;
     border-radius: 50%;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.04);
     pointer-events: none;
 }
 .login-header-ornament--top {
@@ -34,35 +34,11 @@
 .login-header-logo {
     position: relative;
     z-index: 1;
-    margin-bottom: 12px;
 }
 .login-header-logo img {
-    width: 72px;
-    height: 72px;
-    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
-}
-.login-header-title {
-    position: relative;
-    z-index: 1;
-    font-family: var(--jv-font-brand);
-    font-size: 1.8rem;
-    font-weight: 900;
-    color: #fff;
-    margin: 0;
-    letter-spacing: 1px;
-}
-.login-header-title span {
-    color: rgba(255,255,255,0.85);
-    font-weight: 700;
-}
-.login-header-sub {
-    position: relative;
-    z-index: 1;
-    font-size: .85rem;
-    font-weight: 500;
-    color: rgba(255,255,255,0.9);
-    margin: 8px 0 0;
-    letter-spacing: .3px;
+    width: 100px;
+    height: auto;
+    filter: drop-shadow(0 4px 16px rgba(234,88,12,0.3));
 }
 
 /* --- Body del login --- */
@@ -624,9 +600,8 @@
 .alert-card-jv.alert-card-warning .alert-text { color: #92400E; }
 
 @media (max-width: 420px) {
-    .login-header { padding: 24px 20px 22px; }
-    .login-header-title { font-size: 1.5rem; }
-    .login-header-logo img { width: 60px; height: 60px; }
+    .login-header { padding: 24px 20px; }
+    .login-header-logo img { width: 80px; }
     .login-body { padding: 20px 22px 24px; }
     .modal-reg .modal-content { max-width: 100%; margin: 0 8px; }
 }

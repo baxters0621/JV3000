@@ -225,15 +225,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     <div class="login-page">
         <div class="login-card">
 
-            <!-- HEADER GRADIENT -->
+            <!-- HEADER CON LOGO -->
             <div class="login-header">
                 <div class="login-header-ornament login-header-ornament--top" aria-hidden="true"></div>
                 <div class="login-header-ornament login-header-ornament--bottom" aria-hidden="true"></div>
                 <div class="login-header-logo">
                     <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
                 </div>
-                <h1 class="login-header-title">JV3000 <span>C.A.</span></h1>
-                <p class="login-header-sub">Sistema Web para la Gestión de Inventario, Compras y Ventas</p>
             </div>
 
             <!-- CUERPO DEL FORMULARIO -->
