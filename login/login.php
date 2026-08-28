@@ -260,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 
                     <div class="field-group">
                         <i class="field-icon bi bi-person-fill"></i>
-                        <input type="text" id="f-user" name="usuario" class="field-input" placeholder="ID de Operador" required autofocus maxlength="30" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                        <input type="text" id="f-user" name="usuario" class="field-input" placeholder="Nombre de Usuario" required autofocus maxlength="30" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
                     </div>
 
                     <div class="field-group">
