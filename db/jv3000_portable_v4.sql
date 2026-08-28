@@ -212,7 +212,7 @@ CREATE TABLE `productos` (
   `stock_actual` int(11) DEFAULT 0,
   `stock_minimo` int(11) DEFAULT 5,
   `stock_maximo` int(11) NOT NULL DEFAULT 0,
-  `fecha_vencimiento` date DEFAULT NULL,
+  `fecha_vencimiento` date NOT NULL DEFAULT '1900-01-01',
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `id_categoria` int(11) NOT NULL,
   `id_proveedor` int(11) DEFAULT NULL,

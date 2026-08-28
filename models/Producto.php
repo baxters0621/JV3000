@@ -79,9 +79,15 @@ class Producto extends Model
         $precioVentaRaw = trim((string)$datosProducto['precio_venta']);
         $precioVenta = (float)$precioVentaRaw;
         $status = $datosProducto['status'];
-        $fechaVencimiento = $datosProducto['fecha_vencimiento'] ?? null;
+        $fechaVencimiento = trim((string)($datosProducto['fecha_vencimiento'] ?? ''));
 
         if ($idProducto <= 0) return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO.'];
+        if ($fechaVencimiento === '') {
+            return ['ok' => false, 'mensaje' => 'LA FECHA DE VENCIMIENTO ES OBLIGATORIA.'];
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) {
+            return ['ok' => false, 'mensaje' => 'FORMATO DE FECHA DE VENCIMIENTO INVÁLIDO. USE AAAA-MM-DD.'];
+        }
         // Stocks: enteros puros en rango (rechaza decimales, negativos y desbordes)
         if (!preg_match('/^\d{1,5}$/', trim((string)$datosProducto['stock_minimo'])) || $stockMinimo <= 0) {
             return ['ok' => false, 'mensaje' => 'STOCK MÍNIMO DEBE SER UN ENTERO ENTRE 1 Y 99.999.'];
@@ -94,7 +100,6 @@ class Producto extends Model
         }
         if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioVentaRaw) || !is_finite($precioVenta) || $precioVenta < 0.01 || $precioVenta > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,01 Y 99.999,99.'];
         if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
-        if ($fechaVencimiento && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) $fechaVencimiento = null;
 
         $this->db->execute(
             "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=? WHERE id_producto=?",

@@ -229,6 +229,11 @@
                 marcarError(pvp, valorVenta > 99999.99 ? 'MÁXIMO 99.999,99' : 'FORMATO: 0,00 (MÁXIMO 99.999,99)');
                 if (!primerError) primerError = pvp;
             }
+            const vencimiento = document.getElementById('edit_vencimiento');
+            if (!vencimiento.value.trim()) {
+                marcarError(vencimiento, 'FECHA DE VENCIMIENTO REQUERIDA');
+                if (!primerError) primerError = vencimiento;
+            }
             if (primerError) {
                 primerError.focus();
                 return false;

@@ -74,7 +74,7 @@ class ProductosController extends Controller
                 'stock_maximo'    => trim((string)($_POST['stock_maximo'] ?? '')),
                 'precio_venta'    => $parsePrice($_POST['precio_venta'] ?? 0),
                 'status'          => $_POST['status'] ?? 'Activo',
-                'fecha_vencimiento' => !empty($_POST['fecha_vencimiento']) ? $_POST['fecha_vencimiento'] : null,
+                'fecha_vencimiento' => trim($_POST['fecha_vencimiento'] ?? ''),
             ]);
             $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
             $this->redirect('productos');

@@ -75,22 +75,35 @@
         }
 
         .pagina-compras .table-jv {
-            table-layout: fixed;
+            table-layout: auto;
             width: 100%;
-            min-width: 1080px;
+            min-width: 0;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            background: transparent;
         }
 
         .pagina-compras .table-jv thead th {
             background: linear-gradient(135deg, #065f46, #047857);
             color: #fff;
-            border-bottom: 2px solid rgba(16, 185, 129, 0.3);
-            font-size: 0.95rem;
-            font-weight: 900;
-            letter-spacing: 0.5px;
-            padding: 16px 16px;
+            border: none;
+            font-size: .78rem;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 14px 22px;
             text-align: left;
             vertical-align: middle;
-            white-space: normal;
+            white-space: nowrap;
+        }
+
+        .pagina-compras .table-jv thead th:first-child {
+            border-radius: 12px 0 0 12px;
+            padding-left: 26px;
+        }
+
+        .pagina-compras .table-jv thead th:last-child {
+            border-radius: 0 12px 12px 0;
         }
 
         .pagina-compras .table-jv thead th.text-center {
@@ -101,16 +114,38 @@
             text-align: right;
         }
 
-        .pagina-compras .table-jv tbody td {
-            border-bottom: 1px dashed var(--jv-border);
-            padding: 16px 16px;
-            font-size: 1rem;
-            vertical-align: middle;
-            color: var(--jv-text-primary);
+        /* ── Fila = card blanca ── */
+        .pagina-compras .table-jv tbody tr {
+            background: var(--jv-bg-card);
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04), inset 0 0 0 1px rgba(0,0,0,0.03);
+            transition: all .25s cubic-bezier(.4,0,.2,1);
         }
 
         .pagina-compras .table-jv tbody tr:hover {
-            background: rgba(16, 185, 129, 0.06);
+            box-shadow: 0 8px 30px rgba(16,185,129,0.12), inset 0 0 0 1px rgba(16,185,129,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* ── Celdas: transparentes, sin bordes ── */
+        .pagina-compras .table-jv tbody td {
+            background: transparent;
+            border: none;
+            padding: 20px 22px;
+            font-size: 1rem;
+            vertical-align: middle;
+            color: var(--jv-text-primary);
+            line-height: 1.5;
+        }
+
+        .pagina-compras .table-jv tbody td:first-child {
+            border-left: 4px solid #10b981;
+            border-radius: 14px 0 0 14px;
+            padding-left: 26px;
+        }
+
+        .pagina-compras .table-jv tbody td:last-child {
+            border-radius: 0 14px 14px 0;
         }
 
         .pagina-compras .table-jv tbody td.text-center {
@@ -119,53 +154,70 @@
 
         .pagina-compras .table-jv tbody td.text-end {
             text-align: right;
+        }
+
+        /* ── Celda factura: badge + tooltip N° Control ── */
+        .pagina-compras .td-factura .codigo-badge {
+            cursor: help;
+        }
+
+        /* ── Celda proveedor ── */
+        .pagina-compras .td-proveedor {
+            cursor: help;
+        }
+        .pagina-compras .proveedor-nombre {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: #065F46;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+        }
+
+        /* ── Celda detalle: pill + nombres ── */
+        .pagina-compras .td-detalle {
+            max-width: 320px;
+            cursor: help;
+        }
+        .pagina-compras .cant-pill {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #EA580C, #DC2626);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: .78rem;
+            font-weight: 800;
+            margin-right: 8px;
+            box-shadow: 0 2px 6px rgba(234,88,12,0.25);
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+        .pagina-compras .detalle-nombres {
+            font-weight: 600;
+            color: var(--jv-text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline;
+            vertical-align: middle;
+        }
+
+        /* ── Celda total ── */
+        .pagina-compras .td-total {
             white-space: nowrap;
         }
-
-        .pagina-compras .table-jv tbody td.fw-bold {
-            font-weight: 700;
-        }
-
-        .pagina-compras .table-jv tbody td.text-muted {
-            color: var(--jv-text-muted);
-        }
-
-        .pagina-compras .table-jv tbody td.text-success {
+        .pagina-compras .total-monto {
+            font-weight: 800;
+            font-size: 1.05rem;
             color: var(--jv-success);
         }
 
-        .pagina-compras .table-jv tbody td.fecha-cell {
+        /* ── Celda fecha ── */
+        .pagina-compras .td-fecha {
             font-weight: 600;
             font-size: .95rem;
+            white-space: nowrap;
             color: var(--jv-text-primary);
-            white-space: nowrap;
-        }
-
-        /* ── Celdas control / proveedor (ellipsis + tooltip) ── */
-        .pagina-compras .table-jv tbody td.nro-control-cell {
-            color: var(--jv-text-muted);
-            font-weight: 700;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            cursor: help;
-        }
-        .pagina-compras .table-jv tbody td.proveedor-cell {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            cursor: help;
-        }
-
-        /* ── Celda de productos (ellipsis + tooltip) ── */
-        .pagina-compras .table-jv tbody td.td-prod {
-            max-width: 260px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            cursor: help;
-            font-size: .95rem;
-            color: var(--jv-text-muted);
         }
 
         .pagina-compras .btn-jv-primary {
@@ -196,6 +248,37 @@
             color: #10b981;
         }
 
+        /* ── Toolbar search ── */
+        .pagina-compras .compras-search {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+            max-width: 380px;
+        }
+        .pagina-compras .compras-search > i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #10b981;
+            font-size: 1rem;
+            pointer-events: none;
+        }
+        .pagina-compras .compras-search .input-jv {
+            padding-left: 42px;
+            border-radius: 24px;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            background: rgba(16, 185, 129, 0.03);
+            transition: all .25s;
+            box-shadow: none;
+            font-size: .95rem;
+        }
+        .pagina-compras .compras-search .input-jv:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+            background: #fff;
+        }
+
         .pagina-compras .btn-jv-success {
             box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
         }
@@ -217,6 +300,18 @@
         .pagina-compras .widget-card:hover {
             border-color: #34d399;
         }
+
+        /* ── Widget color variants ── */
+        .pagina-compras .widget-green { border-left-color: #059669; }
+        .pagina-compras .widget-green:hover { border-left-color: #34d399; }
+        .pagina-compras .widget-amber { border-left-color: #f59e0b; }
+        .pagina-compras .widget-amber:hover { border-left-color: #fbbf24; }
+        .pagina-compras .widget-blue { border-left-color: #0ea5e9; }
+        .pagina-compras .widget-blue:hover { border-left-color: #38bdf8; }
+
+        .pagina-compras .widget-icon-green { background: rgba(5,150,105,0.12); color: #059669; }
+        .pagina-compras .widget-icon-amber { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .pagina-compras .widget-icon-blue { background: rgba(14,165,233,0.12); color: #0ea5e9; }
 
         /* ── Widget cards bigger & bolder ── */
         .pagina-compras .widget-card {
@@ -262,51 +357,6 @@
         }
 
         /* ── Badges ── */
-        .pagina-compras .codigo-badge {
-            background: rgba(5, 150, 105, 0.12);
-            color: #047857;
-            font-size: .95rem;
-            font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 20px;
-            display: inline-block;
-            vertical-align: middle;
-            white-space: nowrap;
-            letter-spacing: .5px;
-            line-height: 1.5;
-            font-family: 'Courier New', monospace;
-        }
-
-        .pagina-compras .cant-badge {
-            background: rgba(16, 185, 129, 0.15);
-            color: #047857;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 800;
-            font-size: .95rem;
-            display: inline-block;
-            line-height: 1.5;
-        }
-
-        .pagina-compras .badge-jv {
-            padding: 6px 16px;
-            font-size: .9rem;
-            line-height: 1.5;
-            white-space: nowrap;
-            display: inline-block;
-        }
-
-        .pagina-compras .badge-success {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--jv-success);
-            border-color: rgba(16, 185, 129, 0.35);
-        }
-
-        .pagina-compras .badge-warning {
-            background: rgba(245, 158, 11, 0.15);
-            color: #92400E;
-            border-color: rgba(245, 158, 11, 0.35);
-        }
 
         /* ── Modal section groups ── */
         .section-bg {

@@ -467,8 +467,8 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">VENCIMIENTO</label>
-                                <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento">
+                                <label class="small fw-bold text-secondary mb-1">VENCIMIENTO <span class="text-danger">*</span></label>
+                                <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento" required>
                             </div>
                         </div>
                         </div>

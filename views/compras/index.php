@@ -67,35 +67,35 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <!-- Estadísticas / Widgets -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-success);">
-            <div class="widget-icon" style="background:rgba(22,163,74,0.12);color:var(--jv-success);">
+        <div class="widget-card widget-green">
+            <div class="widget-icon widget-icon-green">
                 <i class="bi bi-receipt"></i>
             </div>
             <div>
                 <div class="widget-label">Total Compras</div>
-                <div class="widget-value" style="color: var(--jv-text-primary);"><?php echo (int)$kpis['total_compras']; ?></div>
+                <div class="widget-value"><?php echo (int)$kpis['total_compras']; ?></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-warning);">
-            <div class="widget-icon" style="background:rgba(245,158,11,0.12);color:var(--jv-warning);">
+        <div class="widget-card widget-amber">
+            <div class="widget-icon widget-icon-amber">
                 <i class="bi bi-hourglass-split"></i>
             </div>
             <div>
                 <div class="widget-label">Por Pagar</div>
-                <div class="widget-value" style="color: var(--jv-text-primary);"><?php echo (int)$kpis['por_pagar']; ?></div>
+                <div class="widget-value"><?php echo (int)$kpis['por_pagar']; ?></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-info);">
-            <div class="widget-icon" style="background:rgba(14,165,233,0.12);color:var(--jv-info);">
+        <div class="widget-card widget-blue">
+            <div class="widget-icon widget-icon-blue">
                 <i class="bi bi-currency-dollar"></i>
             </div>
             <div>
                 <div class="widget-label">Invertido (Mes)</div>
-                <div class="widget-value" style="color: var(--jv-text-primary);">$<?php echo number_format((float)$kpis['invertido_mes'], 0); ?></div>
+                <div class="widget-value">$<?php echo number_format((float)$kpis['invertido_mes'], 0); ?></div>
             </div>
         </div>
     </div>
@@ -104,9 +104,11 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <!-- Tabla de compras -->
 <div class="card-jv card-jv-table p-0">
     <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
-        <i class="bi bi-search me-1" style="font-size:1.1rem;color:var(--jv-orange);"></i>
-        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por factura, control, proveedor, productos, estado..." id="buscar" aria-label="Buscar compra" onkeyup="filtrar()" style="box-shadow:none;font-size:1rem;padding:8px 6px;max-width:340px;">
-        <select class="input-jv ms-auto" id="filtroPago" aria-label="Filtrar por estado de pago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value" style="width:auto;padding:6px 10px;font-size:.95rem;">
+        <div class="compras-search">
+            <i class="bi bi-search"></i>
+            <input type="text" class="input-jv" placeholder="Buscar por factura, proveedor, productos..." id="buscar" aria-label="Buscar compra" onkeyup="filtrar()">
+        </div>
+        <select class="input-jv ms-auto" id="filtroPago" aria-label="Filtrar por estado de pago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value">
             <option value="">Todos los pagos</option>
             <option value="Pendiente" <?php echo $filtro_pago === 'Pendiente' ? 'selected' : ''; ?>>Pendiente</option>
             <option value="Pagada" <?php echo $filtro_pago === 'Pagada' ? 'selected' : ''; ?>>Pagada</option>
@@ -116,36 +118,36 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         <table class="table-jv mb-0">
             <thead>
                 <tr>
-                    <th style="width:8%;">Factura</th>
-                    <th style="width:10%;">N° Control</th>
-                    <th style="width:12%;">Proveedor</th>
-                    <th style="width:14%;">Detalle</th>
-                    <th class="text-center" style="width:5%;">Cant</th>
-                    <th style="width:8%;">Subtotal</th>
-                    <th style="width:7%;">IVA</th>
-                    <th style="width:9%;">Total</th>
-                    <th class="text-center" style="width:8%;">Pago</th>
-                    <th style="width:7%;">Fecha</th>
-                    <th class="text-center" style="width:120px;">Acciones</th>
+                    <th>Factura</th>
+                    <th>Proveedor</th>
+                    <th>Detalle</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-center">Pago</th>
+                    <th>Fecha</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody id="tablaEntradas">
                 <?php if (count($compras) > 0): foreach ($compras as $compra): ?>
                         <tr>
-                            <td class="text-center"><span class="codigo-badge"><?php echo htmlspecialchars($compra['nro_factura'] ?: '-'); ?></span></td>
-                            <td class="nro-control-cell" data-tooltip="<?php echo htmlspecialchars($compra['nro_control'] ?: '-'); ?>"><?php echo htmlspecialchars($compra['nro_control'] ?: '-'); ?></td>
-                            <td class="text-uppercase fw-bold proveedor-cell" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?></td>
-                            <td class="td-prod" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? ''); ?>"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></td>
-                            <td class="text-center"><span class="cant-badge">+<?php echo (int)$compra['total_cantidad']; ?></span></td>
-                            <td style="font-weight:600;">$<?php echo number_format($compra['subtotal'] ?? 0, 2); ?></td>
-                            <td style="font-weight:600;">$<?php echo number_format($compra['iva'] ?? 0, 2); ?></td>
-                            <td class="fw-bold text-success">$<?php echo number_format($compra['total'], 2); ?></td>
+                            <td class="td-factura">
+                                <span class="codigo-badge" data-tooltip="<?php echo htmlspecialchars($compra['nro_control'] ?: 'Sin control'); ?>"><?php echo htmlspecialchars($compra['nro_factura'] ?: '-'); ?></span>
+                            </td>
+                            <td class="td-proveedor" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?>">
+                                <span class="proveedor-nombre"><?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?></span>
+                            </td>
+                            <td class="td-detalle" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? ''); ?>">
+                                <span class="cant-pill">+<?php echo (int)$compra['total_cantidad']; ?></span>
+                                <span class="detalle-nombres"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></span>
+                            </td>
+                            <td class="td-total text-end">
+                                <span class="total-monto">$<?php echo number_format($compra['total'], 2); ?></span>
+                            </td>
                             <td class="text-center">
-                                <?php // Estado de pago de la compra: 'Pagada' o 'Pendiente'
-                                $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
+                                <?php $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
                                 <span class="badge-jv <?php echo $status_pago === 'Pagada' ? 'badge-success' : 'badge-warning'; ?>"><i class="bi <?php echo $status_pago === 'Pagada' ? 'bi-check-circle' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $status_pago; ?></span>
                             </td>
-                            <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
+                            <td class="td-fecha"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
                             <td class="text-center">
                                 <?php if ($es_admin): ?>
                                     <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="Anular compra"><i class="bi bi-trash"></i></button>
@@ -155,7 +157,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <?php endforeach;
                 else: ?>
                     <tr>
-                        <td colspan="11">
+                        <td colspan="7">
                             <div class="estado-vacio">
                                 <i class="bi bi-cart-x"></i>
                                 <span>No hay compras registradas</span>
@@ -282,8 +284,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" aria-label="Precio unitario del producto" placeholder="0.00" oninput="formatearPrecioCompra(this)">
                             </div>
                             <div class="col-md-2">
-                                <label class="small fw-bold text-secondary mb-1">Vence <span class="text-muted fw-normal">(opcional)</span></label>
-                                <input type="date" class="input-jv" id="inputVencimiento" aria-label="Fecha de vencimiento del lote">
+                                <label class="small fw-bold text-secondary mb-1">Vence <span class="text-danger">*</span></label>
+                                <input type="date" class="input-jv" id="inputVencimiento" aria-label="Fecha de vencimiento del lote" required>
                             </div>
                             <div class="col-md-1">
                                 <button type="button" class="btn-jv-primary w-100" style="padding:14px;" onclick="agregarProducto()">
