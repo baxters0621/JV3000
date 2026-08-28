@@ -201,7 +201,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <p class="comp-modal-subtitle">Registra una compra indicando el proveedor, factura y productos</p>
                         </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="prov-close-btn" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
 
                 <?php if (!empty($solicitud_prefill)): ?>
@@ -552,10 +552,10 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         <div class="modal-content modal-content-jv">
             <div class="modal-header-jv">
                 <div>
-                    <h5 class="font-brand"><i class="bi bi-building me-2"></i>Proveedores Registrados</h5>
+                    <h5 class="font-brand" style="font-size:1.1rem;"><i class="bi bi-building me-2"></i>Proveedores Registrados</h5>
                     <small>Administra tus proveedores, sus datos de contacto y cat&aacute;logos de precios · Total <strong><?php echo count($prov_gestion); ?></strong> · Activos <strong><?php echo $prov_activos; ?></strong></small>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="prov-close-btn" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="modal-body p-3">
                 <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
@@ -676,10 +676,10 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <input type="hidden" name="id_proveedor" id="p_id_edit">
                     <div class="modal-header-jv">
                         <div>
-                            <h5 class="font-brand" id="modalTitle"><i class="bi bi-building me-2"></i>Registrar Nuevo Proveedor</h5>
+                            <h5 class="font-brand" id="modalTitle" style="font-size:1.1rem;"><i class="bi bi-building me-2"></i>Registrar Nuevo Proveedor</h5>
                             <small>Completa los datos del proveedor para asociarlo a tus compras</small>
                         </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="prov-close-btn" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                     </div>
 
                     <div class="comp-section sec-fiscal">
