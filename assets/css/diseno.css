@@ -575,18 +575,16 @@ select.input-jv { appearance: auto; cursor: pointer; }
     border: 1px solid var(--jv-border);
     border-radius: var(--jv-radius-xl);
     box-shadow: var(--jv-shadow);
-    padding: 40px 36px;
+    padding: 0;
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     position: relative;
     z-index: 1;
+    overflow: hidden;
 }
 
 .login-logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 32px;
+    display: none;
 }
 
 .login-logo img {

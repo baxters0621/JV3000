@@ -1,9 +1,76 @@
 
 /* ==========================================
    LOGIN — TEMA CLARO
-   Coherente con diseno.css (login-page, login-card, login-logo)
    ========================================== */
 
+/* --- Header degradado naranja --- */
+.login-header {
+    background: linear-gradient(135deg, #9a3412, #c2410c 45%, #EA580C);
+    padding: 32px 28px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--jv-radius-xl) var(--jv-radius-xl) 0 0;
+    border-bottom: 3px solid #fb923c;
+}
+.login-header-ornament {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    pointer-events: none;
+}
+.login-header-ornament--top {
+    width: 140px;
+    height: 140px;
+    top: -50px;
+    right: -30px;
+}
+.login-header-ornament--bottom {
+    width: 100px;
+    height: 100px;
+    bottom: -40px;
+    left: 20px;
+}
+.login-header-logo {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 12px;
+}
+.login-header-logo img {
+    width: 72px;
+    height: 72px;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+}
+.login-header-title {
+    position: relative;
+    z-index: 1;
+    font-family: var(--jv-font-brand);
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fff;
+    margin: 0;
+    letter-spacing: 1px;
+}
+.login-header-title span {
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+}
+.login-header-sub {
+    position: relative;
+    z-index: 1;
+    font-size: .85rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    margin: 8px 0 0;
+    letter-spacing: .3px;
+}
+
+/* --- Body del login --- */
+.login-body {
+    padding: 24px 28px 28px;
+}
+
+/* --- Field groups --- */
 .field-group {
     position: relative;
     margin-bottom: 16px;
@@ -28,6 +95,7 @@
     padding: 16px 52px;
     color: var(--jv-text-primary);
     font-size: 1.1rem;
+    font-weight: 500;
     transition: all 0.2s ease;
 }
 
@@ -62,49 +130,98 @@
     color: var(--jv-orange);
 }
 
+/* --- Botón AUTENTICAR --- */
 .btn-access {
-    background: var(--jv-orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #c2410c, #EA580C);
     border: none;
     border-radius: var(--jv-radius);
-    padding: 16px;
+    padding: 16px 24px;
     font-family: var(--jv-font-brand);
-    font-weight: 700;
+    font-weight: 800;
     color: #fff;
     width: 100%;
-    font-size: 1rem;
-    letter-spacing: 1px;
+    font-size: 1.1rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
     transition: all 0.3s ease;
     cursor: pointer;
-    box-shadow: var(--jv-shadow-sm);
+    box-shadow: 0 4px 14px rgba(234,88,12,0.35);
+    margin-top: 4px;
 }
-
 .btn-access:hover {
-    background: var(--jv-orange-dark);
+    background: linear-gradient(135deg, #9a3412, #c2410c);
     transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(234,88,12,0.3);
+    box-shadow: 0 8px 24px rgba(234,88,12,0.4);
     color: #fff;
 }
-
+.btn-access:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(234,88,12,0.3);
+}
 .btn-access:disabled {
     opacity: 0.45;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
 }
+.btn-access i {
+    font-size: 1.2rem;
+}
 
-.divider {
+/* --- Links estilo pill --- */
+.login-link-pill {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin: 24px 0 18px;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    margin-top: 14px;
+    border: 2px solid var(--jv-orange);
+    border-radius: var(--jv-radius);
+    background: rgba(234,88,12,0.06);
+    color: var(--jv-orange);
+    font-size: .95rem;
+    font-weight: 700;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.login-link-pill:hover {
+    background: rgba(234,88,12,0.12);
+    border-color: #c2410c;
+    color: #9a3412;
+    transform: translateY(-1px);
+}
+.login-link-pill i {
+    font-size: 1.1rem;
+}
+.login-link-pill--outline {
+    border-style: dashed;
+    background: transparent;
+}
+.login-link-pill--outline:hover {
+    background: rgba(234,88,12,0.08);
+}
+
+/* --- Divider --- */
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 20px 0 6px;
     color: var(--jv-text-muted);
-    font-size: 0.85rem;
+    font-size: .8rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
-
-.divider::before,
-.divider::after {
+.login-divider::before,
+.login-divider::after {
     content: '';
     flex: 1;
     height: 1px;
@@ -507,9 +624,9 @@
 .alert-card-jv.alert-card-warning .alert-text { color: #92400E; }
 
 @media (max-width: 420px) {
-    .login-logo img {
-        width: 90%;
-        max-width: 300px;
-        margin: 0;
-    }
+    .login-header { padding: 24px 20px 22px; }
+    .login-header-title { font-size: 1.5rem; }
+    .login-header-logo img { width: 60px; height: 60px; }
+    .login-body { padding: 20px 22px 24px; }
+    .modal-reg .modal-content { max-width: 100%; margin: 0 8px; }
 }

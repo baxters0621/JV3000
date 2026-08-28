@@ -224,75 +224,81 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 <body>
     <div class="login-page">
         <div class="login-card">
-            <div class="login-logo">
-                <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
-                <p>Sistema Web para la Gestión de Inventario, Compras y Ventas</p>
+
+            <!-- HEADER GRADIENT -->
+            <div class="login-header">
+                <div class="login-header-ornament login-header-ornament--top" aria-hidden="true"></div>
+                <div class="login-header-ornament login-header-ornament--bottom" aria-hidden="true"></div>
+                <div class="login-header-logo">
+                    <img src="../assets/img/logo-jv3000.svg?v=1" alt="JV3000 C.A.">
+                </div>
+                <h1 class="login-header-title">JV3000 <span>C.A.</span></h1>
+                <p class="login-header-sub">Sistema Web para la Gestión de Inventario, Compras y Ventas</p>
             </div>
 
-            <?php if ($error): ?>
-                <div class="alert-card-jv <?php echo $segundos_restantes > 0 ? 'alert-card-blocked' : 'alert-card-danger flash-auto'; ?>" id="alerta-bloqueo">
-                    <div class="alert-icon-box"><i class="bi bi-shield-slash-fill"></i></div>
-                    <div class="alert-body">
-                        <div class="alert-title"><?php echo $segundos_restantes > 0 ? 'ACCESO BLOQUEADO' : 'ERROR DE ACCESO'; ?></div>
-                        <div class="alert-text"><?php echo htmlspecialchars($error); ?></div>
-                        <?php if ($segundos_restantes > 0): ?>
-                            <div class="alert-timer" id="alertTimer"><?php echo $segundos_restantes; ?> <small>seg</small></div>
-                            <div class="alert-progress">
-                                <div class="alert-progress-fill" id="alertProgressFill"></div>
-                            </div>
-                        <?php endif; ?>
+            <!-- CUERPO DEL FORMULARIO -->
+            <div class="login-body">
+
+                <?php if ($error): ?>
+                    <div class="alert-card-jv <?php echo $segundos_restantes > 0 ? 'alert-card-blocked' : 'alert-card-danger flash-auto'; ?>" id="alerta-bloqueo">
+                        <div class="alert-icon-box"><i class="bi bi-shield-slash-fill"></i></div>
+                        <div class="alert-body">
+                            <div class="alert-title"><?php echo $segundos_restantes > 0 ? 'ACCESO BLOQUEADO' : 'ERROR DE ACCESO'; ?></div>
+                            <div class="alert-text"><?php echo htmlspecialchars($error); ?></div>
+                            <?php if ($segundos_restantes > 0): ?>
+                                <div class="alert-timer" id="alertTimer"><?php echo $segundos_restantes; ?> <small>seg</small></div>
+                                <div class="alert-progress">
+                                    <div class="alert-progress-fill" id="alertProgressFill"></div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <?php if ($exito): ?>
-                <div class="alert-card-jv alert-card-success flash-auto" id="alerta-exito">
-                    <div class="alert-icon-box"><i class="bi bi-shield-check-fill"></i></div>
-                    <div class="alert-body">
-                        <div class="alert-title">OPERACIÓN EXITOSA</div>
-                        <div class="alert-text"><?php echo htmlspecialchars($exito); ?></div>
+                <?php if ($exito): ?>
+                    <div class="alert-card-jv alert-card-success flash-auto" id="alerta-exito">
+                        <div class="alert-icon-box"><i class="bi bi-shield-check-fill"></i></div>
+                        <div class="alert-body">
+                            <div class="alert-title">OPERACIÓN EXITOSA</div>
+                            <div class="alert-text"><?php echo htmlspecialchars($exito); ?></div>
+                        </div>
                     </div>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <?php // ==========================================
-            // FORMULARIO DE INICIO DE SESIÓN
-            // ========================================== 
-            ?>
-            <form action="" method="POST">
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                <form action="" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
 
-                <div class="field-group">
-                    <i class="field-icon bi bi-person-fill"></i>
-                    <input type="text" id="f-user" name="usuario" class="field-input" placeholder="ID de Operador" required autofocus maxlength="30" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
-                </div>
+                    <div class="field-group">
+                        <i class="field-icon bi bi-person-fill"></i>
+                        <input type="text" id="f-user" name="usuario" class="field-input" placeholder="ID de Operador" required autofocus maxlength="30" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                    </div>
 
-                <div class="field-group">
-                    <i class="field-icon bi bi-lock-fill"></i>
-                    <input type="password" id="f-pass" name="password" class="field-input" placeholder="Clave de Acceso" required maxlength="72" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
-                    <button type="button" class="field-eye" id="btnEyePass" aria-label="Mostrar contraseña">
-                        <i class="bi bi-eye-slash-fill" id="iconEyePass"></i>
+                    <div class="field-group">
+                        <i class="field-icon bi bi-lock-fill"></i>
+                        <input type="password" id="f-pass" name="password" class="field-input" placeholder="Clave de Acceso" required maxlength="72" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                        <button type="button" class="field-eye" id="btnEyePass" aria-label="Mostrar contraseña">
+                            <i class="bi bi-eye-slash-fill" id="iconEyePass"></i>
+                        </button>
+                    </div>
+
+                    <button type="submit" name="btn_login" class="btn-access" id="btn-login" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                        <span>AUTENTICAR</span> <i class="bi bi-box-arrow-in-right"></i>
                     </button>
-                </div>
 
-                <button type="submit" name="btn_login" class="btn-access mt-2" id="btn-login" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
-                    AUTENTICAR <i class="bi bi-cpu ms-2"></i>
-                </button>
-
-                <div class="text-center mt-3">
-                    <a href="recuperar.php" class="text-decoration-none text-jv-orange fw-bold" style="font-size:1rem;">
-                        <i class="bi bi-question-circle me-1"></i>¿Olvidaste tu contraseña?
+                    <a href="recuperar.php" class="login-link-pill">
+                        <i class="bi bi-question-circle-fill"></i>¿Olvidaste tu contraseña?
                     </a>
+                </form>
+
+                <div class="login-divider">
+                    <span>Nuevo Personal</span>
                 </div>
-            </form>
 
-            <div class="divider">Nuevo Personal</div>
-
-            <div class="text-center">
-                <a href="#" class="text-decoration-none text-jv-orange fw-bold" style="font-size:0.95rem;" data-bs-toggle="modal" data-bs-target="#modalReg">
-                    <i class="bi bi-person-plus me-1"></i>
+                <a href="#" class="login-link-pill login-link-pill--outline" data-bs-toggle="modal" data-bs-target="#modalReg">
+                    <i class="bi bi-person-plus-fill"></i>
                     <?php echo $sistema_vacio ? 'Configurar Administrador Inicial' : 'Solicitar Acceso de Personal'; ?>
                 </a>
+
             </div>
         </div>
     </div>
