@@ -320,6 +320,41 @@ if (!function_exists('validarPasswordFuerte')) {
     }
 }
 
+if (!function_exists('generarPasswordCheck')) {
+    /**
+     * Genera un hash SHA-256 de la contraseña en minúsculas para detección rápida de duplicados.
+     * Se almacena en la columna password_check de usuarios.
+     *
+     * @param string $password Contraseña en texto plano.
+     * @return string Hash SHA-256 en minúsculas (64 caracteres hex).
+     */
+    function generarPasswordCheck(string $password): string
+    {
+        return hash('sha256', mb_strtolower($password, 'UTF-8'));
+    }
+}
+
+if (!function_exists('existePasswordDuplicado')) {
+    /**
+     * Verifica si ya existe otro usuario con la misma contraseña (case-insensitive).
+     *
+     * @param object $db Instancia de Database.
+     * @param string $password_check Hash de la contraseña a verificar.
+     * @param int|null $exclude_id ID de usuario a excluir (para cambios de contraseña propios).
+     * @return bool true si ya existe otro usuario con esa contraseña.
+     */
+    function existePasswordDuplicado($db, string $password_check, ?int $exclude_id = null): bool
+    {
+        $sql = "SELECT id_usuario FROM usuarios WHERE password_check = ?";
+        $params = [$password_check];
+        if ($exclude_id !== null) {
+            $sql .= " AND id_usuario != ?";
+            $params[] = $exclude_id;
+        }
+        return (bool) $db->fetchOne($sql, $params);
+    }
+}
+
 if (!function_exists('purgarPreviewsSesion')) {
     /**
      * Elimina los previews de ventas abandonados de la sesión.

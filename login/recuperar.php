@@ -104,11 +104,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } elseif ($newPassword !== $newPasswordConfirmation) {
                 $error = "LAS CONTRASEÑAS NO COINCIDEN.";
             } else {
-                $passwordHash = password_hash($newPassword, PASSWORD_BCRYPT);
-                $db->execute("UPDATE usuarios SET password = ? WHERE id_usuario = ?", [$passwordHash, $_SESSION['rec_id']]);
-                registrarAuditoria('editar', 'Contraseña recuperada por pregunta de seguridad');
-                $exito = "CONTRASEÑA ACTUALIZADA. YA PUEDES INICIAR SESIÓN.";
-                $_SESSION['rec_step'] = 4;
+                $pass_check = generarPasswordCheck($newPassword);
+                if (existePasswordDuplicado($db, $pass_check, $_SESSION['rec_id'])) {
+                    $error = "LA CONTRASEÑA YA ESTA EN USO POR OTRO USUARIO. ELIGE UNA DIFERENTE.";
+                } else {
+                    $passwordHash = password_hash($newPassword, PASSWORD_BCRYPT);
+                    $db->execute("UPDATE usuarios SET password = ?, password_check = ? WHERE id_usuario = ?", [$passwordHash, $pass_check, $_SESSION['rec_id']]);
+                    registrarAuditoria('editar', 'Contraseña recuperada por pregunta de seguridad');
+                    $exito = "CONTRASEÑA ACTUALIZADA. YA PUEDES INICIAR SESIÓN.";
+                    $_SESSION['rec_step'] = 4;
+                }
             }
         }
     }

@@ -106,23 +106,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
             if ($dup) {
                 $error = "EL USUARIO O CORREO YA ESTA EN USO";
             } else {
-                $pass_hash = password_hash($new_pass, PASSWORD_BCRYPT);
-                $resp_hash = password_hash(normalizarRespuestaSeguridad($reg_respuesta), PASSWORD_BCRYPT);
-                $es_admin = $sistema_vacio;
-                $db->insert('usuarios', [
-                    'usuario'             => $new_user,
-                    'correo'              => $new_email,
-                    'password'            => $pass_hash,
-                    'id_rol'              => $es_admin ? 1 : NULL,
-                    'pregunta_seguridad'  => $reg_pregunta,
-                    'respuesta_seguridad' => $resp_hash,
-                    'status'              => $es_admin ? 'Activo' : 'Inactivo',
-                    'aprobado'            => $es_admin ? 1 : 0,
-                ]);
-                registrarAuditoria('crear', 'Nuevo usuario registrado');
-                $exito = $es_admin
-                    ? "ADMINISTRADOR CREADO. YA PUEDES INICIAR SESION."
-                    : "REGISTRO EXITOSO. ESPERE A QUE EL ADMINISTRADOR APROBE SU CUENTA.";
+                $pass_check = generarPasswordCheck($new_pass);
+                if (existePasswordDuplicado($db, $pass_check)) {
+                    $error = "LA CONTRASEÑA YA ESTA EN USO POR OTRO USUARIO. ELIGE UNA DIFERENTE.";
+                } else {
+                    $pass_hash = password_hash($new_pass, PASSWORD_BCRYPT);
+                    $resp_hash = password_hash(normalizarRespuestaSeguridad($reg_respuesta), PASSWORD_BCRYPT);
+                    $es_admin = $sistema_vacio;
+                    $db->insert('usuarios', [
+                        'usuario'             => $new_user,
+                        'correo'              => $new_email,
+                        'password'            => $pass_hash,
+                        'password_check'      => $pass_check,
+                        'id_rol'              => $es_admin ? 1 : NULL,
+                        'pregunta_seguridad'  => $reg_pregunta,
+                        'respuesta_seguridad' => $resp_hash,
+                        'status'              => $es_admin ? 'Activo' : 'Inactivo',
+                        'aprobado'            => $es_admin ? 1 : 0,
+                    ]);
+                    registrarAuditoria('crear', 'Nuevo usuario registrado');
+                    $exito = $es_admin
+                        ? "ADMINISTRADOR CREADO. YA PUEDES INICIAR SESION."
+                        : "REGISTRO EXITOSO. ESPERE A QUE EL ADMINISTRADOR APROBE SU CUENTA.";
+                }
             }
         }
     }

@@ -356,6 +356,7 @@ CREATE TABLE `usuarios` (
   `usuario` varchar(50) NOT NULL,
   `correo` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `password_check` varchar(64) DEFAULT NULL COMMENT 'SHA-256 de password en minúsculas para detección de duplicados',
   `id_rol` int(11) DEFAULT NULL,
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `aprobado` tinyint(1) DEFAULT 0 COMMENT '0=Pendiente, 1=Aprobado',

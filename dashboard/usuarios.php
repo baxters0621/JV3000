@@ -57,10 +57,16 @@ if (isset($_POST['accion_usuario'])) {
                 header("Location: usuarios.php");
                 exit();
             }
+            $pass_check = generarPasswordCheck($password);
+            if (existePasswordDuplicado($db, $pass_check, $id_target)) {
+                $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'LA CONTRASEÑA YA ESTA EN USO POR OTRO USUARIO. ELIGE UNA DIFERENTE.'];
+                header("Location: usuarios.php");
+                exit();
+            }
             $pass_hash = password_hash($password, PASSWORD_BCRYPT);
             $db->execute(
-                "UPDATE usuarios SET usuario=?, correo=?, password=?, id_rol=?, status=?, aprobado=? WHERE id_usuario=?",
-                [$usuario, $correo, $pass_hash, $rol_final, $status_final, ($status_final == 'Activo' ? 1 : 0), $id_target]
+                "UPDATE usuarios SET usuario=?, correo=?, password=?, password_check=?, id_rol=?, status=?, aprobado=? WHERE id_usuario=?",
+                [$usuario, $correo, $pass_hash, $pass_check, $rol_final, $status_final, ($status_final == 'Activo' ? 1 : 0), $id_target]
             );
         } else {
             $db->execute(

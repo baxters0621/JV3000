@@ -9,7 +9,7 @@ $csrf_token = Security::generateToken();
 $base_assets = BASE_PATH . 'assets/';
 
 $id_usuario = (int)$_SESSION['id_usuario'];
-$usuario_data = $db->fetchOne("SELECT id_usuario, usuario, correo, password, pregunta_seguridad FROM usuarios WHERE id_usuario = ?", [$id_usuario]);
+        $usuario_data = $db->fetchOne("SELECT id_usuario, usuario, correo, password, password_check, pregunta_seguridad FROM usuarios WHERE id_usuario = ?", [$id_usuario]);
 if (!$usuario_data) {
     header("Location: ../dashboard/index.php");
     exit();
@@ -63,6 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'actua
         if ($actual === $nueva) {
             $errores[] = 'La nueva contraseña debe ser diferente a la actual.';
         }
+        $pass_check = generarPasswordCheck($nueva);
+        if (existePasswordDuplicado($db, $pass_check, $id_usuario)) {
+            $errores[] = 'LA CONTRASEÑA YA ESTA EN USO POR OTRO USUARIO. ELIGE UNA DIFERENTE.';
+        }
     }
 
     // Pregunta y respuesta de seguridad
@@ -74,18 +78,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'actua
 
     if (empty($errores)) {
         $hash_final = $usuario_data['password'];
+        $check_final = $usuario_data['password_check'] ?? null;
         if ($nueva !== '') {
             $hash_final = password_hash($nueva, PASSWORD_BCRYPT);
+            $check_final = $pass_check;
         }
         $resp_hash = password_hash(normalizarRespuestaSeguridad($respuesta), PASSWORD_BCRYPT);
         $db->execute(
-            "UPDATE usuarios SET usuario = ?, correo = ?, password = ?, pregunta_seguridad = ?, respuesta_seguridad = ? WHERE id_usuario = ?",
-            [$usuario, $correo, $hash_final, $pregunta, $resp_hash, $id_usuario]
+            "UPDATE usuarios SET usuario = ?, correo = ?, password = ?, password_check = ?, pregunta_seguridad = ?, respuesta_seguridad = ? WHERE id_usuario = ?",
+            [$usuario, $correo, $hash_final, $check_final, $pregunta, $resp_hash, $id_usuario]
         );
 
         // Refrescar datos de sesión (nombre visible en el sidebar)
         $_SESSION['usuario'] = $usuario;
-        $usuario_data = $db->fetchOne("SELECT id_usuario, usuario, correo, password, pregunta_seguridad FROM usuarios WHERE id_usuario = ?", [$id_usuario]);
+$usuario_data = $db->fetchOne("SELECT id_usuario, usuario, correo, password, password_check, pregunta_seguridad FROM usuarios WHERE id_usuario = ?", [$id_usuario]);
 
         registrarAuditoria('editar', 'Perfil actualizado por el propio usuario.');
         $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'TUS DATOS SE ACTUALIZARON CORRECTAMENTE.'];
