@@ -331,6 +331,62 @@
                 errores.push('SELECCIONE UN MÉTODO DE PAGO');
                 marcarError(metodo);
                 if (!primerError) primerError = metodo;
+            } else {
+                if (metodo.value === 'Efectivo') {
+                    const tipoDivisa = document.getElementById('selEfectivoTipo');
+                    if (!tipoDivisa.value) {
+                        errores.push('SELECCIONE EL TIPO DE DIVISA (BOLÍVARES O DÓLAR/EURO)');
+                        marcarError(tipoDivisa);
+                        if (!primerError) primerError = tipoDivisa;
+                    } else if (tipoDivisa.value !== 'Bolivares') {
+                        const tasa = document.getElementById('tasaCambio');
+                        const tasaVal = parseFloat(tasa.value.replace(/,/g, '')) || 0;
+                        if (tasaVal <= 0) {
+                            errores.push('LA TASA DE CAMBIO DEBE SER MAYOR A 0');
+                            marcarError(tasa);
+                            if (!primerError) primerError = tasa;
+                        }
+                    }
+                } else if (metodo.value === 'Transferencia') {
+                    const cedula = document.getElementById('pmCedula');
+                    const telefono = document.getElementById('pmTelefono');
+                    const banco = document.getElementById('pmBanco');
+                    const referencia = document.getElementById('pmReferencia');
+                    if (!cedula.value.trim()) {
+                        errores.push('LA CÉDULA DEL BENEFICIARIO ES OBLIGATORIA');
+                        marcarError(cedula);
+                        if (!primerError) primerError = cedula;
+                    }
+                    if (!telefono.value.trim()) {
+                        errores.push('EL TELÉFONO ES OBLIGATORIO');
+                        marcarError(telefono);
+                        if (!primerError) primerError = telefono;
+                    }
+                    if (!banco.value) {
+                        errores.push('SELECCIONE EL BANCO DESTINO');
+                        marcarError(banco);
+                        if (!primerError) primerError = banco;
+                    }
+                    if (!referencia.value.trim()) {
+                        errores.push('EL NÚMERO DE REFERENCIA ES OBLIGATORIO');
+                        marcarError(referencia);
+                        if (!primerError) primerError = referencia;
+                    }
+                } else if (metodo.value === 'Cheque') {
+                    const cheque = document.getElementById('chequeNumero');
+                    if (!cheque.value.trim()) {
+                        errores.push('EL NÚMERO DE CHEQUE ES OBLIGATORIO');
+                        marcarError(cheque);
+                        if (!primerError) primerError = cheque;
+                    }
+                } else if (metodo.value === 'Otro') {
+                    const otro = document.getElementById('otroDescripcion');
+                    if (!otro.value.trim()) {
+                        errores.push('DESCRIBA LA FORMA DE PAGO');
+                        marcarError(otro);
+                        if (!primerError) primerError = otro;
+                    }
+                }
             }
 
             const montoEl = document.getElementById('montoPago');
@@ -799,6 +855,27 @@
                     if (e) e.remove();
                 });
             });
+
+            // Pago dinámico: mostrar/ocultar sub-campos según método seleccionado
+            var selMetodo = document.getElementById('selMetodo');
+            if (selMetodo) {
+                selMetodo.addEventListener('change', function() {
+                    var val = this.value;
+                    document.querySelectorAll('.comp-pago-detalle').forEach(function(el) { el.style.display = 'none'; });
+                    document.getElementById('pagoEfectivo').style.display = val === 'Efectivo' ? '' : 'none';
+                    document.getElementById('pagoTransferencia').style.display = val === 'Transferencia' ? '' : 'none';
+                    document.getElementById('pagoCheque').style.display = val === 'Cheque' ? '' : 'none';
+                    document.getElementById('pagoOtro').style.display = val === 'Otro' ? '' : 'none';
+                });
+            }
+
+            // Efectivo: mostrar tasa de cambio si NO es bolívares
+            var selEfectivoTipo = document.getElementById('selEfectivoTipo');
+            if (selEfectivoTipo) {
+                selEfectivoTipo.addEventListener('change', function() {
+                    document.getElementById('divTasaCambio').style.display = this.value !== 'Bolivares' ? '' : 'none';
+                });
+            }
 
             // Toolbox: búsqueda con debounce
             if (toolboxInput && resultadosBox) {

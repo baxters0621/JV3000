@@ -19,6 +19,42 @@
  */
 class Compra extends Model
 {
+    /** Bancos de Venezuela para Pago Móvil (código BIN → nombre). */
+    private const BANCOS_VZLA = [
+        '0102' => 'Banco de Venezuela',
+        '0104' => 'Banco Provincial',
+        '0105' => 'Banco Mercantil',
+        '0108' => 'Banco BBVA Provincial',
+        '0114' => 'Banco Continental',
+        '0116' => 'Banco Plaza',
+        '0128' => 'Banco Caroní',
+        '0134' => 'Bancaribe',
+        '0137' => 'Banco Sofitasa',
+        '0151' => 'BFC Banco Fondo Común',
+        '0156' => '100% Banco',
+        '0157' => 'Banco Exterior',
+        '0163' => 'Banco del Tesoro',
+        '0166' => 'Banco Agrícola',
+        '0168' => 'Bancrecer',
+        '0169' => 'Mi Banco',
+        '0171' => 'Banco Digital de los Trabajadores',
+        '0172' => 'Bancamiga',
+        '0173' => 'Banco Internacional',
+        '0174' => 'Banplus',
+        '0175' => 'Banco Copper National Bank',
+        '0177' => 'Banco de las Fuerzas Armadas',
+        '0178' => 'Banco Peal',
+        '0182' => 'Banco Together Bank',
+        '0183' => 'Novel Bank',
+        '0185' => 'Banco Nova',
+        '0186' => 'Spare Bank',
+        '0187' => 'Banco Tp',
+        '0188' => 'Activobank',
+        '0189' => 'Bangente',
+        '0190' => 'Banco Digital Credipag',
+        '0191' => 'Banco Nacional de Crédito',
+    ];
+
     /**
      * Facturas activas para el tablero, con filtros opcionales.
      *
@@ -266,6 +302,58 @@ class Compra extends Model
         $fecha_compra = date('Y-m-d H:i:s');
         $fecha_pago = date('Y-m-d H:i:s');
 
+        // Construir detalle_pago JSON según método
+        $detalle_pago = null;
+        if ($metodo_pago === 'Efectivo') {
+            $tipo = trim($purchaseFormData['efectivo_tipo'] ?? '');
+            if (!in_array($tipo, ['Bolivares', 'Dolar', 'Euro'], true)) {
+                return ['ok' => false, 'mensaje' => 'SELECCIONE UN TIPO DE DIVISA VÁLIDO.'];
+            }
+            $detalle_pago = ['tipo' => $tipo];
+            if ($tipo !== 'Bolivares') {
+                $tasa = round((float)($purchaseFormData['tasa_cambio'] ?? 0), 4);
+                if ($tasa <= 0) {
+                    return ['ok' => false, 'mensaje' => 'LA TASA DE CAMBIO DEBE SER MAYOR A 0.'];
+                }
+                $detalle_pago['tasa_cambio'] = $tasa;
+            }
+        } elseif ($metodo_pago === 'Transferencia') {
+            $cedula = trim($purchaseFormData['pm_cedula'] ?? '');
+            $telefono = trim($purchaseFormData['pm_telefono'] ?? '');
+            $banco = trim($purchaseFormData['pm_banco'] ?? '');
+            $referencia = trim($purchaseFormData['pm_referencia'] ?? '');
+            if ($cedula === '') {
+                return ['ok' => false, 'mensaje' => 'LA CÉDULA DEL BENEFICIARIO ES OBLIGATORIA.'];
+            }
+            if ($telefono === '') {
+                return ['ok' => false, 'mensaje' => 'EL TELÉFONO ES OBLIGATORIO.'];
+            }
+            if (!in_array($banco, array_keys(self::BANCOS_VZLA), true)) {
+                return ['ok' => false, 'mensaje' => 'SELECCIONE UN BANCO DESTINO VÁLIDO.'];
+            }
+            if ($referencia === '') {
+                return ['ok' => false, 'mensaje' => 'EL NÚMERO DE REFERENCIA ES OBLIGATORIO.'];
+            }
+            $detalle_pago = [
+                'cedula'    => $cedula,
+                'telefono'  => $telefono,
+                'banco'     => $banco,
+                'referencia'=> $referencia,
+            ];
+        } elseif ($metodo_pago === 'Cheque') {
+            $cheque = trim($purchaseFormData['cheque_numero'] ?? '');
+            if ($cheque === '') {
+                return ['ok' => false, 'mensaje' => 'EL NÚMERO DE CHEQUE ES OBLIGATORIO.'];
+            }
+            $detalle_pago = ['numero' => $cheque];
+        } elseif ($metodo_pago === 'Otro') {
+            $desc = trim($purchaseFormData['otro_descripcion'] ?? '');
+            if ($desc === '') {
+                return ['ok' => false, 'mensaje' => 'DESCRIBA LA FORMA DE PAGO.'];
+            }
+            $detalle_pago = ['descripcion' => $desc];
+        }
+
         $this->db->begin();
         try {
             $compra_id = $this->db->insert('compras', [
@@ -284,6 +372,7 @@ class Compra extends Model
                 'monto_pago'       => $monto_pago,
                 'fecha_pago'       => $fecha_pago,
                 'metodo_pago'      => $metodo_pago,
+                'detalle_pago'     => $detalle_pago ? json_encode($detalle_pago) : null,
                 'estado_recepcion' => 'Pendiente',
             ]);
 

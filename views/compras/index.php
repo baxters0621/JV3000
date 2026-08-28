@@ -253,7 +253,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="comp-step-title">Datos de la Factura</div>
                                 <div class="comp-step-desc">Informaci&oacute;n fiscal del comprobante recibido</div>
                             </div>
-                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Factura: 6 a 8 d&iacute;gitos (la define el comercio). Control: 2 d&iacute;gitos de serie + 8 d&iacute;gitos (lo fija la imprenta autorizada por el SENIAT). Ambos son obligatorios."></i>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Ambos campos son obligatorios. La factura y el control deben coincidir con los datos impressos en el comprobante fiscal."></i>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">
@@ -291,7 +291,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     <select name="metodo_pago" class="input-jv comp-input" id="selMetodo" aria-label="Metodo de pago">
                                         <option value="">Selecciona un m&eacute;todo...</option>
                                         <option value="Efectivo">Efectivo</option>
-                                        <option value="Transferencia">Transferencia</option>
+                                        <option value="Transferencia">Transferencia / Pago M&oacute;vil</option>
                                         <option value="Cheque">Cheque</option>
                                         <option value="Otro">Otro</option>
                                     </select>
@@ -305,6 +305,102 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     <input type="date" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha del pago" disabled>
                                 </div>
                             </div>
+
+                            <!-- Sub-detalle: Efectivo -->
+                            <div id="pagoEfectivo" class="comp-pago-detalle" style="display:none;">
+                                <div class="row g-3 mt-1">
+                                    <div class="col-md-4">
+                                        <label class="comp-label">Tipo de Divisa <span class="text-danger">*</span></label>
+                                        <select name="efectivo_tipo" class="input-jv comp-input" id="selEfectivoTipo">
+                                            <option value="">Selecciona...</option>
+                                            <option value="Bolivares">Bol&iacute;vares (VES)</option>
+                                            <option value="Dolar">D&oacute;lar (USD)</option>
+                                            <option value="Euro">Euro (EUR)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4" id="divTasaCambio" style="display:none;">
+                                        <label class="comp-label">Tasa de Cambio <span class="text-danger">*</span></label>
+                                        <input type="text" inputmode="decimal" name="tasa_cambio" class="input-jv comp-input" id="tasaCambio" placeholder="Ej: 36.50" oninput="formatearPrecioCompra(this)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sub-detalle: Transferencia / Pago Móvil -->
+                            <div id="pagoTransferencia" class="comp-pago-detalle" style="display:none;">
+                                <div class="row g-3 mt-1">
+                                    <div class="col-md-3">
+                                        <label class="comp-label">C&eacute;dula del Beneficiario <span class="text-danger">*</span></label>
+                                        <input type="text" inputmode="numeric" name="pm_cedula" class="input-jv comp-input" id="pmCedula" placeholder="V-12345678" maxlength="12">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="comp-label">Tel&eacute;fono <span class="text-danger">*</span></label>
+                                        <input type="text" inputmode="numeric" name="pm_telefono" class="input-jv comp-input" id="pmTelefono" placeholder="0412-1234567" maxlength="12">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="comp-label">Banco Destino <span class="text-danger">*</span></label>
+                                        <select name="pm_banco" class="input-jv comp-input" id="pmBanco">
+                                            <option value="">Selecciona banco...</option>
+                                            <option value="0102">Banco de Venezuela</option>
+                                            <option value="0104">Banco Provincial</option>
+                                            <option value="0105">Banco Mercantil</option>
+                                            <option value="0108">Banco BBVA Provincial</option>
+                                            <option value="0114">Banco Continental</option>
+                                            <option value="0116">Banco Plaza</option>
+                                            <option value="0128">Banco Caroní</option>
+                                            <option value="0134">Bancaribe</option>
+                                            <option value="0137">Banco Sofitasa</option>
+                                            <option value="0151">BFC Banco Fondo Común</option>
+                                            <option value="0156">100% Banco</option>
+                                            <option value="0157">Banco Exterior</option>
+                                            <option value="0163">Banco del Tesoro</option>
+                                            <option value="0166">Banco Agrícola</option>
+                                            <option value="0168">Bancrecer</option>
+                                            <option value="0169">Mi Banco</option>
+                                            <option value="0171">Banco Digital de los Trabajadores</option>
+                                            <option value="0172">Bancamiga</option>
+                                            <option value="0173">Banco Internacional</option>
+                                            <option value="0174">Banplus</option>
+                                            <option value="0175">Banco Copper National Bank</option>
+                                            <option value="0177">Banco de las Fuerzas Armadas</option>
+                                            <option value="0178">Banco Peal</option>
+                                            <option value="0182">Banco Together Bank</option>
+                                            <option value="0183">Novel Bank</option>
+                                            <option value="0185">Banco Nova</option>
+                                            <option value="0186">Spare Bank</option>
+                                            <option value="0187">Banco Tp</option>
+                                            <option value="0188">Activobank</option>
+                                            <option value="0189">Bangente</option>
+                                            <option value="0190">Banco Digital Credipag</option>
+                                            <option value="0191">Banco Nacional de Cr&eacute;dito</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="comp-label">N&ordm; Referencia <span class="text-danger">*</span></label>
+                                        <input type="text" inputmode="numeric" name="pm_referencia" class="input-jv comp-input" id="pmReferencia" placeholder="N&ordm; de confirmaci&oacute;n" maxlength="20">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sub-detalle: Cheque -->
+                            <div id="pagoCheque" class="comp-pago-detalle" style="display:none;">
+                                <div class="row g-3 mt-1">
+                                    <div class="col-md-4">
+                                        <label class="comp-label">N&ordm; de Cheque <span class="text-danger">*</span></label>
+                                        <input type="text" inputmode="numeric" name="cheque_numero" class="input-jv comp-input" id="chequeNumero" placeholder="N&ordm; del cheque" maxlength="20">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sub-detalle: Otro -->
+                            <div id="pagoOtro" class="comp-pago-detalle" style="display:none;">
+                                <div class="row g-3 mt-1">
+                                    <div class="col-md-6">
+                                        <label class="comp-label">Describe la forma de pago <span class="text-danger">*</span></label>
+                                        <input type="text" name="otro_descripcion" class="input-jv comp-input" id="otroDescripcion" placeholder="Ej: Pago con criptomoneda, bono, etc." maxlength="100">
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
