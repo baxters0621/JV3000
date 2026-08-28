@@ -505,9 +505,10 @@
             color: var(--jv-navy);
         }
         .comp-step-desc {
-            font-size: .82rem;
-            color: var(--jv-text-muted);
+            font-size: .85rem;
+            color: #475569;
             margin-top: 2px;
+            font-weight: 400;
         }
         .comp-step-body {
             padding: 18px 20px;
@@ -530,14 +531,14 @@
             font-weight: 400;
             text-transform: none;
             letter-spacing: 0;
-            color: var(--jv-text-muted);
+            color: #64748b;
         }
         .comp-label-sm {
             font-size: .75rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .6px;
-            color: var(--jv-text-muted);
+            color: #475569;
             margin-bottom: 4px;
             display: block;
         }
@@ -545,8 +546,8 @@
             width: 100%;
         }
         .comp-hint {
-            font-size: .72rem;
-            color: var(--jv-text-muted);
+            font-size: .75rem;
+            color: #64748b;
             margin-top: 4px;
             display: block;
         }
@@ -672,11 +673,11 @@
         }
         .comp-summary-label {
             display: block;
-            font-size: .72rem;
+            font-size: .75rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .8px;
-            color: var(--jv-text-muted);
+            color: #475569;
             margin-bottom: 2px;
         }
         .comp-summary-value {
