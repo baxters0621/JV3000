@@ -304,84 +304,113 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     <div class="modal fade modal-reg" id="modalReg" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title font-brand text-jv-orange">
-                        <i class="bi bi-shield-plus me-2"></i>
-                        <?php echo $sistema_vacio ? 'INSTALACION DE SISTEMA' : 'SOLICITUD DE ACCESO'; ?>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="reg-header">
+                    <div>
+                        <h5 class="font-brand"><i class="bi bi-shield-plus me-2"></i><?php echo $sistema_vacio ? 'INSTALACION DE SISTEMA' : 'SOLICITUD DE ACCESO'; ?></h5>
+                        <small>Completa tus datos para crear tu cuenta</small>
+                    </div>
+                    <button type="button" class="reg-close-btn" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
                 <form action="" method="POST">
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-                    <div class="modal-body">
+                    <div class="modal-body reg-body">
 
-                        <label class="form-label">Nombre de Usuario</label>
-                        <div class="field-group">
-                            <i class="field-icon bi bi-at"></i>
-                            <input type="text" name="reg_usuario" id="r-user" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Ej: admin_sistema">
-                        </div>
-                        <small class="reg-hint" id="r-user-hint">Minimo 4 caracteres, solo letras, numeros y guiones bajos.</small>
+                        <!-- SECCION: DATOS DE CUENTA -->
+                        <div class="reg-section sec-cuenta">
+                            <div class="reg-section-header">
+                                <span class="reg-section-chip chip-cuenta"><i class="bi bi-person-fill"></i></span>
+                                <div>
+                                    <div class="reg-section-title">Datos de Cuenta</div>
+                                    <div class="reg-section-sub">Elige tu usuario y correo electrónico</div>
+                                </div>
+                            </div>
 
-                        <label class="form-label" style="margin-top:14px;">Correo Electronico</label>
-                        <div class="field-group">
-                            <i class="field-icon bi bi-envelope-fill"></i>
-                            <input type="email" name="reg_email" class="field-input" required maxlength="50" placeholder="ejemplo@jv3000.com">
-                        </div>
+                            <label class="reg-label" for="r-user">NOMBRE DE USUARIO <span class="text-danger">*</span></label>
+                            <div class="reg-field">
+                                <i class="reg-field-icon bi bi-at"></i>
+                                <input type="text" name="reg_usuario" id="r-user" class="reg-input" required maxlength="20" placeholder="Ej: admin_sistema" autocomplete="off">
+                                <span class="reg-field-status" id="r-user-status"></span>
+                            </div>
+                            <small class="reg-hint" id="r-user-hint">Mínimo 4 caracteres, solo letras, números y guiones bajos.</small>
 
-                        <label class="form-label" style="margin-top:14px;">Contraseña</label>
-                        <div class="field-group">
-                            <i class="field-icon bi bi-key-fill"></i>
-                            <input type="password" name="reg_password" id="r-pass" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Cree una clave fuerte">
-                            <button type="button" class="field-eye" id="btnEyeR1" aria-label="Mostrar">
-                                <i class="bi bi-eye-slash-fill" id="iconEyeR1"></i>
-                            </button>
-                        </div>
-                        <div class="strength-meter">
-                            <div class="strength-fill" id="r-meter"></div>
-                        </div>
-                        <small class="reg-hint" id="r-pass-hint">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 símbolo.</small>
-
-                        <label class="form-label" style="margin-top:14px;">Confirmar Contraseña</label>
-                        <div class="field-group">
-                            <i class="field-icon bi bi-key"></i>
-                            <input type="password" name="reg_password_confirm" id="r-pass2" class="field-input" required oninput="validarReg()" maxlength="20" placeholder="Repita la contraseña">
-                            <button type="button" class="field-eye" id="btnEyeR2" aria-label="Mostrar">
-                                <i class="bi bi-eye-slash-fill" id="iconEyeR2"></i>
-                            </button>
-                            <small class="reg-match" id="r-match-hint"></small>
+                            <label class="reg-label" for="r-email">CORREO ELECTRÓNICO <span class="text-danger">*</span></label>
+                            <div class="reg-field">
+                                <i class="reg-field-icon bi bi-envelope-fill"></i>
+                                <input type="email" name="reg_email" id="r-email" class="reg-input" required maxlength="50" placeholder="ejemplo@jv3000.com" autocomplete="off">
+                                <span class="reg-field-status" id="r-email-status"></span>
+                            </div>
+                            <small class="reg-hint" id="r-email-hint">Formato válido de correo electrónico.</small>
                         </div>
 
-                        <div class="reg-section-title">Pregunta de Seguridad</div>
-                        <div class="reg-section-desc">Se usará para recuperar tu contraseña si la olvidas.</div>
+                        <!-- SECCION: CONTRASEÑA -->
+                        <div class="reg-section sec-pass">
+                            <div class="reg-section-header">
+                                <span class="reg-section-chip chip-pass"><i class="bi bi-key-fill"></i></span>
+                                <div>
+                                    <div class="reg-section-title">Contraseña</div>
+                                    <div class="reg-section-sub">Crea una clave fuerte para proteger tu cuenta</div>
+                                </div>
+                            </div>
 
-                        <label class="form-label" style="margin-top:14px;">Pregunta</label>
-                        <div class="field-group">
-                            <i class="field-icon bi bi-question-circle"></i>
-                            <select name="reg_pregunta" id="r-preg" class="field-input" required onchange="validarReg()">
-                                <option value="">Seleccione una pregunta...</option>
-                                <option value="Nombre de tu mascota">Nombre de tu mascota</option>
-                                <option value="Ciudad donde naciste">Ciudad donde naciste</option>
-                                <option value="Nombre de tu mejor amigo">Nombre de tu mejor amigo</option>
-                                <option value="Comida favorita">Comida favorita</option>
-                                <option value="Nombre de tu escuela primaria">Nombre de tu escuela primaria</option>
-                                <option value="Apellido de tu abuela materna">Apellido de tu abuela materna</option>
-                                <option value="Marca de tu primer auto">Marca de tu primer auto</option>
-                                <option value="Color favorito">Color favorito</option>
-                            </select>
+                            <label class="reg-label" for="r-pass">CONTRASEÑA <span class="text-danger">*</span></label>
+                            <div class="reg-field">
+                                <i class="reg-field-icon bi bi-lock-fill"></i>
+                                <input type="password" name="reg_password" id="r-pass" class="reg-input" required maxlength="20" placeholder="Cree una clave fuerte" autocomplete="new-password">
+                                <button type="button" class="reg-field-eye" id="btnEyeR1" aria-label="Mostrar contraseña"><i class="bi bi-eye-slash-fill" id="iconEyeR1"></i></button>
+                            </div>
+                            <div class="reg-meter"><div class="reg-meter-fill" id="r-meter"></div></div>
+                            <small class="reg-hint" id="r-pass-hint">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 símbolo.</small>
+
+                            <label class="reg-label" for="r-pass2">CONFIRMAR CONTRASEÑA <span class="text-danger">*</span></label>
+                            <div class="reg-field">
+                                <i class="reg-field-icon bi bi-key-fill"></i>
+                                <input type="password" name="reg_password_confirm" id="r-pass2" class="reg-input" required maxlength="20" placeholder="Repita la contraseña" autocomplete="new-password">
+                                <button type="button" class="reg-field-eye" id="btnEyeR2" aria-label="Mostrar contraseña"><i class="bi bi-eye-slash-fill" id="iconEyeR2"></i></button>
+                                <span class="reg-field-status" id="r-match-status"></span>
+                            </div>
+                            <small class="reg-hint" id="r-match-hint">Debe coincidir con la contraseña anterior.</small>
                         </div>
 
-                        <label class="form-label" style="margin-top:10px;">Respuesta</label>
-                        <div class="field-group">
-                            <i class="field-icon bi bi-shield-lock"></i>
-                            <input type="text" name="reg_respuesta" id="r-resp" class="field-input" required maxlength="255" oninput="validarReg()" placeholder="Escribe tu respuesta" autocomplete="off">
+                        <!-- SECCION: SEGURIDAD -->
+                        <div class="reg-section sec-seguridad">
+                            <div class="reg-section-header">
+                                <span class="reg-section-chip chip-seguridad"><i class="bi bi-shield-lock-fill"></i></span>
+                                <div>
+                                    <div class="reg-section-title">Pregunta de Seguridad</div>
+                                    <div class="reg-section-sub">Se usará para recuperar tu contraseña si la olvidas.</div>
+                                </div>
+                            </div>
+
+                            <label class="reg-label" for="r-preg">PREGUNTA <span class="text-danger">*</span></label>
+                            <div class="reg-field">
+                                <i class="reg-field-icon bi bi-question-circle-fill"></i>
+                                <select name="reg_pregunta" id="r-preg" class="reg-input" required>
+                                    <option value="">Seleccione una pregunta...</option>
+                                    <option value="Nombre de tu mascota">Nombre de tu mascota</option>
+                                    <option value="Ciudad donde naciste">Ciudad donde naciste</option>
+                                    <option value="Nombre de tu mejor amigo">Nombre de tu mejor amigo</option>
+                                    <option value="Comida favorita">Comida favorita</option>
+                                    <option value="Nombre de tu escuela primaria">Nombre de tu escuela primaria</option>
+                                    <option value="Apellido de tu abuela materna">Apellido de tu abuela materna</option>
+                                    <option value="Marca de tu primer auto">Marca de tu primer auto</option>
+                                    <option value="Color favorito">Color favorito</option>
+                                </select>
+                            </div>
+
+                            <label class="reg-label" for="r-resp">RESPUESTA <span class="text-danger">*</span></label>
+                            <div class="reg-field">
+                                <i class="reg-field-icon bi bi-shield-check"></i>
+                                <input type="text" name="reg_respuesta" id="r-resp" class="reg-input" required maxlength="255" placeholder="Escribe tu respuesta" autocomplete="off">
+                                <span class="reg-field-status" id="r-resp-status"></span>
+                            </div>
+                            <small class="reg-hint" id="r-resp-hint">Escribe una respuesta que recuerdes fácilmente.</small>
                         </div>
 
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer reg-footer">
                         <button type="button" class="btn btn-jv-outline" data-bs-dismiss="modal">CANCELAR</button>
                         <button type="submit" name="btn_registro" id="btn-reg" class="btn btn-jv-primary" disabled>
-                            <i class="bi bi-check2 me-2"></i>
-                            <?php echo $sistema_vacio ? 'CREAR ADMINISTRADOR' : 'ENVIAR SOLICITUD'; ?>
+                            <i class="bi bi-check2 me-2"></i><?php echo $sistema_vacio ? 'CREAR ADMINISTRADOR' : 'ENVIAR SOLICITUD'; ?>
                         </button>
                     </div>
                 </form>

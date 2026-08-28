@@ -112,7 +112,7 @@
 }
 
 /* ==========================================
-   MODAL REGISTRO
+   MODAL REGISTRO — DISEÑO MEJORADO
    ========================================== */
 
 .modal-reg .modal-content {
@@ -120,89 +120,255 @@
     border: 1px solid var(--jv-border);
     border-radius: var(--jv-radius-xl);
     color: var(--jv-text-primary);
-    max-width: 420px;
+    max-width: 480px;
     margin: 0 auto;
+    overflow: hidden;
 }
 
-.modal-reg .modal-header {
-    border-bottom: 1px solid var(--jv-border);
-    padding: 22px 24px 14px;
+/* --- Header degradado naranja --- */
+.reg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 28px 30px;
+    background: linear-gradient(135deg, #9a3412, #c2410c 45%, #EA580C);
+    border-bottom: 3px solid #fb923c;
+    position: relative;
+    overflow: hidden;
 }
-
-.modal-reg .modal-body {
-    padding: 16px 24px 8px;
+.reg-header::before {
+    content: '';
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    top: -40px;
+    right: -20px;
+    pointer-events: none;
 }
-
-.modal-reg .modal-footer {
-    border-top: 1px solid var(--jv-border);
-    padding: 8px 24px 22px;
+.reg-header::after {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    bottom: -30px;
+    left: 15px;
+    pointer-events: none;
 }
-
-.modal-reg .form-label {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--jv-text-muted);
+.reg-header h5 {
+    font-size: 1.35rem;
+    color: #fff;
+    font-weight: 900;
+    margin: 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+.reg-header small {
+    color: rgba(255,255,255,0.92);
+    font-size: .88rem;
+    display: block;
+    margin-top: 6px;
+}
+.reg-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all .2s;
+    flex-shrink: 0;
+}
+.reg-close-btn:hover {
+    background: rgba(255,255,255,0.35);
+    border-color: #fff;
+    transform: scale(1.1);
+}
+
+/* --- Body con scroll --- */
+.reg-body {
+    padding: 20px 26px 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.reg-body::-webkit-scrollbar { width: 5px; }
+.reg-body::-webkit-scrollbar-track { background: transparent; }
+.reg-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* --- Secciones agrupadas --- */
+.reg-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 18px 14px;
+    margin-bottom: 14px;
+}
+.reg-section:last-child { margin-bottom: 0; }
+.reg-section.sec-cuenta    { border-left: 4px solid #EA580C; }
+.reg-section.sec-pass      { border-left: 4px solid #DC2626; }
+.reg-section.sec-seguridad { border-left: 4px solid #7C3AED; }
+
+.reg-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.reg-section-chip {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .95rem;
+}
+.reg-section-chip.chip-cuenta    { background: #EA580C; }
+.reg-section-chip.chip-pass      { background: #DC2626; }
+.reg-section-chip.chip-seguridad { background: #7C3AED; }
+
+.reg-section-title {
+    font-size: .88rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+.reg-section-sub {
+    font-size: .75rem;
+    color: #64748b;
+}
+
+/* --- Labels --- */
+.reg-label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--jv-text-secondary);
     margin-bottom: 6px;
 }
 
-.reg-section-title {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: var(--jv-navy);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+/* --- Campos con icono --- */
+.reg-field {
+    position: relative;
     margin-bottom: 4px;
 }
-
-.reg-section-desc {
-    font-size: 0.9rem;
+.reg-field-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
     color: var(--jv-text-muted);
-    margin-bottom: 14px;
+    font-size: 1rem;
+    z-index: 2;
+    pointer-events: none;
+    transition: color .2s;
 }
+.reg-input {
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid var(--jv-border);
+    border-radius: var(--jv-radius);
+    padding: 13px 42px 13px 40px;
+    color: var(--jv-text-primary);
+    font-size: .95rem;
+    transition: all 0.2s ease;
+}
+.reg-input::placeholder { color: #94a3b8; opacity: .8; }
+.reg-input:focus {
+    outline: none;
+    border-color: var(--jv-orange);
+    box-shadow: 0 0 0 3px rgba(234,88,12,0.1);
+}
+.reg-input.is-valid {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 2px rgba(22,163,74,0.1);
+}
+.reg-input.is-invalid {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220,38,38,0.1);
+}
+.reg-input.is-valid ~ .reg-field-icon { color: #16a34a; }
+.reg-input.is-invalid ~ .reg-field-icon { color: #dc2626; }
 
+/* Select styling */
+.reg-input option { padding: 8px; }
+
+/* --- Status icon (inline check/cross) --- */
+.reg-field-status {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.15rem;
+    pointer-events: none;
+    z-index: 2;
+    transition: all .2s;
+}
+.reg-field-status.status-ok   { color: #16a34a; }
+.reg-field-status.status-err  { color: #dc2626; }
+
+/* --- Eye toggle --- */
+.reg-field-eye {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--jv-text-muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    font-size: 1.15rem;
+    transition: color 0.2s ease;
+    z-index: 3;
+}
+.reg-field-eye:hover { color: var(--jv-orange); }
+
+/* --- Hints --- */
 .reg-hint {
-    color: var(--jv-text-muted);
-    font-size: 0.95rem;
-    margin-top: 6px;
     display: block;
+    font-size: .73rem;
+    color: #64748b;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    transition: color .2s;
 }
+.reg-hint.hint-ok  { color: #16a34a; font-weight: 600; }
+.reg-hint.hint-err { color: #dc2626; font-weight: 600; }
 
-.strength-meter {
-    height: 3px;
+/* --- Strength meter --- */
+.reg-meter {
+    height: 4px;
     background: rgba(15,26,46,0.08);
-    border-radius: 2px;
+    border-radius: 3px;
     overflow: hidden;
     margin-top: 6px;
+    margin-bottom: 2px;
 }
-
-.strength-fill {
+.reg-meter-fill {
     height: 100%;
     width: 0%;
     transition: all 0.35s ease;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 
-.modal-reg .field-group {
-    position: relative;
-    margin-bottom: 14px;
+/* --- Footer --- */
+.reg-footer {
+    border-top: 1px solid var(--jv-border);
+    padding: 12px 26px 20px;
 }
-
-.modal-reg .modal-footer .btn {
-    font-size: 1rem;
-    padding: 12px 28px;
-}
-
-.reg-match {
-    position: absolute;
-    right: 44px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.25rem;
-    pointer-events: none;
-    z-index: 2;
-}
+.reg-footer .btn { font-size: .95rem; padding: 11px 26px; }
 
 /* ==========================================
    ALERTAS MEJORADAS — TEMA CLARO

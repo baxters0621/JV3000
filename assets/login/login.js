@@ -1,86 +1,174 @@
 
+// ==========================================
+// EYE TOGGLE — LOGIN + REGISTRO
+// ==========================================
 function setupEye(btnId, iconId, inputId) {
-    var buttonElement = document.getElementById(btnId);
-    var iconElement = document.getElementById(iconId);
-    var inputElement = document.getElementById(inputId);
-    if (!buttonElement || !iconElement || !inputElement) return;
-    buttonElement.addEventListener('click', function() {
-        if (inputElement.type === 'password') {
-            inputElement.type = 'text';
-            iconElement.className = 'bi bi-eye-slash-fill';
+    var btn = document.getElementById(btnId);
+    var icon = document.getElementById(iconId);
+    var input = document.getElementById(inputId);
+    if (!btn || !icon || !input) return;
+    btn.addEventListener('click', function() {
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash-fill';
         } else {
-            inputElement.type = 'password';
-            iconElement.className = 'bi bi-eye-fill';
+            input.type = 'password';
+            icon.className = 'bi bi-eye-fill';
         }
     });
 }
-
 setupEye('btnEyePass', 'iconEyePass', 'f-pass');
 setupEye('btnEyeR1', 'iconEyeR1', 'r-pass');
 setupEye('btnEyeR2', 'iconEyeR2', 'r-pass2');
 
-function validarReg() {
-    var username = document.getElementById('r-user').value.trim();
-    var password = document.getElementById('r-pass').value;
-    var passwordConfirmation = document.getElementById('r-pass2').value;
-    var securityQuestion = document.getElementById('r-preg').value;
-    var securityAnswer = document.getElementById('r-resp').value.trim();
-    var registerButton = document.getElementById('btn-reg');
-    var usernameHint = document.getElementById('r-user-hint');
-    var passwordHint = document.getElementById('r-pass-hint');
-    var passwordMeter = document.getElementById('r-meter');
-
-    var answerIsValid = securityAnswer.length >= 1;
-    document.getElementById('r-resp').style.borderColor = securityAnswer.length > 0 ? 'var(--jv-success)' : '';
-
-    var usernameIsValid = username.length >= 4 && /^[a-zA-Z0-9_]+$/.test(username);
-
-    if (username.length > 0) {
-        usernameHint.style.color = usernameIsValid ? 'var(--jv-success)' : 'var(--jv-danger)';
-    } else {
-        usernameHint.style.color = 'var(--jv-text-muted)';
-    }
-
-    var passwordStrength = 0;
-    if (password.length > 0) {
-        if (password.length >= 8) passwordStrength++;
-        if (/[a-z]/.test(password)) passwordStrength++;
-        if (/[A-Z]/.test(password)) passwordStrength++;
-        if (/[0-9]/.test(password)) passwordStrength++;
-        if (/[\W_]/.test(password)) passwordStrength++;
-        if (password.length >= 12) passwordStrength++;
-        var strengthColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a', '#16a34a'];
-        var strengthWidths = ['15%', '35%', '55%', '80%', '100%', '100%'];
-        var strengthTexts = ['Muy débil', 'Débil', 'Media', 'Fuerte', 'Muy fuerte', 'Muy fuerte'];
-        var strengthIndex = Math.max(0, Math.min(passwordStrength, 5));
-        passwordMeter.style.width = strengthWidths[strengthIndex];
-        passwordMeter.style.backgroundColor = strengthColors[strengthIndex];
-        passwordHint.textContent = strengthTexts[strengthIndex];
-        passwordHint.style.color = strengthColors[strengthIndex];
-    } else {
-        passwordMeter.style.width = '0%';
-        passwordHint.textContent = 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 símbolo.';
-        passwordHint.style.color = 'var(--jv-text-muted)';
-    }
-
-    var passwordIsValid = password.length >= 8;
-    var passwordsMatch = password.length > 0 && password === passwordConfirmation;
-    var matchHint = document.getElementById('r-match-hint');
-    if (passwordConfirmation.length > 0) {
-        matchHint.className = 'reg-match bi ' + (passwordsMatch ? 'bi-check-circle-fill text-jv-success' : 'bi-x-circle-fill text-jv-danger');
-    } else {
-        matchHint.className = 'reg-match';
-        matchHint.textContent = '';
-    }
-    registerButton.disabled = !(usernameIsValid && (passwordStrength >= 3) && passwordsMatch && securityQuestion !== '' && answerIsValid);
+// ==========================================
+// NORMALIZACIÓN — USERNAME
+// ==========================================
+var rUser = document.getElementById('r-user');
+if (rUser) {
+    rUser.addEventListener('input', function() {
+        var pos = this.selectionStart;
+        var raw = this.value;
+        var normalized = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        if (raw !== normalized) {
+            this.value = normalized;
+            this.setSelectionRange(normalized.length, normalized.length);
+        }
+        validarReg();
+    });
 }
 
-document.getElementById('r-preg').addEventListener('change', function() {
-    validarReg();
-});
+// ==========================================
+// VALIDACIÓN EN TIEMPO REAL — REGISTRO
+// ==========================================
+function setFieldState(inputId, statusId, hintId, state, message) {
+    var input = document.getElementById(inputId);
+    var status = document.getElementById(statusId);
+    var hint = document.getElementById(hintId);
+    if (!input) return;
 
+    input.classList.remove('is-valid', 'is-invalid');
+    if (status) {
+        status.classList.remove('status-ok', 'status-err');
+        status.textContent = '';
+    }
+    if (hint) {
+        hint.classList.remove('hint-ok', 'hint-err');
+    }
 
-// Contador regresivo de bloqueo con barra de progreso
+    if (state === 'valid') {
+        input.classList.add('is-valid');
+        if (status) { status.classList.add('status-ok'); status.textContent = '\u2713'; }
+        if (hint && message) { hint.textContent = message; hint.classList.add('hint-ok'); }
+    } else if (state === 'invalid') {
+        input.classList.add('is-invalid');
+        if (status) { status.classList.add('status-err'); status.textContent = '\u2717'; }
+        if (hint && message) { hint.textContent = message; hint.classList.add('hint-err'); }
+    } else {
+        if (hint && message) { hint.textContent = message; }
+    }
+}
+
+function validarReg() {
+    var username  = document.getElementById('r-user').value.trim();
+    var email     = document.getElementById('r-email').value.trim();
+    var password  = document.getElementById('r-pass').value;
+    var pass2     = document.getElementById('r-pass2').value;
+    var pregunta  = document.getElementById('r-preg').value;
+    var respuesta = document.getElementById('r-resp').value.trim();
+    var btn       = document.getElementById('btn-reg');
+
+    // --- USUARIO ---
+    var userDefault = 'Mínimo 4 caracteres, solo letras, números y guiones bajos.';
+    if (username.length === 0) {
+        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'neutral', userDefault);
+    } else if (username.length < 4) {
+        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Faltan ' + (4 - username.length) + ' caracteres (mínimo 4).');
+    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Solo letras, números y guiones bajos.');
+    } else {
+        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'valid', 'Nombre de usuario válido.');
+    }
+    var usernameIsValid = username.length >= 4 && /^[a-zA-Z0-9_]+$/.test(username);
+
+    // --- CORREO ---
+    var emailDefault = 'Formato válido de correo electrónico.';
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email.length === 0) {
+        setFieldState('r-email', 'r-email-status', 'r-email-hint', 'neutral', emailDefault);
+    } else if (!emailRegex.test(email)) {
+        setFieldState('r-email', 'r-email-status', 'r-email-hint', 'invalid', 'El correo no tiene un formato válido.');
+    } else {
+        setFieldState('r-email', 'r-email-status', 'r-email-hint', 'valid', 'Correo electrónico válido.');
+    }
+    var emailIsValid = emailRegex.test(email);
+
+    // --- CONTRASEÑA — STRENGTH METER ---
+    var meter = document.getElementById('r-meter');
+    var passHint = document.getElementById('r-pass-hint');
+    var passDefault = 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 símbolo.';
+    var strength = 0;
+    if (password.length > 0) {
+        if (password.length >= 8) strength++;
+        if (/[a-z]/.test(password)) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[\W_]/.test(password)) strength++;
+        if (password.length >= 12) strength++;
+
+        var colors = ['#dc2626', '#f97316', '#eab308', '#22c55e', '#16a34a', '#16a34a'];
+        var widths = ['12%', '30%', '50%', '75%', '100%', '100%'];
+        var labels = ['Muy débil', 'Débil', 'Media', 'Fuerte', 'Muy fuerte', 'Muy fuerte'];
+        var idx = Math.max(0, Math.min(strength, 5));
+
+        meter.style.width = widths[idx];
+        meter.style.backgroundColor = colors[idx];
+        passHint.textContent = labels[idx];
+        passHint.style.color = colors[idx];
+        passHint.className = 'reg-hint';
+    } else {
+        meter.style.width = '0%';
+        passHint.textContent = passDefault;
+        passHint.style.color = '';
+        passHint.className = 'reg-hint';
+    }
+    var passwordIsValid = password.length >= 8;
+
+    // --- CONFIRMAR CONTRASEÑA ---
+    var matchDefault = 'Debe coincidir con la contraseña anterior.';
+    if (pass2.length === 0) {
+        setFieldState('r-pass2', 'r-match-status', 'r-match-hint', 'neutral', matchDefault);
+    } else if (password !== pass2) {
+        setFieldState('r-pass2', 'r-match-status', 'r-match-hint', 'invalid', 'Las contraseñas no coinciden.');
+    } else {
+        setFieldState('r-pass2', 'r-match-status', 'r-match-hint', 'valid', 'Las contraseñas coinciden.');
+    }
+    var passwordsMatch = password.length > 0 && password === pass2;
+
+    // --- PREGUNTA ---
+    var preguntaIsValid = pregunta !== '';
+
+    // --- RESPUESTA ---
+    var respDefault = 'Escribe una respuesta que recuerdes fácilmente.';
+    if (respuesta.length === 0) {
+        setFieldState('r-resp', 'r-resp-status', 'r-resp-hint', 'neutral', respDefault);
+    } else if (respuesta.length < 1) {
+        setFieldState('r-resp', 'r-resp-status', 'r-resp-hint', 'invalid', 'Escribe al menos 1 carácter.');
+    } else {
+        setFieldState('r-resp', 'r-resp-status', 'r-resp-hint', 'valid', 'Respuesta válida.');
+    }
+    var answerIsValid = respuesta.length >= 1;
+
+    // --- BOTÓN HABILITAR ---
+    btn.disabled = !(usernameIsValid && emailIsValid && passwordIsValid && passwordsMatch && preguntaIsValid && answerIsValid);
+}
+
+// Listener para select de pregunta
+document.getElementById('r-preg').addEventListener('change', function() { validarReg(); });
+
+// ==========================================
+// CONTADOR REGRESIVO DE BLOQUEO
+// ==========================================
 var remainingSeconds = window.JV_CONFIG.remainingLockoutSeconds;
 var totalBlockedSeconds = remainingSeconds;
 if (remainingSeconds > 0) {
@@ -115,8 +203,7 @@ if (remainingSeconds > 0) {
     }, 1000);
 }
 
-
-document.querySelectorAll('.flash-auto').forEach(el => {
-    setTimeout(() => { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }, 4000);
+// Auto-dismiss flash alerts
+document.querySelectorAll('.flash-auto').forEach(function(el) {
+    setTimeout(function() { el.style.transition = 'opacity .5s'; el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 500); }, 4000);
 });
-
