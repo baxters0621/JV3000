@@ -253,7 +253,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="comp-step-title">Datos de la Factura</div>
                                 <div class="comp-step-desc">Informaci&oacute;n fiscal del comprobante recibido</div>
                             </div>
-                            <i class="bi bi-question-circle comp-step-help" data-tooltip="El n&uacute;mero de factura es &uacute;nico por proveedor. El control es opcional. La fecha se registra autom&aacute;ticamente."></i>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="El n&uacute;mero de factura y control son obligatorios. La factura debe ser &uacute;nica por proveedor. La fecha se registra autom&aacute;ticamente."></i>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">
@@ -262,8 +262,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     <input type="text" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Ejemplo: 001254" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="comp-label">N&uacute;mero de Control <span class="comp-label-optional">(opcional)</span></label>
-                                    <input type="text" name="nro_control" aria-label="Numero de control" class="input-jv comp-input" value="" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11">
+                                    <label class="comp-label">N&uacute;mero de Control <span class="text-danger">*</span></label>
+                                    <input type="text" name="nro_control" aria-label="Numero de control" class="input-jv comp-input" value="" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11" required>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="comp-label">Fecha de Compra</label>

@@ -187,9 +187,12 @@ class Compra extends Model
             return ['ok' => false, 'mensaje' => 'ESA FACTURA YA ESTÁ REGISTRADA PARA EL PROVEEDOR.'];
         }
 
-        // Número de control: manual y opcional
+        // Número de control: obligatorio, formato 00-00000000
         $nro_control = trim($purchaseFormData['nro_control'] ?? '');
-        if ($nro_control !== '' && !preg_match('/^\d{2}-\d{8}$/', $nro_control)) {
+        if ($nro_control === '') {
+            return ['ok' => false, 'mensaje' => 'EL NÚMERO DE CONTROL ES OBLIGATORIO.'];
+        }
+        if (!preg_match('/^\d{2}-\d{8}$/', $nro_control)) {
             return ['ok' => false, 'mensaje' => 'NRO. CONTROL INVÁLIDO. Formato: 00-00000000'];
         }
 

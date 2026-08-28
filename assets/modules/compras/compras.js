@@ -311,7 +311,11 @@
 
             const ctrl = document.querySelector('input[name="nro_control"]');
             const ctrlVal = ctrl.value.trim();
-            if (ctrlVal && !/^\d{2}-\d{8}$/.test(ctrlVal)) {
+            if (!ctrlVal) {
+                errores.push('EL NÚMERO DE CONTROL ES OBLIGATORIO');
+                marcarError(ctrl);
+                if (!primerError) primerError = ctrl;
+            } else if (!/^\d{2}-\d{8}$/.test(ctrlVal)) {
                 errores.push('NRO. CONTROL INVÁLIDO (00-00000000)');
                 marcarError(ctrl);
                 if (!primerError) primerError = ctrl;
