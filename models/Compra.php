@@ -315,7 +315,23 @@ class Compra extends Model
                 if ($tasa <= 0) {
                     return ['ok' => false, 'mensaje' => 'LA TASA DE CAMBIO DEBE SER MAYOR A 0.'];
                 }
+                $moneda = $tipo === 'Dolar' ? 'USD' : 'EUR';
+                $monto_original = round((float)($purchaseFormData['monto_original'] ?? 0), 2);
+                if ($monto_original <= 0) {
+                    return ['ok' => false, 'mensaje' => 'EL MONTO EN LA DIVISA ES OBLIGATORIO.'];
+                }
+                $equivalente_ves = round((float)($purchaseFormData['equivalente_ves'] ?? 0), 2);
+                if ($equivalente_ves <= 0) {
+                    return ['ok' => false, 'mensaje' => 'EL EQUIVALENTE EN VES ES INVÁLIDO.'];
+                }
                 $detalle_pago['tasa_cambio'] = $tasa;
+                $detalle_pago['moneda'] = $moneda;
+                $detalle_pago['monto_original'] = $monto_original;
+                $detalle_pago['equivalente_ves'] = $equivalente_ves;
+                $detalle_pago['fecha_tasa'] = date('Y-m-d');
+                // Sobrescribir monto_pago con el equivalente en VES
+                $monto_pago = $equivalente_ves;
+                $status_pago = $monto_pago >= $total ? 'Pagada' : 'Pendiente';
             }
         } elseif ($metodo_pago === 'Transferencia') {
             $cedula = trim($purchaseFormData['pm_cedula'] ?? '');

@@ -42,6 +42,67 @@
             if (el) el.classList.remove('input-error');
         }
 
+        // Consulta la tasa BCV oficial al backend (proxy de ve.dolarapi.com)
+        // Rellena el campo #tasaCambio y muestra info de la fuente.
+        function obtenerTasaCambio(tipo) {
+            var tasaEl = document.getElementById('tasaCambio');
+            var infoEl = document.getElementById('tasaInfo');
+            if (!tasaEl) return;
+            tasaEl.value = '';
+            tasaEl.readOnly = true;
+            tasaEl.classList.add('comp-tasa-auto');
+            tasaEl.classList.remove('comp-tasa-editable');
+            var btn = document.getElementById('btnEditarTasa');
+            if (btn) {
+                btn.innerHTML = '<i class="bi bi-pencil"></i>';
+                btn.setAttribute('data-tooltip', 'Clic para editar manualmente');
+            }
+            if (infoEl) infoEl.textContent = 'Consultando tasa BCV...';
+
+            fetch('index.php?url=tasas/obtener')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.ok) {
+                        if (infoEl) infoEl.textContent = 'Error al obtener tasa. Edita manualmente.';
+                        return;
+                    }
+                    var tasa = tipo === 'Dolar' ? data.usd_oficial : data.eur_oficial;
+                    if (!tasa || tasa <= 0) {
+                        if (infoEl) infoEl.textContent = 'Tasa no disponible. Edita manualmente.';
+                        return;
+                    }
+                    tasaEl.value = Number(tasa).toFixed(4);
+                    var moneda = tipo === 'Dolar' ? 'USD' : 'EUR';
+                    if (infoEl) infoEl.textContent = 'Tasa BCV al ' + data.fecha + ' — 1 ' + moneda + ' = ' + Number(tasa).toFixed(2) + ' VES';
+                    calcularEquivalenteVES();
+                })
+                .catch(function() {
+                    if (infoEl) infoEl.textContent = 'Sin conexión. Edita la tasa manualmente.';
+                });
+        }
+
+        // Calcula el equivalente en VES del monto original en divisa extranjera
+        function calcularEquivalenteVES() {
+            var tasaEl = document.getElementById('tasaCambio');
+            var montoEl = document.getElementById('montoOriginal');
+            var resultadoEl = document.getElementById('equivalenteVES');
+            var hiddenEl = document.getElementById('equivalenteVESInput');
+            var montoPagoEl = document.getElementById('montoPago');
+            if (!tasaEl || !montoEl) return;
+            var tasa = parseFloat(tasaEl.value.replace(/,/g, '')) || 0;
+            var monto = parseFloat(montoEl.value.replace(/,/g, '')) || 0;
+            var equivalente = tasa > 0 && monto > 0 ? tasa * monto : 0;
+            if (resultadoEl) {
+                resultadoEl.textContent = equivalente > 0 ? 'Bs. ' + equivalente.toFixed(2) : 'Bs. 0.00';
+            }
+            if (hiddenEl) hiddenEl.value = equivalente > 0 ? equivalente.toFixed(2) : '0';
+            // Auto-llenar monto pagado con el equivalente VES
+            if (montoPagoEl && equivalente > 0) {
+                montoPagoEl.value = equivalente.toFixed(2);
+                montoEditado = false;
+            }
+        }
+
         // ==========================================
         // TOOLBOX — Búsqueda de productos (AJAX)
         // ==========================================
@@ -345,6 +406,13 @@
                             errores.push('LA TASA DE CAMBIO DEBE SER MAYOR A 0');
                             marcarError(tasa);
                             if (!primerError) primerError = tasa;
+                        }
+                        const montoOrig = document.getElementById('montoOriginal');
+                        const montoOrigVal = parseFloat(montoOrig.value.replace(/,/g, '')) || 0;
+                        if (montoOrigVal <= 0) {
+                            errores.push('EL MONTO EN LA DIVISA ES OBLIGATORIO');
+                            marcarError(montoOrig);
+                            if (!primerError) primerError = montoOrig;
                         }
                     }
                 } else if (metodo.value === 'Transferencia') {
@@ -869,12 +937,54 @@
                 });
             }
 
-            // Efectivo: mostrar tasa de cambio si NO es bolívares
+            // Efectivo divisa: mostrar/ocultar campos y consultar tasa BCV automáticamente
             var selEfectivoTipo = document.getElementById('selEfectivoTipo');
             if (selEfectivoTipo) {
                 selEfectivoTipo.addEventListener('change', function() {
-                    document.getElementById('divTasaCambio').style.display = this.value !== 'Bolivares' ? '' : 'none';
+                    var esDivisa = this.value !== 'Bolivares' && this.value !== '';
+                    document.getElementById('divDivisaExtranjera').style.display = esDivisa ? '' : 'none';
+                    // Reset campos al cambiar
+                    document.getElementById('tasaCambio').value = '';
+                    document.getElementById('tasaInfo').textContent = '';
+                    document.getElementById('montoOriginal').value = '';
+                    document.getElementById('equivalenteVES').textContent = 'Bs. 0.00';
+                    document.getElementById('equivalenteVESInput').value = '0';
+                    if (esDivisa) {
+                        var sym = this.value === 'Dolar' ? 'USD' : 'EUR';
+                        document.getElementById('labelMontoOriginal').innerHTML = 'Monto en ' + sym + ' <span class="text-danger">*</span>';
+                        obtenerTasaCambio(this.value);
+                    }
                 });
+            }
+
+            // Botón editar tasa manualmente
+            var btnEditarTasa = document.getElementById('btnEditarTasa');
+            if (btnEditarTasa) {
+                btnEditarTasa.addEventListener('click', function() {
+                    var tasa = document.getElementById('tasaCambio');
+                    if (tasa.readOnly) {
+                        tasa.readOnly = false;
+                        tasa.classList.remove('comp-tasa-auto');
+                        tasa.classList.add('comp-tasa-editable');
+                        this.innerHTML = '<i class="bi bi-check-lg"></i>';
+                        this.setAttribute('data-tooltip', 'Confirmar tasa manual');
+                        tasa.focus();
+                        tasa.select();
+                    } else {
+                        tasa.readOnly = true;
+                        tasa.classList.remove('comp-tasa-editable');
+                        tasa.classList.add('comp-tasa-auto');
+                        this.innerHTML = '<i class="bi bi-pencil"></i>';
+                        this.setAttribute('data-tooltip', 'Clic para editar manualmente');
+                        calcularEquivalenteVES();
+                    }
+                });
+            }
+
+            // Input monto original: recalcular equivalente al escribir
+            var montoOriginalEl = document.getElementById('montoOriginal');
+            if (montoOriginalEl) {
+                montoOriginalEl.addEventListener('input', calcularEquivalenteVES);
             }
 
             // Toolbox: búsqueda con debounce

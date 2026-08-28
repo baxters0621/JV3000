@@ -318,9 +318,31 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                             <option value="Euro">Euro (EUR)</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-4" id="divTasaCambio" style="display:none;">
-                                        <label class="comp-label">Tasa de Cambio <span class="text-danger">*</span></label>
-                                        <input type="text" inputmode="decimal" name="tasa_cambio" class="input-jv comp-input" id="tasaCambio" placeholder="Ej: 36.50" oninput="formatearPrecioCompra(this)">
+                                </div>
+                                <!-- Campos para divisa extranjera (Dólar / Euro) -->
+                                <div id="divDivisaExtranjera" style="display:none;">
+                                    <div class="row g-3 mt-2">
+                                        <div class="col-md-4">
+                                            <label class="comp-label">Tasa BCV <small class="comp-label-optional">(auto)</small></label>
+                                            <div class="comp-tasa-wrapper">
+                                                <input type="text" name="tasa_cambio" class="input-jv comp-input comp-tasa-auto" id="tasaCambio" readonly>
+                                                <button type="button" class="comp-tasa-edit-btn" id="btnEditarTasa" data-tooltip="Clic para editar manualmente">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            </div>
+                                            <small class="comp-hint" id="tasaInfo"></small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="comp-label" id="labelMontoOriginal">Monto en USD <span class="text-danger">*</span></label>
+                                            <input type="text" inputmode="decimal" name="monto_original" class="input-jv comp-input" id="montoOriginal" placeholder="0.00" oninput="calcularEquivalenteVES();formatearPrecioCompra(this)">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="comp-label">Equivalente en VES</label>
+                                            <div class="comp-equivalente" id="divEquivalente">
+                                                <span class="comp-equivalente-valor" id="equivalenteVES">Bs. 0.00</span>
+                                            </div>
+                                            <input type="hidden" name="equivalente_ves" id="equivalenteVESInput" value="0">
+                                        </div>
                                     </div>
                                 </div>
                             </div>

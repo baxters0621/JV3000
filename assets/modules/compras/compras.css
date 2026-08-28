@@ -563,6 +563,64 @@
             display: block;
         }
 
+        /* ── Tasa de cambio wrapper ── */
+        .comp-tasa-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .comp-tasa-wrapper .comp-input {
+            flex: 1;
+        }
+        .comp-tasa-auto {
+            background-color: #f0fdf4 !important;
+            border-color: #86efac !important;
+            color: #166534 !important;
+            font-weight: 600;
+        }
+        .comp-tasa-editable {
+            background-color: #fffbeb !important;
+            border-color: #fbbf24 !important;
+            color: #92400e !important;
+            font-weight: 600;
+        }
+        .comp-tasa-edit-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #fff;
+            color: #64748b;
+            cursor: pointer;
+            transition: all .15s;
+            flex-shrink: 0;
+        }
+        .comp-tasa-edit-btn:hover {
+            background: #f0fdf4;
+            border-color: #059669;
+            color: #059669;
+        }
+
+        /* ── Equivalente VES ── */
+        .comp-equivalente {
+            display: flex;
+            align-items: center;
+            height: 38px;
+            padding: 0 14px;
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 1px solid #86efac;
+            border-radius: 10px;
+        }
+        .comp-equivalente-valor {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #166534;
+            letter-spacing: .3px;
+        }
+
         /* ── Add product row ── */
         .comp-add-row {
             display: flex;
