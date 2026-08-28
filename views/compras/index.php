@@ -350,13 +350,13 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <div class="comp-cart-table">
                                 <table class="table-jv mb-0">
                                     <colgroup>
-                                        <col style="width:36px;">
-                                        <col>
-                                        <col style="width:60px;">
-                                        <col style="width:90px;">
-                                        <col style="width:110px;">
-                                        <col style="width:90px;">
-                                        <col style="width:36px;">
+                                        <col style="width:4%;">
+                                        <col style="width:38%;">
+                                        <col style="width:10%;">
+                                        <col style="width:14%;">
+                                        <col style="width:16%;">
+                                        <col style="width:14%;">
+                                        <col style="width:4%;">
                                     </colgroup>
                                     <thead>
                                         <tr>

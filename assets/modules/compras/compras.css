@@ -635,8 +635,11 @@
             border-collapse: collapse;
             background: var(--jv-bg-card);
         }
-        .comp-cart-table .table-jv thead th {
+        .comp-cart-table .table-jv thead tr {
             background: linear-gradient(135deg, #065f46, #047857);
+        }
+        .comp-cart-table .table-jv thead th {
+            background: transparent;
             color: #fff;
             padding: 10px 12px;
             font-size: .78rem;
@@ -644,18 +647,38 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             border: none;
+            text-align: center;
+        }
+        .comp-cart-table .table-jv thead th:first-child {
+            text-align: center;
+            width: 36px;
+        }
+        .comp-cart-table .table-jv thead th:nth-child(2) {
+            text-align: left;
+        }
+        .comp-cart-table .table-jv thead th:nth-child(4),
+        .comp-cart-table .table-jv thead th:nth-child(6) {
+            text-align: right;
         }
         .comp-cart-table .table-jv tbody td {
             padding: 12px;
             border-bottom: 1px solid var(--jv-border);
             font-size: .92rem;
             vertical-align: middle;
+            text-align: center;
+        }
+        .comp-cart-table .table-jv tbody td:nth-child(2) {
+            text-align: left;
+        }
+        .comp-cart-table .table-jv tbody td:nth-child(4),
+        .comp-cart-table .table-jv tbody td:nth-child(6) {
+            text-align: right;
         }
         .comp-cart-table .table-jv tbody tr:last-child td {
             border-bottom: none;
         }
         .comp-empty-cart {
-            text-align: center;
+            text-align: center !important;
             padding: 28px 12px !important;
             color: var(--jv-text-muted);
             font-size: .92rem;
