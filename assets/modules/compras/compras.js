@@ -303,8 +303,13 @@
             }
 
             const fac = document.querySelector('input[name="nro_factura"]');
-            if (!fac.value.trim()) {
-                errores.push('NRO. FACTURA ES OBLIGATORIO');
+            const facVal = fac.value.trim();
+            if (!facVal) {
+                errores.push('EL NÚMERO DE FACTURA ES OBLIGATORIO');
+                marcarError(fac);
+                if (!primerError) primerError = fac;
+            } else if (!/^\d{1,20}$/.test(facVal)) {
+                errores.push('NRO. FACTURA: SOLO DÍGITOS (1 A 20 NÚMEROS)');
                 marcarError(fac);
                 if (!primerError) primerError = fac;
             }

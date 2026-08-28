@@ -178,10 +178,13 @@ class Compra extends Model
         }
         $id_solicitud = intval($purchaseFormData['id_solicitud'] ?? 0);
 
-        // Número de factura: manual, única por proveedor
+        // Número de factura: manual, única por proveedor, solo dígitos
         $nro_factura = trim($purchaseFormData['nro_factura'] ?? '');
         if ($nro_factura === '') {
             return ['ok' => false, 'mensaje' => 'EL NÚMERO DE FACTURA ES OBLIGATORIO.'];
+        }
+        if (!preg_match('/^\d{1,20}$/', $nro_factura)) {
+            return ['ok' => false, 'mensaje' => 'NRO. FACTURA INVÁLIDO. SOLO DÍGITOS (MÁXIMO 20).'];
         }
         if ($this->db->fetchOne("SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = ? AND status = 'Activa'", [$id_proveedor, $nro_factura])) {
             return ['ok' => false, 'mensaje' => 'ESA FACTURA YA ESTÁ REGISTRADA PARA EL PROVEEDOR.'];

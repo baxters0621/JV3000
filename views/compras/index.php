@@ -259,7 +259,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="comp-label">N&uacute;mero de Factura <span class="text-danger">*</span></label>
-                                    <input type="text" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Ejemplo: 001254" required>
+                                    <input type="text" inputmode="numeric" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Solo n&uacute;meros, Ej: 001254" oninput="this.value=this.value.replace(/[^0-9]/g,'')" maxlength="20" required>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="comp-label">N&uacute;mero de Control <span class="text-danger">*</span></label>
