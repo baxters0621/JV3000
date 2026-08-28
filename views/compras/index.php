@@ -197,8 +197,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <div class="comp-modal-header-content">
                         <div class="comp-modal-icon"><i class="bi bi-cart-plus"></i></div>
                         <div>
-                            <h5 class="comp-modal-title">REGISTRAR COMPRA</h5>
-                            <p class="comp-modal-subtitle">Complete los datos paso a paso para registrar una nueva compra</p>
+                            <h5 class="comp-modal-title">Nueva Compra</h5>
+                            <p class="comp-modal-subtitle">Registra una compra indicando el proveedor, factura y productos</p>
                         </div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -207,8 +207,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <?php if (!empty($solicitud_prefill)): ?>
                     <div class="comp-alert-solicitud">
                         <i class="bi bi-cart-check me-2"></i>
-                        <strong>SOLICITUD #<?php echo (int)$solicitud_prefill['id_solicitud']; ?></strong>
-                        — <?php echo htmlspecialchars($solicitud_prefill['motivo'] ?? 'Solicitud de reposición'); ?>. Los productos ya fueron precargados.
+                        <strong>Solicitud #<?php echo (int)$solicitud_prefill['id_solicitud']; ?></strong>
+                        — <?php echo htmlspecialchars($solicitud_prefill['motivo'] ?? 'Solicitud de reposición'); ?>. Los productos ya est&aacute;n precargados en el formulario.
                     </div>
                 <?php endif; ?>
 
@@ -219,8 +219,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="comp-step-header">
                             <div class="comp-step-chip chip-green">1</div>
                             <div class="comp-step-info">
-                                <div class="comp-step-title">Proveedor</div>
-                                <div class="comp-step-desc">¿Quién le está vendiendo?</div>
+                                <div class="comp-step-title">Seleccionar Proveedor</div>
+                                <div class="comp-step-desc">Indica qui&eacute;n te est&aacute; suministrando la mercanc&iacute;a</div>
                             </div>
                         </div>
                         <div class="comp-step-body">
@@ -228,7 +228,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="col-md-8">
                                     <label class="comp-label">Proveedor <span class="text-danger">*</span></label>
                                     <select name="id_proveedor" class="input-jv comp-input" id="selProveedor" aria-label="Proveedor de la compra" required>
-                                        <option value="">Seleccionar proveedor...</option>
+                                        <option value="">Selecciona un proveedor...</option>
                                         <?php foreach ($proveedores as $proveedor): ?>
                                             <option value="<?php echo (int)$proveedor['id_proveedor']; ?>" data-rif="<?php echo htmlspecialchars($proveedor['rif']); ?>">
                                                 <?php echo htmlspecialchars($proveedor['nombre_empresa']); ?> (<?php echo htmlspecialchars($proveedor['rif']); ?>)
@@ -237,8 +237,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="comp-label">RIF</label>
-                                    <input type="text" class="input-jv comp-input" id="displayRif" aria-label="RIF del proveedor" value="-" readonly disabled>
+                                    <label class="comp-label">RIF del Proveedor</label>
+                                    <input type="text" class="input-jv comp-input" id="displayRif" aria-label="RIF del proveedor" value="—" readonly disabled>
                                 </div>
                             </div>
                         </div>
@@ -249,22 +249,22 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="comp-step-header">
                             <div class="comp-step-chip chip-blue">2</div>
                             <div class="comp-step-info">
-                                <div class="comp-step-title">Factura del Proveedor</div>
-                                <div class="comp-step-desc">Datos del comprobante fiscal</div>
+                                <div class="comp-step-title">Datos de la Factura</div>
+                                <div class="comp-step-desc">Informaci&oacute;n fiscal del comprobante recibido</div>
                             </div>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="comp-label">Nro. Factura <span class="text-danger">*</span></label>
-                                    <input type="text" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Ej: 001254" required>
+                                    <label class="comp-label">N&uacute;mero de Factura <span class="text-danger">*</span></label>
+                                    <input type="text" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Ejemplo: 001254" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="comp-label">Nro. Control <span class="comp-label-optional">(opcional)</span></label>
+                                    <label class="comp-label">N&uacute;mero de Control <span class="comp-label-optional">(opcional)</span></label>
                                     <input type="text" name="nro_control" aria-label="Numero de control" class="input-jv comp-input" value="" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="comp-label">Fecha</label>
+                                    <label class="comp-label">Fecha de Compra</label>
                                     <input type="date" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha de la compra" disabled>
                                     <input type="hidden" name="fecha_compra" value="<?php echo date('Y-m-d'); ?>">
                                 </div>
@@ -277,16 +277,16 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="comp-step-header">
                             <div class="comp-step-chip chip-amber">3</div>
                             <div class="comp-step-info">
-                                <div class="comp-step-title">Comprobante de Pago</div>
-                                <div class="comp-step-desc">¿Cómo está pagando?</div>
+                                <div class="comp-step-title">Forma de Pago</div>
+                                <div class="comp-step-desc">Indica c&oacute;mo se est&aacute; cancelando esta compra</div>
                             </div>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="comp-label">Método <span class="text-danger">*</span></label>
+                                    <label class="comp-label">M&eacute;todo de Pago <span class="text-danger">*</span></label>
                                     <select name="metodo_pago" class="input-jv comp-input" id="selMetodo" aria-label="Metodo de pago">
-                                        <option value="">Seleccionar método...</option>
+                                        <option value="">Selecciona un m&eacute;todo...</option>
                                         <option value="Efectivo">Efectivo</option>
                                         <option value="Transferencia">Transferencia</option>
                                         <option value="Cheque">Cheque</option>
@@ -294,13 +294,13 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="comp-label">Monto Pagado $</label>
+                                    <label class="comp-label">Monto Pagado ($)</label>
                                     <input type="text" inputmode="decimal" name="monto_pago" class="input-jv comp-input" id="montoPago" aria-label="Monto pagado" value="0.00" oninput="marcarMontoEditado();formatearPrecioCompra(this)">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="comp-label">Fecha Pago</label>
+                                    <label class="comp-label">Fecha de Pago</label>
                                     <input type="date" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha del pago" disabled>
-                                    <small class="comp-hint">Si el monto es menor al total, queda PENDIENTE.</small>
+                                    <small class="comp-hint">Si el monto es menor al total de la compra, la factura queda como <strong>Pendiente</strong>.</small>
                                 </div>
                             </div>
                         </div>
@@ -311,8 +311,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="comp-step-header">
                             <div class="comp-step-chip chip-orange">4</div>
                             <div class="comp-step-info">
-                                <div class="comp-step-title">Productos</div>
-                                <div class="comp-step-desc">¿Qué está comprando?</div>
+                                <div class="comp-step-title">Agregar Productos</div>
+                                <div class="comp-step-desc">Busca y a&ntilde;ade cada producto que est&aacute;s comprando</div>
                             </div>
                         </div>
                         <div class="comp-step-body">
@@ -321,24 +321,24 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <div class="comp-add-row">
                                 <div class="comp-add-product">
                                     <i class="bi bi-search"></i>
-                                    <input type="text" class="input-jv" id="buscarProducto" aria-label="Buscar producto para agregar" placeholder="Buscar por nombre o SKU..." autocomplete="off">
+                                    <input type="text" class="input-jv" id="buscarProducto" aria-label="Buscar producto para agregar" placeholder="Buscar por nombre o c&oacute;digo SKU..." autocomplete="off">
                                     <input type="hidden" id="selProductoId">
                                     <input type="hidden" id="selProductoNombre">
                                     <div class="com-resultados" id="resultadosBusqueda"></div>
                                 </div>
                                 <div class="comp-add-field">
-                                    <label class="comp-label-sm">Cant</label>
+                                    <label class="comp-label-sm">Cantidad</label>
                                     <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
                                 </div>
                                 <div class="comp-add-field">
-                                    <label class="comp-label-sm">Precio $</label>
+                                    <label class="comp-label-sm">Precio Unitario ($)</label>
                                     <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" aria-label="Precio unitario del producto" placeholder="0.00" oninput="formatearPrecioCompra(this)">
                                 </div>
                                 <div class="comp-add-field">
-                                    <label class="comp-label-sm">Vence <span class="text-danger">*</span></label>
+                                    <label class="comp-label-sm">Fecha de Vencimiento <span class="text-danger">*</span></label>
                                     <input type="date" class="input-jv" id="inputVencimiento" aria-label="Fecha de vencimiento del lote" required>
                                 </div>
-                                <button type="button" class="comp-add-btn" onclick="agregarProducto()">
+                                <button type="button" class="comp-add-btn" onclick="agregarProducto()" data-tooltip="Agregar producto al carrito">
                                     <i class="bi bi-plus-lg"></i>
                                 </button>
                             </div>

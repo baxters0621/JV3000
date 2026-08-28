@@ -71,7 +71,7 @@
         .pagina-compras .card-jv-table {
             border-top: 4px solid #10b981;
             border-radius: var(--jv-radius) !important;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .pagina-compras .table-jv {
@@ -83,7 +83,7 @@
             background: transparent;
         }
 
-        /* Column widths (7 columns) */
+        /* Column widths (7 columns) — sum = 100% */
         .pagina-compras .table-jv colgroup .col-factura   { width: 10%; }
         .pagina-compras .table-jv colgroup .col-proveedor { width: 20%; }
         .pagina-compras .table-jv colgroup .col-detalle   { width: 28%; }
@@ -92,8 +92,17 @@
         .pagina-compras .table-jv colgroup .col-fecha     { width: 10%; }
         .pagina-compras .table-jv colgroup .col-acciones  { width: 8%; }
 
+        /* Header: continuous green strip — gradient on row, not cells */
+        .pagina-compras .table-jv thead {
+            position: relative;
+        }
+        .pagina-compras .table-jv thead tr {
+            position: relative;
+            z-index: 1;
+        }
+
         .pagina-compras .table-jv thead th {
-            background: linear-gradient(135deg, #065f46, #047857);
+            background: transparent;
             color: #fff;
             border: none;
             font-size: .78rem;
@@ -106,14 +115,15 @@
             white-space: nowrap;
         }
 
-        .pagina-compras .table-jv thead th:first-child {
-            border-radius: 12px 0 0 12px;
-            padding-left: 20px;
-            text-align: left;
+        /* Gradient background on the row, not individual cells */
+        .pagina-compras .table-jv thead tr {
+            background: linear-gradient(135deg, #065f46, #047857);
+            border-radius: 12px;
         }
 
-        .pagina-compras .table-jv thead th:last-child {
-            border-radius: 0 12px 12px 0;
+        .pagina-compras .table-jv thead th:first-child {
+            padding-left: 20px;
+            text-align: left;
         }
 
         /* ── Fila = card blanca ── */
