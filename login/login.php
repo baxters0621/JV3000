@@ -265,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 
                     <div class="field-group">
                         <i class="field-icon bi bi-lock-fill"></i>
-                        <input type="password" id="f-pass" name="password" class="field-input" placeholder="Clave de Acceso" required maxlength="72" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                        <input type="password" id="f-pass" name="password" class="field-input" placeholder="Clave de Acceso" required maxlength="21" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
                         <button type="button" class="field-eye" id="btnEyePass" aria-label="Mostrar contraseña">
                             <i class="bi bi-eye-slash-fill" id="iconEyePass"></i>
                         </button>
