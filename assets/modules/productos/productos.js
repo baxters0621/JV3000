@@ -356,8 +356,42 @@
             const buscadorCategorias = document.getElementById('buscarCat');
             if (buscadorCategorias) buscadorCategorias.value = '';
             catEstadoFiltro = 'todos';
+            document.querySelectorAll('.btn-filter-cat').forEach(function(b) { b.classList.remove('active'); });
+            const btnTodasCategorias = document.querySelector('.btn-filter-cat[data-status="todos"]');
+            if (btnTodasCategorias) btnTodasCategorias.classList.add('active');
             catFiltrar();
             bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias')).show();
+        }
+
+        // Marca el botón de filtro por estado activo y vuelve a filtrar.
+        function catFiltrarEstado(btn) {
+            document.querySelectorAll('.btn-filter-cat').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            catEstadoFiltro = btn.dataset.status;
+            catFiltrar();
+        }
+
+        // Actualiza el contador de resultados y muestra la fila de "sin
+        // resultados" cuando la búsqueda/filtro no encuentra nada.
+        function catContar() {
+            const filasCategorias = document.querySelectorAll('#tablaCategoriasPop tr.cat-fila');
+            let visibles = 0;
+            filasCategorias.forEach(function(fila) {
+                if (fila.style.display !== 'none') visibles++;
+            });
+            const totalCategorias = filasCategorias.length;
+            const botonEstado = document.querySelector('.btn-filter-cat.active');
+            const estadoActivo = botonEstado ? botonEstado.textContent : 'Todas';
+            const contador = document.getElementById('catContador');
+            if (contador) {
+                contador.innerHTML = totalCategorias === 0
+                    ? 'No hay categor&iacute;as registradas.'
+                    : 'Mostrando <strong>' + visibles + '</strong> de <strong>' + totalCategorias + '</strong> categor&iacute;as &middot; Estado: ' + estadoActivo;
+            }
+            const filaSinResultados = document.getElementById('catSinResultados');
+            if (filaSinResultados) {
+                filaSinResultados.style.display = (totalCategorias > 0 && visibles === 0) ? '' : 'none';
+            }
         }
 
         // Filtra las filas por texto (nombre/código) y estado seleccionado.
@@ -368,6 +402,7 @@
                     && (!textoBusqueda || (fila.dataset.texto || '').indexOf(textoBusqueda) !== -1);
                 fila.style.display = visible ? '' : 'none';
             });
+            catContar();
         }
 
         // Prepara y abre el formulario de categoría (null = modo registro).

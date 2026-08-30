@@ -197,165 +197,6 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                                                     <i class="bi bi-archive"></i>
                                                 </button>
 <?php endif; ?>
-
-<?php if ($puede_categorias): ?>
-<!-- ============================================================
-     GESTIÓN INTEGRADA DE CATEGORÍAS (pop-ups dentro de Inventario)
-     ============================================================ -->
-<script>
-    window.JV_CATS = <?php echo json_encode(array_values($categorias_gestion), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-</script>
-
-<!-- POP-UP 1: Listado de categorías -->
-<div class="modal fade" id="modalCategorias" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content modal-content-jv">
-            <div class="cat-modal-header-jv">
-                <div>
-                    <h5 class="font-brand"><i class="bi bi-tags me-2"></i>CATEGOR&Iacute;AS</h5>
-                    <small>Organizaci&oacute;n del cat&aacute;logo · Total <strong><?php echo count($categorias_gestion); ?></strong></small>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-3">
-                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                    <div class="cat-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" class="input-jv" id="buscarCat" placeholder="Buscar por nombre o c&oacute;digo..." oninput="catFiltrar()" aria-label="Buscar categor&iacute;a">
-                    </div>
-                    <button type="button" class="btn module-action-btn ms-auto" onclick="nuevaCat()" style="background:#2563eb;border-color:#2563eb;color:#fff;">
-                        <i class="bi bi-plus-lg me-1"></i>NUEVA
-                    </button>
-                </div>
-
-                <div style="border:1px solid var(--jv-border);border-radius:10px;overflow:hidden;">
-                    <table class="table-jv mb-0">
-                        <thead>
-                            <tr>
-                                <th style="width:30%;">Nombre</th>
-                                <th style="width:16%;">C&oacute;digo</th>
-                                <th class="text-center" style="width:10%;">ABC</th>
-                                <th class="text-center" style="width:18%;">Manejo</th>
-                                <th class="text-center" style="width:12%;">Estado</th>
-                                <th class="text-center" style="width:14%;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaCategoriasPop">
-                            <?php if (!empty($categorias_gestion)): ?>
-                                <?php foreach ($categorias_gestion as $gestion_cat): ?>
-                                    <?php $cat_json = htmlspecialchars(json_encode($gestion_cat, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>
-                                    <tr class="cat-fila" data-status="<?php echo $gestion_cat['status']; ?>" data-texto="<?php echo strtolower(htmlspecialchars($gestion_cat['nombre'] . ' ' . ($gestion_cat['codigo'] ?? ''))); ?>">
-                                        <td>
-                                            <i class="bi bi-folder2-open me-2" style="color:#2563eb;font-size:1rem;"></i>
-                                            <span class="fw-bold text-uppercase" data-tooltip="<?php echo htmlspecialchars($gestion_cat['nombre']); ?>"><?php echo htmlspecialchars($gestion_cat['nombre']); ?></span>
-                                        </td>
-                                        <td><span class="codigo-badge-cat"><?php echo htmlspecialchars($gestion_cat['codigo'] ?? '&mdash;'); ?></span></td>
-                                        <td class="text-center">
-                                            <?php if (!empty($gestion_cat['clasificacion_abc'])): ?>
-                                                <span class="abc-badge abc-<?php echo strtolower($gestion_cat['clasificacion_abc']); ?>"><?php echo $gestion_cat['clasificacion_abc']; ?></span>
-                                            <?php else: ?>
-                                                <span class="text-muted">&mdash;</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="manejo-badge manejo-<?php echo htmlspecialchars($gestion_cat['tipo_manejo'] ?? 'normal'); ?>"><?php echo htmlspecialchars(ucfirst($gestion_cat['tipo_manejo'] ?? 'Normal')); ?></span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge-jv <?php echo ($gestion_cat['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>"><?php echo strtoupper($gestion_cat['status']); ?></span>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="d-flex justify-content-center gap-1">
-                                                <button type="button" class="btn-action" onclick='editarCat(<?php echo $cat_json; ?>)' data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
-                                                <button type="button" class="btn-action" onclick="catToggleStatus(<?php echo (int)$gestion_cat['id_categoria']; ?>, '<?php echo htmlspecialchars(addslashes($gestion_cat['nombre'])); ?>', '<?php echo $gestion_cat['status']; ?>')" data-tooltip="<?php echo $gestion_cat['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
-                                                    <i class="bi <?php echo $gestion_cat['status'] == 'Activo' ? 'bi-eye-slash-fill' : 'bi-eye-fill'; ?>" style="color:<?php echo $gestion_cat['status'] == 'Activo' ? 'var(--jv-warning)' : 'var(--jv-success)'; ?>"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="6">
-                                        <div class="estado-vacio">
-                                            <i class="bi bi-tags"></i>
-                                            <span>No hay categor&iacute;as registradas</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- POP-UP 2: Formulario de categoría (crear / editar) -->
-<div class="modal fade" id="modalCat" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-jv">
-            <form method="POST" id="formCat">
-                <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
-                <input type="hidden" name="accion_categoria" id="cat_accion" value="registrar">
-                <input type="hidden" name="id_categoria" id="cat_id_edit">
-                <input type="hidden" name="status" id="cat_status" value="Activo">
-                <div class="modal-body p-4">
-                    <div class="cat-modal-header-jv">
-                        <div>
-                            <h5 class="font-brand" id="modalTitleCat"><i class="bi bi-tag-fill me-2"></i>NUEVA CATEGOR&Iacute;A</h5>
-                            <small>Nombre, clasificaci&oacute;n y tipo de manejo</small>
-                        </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-
-                    <div class="section-bg cat-sec-general mb-3">
-                        <div class="section-label"><i class="bi bi-card-heading me-1"></i>General</div>
-                        <div class="mb-3">
-                            <label for="cat_nombre" class="small fw-bold text-secondary mb-1">NOMBRE *</label>
-                            <input type="text" name="nombre" id="cat_nombre" class="input-jv" required maxlength="100" placeholder="Ej: Aceites, Lubricantes" oninput="this.value = this.value.toUpperCase()">
-                        </div>
-                        <div class="mb-0">
-                            <label for="cat_desc" class="small fw-bold text-secondary mb-1">DESCRIPCI&Oacute;N</label>
-                            <textarea name="descripcion" id="cat_desc" class="input-jv" rows="2" placeholder="Ej: Aceites de motor, lubricantes, grasas..."></textarea>
-                        </div>
-                    </div>
-
-                    <div class="section-bg cat-sec-parametros mb-4">
-                        <div class="section-label"><i class="bi bi-sliders me-1"></i>Par&aacute;metros</div>
-                        <div class="row g-3 mb-0">
-                            <div class="col-md-6">
-                                <label for="cat_abc" class="small fw-bold text-secondary mb-1">CLASIFICACI&Oacute;N ABC</label>
-                                <select name="clasificacion_abc" id="cat_abc" class="input-jv">
-                                    <option value="">&mdash;</option>
-                                    <option value="A">A &mdash; Alto valor</option>
-                                    <option value="B">B &mdash; Medio valor</option>
-                                    <option value="C">C &mdash; Bajo valor</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cat_manejo" class="small fw-bold text-secondary mb-1">TIPO DE MANEJO</label>
-                                <select name="tipo_manejo" id="cat_manejo" class="input-jv">
-                                    <option value="normal">Normal</option>
-                                    <option value="inflamable">Inflamable</option>
-                                    <option value="liquido">L&iacute;quido</option>
-                                    <option value="peligroso">Peligroso</option>
-                                    <option value="voluminoso">Voluminoso</option>
-                                    <option value="aerosol">Aerosol</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" id="btn-cat-guardar" class="btn w-100 py-3 fw-bolder text-uppercase text-white" style="background:linear-gradient(135deg,#2563eb,#1e3a8a);">
-                        <i class="bi bi-check-lg me-2"></i>GUARDAR CATEGOR&Iacute;A
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
                                         <?php else: ?>
                                             <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" data-tooltip="Reactivar">
                                                 <i class="bi bi-play-circle"></i>
@@ -406,6 +247,188 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
         </div>
     <?php endif; ?>
 </div>
+
+<?php if ($puede_categorias): ?>
+<!-- ============================================================
+     GESTIÓN INTEGRADA DE CATEGORÍAS (pop-ups)
+     Listado + formulario, colocados FUERA de la tabla de productos.
+     ============================================================ -->
+<script>
+    window.JV_CATS = <?php echo json_encode(array_values($categorias_gestion), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+</script>
+
+<!-- POP-UP 1: Listado de categorías -->
+<div class="modal fade" id="modalCategorias" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content modal-content-jv">
+            <div class="cat-modal-header-jv">
+                <div>
+                    <h5 class="font-brand"><i class="bi bi-tags me-2"></i>CATEGOR&Iacute;AS</h5>
+                    <small>Organiza tu cat&aacute;logo para agrupar productos similares</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                    <div class="cat-search">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="input-jv" id="buscarCat" placeholder="Buscar por nombre o c&oacute;digo..." oninput="catFiltrar()" aria-label="Buscar categor&iacute;a">
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar por estado">
+                        <button type="button" class="btn-filter-cat active" data-status="todos" onclick="catFiltrarEstado(this)">Todas</button>
+                        <button type="button" class="btn-filter-cat" data-status="Activo" onclick="catFiltrarEstado(this)">Activas</button>
+                        <button type="button" class="btn-filter-cat" data-status="Inactivo" onclick="catFiltrarEstado(this)">Inactivas</button>
+                    </div>
+                    <button type="button" class="btn module-action-btn ms-auto" onclick="nuevaCat()" style="background:#2563eb;border-color:#2563eb;color:#fff;">
+                        <i class="bi bi-plus-lg me-1"></i>NUEVA CATEGOR&Iacute;A
+                    </button>
+                </div>
+                <div class="small fw-bold text-muted mb-2 cat-contador" id="catContador">
+                    <?php echo count($categorias_gestion); ?> categor&iacute;a(s) · Estado: Todas
+                </div>
+
+                <div style="border:1px solid var(--jv-border);border-radius:10px;overflow:hidden;">
+                    <table class="table-jv mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:28%;">Nombre</th>
+                                <th style="width:15%;">C&oacute;digo</th>
+                                <th class="text-center" style="width:9%;">ABC</th>
+                                <th class="text-center" style="width:19%;">Manejo</th>
+                                <th class="text-center" style="width:12%;">Estado</th>
+                                <th class="text-center" style="width:17%;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaCategoriasPop">
+                            <?php if (!empty($categorias_gestion)): ?>
+                                <?php foreach ($categorias_gestion as $gestion_cat): ?>
+                                    <?php $cat_json = htmlspecialchars(json_encode($gestion_cat, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>
+                                    <tr class="cat-fila" data-status="<?php echo $gestion_cat['status']; ?>" data-texto="<?php echo strtolower(htmlspecialchars($gestion_cat['nombre'] . ' ' . ($gestion_cat['codigo'] ?? ''))); ?>">
+                                        <td>
+                                            <i class="bi bi-folder2-open me-2" style="color:#2563eb;font-size:1rem;"></i>
+                                            <span class="fw-bold text-uppercase" data-tooltip="<?php echo htmlspecialchars($gestion_cat['nombre']); ?>"><?php echo htmlspecialchars($gestion_cat['nombre']); ?></span>
+                                        </td>
+                                        <td><span class="codigo-badge-cat"><?php echo htmlspecialchars($gestion_cat['codigo'] ?? '&mdash;'); ?></span></td>
+                                        <td class="text-center">
+                                            <?php if (!empty($gestion_cat['clasificacion_abc'])): ?>
+                                                <span class="abc-badge abc-<?php echo strtolower($gestion_cat['clasificacion_abc']); ?>" data-tooltip="<?php echo 'A' === $gestion_cat['clasificacion_abc'] ? 'Alto valor / rotaci&oacute;n' : ('B' === $gestion_cat['clasificacion_abc'] ? 'Valor medio' : 'Valor bajo'); ?>"><?php echo $gestion_cat['clasificacion_abc']; ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted">&mdash;</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="manejo-badge manejo-<?php echo htmlspecialchars($gestion_cat['tipo_manejo'] ?? 'normal'); ?>"><?php echo htmlspecialchars(ucfirst($gestion_cat['tipo_manejo'] ?? 'Normal')); ?></span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge-jv <?php echo ($gestion_cat['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>"><?php echo strtoupper($gestion_cat['status']); ?></span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                <button type="button" class="btn-action" onclick='editarCat(<?php echo $cat_json; ?>)' data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
+                                                <button type="button" class="btn-action" onclick="catToggleStatus(<?php echo (int)$gestion_cat['id_categoria']; ?>, '<?php echo htmlspecialchars(addslashes($gestion_cat['nombre'])); ?>', '<?php echo $gestion_cat['status']; ?>')" data-tooltip="<?php echo $gestion_cat['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
+                                                    <i class="bi <?php echo $gestion_cat['status'] == 'Activo' ? 'bi-eye-slash-fill' : 'bi-eye-fill'; ?>" style="color:<?php echo $gestion_cat['status'] == 'Activo' ? 'var(--jv-warning)' : 'var(--jv-success)'; ?>"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="estado-vacio">
+                                            <i class="bi bi-tags"></i>
+                                            <span>A&uacute;n no hay categor&iacute;as</span>
+                                            <p class="mt-2 mb-0 cat-estado-guiador">Haz clic en <strong>NUEVA CATEGOR&Iacute;A</strong> para crear la primera y organizar tu cat&aacute;logo.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                                <tr class="cat-fila-vacia" id="catSinResultados" style="display:none;">
+                                    <td colspan="6">
+                                        <div class="estado-vacio">
+                                            <i class="bi bi-search"></i>
+                                            <span>Sin resultados</span>
+                                            <p class="mt-2 mb-0 cat-estado-guiador">Prueba con otro nombre o cambia el filtro de estado.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- POP-UP 2: Formulario de categoría (crear / editar) -->
+<div class="modal fade" id="modalCat" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <form method="POST" id="formCat" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                <input type="hidden" name="accion_categoria" id="cat_accion" value="registrar">
+                <input type="hidden" name="id_categoria" id="cat_id_edit">
+                <input type="hidden" name="status" id="cat_status" value="Activo">
+                <div class="modal-body p-4">
+                    <div class="cat-modal-header-jv">
+                        <div>
+                            <h5 class="font-brand" id="modalTitleCat"><i class="bi bi-tag-fill me-2"></i>NUEVA CATEGOR&Iacute;A</h5>
+                            <small>Los campos con <span style="color:#FCA5A5;">*</span> son obligatorios</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div class="section-bg cat-sec-general mb-3">
+                        <div class="section-label"><i class="bi bi-card-heading me-1"></i>General</div>
+                        <div class="mb-3">
+                            <label for="cat_nombre" class="small fw-bold text-secondary mb-1">NOMBRE DE LA CATEGOR&Iacute;A <span class="text-danger">*</span></label>
+                            <input type="text" name="nombre" id="cat_nombre" class="input-jv" required maxlength="100" placeholder="Ej: Aceites y Lubricantes" oninput="this.value = this.value.toUpperCase()">
+                            <div class="cat-help"><i class="bi bi-info-circle me-1"></i>Se guarda en MAY&Uacute;SCULAS autom&aacute;ticamente. No puede repetirse.</div>
+                        </div>
+                        <div class="mb-0">
+                            <label for="cat_desc" class="small fw-bold text-secondary mb-1">DESCRIPCI&Oacute;N <span class="text-secondary fw-normal">(OPCIONAL)</span></label>
+                            <textarea name="descripcion" id="cat_desc" class="input-jv" rows="2" placeholder="Ej: Aceites de motor, lubricantes, grasas..."></textarea>
+                            <div class="cat-help"><i class="bi bi-info-circle me-1"></i>Explica qu&eacute; productos agrupa, para que cualquier operador sepa c&oacute;mo usarla.</div>
+                        </div>
+                    </div>
+
+                    <div class="section-bg cat-sec-parametros mb-4">
+                        <div class="section-label"><i class="bi bi-sliders me-1"></i>Par&aacute;metros</div>
+                        <div class="row g-3 mb-0">
+                            <div class="col-md-6">
+                                <label for="cat_abc" class="small fw-bold text-secondary mb-1">CLASIFICACI&Oacute;N ABC</label>
+                                <select name="clasificacion_abc" id="cat_abc" class="input-jv">
+                                    <option value="">&mdash; Sin clasificar</option>
+                                    <option value="A">A &middot; Alto valor / rotaci&oacute;n</option>
+                                    <option value="B">B &middot; Valor medio</option>
+                                    <option value="C">C &middot; Valor bajo</option>
+                                </select>
+                                <div class="cat-help"><i class="bi bi-info-circle me-1"></i>Nivel de importancia de los productos de esta categor&iacute;a.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="cat_manejo" class="small fw-bold text-secondary mb-1">TIPO DE MANEJO</label>
+                                <select name="tipo_manejo" id="cat_manejo" class="input-jv">
+                                    <option value="normal">Normal &middot; Uso general</option>
+                                    <option value="inflamable">Inflamable &middot; Riesgo de incendio</option>
+                                    <option value="liquido">L&iacute;quido &middot; Contenedores</option>
+                                    <option value="peligroso">Peligroso &middot; Riesgo para la salud</option>
+                                    <option value="voluminoso">Voluminoso &middot; Ocupa espacio</option>
+                                    <option value="aerosol">Aerosol &middot; Lata a presi&oacute;n</option>
+                                </select>
+                                <div class="cat-help"><i class="bi bi-info-circle me-1"></i>C&oacute;mo se almacena y manipula el producto.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-cat-guardar" class="btn w-100 py-3 fw-bolder text-uppercase text-white" style="background:linear-gradient(135deg,#F97316,#EA580C);border:none;">
+                        <i class="bi bi-check-lg me-2"></i>GUARDAR CATEGOR&Iacute;A
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php if ($esAdmin): ?>
     <!-- Modal: Editar producto -->

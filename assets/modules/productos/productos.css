@@ -738,7 +738,41 @@
             font-size: 3rem; color: rgba(37, 99, 235, 0.25);
             display: block; margin-bottom: 12px;
         }
-        .pagina-productos .estado-vacio span {
+.pagina-productos .estado-vacio span {
             font-size: .9rem; font-weight: 700; text-transform: uppercase;
             letter-spacing: 1px; color: var(--jv-text-muted);
         }
+
+        /* ── Mejoras UX del gestor de categorías ── */
+
+        /* Guiador bajo el mensaje del estado vacío (tipografía normal) */
+        .pagina-productos .cat-estado-guiador {
+            font-size: .85rem; text-transform: none; letter-spacing: 0;
+            font-weight: 500; color: var(--jv-text-muted);
+        }
+
+        /* Texto de ayuda bajo los campos del formulario */
+        .pagina-productos #modalCat .cat-help {
+            font-size: .75rem; color: var(--jv-text-muted);
+            margin-top: 4px; display: flex; align-items: center; gap: 4px;
+        }
+        .pagina-productos #modalCat .cat-help i { font-size: .72rem; }
+
+        /* Contador de resultados (encima de la tabla del listado) */
+        .pagina-productos #modalCategorias .cat-contador {
+            font-size: .78rem; margin-top: 0;
+        }
+
+        /* Botones de filtro por estado (Todas / Activas / Inactivas) */
+        .pagina-productos .btn-filter-cat {
+            padding: 6px 14px; font-size: .85rem; font-weight: 700; border-radius: 0;
+            background: transparent; color: var(--jv-text-muted);
+            border: 1px solid var(--jv-border); transition: .15s; cursor: pointer;
+        }
+        .pagina-productos .btn-filter-cat.active {
+            background: rgba(37, 99, 235, 0.12); color: #1D4ED8;
+            border-color: rgba(37, 99, 235, 0.3);
+        }
+        .pagina-productos .btn-filter-cat:first-child { border-radius: 6px 0 0 6px; }
+        .pagina-productos .btn-filter-cat:last-child { border-radius: 0 6px 6px 0; }
+        .pagina-productos #modalCategorias .btn-group { flex-shrink: 0; }
