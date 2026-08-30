@@ -34,7 +34,7 @@
     .pagina-usuarios .table-jv {
         table-layout:fixed;
         width:100%;
-        min-width:940px;
+        min-width:980px;
     }
     .pagina-usuarios .table-jv thead th {
         background:linear-gradient(135deg,#5b21b6,#7c3aed);
@@ -282,7 +282,7 @@
     .modal-footer-jv .btn-jv-secondary:hover { border-color:#7c3aed; color:#7c3aed; }
 
     .pagina-usuarios .input-jv { font-size:1rem; }
-    .pagina-usuarios .badge-jv { font-size:.9rem; padding:6px 16px; }
+    .pagina-usuarios .badge-jv { font-size:.9rem; padding:6px 16px; white-space:nowrap; }
     .pagina-usuarios .role-badge {
         display:inline-flex;
         align-items:center;

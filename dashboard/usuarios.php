@@ -172,7 +172,7 @@ unset($_SESSION['flash_msg']);
 <head>
     <?php include '../includes/diseno.php'; ?>
     <title>Colaboradores | JV3000</title>
-    <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=9">
+    <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=10">
 </head>
 
 <body class="usuarios-page">
@@ -273,8 +273,8 @@ unset($_SESSION['flash_msg']);
                                     <th style="width:52px;">#</th>
                                     <th style="width:16%;">USUARIO</th>
                                     <th style="width:20%;">CORREO</th>
-                                    <th style="width:20%;">ROL</th>
-                                    <th class="text-center" style="width:12%;">ESTADO</th>
+                                    <th style="width:19%;">ROL</th>
+                                    <th class="text-center" style="width:14%;">ESTADO</th>
                                     <th class="text-center" style="width:230px;">ACCIONES</th>
                                 </tr>
                             </thead>
