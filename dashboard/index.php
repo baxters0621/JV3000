@@ -2,7 +2,23 @@
 // ==========================================
 // CONFIGURACIÓN INICIAL
 // ==========================================
+// IMPORTANTE: activar errores ANTES del init.php para ver fallos
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+// Forzar zona horaria (init.php también lo hace, pero por si acaso)
+date_default_timezone_set('America/Caracas');
+// ==========================================
+// CONFIGURACIÓN INICIAL
+// ==========================================
 require_once __DIR__ . '/../init.php';
+
+// Sobrescribir el handler de init.php para que muestre errores en pantalla
+set_error_handler(function ($severity, $msg, $file, $line) {
+    if (!(error_reporting() & $severity)) return false;
+    echo "<pre><b>PHP Error [$severity]:</b> $msg in $file on line $line</pre>";
+    return true;
+});
 
 $db = Database::getInstance();
 $nombre_user = $_SESSION['usuario'] ?? 'Usuario';

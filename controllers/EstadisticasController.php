@@ -46,6 +46,31 @@ class EstadisticasController extends Controller
         $datos   = $modelo->obtenerDatos($periodo, $desde, $hasta);
         $periodos = $modelo->periodos();
 
+        // Validar que $datos tenga las keys esperadas; si no, usar valores por defecto
+        $expectedKeys = ['periodo', 'etiqueta', 'mensaje', 'desde', 'hasta', 'ventas', 'compras', 'ganancia', 'pct_ventas', 'pct_compras', 'pct_ganancia', 'labels_ventas', 'data_ventas', 'labels_compras', 'data_compras', 'top_labels', 'top_cant'];
+        $hasAllKeys = count(array_intersect($expectedKeys, array_keys($datos))) === count($expectedKeys);
+        if (!$hasAllKeys) {
+            $datos = [
+                'periodo'   => $periodo,
+                'etiqueta'  => $periodos[$periodo]['label'] ?? 'Semanal · ' . date('d/m/Y', strtotime('-6 days')) . ' al ' . date('d/m/Y'),
+                'mensaje'   => 'Comparado con la semana anterior',
+                'desde'     => date('Y-m-d', strtotime('-6 days')),
+                'hasta'     => date('Y-m-d'),
+                'ventas'    => 0,
+                'compras'   => 0,
+                'ganancia'  => 0,
+                'pct_ventas'   => null,
+                'pct_compras'  => null,
+                'pct_ganancia' => null,
+                'labels_ventas'  => [],
+                'data_ventas'    => [],
+                'labels_compras' => [],
+                'data_compras'   => [],
+                'top_labels' => [],
+                'top_cant'   => [],
+            ];
+        }
+
         $flash = $_SESSION['flash_msg'] ?? null;
         unset($_SESSION['flash_msg']);
 

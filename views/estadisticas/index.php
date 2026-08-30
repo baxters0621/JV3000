@@ -44,9 +44,9 @@
     <form class="filtro-fechas" method="get" action="<?php echo APP_URL_BASE; ?>index.php?url=estadisticas">
         <input type="hidden" name="periodo" value="rango">
         <label for="desde_f" class="fecha-label">Desde</label>
-        <input type="date" id="desde_f" name="desde" class="input-fecha" value="<?php echo htmlspecialchars($datos['periodo'] === 'rango' ? $datos['desde'] : ''); ?>" max="<?php echo date('Y-m-d'); ?>">
+        <input type="date" id="desde_f" name="desde" class="input-fecha" value="<?php echo htmlspecialchars($datos['periodo'] === 'rango' ? (isset($datos['desde']) ? $datos['desde'] : '') : ''); ?>" max="<?php echo date('Y-m-d'); ?>">
         <label for="hasta_f" class="fecha-label">Hasta</label>
-        <input type="date" id="hasta_f" name="hasta" class="input-fecha" value="<?php echo htmlspecialchars($datos['periodo'] === 'rango' ? $datos['hasta'] : ''); ?>" max="<?php echo date('Y-m-d'); ?>">
+        <input type="date" id="hasta_f" name="hasta" class="input-fecha" value="<?php echo htmlspecialchars($datos['periodo'] === 'rango' ? (isset($datos['hasta']) ? $datos['hasta'] : '') : ''); ?>" max="<?php echo date('Y-m-d'); ?>">
         <button type="submit" class="btn-filtrar">Filtrar</button>
     </form>
 </div>
@@ -61,8 +61,8 @@
             <div class="widget-icon widget-icon-naranja"><i class="bi bi-currency-dollar"></i></div>
             <div class="widget-cuerpo">
                 <div class="widget-label">Ventas</div>
-                <div class="widget-value" id="kpi-ventas">$<?php echo number_format($datos['ventas'], 2); ?></div>
-                <div class="cmp-wrap"><?php echo jv_sello($datos['pct_ventas']); ?></div>
+                <div class="widget-value" id="kpi-ventas">$<?php echo number_format(isset($datos['ventas']) ? $datos['ventas'] : 0, 2); ?></div>
+                <div class="cmp-wrap"><?php echo jv_sello(isset($datos['pct_ventas']) ? $datos['pct_ventas'] : null); ?></div>
             </div>
         </div>
     </div>
@@ -71,8 +71,8 @@
             <div class="widget-icon widget-icon-azul"><i class="bi bi-truck"></i></div>
             <div class="widget-cuerpo">
                 <div class="widget-label">Compras</div>
-                <div class="widget-value" id="kpi-compras">$<?php echo number_format($datos['compras'], 2); ?></div>
-                <div class="cmp-wrap"><?php echo jv_sello($datos['pct_compras']); ?></div>
+                <div class="widget-value" id="kpi-compras">$<?php echo number_format(isset($datos['compras']) ? $datos['compras'] : 0, 2); ?></div>
+                <div class="cmp-wrap"><?php echo jv_sello(isset($datos['pct_compras']) ? $datos['pct_compras'] : null); ?></div>
             </div>
         </div>
     </div>
@@ -81,8 +81,8 @@
             <div class="widget-icon widget-icon-verde"><i class="bi bi-graph-up"></i></div>
             <div class="widget-cuerpo">
                 <div class="widget-label">Ganancia</div>
-                <div class="widget-value widget-value-ganancia" id="kpi-ganancia">$<?php echo number_format($datos['ganancia'], 2); ?></div>
-                <div class="cmp-wrap"><?php echo jv_sello($datos['pct_ganancia']); ?></div>
+                <div class="widget-value widget-value-ganancia" id="kpi-ganancia">$<?php echo number_format(isset($datos['ganancia']) ? $datos['ganancia'] : 0, 2); ?></div>
+                <div class="cmp-wrap"><?php echo jv_sello(isset($datos['pct_ganancia']) ? $datos['pct_ganancia'] : null); ?></div>
             </div>
         </div>
     </div>
@@ -91,12 +91,15 @@
 <!-- MENSAJE DINÁMICO DE COMPARACIÓN -->
 <div class="cmp-mensaje" id="cmp-mensaje">
     <i class="bi bi-arrow-left-right"></i>
-    <span id="cmp-mensaje-texto"><?php echo htmlspecialchars($datos['mensaje']); ?></span>
-    <span class="cmp-periodo" id="cmp-periodo"><?php echo htmlspecialchars($datos['etiqueta']); ?></span>
+    <span id="cmp-mensaje-texto"><?php echo htmlspecialchars(isset($datos['mensaje']) ? $datos['mensaje'] : 'Sin datos de comparación'); ?></span>
+    <span class="cmp-periodo" id="cmp-periodo"><?php echo htmlspecialchars(isset($datos['etiqueta']) ? $datos['etiqueta'] : 'Semanal'); ?></span>
 </div>
 
 <!-- AVISO DE PERIODO SIN MOVIMIENTOS -->
-<?php if ($datos['ventas'] == 0 && $datos['compras'] == 0 && $datos['ganancia'] == 0): ?>
+<?php $v = isset($datos['ventas']) ? $datos['ventas'] : 0;
+$c = isset($datos['compras']) ? $datos['compras'] : 0;
+$g = isset($datos['ganancia']) ? $datos['ganancia'] : 0; ?>
+<?php if ($v == 0 && $c == 0 && $g == 0): ?>
     <div class="alert-jv alert-jv-info mb-4" id="aviso-sin-datos">
         <i class="bi bi-info-circle me-2"></i>Sin movimientos en este periodo. Registra ventas o compras para que las estadísticas se reflejen aquí en tiempo real.
     </div>
