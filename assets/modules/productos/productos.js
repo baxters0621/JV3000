@@ -356,8 +356,8 @@
             const buscadorCategorias = document.getElementById('buscarCat');
             if (buscadorCategorias) buscadorCategorias.value = '';
             catEstadoFiltro = 'todos';
-            document.querySelectorAll('.btn-filter-cat').forEach(function(b) { b.classList.remove('active'); });
-            const btnTodasCategorias = document.querySelector('.btn-filter-cat[data-status="todos"]');
+            document.querySelectorAll('.btn-filter').forEach(function(b) { b.classList.remove('active'); });
+            const btnTodasCategorias = document.querySelector('.btn-filter[data-status="todos"]');
             if (btnTodasCategorias) btnTodasCategorias.classList.add('active');
             catFiltrar();
             bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias')).show();
@@ -365,7 +365,7 @@
 
         // Marca el botón de filtro por estado activo y vuelve a filtrar.
         function catFiltrarEstado(btn) {
-            document.querySelectorAll('.btn-filter-cat').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.btn-filter').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
             catEstadoFiltro = btn.dataset.status;
             catFiltrar();
@@ -380,7 +380,7 @@
                 if (fila.style.display !== 'none') visibles++;
             });
             const totalCategorias = filasCategorias.length;
-            const botonEstado = document.querySelector('.btn-filter-cat.active');
+            const botonEstado = document.querySelector('.btn-filter.active');
             const estadoActivo = botonEstado ? botonEstado.textContent : 'Todas';
             const contador = document.getElementById('catContador');
             if (contador) {
@@ -411,7 +411,7 @@
             document.getElementById('cat_accion').value = esEdicion ? 'editar' : 'registrar';
             document.getElementById('cat_id_edit').value = esEdicion ? categoriaData.id_categoria : '';
             document.getElementById('cat_status').value = esEdicion ? (categoriaData.status || 'Activo') : 'Activo';
-            document.getElementById('modalTitleCat').innerHTML = esEdicion ? '<i class="bi bi-tag-fill me-2"></i>EDITAR CATEGOR\u00cdA' : '<i class="bi bi-tag-fill me-2"></i>NUEVA CATEGOR\u00cdA';
+            document.getElementById('modalTitleCat').innerHTML = esEdicion ? '<i class="bi bi-folder-plus-fill me-2"></i>EDITAR CATEGOR\u00cdA' : '<i class="bi bi-folder-plus-fill me-2"></i>NUEVA CATEGOR\u00cdA';
             document.getElementById('cat_nombre').value = esEdicion ? categoriaData.nombre : '';
             document.getElementById('cat_desc').value = esEdicion ? (categoriaData.descripcion || '') : '';
             document.getElementById('cat_abc').value = esEdicion ? (categoriaData.clasificacion_abc || '') : '';
