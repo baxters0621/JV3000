@@ -94,6 +94,8 @@ Al entrar ves tu **saludo** (según la hora de Venezuela), la fecha/hora, tarjet
 
 Estas alertas son el punto de partida del ciclo: si algo se vence o falta, toca pedirlo.
 
+La **Guía de Uso** (este documento) está siempre disponible en el menú lateral, en el ítem **Guía de Uso** (ícono de libro).
+
 ---
 
 ## 7. El ciclo correcto de la mercancía (orden de uso)
@@ -112,9 +114,10 @@ Fase 5  Análisis →  estadísticas + imprimir reporte
 
 ### Fase 2 · Inventario: Productos y Categorías (Administrador configura)
 
-**Categorías** (dentro de `Inventario → Productos · Categorías`):
-1. Pulsa **+ Categoría**.
-2. Nombre (único), código `CAT-XXX` (se genera solo), clasificación **ABC**, tipo de manejo (normal, inflamable, líquido, peligroso, voluminoso, aerosol) y capacidad de almacenamiento si aplica.
+**Categorías** (dentro de `Inventario`):
+1. Pulsa el botón **CATEGORÍAS** del encabezado del módulo.
+2. En la ventana, pulsa **NUEVA CATEGORÍA** (o el botón del centro si aún no hay ninguna).
+3. Nombre único (se guarda en mayúsculas), código `CAT-XXX` (se genera solo), clasificación **ABC** y tipo de manejo (normal, inflamable, líquido, peligroso, voluminoso, aerosol).
 
 **Productos** (solo el Administrador crea o edita):
 1. Entra a `Inventario → Productos · Categorías` y pulsa crear/editar.
@@ -172,7 +175,7 @@ Fase 5  Análisis →  estadísticas + imprimir reporte
 3. **Productos:** búscalos, indica cantidad. El sistema **descuenta FEFO** (primero lo que vence más pronto). Si el stock no alcanza, ofrece crear la **solicitud de compra**.
 4. Pulsa **📄 VISTA PREVIA NOTA** → revisa la **nota imprimible** (cálculos, IVA, observaciones).
 5. En la nota pulsa **CONFIRMAR Y REGISTRAR**. Solo ahí la venta queda registrada y el stock se descuenta.
-6. Verás la nota final: azónala, imprímela y guárdala como respaldo.
+6. Verás la nota final: entrégala al cliente, imprímela y guárdala como respaldo.
 
 **Acciones sobre ventas ya registradas:** desde la tabla, **Ver Nota** (reimprimir), **Editar** (devuelve y reaplica stock) y **Anular** (solo Administrador; devuelve todo al inventario).
 
@@ -181,7 +184,7 @@ Fase 5  Análisis →  estadísticas + imprimir reporte
 ### Fase 5 · Análisis
 
 - **Estadísticas** (`Análisis → Estadísticas`, admin + ventas): elige el período (día, semana, quincena, mes, trimestre, semestre o un rango personalizado) para ver gráficas con comparativa ▲/▼ vs. el período anterior.
-- **Imprimir Reporte** (`Inventario → Imprimir Reporte`, los 3 roles): genera un reporte imprimible de **solo productos activos** con stock, capacidad, precio costo/venta y el **valor total del inventario a costo y a venta**.
+- **Imprimir Reporte** (`Análisis → Imprimir Reporte`, los 3 roles): genera un reporte imprimible de **solo productos activos** con stock, capacidad, precio costo/venta y el **valor total del inventario a costo y a venta**.
 - **Historial** (`Control → Historial`, solo admin): bitácora de auditoría con filtros (usuario, acción, fechas, detalle). Aquí se ve **todo** lo que alguien hizo en el sistema.
 
 ---
@@ -213,5 +216,5 @@ Fase 5  Análisis →  estadísticas + imprimir reporte
 - **¿Falta producto en el almacén?** → `Compras → Solicitudes de Reposición` → ATENDER → COMPRAR → RECIBIR.
 - **¿Llegó un cliente y quiere mercancía?** → `Salidas → Ventas` → NUEVA VENTA → productos → VISTA PREVIA → CONFIRMAR.
 - **¿Vence mercancía o hay merma?** → NUEVA VENTA tipo **Merma/Ajuste** con la causa.
-- **¿Quiero saber si el negocio va bien?** → `Análisis → Estadísticas` y `Inventario → Imprimir Reporte`.
+- **¿Quiero saber si el negocio va bien?** → `Análisis → Estadísticas` y `Análisis → Imprimir Reporte`.
 - **¿Alguien hizo algo raro?** → `Control → Historial`.

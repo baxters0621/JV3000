@@ -34,9 +34,11 @@ class ManualController extends Controller
         $this->view('manual/index', [
             'titulo'       => 'Guía de Uso | JV3000 C.A.',
             'wrapper_class'=> 'pagina-manual',
-            'css_extra'    => ['modules/manual/manual.css?v=1'],
+            'css_extra'    => ['modules/manual/manual.css?v=2'],
+            'js_extra'     => ['modules/manual/manual.js?v=1'],
             'csrf'         => Security::generateToken(),
             'manual_html'  => self::mdToHtml($manual_md),
+            'manual_toc'   => self::extraerToc($manual_md),
         ]);
     }
 
@@ -126,7 +128,8 @@ class ManualController extends Controller
                 }
                 $level = substr_count($trimmed, '#');
                 $tag = 'h' . min($level, 6);
-                $html[] = '<' . $tag . ' class="manual-' . $tag . '">' . self::inlineMd($m[1]) . '</' . $tag . '>';
+                $id = self::slugify($m[1]);
+                $html[] = '<' . $tag . ' id="' . $id . '" class="manual-' . $tag . '">' . self::inlineMd($m[1]) . '</' . $tag . '>';
                 continue;
             }
 
@@ -177,6 +180,73 @@ class ManualController extends Controller
         self::cerrarBloques($html, $in_table, $in_list, $list_ol);
 
         return implode("\n", $html);
+    }
+
+    /**
+     * Construye el índice de contenidos (TOC) a partir del Markdown.
+     *
+     * Escanea los encabezados de nivel 2 a 4 y devuelve una lista con su
+     * nivel, título y ancla, de modo que la Tabla de Contenidos de la vista
+     * siempre quede sincronizada con el documento fuente.
+     *
+     * @param string $md Contenido Markdown de origen.
+     * @return array<int, array{nivel:int, titulo:string, id:string, num:?int}> Ítems del índice.
+     */
+    private static function extraerToc(string $md): array
+    {
+        $toc = [];
+        $ids_uso = [];
+
+        foreach (explode("\n", $md) as $linea) {
+            if (!preg_match('/^(#{2,4})\s+(.+)$/', $linea, $m)) {
+                continue;
+            }
+            $nivel = strlen($m[1]);
+            $titulo_raw = trim($m[2]);
+
+            // El número de sección sale de los títulos "N. Título".
+            // La ancla se calcula SIEMPRE con el texto completo (con el
+            // número) para que coincida con los id que genera mdToHtml().
+            $num = null;
+            $titulo = $titulo_raw;
+            if (preg_match('/^(\d+)\.\s*(.+)$/', $titulo_raw, $partes)) {
+                $num = (int)$partes[1];
+                $titulo = trim($partes[2]);
+            }
+
+            // Ancla única (slug) con sufijo numérico en caso de repetirse.
+            $base = self::slugify($titulo_raw);
+            $id = $base;
+            $i = 2;
+            while (isset($ids_uso[$id])) {
+                $id = $base . '-' . $i++;
+            }
+            $ids_uso[$id] = true;
+
+            $toc[] = ['nivel' => $nivel, 'titulo' => $titulo, 'id' => $id, 'num' => $num];
+        }
+
+        return $toc;
+    }
+
+    /**
+     * Convierte un texto en un slug seguro para usarse como ancla HTML.
+     *
+     * Pasa a minúsculas, normaliza tildes y ñ, y sustituye espacios y
+     * caracteres especiales por guiones.
+     *
+     * @param string $texto Texto de origen.
+     * @return string Slug resultante.
+     */
+    private static function slugify(string $texto): string
+    {
+        $texto = html_entity_decode(strip_tags($texto), ENT_QUOTES, 'UTF-8');
+        $texto = strtolower(trim($texto));
+        $mapa = ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n', 'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ñ' => 'n'];
+        $texto = strtr($texto, $mapa);
+        $texto = preg_replace('/[^a-z0-9\s\-]/', '', $texto);
+        $texto = preg_replace('/[\s_\-]+/', '-', $texto);
+        return trim((string)$texto, '-');
     }
 
     /**

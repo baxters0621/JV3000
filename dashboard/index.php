@@ -122,7 +122,7 @@ $tabla_compras = $datos['tabla_compras'];
     <title>Panel de Inicio | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
 
-    <link rel="stylesheet" href="../assets/dashboard/index.css?v=30">
+    <link rel="stylesheet" href="../assets/dashboard/index.css?v=31">
 </head>
 
 <?php
@@ -161,9 +161,6 @@ $tabla_compras = $datos['tabla_compras'];
                         <i class="bi bi-clock-fill me-1"></i><span id="dash-clock">--:--</span>
                     </div>
                     <div class="dash-bell-wrap">
-                        <a href="<?php echo BASE_PATH; ?>index.php?url=manual" class="dash-guide" title="Guía de uso del sistema">
-                            <i class="bi bi-book-half"></i>
-                        </a>
                         <button type="button" class="dash-bell" id="dashBellBtn" onclick="toggleAlertas(event)" title="Alertas críticas de stock">
                             <i class="bi bi-bell"></i>
                             <?php if ($alertas['total'] > 0): ?><span class="dash-bell-badge" id="dashBellBadge"><?php echo min($alertas['total'], 99); ?></span><?php endif; ?>
