@@ -44,12 +44,15 @@
     <form class="filtro-fechas" method="get" action="<?php echo APP_URL_BASE; ?>index.php?url=estadisticas">
         <input type="hidden" name="periodo" value="rango">
         <label for="desde_f" class="fecha-label">Desde</label>
-        <input type="date" id="desde_f" name="desde" class="input-fecha" value="<?php echo htmlspecialchars($datos['periodo'] === 'rango' ? $datos['desde'] : ''); ?>">
+        <input type="date" id="desde_f" name="desde" class="input-fecha" value="<?php echo htmlspecialchars($datos['periodo'] === 'rango' ? $datos['desde'] : ''); ?>" max="<?php echo date('Y-m-d'); ?>">
         <label for="hasta_f" class="fecha-label">Hasta</label>
-        <input type="date" id="hasta_f" name="hasta" class="input-fecha" value="<?php echo htmlspecialchars($datos['periodo'] === 'rango' ? $datos['hasta'] : ''); ?>">
+        <input type="date" id="hasta_f" name="hasta" class="input-fecha" value="<?php echo htmlspecialchars($datos['periodo'] === 'rango' ? $datos['hasta'] : ''); ?>" max="<?php echo date('Y-m-d'); ?>">
         <button type="submit" class="btn-filtrar">Filtrar</button>
     </form>
 </div>
+
+<!-- ERROR DE VALIDACIÓN DE FECHAS (mostrado/oculto por estadisticas.js) -->
+<div class="alert-jv alert-jv-warning d-none mb-3" id="error-fechas"></div>
 
 <!-- TARJETAS KPI -->
 <div class="row g-3 mb-3">
@@ -92,6 +95,15 @@
     <span class="cmp-periodo" id="cmp-periodo"><?php echo htmlspecialchars($datos['etiqueta']); ?></span>
 </div>
 
+<!-- AVISO DE PERIODO SIN MOVIMIENTOS -->
+<?php if ($datos['ventas'] == 0 && $datos['compras'] == 0 && $datos['ganancia'] == 0): ?>
+    <div class="alert-jv alert-jv-info mb-4" id="aviso-sin-datos">
+        <i class="bi bi-info-circle me-2"></i>Sin movimientos en este periodo. Registra ventas o compras para que las estadísticas se reflejen aquí en tiempo real.
+    </div>
+<?php else: ?>
+    <div class="alert-jv alert-jv-info d-none mb-4" id="aviso-sin-datos"></div>
+<?php endif; ?>
+
 <!-- GRÁFICOS -->
 <div class="row g-4">
     <div class="col-lg-8">
@@ -99,6 +111,10 @@
             <h5><i class="bi bi-graph-up me-2"></i>Ventas vs Compras</h5>
             <div class="chart-canvas-wrap">
                 <canvas id="chartFlujo"></canvas>
+                <div class="chart-empty d-none" id="empty-flujo">
+                    <i class="bi bi-inbox"></i>
+                    <span>Sin ventas ni compras en este periodo</span>
+                </div>
             </div>
         </div>
     </div>
@@ -107,6 +123,10 @@
             <h5><i class="bi bi-bar-chart-fill me-2"></i>Top 5 Más Vendidos</h5>
             <div class="chart-canvas-wrap">
                 <canvas id="chartTop"></canvas>
+                <div class="chart-empty d-none" id="empty-top">
+                    <i class="bi bi-inbox"></i>
+                    <span>Sin ventas registradas en este periodo</span>
+                </div>
             </div>
         </div>
     </div>

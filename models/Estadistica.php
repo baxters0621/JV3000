@@ -108,7 +108,9 @@ class Estadistica extends Model
      *
      * Suma cantidad*precio en detalle_salidas (ventas tipo 1 activas) y en
      * detalle_compras (compras activas); la ganancia usa la diferencia entre
-     * precio de venta y precio de costo por producto.
+     * el precio de venta y el costo REAL del lote consumido (detalle_salidas
+     * apunta al lote con su precio_costo de compra), con respaldo al precio
+     * de costo actual del producto cuando el detalle no tiene lote.
      *
      * @param string $desde Fecha inicial (YYYY-MM-DD).
      * @param string $hasta Fecha final (YYYY-MM-DD).
@@ -123,7 +125,7 @@ class Estadistica extends Model
 
         $compras = (float)$this->db->fetchOne("SELECT COALESCE(SUM(dc.cantidad * dc.precio_costo), 0) AS total FROM compras c JOIN detalle_compras dc ON c.id_compra = dc.id_compra WHERE c.fecha_compra BETWEEN ? AND ? AND c.status = 'Activa'", [$f_desde, $f_hasta])['total'];
 
-        $ganancia = (float)$this->db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * (ds.precio_venta - p.precio_costo)), 0) AS total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida BETWEEN ? AND ? AND s.id_tipo_mov = 1 AND s.status = 'Activa'", [$f_desde, $f_hasta])['total'];
+        $ganancia = (float)$this->db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * (ds.precio_venta - COALESCE(l.precio_costo, p.precio_costo))), 0) AS total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto LEFT JOIN lotes l ON ds.id_lote = l.id_lote WHERE s.fecha_salida BETWEEN ? AND ? AND s.id_tipo_mov = 1 AND s.status = 'Activa'", [$f_desde, $f_hasta])['total'];
 
         return ['ventas' => $ventas, 'compras' => $compras, 'ganancia' => $ganancia];
     }

@@ -221,6 +221,40 @@
         height:340px;
     }
 
+    /* === ESTADO VACÍO DE LOS GRÁFICOS ================= */
+    .chart-canvas-wrap .chart-empty {
+        position:absolute;
+        inset:0;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        color:var(--jv-text-muted);
+        background:rgba(248,250,252,0.6);
+        border-radius:12px;
+        text-align:center;
+        padding:20px;
+    }
+    .chart-empty i {
+        font-size:2.4rem;
+        color:#A8B8CC;
+    }
+    .chart-empty span {
+        font-size:.95rem;
+        font-weight:600;
+    }
+
+    /* === INDICADOR DE REFRESCO EN VIVO ================ */
+    .stats-refrescando .widget-value,
+    .stats-refrescando .cmp-sello {
+        animation:statsPulse 1s ease-in-out infinite;
+    }
+    @keyframes statsPulse {
+        0%, 100% { opacity:1; }
+        50%      { opacity:.45; }
+    }
+
     /* === RESPONSIVE =================================== */
     @media (max-width: 1200px) {
         .chart-canvas-wrap { height:320px; }

@@ -4,6 +4,34 @@
 
     const cfg = window.JV_CONFIG || {};
 
+    // ---------- HELPERS DE ESTADO ----------
+    // Indica si una serie numérica tiene al menos un valor distinto de cero
+    // (decide si los gráficos muestran el estado vacío).
+    function tieneDatos(serie) {
+        return Array.isArray(serie) && serie.some(v => Number(v) !== 0);
+    }
+
+    // Muestra u oculta el mensaje "sin datos" superpuesto a un canvas según existan datos.
+    function toggleEmptyCanvas(canvasId, emptyId, hasData) {
+        const empty = document.getElementById(emptyId);
+        if (!empty) return;
+        const canvas = document.getElementById(canvasId);
+        if (canvas) canvas.classList.toggle('d-none', !hasData);
+        empty.classList.toggle('d-none', hasData);
+    }
+
+    // Muestra u oculta el aviso global de "periodo sin movimientos".
+    function toggleAvisoSinDatos(hasMovement) {
+        const aviso = document.getElementById('aviso-sin-datos');
+        if (!aviso) return;
+        if (hasMovement) {
+            aviso.classList.add('d-none');
+        } else {
+            aviso.innerHTML = '<i class="bi bi-info-circle me-2"></i>Sin movimientos en este periodo. Registra ventas o compras para que las estadísticas se reflejen aquí en tiempo real.';
+            aviso.classList.remove('d-none');
+        }
+    }
+
     // ---------- GRÁFICO DE LÍNEAS: VENTAS VS COMPRAS ----------
     let chartFlujo = null;
     // Dibuja o redibuja el gráfico de líneas comparando ventas y compras por periodo.
@@ -102,8 +130,15 @@
         updateText('cmp-mensaje-texto', statisticsResponse.mensaje);
         updateText('cmp-periodo', statisticsResponse.etiqueta);
 
+        const hayVentas = tieneDatos(statisticsResponse.data_ventas);
+        const hayCompras = tieneDatos(statisticsResponse.data_compras);
+        const hayTop = Array.isArray(statisticsResponse.topLabels) && statisticsResponse.topLabels.length > 0;
+
         crearChartFlujo(statisticsResponse.labels, statisticsResponse.data_ventas, statisticsResponse.data_compras);
+        toggleEmptyCanvas('chartFlujo', 'empty-flujo', (hayVentas || hayCompras));
         crearChartTop(statisticsResponse.topLabels, statisticsResponse.topCant);
+        toggleEmptyCanvas('chartTop', 'empty-top', hayTop);
+        toggleAvisoSinDatos(hayVentas || hayCompras || Number(statisticsResponse.ventas) !== 0);
     }
 
     // ---------- FILTROS: BOTONES DE PERIODO ----------
@@ -117,9 +152,34 @@
     // ---------- RENDER INICIAL ----------
     if (cfg.labels) {
         crearChartFlujo(cfg.labels, cfg.ventas, cfg.compras);
+        toggleEmptyCanvas('chartFlujo', 'empty-flujo', (tieneDatos(cfg.ventas) || tieneDatos(cfg.compras)));
     }
     if (cfg.topLabels) {
         crearChartTop(cfg.topLabels, cfg.topCant);
+        toggleEmptyCanvas('chartTop', 'empty-top', cfg.topLabels.length > 0);
+    }
+
+    // ---------- VALIDACIÓN DEL FILTRO POR FECHAS ----------
+    // Valida en el cliente que el rango sea coherente (no vacío, desde <= hasta,
+    // y no futuro) antes de enviar el formulario al servidor.
+    const filtroFechas = document.querySelector('.filtro-fechas');
+    const avisoFechas = document.getElementById('error-fechas');
+    if (filtroFechas) {
+        filtroFechas.addEventListener('submit', (e) => {
+            const desde = document.getElementById('desde_f');
+            const hasta = document.getElementById('hasta_f');
+            const hoy = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+            const mostrarError = (texto) => {
+                if (avisoFechas) { avisoFechas.textContent = texto; avisoFechas.classList.remove('d-none'); }
+            };
+
+            if (!desde.value || !hasta.value) { mostrarError('Indica la fecha Desde y Hasta para filtrar por rango.'); e.preventDefault(); return; }
+            const d = new Date(desde.value + 'T00:00:00');
+            const h = new Date(hasta.value + 'T00:00:00');
+            if (d > h) { mostrarError('La fecha Hasta no puede ser anterior a la fecha Desde.'); e.preventDefault(); return; }
+            if (h > hoy) { mostrarError('La fecha Hasta no puede ser futura.'); e.preventDefault(); return; }
+            if (avisoFechas) avisoFechas.classList.add('d-none');
+        });
     }
 
     // ---------- AUTO-REFRESH CADA 60 S ----------
@@ -131,9 +191,11 @@
 
     // Consulta los datos de estadísticas del periodo activo y actualiza la interfaz sin recargar la página.
     function refreshEstadisticas() {
+        document.body.classList.add('stats-refrescando');
         fetch((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.json())
             .then(statisticsResponse => { try { actualizarUI(statisticsResponse); } catch (error) { console.error('Stats refresh error:', error); } })
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => document.body.classList.remove('stats-refrescando'));
     }
     setInterval(refreshEstadisticas, 60000);
