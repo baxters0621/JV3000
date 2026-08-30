@@ -5,8 +5,7 @@
 // ==========================================
 // Carga init (sesión, seguridad, DB), configura
 // las rutas MVC y delega al Router.
-//   http://localhost/JV3000_db/index.php?url=solicitudes
-//   http://localhost/JV3000_db/index.php?url=solicitudes/cancelar/5
+//   http://localhost/JV3000_db/index.php?url=compras
 require_once __DIR__ . '/init.php';
 require_once __DIR__ . '/config/config.php';
 

@@ -13,6 +13,10 @@
 /** @var int $prov_activos */
 /** @var array<int, array<int, array<string, mixed>>> $prov_catalogo Mapa id_proveedor => entradas */
 /** @var array<int, array<string, mixed>> $productos_activos */
+/** @var array<int, array<string, mixed>> $solicitudes_pendientes Solicitudes de reposición por atender */
+/** @var array<int, array<string, mixed>> $compras_pendientes Compras pendientes de recepción */
+/** @var int $unidades_por_recibir Unidades pendientes por recibir */
+/** @var array<int, array<string, mixed>> $recepciones Últimas recepciones registradas */
 
 // ==========================================
 // VISTA: Compras (index)
@@ -101,6 +105,56 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
     </div>
 </div>
 
+<!-- Solicitudes de reposición pendientes (integradas en Compras) -->
+<?php if (!empty($solicitudes_pendientes)): ?>
+    <div class="card-jv card-jv-table p-0 mb-4 comp-sol-card">
+        <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
+            <i class="bi bi-clipboard-check me-1" style="font-size:1rem;color:#7C3AED;"></i>
+            <span class="fw-bold text-uppercase" style="font-size:.8rem;letter-spacing:.5px;color:var(--jv-navy);">
+                Solicitudes de Reposición Pendientes
+            </span>
+            <span class="badge-jv badge-primary ms-1"><?php echo count($solicitudes_pendientes); ?></span>
+            <span class="ms-auto"></span>
+            <span class="small text-secondary fw-semibold"><i class="bi bi-info-circle me-1"></i>Se generan desde Ventas cuando un producto queda sin stock</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table-jv mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:10%;">Solicitud</th>
+                        <th style="width:14%;">Solicitante</th>
+                        <th>Motivo</th>
+                        <th class="text-center" style="width:8%;">Productos</th>
+                        <th class="text-center" style="width:8%;">Unidades</th>
+                        <th style="width:10%;">Fecha</th>
+                        <th class="text-center" style="width:160px;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaSolicitudes">
+                    <?php foreach ($solicitudes_pendientes as $sol_pend): ?>
+                        <tr>
+                            <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge sol-num-badge"><?php echo '#' . (int)$sol_pend['id_solicitud']; ?></span></td>
+                            <td class="text-uppercase fw-bold small"><?php echo htmlspecialchars($sol_pend['solicitante']); ?></td>
+                            <td style="color:var(--jv-text-secondary);"><?php echo htmlspecialchars($sol_pend['motivo'] ?? 'Solicitud de reposición'); ?></td>
+                            <td class="text-center"><span class="cant-badge"><?php echo (int)$sol_pend['num_productos']; ?></span></td>
+                            <td class="text-center fw-bold"><?php echo (int)$sol_pend['total_unidades']; ?></td>
+                            <td class="small" style="color:var(--jv-text-muted);"><?php echo date('d/m/Y H:i', strtotime($sol_pend['fecha_solicitud'])); ?></td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-1">
+                                    <a href="<?php echo APP_URL_BASE; ?>index.php?url=compras&atender_solicitud=<?php echo (int)$sol_pend['id_solicitud']; ?>" class="btn btn-sm btn-jv-success comp-sol-atender" data-tooltip="Atender esta solicitud creando la compra">
+                                        <i class="bi bi-cart-check me-1"></i>ATENDER
+                                    </a>
+                                    <button type="button" class="btn-action comp-sol-cancelar" onclick="confirmarCancelarSolicitud(<?php echo (int)$sol_pend['id_solicitud']; ?>)" data-tooltip="Cancelar solicitud"><i class="bi bi-x-circle"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<?php endif; ?>
+
 <!-- Tabla de compras -->
 <div class="card-jv card-jv-table p-0">
     <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
@@ -178,6 +232,99 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         </table>
     </div>
 </div>
+
+<!-- Compras pendientes de recepción (integradas en Compras) -->
+<?php if (!empty($compras_pendientes)): ?>
+    <div class="card-jv card-jv-table p-0 mb-4 comp-rec-card">
+        <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
+            <i class="bi bi-box-arrow-in-down me-1" style="font-size:1rem;color:#D97706;"></i>
+            <span class="fw-bold text-uppercase" style="font-size:.8rem;letter-spacing:.5px;color:var(--jv-navy);">Compras Pendientes de Recepción</span>
+            <span class="badge-jv badge-warning ms-1"><?php echo count($compras_pendientes); ?> compra(s)</span>
+            <span class="small text-secondary fw-semibold ms-1"><i class="bi bi-boxes me-1"></i><?php echo number_format($unidades_por_recibir, 0); ?> unds.</span>
+            <span class="ms-auto"></span>
+            <i class="bi bi-search me-1" style="font-size:1rem;color:#D97706;"></i>
+            <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar pendientes..." id="buscarPendientes" onkeyup="filtrarPendientes()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;max-width:240px;">
+        </div>
+        <div class="table-responsive">
+            <table class="table-jv rec-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:12%;">Factura</th>
+                        <th style="width:10%;">Nro. Control</th>
+                        <th style="width:17%;">Proveedor</th>
+                        <th class="text-center" style="width:7%;">Items</th>
+                        <th class="text-center" style="width:8%;">Unds</th>
+                        <th class="text-center" style="width:11%;">Estado</th>
+                        <th style="width:8%;">Fecha</th>
+                        <th class="text-center" style="width:130px;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaPendientes">
+                    <?php foreach ($compras_pendientes as $compra_pendiente): ?>
+                        <tr>
+                            <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($compra_pendiente['nro_factura']); ?></span></td>
+                            <td style="color:var(--jv-text-muted);font-weight:600;"><?php echo htmlspecialchars($compra_pendiente['nro_control'] ?: '-'); ?></td>
+                            <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($compra_pendiente['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($compra_pendiente['proveedor'] ?? 'S/P'); ?></td>
+                            <td class="text-center"><span class="cant-badge"><?php echo (int)$compra_pendiente['items_pend']; ?></span></td>
+                            <td class="text-center fw-bold"><?php echo (int)$compra_pendiente['unidades_pend']; ?></td>
+                            <td class="text-center">
+                                <?php $estado_recepcion = $compra_pendiente['estado_recepcion']; ?>
+                                <span class="badge-jv <?php echo $estado_recepcion === 'Parcial' ? 'badge-info' : 'badge-warning'; ?>"><i class="bi <?php echo $estado_recepcion === 'Parcial' ? 'bi-arrow-repeat' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $estado_recepcion; ?></span>
+                            </td>
+                            <td class="fecha-cell"><?php echo date('d/m/Y', strtotime($compra_pendiente['fecha_compra'])); ?></td>
+                            <td class="text-center">
+                                <button type="button" class="btn comp-rec-btn w-100" onclick="abrirRecepcion(<?php echo $compra_pendiente['id_compra']; ?>)" data-tooltip="Registrar la recepción de esta mercancía">
+                                    <i class="bi bi-box-arrow-in-down me-1"></i>RECIBIR
+                                </button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<?php endif; ?>
+
+<!-- Últimas recepciones (integradas en Compras) -->
+<?php if (!empty($recepciones)): ?>
+    <div class="card-jv card-jv-table p-0 mb-4 comp-rec-card">
+        <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
+            <i class="bi bi-clock-history me-1" style="font-size:1rem;color:#D97706;"></i>
+            <span class="fw-bold text-uppercase" style="font-size:.8rem;letter-spacing:.5px;color:var(--jv-navy);">Últimas Recepciones</span>
+            <span class="ms-auto"></span>
+            <i class="bi bi-search me-1" style="font-size:1rem;color:#D97706;"></i>
+            <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar recepciones..." id="buscarRecepciones" onkeyup="filtrarRecepciones()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;max-width:240px;">
+        </div>
+        <div class="table-responsive">
+            <table class="table-jv rec-table mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:14%;">Fecha</th>
+                        <th style="width:14%;">Factura</th>
+                        <th style="width:22%;">Proveedor</th>
+                        <th class="text-center" style="width:11%;">Productos</th>
+                        <th class="text-center" style="width:11%;">Unidades</th>
+                        <th style="width:16%;">Guía/Recibo</th>
+                        <th style="width:12%;">Operador</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaRecepciones">
+                    <?php foreach ($recepciones as $recepcion): ?>
+                        <tr>
+                            <td class="fecha-cell"><?php echo date('d/m/Y H:i', strtotime($recepcion['fecha_movimiento'])); ?></td>
+                            <td style="text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($recepcion['nro_factura'] ?? '-'); ?></span></td>
+                            <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($recepcion['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($recepcion['proveedor'] ?? 'S/P'); ?></td>
+                            <td class="text-center"><span class="cant-badge">+<?php echo (int)$recepcion['num_items']; ?></span></td>
+                            <td class="text-center fw-bold text-success">+<?php echo (int)$recepcion['unidades']; ?></td>
+                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($recepcion['documento_recepcion'] ?: '-'); ?></td>
+                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($recepcion['operador'] ?? '-'); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<?php endif; ?>
 
 <!-- Modal: Registrar compra -->
 <script>window.JV_CATALOGO = <?php echo $catalogo_costos; ?>;</script>
@@ -837,3 +984,80 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <script>
     window.COMPRAS_SOLICITUD = <?php echo !empty($solicitud_prefill) ? json_encode($solicitud_prefill, JSON_UNESCAPED_UNICODE) : 'null'; ?>;
 </script>
+
+<!-- ============================================================
+     RECEPCIÓN DE MERCADERÍA (modal integrado en Compras)
+     Los datos de cada compra pendiente llegan vía
+     window.JV_CONFIG.recepcionDatos (inyectado por el layout).
+     ============================================================ -->
+<div class="modal fade" id="modalRecepcion" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <form method="POST" id="formRecepcion">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                <input type="hidden" name="accion_recepcion" value="recibir">
+                <input type="hidden" name="id_compra" id="recIdCompra">
+                <input type="hidden" name="items_data" id="recItemsData">
+
+                <!-- Header receptivo -->
+                <div class="rec-modal-header">
+                    <div class="rec-modal-icon"><i class="bi bi-box-arrow-in-down"></i></div>
+                    <div>
+                        <h5 class="rec-modal-titulo">RECIBIR MERCADERÍA</h5>
+                        <p class="rec-modal-sub">Ingreso al inventario: lotes, vencimiento y costo promedio</p>
+                    </div>
+                    <button type="button" class="prov-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                <div class="p-3">
+                    <div class="rec-section">
+                        <div class="rec-section-label"><i class="bi bi-receipt me-1"></i>Compra</div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="small fw-bold text-secondary mb-1">FACTURA</label>
+                                <input type="text" class="input-jv" id="recFactura" readonly disabled style="color:var(--jv-text-muted);font-weight:700;">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold text-secondary mb-1">PROVEEDOR</label>
+                                <input type="text" class="input-jv" id="recProveedor" readonly disabled style="color:var(--jv-text-muted);">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">N&deg; GU&Iacute;A / RECIBO <span class="fw-normal">(opcional)</span></label>
+                                <input type="text" name="documento_recepcion" class="input-jv" id="recDocumento" maxlength="100" placeholder="Documento físico de entrega...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rec-section" style="margin-bottom:0;">
+                        <div class="rec-section-label"><i class="bi bi-box-seam me-1"></i>Productos a recibir <span class="fw-normal text-secondary">(ajuste la cantidad, m&aacute;x. lo pendiente)</span></div>
+                        <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;">
+                            <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
+                                <thead>
+                                    <tr style="background:linear-gradient(135deg,#B45309,#D97706);">
+                                        <th style="padding:10px 8px;width:28px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">#</th>
+                                        <th style="padding:10px 8px;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Producto</th>
+                                        <th style="padding:10px 8px;width:70px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Orden</th>
+                                        <th style="padding:10px 8px;width:70px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Recibido</th>
+                                        <th style="padding:10px 8px;width:100px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">A Recibir</th>
+                                        <th style="padding:10px 8px;width:130px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Vence</th>
+                                        <th style="padding:10px 8px;width:80px;text-align:right;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">P. Costo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recItemsBody">
+                                    <tr>
+                                        <td colspan="7" style="padding:24px 12px;text-align:center;color:var(--jv-text-muted);font-size:.85rem;">Seleccione una compra para recibir</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
+                    <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
+                    <button type="button" class="btn btn-jv-success module-action-btn" id="btnRecibir" onclick="return confirmarRecepcion(this)"><i class="bi bi-check-lg me-1"></i> Registrar Recepci&oacute;n</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

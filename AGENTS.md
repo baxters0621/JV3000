@@ -20,7 +20,7 @@ _Nota de seguridad: Nunca recortes en validaciones de seguridad, accesibilidad o
 - Para mostrar el nombre del rol: JOIN con `roles` o usar el mapa inline `$roles_map = [1=>'Administrador', 2=>'Operador de Carga', 3=>'Operador de Ventas']`
 - Accesos por módulo (el sidebar refleja exactamente esto, ordenado por fases):
   - Categorías/Proveedores: admin + carga · Usuarios/Historial: solo admin
-  - Solicitudes/Compras/Recepción: admin + carga · Ventas/Salidas: admin + ventas
+  - Compras: admin + carga. **Solicitudes y Recepción están integradas dentro de Compras** (no son módulos del menú): las solicitudes pendientes nas desde Ventas y se atienden desde el tablero de Compras (`?url=compras&atender_solicitud=N`, cancelación vía AJAX `solicitudes/cancelar`); la recepción de mercancía se hace en un modal del propio módulo (`POST accion_recepcion`). Ventas/Salidas: admin + ventas
   - Inventario: los tres roles en CONSULTA; toda escritura exige admin (`$esAdmin` gates)
   - Estadísticas: admin + ventas · Imprimir reporte: los tres roles
 - El sidebar (`includes/sidebar.php`) está ordenado por fases operativas con títulos de sección: Configuración → Operaciones → Análisis → Control. Mantener ese orden en cambios nuevos.

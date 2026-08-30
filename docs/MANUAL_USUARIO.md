@@ -11,7 +11,7 @@ Este manual explica, en orden, qué debe hacer un **Administrador**, un **Operad
 | Rol | Acceso | Trabaja en |
 |---|---|---|
 | **Administrador** | Todo el sistema | Usuarios, Historial, Productos, Categorías, Compras, Ventas, Clientes, Estadísticas |
-| **Operador de Carga** | Compras, Recepción, Productos (consulta) | Solicitudes, Compras, Recepción |
+| **Operador de Carga** | Compras (incluye recepción y solicitudes), Productos (consulta) | Compras, Proveedores, Recepción, Solicitudes |
 | **Operador de Ventas** | Ventas, Estadísticas, Productos (consulta) | Ventas y Salidas |
 
 > Regla general: **Inventario** y **Productos** se pueden consultar con los 3 roles, pero solo el **Administrador** puede crearlos o modificarlos.
@@ -130,14 +130,16 @@ Fase 5  Análisis →  estadísticas + imprimir reporte
 
 ### Fase 3 · Compras (Operador de Carga / Administrador)
 
+> En el módulo **Compras** viven también las Solicitudes de Reposición y la Recepción de Mercancía. No necesitas salir de Compras: las pendientes aparecen como tarjetas arriba de la tabla de facturas.
+
 #### Paso 1 — Solicitudes de Reposición
 - Las solicitudes **nacen desde Ventas**: si al vender faltó producto, el sistema ofrece generar automáticamente una solicitud.
-- En `Compras → Solicitudes de Reposición` verás las pendientes con sus productos y unidades.
-- Para atender una: pulsa **ATENDER** → te lleva a una nueva compra con los ítems ya cargados.
+- En la tarjeta **"Solicitudes de Reposición Pendientes"** (parte superior de Compras) verás las pendientes con solicitante, motivo, productos y unidades.
+- Para atender una: pulsa **ATENDER** → te lleva a una nueva compra con los ítems ya cargados. También puedes **cancelarla** con el botón de la X.
 - Estados: `Pendiente` → `Atendida` (al crear la compra) o `Cancelada`.
 
 #### Paso 2 — Compras
-`Compras → Compras · Proveedores` → botón **NUEVA COMPRA** (4 pasos):
+`Compras → botón NUEVA COMPRA` (4 pasos):
 
 1. **Proveedor:** escoge un proveedor activo con RIF válido. *(Los proveedores se gestionan aquí mismo, con datos de empresa, RIF y contacto.)*
 2. **Factura:** número (6–8 dígitos, **único por proveedor**) y Nº control de la papelería fiscal.
@@ -147,11 +149,11 @@ Fase 5  Análisis →  estadísticas + imprimir reporte
 > Importante: al guardar la compra **NO sube el stock**. Eso ocurre en la Recepción. La compra queda con estado de recepción **Pendiente**.
 
 #### Paso 3 — Recepción
-`Compras → Recepción`:
-1. En "Compras Pendientes de Recepción" pulsa **RECIBIR**.
-2. Verifica factura y proveedor (solo lectura). Nº de Guía/Recibo opcional.
-3. Indica cuánto **vas a recibir** por línea (máximo lo comprado).
-4. Registra: el sistema **crea los lotes**, recalcula el **costo promedio**, sube el stock y deja la compra **Completa** (o **Parcial** si solo recibiste parte).
+En la tarjeta **"Compras Pendientes de Recepción"** (dentro de Compras) pulsa el botón **RECIBIR** de la compra a recibir:
+
+1. Verifica factura y proveedor (solo lectura). Nº de Guía/Recibo opcional.
+2. Indica cuánto **vas a recibir** por línea (máximo lo pendiente por recibir).
+3. Registra: el sistema **crea los lotes**, recalcula el **costo promedio**, sube el stock y deja la compra **Completa** (o **Parcial** si solo recibiste parte). Las recepciones recientes quedan en la tarjeta **"Últimas Recepciones"** (últimas 5).
 
 > Regla de oro: **una compra solo aumenta el inventario cuando se recibe.** Si haces compras y nunca recibes, el stock no reflejará la mercancía.
 
@@ -213,7 +215,7 @@ Fase 5  Análisis →  estadísticas + imprimir reporte
 ## 10. Resumen rápido "qué hago hoy"
 
 - **¿Soy administrador y llega un colaborador nuevo?** → `Control → Usuarios` → APROBAR con su rol.
-- **¿Falta producto en el almacén?** → `Compras → Solicitudes de Reposición` → ATENDER → COMPRAR → RECIBIR.
+- **¿Falta producto en el almacén?** → `Compras` → Solicitudes Pendientes → ATENDER → COMPRAR → RECIBIR.
 - **¿Llegó un cliente y quiere mercancía?** → `Salidas → Ventas` → NUEVA VENTA → productos → VISTA PREVIA → CONFIRMAR.
 - **¿Vence mercancía o hay merma?** → NUEVA VENTA tipo **Merma/Ajuste** con la causa.
 - **¿Quiero saber si el negocio va bien?** → `Análisis → Estadísticas` y `Análisis → Imprimir Reporte`.

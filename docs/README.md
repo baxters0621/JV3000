@@ -60,20 +60,18 @@ El menú lateral sigue las fases reales de trabajo. Este es el procedimiento est
 3. **Usuarios** → crear los operadores y asignarles rol (2 = Carga, 3 = Ventas)
 
 ### Fase 2 — Ciclo diario de abastecimiento (Operador de Carga)
-4. **Solicitudes de Reposición** → detectar qué producto falta
-5. **Compras** → comprar al proveedor (la solicitud queda Atendida; toda fecha de vencimiento es obligatoria)
-6. **Recepción** → confirmar lo recibido: crea lotes, sube el stock y genera el movimiento Entrada
-7. **Inventario** → verificar el resultado
+4. **Compras** → en el módulo de Compras viven también las **Solicitudes de Reposición** que nacen desde Ventas (columna superior "Solicitudes Pendientes", con ATENDER/CANCELAR) y la **Recepción de Mercancía** (tarjetas "Compras Pendientes de Recepción" con RECIBIR y "Últimas Recepciones"). Registrar la compra al proveedor deja la solicitud Atendida; recibir la mercancía crea lotes, sube el stock y genera el movimiento Entrada. Toda fecha de vencimiento es obligatoria.
+5. **Inventario** → verificar el resultado
 
 ### Fase 3 — Ventas (Operador de Ventas)
-8. **Ventas / Salidas** → validar y confirmar: descuenta por FEFO, genera NDE y movimiento Salida
+6. **Ventas / Salidas** → validar y confirmar: descuenta por FEFO, genera NDE y movimiento Salida
 
 ### Fase 4 — Análisis (todos según rol)
-9. **Estadísticas** → ventas y comportamiento (Admin y Operador de Ventas)
-10. **Imprimir** → reporte de inventario (todos los roles)
+7. **Estadísticas** → ventas y comportamiento (Admin y Operador de Ventas)
+8. **Imprimir** → reporte de inventario (todos los roles)
 
 ### Fase 5 — Control (Administrador)
-11. **Historial** → auditoría de todas las operaciones
+9. **Historial** → auditoría de todas las operaciones
 
 ### Permisos por rol
 
@@ -81,7 +79,7 @@ El menú lateral sigue las fases reales de trabajo. Este es el procedimiento est
 |---|---|---|---|
 | Categorías, Proveedores | ✔ gestionar | ✔ gestionar | ✖ |
 | Usuarios | ✔ | ✖ | ✖ |
-| Solicitudes, Compras, Recepción | ✔ | ✔ | ✖ |
+| Compras (incluye recepción y solicitudes) | ✔ | ✔ | ✖ |
 | Inventario | ✔ editar | ✔ consultar | ✔ solo consulta |
 | Ventas / Salidas | ✔ (además anular) | ✖ | ✔ |
 | Estadísticas | ✔ | ✖ | ✔ |

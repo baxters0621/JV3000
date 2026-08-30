@@ -56,7 +56,7 @@ $es_op_ventas = $id_rol === 3;
 
         // Detecta rama activa para auto-expandir
         $rama_inventario_activa = $mvc_activa('productos');
-        $rama_compras_activa = $mvc_activa('solicitudes') || $mvc_activa('compras') || $mvc_activa('recepcion');
+        $rama_compras_activa = $mvc_activa('compras');
         $rama_salidas_activa = $mvc_activa('salidas');
         $rama_analisis_activo = $mvc_activa('estadisticas') || $mvc_activa('reporte_inventario');
         $rama_admin_activo = $mvc_activa('historial') || ($archivo_actual === 'usuarios.php');
@@ -90,22 +90,10 @@ $es_op_ventas = $id_rol === 3;
                 <i class="bi bi-chevron-down nav-chevron"></i>
             </button>
             <div class="nav-group-items">
-                <div class="nav-item <?php echo $mvc_activa('solicitudes') ? 'active' : ''; ?>">
-                    <a href="<?php echo $prefijo; ?>index.php?url=solicitudes" class="nav-link">
-                        <i class="bi bi-clipboard-check"></i>
-                        <span>Solicitudes</span>
-                    </a>
-                </div>
                 <div class="nav-item <?php echo $mvc_activa('compras') ? 'active' : ''; ?>">
                     <a href="<?php echo $prefijo; ?>index.php?url=compras" class="nav-link">
                         <i class="bi bi-bag"></i>
                         <span>Compras · Proveedores</span>
-                    </a>
-                </div>
-                <div class="nav-item <?php echo $mvc_activa('recepcion') ? 'active' : ''; ?>">
-                    <a href="<?php echo $prefijo; ?>index.php?url=recepcion" class="nav-link">
-                        <i class="bi bi-box-arrow-in-down"></i>
-                        <span>Recepción</span>
                     </a>
                 </div>
             </div>

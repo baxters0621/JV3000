@@ -1405,3 +1405,147 @@
         /* ── Selector internacional de teléfono dentro del modal ── */
         .modal .iti__country-list { z-index: 1080; }
     
+/* ============================================================
+   RECEPCIoN DE MERCADERIA + SOLICITUDES (integradas en Compras)
+   Identidad alineada al antiguo modulo de recepcion (acento ambar).
+   ============================================================ */
+.pagina-compras .comp-rec-card {
+    border-top: 3px solid #D97706;
+}
+.pagina-compras .comp-rec-btn {
+    padding: 9px 14px;
+    font-size: .8rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #fff;
+    background: linear-gradient(135deg, #B45309, #D97706);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+.pagina-compras .comp-rec-btn:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(217, 119, 6, .35);
+}
+.pagina-compras .rec-table th {
+    color: #B45309;
+}
+.pagina-compras .comp-sol-card {
+    border-top: 3px solid #7C3AED;
+}
+.pagina-compras .comp-sol-atender {
+    padding: 7px 12px;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.pagina-compras .sol-num-badge {
+    color: #7C3AED;
+}
+.pagina-compras .comp-sol-cancelar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(220, 38, 38, .1);
+    color: #DC2626;
+}
+.pagina-compras .comp-sol-cancelar:hover {
+    background: #DC2626;
+    color: #fff;
+}
+.pagina-compras .fecha-cell {
+    color: var(--jv-text-muted);
+    font-size: .8rem;
+    white-space: nowrap;
+}
+.pagina-compras .td-proveedor {
+    max-width: 180px;
+}
+/* Modal de recepcion */
+.pagina-compras .rec-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 24px;
+    color: #fff;
+    background: linear-gradient(135deg, #B45309 0%, #D97706 100%);
+}
+.pagina-compras .rec-modal-icon {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .18);
+    font-size: 1.3rem;
+}
+.pagina-compras .rec-modal-titulo {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+.pagina-compras .rec-modal-sub {
+    margin: 0;
+    font-size: .78rem;
+    opacity: .9;
+    font-weight: 400;
+}
+.pagina-compras .rec-section {
+    margin-bottom: 16px;
+}
+.pagina-compras .rec-section-label {
+    margin-bottom: 8px;
+    color: var(--jv-navy);
+    font-size: .75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+.pagina-compras .rec-section-label:before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 12px;
+    border-radius: 4px;
+    background: #D97706;
+    margin-right: 4px;
+    vertical-align: -1px;
+}
+.pagina-compras .rec-cant,
+.pagina-compras .rec-venc {
+    border: 1px solid var(--jv-border);
+    border-radius: 8px;
+    background: #fff;
+}
+.pagina-compras .rec-cant:focus {
+    border-color: #D97706;
+    box-shadow: 0 0 0 .25rem rgba(217, 119, 6, .18);
+}
+.pagina-compras .rec-cant.input-error,
+.pagina-compras .rec-venc.input-error {
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 0 .25rem rgba(220, 38, 38, .18);
+}
+.pagina-compras #btnRecibir {
+    padding: 12px 32px;
+    font-size: 1rem;
+}
+@media (max-width: 576px) {
+    .pagina-compras .rec-modal-header {
+        flex-wrap: wrap;
+    }
+    .pagina-compras .comp-rec-btn {
+        padding: 6px 10px;
+        font-size: .7rem;
+    }
+}

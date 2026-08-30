@@ -4,7 +4,7 @@
 // ROUTER — Convierte la URL en Controlador@método
 // ==========================================
 // Formato:  index.php?url=controlador/accion/param1/param2
-// Ejemplo:  index.php?url=solicitudes/cancelar/5
+// Ejemplo:  index.php?url=compras
 
 /**
  * Router: convierte la URL recibida (vía parámetro ?url=) en la llamada
@@ -19,11 +19,11 @@ class Router
      * Despacha la URL solicitada hacia el controlador y método correspondientes.
      *
      * Descompone la URL en [controlador]/[accion]/[parametros...], instancia el
-     * controlador (por defecto SolicitudesController::index) e invoca la acción
-     * con los parámetros restantes. Carga antes las clases base (Controller/Model)
+     * controlador (por defecto ComprasController::index) e invoca la acción con
+     * los parámetros restantes. Carga antes las clases base (Controller/Model)
      * y responde con 404 si el controlador, la clase o la acción no existen.
      *
-     * @param string $url Ruta MVC completa, p. ej. "solicitudes/cancelar/5".
+     * @param string $url Ruta MVC completa, p. ej. "compras".
      * @return void
      */
     public static function dispatch(string $url): void
@@ -33,7 +33,7 @@ class Router
         $parts = array_values(array_filter(explode('/', trim($url, '/')), 'strlen'));
 
         // Controlador por defecto
-        $controllerName = 'SolicitudesController';
+        $controllerName = 'ComprasController';
         $action = 'index';
         $params = [];
 
@@ -70,14 +70,12 @@ class Router
         call_user_func_array([$controller, $action], $params);
     }
 
-    // Convierte "solicitudes-de-repo" / "solicitudes" → "Solicitudes"
-
     /**
      * Convierte un segmento de URL en el nombre CamelCase del controlador.
      *
      * Separa por guiones/guiones bajos, pone cada palabra en mayúscula y las
-     * une. Ejemplo: "solicitudes-de-repo" → "SolicitudesDeRepo". El sufijo
-     * "Controller" lo añade quien lo invoca.
+     * une. Ejemplo: "compras" → "Compras". El sufijo "Controller" lo añade
+     * quien lo invoca.
      *
      * @param string $segment Segmento de URL (normalmente la primera parte).
      * @return string Palabras unidas en CamelCase.
