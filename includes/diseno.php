@@ -21,7 +21,7 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 <?php endif; ?>
 
 <!-- ACCIONES POST SEGURAS -->
-<script src="<?php echo $base_assets; ?>js/diseno.js?v=6"></script>
+<script src="<?php echo $base_assets; ?>js/diseno.js?v=7"></script>
 
 <!-- TOOLTIP GLOBAL COMPARTIDO (un solo <div> para toda la app) -->
 <script src="<?php echo $base_assets; ?>js/tooltips.js?v=5"></script>
@@ -35,7 +35,7 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 <link rel="stylesheet" href="<?php echo $base_assets; ?>css/bootstrap.min.css?v=4">
 <link rel="stylesheet" href="<?php echo $base_assets; ?>css/bootstrap-icons.css?v=4">
 
-<link rel="stylesheet" href="<?php echo $base_assets; ?>css/diseno.css?v=9">
+<link rel="stylesheet" href="<?php echo $base_assets; ?>css/diseno.css?v=10">
 
 <!-- FAVICON -->
 <link rel="icon" type="image/svg+xml" href="<?php echo $base_assets; ?>img/favicon.svg?v=1">

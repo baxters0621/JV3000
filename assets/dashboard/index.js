@@ -244,3 +244,23 @@
 
         iniciarDashboard();
         iniciarAlertas();
+        iniciarReloj();
+
+        // Reloj en tiempo real: hora local de Venezuela (Caracas) en formato 12h.
+        // Se actualiza cada segundo y usa cifras tabulares para no "saltar".
+        function iniciarReloj() {
+            var reloj = $id('dash-clock');
+            if (!reloj) return;
+            var formateador = new Intl.DateTimeFormat('es-VE', {
+                timeZone: 'America/Caracas',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            function pintar() {
+                reloj.textContent = formateador.format(new Date());
+            }
+            pintar();
+            setInterval(pintar, 1000);
+        }

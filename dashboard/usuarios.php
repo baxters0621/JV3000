@@ -16,7 +16,7 @@ $csrf_token = Security::generateToken();
 // ==========================================
 if (isset($_POST['accion_usuario'])) {
     $accion = $_POST['accion_usuario'];
-    $usuario = trim($_POST['usuario'] ?? '');
+    $usuario = normalizarUsuario($_POST['usuario'] ?? '');
 
     if ($accion == "editar") {
         $id_target = intval($_POST['id_usuario']);
@@ -24,6 +24,24 @@ if (isset($_POST['accion_usuario'])) {
         $password = $_POST['password'] ?? '';
         $rol_final = ($id_target == $id_propio) ? (int)$_SESSION['id_rol'] : (int)$_POST['id_rol'];
         $status_final = ($id_target == $id_propio) ? 'Activo' : ($_POST['status'] ?? 'Activo');
+
+        if ($id_target != $id_propio && !in_array($rol_final, [1, 2, 3], true)) {
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'SELECCIONA UN ROL VÁLIDO PARA EL COLABORADOR.'];
+            header("Location: usuarios.php");
+            exit();
+        }
+
+        if (strlen($usuario) < 4 || strlen($usuario) > 20 || !preg_match('/^[a-zA-Z0-9_]+$/', $usuario)) {
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'EL USUARIO DEBE TENER MÍN 4 Y MÁX 20 CARACTERES (letras, números, guion bajo).'];
+            header("Location: usuarios.php");
+            exit();
+        }
+
+        if (strlen($correo) > 100) {
+            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'CORREO DEMASIADO LARGO (MÁX 100 CARACTERES).'];
+            header("Location: usuarios.php");
+            exit();
+        }
 
         if ($db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) AND id_usuario != ?", [$usuario, $id_target])) {
             $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'EL USUARIO YA EXISTE.'];
@@ -40,12 +58,6 @@ if (isset($_POST['accion_usuario'])) {
 
         if (!empty($correo) && $db->fetchOne("SELECT id_usuario FROM usuarios WHERE correo = ? AND id_usuario != ?", [$correo, $id_target])) {
             $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'EL CORREO YA ESTÁ EN USO.'];
-            header("Location: usuarios.php");
-            exit();
-        }
-
-        if (strlen($usuario) < 4 || !preg_match('/^[a-zA-Z0-9_]+$/', $usuario)) {
-            $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'EL USUARIO DEBE TENER MÍN 4 CARACTERES (letras, números, guion bajo).'];
             header("Location: usuarios.php");
             exit();
         }
@@ -160,7 +172,7 @@ unset($_SESSION['flash_msg']);
 <head>
     <?php include '../includes/diseno.php'; ?>
     <title>Colaboradores | JV3000</title>
-    <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=7">
+    <link rel="stylesheet" href="../assets/dashboard/usuarios.css?v=9">
 </head>
 
 <body class="usuarios-page">
@@ -228,7 +240,7 @@ unset($_SESSION['flash_msg']);
                 </div>
 
                 <?php // ==========================================
-                // TABLA DE USUARIOS
+                // TABLA DE USUARIOS (búsqueda + filtros + paginación)
                 // ==========================================
                 ?>
                 <!-- Tabla Premium -->
@@ -238,23 +250,62 @@ unset($_SESSION['flash_msg']);
                         <span class="fw-bold small text-secondary text-uppercase">Listado de Accesos</span>
                         <span class="codigo-badge ms-auto"><?php echo $total_users; ?> registros</span>
                     </div>
+
+                    <!-- Buscador y filtros dinámicos -->
+                    <div class="buscador-usu d-flex align-items-center gap-2 px-3 py-2 flex-wrap">
+                        <div class="usu-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="input-jv" id="buscarUsuario" placeholder="Buscar por usuario o correo..." onkeyup="aplicarBusquedaUsuarios()" aria-label="Buscar colaborador">
+                        </div>
+                        <span class="contador-usuarios small ms-2" id="contadorUsuarios"> </span>
+                        <div class="filter-group-usu ms-auto">
+                            <button type="button" class="btn-filter-usu active" data-status-filtro="todos" onclick="setFiltroUsuarios(this)">Todos</button>
+                            <button type="button" class="btn-filter-usu" data-status-filtro="activo" onclick="setFiltroUsuarios(this)">Activos</button>
+                            <button type="button" class="btn-filter-usu" data-status-filtro="pendiente" onclick="setFiltroUsuarios(this)">Pendientes</button>
+                            <button type="button" class="btn-filter-usu" data-status-filtro="inactivo" onclick="setFiltroUsuarios(this)">Inactivos</button>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
-                        <table class="table-jv mb-0">
+                        <table class="table-jv mb-0" id="tablaUsuarios">
                             <thead>
                                 <tr>
-                                    <th style="width:70px;">#</th>
-                                    <th style="width:20%;">USUARIO</th>
-                                    <th style="width:26%;">CORREO</th>
-                                    <th style="width:15%;">ROL</th>
-                                    <th class="text-center" style="width:10%;">APROBADO</th>
-                                    <th class="text-center" style="width:10%;">ESTADO</th>
-                                    <th class="text-center" style="width:180px;">CONTROL</th>
+                                    <th style="width:52px;">#</th>
+                                    <th style="width:16%;">USUARIO</th>
+                                    <th style="width:20%;">CORREO</th>
+                                    <th style="width:20%;">ROL</th>
+                                    <th class="text-center" style="width:12%;">ESTADO</th>
+                                    <th class="text-center" style="width:230px;">ACCIONES</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="cuerpoUsuarios">
                                 <?php if (!empty($usuarios)): ?>
-                                    <?php foreach ($usuarios as $row): ?>
-                                        <tr <?php echo ((int)$row['aprobado'] === 0) ? 'class="fila-pendiente"' : ''; ?>>
+                                    <?php foreach ($usuarios as $row):
+                                        // Pendiente = sin aprobar Y sin rol asignado. Suspendido = inactivo con rol.
+                                        $es_pendiente = ((int)$row['aprobado'] === 0) && ($row['id_rol'] === null);
+                                        if ($es_pendiente) {
+                                            $estado_key  = 'pendiente';
+                                            $estado_css  = 'badge-pendiente';
+                                            $estado_icon = 'bi-hourglass-split';
+                                            $estado_texto = 'PENDIENTE';
+                                        } elseif ($row['status'] == 'Activo') {
+                                            $estado_key  = 'activo';
+                                            $estado_css  = 'badge-success';
+                                            $estado_icon = 'bi-check-circle-fill';
+                                            $estado_texto = 'ACTIVO';
+                                        } else {
+                                            $estado_key  = 'inactivo';
+                                            $estado_css  = 'badge-danger';
+                                            $estado_icon = 'bi-x-circle-fill';
+                                            $estado_texto = 'INACTIVO';
+                                        } ?>
+                                        <tr class="usuario-fila <?php echo $es_pendiente ? 'fila-pendiente' : ''; ?>"
+                                            data-id="<?php echo (int)$row['id_usuario']; ?>"
+                                            data-usuario="<?php echo htmlspecialchars($row['usuario']); ?>"
+                                            data-correo="<?php echo htmlspecialchars($row['correo'] ?? ''); ?>"
+                                            data-rol="<?php echo (int)$row['id_rol']; ?>"
+                                            data-status="<?php echo htmlspecialchars($row['status']); ?>"
+                                            data-estado="<?php echo $estado_key; ?>">
                                             <td class="text-secondary small"><span class="codigo-badge">#<?php echo $row['id_usuario']; ?></span></td>
                                             <td class="fw-bold usuario-cell" data-tooltip="<?php echo htmlspecialchars($row['usuario']); ?>">
                                                 <?php echo htmlspecialchars($row['usuario']); ?>
@@ -272,52 +323,47 @@ unset($_SESSION['flash_msg']);
                                                 <span class="role-badge <?php echo $role_class; ?>" data-tooltip="<?php echo htmlspecialchars($role_text); ?>"><i class="bi <?php echo $role_icon; ?>"></i><?php echo htmlspecialchars($role_text); ?></span>
                                             </td>
                                             <td class="text-center">
-                                                <?php if ($row['aprobado'] == 1): ?>
-                                                    <i class="bi bi-check-circle-fill fs-5" style="color:var(--jv-success);"></i>
+                                                <span class="badge-jv <?php echo $estado_css; ?>"><i class="bi <?php echo $estado_icon; ?> me-1"></i><?php echo $estado_texto; ?></span>
+                                            </td>
+                                            <td class="text-center">
+                                                <?php if ($row['id_usuario'] == $id_propio): ?>
+                                                    <span class="badge-jv badge-secondary" style="font-size:.7rem;padding:6px 12px;"><i class="bi bi-lock-fill me-1"></i>CUENTA PRINCIPAL</span>
+                                                <?php elseif ($es_pendiente): ?>
+                                                    <form method="POST" class="form-aprobar">
+                                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                                                        <input type="hidden" name="aprobar_usuario" value="<?php echo (int)$row['id_usuario']; ?>">
+                                                        <select name="id_rol" class="input-jv select-rol-aprobar" aria-label="Rol para <?php echo htmlspecialchars($row['usuario']); ?>" required>
+                                                            <option value="">Asignar rol...</option>
+                                                            <?php foreach ($roles_lista as $role): if (in_array((int)$role['id_rol'], [2, 3], true)): ?>
+                                                                    <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
+                                                            <?php endif; endforeach; ?>
+                                                        </select>
+                                                        <button type="submit" class="btn-accion btn-aprobar-mini" title="Aprobar acceso">
+                                                            <i class="bi bi-person-check-fill"></i>
+                                                        </button>
+                                                    </form>
                                                 <?php else: ?>
-                                                    <i class="bi bi-hourglass-split fs-5" style="color:var(--jv-warning);"></i>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge-jv <?php echo ($row['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>">
-                                                    <?php echo strtoupper($row['status']); ?>
-                                                </span>
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="d-flex justify-content-center">
-                                                    <?php if ($row['id_usuario'] == $id_propio): ?>
-                                                        <span class="badge-jv badge-secondary" style="font-size:.72rem;padding:6px 12px;"><i class="bi bi-lock-fill me-1"></i>CUENTA PRINCIPAL</span>
-                                                    <?php elseif ((int)$row['aprobado'] === 0): ?>
-                                                        <form method="POST" class="d-flex align-items-center gap-1">
-                                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-                                                            <input type="hidden" name="aprobar_usuario" value="<?php echo (int)$row['id_usuario']; ?>">
-                                                            <select name="id_rol" class="input-jv" style="width:145px;padding:8px 10px;font-size:.75rem;" aria-label="Rol para <?php echo htmlspecialchars($row['usuario']); ?>" required>
-                                                                <option value="">Asignar rol...</option>
-                                                                <?php foreach ($roles_lista as $role): if (in_array((int)$role['id_rol'], [2, 3], true)): ?>
-                                                                        <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
-                                                                <?php endif;
-                                                                endforeach; ?>
-                                                            </select>
-                                                            <button type="submit" class="btn-suspend btn-aprobar" data-tooltip="Aprobar este acceso">
-                                                                <i class="bi bi-person-check-fill me-1"></i>APROBAR
+                                                    <div class="acciones-usuario">
+                                                        <button type="button" class="btn-accion btn-editar" data-tooltip="Editar colaborador" onclick="abrirEdicion(this)">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </button>
+                                                        <?php if ($row['status'] == 'Activo'): ?>
+                                                            <button type="button" class="btn-accion btn-suspender" title="Suspender acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'suspender')">
+                                                                <i class="bi bi-person-lock"></i>
                                                             </button>
-                                                        </form>
-                                                    <?php elseif ($row['status'] == 'Activo'): ?>
-                                                        <button class="btn-suspend" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'suspender')">
-                                                            <i class="bi bi-person-lock me-1"></i>SUSPENDER
-                                                        </button>
-                                                    <?php else: ?>
-                                                        <button class="btn-suspend btn-reactivar" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')">
-                                                            <i class="bi bi-person-check-fill me-1"></i>REACTIVAR
-                                                        </button>
-                                                    <?php endif; ?>
-                                                </div>
+                                                        <?php else: ?>
+                                                            <button type="button" class="btn-accion btn-reactivar" title="Reactivar acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')">
+                                                                <i class="bi bi-person-check-fill"></i>
+                                                            </button>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="7">
+                                        <td colspan="6">
                                             <div class="estado-vacio">
                                                 <i class="bi bi-people-fill"></i>
                                                 <span>No hay colaboradores registrados</span>
@@ -328,7 +374,61 @@ unset($_SESSION['flash_msg']);
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Pie de tabla: contador + paginación dinámica -->
+                    <div class="paginacion-footer d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 py-2">
+                        <span class="small text-secondary" id="infoPagina"> </span>
+                        <nav id="paginacionUsuarios" aria-label="Paginación de colaboradores"></nav>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <?php // ==========================================
+    // MODAL: EDITAR COLABORADOR
+    // ==========================================
+    ?>
+    <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-jv">
+                <form id="formEditar" novalidate>
+                    <div class="modal-header modal-header-jv">
+                        <h5 class="modal-title fw-bold" id="modalEditarLabel"><i class="bi bi-pencil-square me-2"></i>EDITAR COLABORADOR</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="edit_id_usuario">
+                        <input type="hidden" id="edit_status">
+                        <div class="section-bg">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="section-label" for="edit_usuario"><i class="bi bi-person-fill"></i> NOMBRE DE USUARIO</label>
+                                    <input type="text" class="input-jv w-100" id="edit_usuario" maxlength="20" autocomplete="off" placeholder="Ej: Juan_Perez" required>
+                                    <div class="form-text jv-form-text">Mín 4 - Máx 20 caracteres (letras, números, guion bajo).</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="section-label" for="edit_correo"><i class="bi bi-envelope-fill"></i> CORREO ELECTRÓNICO</label>
+                                    <input type="email" class="input-jv w-100" id="edit_correo" maxlength="100" autocomplete="off" placeholder="usuario@empresa.com" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="section-label" for="edit_rol"><i class="bi bi-shield-fill-check"></i> ROL DEL USUARIO</label>
+                                    <select class="input-jv w-100" id="edit_rol" required>
+                                        <option value="">Seleccionar rol...</option>
+                                        <?php foreach ($roles_lista as $role): ?>
+                                            <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="form-text jv-form-text">Controla los permisos del colaborador dentro del sistema.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer modal-footer-jv">
+                        <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                        <button type="submit" class="btn-jv-primary"><i class="bi bi-check-lg me-1"></i>GUARDAR CAMBIOS</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -343,7 +443,7 @@ unset($_SESSION['flash_msg']);
             csrfToken: '<?php echo htmlspecialchars($csrf_token, ENT_QUOTES, 'UTF-8'); ?>'
         };
     </script>
-    <script src="../assets/dashboard/usuarios.js?v=4"></script>
+    <script src="../assets/dashboard/usuarios.js?v=6"></script>
 
 
 </body>

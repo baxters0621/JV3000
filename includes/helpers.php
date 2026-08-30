@@ -334,6 +334,29 @@ if (!function_exists('generarPasswordCheck')) {
     }
 }
 
+if (!function_exists('normalizarUsuario')) {
+    /**
+     * Normaliza un nombre de usuario a "Title_Case": primera letra de cada
+     * segmento en mayúscula y el resto en minúscula (ej: ADMINISTRADOR →
+     * Administrador, juan_perez → Juan_perez). Garantiza que un mismo nombre
+     * no exista con variantes de mayúsculas.
+     *
+     * @param string $raw Nombre de usuario sin normalizar.
+     * @return string Nombre de usuario normalizado.
+     */
+    function normalizarUsuario(string $raw): string
+    {
+        $clean = strtolower(trim($raw));
+        return preg_replace_callback(
+            '/(^|_)([a-z])/',
+            function ($m) {
+                return ($m[1] === '_' ? '_' : '') . strtoupper($m[2]);
+            },
+            $clean
+        );
+    }
+}
+
 if (!function_exists('existePasswordDuplicado')) {
     /**
      * Verifica si ya existe otro usuario con la misma contraseña (case-insensitive).

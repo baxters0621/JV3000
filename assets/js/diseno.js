@@ -132,19 +132,33 @@ function marcarError(inputElement, errorMessage) {
 // ==========================================
 // Cualquier .flash-auto se cierra solo a los 4 segundos, sincronizado con la
 // barra de tiempo que dibuja el CSS (::after con animación jvFlashBarra).
+// Un MutationObserver vigila el DOM: si algún módulo inyecta una alerta nueva
+// en runtime (fetch, innerHTML), también le programa su cierre automático.
 (function() {
-    function jvAutoCerrarAlertas() {
-        document.querySelectorAll('.flash-auto').forEach(function(alerta) {
-            if (alerta.dataset.flashListo) return;
-            alerta.dataset.flashListo = '1';
-            window.setTimeout(function() {
-                alerta.classList.add('jv-flash-out');
-                window.setTimeout(function() { alerta.remove(); }, 500);
-            }, 4000);
+    function jvProgramarCierre(alerta) {
+        if (alerta.dataset.flashListo) return;
+        alerta.dataset.flashListo = '1';
+        window.setTimeout(function() {
+            alerta.classList.add('jv-flash-out');
+            window.setTimeout(function() { alerta.remove(); }, 550);
+        }, 4000);
+    }
+    function jvAutoCerrarAlertas(raiz) {
+        (raiz || document).querySelectorAll('.flash-auto').forEach(jvProgramarCierre);
+    }
+    function jvObservarNodos(mutaciones) {
+        mutaciones.forEach(function(m) {
+            m.addedNodes.forEach(function(nodo) {
+                if (nodo.nodeType !== 1) return;
+                if (nodo.classList && nodo.classList.contains('flash-auto')) jvProgramarCierre(nodo);
+                jvAutoCerrarAlertas(nodo);
+            });
         });
     }
+    var observador = new MutationObserver(jvObservarNodos);
+    observador.observe(document.body || document.documentElement, { childList: true, subtree: true });
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', jvAutoCerrarAlertas);
+        document.addEventListener('DOMContentLoaded', function() { jvAutoCerrarAlertas(); });
     } else {
         jvAutoCerrarAlertas();
     }

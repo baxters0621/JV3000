@@ -39,7 +39,7 @@
 <!-- Mensajes flash -->
 <?php if (!empty($flash)): ?>
     <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" id="flash<?php echo ucfirst($flash['tipo']); ?>" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
-        <i class="bi bi-shield-check me-2"></i><?php echo htmlspecialchars($flash['texto']); ?>
+        <i class="bi bi-shield-check"></i><?php echo htmlspecialchars($flash['texto']); ?>
     </div>
 <?php endif; ?>
 

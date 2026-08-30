@@ -323,14 +323,28 @@ select.input-jv { appearance: auto; cursor: pointer; }
     box-shadow: 0 4px 16px rgba(15, 26, 46, 0.08);
 }
 
-/* Mensaje flash auto-cerrable: animación de entrada + barra de tiempo */
+/* Mensaje flash auto-cerrable: animación de entrada + barra de tiempo + salida con colapso */
 .flash-auto {
     display: flex;
     align-items: center;
     gap: 10px;
     border-radius: 14px;
     padding: 14px 20px;
-    animation: jvFlashIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(15, 26, 46, 0.10);
+    animation: jvFlashIn 0.45s cubic-bezier(0.21, 1.02, 0.73, 1) both;
+}
+/* Acento lateral que acompaña el color de cada tipo */
+.flash-auto::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: currentColor;
+    opacity: 0.85;
 }
 .flash-auto::after {
     content: "";
@@ -345,17 +359,22 @@ select.input-jv { appearance: auto; cursor: pointer; }
     animation: jvFlashBarra 4s linear forwards;
 }
 @keyframes jvFlashIn {
-    from { opacity: 0; transform: translateY(-12px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-14px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes jvFlashBarra {
     from { transform: scaleX(1); }
     to { transform: scaleX(0); }
 }
+/* Salida: se desvanece, se eleva y colapsa para liberar el espacio */
 .flash-auto.jv-flash-out {
-    opacity: 0;
-    transform: translateY(-8px);
-    transition: opacity 0.45s ease, transform 0.45s ease;
+    animation: jvFlashOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: none;
+}
+@keyframes jvFlashOut {
+    0% { opacity: 1; transform: translateY(0) scale(1); max-height: 120px; margin-bottom: 1rem; }
+    60% { opacity: 0; transform: translateY(-10px) scale(0.97); max-height: 120px; margin-bottom: 1rem; }
+    100% { opacity: 0; transform: translateY(-14px) scale(0.96); max-height: 0; margin-bottom: 0; }
 }
 
 /* ==========================================

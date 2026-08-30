@@ -18,6 +18,24 @@ $fecha_hoy = date('d/m/Y');
 
 $alertas = jv_alertas_por_rol($rol_user_id);
 
+// Saludo contextual según la hora local de Venezuela (formato 12h)
+$hora_ve = (int) (new DateTime('now', new DateTimeZone('America/Caracas')))->format('G');
+if ($hora_ve >= 5 && $hora_ve < 12) {
+    $saludo = 'Buenos días';
+} elseif ($hora_ve >= 12 && $hora_ve < 18) {
+    $saludo = 'Buenas tardes';
+} else {
+    $saludo = 'Buenas noches';
+}
+
+// Iniciales del usuario para el avatar (primera letra del nombre y del último
+// segmento si el nombre es compuesto con guion bajo, ej: Operador_Ventas → OV)
+$iniciales = mb_strtoupper(mb_substr($nombre_user, 0, 1), 'UTF-8');
+if (str_contains($nombre_user, '_')) {
+    $partes = explode('_', $nombre_user);
+    $iniciales .= mb_strtoupper(mb_substr($partes[count($partes) - 1], 0, 1), 'UTF-8');
+}
+
 // ==========================================
 // CONSULTAS UNIFICADAS DEL DASHBOARD
 // ==========================================
@@ -104,7 +122,7 @@ $tabla_compras = $datos['tabla_compras'];
     <title>Panel de Inicio | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
 
-    <link rel="stylesheet" href="../assets/dashboard/index.css?v=28">
+    <link rel="stylesheet" href="../assets/dashboard/index.css?v=29">
 </head>
 
 <?php
@@ -130,14 +148,17 @@ $tabla_compras = $datos['tabla_compras'];
                 </div>
                 <div class="dash-hero-info">
                     <div class="dash-user">
-                        <div class="dash-user-avatar"><i class="bi bi-person-fill"></i></div>
+                        <div class="dash-user-avatar"><?php echo $iniciales; ?></div>
                         <div>
+                            <div class="dash-user-greeting"><?php echo $saludo; ?></div>
                             <div class="dash-user-name"><?php echo htmlspecialchars($nombre_user); ?></div>
                             <div class="dash-user-role"><?php echo strtoupper($rol_user); ?></div>
                         </div>
                     </div>
                     <div class="dash-date">
                         <i class="bi bi-calendar3 me-2"></i><?php echo $fecha_hoy; ?>
+                        <span class="dash-date-sep">&middot;</span>
+                        <i class="bi bi-clock-fill me-1"></i><span id="dash-clock">--:--</span>
                     </div>
                     <div class="dash-bell-wrap">
                         <button type="button" class="dash-bell" id="dashBellBtn" onclick="toggleAlertas(event)" title="Alertas críticas de stock">
@@ -337,7 +358,7 @@ $tabla_compras = $datos['tabla_compras'];
     // ========================================== 
     ?>
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/dashboard/index.js?v=12"></script>
+    <script src="../assets/dashboard/index.js?v=13"></script>
 </body>
 
 </html>

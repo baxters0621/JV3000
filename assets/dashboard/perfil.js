@@ -42,8 +42,36 @@ function togglePass(inputId, btn) {
     var form = document.getElementById('formPerfil');
     if (!form) return;
 
+    // Normaliza el nombre de usuario mientras se escribe: solo minúsculas,
+    // números y guiones bajos; espacios se convierten en guion bajo.
+    var fUser = document.getElementById('perfil_usuario');
+    if (fUser) {
+        fUser.addEventListener('input', function() {
+            var raw = fUser.value;
+            var norm = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').slice(0, 20);
+            if (raw !== norm) fUser.value = norm;
+        });
+    }
+
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+
+        if (fUser) {
+            var u = fUser.value.trim();
+            if (u.length < 4) {
+                Swal.fire({ title: 'Usuario muy corto', text: 'El nombre de usuario debe tener MÍN 4 caracteres.', icon: 'error', confirmButtonColor: '#DC2626' });
+                return;
+            }
+            if (u.length > 20) {
+                Swal.fire({ title: 'Usuario muy largo', text: 'El nombre de usuario debe tener MÁX 20 caracteres.', icon: 'error', confirmButtonColor: '#DC2626' });
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]+$/.test(u)) {
+                Swal.fire({ title: 'Usuario inválido', text: 'Solo se permiten letras, números y guiones bajos.', icon: 'error', confirmButtonColor: '#DC2626' });
+                return;
+            }
+        }
+
         Swal.fire({
             title: '¿Está seguro de estos cambios?',
             text: 'Se actualizarán los datos de tu cuenta y pregunta de seguridad.',
@@ -63,19 +91,7 @@ function togglePass(inputId, btn) {
     });
 })();
 
-// Auto-ocultar alertas flash
-(function() {
-    var alerts = document.querySelectorAll('.alert-jv');
-    for (var i = 0; i < alerts.length; i++) {
-        (function(a) {
-            setTimeout(function() {
-                a.style.transition = 'opacity 0.6s';
-                a.style.opacity = '0';
-                setTimeout(function() { a.remove(); }, 600);
-            }, 4000);
-        })(alerts[i]);
-    }
-})();
+// Auto-ocultar alertas flash (gestionado en diseno.js vía .flash-auto)
 const observer = new MutationObserver(function() {
     if (typeof mainWrapper === 'undefined' || !mainWrapper) return;
     if (document.body.classList.contains('sidebar-open')) mainWrapper.classList.add('sidebar-open');

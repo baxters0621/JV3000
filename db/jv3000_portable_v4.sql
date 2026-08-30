@@ -167,7 +167,7 @@ INSERT INTO `tipos_movimientos` (`id_tipo_mov`, `nombre`, `tipo_movimiento`) VAL
 DROP TABLE IF EXISTS `usuarios`;
 CREATE TABLE `usuarios` (
   `id_usuario` int(11) NOT NULL AUTO_INCREMENT,
-  `usuario` varchar(50) NOT NULL,
+  `usuario` varchar(20) NOT NULL,
   `correo` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `id_rol` int(11) DEFAULT NULL,

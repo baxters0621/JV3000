@@ -77,7 +77,7 @@ if ($row_rest && $row_rest['restante'] > 0) {
 // PROCESAR REGISTRO
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
-    $new_user = trim($_POST['reg_usuario']);
+    $new_user = normalizarUsuario($_POST['reg_usuario']);
     $new_email = strtolower(trim($_POST['reg_email']));
     $new_pass = $_POST['reg_password'];
 
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
         } elseif (!validarRespuestaSeguridad($reg_respuesta)) {
             $error = "RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.";
         } else {
-            $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE BINARY usuario = ? OR BINARY correo = ?", [$new_user, $new_email]);
+            $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) OR LOWER(correo) = LOWER(?)", [$new_user, $new_email]);
             if ($dup) {
                 $error = "EL USUARIO O CORREO YA ESTA EN USO";
             } else {
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     $ip_usuario = $_SERVER['REMOTE_ADDR'];
-    $user_login = trim($_POST['usuario']);
+    $user_login = normalizarUsuario($_POST['usuario']);
 
     // Lockout dual: verificar por IP O por usuario
     $blocked = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE (ip_address = ? OR usuario = ?) AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ? ORDER BY restante DESC LIMIT 1", [$ip_usuario, $user_login, $max_intentos, $tiempo_bloqueo]);
@@ -149,12 +149,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     } else {
         $pass = $_POST['password'];
 
-        if (strlen($user_login) > 30) {
-            $error = "USUARIO DEMASIADO LARGO (MAX 30 CARACTERES)";
+        if (strlen($user_login) > 20) {
+            $error = "USUARIO DEMASIADO LARGO (MAX 20 CARACTERES)";
         } else {
             $login_exitoso = false;
             $clave_correcta = false;
-            $row = $db->fetchOne("SELECT * FROM usuarios WHERE BINARY usuario = ? LIMIT 1", [$user_login]);
+            $row = $db->fetchOne("SELECT * FROM usuarios WHERE LOWER(usuario) = LOWER(?) LIMIT 1", [$user_login]);
             if ($row) {
                 if (password_verify($pass, $row['password'])) {
                     $clave_correcta = true;
@@ -260,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 
                     <div class="field-group">
                         <i class="field-icon bi bi-person-fill"></i>
-                        <input type="text" id="f-user" name="usuario" class="field-input" placeholder="Nombre de Usuario" required autofocus maxlength="30" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                        <input type="text" id="f-user" name="usuario" class="field-input" placeholder="Nombre de Usuario" required autofocus maxlength="20" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
                     </div>
 
                     <div class="field-group">

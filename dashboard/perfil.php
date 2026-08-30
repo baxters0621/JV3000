@@ -26,7 +26,7 @@ $preguntas_opciones = getPreguntasRespuestas();
 $errores = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'actualizar_perfil') {
     $actual  = $_POST['password_actual'] ?? '';
-    $usuario = trim($_POST['usuario'] ?? '');
+    $usuario = normalizarUsuario($_POST['usuario'] ?? '');
     $correo  = strtolower(trim($_POST['correo'] ?? ''));
     $nueva   = $_POST['password_nueva'] ?? '';
     $confirm = $_POST['password_confirm'] ?? '';
@@ -42,15 +42,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'actua
     }
 
     // Usuario
-    if (strlen($usuario) < 4 || !preg_match('/^[a-zA-Z0-9_]+$/', $usuario)) {
-        $errores[] = 'EL USUARIO DEBE TENER MÍN 4 CARACTERES (letras, números, guion bajo).';
+    if (strlen($usuario) < 4 || strlen($usuario) > 20 || !preg_match('/^[a-zA-Z0-9_]+$/', $usuario)) {
+        $errores[] = 'EL USUARIO DEBE TENER MÍN 4 Y MÁX 20 CARACTERES (letras, números, guion bajo).';
     } elseif ($db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) AND id_usuario != ?", [$usuario, $id_usuario])) {
         $errores[] = 'EL NOMBRE DE USUARIO YA ESTÁ EN USO POR OTRA CUENTA.';
     }
 
     // Correo
-    if ($correo === '' || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-        $errores[] = 'CORREO ELECTRÓNICO INVÁLIDO.';
+    if ($correo === '' || strlen($correo) > 100 || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+        $errores[] = 'CORREO ELECTRÓNICO INVÁLIDO (MÁX 100 CARACTERES).';
     } elseif ($db->fetchOne("SELECT id_usuario FROM usuarios WHERE correo = ? AND id_usuario != ?", [$correo, $id_usuario])) {
         $errores[] = 'EL CORREO YA ESTÁ EN USO POR OTRA CUENTA.';
     }
@@ -126,7 +126,7 @@ unset($_SESSION['flash_msg']);
 <head>
     <?php include '../includes/diseno.php'; ?>
     <title>Mi Perfil | JV3000 C.A.</title>
-    <link rel="stylesheet" href="../assets/dashboard/perfil.css?v=3">
+    <link rel="stylesheet" href="../assets/dashboard/perfil.css?v=4">
 </head>
 
 <body>
@@ -135,12 +135,12 @@ unset($_SESSION['flash_msg']);
         <div class="container-fluid px-4 py-4">
 
             <?php if ($flash): ?>
-                <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?>" style="padding:12px 18px;font-size:.85rem;font-weight:600;">
+                <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3">
                     <?php echo htmlspecialchars($flash['texto']); ?>
                 </div>
             <?php endif; ?>
             <?php foreach ($errores as $err): ?>
-                <div class="alert-jv alert-jv-danger" style="padding:12px 18px;font-size:.85rem;font-weight:600;">
+                <div class="alert-jv alert-jv-danger flash-auto mb-3">
                     <?php echo htmlspecialchars($err); ?>
                 </div>
             <?php endforeach; ?>
@@ -180,7 +180,7 @@ unset($_SESSION['flash_msg']);
 
                             <div class="col-md-6">
                                 <label class="form-label-jv" for="perfil_usuario">USUARIO</label>
-                                <input type="text" id="perfil_usuario" name="usuario" class="input-jv" required maxlength="50" value="<?php echo htmlspecialchars($usuario_data['usuario']); ?>" autocomplete="username">
+                                <input type="text" id="perfil_usuario" name="usuario" class="input-jv" required maxlength="20" value="<?php echo htmlspecialchars($usuario_data['usuario']); ?>" autocomplete="username">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label-jv" for="perfil_correo">CORREO ELECTRÓNICO</label>
@@ -294,7 +294,7 @@ unset($_SESSION['flash_msg']);
     </div>
     <!-- JAVASCRIPT -->
     <script src="<?php echo $base_assets; ?>js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/dashboard/perfil.js?v=3"></script>
+    <script src="../assets/dashboard/perfil.js?v=5"></script>
 </body>
 
 </html>

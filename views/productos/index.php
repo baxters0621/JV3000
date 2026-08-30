@@ -38,8 +38,8 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
 
 <!-- Mensajes flash (id/data-texto permiten al JS de categorías marcar el campo con error) -->
 <?php if ($flash): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3 px-3 py-2" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
-        <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
+        <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?>"></i>
         <?php echo htmlspecialchars($flash['texto']); ?>
     </div>
 <?php endif; ?>

@@ -124,7 +124,7 @@ class ProductosController extends Controller
             'titulo'       => 'Inventario | JV3000 C.A.',
             'wrapper_class' => 'pagina-productos',
             'css_extra'    => ['modules/productos/productos.css?v=19'],
-            'js_extra'     => ['modules/productos/productos.js?v=13'],
+            'js_extra'     => ['modules/productos/productos.js?v=14'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,
             'esAdmin'      => $esAdmin,

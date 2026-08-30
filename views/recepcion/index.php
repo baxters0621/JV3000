@@ -33,8 +33,8 @@
 
 <!-- Mensajes flash -->
 <?php if ($flash): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3 px-3 py-2">
-        <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?> me-2"></i>
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3">
+        <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?>"></i>
         <?php echo htmlspecialchars($flash['texto']); ?>
     </div>
 <?php endif; ?>

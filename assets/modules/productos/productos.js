@@ -61,16 +61,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert-jv');
-            alerts.forEach(function(a) {
-                setTimeout(function() {
-                    a.style.transition = 'opacity 0.6s';
-                    a.style.opacity = '0';
-                    setTimeout(function() {
-                        a.remove();
-                    }, 600);
-                }, 4000);
-            });
             document.querySelectorAll('#formEditar input, #formEditar select').forEach(function(el) {
                 el.addEventListener('input', function() {
                     this.classList.remove('input-error');

@@ -353,7 +353,7 @@ CREATE TABLE `tipos_movimientos` (
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `usuarios` (
   `id_usuario` int(11) NOT NULL AUTO_INCREMENT,
-  `usuario` varchar(50) NOT NULL,
+  `usuario` varchar(20) NOT NULL,
   `correo` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `password_check` varchar(64) DEFAULT NULL COMMENT 'SHA-256 de password en minúsculas para detección de duplicados',

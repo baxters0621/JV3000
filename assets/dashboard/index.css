@@ -122,7 +122,21 @@
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 1.5rem;
+    font-family: var(--jv-font-brand);
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35);
+}
+
+.dash-user-greeting {
+    color: #FFD7B5;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    line-height: 1;
+    margin-bottom: 2px;
 }
 
 .dash-user-name {
@@ -151,6 +165,21 @@
     font-weight: 700;
     font-size: 1.05rem;
 }
+
+/* Hora en tiempo real: separador y cifras fijas para que no "baile" »
+   el reloj al cambiar los dígitos */
+.dash-date-sep {
+    margin-left: 10px;
+    opacity: 0.45;
+    font-weight: 400;
+}
+
+#dash-clock {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+}
+
+#dash-clock::first-letter { text-transform: lowercase; }
 
 .dash-bell-wrap { position: relative; }
 
