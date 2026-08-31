@@ -422,11 +422,18 @@
             btnGuardarCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR CATEGOR\u00cdA';
 
             catDesdeLista = true;
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias')).hide();
-            setTimeout(function() {
-                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat')).show();
+            const modalCategorias = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias'));
+            const modalCat = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat'));
+
+            // Usar evento hidden.bs.modal en lugar de setTimeout para asegurar
+            // que el segundo modal se abra solo después de que el primero se oculte completamente.
+            const onHidden = function() {
+                modalCategorias.removeEventListener('hidden.bs.modal', onHidden);
+                modalCat.show();
                 document.getElementById('cat_nombre').focus();
-            }, 300);
+            };
+            modalCategorias.addEventListener('hidden.bs.modal', onHidden);
+            modalCategorias.hide();
         }
 
         // Modo registro (botón NUEVA del listado).

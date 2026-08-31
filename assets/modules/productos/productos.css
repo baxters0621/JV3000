@@ -873,6 +873,14 @@
             50% { transform: translateY(-6px); }
         }
 
+        /* ── Forzar fondo blanco en modales de categorías (fix fondo negro) ── */
+        .pagina-productos #modalCat .modal-content-jv,
+        .pagina-productos #modalCategorias .modal-content-jv {
+            background: var(--jv-bg-card) !important;
+            border: 1px solid var(--jv-border);
+            border-radius: var(--jv-radius-xl);
+        }
+
         /* ── Secciones del formulario (chips de color) ── */
         .pagina-productos #modalCat .cat-section {
             background: #F8FAFC;
