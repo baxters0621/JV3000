@@ -216,7 +216,7 @@
             if (documentMatch) {
                 document.getElementById('s_rif_tipo').value = documentMatch[1];
                 document.getElementById('s_rif_num').value = documentMatch[2] + (documentMatch[3] || '');
-                validarRIFInput();
+                formatoDocumento('s_rif_num','s-rif-msg','s_rif');
             }
             cerrarResultadosCli();
         }
@@ -513,40 +513,49 @@
         }
 
         // Valida y formatea el RIF o cédula ingresado y muestra si es válido o incompleto.
-        function validarRIFInput() {
-            var tipo = document.getElementById('s_rif_tipo').value;
-            var nums = document.getElementById('s_rif_num').value.replace(/\D/g, '');
-            var msg = document.getElementById('s-rif-msg');
-            var numInput = document.getElementById('s_rif_num');
-            var hidden = document.getElementById('s_rif');
+        // Valida formato de documento fiscal (RIF o Cédula) según tipo seleccionado.
+        // V/E: cédula → 6-9 dígitos.
+        // J/G/P/C: RIF → 8 dígitos + guión + 1 verificador.
+        function formatoDocumento(inputId, msgId, hiddenId, typeId) {
+            var tipoElId = typeId || (hiddenId ? 's_rif_tipo' : 'cliDocTipo');
+            var tipo = document.getElementById(tipoElId).value;
+            var nums = document.getElementById(inputId).value.replace(/\D/g, '');
+            var msg = document.getElementById(msgId);
+            var numInput = document.getElementById(inputId);
+            var hidden = hiddenId ? document.getElementById(hiddenId) : null;
             var esRif = (tipo === 'J' || tipo === 'G' || tipo === 'P' || tipo === 'C');
             var maxDig = esRif ? 9 : 9;
-            if (nums.length > maxDig) { nums = nums.slice(0, maxDig); }
+            if (nums.length > maxDig) nums = nums.slice(0, maxDig);
             if (nums === '') {
-                msg.innerHTML = ''; numInput.style.borderColor = ''; hidden.value = ''; numInput.value = '';
+                msg.innerHTML = '';
+                numInput.style.borderColor = '';
+                numInput.value = '';
+                if (hidden) hidden.value = '';
                 return;
             }
-            // Tanto RIF como cédula usan 9 dígitos fijos. Formato unificado SIN puntos:
-            // el RIF jurídico muestra guión antes del dígito verificador (12345678-9)
-            // y la cédula va seguida (123456789), igual que en Proveedores.
-            var cuerpo, verif, formatted;
+            var formatted;
             if (esRif) {
-                cuerpo = nums.slice(0, 8);
-                verif = nums.slice(8);
+                var cuerpo = nums.slice(0, 8);
+                var verif = nums.slice(8);
                 formatted = cuerpo + (verif ? '-' + verif : '');
-                hidden.value = tipo + '-' + cuerpo + (verif ? '-' + verif : '');
+                if (hidden) hidden.value = tipo + '-' + formatted;
             } else {
-                cuerpo = nums;
-                formatted = cuerpo;
-                hidden.value = tipo + '-' + cuerpo;
+                formatted = nums;
+                if (hidden) hidden.value = tipo + '-' + nums;
             }
-            var valido = nums.length === 9;
             numInput.value = formatted;
+            var valido;
+            if (esRif) {
+                valido = nums.length === 9;
+            } else {
+                valido = nums.length >= 6 && nums.length <= 9;
+            }
             if (valido) {
-                msg.innerHTML = '<span style="color:var(--jv-success);">✓ Válido</span>';
+                msg.innerHTML = '<span style="color:var(--jv-success);">\u2713 V\u00e1lido</span>';
                 numInput.style.borderColor = '#16A34A';
             } else {
-                msg.innerHTML = '<span style="color:var(--jv-danger);">RIF incompleto</span>';
+                var label = esRif ? 'RIF' : 'C\u00e9dula';
+                msg.innerHTML = '<span style="color:var(--jv-danger);">' + label + ' incompleto</span>';
                 numInput.style.borderColor = '#DC2626';
             }
         }
@@ -571,7 +580,7 @@
                 document.getElementById('s_rif_tipo').value = 'V';
                 document.getElementById('s_rif_num').value = '';
             }
-            validarRIFInput();
+            formatoDocumento('s_rif_num','s-rif-msg','s_rif');
             document.getElementById('s_tipo').value = data.id_tipo_mov;
             document.getElementById('s_obs').value = data.observaciones;
             toggleCampos();
@@ -581,6 +590,18 @@
                 if (prods.length) { selectedProducts = prods; actualizarTablaSalida(); }
             } catch(e) {}
             salidaModal.show();
+        }
+
+        // Verifica si un documento fiscal tiene formato válido según su tipo.
+        // Devuelve true si el formato es correcto.
+        function esDocFiscalValido(tipoDoc, numDoc) {
+            var esRif = (tipoDoc === 'J' || tipoDoc === 'G' || tipoDoc === 'P' || tipoDoc === 'C');
+            var nums = numDoc.replace(/\D/g, '');
+            if (esRif) {
+                return /^\d{8}-\d$/.test(numDoc) && nums.length === 9;
+            } else {
+                return nums.length >= 6 && nums.length <= 9;
+            }
         }
 
         // Valida el formulario completo y solicita la vista previa de la nota de entrega al servidor.
@@ -611,10 +632,9 @@
             if (grupo === 'venta') {
                 const rifEl = document.getElementById('s_rif');
                 const rifInput = document.getElementById('s_rif_num');
-                const rifMsg = document.getElementById('s-rif-msg');
                 const rifTipo = document.getElementById('s_rif_tipo');
                 if (!rifEl.value) { marcarError(rifInput, 'RIF OBLIGATORIO'); valido = false; if (!primerError) primerError = rifInput; }
-                else if (rifMsg && rifMsg.innerHTML.includes('incompleto')) { marcarError(rifInput, 'RIF INCOMPLETO'); valido = false; if (!primerError) primerError = rifInput; }
+                else if (!esDocFiscalValido(rifTipo.value, rifInput.value)) { marcarError(rifInput, 'DOCUMENTO FISCAL INVÁLIDO'); valido = false; if (!primerError) primerError = rifInput; }
                 const cli = document.getElementById('s_cliente');
                 if (!cli.value.trim()) { marcarError(toolboxCli, 'CLIENTE OBLIGATORIO'); valido = false; if (!primerError) primerError = toolboxCli; }
             }
@@ -825,36 +845,7 @@
 
         // Valida y formatea el documento fiscal del cliente.
         function cliValidarDoc() {
-            var tipo = document.getElementById('cliDocTipo').value;
-            var nums = document.getElementById('cliDocNum').value.replace(/\D/g, '');
-            var msg = document.getElementById('cliDocMsg');
-            var numInput = document.getElementById('cliDocNum');
-            var esRif = (tipo === 'J' || tipo === 'G' || tipo === 'P' || tipo === 'C');
-            var maxDig = esRif ? 9 : 9;
-            if (nums.length > maxDig) nums = nums.slice(0, maxDig);
-            if (nums === '') {
-                msg.innerHTML = '';
-                numInput.style.borderColor = '';
-                numInput.value = '';
-                return;
-            }
-            var cuerpo, verif, formatted;
-            if (esRif) {
-                cuerpo = nums.slice(0, 8);
-                verif = nums.slice(8);
-                formatted = cuerpo + (verif ? '-' + verif : '');
-            } else {
-                formatted = nums;
-            }
-            var valido = nums.length === 9;
-            numInput.value = formatted;
-            if (valido) {
-                msg.innerHTML = '<span style="color:var(--jv-success);">✓ Válido</span>';
-                numInput.style.borderColor = '#16A34A';
-            } else {
-                msg.innerHTML = '<span style="color:var(--jv-danger);">Documento incompleto</span>';
-                numInput.style.borderColor = '#DC2626';
-            }
+            formatoDocumento('cliDocNum', 'cliDocMsg', null, 'cliDocTipo');
         }
 
         // Envía el formulario de cliente (registrar o editar).
@@ -879,6 +870,14 @@
             var hiddenDoc = document.getElementById('formCli').querySelector('[name="documento"]');
             if (docNum) {
                 var tipo = document.getElementById('cliDocTipo').value;
+                if (!esDocFiscalValido(tipo, docNum)) {
+                    var msgEl = document.getElementById('cliDocMsg');
+                    var numInput = document.getElementById('cliDocNum');
+                    marcarError(numInput, 'DOCUMENTO FISCAL INVÁLIDO');
+                    if (msgEl) msgEl.innerHTML = '<span style="color:var(--jv-danger);">Formato inválido</span>';
+                    numInput.focus();
+                    return;
+                }
                 hiddenDoc.value = tipo + '-' + docNum;
             } else {
                 hiddenDoc.value = '';

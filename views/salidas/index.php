@@ -247,7 +247,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                             <div class="col-md-6">
                                 <label for="s_rif_num" class="jv-modal-label">RIF / C&Eacute;DULA <span class="text-danger">*</span></label>
                                 <div class="d-flex gap-2">
-                                    <select id="s_rif_tipo" aria-label="Tipo de RIF o cedula" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="validarRIFInput()">
+                                    <select id="s_rif_tipo" aria-label="Tipo de RIF o cedula" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="formatoDocumento('s_rif_num','s-rif-msg','s_rif')">
                                         <option value="V">V-</option>
                                         <option value="J">J-</option>
                                         <option value="E">E-</option>
@@ -255,7 +255,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                         <option value="G">G-</option>
                                         <option value="C">C-</option>
                                     </select>
-                                    <input type="text" id="s_rif_num" aria-label="Numero de RIF o cedula" class="input-jv" placeholder="N&uacute;mero de identificaci&oacute;n" oninput="validarRIFInput()" style="flex:1;" inputmode="numeric">
+                                    <input type="text" id="s_rif_num" aria-label="Numero de RIF o cedula" class="input-jv" placeholder="N&uacute;mero de identificaci&oacute;n" oninput="formatoDocumento('s_rif_num','s-rif-msg','s_rif')" style="flex:1;" inputmode="numeric">
                                     <input type="hidden" name="rif_cliente" id="s_rif">
                                 </div>
                                 <div id="s-rif-msg" class="small mt-1" style="min-height:18px;"></div>
