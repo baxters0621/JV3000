@@ -16,6 +16,7 @@
 // El layout principal inyecta sidebar, bootstrap,
 // sweetalert, JV_CONFIG (c0=mapa tipo→grupo, c1=CSRF) y salidas.js.
 ?>
+<div class="pagina-salidas">
 <!-- Encabezado -->
 <div class="card-jv d-flex align-items-center gap-3 mb-3 flex-wrap" style="padding:18px 24px;border-left:4px solid #dc2626;">
     <div class="sal-header-icon"><i class="bi bi-cart-x-fill"></i></div>
@@ -617,4 +618,5 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
         </div>
     </div>
 </div>
+</div><!-- /.pagina-salidas -->
 <?php endif; ?>

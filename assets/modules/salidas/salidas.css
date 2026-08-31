@@ -7,6 +7,8 @@
             --jv-modal-gradient-mid: #DC2626;
             --jv-modal-gradient-end: #EF4444;
             --jv-modal-gradient-border: #F87171;
+            font-size: 1.05rem;
+            line-height: 1.75;
         }
 
         /* ── Los modales de clientes usan gradiente verde ── */
