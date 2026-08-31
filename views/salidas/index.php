@@ -554,54 +554,48 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                 </div>
 
                 <div class="modal-body p-3">
-                    <div class="jv-modal-section" style="border-left:4px solid #059669;">
-                        <div class="jv-modal-section-head">
-                            <span class="jv-modal-chip" style="background:#059669;box-shadow:0 3px 10px rgba(5,150,105,0.3);"><i class="bi bi-person-badge"></i></span>
-                            <div>
-                                <div class="jv-modal-section-title">Datos del cliente</div>
-                                <div class="jv-modal-section-sub">Informaci&oacute;n de identificaci&oacute;n</div>
-                            </div>
+                    <!-- NOMBRE — ancho completo -->
+                    <div class="mb-3">
+                        <label for="cliNombre" class="jv-modal-label">NOMBRE / RAZ&Oacute;N SOCIAL <span style="color:var(--jv-danger);">*</span></label>
+                        <input type="text" name="nombre" id="cliNombre" class="input-jv" placeholder="Nombre completo o raz&oacute;n social" maxlength="150" required>
+                    </div>
+
+                    <!-- DOCUMENTO — ancho completo con select integrado -->
+                    <div class="mb-3">
+                        <label for="cliDocNum" class="jv-modal-label">DOCUMENTO (RIF / C&Eacute;DULA)</label>
+                        <div class="input-group">
+                            <select id="cliDocTipo" aria-label="Tipo de documento" class="input-jv" style="width:120px;flex-shrink:0;border-right:none;border-radius:var(--jv-radius) 0 0 var(--jv-radius);" onchange="cliValidarDoc()">
+                                <option value="V">V - C&eacute;dula</option>
+                                <option value="E">E - Extranjero</option>
+                                <option value="J">J - Jur&iacute;dico</option>
+                                <option value="P">P - Pasaporte</option>
+                                <option value="G">G - Gobierno</option>
+                                <option value="C">C - Comunal</option>
+                            </select>
+                            <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="Ej: 12345678 o 12345678-9" oninput="cliValidarDoc()" style="flex:1;border-radius:0 var(--jv-radius) var(--jv-radius) 0;" inputmode="numeric" maxlength="12">
                         </div>
-                        <div class="row g-3 mb-0 align-items-end">
-                            <div class="col-md-8">
-                                <label for="cliNombre" class="jv-modal-label">NOMBRE / RAZ&Oacute;N SOCIAL <span style="color:var(--jv-danger);">*</span></label>
-                                <input type="text" name="nombre" id="cliNombre" class="input-jv" placeholder="Nombre completo o razón social" maxlength="150" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="cliStatus" class="jv-modal-label">ESTADO</label>
-                                <select name="status" id="cliStatus" class="input-jv">
-                                    <option value="Activo">Activo</option>
-                                    <option value="Inactivo">Inactivo</option>
-                                </select>
-                            </div>
+                        <div id="cliDocMsg" class="small mt-1" style="min-height:18px;"></div>
+                    </div>
+
+                    <!-- TELÉFONO + ESTADO — lado a lado -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label for="cliTelefono" class="jv-modal-label">TEL&Eacute;FONO</label>
+                            <input type="text" name="telefono" id="cliTelefono" class="input-jv" placeholder="0414-1234567" maxlength="20">
                         </div>
-                        <div class="row g-3 mt-1 mb-0 align-items-end">
-                            <div class="col-md-7">
-                                <label for="cliDocNum" class="jv-modal-label">DOCUMENTO (RIF / C&Eacute;DULA)</label>
-                                <div class="d-flex gap-2">
-                                    <select id="cliDocTipo" aria-label="Tipo de documento" class="input-jv" style="width:80px;flex-shrink:0;" onchange="cliValidarDoc()">
-                                        <option value="V">V-</option>
-                                        <option value="J">J-</option>
-                                        <option value="E">E-</option>
-                                        <option value="P">P-</option>
-                                        <option value="G">G-</option>
-                                        <option value="C">C-</option>
-                                    </select>
-                                    <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="N&uacute;mero de identificaci&oacute;n" oninput="cliValidarDoc()" style="flex:1;" inputmode="numeric" maxlength="12">
-                                </div>
-                                <div id="cliDocMsg" class="small mt-1" style="min-height:18px;"></div>
-                            </div>
-                            <div class="col-md-5">
-                                <label for="cliTelefono" class="jv-modal-label">TEL&Eacute;FONO</label>
-                                <input type="text" name="telefono" id="cliTelefono" class="input-jv" placeholder="0414-1234567" maxlength="20">
-                            </div>
+                        <div class="col-md-4">
+                            <label for="cliStatus" class="jv-modal-label">ESTADO</label>
+                            <select name="status" id="cliStatus" class="input-jv">
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
+                            </select>
                         </div>
-                        <div class="row g-3 mt-1 mb-0">
-                            <div class="col-12">
-                                <label for="cliDireccion" class="jv-modal-label">DIRECCI&Oacute;N</label>
-                                <input type="text" name="direccion" id="cliDireccion" class="input-jv" placeholder="Direcci&oacute;n completa" maxlength="255">
-                            </div>
-                        </div>
+                    </div>
+
+                    <!-- DIRECCIÓN — ancho completo -->
+                    <div class="mb-0">
+                        <label for="cliDireccion" class="jv-modal-label">DIRECCI&Oacute;N</label>
+                        <input type="text" name="direccion" id="cliDireccion" class="input-jv" placeholder="Direcci&oacute;n completa" maxlength="255">
                     </div>
                 </div>
 

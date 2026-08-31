@@ -690,3 +690,15 @@
             box-shadow: 0 6px 20px -4px rgba(5, 150, 105, 0.45);
             transform: translateY(-1px);
         }
+
+        /* ── Modal formulario cliente: input-group documento integrado ── */
+        .pagina-salidas #formCli .input-group .input-jv {
+            font-size: 1rem;
+        }
+
+        .pagina-salidas #formCli .input-group select.input-jv {
+            font-size: .9rem;
+            font-weight: 600;
+            color: var(--jv-text-secondary);
+            background: var(--jv-navy-dim);
+        }

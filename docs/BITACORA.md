@@ -10,6 +10,10 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-08-31 18:05] · Módulo: Salidas/Ventas · Cambio: RE-DISEÑO COMPLETO del modal formulario CLIENTE (REGISTRAR/EDITAR). Eliminado el layout anterior con section-header, section-chip y columnas desiguales. Nuevo diseño limpio y consistente: A) NOMBRE ancho completo (era col-md-8). B) DOCUMENTO ancho completo con `input-group` integrado: select de tipo con labels descriptivos ("V - Cédula", "J - Jurídico", etc.) de 120px + input de número con border-radius conectados visualmente. C) TELÉFONO (col-md-8) + ESTADO (col-md-4) lado a lado. D) DIRECCIÓN ancho completo. Eliminada la jerarquía visual innecesaria (section-head, section-chip, section-title, section-sub) que añadía ruido al formulario. El formulario ahora usa `mb-3` para spacing vertical consistente. CSS v=12: estilos para `#formCli .input-group` (select con fondo distinto, font-size consistente). · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.css (v=12), controllers/SalidasController.php · Prueba: php -l sin errores; formulario con 4 campos limpios: Nombre full-width, Documento full-width con input-group, Tel+Estado lado a lado, Dirección full-width.
+
+---
+
 [2026-08-31 17:50] · Módulo: Salidas/Ventas · Cambio: Fix layout del modal FORMULARIO CLIENTE (REGISTRAR/EDITAR). A) Invertir columnas DOCUMENTO/TELÉFONO: DOCUMENTO ahora es col-md-7 (antes col-md-5) y TELÉFONO col-md-5 (antes col-md-7), dando más espacio al documento y evitando que el label se parta en 2 líneas. B) Select de tipo documento de `max-width:70px` a `width:80px` para mejor alineación. C) Placeholder más descriptivo "Número de identificación". D) Agregar `align-items-end` a las filas para alinear inputs verticalmente. E) Unificar gap de filas a `g-3` para consistencia visual. F) Agregar `col-md-7` más spacious para labels largos. · Archivos: views/salidas/index.php · Prueba: php -l sin errores; layout corregido: DOCUMENTO (7 cols) + TELÉFONO (5 cols) alineados, labels sin wrapping, inputs alineados verticalmente.
 
 ---
