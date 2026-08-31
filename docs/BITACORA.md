@@ -10,6 +10,10 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-08-31 17:50] · Módulo: Salidas/Ventas · Cambio: Fix layout del modal FORMULARIO CLIENTE (REGISTRAR/EDITAR). A) Invertir columnas DOCUMENTO/TELÉFONO: DOCUMENTO ahora es col-md-7 (antes col-md-5) y TELÉFONO col-md-5 (antes col-md-7), dando más espacio al documento y evitando que el label se parta en 2 líneas. B) Select de tipo documento de `max-width:70px` a `width:80px` para mejor alineación. C) Placeholder más descriptivo "Número de identificación". D) Agregar `align-items-end` a las filas para alinear inputs verticalmente. E) Unificar gap de filas a `g-3` para consistencia visual. F) Agregar `col-md-7` más spacious para labels largos. · Archivos: views/salidas/index.php · Prueba: php -l sin errores; layout corregido: DOCUMENTO (7 cols) + TELÉFONO (5 cols) alineados, labels sin wrapping, inputs alineados verticalmente.
+
+---
+
 [2026-08-31 17:35] · Módulo: Salidas/Ventas · Cambio: Agrandar fuentes del módulo de Clientes (integrado en Salidas) para legibilidad completa. A) Subir base `.pagina-salidas` de `1.05rem` a `1.1rem` (~17.6px). B) Subir inline font-sizes en tabla de clientes: headers `.85rem→.95rem`, fila # `.85rem→.95rem`, dirección `.85rem→.95rem`, badge count `.75rem→.85rem`, búsqueda `.95rem→1rem`. C) Agregar overrides CSS en salidas.css: `.jv-modal-label` `.82rem→.9rem`, `.jv-modal-section-sub` `.75rem→.82rem`, `.jv-modal-section-title` `.88rem→.95rem`, `.btn-action-sm` `.8rem→.9rem`, `.badge-jv` `.9rem→.95rem`. Todos los overrides scopeados a `.pagina-salidas` para no afectar otros módulos. · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.css (v=11), controllers/SalidasController.php · Prueba: php -l sin errores; CSS v=11 contiene overrides de fuente; HTML: 0 font-size:.75rem, 0 font-size:.85rem en tabla, todos los inline sizes ≥ .95rem.
 
 ---

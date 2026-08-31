@@ -562,7 +562,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <div class="jv-modal-section-sub">Informaci&oacute;n de identificaci&oacute;n</div>
                             </div>
                         </div>
-                        <div class="row g-2 mb-0">
+                        <div class="row g-3 mb-0 align-items-end">
                             <div class="col-md-8">
                                 <label for="cliNombre" class="jv-modal-label">NOMBRE / RAZ&Oacute;N SOCIAL <span style="color:var(--jv-danger);">*</span></label>
                                 <input type="text" name="nombre" id="cliNombre" class="input-jv" placeholder="Nombre completo o razón social" maxlength="150" required>
@@ -575,11 +575,11 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 </select>
                             </div>
                         </div>
-                        <div class="row g-2 mt-1 mb-0">
-                            <div class="col-md-5">
-                                <label for="cliDocNum" class="jv-modal-label">DOCUMENTO (RIF/C&eacute;dula)</label>
+                        <div class="row g-3 mt-1 mb-0 align-items-end">
+                            <div class="col-md-7">
+                                <label for="cliDocNum" class="jv-modal-label">DOCUMENTO (RIF / C&Eacute;DULA)</label>
                                 <div class="d-flex gap-2">
-                                    <select id="cliDocTipo" aria-label="Tipo de documento" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="cliValidarDoc()">
+                                    <select id="cliDocTipo" aria-label="Tipo de documento" class="input-jv" style="width:80px;flex-shrink:0;" onchange="cliValidarDoc()">
                                         <option value="V">V-</option>
                                         <option value="J">J-</option>
                                         <option value="E">E-</option>
@@ -587,16 +587,16 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                         <option value="G">G-</option>
                                         <option value="C">C-</option>
                                     </select>
-                                    <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="N&uacute;mero" oninput="cliValidarDoc()" style="flex:1;" inputmode="numeric" maxlength="12">
+                                    <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="N&uacute;mero de identificaci&oacute;n" oninput="cliValidarDoc()" style="flex:1;" inputmode="numeric" maxlength="12">
                                 </div>
                                 <div id="cliDocMsg" class="small mt-1" style="min-height:18px;"></div>
                             </div>
-                            <div class="col-md-7">
+                            <div class="col-md-5">
                                 <label for="cliTelefono" class="jv-modal-label">TEL&Eacute;FONO</label>
                                 <input type="text" name="telefono" id="cliTelefono" class="input-jv" placeholder="0414-1234567" maxlength="20">
                             </div>
                         </div>
-                        <div class="row g-2 mt-1 mb-0">
+                        <div class="row g-3 mt-1 mb-0">
                             <div class="col-12">
                                 <label for="cliDireccion" class="jv-modal-label">DIRECCI&Oacute;N</label>
                                 <input type="text" name="direccion" id="cliDireccion" class="input-jv" placeholder="Direcci&oacute;n completa" maxlength="255">
