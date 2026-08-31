@@ -638,55 +638,12 @@
            naranja de Inventario y del verde de Compras).
            ============================================================ */
 
-        /* ── Cabecera degradada azul (banner a sangre) ── */
-        .pagina-productos .cat-modal-header-jv {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 24px;
-            margin: 0;
-            border-radius: calc(var(--jv-radius-xl, 20px) - 1px) calc(var(--jv-radius-xl, 20px) - 1px) 0 0;
-            background: linear-gradient(135deg, #1E40AF, #2563EB 45%, #3B82F6);
-            border-bottom: 3px solid #60A5FA;
-            position: relative;
-            overflow: hidden;
-        }
-        .pagina-productos .cat-modal-header-jv::before {
-            content: '';
-            position: absolute; top: -70%; right: -5%;
-            width: 240px; height: 240px; border-radius: 50%;
-            background: rgba(255,255,255,0.07);
-            pointer-events: none;
-        }
-        .pagina-productos .cat-modal-header-jv::after {
-            content: '';
-            position: absolute; bottom: -90%; left: 18%;
-            width: 180px; height: 180px; border-radius: 50%;
-            background: rgba(255,255,255,0.05);
-            pointer-events: none;
-        }
-        .pagina-productos .cat-modal-header-jv h5 {
-            font-size: 1.25rem; color: #fff; margin: 0; font-weight: 800;
-            letter-spacing: .5px; position: relative; z-index: 1;
-        }
-        .pagina-productos .cat-modal-header-jv small {
-            color: rgba(255,255,255,0.82); font-size: .88rem;
-            display: block; margin-top: 2px; position: relative; z-index: 1;
-        }
-        .pagina-productos .cat-close-btn {
-            display: flex; align-items: center; justify-content: center;
-            width: 36px; height: 36px;
-            border: 2px solid rgba(255,255,255,0.5);
-            border-radius: 10px;
-            background: rgba(255,255,255,0.15);
-            color: #fff; font-size: 1rem;
-            cursor: pointer; transition: all .2s;
-            position: relative; z-index: 1; flex-shrink: 0;
-        }
-        .pagina-productos .cat-close-btn:hover {
-            background: rgba(255,255,255,0.35);
-            border-color: #fff;
-            transform: scale(1.1);
+        /* ── Colores del patrón de modal (desde diseno.css) para Productos ── */
+        .pagina-productos {
+            --jv-modal-gradient-start: #1E40AF;
+            --jv-modal-gradient-mid: #2563EB;
+            --jv-modal-gradient-end: #3B82F6;
+            --jv-modal-gradient-border: #60A5FA;
         }
 
         /* ── Toolbar: búsqueda ── */
@@ -881,50 +838,9 @@
             border-radius: var(--jv-radius-xl);
         }
 
-        /* ── Secciones del formulario (chips de color) ── */
-        .pagina-productos #modalCat .cat-section {
-            background: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            border-radius: 14px;
-            padding: 16px 18px 14px;
-            margin-bottom: 14px;
-        }
-        .pagina-productos #modalCat .cat-sec-general    { border-left: 4px solid #2563EB; }
-        .pagina-productos #modalCat .cat-sec-parametros { border-left: 4px solid #0D9488; }
-        .pagina-productos #modalCat .cat-section-head {
-            display: flex; align-items: center; gap: 10px;
-            margin-bottom: 14px;
-        }
-        .pagina-productos #modalCat .cat-chip {
-            width: 34px; height: 34px;
-            border-radius: 10px;
-            flex-shrink: 0;
-            display: inline-flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 1rem;
-        }
-        .pagina-productos #modalCat .cat-chip-general    { background: #2563EB; box-shadow: 0 3px 10px rgba(37,99,235,0.3); }
-        .pagina-productos #modalCat .cat-chip-parametros { background: #0D9488; box-shadow: 0 3px 10px rgba(13,148,136,0.3); }
-        .pagina-productos #modalCat .cat-section-title { font-size: .88rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
-        .pagina-productos #modalCat .cat-section-sub { font-size: .75rem; color: #64748b; }
-
-        /* Texto de ayuda bajo los campos del formulario */
-        .pagina-productos #modalCat .cat-help {
-            font-size: .75rem; color: var(--jv-text-muted);
-            margin-top: 4px; display: flex; align-items: center; gap: 4px;
-        }
-        .pagina-productos #modalCat .cat-help i { font-size: .72rem; }
-
         /* Guiador bajo el mensaje del estado vacío (tipografía normal) */
         .pagina-productos .cat-estado-guiador {
             font-size: .85rem; text-transform: none; letter-spacing: 0;
             font-weight: 500; color: var(--jv-text-muted);
         }
 
-        /* ── Footer del formulario: Cancelar + Guardar ── */
-        .pagina-productos #modalCat .cat-modal-footer {
-            display: flex; justify-content: flex-end; align-items: center; gap: 10px;
-            padding: 14px 20px;
-            border-top: 1px solid var(--jv-border);
-            background: #F8FAFC;
-            border-radius: 0 0 calc(var(--jv-radius-xl, 20px) - 1px) calc(var(--jv-radius-xl, 20px) - 1px);
-        }

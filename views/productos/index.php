@@ -259,12 +259,12 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
 <div class="modal fade" id="modalCategorias" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
-            <div class="cat-modal-header-jv">
+            <div class="jv-modal-header">
                 <div>
                     <h5 class="font-brand"><i class="bi bi-folder2-open me-2"></i>CATEGOR&Iacute;AS</h5>
                     <small>Organiza tu cat&aacute;logo para agrupar productos similares</small>
                 </div>
-                <button type="button" class="cat-close-btn" data-bs-dismiss="modal" aria-label="Cerrar">
+                <button type="button" class="jv-modal-close" data-bs-dismiss="modal" aria-label="Cerrar">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
@@ -364,12 +364,12 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-content-jv">
             <form method="POST" id="formCat" autocomplete="off">
-                <div class="cat-modal-header-jv">
+                <div class="jv-modal-header">
                     <div>
                         <h5 class="font-brand" id="modalTitleCat"><i class="bi bi-folder-plus-fill me-2"></i>NUEVA CATEGOR&Iacute;A</h5>
                         <small>Los campos con <span style="color:#FCA5A5;">*</span> son obligatorios</small>
                     </div>
-                    <button type="button" class="cat-close-btn" data-bs-dismiss="modal" aria-label="Cerrar">
+                    <button type="button" class="jv-modal-close" data-bs-dismiss="modal" aria-label="Cerrar">
                         <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
@@ -378,47 +378,47 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                 <input type="hidden" name="id_categoria" id="cat_id_edit">
                 <input type="hidden" name="status" id="cat_status" value="Activo">
                 <div class="modal-body p-4">
-                    <div class="cat-section cat-sec-general">
-                        <div class="cat-section-head">
-                            <span class="cat-chip cat-chip-general"><i class="bi bi-card-heading"></i></span>
+                    <div class="jv-modal-section" style="border-left:4px solid #2563EB;">
+                        <div class="jv-modal-section-head">
+                            <span class="jv-modal-chip" style="background:#2563EB;box-shadow:0 3px 10px rgba(37,99,235,0.3);"><i class="bi bi-card-heading"></i></span>
                             <div>
-                                <div class="cat-section-title">General</div>
-                                <div class="cat-section-sub">Identificaci&oacute;n b&aacute;sica de la categor&iacute;a</div>
+                                <div class="jv-modal-section-title">General</div>
+                                <div class="jv-modal-section-sub">Identificaci&oacute;n b&aacute;sica de la categor&iacute;a</div>
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="cat_nombre" class="small fw-bold text-secondary mb-1">NOMBRE DE LA CATEGOR&Iacute;A <span class="text-danger">*</span></label>
+                            <label for="cat_nombre" class="jv-modal-label">NOMBRE DE LA CATEGOR&Iacute;A <span class="text-danger">*</span></label>
                             <input type="text" name="nombre" id="cat_nombre" class="input-jv" required maxlength="100" placeholder="Ej: Aceites y Lubricantes" oninput="this.value = this.value.toUpperCase()">
-                            <div class="cat-help"><i class="bi bi-info-circle me-1"></i>Se guarda en MAY&Uacute;SCULAS autom&aacute;ticamente. No puede repetirse.</div>
+                            <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Se guarda en MAY&Uacute;SCULAS autom&aacute;ticamente. No puede repetirse.</div>
                         </div>
                         <div class="mb-0">
-                            <label for="cat_desc" class="small fw-bold text-secondary mb-1">DESCRIPCI&Oacute;N <span class="text-secondary fw-normal">(OPCIONAL)</span></label>
+                            <label for="cat_desc" class="jv-modal-label">DESCRIPCI&Oacute;N <span class="text-secondary fw-normal">(OPCIONAL)</span></label>
                             <textarea name="descripcion" id="cat_desc" class="input-jv" rows="2" placeholder="Ej: Aceites de motor, lubricantes, grasas..."></textarea>
-                            <div class="cat-help"><i class="bi bi-info-circle me-1"></i>Explica qu&eacute; productos agrupa, para que cualquier operador sepa c&oacute;mo usarla.</div>
+                            <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Explica qu&eacute; productos agrupa, para que cualquier operador sepa c&oacute;mo usarla.</div>
                         </div>
                     </div>
 
-                    <div class="cat-section cat-sec-parametros">
-                        <div class="cat-section-head">
-                            <span class="cat-chip cat-chip-parametros"><i class="bi bi-sliders"></i></span>
+                    <div class="jv-modal-section" style="border-left:4px solid #0D9488;">
+                        <div class="jv-modal-section-head">
+                            <span class="jv-modal-chip" style="background:#0D9488;box-shadow:0 3px 10px rgba(13,148,136,0.3);"><i class="bi bi-sliders"></i></span>
                             <div>
-                                <div class="cat-section-title">Par&aacute;metros</div>
-                                <div class="cat-section-sub">Clasificaci&oacute;n y manejo del inventario</div>
+                                <div class="jv-modal-section-title">Par&aacute;metros</div>
+                                <div class="jv-modal-section-sub">Clasificaci&oacute;n y manejo del inventario</div>
                             </div>
                         </div>
                         <div class="row g-3 mb-0">
                             <div class="col-md-6">
-                                <label for="cat_abc" class="small fw-bold text-secondary mb-1">CLASIFICACI&Oacute;N ABC</label>
+                                <label for="cat_abc" class="jv-modal-label">CLASIFICACI&Oacute;N ABC</label>
                                 <select name="clasificacion_abc" id="cat_abc" class="input-jv">
                                     <option value="">&mdash; Sin clasificar</option>
                                     <option value="A">A &middot; Alto valor / rotaci&oacute;n</option>
                                     <option value="B">B &middot; Valor medio</option>
                                     <option value="C">C &middot; Valor bajo</option>
                                 </select>
-                                <div class="cat-help"><i class="bi bi-info-circle me-1"></i>Nivel de importancia de los productos de esta categor&iacute;a.</div>
+                                <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Nivel de importancia de los productos de esta categor&iacute;a.</div>
                             </div>
                             <div class="col-md-6">
-                                <label for="cat_manejo" class="small fw-bold text-secondary mb-1">TIPO DE MANEJO</label>
+                                <label for="cat_manejo" class="jv-modal-label">TIPO DE MANEJO</label>
                                 <select name="tipo_manejo" id="cat_manejo" class="input-jv">
                                     <option value="normal">Normal &middot; Uso general</option>
                                     <option value="inflamable">Inflamable &middot; Riesgo de incendio</option>
@@ -427,12 +427,12 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                                     <option value="voluminoso">Voluminoso &middot; Ocupa espacio</option>
                                     <option value="aerosol">Aerosol &middot; Lata a presi&oacute;n</option>
                                 </select>
-                                <div class="cat-help"><i class="bi bi-info-circle me-1"></i>C&oacute;mo se almacena y manipula el producto.</div>
+                                <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>C&oacute;mo se almacena y manipula el producto.</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="cat-modal-footer">
+                <div class="jv-modal-footer">
                     <button type="button" class="btn btn-jv-ghost" data-bs-dismiss="modal">
                         <i class="bi bi-x-lg me-1"></i>CANCELAR
                     </button>

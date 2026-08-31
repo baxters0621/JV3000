@@ -35,7 +35,7 @@ $fresh = constant('_TAB_FRESH_LOGIN');
 <link rel="stylesheet" href="<?php echo $base_assets; ?>css/bootstrap.min.css?v=4">
 <link rel="stylesheet" href="<?php echo $base_assets; ?>css/bootstrap-icons.css?v=4">
 
-<link rel="stylesheet" href="<?php echo $base_assets; ?>css/diseno.css?v=10">
+<link rel="stylesheet" href="<?php echo $base_assets; ?>css/diseno.css?v=11">
 
 <!-- FAVICON -->
 <link rel="icon" type="image/svg+xml" href="<?php echo $base_assets; ?>img/favicon.svg?v=1">

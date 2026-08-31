@@ -850,3 +850,125 @@ select.input-jv { appearance: auto; cursor: pointer; }
     .btn-jv-primary, .btn-jv-danger, .btn-jv-success,
     .btn-jv-secondary, .btn-jv-warning, .btn-jv-info { width: 100%; }
 }
+
+/* ==========================================
+   MODALES COMPARTIDOS — PATRÓN GLOBAL
+   ==========================================
+   Cada módulo define sus colores via custom properties:
+   --jv-modal-gradient-start, --jv-modal-gradient-mid, --jv-modal-gradient-end
+   --jv-modal-gradient-border, --jv-modal-chip-bg, --jv-modal-section-accent
+   ========================================== */
+
+/* ── Header degradado con pseudo-elementos decorativos ── */
+.jv-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    margin: 0;
+    border-radius: calc(var(--jv-radius-xl, 20px) - 1px) calc(var(--jv-radius-xl, 20px) - 1px) 0 0;
+    background: linear-gradient(135deg, var(--jv-modal-gradient-start, #1E40AF), var(--jv-modal-gradient-mid, #2563EB) 45%, var(--jv-modal-gradient-end, #3B82F6));
+    border-bottom: 3px solid var(--jv-modal-gradient-border, #60A5FA);
+    position: relative;
+    overflow: hidden;
+}
+.jv-modal-header::before {
+    content: '';
+    position: absolute; top: -70%; right: -5%;
+    width: 240px; height: 240px; border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    pointer-events: none;
+}
+.jv-modal-header::after {
+    content: '';
+    position: absolute; bottom: -90%; left: 18%;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    pointer-events: none;
+}
+.jv-modal-header h5 {
+    font-size: 1.25rem; color: #fff; margin: 0; font-weight: 800;
+    letter-spacing: .5px; position: relative; z-index: 1;
+}
+.jv-modal-header small {
+    color: rgba(255,255,255,0.82); font-size: .88rem;
+    display: block; margin-top: 2px; position: relative; z-index: 1;
+}
+
+/* ── Sección de formulario (tarjeta con borde izquierdo) ── */
+.jv-modal-section {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 16px 18px 14px;
+    margin-bottom: 14px;
+}
+
+/* ── Encabezado de sección: chip + título + subtítulo ── */
+.jv-modal-section-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+}
+
+/* ── Chip de ícono (badge redondeado) ── */
+.jv-modal-chip {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-size: .95rem;
+}
+
+/* ── Título de sección ── */
+.jv-modal-section-title {
+    font-size: .88rem; font-weight: 700; color: #1e293b; line-height: 1.2;
+}
+
+/* ── Subtítulo de sección ── */
+.jv-modal-section-sub {
+    font-size: .75rem; color: #64748b;
+}
+
+/* ── Label de formulario (uppercase, bold, secondary) ── */
+.jv-modal-label {
+    display: block;
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--jv-text-secondary);
+    margin-bottom: 6px;
+}
+
+/* ── Texto de ayuda bajo campos ── */
+.jv-modal-hint {
+    font-size: .75rem; color: var(--jv-text-muted);
+    margin-top: 4px; display: flex; align-items: center; gap: 4px;
+}
+.jv-modal-hint i { font-size: .72rem; }
+
+/* ── Footer del modal: Cancelar + Guardar ── */
+.jv-modal-footer {
+    display: flex; justify-content: flex-end; align-items: center; gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--jv-border);
+    background: #F8FAFC;
+    border-radius: 0 0 calc(var(--jv-radius-xl, 20px) - 1px) calc(var(--jv-radius-xl, 20px) - 1px);
+}
+
+/* ── Botón de cerrar (semi-transparente, adaptable al header) ── */
+.jv-modal-close {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+    color: #fff; font-size: 1rem;
+    cursor: pointer; transition: all .2s;
+    position: relative; z-index: 1; flex-shrink: 0;
+}
+.jv-modal-close:hover {
+    background: rgba(255,255,255,0.35);
+    border-color: #fff;
+    transform: scale(1.1);
+}
