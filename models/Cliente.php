@@ -75,7 +75,7 @@ class Cliente extends Model
         $telefono  = trim($datos['telefono'] ?? '');
         $direccion = trim($datos['direccion'] ?? '');
         $status    = in_array($datos['status'] ?? '', ['Activo', 'Inactivo']) ? $datos['status'] : 'Activo';
-        $accion    = $datos['accion'] ?? '';
+        $accion    = $datos['accion_cliente'] ?? $datos['accion'] ?? '';
         $id        = (int)($datos['id_cliente'] ?? 0);
 
         if ($nombre === '') {

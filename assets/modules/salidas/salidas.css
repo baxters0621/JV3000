@@ -1,6 +1,23 @@
 
         /* === THEME: VENTAS / SALIDAS (Red) ================ */
 
+        /* ── Colores del patrón de modal (desde diseno.css) para Salidas ── */
+        .pagina-salidas {
+            --jv-modal-gradient-start: #991B1B;
+            --jv-modal-gradient-mid: #DC2626;
+            --jv-modal-gradient-end: #EF4444;
+            --jv-modal-gradient-border: #F87171;
+        }
+
+        /* ── Los modales de clientes usan gradiente verde ── */
+        .pagina-salidas #modalCliListHeader,
+        .pagina-salidas #modalCliHeader {
+            --jv-modal-gradient-start: #065F46;
+            --jv-modal-gradient-mid: #059669;
+            --jv-modal-gradient-end: #10B981;
+            --jv-modal-gradient-border: #34D399;
+        }
+
         /* ── Header icon ── */
         .sal-header-icon {
             width: 56px;
@@ -211,11 +228,6 @@
             transform: translateY(-2px);
         }
 
-        .pagina-salidas .header-card {
-            padding: 18px 24px;
-            border-left: 4px solid #dc2626;
-        }
-
         .pagina-salidas .widget-card {
             border-left: 3px solid #dc2626;
             border-radius: var(--jv-radius-lg);
@@ -271,17 +283,6 @@
             vertical-align: middle;
             white-space: nowrap;
             letter-spacing: .5px;
-            line-height: 1.5;
-        }
-
-        .pagina-salidas .cant-badge {
-            background: rgba(220, 38, 38, 0.15);
-            color: #991b1b;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: .95rem;
-            display: inline-block;
             line-height: 1.5;
         }
 
@@ -568,33 +569,8 @@
         }
 
         /* ============================================================
-           GESTIÓN DE CLIENTES — modal header y estilos (verde #059669)
+           GESTIÓN DE CLIENTES — estilos verdes (#059669)
            ============================================================ */
-        .cli-modal-header-jv {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 18px 24px;
-            background: linear-gradient(135deg, #065f46, #059669);
-            border-bottom: 3px solid #10b981;
-            border-radius: var(--jv-radius-lg) var(--jv-radius-lg) 0 0;
-        }
-
-        .cli-modal-header-jv h5 {
-            color: #fff;
-            font-size: 1.15rem;
-            letter-spacing: .5px;
-        }
-
-        .cli-modal-header-jv .btn-close {
-            filter: brightness(0) invert(1);
-            opacity: .8;
-        }
-
-        .cli-modal-header-jv .btn-close:hover {
-            opacity: 1;
-        }
-
         /* Botón de acción pequeño (filtro, etc.) */
         .btn-action-sm {
             padding: 6px 14px;
@@ -614,28 +590,6 @@
         /* Fila de tabla de clientes */
         #cliTablaBody tr:hover {
             background: rgba(5, 150, 105, 0.04);
-        }
-
-        /* Badge estado activo (verde) */
-        .cli-active-badge {
-            background: #d1fae5;
-            color: #065f46;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: .8rem;
-            font-weight: 700;
-            display: inline-block;
-        }
-
-        /* Badge estado inactivo (rojo) — reutiliza manejo-badge */
-        .cli-inactive-badge {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: .8rem;
-            font-weight: 700;
-            display: inline-block;
         }
 
         /* Resultado toolbox cliente — estilo verde para coincidir con módulo */

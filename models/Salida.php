@@ -18,7 +18,6 @@
 class Salida extends Model
 {
     public const LIMITE_PRODUCTOS = 200;
-    public const LIMITE_UNIDADES = 999999;
 
     /**
      * Agrupa un tipo de movimiento para las reglas de venta.
@@ -114,17 +113,6 @@ class Salida extends Model
     {
         $movementType = $this->db->fetchOne("SELECT nombre FROM tipos_movimientos WHERE id_tipo_mov = ?", [$idTipoMov]);
         return $movementType['nombre'] ?? '';
-    }
-
-    /**
-     * Datos básicos de stock/vencimiento de un producto para validar una venta.
-     *
-     * @param int $idProducto Identificador del producto.
-     * @return array|null ['stock_actual'=>.., 'fecha_vencimiento'=>..] o null.
-     */
-    public function obtenerProductoBasico(int $idProducto): ?array
-    {
-        return $this->db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$idProducto]);
     }
 
     /**

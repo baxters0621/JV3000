@@ -10,6 +10,10 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-08-31 13:46] · Módulo: Salidas/Ventas · Cambio: Rediseño del módulo con patrón global de modales: se movieron modalCliList y modalCli FUERA del form de modalSalida (antes anidados → cierres de div rotos) y se refactorizó todo a clases .jv-modal-* (header rojo para salida, verde para clientes vía overrides #modalCliListHeader/#modalCliHeader) con secciones, chips, labels, hints y footers; fix bug en Cliente::procesar que leía 'accion' pero el form envía 'accion_cliente' (Editar cliente registraba uno nuevo en vez de actualizar); eliminación de dead code (procesarAccionSalida en controller, obtenerProductoBasico y LIMITE_UNIDADES en models/Salida.php, CSS muerto .cli-modal-header-jv/.cli-active-badge/.cli-inactive-badge/.header-card/.cant-badge, variables de color por .pagina-salidas) y bump salidas.css a v=6. · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.css (v=6), controllers/SalidasController.php, models/Salida.php, models/Cliente.php · Prueba: php -l sin errores en los 3 PHP; HTTP 200 con login + CSRF (session cookie) confirmó jv-modal-header, salidas.css?v=6, modalSalida/modalCliList/modalCli, headers modalCliListHeader/modalCliHeader y oculto accion_cliente; balance de llaves CSS 86=86.
+
+---
+
 [2026-08-30 22:40] · Módulo: Estadísticas · Cambio: Mejoras de interfaz y validación matemática: cálculo de ganancia mediante JOIN a lotes (costo real consumido vs precio actual), indicador de carga en auto-refresh, validación de fechas en cliente, estados vacíos en gráficos y mensajes contextuales; cálculo de pct() conservado por honestidad matemática (null cuando baseline ausente). · Archivos: models/Estadistica.php, views/estadisticas/index.php, assets/modules/estadisticas/estadisticas.js, assets/modules/estadisticas/estadisticas.css · Prueba: harness transaccional con siembra de datos (ROLLBACK) confirmó ventas=250, compras=160, ganancia=200 (vs 150 anterior), pct=-36% correcto, series suman a KPIs, rango diario 24h y inválido → semana; php -l y node --check sin errores.
 
 ---

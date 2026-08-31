@@ -358,6 +358,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
             </div>
     </div>
 </div>
+</div>
 
 <!-- POP-UP 2: Formulario de categoría (crear / editar) -->
 <div class="modal fade" id="modalCat" tabindex="-1">
