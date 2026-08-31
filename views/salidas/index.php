@@ -17,7 +17,7 @@
 // sweetalert, JV_CONFIG (c0=mapa tipo→grupo, c1=CSRF) y salidas.js.
 ?>
 <!-- Encabezado -->
-<div class="d-flex align-items-center gap-3 mb-4">
+<div class="card-jv d-flex align-items-center gap-3 mb-3 flex-wrap" style="padding:18px 24px;border-left:4px solid #dc2626;">
     <div class="sal-header-icon"><i class="bi bi-cart-x-fill"></i></div>
     <div>
         <h1 class="module-title">SALIDAS / VENTAS</h1>
@@ -25,7 +25,7 @@
     </div>
     <div class="ms-auto d-flex align-items-center gap-2">
         <?php if ($es_admin): ?>
-            <button class="btn btn-outline-secondary module-action-btn d-flex align-items-center gap-2" onclick="abrirGestorCli()" style="border-color:#059669;color:#059669;font-weight:700;font-size:.88rem;padding:10px 18px;border-radius:10px;">
+            <button class="btn btn-clientes-sal module-action-btn d-flex align-items-center gap-2" onclick="abrirGestorCli()">
                 <i class="bi bi-people-fill"></i>CLIENTES
                 <span class="badge rounded-pill" style="background:#059669;color:#fff;font-size:.78rem;padding:4px 10px;margin-left:2px;"><?php echo $cli_activos; ?></span>
             </button>
@@ -62,7 +62,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 <!-- Estadísticas / Widgets -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-success);">
+        <div class="widget-card" style="border-left:4px solid var(--jv-success);background:linear-gradient(135deg,rgba(22,163,74,0.04),rgba(22,163,74,0.01));">
             <div class="widget-icon" style="background:rgba(22,163,74,0.12);color:var(--jv-success);">
                 <i class="bi bi-currency-dollar"></i>
             </div>
@@ -73,7 +73,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
         </div>
     </div>
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-info);">
+        <div class="widget-card" style="border-left:4px solid var(--jv-info);background:linear-gradient(135deg,rgba(14,165,233,0.04),rgba(14,165,233,0.01));">
             <div class="widget-icon" style="background:rgba(14,165,233,0.12);color:var(--jv-info);">
                 <i class="bi bi-boxes"></i>
             </div>
@@ -84,7 +84,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
         </div>
     </div>
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-warning);">
+        <div class="widget-card" style="border-left:4px solid var(--jv-warning);background:linear-gradient(135deg,rgba(245,158,11,0.04),rgba(245,158,11,0.01));">
             <div class="widget-icon" style="background:rgba(245,158,11,0.12);color:var(--jv-warning);">
                 <i class="bi bi-receipt"></i>
             </div>
@@ -100,7 +100,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 <div class="card-jv p-0">
     <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
         <i class="bi bi-search me-1" style="font-size:1rem;color:var(--jv-orange);"></i>
-        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nota, control, cliente, RIF, productos, tipo..." id="buscarSal" aria-label="Buscar salida" onkeyup="filtrarSalidas()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;max-width:340px;">
+        <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nota, control, cliente, RIF, producto..." id="buscarSal" aria-label="Buscar salida" onkeyup="filtrarSalidas()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;">
     </div>
     <div class="table-responsive">
         <table class="table-jv mb-0">

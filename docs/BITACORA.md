@@ -10,6 +10,10 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-08-31 15:41] · Módulo: Salidas/Ventas · Cambio: Pulido visual de la página principal: header envuelto en card-jv con border-left rojo (patrón Productos), botón CLIENTES migrado de 8 inline styles a clase CSS .btn-clientes-sal, KPIs con gradientes sutiles de fondo (verde/azul/ámbar) y hover con elevación, buscador sin max-width truncado, tabla con hover de fila mejorado (barra roja lateral sutil), eliminación de CSS muerto (section-bg, section-label, modal-title-jv) y bump salidas.css a v=7. · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.css (v=7), controllers/SalidasController.php · Prueba: php -l sin errores; HTTP 200 con login confirmó salidas.css?v=7, .btn-clientes-sal, card-jv border-left rojo, 3 gradientes de KPIs, max-width eliminado, inline styles eliminados; CSS 85=85 balanceado.
+
+---
+
 [2026-08-31 14:49] · Módulo: Productos/Compras · Cambio: Fix scroll recortado en todos los modales que combinaban modal-dialog-centered + modal-dialog-scrollable (incompatibles en Bootstrap 5). Se eliminó modal-dialog-centered de modalCategorias (productos), y de los dos modales scrollables de compras (líneas 698/817). Los formularios cortos (modalCat, modalCli, etc.) mantienen solo centered sin scrollable. · Archivos: views/productos/index.php, views/compras/index.php · Prueba: php -l sin errores en ambos; count centered+scrollable = 0 en los 3 módulos; centered restante = solo en modales de formulario corto (modalCat, modalCli, etc.).
 
 ---

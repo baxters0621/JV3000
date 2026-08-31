@@ -126,7 +126,8 @@
         }
 
         .pagina-salidas .table-jv tbody tr:hover {
-            background: rgba(220, 38, 38, 0.03);
+            background: rgba(220, 38, 38, 0.04);
+            box-shadow: inset 3px 0 0 #dc2626;
         }
 
         .pagina-salidas .table-jv tbody td.text-center {
@@ -238,10 +239,13 @@
             align-items: center;
             gap: 18px;
             min-height: 110px;
+            transition: .2s;
         }
 
         .pagina-salidas .widget-card:hover {
             border-color: var(--jv-border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
         }
 
         .pagina-salidas .widget-icon {
@@ -318,37 +322,7 @@
             border-color: rgba(14, 165, 233, 0.35);
         }
 
-        /* ── Modal sections ── */
-        .pagina-salidas .section-bg {
-            background: var(--jv-bg-primary);
-            border: 1px solid var(--jv-border);
-            border-radius: var(--jv-radius);
-            padding: 16px 18px;
-            margin-bottom: 12px;
-        }
-
-        .pagina-salidas .section-label {
-            font-size: .9rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--jv-navy);
-            margin-bottom: 8px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(220, 38, 38, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
         /* ── Modal: títulos y etiquetas grandes ── */
-        .pagina-salidas .modal-title-jv {
-            font-size: 1.35rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: .5px;
-            color: var(--jv-navy);
-        }
 
         .pagina-salidas .modal-body label,
         .pagina-salidas .modal-body .form-label {
@@ -598,6 +572,23 @@
         }
 
         /* Botón CLIENTES en header — outline verde */
+        .pagina-salidas .btn-clientes-sal {
+            border-color: #059669;
+            color: #059669;
+            font-weight: 700;
+            font-size: .88rem;
+            padding: 10px 18px;
+            border-radius: 10px;
+            transition: .15s;
+        }
+
+        .pagina-salidas .btn-clientes-sal:hover {
+            background: #059669;
+            color: #fff;
+            box-shadow: 0 6px 20px -4px rgba(5, 150, 105, 0.45);
+            transform: translateY(-1px);
+        }
+
         .pagina-salidas .module-action-btn[onclick="abrirGestorCli()"] {
             transition: .15s;
         }
