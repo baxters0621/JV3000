@@ -460,6 +460,21 @@
             font-size: .92rem;
         }
 
+        /* ── FIX: form dentro de modal rompe flex layout de scrollable ── */
+        .pagina-salidas #formSalida {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .pagina-salidas #formSalida > .modal-body {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
         /* ── Botón Agregar producto ── */
         .pagina-salidas .btn-agregar-producto {
             margin-top: 22px;

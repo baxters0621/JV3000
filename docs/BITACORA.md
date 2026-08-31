@@ -10,6 +10,10 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-08-31 16:03] · Módulo: Salidas/Ventas · Cambio: FIX CRÍTICO — modal de salida recortado e imposible de desplazar: el <form id="formSalida"> envolvía header+body+footer dentro de .modal-content, rompiendo el flex layout de Bootstrap modal-dialog-scrollable (el form tomaba toda la altura y .modal-body no podía scrollear). Fix: #formSalida ahora es flex column con overflow:hidden y flex:1 1 auto; #formSalida > .modal-body tiene flex:1 1 auto + overflow-y:auto + min-height:0, permitiendo scroll interno completo hasta los botones CANCELAR/VISTA PREVIA. · Archivos: assets/modules/salidas/salidas.css (v=9), controllers/SalidasController.php · Prueba: php -l sin errores; HTTP 200 confirmó salidas.css?v=9, selectores #formSalida y #formSalida > .modal-body presentes en CSS servido; CSS 96=96 balanceado.
+
+---
+
 [2026-08-31 15:51] · Módulo: Salidas/Ventas · Cambio: Pulido visual del modal/formulario de NUEVA VENTA: tabla de productos header de navy a gradiente rojo (consistente con módulo), empty state con icono bi-box-seam, barra de totales con fondo gradiente rojo sutil, footer con botones más grandes, solicitud a compras limpia de inline styles (nueva clase .sal-solicitud-table con header rojo), botón Agregar migrado a .btn-agregar-producto, input precio readonly migrado a .input-precio-readonly, bump salidas.css a v=8. · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.css (v=8), controllers/SalidasController.php · Prueba: php -l sin errores; HTTP 200 confirmó salidas.css?v=8, .btn-agregar-producto, .input-precio-readonly, .sal-solicitud-table, icono empty state, inline styles eliminados; CSS 94=94 balanceado.
 
 ---
