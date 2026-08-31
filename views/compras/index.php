@@ -695,7 +695,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
 <!-- POP-UP 1: Listado de proveedores -->
 <div class="modal fade" id="modalProvList" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
             <div class="modal-header-jv">
                 <div>
@@ -814,7 +814,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
 <!-- POP-UP 2: Formulario de proveedor (registrar / editar) -->
 <div class="modal fade" id="modalProveedor" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
             <div class="modal-body p-4">
             <form action="" method="POST" id="formProveedor">

@@ -10,6 +10,9 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-08-31 14:49] · Módulo: Productos/Compras · Cambio: Fix scroll recortado en todos los modales que combinaban modal-dialog-centered + modal-dialog-scrollable (incompatibles en Bootstrap 5). Se eliminó modal-dialog-centered de modalCategorias (productos), y de los dos modales scrollables de compras (líneas 698/817). Los formularios cortos (modalCat, modalCli, etc.) mantienen solo centered sin scrollable. · Archivos: views/productos/index.php, views/compras/index.php · Prueba: php -l sin errores en ambos; count centered+scrollable = 0 en los 3 módulos; centered restante = solo en modales de formulario corto (modalCat, modalCli, etc.).
+
+---
 [2026-08-31 13:59] · Módulo: Salidas/Ventas · Cambio: Fix scroll del modal de salida recortado: el modalSalida y modalCliList combinaban Bootstrap modal-dialog-centered + modal-dialog-scrollable, lo que al tener contenido más alto que la ventana centraba verticalmente y recortaba sin poder desplazarse hasta el footer (botones CANCELAR/VISTA PREVIA). Se eliminó modal-dialog-centered de ambos (queda modal-dialog-scrollable anclado arriba con scroll interno del modal-body). · Archivos: views/salidas/index.php · Prueba: php -l sin errores; HTTP 200 con login confirmó dialog modal-lg modal-dialog-scrollable (sin centered) en modalSalida/modalCliList, count centered+scrollable = 0 y 3 headers jv-modal-header.
 
 ---

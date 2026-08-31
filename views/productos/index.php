@@ -257,7 +257,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
 
 <!-- POP-UP 1: Listado de categorías -->
 <div class="modal fade" id="modalCategorias" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
             <div class="jv-modal-header">
                 <div>
