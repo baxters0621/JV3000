@@ -349,10 +349,10 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                             </div>
                             <div class="col-md-3">
                                 <label for="s_precio" class="jv-modal-label">Precio $</label>
-                                <input type="text" inputmode="decimal" id="s_precio" aria-label="Precio unitario del producto" class="input-jv" placeholder="0.00" readonly style="background:var(--jv-bg-primary);cursor:not-allowed;color:var(--jv-text-muted);">
+                                <input type="text" inputmode="decimal" id="s_precio" aria-label="Precio unitario del producto" class="input-jv input-precio-readonly" placeholder="0.00" readonly>
                             </div>
                             <div class="col-md-2">
-                                <button type="button" class="btn-jv-primary w-100" style="margin-top:22px;padding:12px 8px;" onclick="agregarProductoSalida()">
+                                <button type="button" class="btn-jv-primary w-100 btn-agregar-producto" onclick="agregarProductoSalida()">
                                     <i class="bi bi-plus-lg"></i> Agregar
                                 </button>
                             </div>
@@ -374,7 +374,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                             </thead>
                             <tbody id="s_productos_body">
                                 <tr id="s_fila_vacia">
-                                    <td colspan="6" class="sal-fila-vacia">&#11014; Agregue productos con los controles de arriba</td>
+                                    <td colspan="6" class="sal-fila-vacia"><i class="bi bi-box-seam"></i>Agregue productos con los controles de arriba</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -394,21 +394,21 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <div class="jv-modal-section-sub">Sin stock disponible, se pedir&aacute;n a Compras</div>
                             </div>
                         </div>
-                        <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;">
-                            <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
+                        <div class="sal-solicitud-table">
+                            <table>
                                 <thead>
-                                    <tr style="background:var(--jv-navy);">
-                                        <th style="padding:8px;width:30px;text-align:center;color:#fff;font-size:.8rem;text-transform:uppercase;">#</th>
-                                        <th style="padding:8px;color:#fff;font-size:.8rem;text-transform:uppercase;">Producto</th>
-                                        <th style="padding:8px;width:70px;text-align:center;color:#fff;font-size:.8rem;text-transform:uppercase;">Cant</th>
-                                        <th style="padding:8px;width:30px;text-align:center;color:#fff;font-size:.8rem;text-transform:uppercase;"></th>
+                                    <tr>
+                                        <th class="text-center" style="width:30px;">#</th>
+                                        <th>Producto</th>
+                                        <th class="text-center" style="width:70px;">Cant</th>
+                                        <th style="width:30px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="s_solicitud_body"></tbody>
                             </table>
                         </div>
                         <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="btn-jv-primary" id="btnEnviarSolicitud" style="padding:10px 20px;font-size:.9rem;font-weight:700;border:none;border-radius:8px;color:#fff;" onclick="enviarSolicitudCompras()">
+                            <button type="button" class="btn-jv-primary" id="btnEnviarSolicitud" onclick="enviarSolicitudCompras()">
                                 <i class="bi bi-truck me-1"></i> ENVIAR SOLICITUD A COMPRAS
                             </button>
                         </div>

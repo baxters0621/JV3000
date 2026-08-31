@@ -74,7 +74,7 @@ class SalidasController extends Controller
         $this->view('salidas/index', [
             'titulo'        => 'Salidas / Ventas | JV3000 C.A.',
             'wrapper_class' => 'pagina-salidas',
-            'css_extra'     => ['modules/salidas/salidas.css?v=7'],
+            'css_extra'     => ['modules/salidas/salidas.css?v=8'],
             'js_extra'      => ['modules/salidas/salidas.js?v=8'],
             'csrf'          => $csrf,
             'js_config'     => ['movementTypeGroups' => $tipos_mov_map, 'csrfToken' => $csrf],
