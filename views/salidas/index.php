@@ -177,7 +177,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 
 <!-- Modal: Nueva / Editar salida -->
 <div class="modal fade" id="modalSalida" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
             <form action="" method="POST" id="formSalida" onsubmit="return false;">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
@@ -438,7 +438,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 <?php if ($es_admin): ?>
 <!-- MODAL: GESTIÓN DE CLIENTES (listado ABC) -->
 <div class="modal fade" id="modalCliList" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
             <div class="jv-modal-header" id="modalCliListHeader">
                 <div>
