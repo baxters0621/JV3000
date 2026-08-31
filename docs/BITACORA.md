@@ -10,6 +10,10 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-08-31 17:35] · Módulo: Salidas/Ventas · Cambio: Agrandar fuentes del módulo de Clientes (integrado en Salidas) para legibilidad completa. A) Subir base `.pagina-salidas` de `1.05rem` a `1.1rem` (~17.6px). B) Subir inline font-sizes en tabla de clientes: headers `.85rem→.95rem`, fila # `.85rem→.95rem`, dirección `.85rem→.95rem`, badge count `.75rem→.85rem`, búsqueda `.95rem→1rem`. C) Agregar overrides CSS en salidas.css: `.jv-modal-label` `.82rem→.9rem`, `.jv-modal-section-sub` `.75rem→.82rem`, `.jv-modal-section-title` `.88rem→.95rem`, `.btn-action-sm` `.8rem→.9rem`, `.badge-jv` `.9rem→.95rem`. Todos los overrides scopeados a `.pagina-salidas` para no afectar otros módulos. · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.css (v=11), controllers/SalidasController.php · Prueba: php -l sin errores; CSS v=11 contiene overrides de fuente; HTML: 0 font-size:.75rem, 0 font-size:.85rem en tabla, todos los inline sizes ≥ .95rem.
+
+---
+
 [2026-08-31 17:20] · Módulo: Salidas/Ventas · Cambio: Agrandar fuentes del módulo de Salidas para mejor legibilidad. Envolver contenido de views/salidas/index.php en `<div class="pagina-salidas">` (wrapper de aislamiento). Agregar `font-size: 1.05rem; line-height: 1.75;` a `.pagina-salidas` en salidas.css (v=10), que escala todos los rem del módulo de ~15px a ~17px. El cambio NO afecta otros módulos del sistema. · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.css (v=10), controllers/SalidasController.php · Prueba: php -l sin errores; CSS v=10 contiene `font-size: 1.05rem` y `line-height: 1.75`; HTML contiene wrapper `.pagina-salidas` de apertura y cierre.
 
 ---

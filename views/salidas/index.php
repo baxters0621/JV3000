@@ -455,7 +455,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-0">
                         <div class="d-flex align-items-center gap-2" style="flex:1;min-width:200px;">
                             <i class="bi bi-search" style="font-size:1rem;color:#059669;"></i>
-                            <input type="text" class="input-jv border-0 bg-transparent" id="cliBuscar" placeholder="Buscar por nombre o documento..." style="box-shadow:none;font-size:.95rem;padding:8px 6px;flex:1;" oninput="cliFiltrar()">
+                            <input type="text" class="input-jv border-0 bg-transparent" id="cliBuscar" placeholder="Buscar por nombre o documento..." style="box-shadow:none;font-size:1rem;padding:8px 6px;flex:1;" oninput="cliFiltrar()">
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <button class="btn btn-action-sm" onclick="cliSetFiltro('todos')" id="cliFiltTodos" style="background:#059669;color:#fff;">Todos</button>
@@ -469,31 +469,30 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                     <div class="jv-modal-section-head">
                         <span class="jv-modal-chip" style="background:#059669;box-shadow:0 3px 10px rgba(5,150,105,0.3);"><i class="bi bi-list-ul"></i></span>
                         <div>
-                            <div class="jv-modal-section-title">Clientes registrados <span class="badge rounded-pill ms-2" style="background:#059669;color:#fff;font-size:.75rem;" id="cliTotalBadge"><?php echo count($cli_gestion); ?></span></div>
-                            <div class="jv-modal-section-sub">Total de clientes en el sistema</div>
+                            <div class="jv-modal-section-title">Clientes registrados <span class="badge rounded-pill ms-2" style="background:#059669;color:#fff;font-size:.85rem;" id="cliTotalBadge"><?php echo count($cli_gestion); ?></span></div>                            <div class="jv-modal-section-sub">Total de clientes en el sistema</div>
                         </div>
                     </div>
                     <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;">
                         <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
                             <thead>
                                 <tr style="background:#065f46;">
-                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;width:30px;text-align:center;">#</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;">Cliente</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;width:140px;">Documento</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;width:120px;">Tel&eacute;fono</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;text-align:center;width:90px;">Estado</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.85rem;text-transform:uppercase;text-align:center;width:80px;">Acciones</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;width:30px;text-align:center;">#</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;">Cliente</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;width:140px;">Documento</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;width:120px;">Tel&eacute;fono</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;text-align:center;width:90px;">Estado</th>
+                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;text-align:center;width:80px;">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="cliTablaBody">
                                 <?php if (count($cli_gestion) > 0): ?>
                                     <?php foreach ($cli_gestion as $idx => $cli): ?>
                                         <tr class="cli-fila" data-status="<?php echo $cli['status']; ?>" data-nombre="<?php echo htmlspecialchars(strtolower($cli['nombre'])); ?>" data-documento="<?php echo htmlspecialchars(strtolower($cli['documento'] ?? '')); ?>">
-                                            <td style="text-align:center;color:var(--jv-text-muted);padding:10px 12px;font-size:.85rem;"><?php echo $idx + 1; ?></td>
+                                            <td style="text-align:center;color:var(--jv-text-muted);padding:10px 12px;font-size:.95rem;"><?php echo $idx + 1; ?></td>
                                             <td style="padding:10px 12px;">
                                                 <div style="font-weight:700;font-size:1rem;color:var(--jv-text-primary);"><?php echo htmlspecialchars($cli['nombre']); ?></div>
                                                 <?php if (!empty($cli['direccion'])): ?>
-                                                    <div style="font-size:.85rem;color:var(--jv-text-secondary);margin-top:2px;"><i class="bi bi-geo-alt me-1"></i><?php echo htmlspecialchars($cli['direccion']); ?></div>
+                                                    <div style="font-size:.95rem;color:var(--jv-text-secondary);margin-top:2px;"><i class="bi bi-geo-alt me-1"></i><?php echo htmlspecialchars($cli['direccion']); ?></div>
                                                 <?php endif; ?>
                                             </td>
                                             <td style="padding:10px 12px;font-size:.95rem;color:var(--jv-text-primary);white-space:nowrap;"><?php echo htmlspecialchars($cli['documento'] ?: '&mdash;'); ?></td>
