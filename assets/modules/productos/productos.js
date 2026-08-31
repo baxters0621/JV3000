@@ -422,18 +422,28 @@
             btnGuardarCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR CATEGOR\u00cdA';
 
             catDesdeLista = true;
-            const modalCategorias = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias'));
+            const modalCategoriasEl = document.getElementById('modalCategorias');
+            const modalCategorias = bootstrap.Modal.getOrCreateInstance(modalCategoriasEl);
             const modalCat = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat'));
 
-            // Usar evento hidden.bs.modal en lugar de setTimeout para asegurar
-            // que el segundo modal se abra solo después de que el primero se oculte completamente.
-            const onHidden = function() {
-                modalCategorias.removeEventListener('hidden.bs.modal', onHidden);
+            // Verificar si modalCategorias está visible (tiene clase 'show')
+            const estaVisible = modalCategoriasEl.classList.contains('show');
+
+            if (estaVisible) {
+                // Si está visible, usar evento hidden.bs.modal para abrir el formulario
+                // después de que se complete la animación de cierre.
+                const onHidden = function() {
+                    modalCategorias.removeEventListener('hidden.bs.modal', onHidden);
+                    modalCat.show();
+                    document.getElementById('cat_nombre').focus();
+                };
+                modalCategorias.addEventListener('hidden.bs.modal', onHidden);
+                modalCategorias.hide();
+            } else {
+                // Si ya está oculto, mostrar el formulario directamente
                 modalCat.show();
                 document.getElementById('cat_nombre').focus();
-            };
-            modalCategorias.addEventListener('hidden.bs.modal', onHidden);
-            modalCategorias.hide();
+            }
         }
 
         // Modo registro (botón NUEVA del listado).
