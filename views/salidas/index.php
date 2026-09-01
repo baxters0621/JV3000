@@ -560,20 +560,11 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                         <input type="text" name="nombre" id="cliNombre" class="input-jv" placeholder="Nombre completo o raz&oacute;n social" maxlength="150" required>
                     </div>
 
-                    <!-- DOCUMENTO — select + input separados -->
+                    <!-- DOCUMENTO — campo único, usuario escribe directamente -->
                     <div class="mb-3">
-                        <label for="cliDocNum" class="jv-modal-label">DOCUMENTO (RIF / C&Eacute;DULA)</label>
-                        <div class="d-flex gap-2">
-                            <select id="cliDocTipo" aria-label="Tipo de documento" class="input-jv" style="width:80px;flex-shrink:0;" onchange="cliValidarDoc()">
-                                <option value="V">V-</option>
-                                <option value="J">J-</option>
-                                <option value="E">E-</option>
-                                <option value="P">P-</option>
-                                <option value="G">G-</option>
-                                <option value="C">C-</option>
-                            </select>
-                            <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="N&uacute;mero de identificaci&oacute;n" oninput="cliValidarDoc()" style="flex:1;" inputmode="numeric" maxlength="12">
-                        </div>
+                        <label for="cliDocNum" class="jv-modal-label">RIF / C&Eacute;DULA</label>
+                        <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="V-12345678 o J-12345678-9" oninput="cliValidarDoc()" maxlength="20" autocomplete="off">
+                        <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>C&eacute;dula: V- o E- seguido de 6 a 9 d&iacute;gitos. RIF: J-, G-, P- o C- seguido de 8 d&iacute;gitos, guion y verificador.</div>
                         <div id="cliDocMsg" class="small mt-1" style="min-height:18px;"></div>
                     </div>
 

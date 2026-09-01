@@ -517,7 +517,7 @@
         // V/E: cédula → 6-9 dígitos.
         // J/G/P/C: RIF → 8 dígitos + guión + 1 verificador.
         function formatoDocumento(inputId, msgId, hiddenId, typeId) {
-            var tipoElId = typeId || (hiddenId ? 's_rif_tipo' : 'cliDocTipo');
+            var tipoElId = typeId || 's_rif_tipo';
             var tipo = document.getElementById(tipoElId).value;
             var nums = document.getElementById(inputId).value.replace(/\D/g, '');
             var msg = document.getElementById(msgId);
@@ -602,6 +602,15 @@
             } else {
                 return nums.length >= 6 && nums.length <= 9;
             }
+        }
+
+        // Valida documento fiscal en formato completo ("V-12345678", "J-12345678-9").
+        function esDocFiscalValidoSingle(doc) {
+            var match = doc.match(/^([VEJGPC])-(\d{6,9})(?:-(\d))?$/);
+            if (!match) return false;
+            var tipo = match[1];
+            var esRif = (tipo === 'J' || tipo === 'G' || tipo === 'P' || tipo === 'C');
+            return esRif ? !!match[3] : true;
         }
 
         // Valida el formulario completo y solicita la vista previa de la nota de entrega al servidor.
@@ -804,12 +813,12 @@
                 document.getElementById('cliAccion').value = 'registrar';
                 document.getElementById('cliIdEdit').value = '';
                 document.getElementById('cliNombre').value = '';
-                document.getElementById('cliDocTipo').value = 'V';
                 document.getElementById('cliDocNum').value = '';
                 document.getElementById('cliTelefono').value = '';
                 document.getElementById('cliDireccion').value = '';
                 document.getElementById('cliStatus').value = 'Activo';
                 var msg = document.getElementById('cliDocMsg'); if (msg) msg.innerHTML = '';
+                var docIn = document.getElementById('cliDocNum'); if (docIn) docIn.style.borderColor = '';
                 cliFormModal.show();
             }, 300);
         }
@@ -830,22 +839,41 @@
                 document.getElementById('cliTelefono').value = cliente.telefono;
                 document.getElementById('cliDireccion').value = cliente.direccion;
                 document.getElementById('cliStatus').value = cliente.status;
-                var docMatch = (cliente.documento || '').match(/^([VEJGPC])-(\d+)(?:-(\d+))?/);
-                if (docMatch) {
-                    document.getElementById('cliDocTipo').value = docMatch[1];
-                    document.getElementById('cliDocNum').value = docMatch[2] + (docMatch[3] || '');
-                } else {
-                    document.getElementById('cliDocTipo').value = 'V';
-                    document.getElementById('cliDocNum').value = cliente.documento || '';
-                }
+                document.getElementById('cliDocNum').value = cliente.documento || '';
+                var docIn = document.getElementById('cliDocNum'); if (docIn) docIn.style.borderColor = '';
                 cliValidarDoc();
                 cliFormModal.show();
             }, 300);
         }
 
-        // Valida y formatea el documento fiscal del cliente.
+        // Valida el documento fiscal del cliente (campo único: "V-12345678", "J-12345678-9").
         function cliValidarDoc() {
-            formatoDocumento('cliDocNum', 'cliDocMsg', null, 'cliDocTipo');
+            var input = document.getElementById('cliDocNum');
+            var msg = document.getElementById('cliDocMsg');
+            var val = input.value.trim().toUpperCase();
+            if (val === '') {
+                msg.innerHTML = '';
+                input.style.borderColor = '';
+                return;
+            }
+            var match = val.match(/^([VEJGPC])-(\d{6,9})(?:-(\d))?$/);
+            if (match) {
+                var tipo = match[1];
+                var esRif = (tipo === 'J' || tipo === 'G' || tipo === 'P' || tipo === 'C');
+                if (esRif && match[3]) {
+                    msg.innerHTML = '<span style="color:var(--jv-success);">\u2713 V\u00e1lido</span>';
+                    input.style.borderColor = '#16A34A';
+                } else if (!esRif) {
+                    msg.innerHTML = '<span style="color:var(--jv-success);">\u2713 V\u00e1lido</span>';
+                    input.style.borderColor = '#16A34A';
+                } else {
+                    msg.innerHTML = '<span style="color:var(--jv-danger);">RIF incompleto (falta d\u00edgito verificador)</span>';
+                    input.style.borderColor = '#DC2626';
+                }
+            } else {
+                msg.innerHTML = '<span style="color:var(--jv-danger);">Formato inv\u00e1lido (use: V-12345678 o J-12345678-9)</span>';
+                input.style.borderColor = '#DC2626';
+            }
         }
 
         // Envía el formulario de cliente (registrar o editar).
@@ -866,11 +894,10 @@
                 return;
             }
 
-            var docNum = document.getElementById('cliDocNum').value.trim();
+            var docNum = document.getElementById('cliDocNum').value.trim().toUpperCase();
             var hiddenDoc = document.getElementById('formCli').querySelector('[name="documento"]');
             if (docNum) {
-                var tipo = document.getElementById('cliDocTipo').value;
-                if (!esDocFiscalValido(tipo, docNum)) {
+                if (!esDocFiscalValidoSingle(docNum)) {
                     var msgEl = document.getElementById('cliDocMsg');
                     var numInput = document.getElementById('cliDocNum');
                     marcarError(numInput, 'DOCUMENTO FISCAL INVÁLIDO');
@@ -878,7 +905,7 @@
                     numInput.focus();
                     return;
                 }
-                hiddenDoc.value = tipo + '-' + docNum;
+                hiddenDoc.value = docNum;
             } else {
                 hiddenDoc.value = '';
             }
