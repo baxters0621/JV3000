@@ -564,7 +564,6 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                     <div class="mb-3">
                         <label for="cliDocNum" class="jv-modal-label">RIF / C&Eacute;DULA</label>
                         <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="V-12345678 o J-12345678-9" oninput="cliValidarDoc()" maxlength="20" autocomplete="off">
-                        <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>C&eacute;dula: V- o E- seguido de 6 a 9 d&iacute;gitos. RIF: J-, G-, P- o C- seguido de 8 d&iacute;gitos, guion y verificador.</div>
                         <div id="cliDocMsg" class="small mt-1" style="min-height:18px;"></div>
                     </div>
 

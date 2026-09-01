@@ -116,11 +116,11 @@
             background: linear-gradient(135deg, #7f1d1d, #b91c1c);
             color: #fff;
             border-bottom: 2px solid rgba(220, 38, 38, 0.3);
-            font-size: 0.95rem;
-            padding: 16px 14px;
+            font-size: 0.8rem;
+            padding: 12px 12px;
             text-align: left;
             vertical-align: middle;
-            white-space: normal;
+            white-space: nowrap;
             letter-spacing: 0.5px;
         }
 
@@ -134,8 +134,8 @@
 
         .pagina-salidas .table-jv tbody td {
             border-bottom: 1px solid rgba(220, 38, 38, 0.07);
-            padding: 16px 18px;
-            font-size: 1rem;
+            padding: 12px 14px;
+            font-size: 0.9rem;
             vertical-align: middle;
             color: var(--jv-text-primary);
         }
@@ -229,10 +229,13 @@
         .pagina-salidas .buscador-wrapper {
             border-bottom: 1px solid var(--jv-border);
             background: rgba(15, 26, 46, 0.02);
+            display: flex;
+            align-items: center;
         }
 
         .pagina-salidas .buscador-wrapper i {
             color: #dc2626;
+            flex-shrink: 0;
         }
 
         .pagina-salidas .btn-jv-success {

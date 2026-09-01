@@ -10,6 +10,10 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-08-31 18:35] · Módulo: Salidas/Ventas · Cambio: Fix encabezado/cuerpo de tabla principal + alineación de búsqueda. A) thead th: `font-size: 0.95rem → 0.8rem`, `padding: 16px 14px → 12px 12px`, `white-space: normal → nowrap` (evita saltos de línea en headers). B) tbody td: `padding: 16px 18px → 12px 14px`, `font-size: 1rem → 0.9rem`. C) buscador-wrapper: agregar `display:flex; align-items:center` para centrar el icono de búsqueda verticalmente con el input. D) Quitado hint confuso del campo documento cliente (el placeholder es suficiente). CSS v=13. · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.css (v=13), controllers/SalidasController.php · Prueba: php -l sin errores; tabla más compacta, headers más legibles, icono centrado.
+
+---
+
 [2026-08-31 18:20] · Módulo: Salidas/Ventas · Cambio: RE-DISEÑO campo documento cliente: campo único de texto (antes select+input separados). El usuario escribe directamente "V-12345678" o "J-12345678-9" — el formato más natural y estándar en sistemas venezolanos. A) HTML: eliminado `select#cliDocTipo`, `input#cliDocNum` ahora es campo completo con placeholder "V-12345678 o J-12345678-9", hint informativo con formato aceptado. B) JS: nueva `cliValidarDoc()` que parsea el valor completo (detecta tipo del prefijo, valida cédula 6-9 dígitos, RIF 8+1 con guión). C) JS: nueva `esDocFiscalValidoSingle(doc)` para validar documento completo. D) JS: `cliEnviarForm()` ya no construye `tipo+'-'+num`, usa el valor directo del input. E) JS: `nuevaCli()` y `cliEditar()` ya no manipulan `cliDocTipo`. F) Limpieza: eliminada toda referencia a `cliDocTipo` en JS (0 apariciones). El campo de la venta (modalSalida) mantiene select+input separados sin cambios. · Archivos: views/salidas/index.php, assets/modules/salidas/salidas.js · Prueba: php -l sin errores; HTML: 0 referencias a cliDocTipo, JS: 0 referencias a cliDocTipo, cliValidarDoc parsea formato completo, esDocFiscalValidoSingle valida por regex.
 
 ---
