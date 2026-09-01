@@ -560,19 +560,19 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                         <input type="text" name="nombre" id="cliNombre" class="input-jv" placeholder="Nombre completo o raz&oacute;n social" maxlength="150" required>
                     </div>
 
-                    <!-- DOCUMENTO — ancho completo con select integrado -->
+                    <!-- DOCUMENTO — select + input separados -->
                     <div class="mb-3">
                         <label for="cliDocNum" class="jv-modal-label">DOCUMENTO (RIF / C&Eacute;DULA)</label>
-                        <div class="input-group">
-                            <select id="cliDocTipo" aria-label="Tipo de documento" class="input-jv" style="width:120px;flex-shrink:0;border-right:none;border-radius:var(--jv-radius) 0 0 var(--jv-radius);" onchange="cliValidarDoc()">
-                                <option value="V">V - C&eacute;dula</option>
-                                <option value="E">E - Extranjero</option>
-                                <option value="J">J - Jur&iacute;dico</option>
-                                <option value="P">P - Pasaporte</option>
-                                <option value="G">G - Gobierno</option>
-                                <option value="C">C - Comunal</option>
+                        <div class="d-flex gap-2">
+                            <select id="cliDocTipo" aria-label="Tipo de documento" class="input-jv" style="width:80px;flex-shrink:0;" onchange="cliValidarDoc()">
+                                <option value="V">V-</option>
+                                <option value="J">J-</option>
+                                <option value="E">E-</option>
+                                <option value="P">P-</option>
+                                <option value="G">G-</option>
+                                <option value="C">C-</option>
                             </select>
-                            <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="Ej: 12345678 o 12345678-9" oninput="cliValidarDoc()" style="flex:1;border-radius:0 var(--jv-radius) var(--jv-radius) 0;" inputmode="numeric" maxlength="12">
+                            <input type="text" name="documento" id="cliDocNum" class="input-jv" placeholder="N&uacute;mero de identificaci&oacute;n" oninput="cliValidarDoc()" style="flex:1;" inputmode="numeric" maxlength="12">
                         </div>
                         <div id="cliDocMsg" class="small mt-1" style="min-height:18px;"></div>
                     </div>
