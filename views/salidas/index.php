@@ -99,8 +99,8 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 
 <!-- Tabla de ventas -->
 <div class="card-jv p-0">
-    <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
-        <i class="bi bi-search me-1" style="font-size:1rem;color:var(--jv-orange);"></i>
+    <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper">
+        <i class="bi bi-search" style="font-size:1rem;color:var(--jv-orange);flex-shrink:0;"></i>
         <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nota, control, cliente, RIF, producto..." id="buscarSal" aria-label="Buscar salida" onkeyup="filtrarSalidas()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;">
     </div>
     <div class="table-responsive">
