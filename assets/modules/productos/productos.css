@@ -844,3 +844,30 @@
             font-weight: 500; color: var(--jv-text-muted);
         }
 
+        /* ── Modal Cat: tamaños más grandes para mejor legibilidad ── */
+        .pagina-productos #modalCat .modal-dialog { max-width: 540px; }
+        .pagina-productos #modalCat .modal-body { padding: 24px 28px; }
+
+        .pagina-productos #modalCat .jv-modal-chip {
+            width: 40px; height: 40px; border-radius: 10px; font-size: 1.15rem;
+        }
+        .pagina-productos #modalCat .jv-modal-section-title {
+            font-size: 1.05rem;
+        }
+        .pagina-productos #modalCat .jv-modal-section-sub {
+            font-size: .88rem;
+        }
+        .pagina-productos #modalCat .jv-modal-label {
+            font-size: .92rem; letter-spacing: .5px; margin-bottom: 8px;
+        }
+        .pagina-productos #modalCat .input-jv {
+            font-size: .95rem; padding: 10px 14px;
+        }
+        .pagina-productos #modalCat .jv-modal-hint {
+            font-size: .82rem; margin-top: 6px;
+        }
+        .pagina-productos #modalCat .jv-modal-hint i { font-size: .82rem; }
+        .pagina-productos #modalCat .jv-modal-section { padding: 18px 20px; margin-bottom: 16px; }
+        .pagina-productos #modalCat .jv-modal-footer { padding: 16px 24px; }
+        .pagina-productos #modalCat .jv-modal-footer .btn { padding: 10px 24px; font-size: .88rem; }
+
