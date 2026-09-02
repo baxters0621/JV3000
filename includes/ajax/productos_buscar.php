@@ -40,7 +40,7 @@ if ($id_producto > 0) {
     $params[] = $id_producto;
 } else {
     if ($q !== '') {
-        $where[] = '(p.sku LIKE ? OR p.nombre_producto LIKE ? OR c.nombre LIKE ? OR COALESCE(pr.nombre_empresa,"") LIKE ?)';
+        $where[] = '(p.sku LIKE ? OR p.nombre_producto LIKE ? OR c.nombre LIKE ? OR EXISTS (SELECT 1 FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra JOIN proveedores pr2 ON co.id_proveedor = pr2.id_proveedor WHERE dc.id_producto = p.id_producto AND pr2.nombre_empresa LIKE ?))';
         $like = '%' . $q . '%';
         $params[] = $like;
         $params[] = $like;
@@ -48,7 +48,7 @@ if ($id_producto > 0) {
         $params[] = $like;
     }
     if ($id_proveedor > 0) {
-        $where[] = 'p.id_proveedor = ?';
+        $where[] = 'EXISTS (SELECT 1 FROM detalle_compras dc JOIN compras co ON dc.id_compra = co.id_compra WHERE dc.id_producto = p.id_producto AND co.id_proveedor = ? AND co.status = \'Activa\')';
         $params[] = $id_proveedor;
     }
     if ($id_categoria > 0) {
@@ -80,8 +80,7 @@ $sql = "SELECT p.id_producto, p.sku, p.nombre_producto, p.precio_venta, p.precio
                $stock_expr AS stock,
                (SELECT MIN(l.fecha_vencimiento) FROM lotes l WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0 AND l.fecha_vencimiento IS NOT NULL) AS proximo_vencimiento
         FROM productos p
-        LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-        LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor";
+        LEFT JOIN categorias c ON p.id_categoria = c.id_categoria";
 
 if ($where) {
     $sql .= " WHERE " . implode(' AND ', $where);

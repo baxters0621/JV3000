@@ -264,6 +264,14 @@ class Salida extends Model
 
             // Validar stock de todos los productos (después de restaurar, en caso de edición)
             $solo_vencidos = $grupo_data === 'merma';
+
+            // Bloquear filas de productos involucrados (prevenir race condition)
+            $ids_producto = array_unique(array_filter(array_map(fn($p) => intval($p['id_producto'] ?? 0), $productos_raw), fn($id) => $id > 0));
+            if (!empty($ids_producto)) {
+                $ph = implode(',', array_fill(0, count($ids_producto), '?'));
+                $this->db->fetchAll("SELECT id_producto, stock_actual FROM productos WHERE id_producto IN ($ph) FOR UPDATE", $ids_producto);
+            }
+
             foreach ($productos_raw as $prod) {
                 $id_producto = intval($prod['id_producto'] ?? 0);
                 $cantidad = intval($prod['cantidad'] ?? 0);
@@ -321,7 +329,7 @@ class Salida extends Model
 
                 $tiene_lotes = (int)$this->db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE id_producto = ?", [$id_producto])['n'];
                 if ($tiene_lotes > 0) {
-                    $usados = consumirLotes($this->db, $id_producto, $cantidad, $solo_vencidos);
+                    $usados = consumirLotes($this->db, $id_producto, $cantidad, $solo_vencidos, true);
                     foreach ($usados as $u) {
                         $this->db->insert('detalle_salidas', [
                             'id_salida'    => $salida_id,

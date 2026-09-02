@@ -54,6 +54,9 @@ class SalidasController extends Controller
                     $this->redirect('salidas');
                 }
                 $resultado = (new Cliente())->procesar($_POST);
+                if (!$resultado['ok']) {
+                    $this->flash('danger', $resultado['mensaje'] ?? 'ERROR AL PROCESAR EL CLIENTE.');
+                }
                 $this->redirect('salidas');
             }
 

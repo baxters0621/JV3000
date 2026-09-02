@@ -195,10 +195,11 @@ CREATE TABLE `detalle_solicitud_compra` (
 CREATE TABLE `login_intentos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `ip_address` varchar(45) NOT NULL,
+  `usuario` varchar(100) DEFAULT NULL,
   `intentos` int(11) DEFAULT 0,
   `ultimo_intento` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_ip_unique` (`ip_address`),
+  UNIQUE KEY `idx_ip_user_unique` (`ip_address`,`usuario`),
   KEY `idx_ip` (`ip_address`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

@@ -279,6 +279,15 @@ if (!$pinEmergenciaColumn || (int)$pinEmergenciaColumn['n'] === 0) {
     $jv_db->execute("ALTER TABLE usuarios ADD COLUMN pin_emergencia VARCHAR(60) DEFAULT NULL COMMENT 'bcrypt hash de PIN 6 digitos de emergencia' AFTER respuesta_seguridad");
 }
 
+// --- 7d. Login intentos: columna usuario (doble bloqueo IP + usuario) ---
+$loginUsuarioColumn = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'login_intentos' AND COLUMN_NAME = 'usuario'");
+if (!$loginUsuarioColumn || (int)$loginUsuarioColumn['n'] === 0) {
+    $jv_db->execute("ALTER TABLE login_intentos ADD COLUMN usuario VARCHAR(100) DEFAULT NULL AFTER ip_address");
+    $jv_db->execute("ALTER TABLE login_intentos DROP INDEX idx_ip_unique");
+    $jv_db->execute("ALTER TABLE login_intentos ADD UNIQUE INDEX idx_ip_user_unique (ip_address, usuario)");
+    error_log("[JV3000] Migración login_intentos: columna usuario agregada.");
+}
+
 // ==========================================
 // SEGURIDAD Y SESIÓN
 // ==========================================

@@ -573,16 +573,18 @@ if (!function_exists('lotesConsumibles')) {
      * Lotes disponibles de un producto en orden FEFO (primero lo que vence antes).
      * $solo_vencidos = true  → solo lotes vencidos (para ajustes por vencimiento).
      * $solo_vencidos = false → solo lotes vigentes (para ventas/regalías).
+     * $lock = true → FOR UPDATE (bloquea filas dentro de transacción).
      */
-    function lotesConsumibles(Database $db, int $id_producto, bool $solo_vencidos = false): array
+    function lotesConsumibles(Database $db, int $id_producto, bool $solo_vencidos = false, bool $lock = false): array
     {
+        $forUpdate = $lock ? ' FOR UPDATE' : '';
         if ($solo_vencidos) {
             return $db->fetchAll(
                 "SELECT id_lote, cantidad_restante, fecha_vencimiento
                  FROM lotes
                  WHERE id_producto = ? AND cantidad_restante > 0
                    AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento <= CURDATE()
-                 ORDER BY fecha_vencimiento ASC, id_lote ASC",
+                 ORDER BY fecha_vencimiento ASC, id_lote ASC" . $forUpdate,
                 [$id_producto]
             );
         }
@@ -591,7 +593,7 @@ if (!function_exists('lotesConsumibles')) {
              FROM lotes
              WHERE id_producto = ? AND cantidad_restante > 0
                AND (fecha_vencimiento IS NULL OR fecha_vencimiento > CURDATE())
-             ORDER BY (fecha_vencimiento IS NULL) ASC, fecha_vencimiento ASC, id_lote ASC",
+             ORDER BY (fecha_vencimiento IS NULL) ASC, fecha_vencimiento ASC, id_lote ASC" . $forUpdate,
             [$id_producto]
         );
     }
@@ -614,12 +616,13 @@ if (!function_exists('consumirLotes')) {
      * Consume $cantidad del producto en modo FEFO y devuelve
      * [ ['id_lote' => int, 'cantidad' => int], ... ].
      * Lanza Exception si no hay stock suficiente en los lotes permitidos.
+     * $lock = true → bloquea filas de lotes (usar dentro de transacción).
      */
-    function consumirLotes(Database $db, int $id_producto, int $cantidad, bool $solo_vencidos = false): array
+    function consumirLotes(Database $db, int $id_producto, int $cantidad, bool $solo_vencidos = false, bool $lock = false): array
     {
         $restante = $cantidad;
         $usados = [];
-        foreach (lotesConsumibles($db, $id_producto, $solo_vencidos) as $lote) {
+        foreach (lotesConsumibles($db, $id_producto, $solo_vencidos, $lock) as $lote) {
             if ($restante <= 0) break;
             $disp = (int)$lote['cantidad_restante'];
             if ($disp <= 0) continue;
