@@ -141,19 +141,4 @@ class SalidasController extends Controller
         $this->flash('danger', $confirmationResult['error'] ?? 'ERROR AL REGISTRAR LA SALIDA.');
         $this->redirect('salidas');
     }
-
-    /**
-     * Lee y limpia el mensaje flash pendiente de la sesión.
-     *
-     * Obtiene el mensaje guardado por operaciones previas y lo elimina de la
-     * sesión para que solo se muestre una vez. Devuelve null si no hay mensaje.
-     *
-     * @return array|null Arreglo ['tipo'=>.., 'texto'=>..] o null si no hay.
-     */
-    private function consumeFlash(): ?array
-    {
-        $flash = $_SESSION['flash_msg'] ?? null;
-        unset($_SESSION['flash_msg']);
-        return $flash;
-    }
 }

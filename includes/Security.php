@@ -33,6 +33,14 @@ class Security
             self::redirectToLogin();
         }
 
+        // Timeout de inactividad (30 minutos)
+        $idleTimeout = 1800; // 30 * 60 segundos
+        if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $idleTimeout) {
+            session_destroy();
+            self::redirectToLogin('sesion_expirada');
+        }
+        $_SESSION['last_activity'] = time();
+
         if ((int)$user['aprobado'] === 0) {
             session_destroy();
             self::redirectToLogin('cuenta_pendiente');

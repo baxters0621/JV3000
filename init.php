@@ -8,6 +8,7 @@
 date_default_timezone_set('America/Caracas');
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_strict_mode', '1');
+    ini_set('session.gc_maxlifetime', '1800');
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
@@ -286,6 +287,35 @@ if (!$loginUsuarioColumn || (int)$loginUsuarioColumn['n'] === 0) {
     $jv_db->execute("ALTER TABLE login_intentos DROP INDEX idx_ip_unique");
     $jv_db->execute("ALTER TABLE login_intentos ADD UNIQUE INDEX idx_ip_user_unique (ip_address, usuario)");
     error_log("[JV3000] Migración login_intentos: columna usuario agregada.");
+}
+
+// --- 7e. Cuentas por pagar: tabla pagos_compra (historial de pagos parciales) ---
+$pagosTable = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'pagos_compra'");
+if (!$pagosTable || (int)$pagosTable['n'] === 0) {
+    $jv_db->execute("CREATE TABLE IF NOT EXISTS pagos_compra (
+        id_pago int(11) NOT NULL AUTO_INCREMENT,
+        id_compra int(11) NOT NULL,
+        id_usuario int(11) NOT NULL,
+        monto decimal(10,2) NOT NULL,
+        metodo_pago enum('Efectivo','Transferencia','Cheque','Otro') NOT NULL,
+        detalle_pago json DEFAULT NULL,
+        fecha_pago timestamp NOT NULL DEFAULT current_timestamp(),
+        PRIMARY KEY (id_pago),
+        KEY fk_pago_compra (id_compra),
+        KEY fk_pago_usuario (id_usuario),
+        CONSTRAINT fk_pago_compra FOREIGN KEY (id_compra) REFERENCES compras (id_compra) ON DELETE CASCADE,
+        CONSTRAINT fk_pago_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+    error_log("[JV3000] Tabla pagos_compra creada.");
+}
+
+// --- 7f. Optimistic locking: columna updated_at en tablas clave ---
+foreach (['productos', 'compras', 'proveedores', 'clientes'] as $tablaLock) {
+    $colCheck = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = '$tablaLock' AND COLUMN_NAME = 'updated_at'");
+    if (!$colCheck || (int)$colCheck['n'] === 0) {
+        $jv_db->execute("ALTER TABLE $tablaLock ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+        error_log("[JV3000] Migración optimistic locking: updated_at agregada a $tablaLock.");
+    }
 }
 
 // ==========================================

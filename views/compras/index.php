@@ -209,9 +209,15 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <td class="text-center">
                                 <?php $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
                                 <span class="badge-jv <?php echo $status_pago === 'Pagada' ? 'badge-success' : 'badge-warning'; ?>"><i class="bi <?php echo $status_pago === 'Pagada' ? 'bi-check-circle' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $status_pago; ?></span>
+                                <?php if ($status_pago !== 'Pagada' && (float)($compra['saldo_pendiente'] ?? 0) > 0): ?>
+                                    <div class="mt-1" style="font-size:.75rem;color:var(--jv-red);">Saldo: $<?php echo number_format($compra['saldo_pendiente'], 2); ?></div>
+                                <?php endif; ?>
                             </td>
                             <td class="td-fecha"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
                             <td class="text-center">
+                                <?php if ($status_pago !== 'Pagada' && (float)($compra['saldo_pendiente'] ?? 0) > 0): ?>
+                                    <button type="button" class="btn-action" style="color:var(--jv-green);border-color:var(--jv-green);" onclick="abrirModalPago(<?php echo (int)$compra['id_compra']; ?>, '<?php echo htmlspecialchars(addslashes($compra['nro_factura'] ?? ''), ENT_QUOTES); ?>', <?php echo (float)$compra['total']; ?>, <?php echo (float)($compra['saldo_pendiente'] ?? 0); ?>)" data-tooltip="Registrar pago"><i class="bi bi-cash-coin"></i></button>
+                                <?php endif; ?>
                                 <?php if ($es_admin): ?>
                                     <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="Anular compra"><i class="bi bi-trash"></i></button>
                                 <?php endif; ?>
@@ -489,9 +495,118 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                                 <span class="comp-equivalente-valor" id="equivalenteVES">Bs. 0.00</span>
                                             </div>
                                             <input type="hidden" name="equivalente_ves" id="equivalenteVESInput" value="0">
-                                        </div>
-                                    </div>
-                                </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Registrar Pago -->
+<div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" style="max-width:520px;">
+        <div class="modal-content jv-modal-content">
+            <div class="jv-modal-header" style="background:linear-gradient(135deg,#059669,#10b981);">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-cash-coin" style="font-size:1.3rem;"></i>
+                    <h5 class="jv-modal-title" id="modalPagoLabel">REGISTRAR PAGO</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form method="POST" action="<?php echo $purchaseListUrl; ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
+                <input type="hidden" name="accion_pago" value="1">
+                <input type="hidden" name="id_compra" id="pago_id_compra">
+
+                <div class="jv-modal-body" style="padding:20px;">
+                    <div class="jv-modal-section-sub mb-3">
+                        <span style="font-size:.85rem;color:var(--jv-text-muted);">Factura:</span>
+                        <span id="pago_factura_num" style="font-weight:700;margin-left:4px;"></span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="jv-modal-label">TOTAL</label>
+                            <div class="input-group">
+                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
+                                <input type="text" class="form-control" id="pago_total" readonly style="background:var(--jv-bg);font-weight:700;">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="jv-modal-label">SALDO PENDIENTE</label>
+                            <div class="input-group">
+                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
+                                <input type="text" class="form-control" id="pago_saldo" readonly style="background:var(--jv-bg);font-weight:700;color:var(--jv-red);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="jv-modal-label">MONTO A PAGAR <span style="color:var(--jv-red);">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="font-size:.85rem;">$</span>
+                            <input type="number" step="0.01" min="0.01" class="form-control input-jv" name="monto_pago" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="jv-modal-label">MÉTODO DE PAGO <span style="color:var(--jv-red);">*</span></label>
+                        <select name="metodo_pago" class="form-select input-jv" id="pago_metodo" required>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- Detalle según método -->
+                    <div id="pago_detalle_transferencia" style="display:none;">
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="jv-modal-label">Teléfono (Pago Móvil)</label>
+                                <input type="text" class="form-control input-jv" name="pago_telefono" placeholder="0412-1234567">
+                            </div>
+                            <div class="col-6">
+                                <label class="jv-modal-label">Banco</label>
+                                <input type="text" class="form-control input-jv" name="pago_banco" placeholder="Banco">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="jv-modal-label">Referencia</label>
+                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. referencia">
+                        </div>
+                    </div>
+
+                    <div id="pago_detalle_cheque" style="display:none;">
+                        <div class="mb-3">
+                            <label class="jv-modal-label">Nro. de Cheque</label>
+                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. cheque">
+                        </div>
+                    </div>
+
+                    <div id="pago_detalle_otro" style="display:none;">
+                        <div class="mb-3">
+                            <label class="jv-modal-label">Descripción</label>
+                            <input type="text" class="form-control input-jv" name="pago_descripcion" placeholder="Detalle del pago">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="jv-modal-label">Pago rápido</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(25)">25%</button>
+                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(50)">50%</button>
+                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(75)">75%</button>
+                            <button type="button" class="btn btn-sm btn-jv-success" onclick="setPagoMonto(100)">100%</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
+                    <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
+                    <button type="submit" class="btn btn-jv-success module-action-btn"><i class="bi bi-check-lg me-1"></i>Registrar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
                             </div>
 
                             <!-- Sub-detalle: Transferencia / Pago Móvil -->

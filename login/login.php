@@ -23,7 +23,7 @@ $error = "";
 $exito = "";
 $intentos_actuales = 0;
 $max_intentos = 3;
-$tiempo_bloqueo = 30; // segundos
+$tiempo_bloqueo = 300; // 5 minutos base
 
 // ==========================================
 // MENSAJES DE ERROR DESDE URL
@@ -42,6 +42,9 @@ switch ($error_get) {
         break;
     case 'expired':
         $error = 'SESIÓN EXPIRADA. LA PESTAÑA ANTERIOR FUE CERRADA. VUELVE A INICIAR SESIÓN.';
+        break;
+    case 'sesion_expirada':
+        $error = 'SESIÓN EXPIRADA POR INACTIVIDAD (30 MIN). VUELVE A INICIAR SESIÓN.';
         break;
 }
 
@@ -202,8 +205,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                 $intentos_actuales = max((int)($row_ip['intentos'] ?? 0), (int)($row_user['intentos'] ?? 0));
                 $restantes = $max_intentos - $intentos_actuales;
                 if ($restantes <= 0) {
+                    // Backoff exponencial: 5min → 15min → 30min
+                    $bloqueosRecientes = $db->fetchOne(
+                        "SELECT COUNT(*) as n FROM login_intentos
+                         WHERE (ip_address = ? OR usuario = ?)
+                           AND ultimo_intento > DATE_SUB(NOW(), INTERVAL 24 HOUR)",
+                        [$ip_usuario, $user_login ?: '']
+                    );
+                    $numBloqueos = (int)($bloqueosRecientes['n'] ?? 0);
+                    if ($numBloqueos >= 6) {
+                        $tiempo_bloqueo = 1800; // 30 min
+                    } elseif ($numBloqueos >= 3) {
+                        $tiempo_bloqueo = 900; // 15 min
+                    }
                     $segundos_restantes = $tiempo_bloqueo;
-                    $error = "ACCESO BLOQUEADO POR 30 SEGUNDOS (3 intentos fallidos)";
+                    $minutos = intval($tiempo_bloqueo / 60);
+                    $error = "ACCESO BLOQUEADO POR $minutos MINUTOS (demasiados intentos fallidos)";
                 } else {
                     $error = "CREDENCIALES INVÁLIDAS (intento $intentos_actuales de $max_intentos)";
                 }

@@ -59,7 +59,7 @@ $es_op_ventas = $id_rol === 3;
         $rama_compras_activa = $mvc_activa('compras');
         $rama_salidas_activa = $mvc_activa('salidas');
         $rama_analisis_activo = $mvc_activa('estadisticas') || $mvc_activa('reporte_inventario');
-        $rama_admin_activo = $mvc_activa('historial') || ($archivo_actual === 'usuarios.php');
+        $rama_admin_activo = $mvc_activa('historial') || $mvc_activa('usuarios');
         ?>
 
         <!-- ═══ INVENTARIO (consulta: los tres roles) ═══ -->
@@ -115,6 +115,12 @@ $es_op_ventas = $id_rol === 3;
                         <span>Ventas · Salidas</span>
                     </a>
                 </div>
+                <div class="nav-item <?php echo $mvc_activa('devoluciones') ? 'active' : ''; ?>">
+                    <a href="<?php echo $prefijo; ?>index.php?url=devoluciones" class="nav-link">
+                        <i class="bi bi-arrow-return-left"></i>
+                        <span>Devoluciones</span>
+                    </a>
+                </div>
             </div>
         </div>
         <?php endif; ?>
@@ -153,8 +159,8 @@ $es_op_ventas = $id_rol === 3;
                 <i class="bi bi-chevron-down nav-chevron"></i>
             </button>
             <div class="nav-group-items">
-                <div class="nav-item <?php echo ($archivo_actual === 'usuarios.php') ? 'active' : ''; ?>">
-                    <a href="<?php echo $prefijo; ?>dashboard/usuarios.php" class="nav-link">
+                <div class="nav-item <?php echo $mvc_activa('usuarios') ? 'active' : ''; ?>">
+                    <a href="<?php echo $prefijo; ?>index.php?url=usuarios" class="nav-link">
                         <i class="bi bi-people"></i>
                         <span>Usuarios</span>
                     </a>
@@ -178,8 +184,8 @@ $es_op_ventas = $id_rol === 3;
         </div>
 
         <!-- Mi Perfil -->
-        <div class="nav-item nav-ram-perfil <?php echo ($archivo_actual === 'perfil.php') ? 'active' : ''; ?>">
-            <a href="<?php echo $prefijo; ?>dashboard/perfil.php" class="nav-link">
+        <div class="nav-item nav-ram-perfil <?php echo $mvc_activa('perfil') ? 'active' : ''; ?>">
+            <a href="<?php echo $prefijo; ?>index.php?url=perfil" class="nav-link">
                 <i class="bi bi-person"></i>
                 <span>Mi Perfil</span>
             </a>

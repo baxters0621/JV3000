@@ -144,6 +144,23 @@ CREATE TABLE `detalle_compras` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `pagos_compra` (
+  `id_pago` int(11) NOT NULL AUTO_INCREMENT,
+  `id_compra` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `monto` decimal(10,2) NOT NULL,
+  `metodo_pago` enum('Efectivo','Transferencia','Cheque','Otro') NOT NULL,
+  `detalle_pago` json DEFAULT NULL,
+  `fecha_pago` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_pago`),
+  KEY `fk_pago_compra` (`id_compra`),
+  KEY `fk_pago_usuario` (`id_usuario`),
+  CONSTRAINT `fk_pago_compra` FOREIGN KEY (`id_compra`) REFERENCES `compras` (`id_compra`) ON DELETE CASCADE,
+  CONSTRAINT `fk_pago_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `detalle_movimientos` (
   `id_detalle` int(11) NOT NULL AUTO_INCREMENT,
   `id_movimiento` int(11) NOT NULL,

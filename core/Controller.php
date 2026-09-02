@@ -115,4 +115,19 @@ abstract class Controller
     {
         $_SESSION['flash_msg'] = ['tipo' => $tipo, 'texto' => $texto];
     }
+
+    /**
+     * Lee y limpia el mensaje flash pendiente de la sesión.
+     *
+     * Obtiene el mensaje guardado por operaciones previas y lo elimina de la
+     * sesión para que solo se muestre una vez. Devuelve null si no hay mensaje.
+     *
+     * @return array|null Arreglo ['tipo'=>.., 'texto'=>..] o null si no hay.
+     */
+    protected function consumeFlash(): ?array
+    {
+        $flash = $_SESSION['flash_msg'] ?? null;
+        unset($_SESSION['flash_msg']);
+        return $flash;
+    }
 }

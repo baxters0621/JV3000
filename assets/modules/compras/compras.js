@@ -1185,3 +1185,45 @@
             document.getElementById('formRecepcion').submit();
             return false;
         }
+
+        // ==========================================
+        // MODAL DE PAGO
+        // ==========================================
+
+        let pagoTotal = 0;
+        let pagoSaldo = 0;
+
+        function abrirModalPago(idCompra, factura, total, saldo) {
+            pagoTotal = total;
+            pagoSaldo = saldo;
+            document.getElementById('pago_id_compra').value = idCompra;
+            document.getElementById('pago_factura_num').textContent = factura || '-';
+            document.getElementById('pago_total').value = formatCurrency(total);
+            document.getElementById('pago_saldo').value = formatCurrency(saldo);
+            document.getElementById('pago_monto').value = '';
+            document.getElementById('pago_monto').max = saldo.toFixed(2);
+            document.getElementById('pago_monto').placeholder = saldo.toFixed(2);
+            document.getElementById('pago_metodo').value = 'Efectivo';
+            togglePagoDetalle();
+            var modal = new bootstrap.Modal(document.getElementById('modalPago'));
+            modal.show();
+        }
+
+        function setPagoMonto(pct) {
+            var monto = (pagoSaldo * pct / 100).toFixed(2);
+            document.getElementById('pago_monto').value = monto;
+        }
+
+        function togglePagoDetalle() {
+            var metodo = document.getElementById('pago_metodo').value;
+            document.getElementById('pago_detalle_transferencia').style.display = metodo === 'Transferencia' ? 'block' : 'none';
+            document.getElementById('pago_detalle_cheque').style.display = metodo === 'Cheque' ? 'block' : 'none';
+            document.getElementById('pago_detalle_otro').style.display = metodo === 'Otro' ? 'block' : 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var metodoSelect = document.getElementById('pago_metodo');
+            if (metodoSelect) {
+                metodoSelect.addEventListener('change', togglePagoDetalle);
+            }
+        });

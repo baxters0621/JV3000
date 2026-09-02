@@ -113,6 +113,24 @@ class ComprasController extends Controller
                 $this->redirect('compras');
             }
 
+            // Registro de pago parcial
+            if (isset($_POST['accion_pago'])) {
+                $resultado = (new PagoCompra())->registrar(
+                    (int)($_POST['id_compra'] ?? 0),
+                    (float)($_POST['monto_pago'] ?? 0),
+                    $_POST['metodo_pago'] ?? 'Efectivo',
+                    [
+                        'telefono'    => $_POST['pago_telefono'] ?? '',
+                        'banco'       => $_POST['pago_banco'] ?? '',
+                        'referencia'  => $_POST['pago_referencia'] ?? '',
+                        'descripcion' => $_POST['pago_descripcion'] ?? '',
+                    ],
+                    (int)($_SESSION['id_usuario'] ?? 0)
+                );
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->redirect('compras');
+            }
+
             if (isset($_POST['accion_compra'])) {
                 $resultado = $modelo->registrar($_POST, (int)($_SESSION['id_usuario'] ?? 0));
                 if ($resultado['ok']) {
@@ -148,6 +166,15 @@ class ComprasController extends Controller
         $sol_pendientes = (new Solicitud())->obtenerPendientes();
         $rec_datos = (new Recepcion())->dashboard();
 
+        // Datos de pagos para cada compra
+        $pagoModelo = new PagoCompra();
+        $comprasData = $modelo->obtenerCompras($filtro_proveedor, $filtro_pago);
+        foreach ($comprasData as &$c) {
+            $c['monto_pagado'] = $pagoModelo->totalPagado((int)$c['id_compra']);
+            $c['saldo_pendiente'] = max(0, (float)$c['total'] - $c['monto_pagado']);
+        }
+        unset($c);
+
         $this->view('compras/index', [
             'titulo'              => 'Compras | JV3000 C.A.',
             'wrapper_class'       => 'pagina-compras',
@@ -159,7 +186,7 @@ class ComprasController extends Controller
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
                 'modules/compras/compras.js?v=10',
             ],
-            'compras'             => $modelo->obtenerCompras($filtro_proveedor, $filtro_pago),
+            'compras'             => $comprasData,
             'proveedores'         => $modelo->obtenerProveedores(),
             'catalogo_costos'     => json_encode($modelo->mapaCostosCatalogo()),
             'kpis'                => $modelo->kpis(),
@@ -198,20 +225,5 @@ class ComprasController extends Controller
         Security::verificarPermisoCarga();
         unset($_SESSION['sol_seleccionada']);
         $this->redirect('compras');
-    }
-
-    /**
-     * Lee y limpia el mensaje flash pendiente de la sesión.
-     *
-     * Obtiene el mensaje guardado por operaciones previas y lo elimina de la
-     * sesión para que solo se muestre una vez. Devuelve null si no hay mensaje.
-     *
-     * @return array|null Arreglo ['tipo'=>.., 'texto'=>..] o null si no hay.
-     */
-    private function consumeFlash(): ?array
-    {
-        $flash = $_SESSION['flash_msg'] ?? null;
-        unset($_SESSION['flash_msg']);
-        return $flash;
     }
 }

@@ -47,15 +47,19 @@ class Cliente extends Model
     public function toggleStatus(int $idCliente): void
     {
         $cliente = $this->db->fetchOne(
-            "SELECT status, nombre FROM clientes WHERE id_cliente = ?",
+            "SELECT status, nombre, updated_at FROM clientes WHERE id_cliente = ?",
             [$idCliente]
         );
         if ($cliente) {
             $nuevoStatus = $cliente['status'] === 'Activo' ? 'Inactivo' : 'Activo';
             $this->db->execute(
-                "UPDATE clientes SET status = ? WHERE id_cliente = ?",
-                [$nuevoStatus, $idCliente]
+                "UPDATE clientes SET status = ? WHERE id_cliente = ? AND updated_at = ?",
+                [$nuevoStatus, $idCliente, $cliente['updated_at']]
             );
+            if ($this->db->affectedRows() === 0) {
+                $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL CLIENTE. RECARGUE.'];
+                return;
+            }
             $accion = $nuevoStatus === 'Activo' ? 'activar' : 'desactivar';
             registrarAuditoria($accion, 'Cliente ' . $accion . 'do: ' . $cliente['nombre']);
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'CLIENTE ' . strtoupper($accion) . 'DO CON ÉXITO.'];

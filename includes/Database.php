@@ -125,6 +125,12 @@ class Database
         return $affected;
     }
 
+    // Filas afectadas por la última operación
+    public function affectedRows(): int
+    {
+        return $this->conn->affected_rows;
+    }
+
     // Iniciar transacción
     public function begin(): void
     {

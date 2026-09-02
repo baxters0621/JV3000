@@ -27,10 +27,13 @@ class Producto extends Model
      */
     public function toggleStatus(int $idProducto): array
     {
-        $producto = $this->db->fetchOne("SELECT status FROM productos WHERE id_producto = ?", [$idProducto]);
+        $producto = $this->db->fetchOne("SELECT status, updated_at FROM productos WHERE id_producto = ?", [$idProducto]);
         if (!$producto) return ['ok' => false, 'mensaje' => 'PRODUCTO NO ENCONTRADO.'];
         $nuevoStatus = $producto['status'] === 'Activo' ? 'Inactivo' : 'Activo';
-        $this->db->execute("UPDATE productos SET status = ? WHERE id_producto = ?", [$nuevoStatus, $idProducto]);
+        $this->db->execute("UPDATE productos SET status = ? WHERE id_producto = ? AND updated_at = ?", [$nuevoStatus, $idProducto, $producto['updated_at']]);
+        if ($this->db->affectedRows() === 0) {
+            return ['ok' => false, 'mensaje' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL PRODUCTO. RECARGUE LA PÁGINA.'];
+        }
         $accion = $nuevoStatus === 'Activo' ? 'REACTIVADO' : 'DESACTIVADO';
         registrarAuditoria(strtolower($accion), "Producto $accion");
         return ['ok' => true, 'mensaje' => "PRODUCTO $accion."];
@@ -101,10 +104,15 @@ class Producto extends Model
         if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioVentaRaw) || !is_finite($precioVenta) || $precioVenta < 0.01 || $precioVenta > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,01 Y 99.999,99.'];
         if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
 
+        // Optimistic locking: verificar updated_at antes de actualizar
+        $current = $this->db->fetchOne("SELECT updated_at FROM productos WHERE id_producto = ?", [$idProducto]);
         $this->db->execute(
-            "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=? WHERE id_producto=?",
-            [$stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $idProducto]
+            "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=? WHERE id_producto=? AND updated_at=?",
+            [$stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $idProducto, $current['updated_at'] ?? '']
         );
+        if ($this->db->affectedRows() === 0) {
+            return ['ok' => false, 'mensaje' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL PRODUCTO. RECARGUE LA PÁGINA.'];
+        }
         registrarAuditoria('editar', 'Producto modificado');
         return ['ok' => true, 'mensaje' => 'PRODUCTO ACTUALIZADO EN EL INVENTARIO.'];
     }

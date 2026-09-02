@@ -28,10 +28,14 @@ class Proveedor extends Model
      */
     public function toggleStatus(int $idProveedor): void
     {
-        $proveedor = $this->db->fetchOne("SELECT status FROM proveedores WHERE id_proveedor = ?", [$idProveedor]);
+        $proveedor = $this->db->fetchOne("SELECT status, updated_at FROM proveedores WHERE id_proveedor = ?", [$idProveedor]);
         if ($proveedor) {
             $nuevoStatus = $proveedor['status'] === 'Activo' ? 'Inactivo' : 'Activo';
-            $this->db->execute("UPDATE proveedores SET status = ? WHERE id_proveedor = ?", [$nuevoStatus, $idProveedor]);
+            $this->db->execute("UPDATE proveedores SET status = ? WHERE id_proveedor = ? AND updated_at = ?", [$nuevoStatus, $idProveedor, $proveedor['updated_at']]);
+            if ($this->db->affectedRows() === 0) {
+                $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL PROVEEDOR. RECARGUE.'];
+                return;
+            }
             $accion = $nuevoStatus === 'Activo' ? 'activar' : 'desactivar';
             registrarAuditoria($accion, 'Proveedor ' . $accion . 'do');
             $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'PROVEEDOR ' . strtoupper($accion) . 'DO CON ÉXITO.'];

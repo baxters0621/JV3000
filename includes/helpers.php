@@ -155,9 +155,12 @@ if (!function_exists('getConfig')) {
      */
     function getConfig(string $clave, string $default = ''): string
     {
+        static $cache = [];
+        if (isset($cache[$clave])) return $cache[$clave];
         $db = Database::getInstance();
         $row = $db->fetchOne("SELECT valor FROM configuracion WHERE clave = ?", [$clave]);
-        return $row ? $row['valor'] : $default;
+        $cache[$clave] = $row ? $row['valor'] : $default;
+        return $cache[$clave];
     }
 }
 
@@ -652,10 +655,7 @@ if (!function_exists('devolverLote')) {
 if (!function_exists('jv_alertas_por_rol')) {
     /**
      * Alertas de stock para la campana del Panel de Inicio.
-     * - Vencidos (< hoy), Próximos (hoy a +7 días), Prontos (+8 a +30 días), Stock bajo.
-     * - Roles 1 (Admin) y 2 (Operador de Carga): vencidos + próximos + prontos + stock bajo.
-     * - Rol 3 (Operador de Ventas): solo vencidos + próximos + prontos.
-     * Devuelve hasta 8 productos por categoría y los totales reales para el badge.
+     * Consolidado: 2 queries en vez de 11.
      */
     function jv_alertas_por_rol(?int $id_rol = null): array
     {
@@ -663,101 +663,48 @@ if (!function_exists('jv_alertas_por_rol')) {
         $id_rol = $id_rol ?? (int)($_SESSION['id_rol'] ?? 0);
         $es_ventas = ($id_rol === 3);
 
-        $vencidos = [];
-        $proximos = [];
-        $prontos = [];
-        $bajos = [];
-
-        $filas = $db->fetchAll(
-            "SELECT id_producto, nombre_producto, fecha_vencimiento
+        // Query 1: Todas las alertas de vencimiento (vencidos + próximos + prontos) en una sola
+        $vencimientoFilas = $db->fetchAll(
+            "SELECT id_producto, nombre_producto, fecha_vencimiento,
+                    CASE
+                        WHEN fecha_vencimiento < CURDATE() THEN 'vencido'
+                        WHEN fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 'proximo'
+                        WHEN fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 'pronto'
+                    END as categoria
              FROM productos
              WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
-               AND fecha_vencimiento < CURDATE()
-             ORDER BY fecha_vencimiento ASC
-             LIMIT 8"
-        );
-        foreach ($filas as $r) {
-            $vencidos[] = [
-                'id' => (int)$r['id_producto'],
-                'nombre' => (string)$r['nombre_producto'],
-                'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
-            ];
-        }
-
-        $filas = $db->fetchAll(
-            "SELECT id_producto, nombre_producto, fecha_vencimiento
-             FROM productos
-             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
-               AND fecha_vencimiento >= CURDATE()
-               AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-             ORDER BY fecha_vencimiento ASC
-             LIMIT 8"
-        );
-        foreach ($filas as $r) {
-            $proximos[] = [
-                'id' => (int)$r['id_producto'],
-                'nombre' => (string)$r['nombre_producto'],
-                'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
-            ];
-        }
-
-        $filas = $db->fetchAll(
-            "SELECT id_producto, nombre_producto, fecha_vencimiento
-             FROM productos
-             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
-               AND fecha_vencimiento > DATE_ADD(CURDATE(), INTERVAL 7 DAY)
                AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-             ORDER BY fecha_vencimiento ASC
-             LIMIT 8"
+             ORDER BY fecha_vencimiento ASC"
         );
-        foreach ($filas as $r) {
-            $prontos[] = [
-                'id' => (int)$r['id_producto'],
-                'nombre' => (string)$r['nombre_producto'],
-                'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
-            ];
+
+        $vencidos = []; $proximos = []; $prontos = [];
+        $count_vencidos = 0; $count_proximos = 0; $count_prontos = 0;
+        foreach ($vencimientoFilas as $r) {
+            $cat = $r['categoria'];
+            if ($cat === 'vencido') $count_vencidos++;
+            elseif ($cat === 'proximo') $count_proximos++;
+            elseif ($cat === 'pronto') $count_prontos++;
+
+            $item = ['id' => (int)$r['id_producto'], 'nombre' => (string)$r['nombre_producto'], 'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento']))];
+            if ($cat === 'vencido' && count($vencidos) < 8) $vencidos[] = $item;
+            elseif ($cat === 'proximo' && count($proximos) < 8) $proximos[] = $item;
+            elseif ($cat === 'pronto' && count($prontos) < 8) $prontos[] = $item;
         }
 
-        $count_vencidos = (int)($db->fetchOne(
-            "SELECT COUNT(*) AS n FROM productos
-             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento < CURDATE()"
-        )['n'] ?? 0);
-
-        $count_proximos = (int)($db->fetchOne(
-            "SELECT COUNT(*) AS n FROM productos
-             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
-               AND fecha_vencimiento >= CURDATE()
-               AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 7 DAY)"
-        )['n'] ?? 0);
-
-        $count_prontos = (int)($db->fetchOne(
-            "SELECT COUNT(*) AS n FROM productos
-             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
-               AND fecha_vencimiento > DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-               AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
-        )['n'] ?? 0);
-
+        // Query 2: Stock bajo (solo admin + carga) + conteo total
+        $bajos = [];
+        $count_bajos = 0;
         if (!$es_ventas) {
-            $filas = $db->fetchAll(
+            $bajoFilas = $db->fetchAll(
                 "SELECT id_producto, nombre_producto, stock_actual, stock_minimo
                  FROM productos
                  WHERE status = 'Activo' AND stock_actual <= stock_minimo
-                 ORDER BY stock_actual ASC
-                 LIMIT 8"
+                 ORDER BY stock_actual ASC"
             );
-            foreach ($filas as $r) {
-                $bajos[] = [
-                    'id' => (int)$r['id_producto'],
-                    'nombre' => (string)$r['nombre_producto'],
-                    'stock' => (int)$r['stock_actual'],
-                    'minimo' => (int)$r['stock_minimo'],
-                ];
+            $count_bajos = count($bajoFilas);
+            foreach (array_slice($bajoFilas, 0, 8) as $r) {
+                $bajos[] = ['id' => (int)$r['id_producto'], 'nombre' => (string)$r['nombre_producto'], 'stock' => (int)$r['stock_actual'], 'minimo' => (int)$r['stock_minimo']];
             }
-            $count_bajos = (int)($db->fetchOne(
-                "SELECT COUNT(*) AS n FROM productos WHERE status = 'Activo' AND stock_actual <= stock_minimo"
-            )['n'] ?? 0);
-        } else {
-            $count_bajos = 0;
         }
 
         $total = $count_vencidos + $count_proximos + $count_prontos + $count_bajos;
