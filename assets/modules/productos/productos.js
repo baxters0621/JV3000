@@ -433,11 +433,11 @@
                 // Si está visible, usar evento hidden.bs.modal para abrir el formulario
                 // después de que se complete la animación de cierre.
                 const onHidden = function() {
-                    modalCategorias.removeEventListener('hidden.bs.modal', onHidden);
+                    modalCategoriasEl.removeEventListener('hidden.bs.modal', onHidden);
                     modalCat.show();
                     document.getElementById('cat_nombre').focus();
                 };
-                modalCategorias.addEventListener('hidden.bs.modal', onHidden);
+                modalCategoriasEl.addEventListener('hidden.bs.modal', onHidden);
                 modalCategorias.hide();
             } else {
                 // Si ya está oculto, mostrar el formulario directamente

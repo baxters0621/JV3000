@@ -71,7 +71,7 @@
         .pagina-compras .card-jv-table {
             border-top: 4px solid #10b981;
             border-radius: var(--jv-radius) !important;
-            overflow: visible;
+            overflow: hidden;
         }
 
         .pagina-compras .table-jv {
