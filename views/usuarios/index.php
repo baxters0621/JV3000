@@ -154,11 +154,11 @@
                                                     <i class="bi bi-pencil-square"></i>
                                                 </button>
                                                 <?php if ($row['status'] == 'Activo'): ?>
-                                                    <button type="button" class="btn-accion btn-suspender" title="Suspender acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'suspender')">
+                                                    <button type="button" class="btn-accion btn-suspender" data-tooltip="Suspender acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'suspender')">
                                                         <i class="bi bi-person-lock"></i>
                                                     </button>
                                                 <?php else: ?>
-                                                    <button type="button" class="btn-accion btn-reactivar" title="Reactivar acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')">
+                                                    <button type="button" class="btn-accion btn-reactivar" data-tooltip="Reactivar acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')">
                                                         <i class="bi bi-person-check-fill"></i>
                                                     </button>
                                                 <?php endif; ?>

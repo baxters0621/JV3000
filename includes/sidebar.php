@@ -115,12 +115,6 @@ $es_op_ventas = $id_rol === 3;
                         <span>Ventas · Salidas</span>
                     </a>
                 </div>
-                <div class="nav-item <?php echo $mvc_activa('devoluciones') ? 'active' : ''; ?>">
-                    <a href="<?php echo $prefijo; ?>index.php?url=devoluciones" class="nav-link">
-                        <i class="bi bi-arrow-return-left"></i>
-                        <span>Devoluciones</span>
-                    </a>
-                </div>
             </div>
         </div>
         <?php endif; ?>

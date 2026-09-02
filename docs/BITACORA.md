@@ -75,6 +75,22 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-09-02 10:00] · Módulo: Usuarios · Cambio: Fix tarjeta "Pendientes de Aprobación" mostraba conteo incorrecto: model contaba WHERE aprobado=0 sin filtrar id_rol IS NULL, incluyendo perfiles inactivos; corregido query para alinearse con la lógica de la vista. También se agregó data-tooltip a botones reactivar y suspender (antes usaban title nativo). · Archivos: models/Usuario.php (totalPendientes), views/usuarios/index.php (tooltips) · Prueba: php -l sin errores; query corregido alinea vista y modelo.
+
+---
+
+[2026-09-02 10:00] · Módulo: Compras · Cambio: Fix tabla compras "esquinada": eliminado border-radius del thead tr que se superponía con overflow:hidden del card, causando recorte visual raro. Bump version a v=16. · Archivos: assets/modules/compras/compras.css (v=16), controllers/ComprasController.php · Prueba: php -l sin errores.
+
+---
+
+[2026-09-02 10:00] · Módulo: UI · Cambio: Mejorada legibilidad del modal de categorías: aumentado tamaño de fuente para chips, títulos, labels, inputs y max-width del modal. · Archivos: assets/modules/productos/productos.css (commit previo 9615c22) · Prueba: commit ya pushed.
+
+---
+
+[2026-09-02 10:00] · Módulo: Sidebar · Cambio: Eliminado link "Devoluciones" del sidebar (módulo previamente eliminado del código). · Archivos: includes/sidebar.php · Prueba: php -l sin errores; sin referencias residuales a devoluciones en el proyecto.
+
+---
+
 [2026-08-31 16:30] · Módulo: Categorías · Cambio: Fix modal formulario no se abría en primera carga: catAbrirForm() ahora verifica si #modalCategorias tiene clase 'show' antes de usar hidden.bs.modal; si ya está oculto, muestra #modalCat directamente. · Archivos: assets/modules/productos/productos.js (v=18), controllers/ProductosController.php (bump v=18) · Prueba: php -l y node --check sin errores; commit 5a9a81a pushed.
 
 ---

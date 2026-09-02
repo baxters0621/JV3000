@@ -74,6 +74,10 @@
             overflow: hidden;
         }
 
+        .pagina-compras .card-jv-table .table-responsive {
+            overflow: visible;
+        }
+
         .pagina-compras .table-jv {
             table-layout: fixed;
             width: 100%;
@@ -118,7 +122,6 @@
         /* Gradient background on the row, not individual cells */
         .pagina-compras .table-jv thead tr {
             background: linear-gradient(135deg, #065f46, #047857);
-            border-radius: 12px;
         }
 
         .pagina-compras .table-jv thead th:first-child {

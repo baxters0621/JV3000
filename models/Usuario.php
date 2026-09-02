@@ -75,10 +75,11 @@ class Usuario extends Model
 
     /**
      * Total de usuarios pendientes de aprobación.
+     * Un usuario está pendiente cuando no tiene rol asignado y no ha sido aprobado.
      */
     public function totalPendientes(): int
     {
-        return (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM usuarios WHERE COALESCE(aprobado, 0) = 0")['t'] ?? 0);
+        return (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM usuarios WHERE COALESCE(aprobado, 0) = 0 AND id_rol IS NULL")['t'] ?? 0);
     }
 
     /**
