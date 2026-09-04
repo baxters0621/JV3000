@@ -81,10 +81,11 @@
 
         .pagina-compras .table-jv {
             table-layout: fixed;
-            width: 100%;
+            width: calc(100% - 16px);
+            margin: 0 8px;
             min-width: 0;
             border-collapse: separate;
-            border-spacing: 0 6px;
+            border-spacing: 0 8px;
             background: transparent;
         }
 
