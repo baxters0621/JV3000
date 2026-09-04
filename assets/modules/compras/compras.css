@@ -75,7 +75,8 @@
         }
 
         .pagina-compras .card-jv-table .table-responsive {
-            overflow: visible;
+            overflow: hidden;
+            border-radius: 0 0 var(--jv-radius) var(--jv-radius);
         }
 
         .pagina-compras .table-jv {
@@ -83,7 +84,7 @@
             width: 100%;
             min-width: 0;
             border-collapse: separate;
-            border-spacing: 0 10px;
+            border-spacing: 0 6px;
             background: transparent;
         }
 
@@ -98,11 +99,8 @@
 
         /* Header: continuous green strip — gradient on row, not cells */
         .pagina-compras .table-jv thead {
-            position: relative;
         }
         .pagina-compras .table-jv thead tr {
-            position: relative;
-            z-index: 1;
         }
 
         .pagina-compras .table-jv thead th {
