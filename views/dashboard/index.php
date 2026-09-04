@@ -238,6 +238,77 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="table-card">
+                    <h3>Clasificación ABC</h3>
+                    <p class="card-desc">Distribución de productos activos por valor de rotación.</p>
+                    <div class="d-flex gap-3 flex-wrap" style="padding: 8px 0;">
+                        <?php
+                        $abc_a = $abc_counts['A'] ?? 0;
+                        $abc_b = $abc_counts['B'] ?? 0;
+                        $abc_c = $abc_counts['C'] ?? 0;
+                        $abc_sin = $abc_counts[''] ?? 0;
+                        ?>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="abc-badge abc-a" style="width:32px;height:32px;font-size:.95rem;">A</span>
+                            <div>
+                                <div style="font-size:1.3rem;font-weight:800;color:#065F46;"><?php echo $abc_a; ?></div>
+                                <div style="font-size:.7rem;color:var(--jv-text-muted);text-transform:uppercase;letter-spacing:.5px;">Alto valor</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="abc-badge abc-b" style="width:32px;height:32px;font-size:.95rem;">B</span>
+                            <div>
+                                <div style="font-size:1.3rem;font-weight:800;color:#92400E;"><?php echo $abc_b; ?></div>
+                                <div style="font-size:.7rem;color:var(--jv-text-muted);text-transform:uppercase;letter-spacing:.5px;">Valor medio</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="abc-badge abc-c" style="width:32px;height:32px;font-size:.95rem;">C</span>
+                            <div>
+                                <div style="font-size:1.3rem;font-weight:800;color:#DC2626;"><?php echo $abc_c; ?></div>
+                                <div style="font-size:.7rem;color:var(--jv-text-muted);text-transform:uppercase;letter-spacing:.5px;">Valor bajo</div>
+                            </div>
+                        </div>
+                        <?php if ($abc_sin > 0): ?>
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;font-size:.85rem;font-weight:900;border:2px solid #CBD5E1;color:#94A3B8;background:rgba(148,163,184,0.1);">&mdash;</span>
+                            <div>
+                                <div style="font-size:1.3rem;font-weight:800;color:var(--jv-text-muted);"><?php echo $abc_sin; ?></div>
+                                <div style="font-size:.7rem;color:var(--jv-text-muted);text-transform:uppercase;letter-spacing:.5px;">Sin clasificar</div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <h3>Tipos de Manejo</h3>
+                    <p class="card-desc">Productos activos clasificados por tipo de almacenamiento.</p>
+                    <div class="d-flex gap-3 flex-wrap" style="padding: 8px 0;">
+                        <?php
+                        $manejo_labels = [
+                            'normal' => 'Normal',
+                            'inflamable' => 'Inflamable',
+                            'liquido' => 'Líquido',
+                            'peligroso' => 'Peligroso',
+                            'voluminoso' => 'Voluminoso',
+                            'aerosol' => 'Aerosol',
+                        ];
+                        foreach ($manejo_labels as $tipo => $label):
+                            $count = $manejo_counts[$tipo] ?? 0;
+                            if ($count > 0):
+                        ?>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="manejo-badge manejo-<?php echo $tipo; ?>"><?php echo $label; ?></span>
+                            <span style="font-size:1.2rem;font-weight:800;color:var(--jv-text-primary);"><?php echo $count; ?></span>
+                        </div>
+                        <?php
+                            endif;
+                        endforeach;
+                        ?>
+                    </div>
+                </div>
             <?php endif; ?>
         </div>
     </section>

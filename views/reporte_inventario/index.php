@@ -43,13 +43,15 @@ $valor_venta_total = 0;
             <table class="table table-bordered table-sm align-middle mt-2">
                 <thead class="text-center">
                     <tr class="text-uppercase small fw-bold">
-                        <th width="8%">SKU</th>
-                        <th width="22%">Producto</th>
-                        <th width="11%">Categoría</th>
-                        <th width="13%">Proveedor</th>
-                        <th width="7%">Stock</th>
-                        <th width="6%">Cap.</th>
-                        <th width="8%">Estado</th>
+                        <th width="7%">SKU</th>
+                        <th width="18%">Producto</th>
+                        <th width="10%">Categoría</th>
+                        <th width="4%">ABC</th>
+                        <th width="8%">Manejo</th>
+                        <th width="12%">Proveedor</th>
+                        <th width="6%">Stock</th>
+                        <th width="5%">Cap.</th>
+                        <th width="7%">Estado</th>
                         <th width="8%">P. Costo</th>
                         <th width="8%">P. Venta</th>
                         <th width="9%">Valor Total</th>
@@ -65,6 +67,14 @@ $valor_venta_total = 0;
                             <td class="text-center font-monospace small"><?php echo htmlspecialchars($producto['sku']); ?></td>
                             <td class="text-start ps-2 fw-semibold small"><?php echo htmlspecialchars($producto['nombre_producto']); ?></td>
                             <td class="text-center small text-muted"><?php echo htmlspecialchars($producto['nombre_cat'] ?? '-'); ?></td>
+                            <td class="text-center small">
+                                <?php if (!empty($producto['clasificacion_abc'])): ?>
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:.75rem;font-weight:900;border:2px solid <?php echo $producto['clasificacion_abc'] === 'A' ? '#16A34A' : ($producto['clasificacion_abc'] === 'B' ? '#D97706' : '#DC2626'); ?>;color:<?php echo $producto['clasificacion_abc'] === 'A' ? '#16A34A' : ($producto['clasificacion_abc'] === 'B' ? '#D97706' : '#DC2626'); ?>;"><?php echo $producto['clasificacion_abc']; ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">&mdash;</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-center small"><?php echo htmlspecialchars(ucfirst($producto['tipo_manejo'] ?? 'Normal')); ?></td>
                             <td class="text-center small text-muted"><?php echo htmlspecialchars($producto['ultimo_proveedor'] ?? '-'); ?></td>
                             <td class="text-center <?php echo ($producto['stock_actual'] <= 5) ? 'text-danger fw-bold' : ''; ?>"><?php echo number_format($producto['stock_actual'], 0); ?></td>
                             <td class="text-center small text-muted"><?php echo number_format((int)$producto['capacidad'], 0); ?></td>
@@ -77,8 +87,9 @@ $valor_venta_total = 0;
                 </tbody>
                 <tfoot>
                     <tr class="footer-total">
-                        <td colspan="4" class="text-end text-uppercase py-2 pe-3 small">Totales Consolidados:</td>
+                        <td colspan="5" class="text-end text-uppercase py-2 pe-3 small">Totales Consolidados:</td>
                         <td class="text-center py-2"><?php echo number_format($gran_total_stock, 0); ?> Unds.</td>
+                        <td></td>
                         <td></td>
                         <td></td>
                         <td class="text-end pe-2 py-2 text-primary fw-bold">$<?php echo number_format($valor_costo_total, 2); ?></td>

@@ -6,12 +6,16 @@
             if (alertFilterButton) filtrarVenc(alertFilterButton);
         }
 
-        // Aplica los filtros activos (estado, vencimiento, stock bajo y búsqueda) sobre las filas.
+        // Aplica los filtros activos (estado, vencimiento, ABC, manejo, stock bajo y búsqueda) sobre las filas.
         function aplicarFiltros() {
             var activeExpirationButton = document.querySelector('.btn-filtro-venc.active');
             var expirationFilter = activeExpirationButton ? activeExpirationButton.getAttribute('data-venc') : 'todas';
             var activeStatusButton = document.querySelector('.btn-filter-prod.active');
             var statusFilter = activeStatusButton ? activeStatusButton.getAttribute('data-status') : 'todas';
+            var activeABCButton = document.querySelector('.btn-filter-abc.active');
+            var abcFilter = activeABCButton ? activeABCButton.getAttribute('data-abc') : 'todos';
+            var activeManejoButton = document.querySelector('.btn-filter-manejo.active');
+            var manejoFilter = activeManejoButton ? activeManejoButton.getAttribute('data-manejo') : 'todos';
             var searchValue = document.getElementById('buscar').value.toLowerCase();
             var productRows = document.getElementById('tablaProductos').getElementsByTagName('tr');
             for (var rowIndex = 0; rowIndex < productRows.length; rowIndex++) {
@@ -20,6 +24,10 @@
                 if (statusFilter !== 'todas' && productStatus !== statusFilter) { productRow.style.display = 'none'; continue; }
                 var expirationClass = productRow.getAttribute('data-venc-cls') || '';
                 if (expirationFilter !== 'todas' && expirationClass !== expirationFilter) { productRow.style.display = 'none'; continue; }
+                var rowABC = productRow.getAttribute('data-abc') || '';
+                if (abcFilter !== 'todos' && rowABC !== abcFilter) { productRow.style.display = 'none'; continue; }
+                var rowManejo = productRow.getAttribute('data-manejo') || '';
+                if (manejoFilter !== 'todos' && rowManejo !== manejoFilter) { productRow.style.display = 'none'; continue; }
                 if (filtroBajos) {
                     var currentStock = parseInt(productRow.getAttribute('data-stock') || '', 10);
                     var minimumStock = parseInt(productRow.getAttribute('data-minimo') || '', 10);
@@ -279,6 +287,24 @@
         // Marca el botón de filtro por estado activo y vuelve a aplicar los filtros.
         function filtrarStatus(btn) {
             document.querySelectorAll('.btn-filter-prod').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+            aplicarFiltros();
+        }
+
+        // Marca el botón de filtro ABC activo y vuelve a aplicar los filtros.
+        function filtrarABC(btn) {
+            document.querySelectorAll('.btn-filter-abc').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+            aplicarFiltros();
+        }
+
+        // Marca el botón de filtro por tipo de manejo activo y vuelve a aplicar los filtros.
+        function filtrarManejo(btn) {
+            document.querySelectorAll('.btn-filter-manejo').forEach(function(b) {
                 b.classList.remove('active');
             });
             btn.classList.add('active');

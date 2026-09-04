@@ -123,7 +123,7 @@ class ProductosController extends Controller
         $this->view('productos/index', [
             'titulo'       => 'Inventario | JV3000 C.A.',
             'wrapper_class' => 'pagina-productos',
-            'css_extra'    => ['modules/productos/productos.css?v=23'],
+            'css_extra'    => ['modules/productos/productos.css?v=24'],
             'js_extra'     => ['modules/productos/productos.js?v=18'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,

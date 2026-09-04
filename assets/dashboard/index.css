@@ -754,3 +754,28 @@
     .kpi-value { font-size: 2.2rem; }
     .quick-grid { grid-template-columns: 1fr; }
 }
+
+/* ==========================================
+   BADGES ABC Y MANEJO (para widgets)
+   ========================================== */
+
+.abc-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    font-size: .85rem; font-weight: 900; border: 2px solid;
+}
+.abc-a { background: rgba(22,163,74,0.12); color: #16A34A; border-color: rgba(22,163,74,0.4); }
+.abc-b { background: rgba(217,119,6,0.12); color: #D97706; border-color: rgba(217,119,6,0.4); }
+.abc-c { background: rgba(220,38,38,0.12); color: #DC2626; border-color: rgba(220,38,38,0.4); }
+
+.manejo-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: .75rem; font-weight: 800; letter-spacing: .5px;
+    text-transform: uppercase; white-space: nowrap;
+}
+.manejo-normal     { background: rgba(37,99,235,0.1);   color: #1e3a8a; }
+.manejo-inflamable { background: rgba(239,68,68,0.12);  color: #DC2626; }
+.manejo-liquido    { background: rgba(59,130,246,0.12); color: #2563EB; }
+.manejo-peligroso  { background: rgba(251,191,36,0.12); color: #92400E; }
+.manejo-voluminoso { background: rgba(168,85,247,0.12); color: #7C3AED; }
+.manejo-aerosol    { background: rgba(251,146,60,0.12); color: #C2410C; }
