@@ -103,7 +103,7 @@
         }
 
         .pagina-compras .table-jv thead th {
-            background: transparent;
+            background: linear-gradient(135deg, #065f46, #047857);
             color: #fff;
             border: none;
             font-size: .78rem;
@@ -116,15 +116,17 @@
             white-space: nowrap;
         }
 
-        /* Gradient background on the row, not individual cells */
-        .pagina-compras .table-jv thead tr {
-            background: linear-gradient(135deg, #065f46, #047857);
-            border-radius: var(--jv-radius) var(--jv-radius) 0 0;
-        }
-
         .pagina-compras .table-jv thead th:first-child {
             padding-left: 20px;
             text-align: left;
+            border-radius: var(--jv-radius) 0 0 0;
+        }
+
+        .pagina-compras .table-jv thead th:last-child {
+            border-radius: 0 var(--jv-radius) 0 0;
+        }
+
+        .pagina-compras .table-jv thead tr {
         }
 
         /* ── Fila = card blanca ── */
