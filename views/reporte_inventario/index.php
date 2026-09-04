@@ -44,15 +44,14 @@ $valor_venta_total = 0;
                 <thead class="text-center">
                     <tr class="text-uppercase small fw-bold">
                         <th width="8%">SKU</th>
-                        <th width="22%">Producto</th>
-                        <th width="11%">Categoría</th>
-                        <th width="13%">Proveedor</th>
+                        <th width="24%">Producto</th>
+                        <th width="12%">Categoría</th>
+                        <th width="14%">Proveedor</th>
                         <th width="7%">Stock</th>
-                        <th width="6%">Cap.</th>
-                        <th width="8%">Estado</th>
-                        <th width="8%">P. Costo</th>
-                        <th width="8%">P. Venta</th>
-                        <th width="9%">Valor Total</th>
+                        <th width="7%">Cap.</th>
+                        <th width="9%">P. Costo</th>
+                        <th width="9%">P. Venta</th>
+                        <th width="10%">Valor Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,7 +67,6 @@ $valor_venta_total = 0;
                             <td class="text-center small text-muted"><?php echo htmlspecialchars($producto['ultimo_proveedor'] ?? '-'); ?></td>
                             <td class="text-center <?php echo ($producto['stock_actual'] <= 5) ? 'text-danger fw-bold' : ''; ?>"><?php echo number_format($producto['stock_actual'], 0); ?></td>
                             <td class="text-center small text-muted"><?php echo number_format((int)$producto['capacidad'], 0); ?></td>
-                            <td class="text-center"><?php if ((int)$producto['stock_actual'] >= (int)$producto['capacidad']): ?><span class="badge bg-danger">COMPLETO</span><?php else: ?><span class="badge bg-success">OK</span><?php endif; ?></td>
                             <td class="text-end pe-2 small">$<?php echo number_format($producto['precio_costo'], 2); ?></td>
                             <td class="text-end pe-2 small">$<?php echo number_format($producto['precio_venta'], 2); ?></td>
                             <td class="text-end pe-2 fw-bold">$<?php echo number_format($producto['valor_venta'], 2); ?></td>
@@ -79,7 +77,6 @@ $valor_venta_total = 0;
                     <tr class="footer-total">
                         <td colspan="4" class="text-end text-uppercase py-2 pe-3 small">Totales Consolidados:</td>
                         <td class="text-center py-2"><?php echo number_format($gran_total_stock, 0); ?> Unds.</td>
-                        <td></td>
                         <td></td>
                         <td class="text-end pe-2 py-2 text-primary fw-bold">$<?php echo number_format($valor_costo_total, 2); ?></td>
                         <td class="text-end pe-2 py-2 text-success fw-bold">$<?php echo number_format($valor_venta_total, 2); ?></td>
