@@ -593,6 +593,8 @@
             document.getElementById('p_accion').value = esEdicion ? 'editar' : 'registrar';
             document.getElementById('p_id_edit').value = esEdicion ? proveedorData.id_proveedor : '';
             document.getElementById('modalTitle').innerText = esEdicion ? 'Editar Proveedor' : 'Registrar Nuevo Proveedor';
+            document.getElementById('p_rif_tipo').value = esEdicion ? (proveedorData.rif.charAt(0) || 'J') : 'J';
+            document.getElementById('p_rif_numero').value = esEdicion ? proveedorData.rif.substring(2) : '';
             document.getElementById('p_rif').value = esEdicion ? proveedorData.rif : '';
             document.getElementById('p_empresa').value = esEdicion ? proveedorData.nombre_empresa : '';
             document.getElementById('p_contacto_nombre').value = esEdicion ? (proveedorData.contacto || '') : '';
@@ -605,7 +607,7 @@
             const btnSubmit = document.getElementById('btn-prov-submit');
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = '<i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR';
-            document.getElementById('p_rif').dispatchEvent(new Event('input'));
+            document.getElementById('p_rif_numero').dispatchEvent(new Event('input'));
 
             if (window.provIti && typeof window.provIti.setNumber === 'function') {
                 window.provIti.setNumber(esEdicion ? (proveedorData.telefono || '') : '');
@@ -739,21 +741,35 @@
                 telInputProv.addEventListener('input', sincronizarTel);
             }
 
-            // Máscara en vivo del RIF: letra-tipo + cuerpo de 8 dígitos + dígito verificador
-            const rifInput = document.getElementById('p_rif');
-            if (rifInput) {
-                rifInput.addEventListener('input', function(e) {
-                    let valor = e.target.value.toUpperCase().replace(/[^VEJGPC0-9]/g, '');
+            // Máscara en vivo del RIF: solo dígitos + guión verificador en el campo numérico
+            const rifNumero = document.getElementById('p_rif_numero');
+            const rifTipo = document.getElementById('p_rif_tipo');
+            const rifHidden = document.getElementById('p_rif');
+
+            function sincronizarRif() {
+                var tipo = rifTipo ? rifTipo.value : 'J';
+                var numero = rifNumero ? rifNumero.value.replace(/[^0-9-]/g, '') : '';
+                rifHidden.value = tipo + '-' + numero;
+            }
+
+            if (rifTipo) {
+                rifTipo.addEventListener('change', sincronizarRif);
+            }
+            if (rifNumero) {
+                rifNumero.addEventListener('input', function(e) {
+                    let valor = e.target.value.replace(/[^0-9]/g, '');
                     let formateado = '';
                     if (valor.length > 0) {
-                        formateado += valor[0];
-                        if (valor.length > 1) {
-                            formateado += '-';
-                            const cuerpo = valor.substring(1).slice(0, 9);
-                            formateado += cuerpo.length > 8 ? cuerpo.substring(0, 8) + '-' + cuerpo.substring(8) : cuerpo;
+                        const esJuridico = rifTipo && ['J','G','P','C'].includes(rifTipo.value);
+                        const maxCuerpo = esJuridico ? 9 : 8;
+                        const cuerpo = valor.substring(0, maxCuerpo);
+                        formateado = cuerpo;
+                        if (esJuridico && valor.length > 8) {
+                            formateado = cuerpo.substring(0, 8) + '-' + cuerpo.substring(8);
                         }
                     }
-                    e.target.value = formateado.substring(0, 13);
+                    e.target.value = formateado;
+                    sincronizarRif();
                 });
             }
 
@@ -775,9 +791,11 @@
                         if (!primerError) primerError = empresaEl;
                     }
 
+                    // Sincronizar RIF antes de validar
+                    sincronizarRif();
                     const rifValidar = document.getElementById('p_rif');
-                    if (!/^[VEJGPC]-\d{8}-\d$/.test(rifValidar.value)) {
-                        marcarError(rifValidar, 'RIF INV\u00c1LIDO (J-12345678-0)');
+                    if (!/^[VEJGPC]-\d{8}(-\d)?$/.test(rifValidar.value)) {
+                        marcarError(document.getElementById('p_rif_numero'), 'RIF INV\u00c1LIDO (use: V-12345678 o J-12345678-9)');
                         e.preventDefault();
                         if (!primerError) primerError = rifValidar;
                     }
@@ -856,7 +874,7 @@
             if (flashProv && flashProv.classList.contains('alert-jv-danger')) {
                 const textoFlash = (flashProv.dataset.texto || '').toUpperCase();
                 const mapaCampos = [
-                    ['RIF', 'p_rif'],
+                    ['RIF', 'p_rif_numero'],
                     ['NOMBRE', 'p_empresa'],
                     ['CORREO', 'p_email'],
                     ['EMAIL', 'p_email'],

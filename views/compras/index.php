@@ -954,8 +954,20 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         </div>
                         <div class="row g-3 mb-0">
                             <div class="col-md-3">
-                                <label class="comp-label">RIF <span class="text-danger">*</span></label>
-                                <input type="text" name="rif" id="p_rif" class="input-jv comp-input" required placeholder="J-12345678-0" maxlength="13">
+                                <label class="comp-label">RIF / C&eacute;dula <span class="text-danger">*</span></label>
+                                <input type="hidden" name="rif" id="p_rif">
+                                <div class="input-group">
+                                    <select id="p_rif_tipo" class="input-jv comp-input comp-rif-tipo" required>
+                                        <option value="V">V</option>
+                                        <option value="E">E</option>
+                                        <option value="J" selected>J</option>
+                                        <option value="G">G</option>
+                                        <option value="P">P</option>
+                                        <option value="C">C</option>
+                                    </select>
+                                    <input type="text" id="p_rif_numero" class="input-jv comp-input" required placeholder="12345678-0" maxlength="10" inputmode="numeric">
+                                </div>
+                                <small class="comp-hint">V/E: 8 dígitos · J/G/P/C: 8 dígitos + 1 verificador</small>
                             </div>
                             <div class="col-md-9">
                                 <label class="comp-label">Nombre de la Empresa <span class="text-danger">*</span></label>
