@@ -132,8 +132,7 @@ class Producto extends Model
     public function listar(int $limit, int $offset): array
     {
         return $this->db->fetchAll(
-            "SELECT p.*, c.nombre as nombre_cat, c.clasificacion_abc, c.tipo_manejo,
-                COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
+            "SELECT p.*, c.nombre as nombre_cat, COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
                 -- Vencimiento real del producto = el lote con stock que vence primero (FEFO);
                 -- si no tiene lotes activos se usa la fecha legacy del producto
                 COALESCE((

@@ -483,24 +483,6 @@
         .btn-filter-prod:first-child { border-radius:6px 0 0 6px; }
         .btn-filter-prod:last-child { border-radius:0 6px 6px 0; }
 
-        .btn-filter-abc {
-            padding:6px 12px;font-size:.85rem;font-weight:700;border-radius:0;
-            background:transparent;color:var(--jv-text-muted);border:1px solid var(--jv-border);
-            transition:.15s;cursor:pointer;
-        }
-        .btn-filter-abc.active { background:rgba(16,185,129,0.15); color:#065F46; border-color:rgba(16,185,129,0.3); }
-        .btn-filter-abc:first-child { border-radius:6px 0 0 6px; }
-        .btn-filter-abc:last-child { border-radius:0 6px 6px 0; }
-
-        .btn-filter-manejo {
-            padding:6px 12px;font-size:.85rem;font-weight:700;border-radius:0;
-            background:transparent;color:var(--jv-text-muted);border:1px solid var(--jv-border);
-            transition:.15s;cursor:pointer;
-        }
-        .btn-filter-manejo.active { background:rgba(245,158,11,0.15); color:#92400E; border-color:rgba(245,158,11,0.3); }
-        .btn-filter-manejo:first-child { border-radius:6px 0 0 6px; }
-        .btn-filter-manejo:last-child { border-radius:0 6px 6px 0; }
-
         .btn-filtro-venc {
             padding:6px 14px;font-size:.85rem;font-weight:700;border-radius:0;
         }

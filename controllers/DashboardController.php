@@ -96,8 +96,6 @@ class DashboardController extends Controller
             'ultimas_facturas' => $datos['ultimas_facturas'],
             'tabla_criticos'   => $datos['tabla_criticos'],
             'tabla_compras'    => $datos['tabla_compras'],
-            'abc_counts'       => $datos['abc_counts'],
-            'manejo_counts'    => $datos['manejo_counts'],
         ]);
     }
 
@@ -151,18 +149,6 @@ class DashboardController extends Controller
             'stock' => (int)$r['stock_actual'],
             'estado' => $r['stock_actual'] <= 0 ? 'critico' : 'bajo'
         ], $crit);
-
-        // Conteo de productos por clasificación ABC (via categoría)
-        $abc = $db->fetchAll("SELECT COALESCE(c.clasificacion_abc, '') as abc, COUNT(*) as total
-            FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-            WHERE p.status = 'Activo' GROUP BY abc ORDER BY abc");
-        $datos['abc_counts'] = array_column($abc, 'total', 'abc');
-
-        // Conteo de productos por tipo de manejo (via categoría)
-        $manejo = $db->fetchAll("SELECT COALESCE(c.tipo_manejo, 'normal') as tipo, COUNT(*) as total
-            FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-            WHERE p.status = 'Activo' GROUP BY tipo ORDER BY total DESC");
-        $datos['manejo_counts'] = array_column($manejo, 'total', 'tipo');
 
         return $datos;
     }

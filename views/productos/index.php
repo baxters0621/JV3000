@@ -71,48 +71,22 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                     <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vigente" onclick="filtrarVenc(this)" style="border-radius:0 6px 6px 0;background:transparent;color:var(--jv-success);border:1px solid rgba(22,163,74,0.3);">Vigente</button>
                 </div>
             </div>
-            <span class="actions-divider mx-1"></span>
-            <div class="filtro-unidad d-flex align-items-center gap-2">
-                <span class="small fw-bold text-uppercase" style="color:var(--jv-text-muted);font-size:.8rem;letter-spacing:1px;">ABC:</span>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn-filter-abc active" data-abc="todos" onclick="filtrarABC(this)">Todos</button>
-                    <button type="button" class="btn-filter-abc" data-abc="A" onclick="filtrarABC(this)">A</button>
-                    <button type="button" class="btn-filter-abc" data-abc="B" onclick="filtrarABC(this)">B</button>
-                    <button type="button" class="btn-filter-abc" data-abc="C" onclick="filtrarABC(this)">C</button>
-                    <button type="button" class="btn-filter-abc" data-abc="" onclick="filtrarABC(this)">Sin</button>
-                </div>
-            </div>
-            <span class="actions-divider mx-1"></span>
-            <div class="filtro-unidad d-flex align-items-center gap-2">
-                <span class="small fw-bold text-uppercase" style="color:var(--jv-text-muted);font-size:.8rem;letter-spacing:1px;">Manejo:</span>
-                <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn-filter-manejo active" data-manejo="todos" onclick="filtrarManejo(this)">Todos</button>
-                    <button type="button" class="btn-filter-manejo" data-manejo="normal" onclick="filtrarManejo(this)">Normal</button>
-                    <button type="button" class="btn-filter-manejo" data-manejo="inflamable" onclick="filtrarManejo(this)">Inflamable</button>
-                    <button type="button" class="btn-filter-manejo" data-manejo="peligroso" onclick="filtrarManejo(this)">Peligroso</button>
-                    <button type="button" class="btn-filter-manejo" data-manejo="liquido" onclick="filtrarManejo(this)">Líquido</button>
-                    <button type="button" class="btn-filter-manejo" data-manejo="voluminoso" onclick="filtrarManejo(this)">Voluminoso</button>
-                    <button type="button" class="btn-filter-manejo" data-manejo="aerosol" onclick="filtrarManejo(this)">Aerosol</button>
-                </div>
-            </div>
         </div>
     </div>
     <div class="table-responsive">
         <table class="table-jv mb-0">
             <thead>
                 <tr>
-                    <th class="text-center" style="width:8%;">CÓDIGO</th>
-                    <th style="width:16%;">PRODUCTO</th>
-                    <th style="width:9%;">CATEGORÍA</th>
-                    <th class="text-center" style="width:5%;">ABC</th>
-                    <th class="text-center" style="width:8%;">MANEJO</th>
-                    <th style="width:11%;">PROVEEDOR</th>
-                    <th class="text-center" style="width:9%;">STOCK</th>
-                    <th style="width:7%;">PRECIO</th>
-                    <th class="text-center" style="width:9%;">VENCE</th>
-                    <th class="text-center" style="width:8%;">ESTADO</th>
+                    <th class="text-center" style="width:10%;">CÓDIGO</th>
+                    <th style="width:20%;">PRODUCTO</th>
+                    <th style="width:11%;">CATEGORÍA</th>
+                    <th style="width:12%;">PROVEEDOR</th>
+                    <th class="text-center" style="width:10%;">STOCK</th>
+                    <th style="width:8%;">PRECIO</th>
+                    <th class="text-center" style="width:10%;">VENCE</th>
+                    <th class="text-center" style="width:9%;">ESTADO</th>
                     <?php if ($esAdmin): ?>
-                        <th class="text-center" style="width:9%;">ACCIONES</th>
+                        <th class="text-center" style="width:10%;">ACCIONES</th>
                     <?php endif; ?>
                 </tr>
             </thead>
@@ -167,7 +141,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                             }
                         }
                         ?>
-                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>" data-abc="<?php echo htmlspecialchars($productRecord['clasificacion_abc'] ?? ''); ?>" data-manejo="<?php echo htmlspecialchars($productRecord['tipo_manejo'] ?? 'normal'); ?>">
+                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
                             <td class="td-prod-sku">
                                 <span class="codigo-badge"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
                             </td>
@@ -176,16 +150,6 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                             </td>
                             <td class="td-prod-cat" data-tooltip="<?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?>">
                                 <span class="prod-cat"><?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?></span>
-                            </td>
-                            <td class="text-center">
-                                <?php if (!empty($productRecord['clasificacion_abc'])): ?>
-                                    <span class="abc-badge abc-<?php echo strtolower($productRecord['clasificacion_abc']); ?>" data-tooltip="<?php echo $productRecord['clasificacion_abc'] === 'A' ? 'Alto valor / rotación' : ($productRecord['clasificacion_abc'] === 'B' ? 'Valor medio' : 'Valor bajo'); ?>"><?php echo $productRecord['clasificacion_abc']; ?></span>
-                                <?php else: ?>
-                                    <span class="text-muted">&mdash;</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="text-center">
-                                <span class="manejo-badge manejo-<?php echo htmlspecialchars($productRecord['tipo_manejo'] ?? 'normal'); ?>"><?php echo htmlspecialchars(ucfirst($productRecord['tipo_manejo'] ?? 'Normal')); ?></span>
                             </td>
                             <td class="td-prod-prov" data-tooltip="<?php echo htmlspecialchars($productRecord['proveedores'] ?? 'Sin proveedor en catálogo'); ?>">
                                 <span class="prod-prov"><?php echo htmlspecialchars($productRecord['proveedores'] ?? '—'); ?></span>
