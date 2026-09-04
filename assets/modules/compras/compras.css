@@ -561,8 +561,9 @@
         }
         .comp-rif-tipo {
             width: 70px !important;
-            min-width: 70px;
-            flex: 0 0 70px;
+            min-width: 70px !important;
+            flex: 0 0 70px !important;
+            max-width: 70px !important;
             text-align: center;
             font-weight: 800;
             font-size: 1rem;
