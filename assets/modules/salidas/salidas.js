@@ -813,6 +813,7 @@
                 document.getElementById('cliAccion').value = 'registrar';
                 document.getElementById('cliIdEdit').value = '';
                 document.getElementById('cliNombre').value = '';
+                document.getElementById('cliDocTipo').value = 'V';
                 document.getElementById('cliDocNum').value = '';
                 document.getElementById('cliTelefono').value = '';
                 document.getElementById('cliDireccion').value = '';
@@ -839,39 +840,49 @@
                 document.getElementById('cliTelefono').value = cliente.telefono;
                 document.getElementById('cliDireccion').value = cliente.direccion;
                 document.getElementById('cliStatus').value = cliente.status;
-                document.getElementById('cliDocNum').value = cliente.documento || '';
+                // Parsear documento ("V-12345678" o "J-12345678-9") en tipo + número
+                var docStr = cliente.documento || '';
+                var docMatch = docStr.match(/^([VEJGPC])-(.+)$/);
+                document.getElementById('cliDocTipo').value = docMatch ? docMatch[1] : 'V';
+                document.getElementById('cliDocNum').value = docMatch ? docMatch[2] : docStr;
                 var docIn = document.getElementById('cliDocNum'); if (docIn) docIn.style.borderColor = '';
                 cliValidarDoc();
                 cliFormModal.show();
             }, 300);
         }
 
-        // Valida el documento fiscal del cliente (campo único: "V-12345678", "J-12345678-9").
+        // Valida y formatea el documento del cliente: combina el tipo del selector
+        // con el número, aplica guión verificador para RIF y muestra validez.
         function cliValidarDoc() {
+            var tipo = (document.getElementById('cliDocTipo') || {}).value || 'V';
             var input = document.getElementById('cliDocNum');
             var msg = document.getElementById('cliDocMsg');
-            var val = input.value.trim().toUpperCase();
-            if (val === '') {
+            var esRif = (tipo === 'J' || tipo === 'G' || tipo === 'P' || tipo === 'C');
+            var nums = input.value.replace(/\D/g, '');
+            var maxDig = 9;
+            if (nums.length > maxDig) nums = nums.slice(0, maxDig);
+            if (nums === '') {
+                input.value = '';
                 msg.innerHTML = '';
                 input.style.borderColor = '';
                 return;
             }
-            var match = val.match(/^([VEJGPC])-(\d{6,9})(?:-(\d))?$/);
-            if (match) {
-                var tipo = match[1];
-                var esRif = (tipo === 'J' || tipo === 'G' || tipo === 'P' || tipo === 'C');
-                if (esRif && match[3]) {
-                    msg.innerHTML = '<span style="color:var(--jv-success);">\u2713 V\u00e1lido</span>';
-                    input.style.borderColor = '#16A34A';
-                } else if (!esRif) {
-                    msg.innerHTML = '<span style="color:var(--jv-success);">\u2713 V\u00e1lido</span>';
-                    input.style.borderColor = '#16A34A';
-                } else {
-                    msg.innerHTML = '<span style="color:var(--jv-danger);">RIF incompleto (falta d\u00edgito verificador)</span>';
-                    input.style.borderColor = '#DC2626';
-                }
+            // Formateo: RIF → 8 dígitos + '-' + verificador; cédula → dígitos simples
+            var formatted;
+            if (esRif) {
+                formatted = nums.slice(0, 8) + (nums.length > 8 ? '-' + nums.slice(8) : '');
             } else {
-                msg.innerHTML = '<span style="color:var(--jv-danger);">Formato inv\u00e1lido (use: V-12345678 o J-12345678-9)</span>';
+                formatted = nums;
+            }
+            input.value = formatted;
+            if (esDocFiscalValidoSingle(tipo + '-' + formatted)) {
+                msg.innerHTML = '<span style="color:var(--jv-success);">\u2713 V\u00e1lido</span>';
+                input.style.borderColor = '#16A34A';
+            } else if (esRif && nums.length < 9) {
+                msg.innerHTML = '<span style="color:var(--jv-danger);">RIF incompleto (falta d\u00edgito verificador)</span>';
+                input.style.borderColor = '#DC2626';
+            } else {
+                msg.innerHTML = '<span style="color:var(--jv-danger);">C\u00e9dula incompleta (6-9 d\u00edgitos)</span>';
                 input.style.borderColor = '#DC2626';
             }
         }
@@ -894,9 +905,10 @@
                 return;
             }
 
-            var docNum = document.getElementById('cliDocNum').value.trim().toUpperCase();
-            var hiddenDoc = document.getElementById('formCli').querySelector('[name="documento"]');
-            if (docNum) {
+            var tipo = document.getElementById('cliDocTipo').value;
+            var numRaw = document.getElementById('cliDocNum').value.replace(/\D/g, '');
+            var docNum = (tipo + '-' + numRaw).toUpperCase();
+            if (numRaw) {
                 if (!esDocFiscalValidoSingle(docNum)) {
                     var msgEl = document.getElementById('cliDocMsg');
                     var numInput = document.getElementById('cliDocNum');
@@ -905,9 +917,9 @@
                     numInput.focus();
                     return;
                 }
-                hiddenDoc.value = docNum;
+                document.getElementById('cliDocNum').value = docNum;
             } else {
-                hiddenDoc.value = '';
+                document.getElementById('cliDocNum').value = '';
             }
 
             var fd = new FormData(document.getElementById('formCli'));
