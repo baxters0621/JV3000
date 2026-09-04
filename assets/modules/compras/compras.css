@@ -71,18 +71,16 @@
         .pagina-compras .card-jv-table {
             border-top: 4px solid #10b981;
             border-radius: var(--jv-radius) !important;
-            overflow: hidden;
         }
 
         .pagina-compras .card-jv-table .table-responsive {
-            overflow: hidden;
             border-radius: 0 0 var(--jv-radius) var(--jv-radius);
+            overflow: hidden;
         }
 
         .pagina-compras .table-jv {
             table-layout: fixed;
-            width: calc(100% - 16px);
-            margin: 0 8px;
+            width: 100%;
             min-width: 0;
             border-collapse: separate;
             border-spacing: 0 8px;
@@ -121,6 +119,7 @@
         /* Gradient background on the row, not individual cells */
         .pagina-compras .table-jv thead tr {
             background: linear-gradient(135deg, #065f46, #047857);
+            border-radius: var(--jv-radius) var(--jv-radius) 0 0;
         }
 
         .pagina-compras .table-jv thead th:first-child {
