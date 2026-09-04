@@ -98,3 +98,15 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 [2026-08-31 17:10] · Módulo: Categorías/UI · Cambio: Unificación del formulario de categorías con patrón global de modales. Se crearon clases compartidas .jv-modal-* (header, close, section, section-head, chip, section-title, section-sub, label, hint, footer) en diseno.css con colores por custom properties; se refactorizó modalCat y el header del listado modalCategorias en vistas, eliminando las clases duplicadas cat-* (~250 líneas) de productos.css. · Archivos: assets/css/diseno.css (v=11), views/productos/index.php, assets/modules/productos/productos.css (v=23), controllers/ProductosController.php (bump v=23), includes/diseno.php (bump v=11) · Prueba: php -l sin errores; página productos HTTP 200 con clases jv-modal-* renderizadas (header x2, section x2, chip x2, label x4, hint x3, footer) y CSS v=23 / diseno v=11 servidos; sin referencias residuales a cat-*.
 
 ---
+
+[2026-09-02 12:00] · Módulo: Compras · Cambio: Fix tabla compras visual — gradiente y border-radius movidos de thead tr a thead th (tr no soporta border-radius); table-responsive con overflow:hidden y border-radius inferior; eliminados position:relative y z-index del thead que creaban stacking context. · Archivos: assets/modules/compras/compras.css (v=20), controllers/ComprasController.php · Prueba: php -l sin errores; commit 68e2df3 pushed.
+
+---
+
+[2026-09-02 12:00] · Módulo: Reporte Inventario · Cambio: Eliminada columna "Estado" del reporte imprimible (ya no es necesaria). Ajustados anchos de columnas para distribuir el espacio. · Archivos: views/reporte_inventario/index.php · Prueba: php -l sin errores; commit 5d6f5f7 pushed.
+
+---
+
+[2026-09-02 12:00] · Módulo: Documentación · Cambio: Actualizada guía de usuario (MANUAL_USUARIO.md) descripción de Imprimir Reporte para reflejar columnas actuales (SKU, categoría, proveedor, stock, capacidad, precio, valor total). · Archivos: docs/MANUAL_USUARIO.md · Prueba: manual renderiza correctamente en el sistema.
+
+---

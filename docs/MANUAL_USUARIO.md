@@ -186,7 +186,7 @@ En la tarjeta **"Compras Pendientes de Recepción"** (dentro de Compras) pulsa e
 ### Fase 5 · Análisis
 
 - **Estadísticas** (`Análisis → Estadísticas`, admin + ventas): elige el período (día, semana, quincena, mes, trimestre, semestre o un rango personalizado) para ver gráficas con comparativa ▲/▼ vs. el período anterior.
-- **Imprimir Reporte** (`Análisis → Imprimir Reporte`, los 3 roles): genera un reporte imprimible de **solo productos activos** con stock, capacidad, precio costo/venta y el **valor total del inventario a costo y a venta**.
+- **Imprimir Reporte** (`Análisis → Imprimir Reporte`, los 3 roles): genera un reporte imprimible de **solo productos activos** con SKU, categoría, proveedor, stock, capacidad, precio costo/venta y el **valor total del inventario a costo y a venta**.
 - **Historial** (`Control → Historial`, solo admin): bitácora de auditoría con filtros (usuario, acción, fechas, detalle). Aquí se ve **todo** lo que alguien hizo en el sistema.
 
 ---
