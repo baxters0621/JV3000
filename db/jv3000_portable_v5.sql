@@ -268,13 +268,16 @@ CREATE TABLE `productos` (
   `stock_actual` int(11) DEFAULT 0,
   `stock_minimo` int(11) DEFAULT 5,
   `stock_maximo` int(11) NOT NULL DEFAULT 0,
-  `fecha_vencimiento` date DEFAULT NULL,
+  `fecha_vencimiento` date NOT NULL,
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `id_categoria` int(11) NOT NULL,
   PRIMARY KEY (`id_producto`),
   UNIQUE KEY `idx_sku` (`sku`),
   KEY `fk_prod_cat` (`id_categoria`),
   KEY `idx_prod_status` (`status`),
+  CONSTRAINT `chk_prod_precio_venta` CHECK (`precio_venta` > 0),
+  CONSTRAINT `chk_prod_precio_costo` CHECK (`precio_costo` > 0),
+  CONSTRAINT `chk_prod_stock` CHECK (`stock_actual` >= 0 AND `stock_minimo` > 0 AND `stock_maximo` >= `stock_minimo`),
   CONSTRAINT `fk_prod_cat` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

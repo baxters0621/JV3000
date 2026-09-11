@@ -79,7 +79,7 @@ class DashboardController extends Controller
         $this->view('dashboard/index', [
             'titulo'        => 'Panel de Inicio | JV3000 C.A.',
             'css_extra'     => ['dashboard/index.css?v=31'],
-            'js_extra'      => ['js/chart.umd.min.js', 'dashboard/index.js?v=13'],
+            'js_extra'      => ['js/chart.umd.min.js', 'dashboard/index.js?v=14'],
             'csrf'          => Security::generateToken(),
             'nombre_user'   => $nombre_user,
             'rol_user'      => $rol_user,

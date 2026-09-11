@@ -73,7 +73,8 @@ class PagoCompra extends Model
 
             // Actualizar acumulado en compras
             $nuevoPagado = $yaPagado + $monto;
-            $nuevoStatus = $nuevoPagado >= $total ? 'Pagada' : 'Parcial';
+            // La columna status_pago solo admite Pendiente o Pagada.
+            $nuevoStatus = $nuevoPagado >= $total ? 'Pagada' : 'Pendiente';
             $this->db->execute(
                 "UPDATE compras SET monto_pago = ?, status_pago = ?, fecha_pago = NOW() WHERE id_compra = ?",
                 [$nuevoPagado, $nuevoStatus, $idCompra]

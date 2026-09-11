@@ -265,12 +265,25 @@ class Compra extends Model
             if ($cantidad < 1 || $cantidad > 999999) {
                 return ['ok' => false, 'mensaje' => 'CANTIDAD INVÁLIDA POR PRODUCTO. RANGO: 1 A 999,999.'];
             }
-            if ($precio_costo < 0 || $precio_costo > 99999999.99) {
-                return ['ok' => false, 'mensaje' => "PRECIO DE COSTO INVÁLIDO PARA PRODUCTO #$id_producto. RANGO: 0 A 99,999,999.99."];
+            if ($precio_costo <= 0 || $precio_costo > 99999999.99) {
+                return ['ok' => false, 'mensaje' => "PRECIO DE COSTO INVÁLIDO PARA PRODUCTO #$id_producto. DEBE SER MAYOR A 0 Y MENOR O IGUAL A 99,999,999.99."];
             }
             if ($id_producto <= 0) continue;
-            $prod_fila = $this->db->fetchOne("SELECT sku, nombre_producto FROM productos WHERE id_producto = ?", [$id_producto]);
+            $prod_fila = $this->db->fetchOne(
+                "SELECT sku, nombre_producto, precio_venta, precio_costo, fecha_vencimiento, id_categoria
+                 FROM productos WHERE id_producto = ? AND status = 'Activo'",
+                [$id_producto]
+            );
             if (!$prod_fila) continue;
+            if (
+                trim((string)$prod_fila['sku']) === '' ||
+                trim((string)$prod_fila['nombre_producto']) === '' ||
+                (int)$prod_fila['id_categoria'] <= 0 ||
+                (float)$prod_fila['precio_venta'] <= 0 ||
+                (float)$prod_fila['precio_costo'] <= 0
+            ) {
+                return ['ok' => false, 'mensaje' => "EL PRODUCTO {$id_producto} TIENE DATOS INCOMPLETOS. CORRÍJALO ANTES DE REGISTRAR LA COMPRA."];
+            }
             // REGLA DE NEGOCIO: todo lote nace de una compra y TODO lote exige
             // fecha de vencimiento. Sin ella se rompe el control FEFO del inventario.
             $lote_venc = null;

@@ -8,7 +8,8 @@ try {
     $db->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     $db->execute("CREATE TABLE IF NOT EXISTS schema_migrations (version varchar(50) NOT NULL, applied_at timestamp NOT NULL DEFAULT current_timestamp(), PRIMARY KEY (version)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
     $version = '001_legacy_schema_compatibility';
-    if ($db->fetchOne('SELECT version FROM schema_migrations WHERE version = ?', [$version])) { echo "[OK] Migracion ya aplicada: {$version}\n"; exit(0); }
+    $legacyApplied = (bool)$db->fetchOne('SELECT version FROM schema_migrations WHERE version = ?', [$version]);
+    if ($legacyApplied) { echo "[OK] Migracion ya aplicada: {$version}\n"; }
     $column = static function (string $table, string $name) use ($db): bool { $r=$db->fetchOne('SELECT COUNT(*) n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND COLUMN_NAME=?',[DB_NAME,$table,$name]); return (int)($r['n']??0)>0; };
     $table = static function (string $name) use ($db): bool { $r=$db->fetchOne('SELECT COUNT(*) n FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=? AND TABLE_NAME=?',[DB_NAME,$name]); return (int)($r['n']??0)>0; };
     $index = static function (string $tableName, string $indexName) use ($db): bool { $r=$db->fetchOne('SELECT COUNT(*) n FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND INDEX_NAME=?',[DB_NAME,$tableName,$indexName]); return (int)($r['n']??0)>0; };
@@ -19,5 +20,34 @@ try {
     if (!$table('pagos_compra')) { $db->execute("CREATE TABLE pagos_compra (id_pago int(11) NOT NULL AUTO_INCREMENT,id_compra int(11) NOT NULL,id_usuario int(11) NOT NULL,monto decimal(10,2) NOT NULL,metodo_pago enum('Efectivo','Transferencia','Cheque','Otro') NOT NULL,detalle_pago json DEFAULT NULL,fecha_pago timestamp NOT NULL DEFAULT current_timestamp(),PRIMARY KEY(id_pago),KEY fk_pago_compra(id_compra),KEY fk_pago_usuario(id_usuario),CONSTRAINT fk_pago_compra FOREIGN KEY(id_compra) REFERENCES compras(id_compra) ON DELETE CASCADE,CONSTRAINT fk_pago_usuario FOREIGN KEY(id_usuario) REFERENCES usuarios(id_usuario)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"); }
     foreach (['productos','compras','proveedores','clientes'] as $t) { if (!$column($t,'updated_at')) { $db->execute("ALTER TABLE {$t} ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"); echo "[OK] updated_at {$t}\n"; } }
     $normalization=$db->fetchOne("SELECT valor FROM configuracion WHERE clave='documentos_normalizados'"); if (!$normalization) { require_once __DIR__.'/../db/migrar_documentos.php'; migrar_documentos($db->getConnection(),DB_NAME); $db->execute("INSERT INTO configuracion (clave,valor,descripcion,fecha_actualizado) VALUES ('documentos_normalizados','1','Migracion de formato de documento fiscal aplicada (v1)',NOW()) ON DUPLICATE KEY UPDATE valor='1'"); }
-    $db->execute('INSERT INTO schema_migrations(version) VALUES(?)',[$version]); echo "[OK] Migracion completada: {$version}\n";
+    if (!$legacyApplied) {
+        $db->execute('INSERT INTO schema_migrations(version) VALUES(?)',[$version]);
+        echo "[OK] Migracion completada: {$version}\n";
+    }
+    $integrityVersion = '002_product_expiration_required';
+    if (!$db->fetchOne('SELECT version FROM schema_migrations WHERE version = ?', [$integrityVersion])) {
+        $invalid = $db->fetchOne("SELECT COUNT(*) AS total FROM productos WHERE fecha_vencimiento IS NULL OR TRIM(sku) = '' OR TRIM(nombre_producto) = '' OR precio_venta <= 0 OR precio_costo < 0 OR id_categoria IS NULL");
+        if ((int)($invalid['total'] ?? 0) > 0) {
+            throw new RuntimeException('No se puede aplicar la migracion: existen productos con datos obligatorios incompletos.');
+        }
+        $db->execute('ALTER TABLE productos MODIFY fecha_vencimiento DATE NOT NULL');
+        $db->execute('INSERT INTO schema_migrations(version) VALUES(?)', [$integrityVersion]);
+        echo "[OK] Migracion completada: {$integrityVersion}\n";
+    } else {
+        echo "[OK] Migracion ya aplicada: {$integrityVersion}\n";
+    }
+    $constraintsVersion = '003_product_value_constraints';
+    if (!$db->fetchOne('SELECT version FROM schema_migrations WHERE version = ?', [$constraintsVersion])) {
+        $invalidValues = $db->fetchOne("SELECT COUNT(*) AS total FROM productos WHERE precio_venta <= 0 OR precio_costo <= 0 OR stock_actual < 0 OR stock_minimo <= 0 OR stock_maximo < stock_minimo");
+        if ((int)($invalidValues['total'] ?? 0) > 0) {
+            throw new RuntimeException('No se puede aplicar la migracion: existen productos con precios o stocks invalidos.');
+        }
+        $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_precio_venta CHECK (precio_venta > 0)');
+        $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_precio_costo CHECK (precio_costo > 0)');
+        $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_stock CHECK (stock_actual >= 0 AND stock_minimo > 0 AND stock_maximo >= stock_minimo)');
+        $db->execute('INSERT INTO schema_migrations(version) VALUES(?)', [$constraintsVersion]);
+        echo "[OK] Migracion completada: {$constraintsVersion}\n";
+    } else {
+        echo "[OK] Migracion ya aplicada: {$constraintsVersion}\n";
+    }
 } catch (Throwable $e) { fwrite(STDERR,"[ERROR] Migracion fallida: ".$e->getMessage()."\n"); exit(1); }
