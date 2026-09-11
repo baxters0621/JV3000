@@ -45,7 +45,7 @@ docs/                     Documentación del proyecto y bitácora de cambios
 
 1. Clonar el repositorio en `C:\xampp\htdocs\JV3000_db`
 2. Iniciar el servicio `mysql` (Windows) y Apache (XAMPP)
-3. El auto-instalador `init.php` crea la BD a partir de `db/jv3000_portable_v4.sql`
+3. El auto-instalador `init.php` crea la BD a partir de `db/jv3000_portable_v5.sql`
    (esquema completo + datos de sistema, sin datos demo)
 4. Usuario inicial: `Administrador` / `Admin123*` (cambiar tras el primer inicio)
 5. Acceder via `http://localhost/JV3000_db`
@@ -93,3 +93,82 @@ Todo cambio de código debe registrarse en `docs/BITACORA.md` (regla obligatoria
 ## Licencia
 
 Uso interno exclusivo de JV3000 C.A.
+
+## Configuracion de entorno
+
+La aplicacion lee primero variables de entorno y despues `config/.env`. Copia
+`config/.env.example` como `config/.env` y ajusta al menos:
+
+```ini
+JV_DB_HOST=localhost
+JV_DB_USER=usuario_de_aplicacion
+JV_DB_PASS=clave_de_la_base
+JV_DB_NAME=jv3000_db
+```
+
+No publiques `config/.env`, contrasenas ni respaldos con datos reales. En
+produccion la cuenta de MySQL debe tener solo los permisos necesarios para la
+aplicacion y el directorio de respaldos debe estar fuera del webroot cuando sea
+posible.
+
+## Actualizacion de una instalacion existente
+
+1. Realiza y verifica un respaldo antes de copiar archivos nuevos.
+2. Deten temporalmente las tareas programadas que escriban en `backups/`.
+3. Copia el codigo nuevo sin sobrescribir `config/.env`.
+4. Confirma que `JV_DB_NAME` apunta a la base correcta.
+5. Inicia Apache y MySQL y abre la aplicacion una vez para que el arranque
+   compruebe el esquema compatible.
+6. Ejecuta `tools/validar.ps1` con los parametros de tu instalacion.
+7. Prueba login, permisos, compras, recepcion, FEFO, salidas, reportes y
+   anulaciones antes de reabrir la operacion.
+
+No elimines ni reemplaces una base existente con `db/jv3000_portable_v5.sql`.
+Ese archivo es para instalacion limpia; una restauracion sobre una base existente
+debe hacerse con un respaldo comprobado y un plan de rollback.
+
+## Respaldos y restauracion
+
+El respaldo manual se ejecuta con:
+
+```powershell
+backups\backup.bat
+```
+
+La tarea diaria puede configurarse ejecutando `backups\configurar_backup.bat`
+como Administrador. El script conserva 30 dias de archivos `jv3000_db_*.sql`.
+Comprueba periodicamente que el archivo se cree y que su tamano sea razonable.
+
+Para probar una restauracion, usa una base temporal, nunca la base operativa:
+
+```powershell
+mysql -u USUARIO -p -e "CREATE DATABASE jv3000_restore_test CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+mysql -u USUARIO -p jv3000_restore_test < backups\jv3000_db_FECHA.sql
+```
+
+Despues valida tablas, roles, productos, movimientos, triggers y eventos. Si la
+restauracion falla, conserva el archivo original y no borres la base operativa.
+
+## Validacion antes de entregar o desplegar
+
+Desde PowerShell, ejecuta:
+
+```powershell
+.\tools\validar.ps1 -BaseUrl http://localhost/JV3000_db -Database jv3000_db
+```
+
+Si la aplicacion esta instalada en otra ruta, cambia `-BaseUrl`. La validacion
+comprueba sintaxis PHP y JavaScript, bloqueo de archivos internos, invariantes
+basicos de inventario, consistencia de base configurada y permisos de carpetas.
+
+## Lista de puesta en produccion
+
+- Cambiar la contrasena inicial del Administrador.
+- Configurar `config/.env` fuera del control de versiones.
+- Desactivar cuentas de prueba o dejarlas inactivas.
+- Confirmar HTTPS, Apache y MySQL activos.
+- Confirmar que `display_errors` no este habilitado en produccion.
+- Ejecutar un respaldo y una restauracion de prueba.
+- Configurar la tarea diaria y revisar su primera ejecucion.
+- Probar los tres roles con una cuenta de prueba por rol.
+- Registrar el cambio en `docs/BITACORA.md`.

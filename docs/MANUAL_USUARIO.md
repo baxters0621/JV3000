@@ -220,3 +220,48 @@ En la tarjeta **"Compras Pendientes de Recepción"** (dentro de Compras) pulsa e
 - **¿Vence mercancía o hay merma?** → NUEVA VENTA tipo **Merma/Ajuste** con la causa.
 - **¿Quiero saber si el negocio va bien?** → `Análisis → Estadísticas` y `Análisis → Imprimir Reporte`.
 - **¿Alguien hizo algo raro?** → `Control → Historial`.
+## 11. Operacion segura y continuidad
+
+### Inicio de una jornada
+
+1. Confirma que Apache y MySQL esten activos.
+2. Inicia sesion con tu cuenta personal; no compartas la cuenta de Administrador.
+3. Revisa en el Dashboard las alertas de stock bajo y vencimientos.
+4. Comprueba que las fechas y cantidades de las operaciones del dia sean correctas.
+
+### Respaldo y restauracion
+
+El Administrador debe verificar diariamente que la tarea `JV3000_Backup_Diario`
+se haya ejecutado. Para un respaldo manual, ejecuta `backups\backup.bat`.
+
+Una restauracion nunca debe hacerse directamente sobre la base operativa. Crea
+una base temporal, importa el archivo SQL y revisa que existan tablas, roles,
+productos, lotes y movimientos antes de planificar cualquier recuperacion.
+
+### Actualizacion del sistema
+
+Antes de actualizar, genera un respaldo y conserva una copia del codigo actual.
+No reemplaces `config/.env` ni uses el seed `db/jv3000_portable_v5.sql` sobre
+una base con datos reales. Tras copiar una version nueva, ejecuta `php tools\\migrar.php`, luego el validador y
+prueba los flujos de compra, recepcion, FEFO, venta, anulacion y reportes.
+
+### Respuesta ante un problema
+
+- Si no hay conexion: confirma servicio MySQL, credenciales y `JV_DB_NAME`.
+- Si faltan modales o estilos: confirma que existan los tres assets Bootstrap en
+  `assets/css` y `assets/js`.
+- Si una consulta AJAX devuelve error: revisa la sesion, el log de PHP y la
+  respuesta HTTP; no repitas una operacion de compra o venta sin confirmar su
+  estado.
+- Si el stock no coincide: detente, conserva el respaldo y registra el caso
+  para revisar movimientos y lotes antes de hacer un ajuste.
+
+## 12. Checklist de cierre diario
+
+- [ ] Compras recibidas con lote y vencimiento correctos.
+- [ ] Salidas confirmadas y notas de entrega verificadas.
+- [ ] Solicitudes pendientes revisadas por Compras.
+- [ ] Alertas de vencimiento y stock atendidas.
+- [ ] Reporte necesario exportado o impreso.
+- [ ] Respaldo diario generado y visible.
+- [ ] Incidencias registradas para el Administrador.

@@ -56,7 +56,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
         'direccion'  => (string)($c['direccion'] ?? ''),
         'status'     => (string)$c['status'],
     ];
-}, $cli_gestion), JSON_UNESCAPED_UNICODE); ?>;
+}, $cli_gestion), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 </script>
 <?php endif; ?>
 
@@ -150,7 +150,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <button class="btn-action" onclick="verFactura(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Ver Nota">
                                     <i class="bi bi-receipt"></i>
                                 </button>
-                                <button class="btn-action" onclick='editarSalida(<?php echo json_encode($outgoingRecord); ?>)' data-tooltip="Editar">
+                                <button class="btn-action" onclick='editarSalida(<?php echo htmlspecialchars(json_encode($outgoingRecord, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, "UTF-8"); ?>)' data-tooltip="Editar">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
                                 <?php if (Security::esAdmin()): ?>

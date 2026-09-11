@@ -1,27 +1,4 @@
 // ==========================================
-// CONTROL DE PESTAÑA ÚNICA (marcador de sesión)
-// ==========================================
-// Al cargar cada página MVC se compara el marcador de pestaña guardado en
-// sessionStorage con el que genera el layout. Si no coincide, la pestaña fue
-// duplicada/reabierta y se cierra la sesión (sendBeacon + redirect al login).
-(function(){
-    var tabConfiguration = window.JV_CONFIG && window.JV_CONFIG.tab;
-    if (!tabConfiguration) return;
-    var tabMarker = tabConfiguration.marker;
-    var stored = sessionStorage.getItem('jv_tab');
-    if (tabConfiguration.fresh) {
-        sessionStorage.setItem('jv_tab', tabMarker);
-        return;
-    }
-    if (stored !== tabMarker) {
-        navigator.sendBeacon((tabConfiguration.base || '') + 'login/logout.php?action=tab_closed', '1');
-        window.location.replace((tabConfiguration.base || '') + 'login/login.php?error=expired');
-        return;
-    }
-    sessionStorage.setItem('jv_tab', tabMarker);
-})();
-
-// ==========================================
 // POST DINÁMICO — envía parámetros como formulario oculto
 // ==========================================
 // Crea un <form> oculto con inputs para cada parámetro y lo envía con POST.
@@ -79,7 +56,11 @@ function jvApiGet(endpoint, params, cb) {
     fetch(jvBasePath() + endpoint + (queryParts.length ? '?' + queryParts.join('&') : ''), {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
-    .then(function(response) { return response.json(); })
+    .then(function(response) {
+        if (response.status === 401 || response.redirected) { window.location.href = jvBasePath() + 'login/login.php?error=expired'; throw new Error('Sesión expirada'); }
+        if (!response.ok) throw new Error('Respuesta HTTP ' + response.status);
+        return response.json();
+    })
     .then(function(responseData) { cb(responseData); })
     .catch(function() { cb({ success: false, items: [] }); });
 }

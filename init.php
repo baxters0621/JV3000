@@ -194,129 +194,8 @@ try {
     }
 }
 
-// ==========================================
-// MIGRACIÓN AUTOMÁTICA DE DOCUMENTOS (una sola vez)
-// ==========================================
-
-// --- 7b. Normalización de documento fiscal (cédula/RIF) ---
-// Se ejecuta una única vez (flag en configuracion). Idempotente.
-$jv_db = Database::getInstance();
-
-// -- Compatibilidad de auditoría: columnas de trazabilidad del request
-foreach (
-    [
-        ['auditoria', 'ip_origen', 'VARCHAR(45) NULL'],
-        ['auditoria', 'ruta', 'VARCHAR(255) NULL'],
-        ['auditoria', 'metodo', 'VARCHAR(10) NULL'],
-        ['login_intentos', 'ultimo_intento', 'TIMESTAMP NOT NULL DEFAULT current_timestamp()'],
-    ] as [$tabla, $columna, $tipo]
-) {
-    $exists = $jv_db->fetchOne(
-        "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
-        [DB_NAME, $tabla, $columna]
-    );
-    if (!$exists || (int)($exists['n'] ?? 0) === 0) {
-        $jv_db->execute("ALTER TABLE {$tabla} ADD COLUMN {$columna} {$tipo}");
-    }
-}
-
-$loginUniqueIndex = $jv_db->fetchOne(
-    "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'login_intentos' AND INDEX_NAME = 'idx_ip_unique'",
-    [DB_NAME]
-);
-if (!$loginUniqueIndex || (int)($loginUniqueIndex['n'] ?? 0) === 0) {
-    $jv_db->execute("DELETE FROM login_intentos WHERE id NOT IN (SELECT id FROM (SELECT MIN(id) AS id FROM login_intentos GROUP BY ip_address) AS intentos_unicos)");
-    $jv_db->execute("ALTER TABLE login_intentos ADD UNIQUE INDEX idx_ip_unique (ip_address)");
-}
-
-$normalizationFlag = $jv_db->fetchOne("SELECT valor FROM configuracion WHERE clave = 'documentos_normalizados'");
-if (!$normalizationFlag) {
-    $migrationFile = __DIR__ . '/db/migrar_documentos.php';
-    if (is_file($migrationFile)) {
-        require_once $migrationFile;
-        if (function_exists('migrar_documentos')) {
-            ob_start();
-            migrar_documentos($jv_db->getConnection(), DB_NAME);
-            ob_end_clean();
-        }
-    }
-    @mysqli_query($jv_db->getConnection(), "INSERT INTO configuracion (clave, valor, descripcion, fecha_actualizado) VALUES ('documentos_normalizados', '1', 'Migración de formato de documento fiscal aplicada (v1)', NOW()) ON DUPLICATE KEY UPDATE valor = '1'");
-    error_log("[JV3000] Migración de documentos fiscales ejecutada.");
-}
-
-// --- 7c. Esquema: solicitudes de compra + documento de recepción (idempotente) ---
-$jv_db->execute("CREATE TABLE IF NOT EXISTS solicitudes_compra (
-    id_solicitud int(11) NOT NULL AUTO_INCREMENT,
-    id_usuario_solicitante int(11) NOT NULL,
-    fecha_solicitud timestamp NOT NULL DEFAULT current_timestamp(),
-    motivo varchar(150) DEFAULT NULL,
-    estado enum('Pendiente','Atendida','Cancelada') NOT NULL DEFAULT 'Pendiente',
-    id_compra int(11) DEFAULT NULL,
-    fecha_atendida datetime DEFAULT NULL,
-    PRIMARY KEY (id_solicitud),
-    KEY fk_sol_user (id_usuario_solicitante),
-    KEY fk_sol_compra (id_compra),
-    KEY idx_sol_estado (estado),
-    CONSTRAINT fk_sol_user FOREIGN KEY (id_usuario_solicitante) REFERENCES usuarios (id_usuario),
-    CONSTRAINT fk_sol_compra FOREIGN KEY (id_compra) REFERENCES compras (id_compra) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-$jv_db->execute("CREATE TABLE IF NOT EXISTS detalle_solicitud_compra (
-    id_detalle int(11) NOT NULL AUTO_INCREMENT,
-    id_solicitud int(11) NOT NULL,
-    id_producto int(11) NOT NULL,
-    cantidad_solicitada int(11) NOT NULL,
-    PRIMARY KEY (id_detalle),
-    KEY fk_dsc_solicitud (id_solicitud),
-    KEY fk_dsc_producto (id_producto),
-    CONSTRAINT fk_dsc_solicitud FOREIGN KEY (id_solicitud) REFERENCES solicitudes_compra (id_solicitud) ON DELETE CASCADE,
-    CONSTRAINT fk_dsc_producto FOREIGN KEY (id_producto) REFERENCES productos (id_producto)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-$receptionDocumentColumn = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'movimientos' AND COLUMN_NAME = 'documento_recepcion'");
-if (!$receptionDocumentColumn || (int)$receptionDocumentColumn['n'] === 0) {
-    $jv_db->execute("ALTER TABLE movimientos ADD COLUMN documento_recepcion VARCHAR(100) DEFAULT NULL AFTER status");
-}
-$pinEmergenciaColumn = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = 'pin_emergencia'");
-if (!$pinEmergenciaColumn || (int)$pinEmergenciaColumn['n'] === 0) {
-    $jv_db->execute("ALTER TABLE usuarios ADD COLUMN pin_emergencia VARCHAR(60) DEFAULT NULL COMMENT 'bcrypt hash de PIN 6 digitos de emergencia' AFTER respuesta_seguridad");
-}
-
-// --- 7d. Login intentos: columna usuario (doble bloqueo IP + usuario) ---
-$loginUsuarioColumn = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'login_intentos' AND COLUMN_NAME = 'usuario'");
-if (!$loginUsuarioColumn || (int)$loginUsuarioColumn['n'] === 0) {
-    $jv_db->execute("ALTER TABLE login_intentos ADD COLUMN usuario VARCHAR(100) DEFAULT NULL AFTER ip_address");
-    $jv_db->execute("ALTER TABLE login_intentos DROP INDEX idx_ip_unique");
-    $jv_db->execute("ALTER TABLE login_intentos ADD UNIQUE INDEX idx_ip_user_unique (ip_address, usuario)");
-    error_log("[JV3000] Migración login_intentos: columna usuario agregada.");
-}
-
-// --- 7e. Cuentas por pagar: tabla pagos_compra (historial de pagos parciales) ---
-$pagosTable = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'pagos_compra'");
-if (!$pagosTable || (int)$pagosTable['n'] === 0) {
-    $jv_db->execute("CREATE TABLE IF NOT EXISTS pagos_compra (
-        id_pago int(11) NOT NULL AUTO_INCREMENT,
-        id_compra int(11) NOT NULL,
-        id_usuario int(11) NOT NULL,
-        monto decimal(10,2) NOT NULL,
-        metodo_pago enum('Efectivo','Transferencia','Cheque','Otro') NOT NULL,
-        detalle_pago json DEFAULT NULL,
-        fecha_pago timestamp NOT NULL DEFAULT current_timestamp(),
-        PRIMARY KEY (id_pago),
-        KEY fk_pago_compra (id_compra),
-        KEY fk_pago_usuario (id_usuario),
-        CONSTRAINT fk_pago_compra FOREIGN KEY (id_compra) REFERENCES compras (id_compra) ON DELETE CASCADE,
-        CONSTRAINT fk_pago_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-    error_log("[JV3000] Tabla pagos_compra creada.");
-}
-
-// --- 7f. Optimistic locking: columna updated_at en tablas clave ---
-foreach (['productos', 'compras', 'proveedores', 'clientes'] as $tablaLock) {
-    $colCheck = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = '$tablaLock' AND COLUMN_NAME = 'updated_at'");
-    if (!$colCheck || (int)$colCheck['n'] === 0) {
-        $jv_db->execute("ALTER TABLE $tablaLock ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
-        error_log("[JV3000] Migración optimistic locking: updated_at agregada a $tablaLock.");
-    }
-}
+// Las actualizaciones de esquema se ejecutan explícitamente con tools/migrar.php.
+// El arranque web no solicita privilegios DDL ni modifica la estructura de la BD.
 
 // ==========================================
 // SEGURIDAD Y SESIÓN
@@ -328,18 +207,6 @@ $currentScript = basename($_SERVER['SCRIPT_NAME']);
 
 if (!in_array($currentScript, $publicPages)) {
     Security::validateSession();
-}
-
-// --- 8b. Tab session marker (prevents reused session after tab close) ---
-if (isset($_SESSION['id_usuario'])) {
-    if (!isset($_SESSION['tab_marker'])) {
-        $_SESSION['tab_marker'] = bin2hex(random_bytes(16));
-    }
-    $freshLogin = !empty($_SESSION['fresh_login']);
-    define('_TAB_FRESH_LOGIN', $freshLogin);
-    if ($freshLogin) {
-        $_SESSION['fresh_login'] = false;
-    }
 }
 
 // --- 9. Sanitización global de inputs ---

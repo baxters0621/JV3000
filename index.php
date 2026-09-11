@@ -29,7 +29,7 @@ $url = trim($_GET['url'] ?? '', '/');
 
 if ($url === '') {
     // Sin ruta: comportamiento original → panel de inicio
-    header('Location: ' . BASE_PATH . 'dashboard/index.php');
+    header('Location: ' . BASE_PATH . 'index.php?url=dashboard');
     exit;
 }
 

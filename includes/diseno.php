@@ -9,16 +9,6 @@ $base_assets = BASE_PATH . 'assets/';
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- GESTIÓN DE SESIÓN POR PESTAÑA -->
-<?php if (isset($_SESSION['id_usuario']) && defined('_TAB_FRESH_LOGIN')):
-$marker = strval($_SESSION['tab_marker'] ?? '');
-$fresh = constant('_TAB_FRESH_LOGIN');
-?>
-<script>
-    window.JV_CONFIG = window.JV_CONFIG || {};
-    window.JV_CONFIG.tab = { marker: <?php echo json_encode($marker); ?>, fresh: <?php echo $fresh ? 'true' : 'false'; ?>, base: <?php echo json_encode(BASE_PATH); ?> };
-</script>
-<?php endif; ?>
 
 <!-- ACCIONES POST SEGURAS -->
 <script src="<?php echo $base_assets; ?>js/diseno.js?v=7"></script>

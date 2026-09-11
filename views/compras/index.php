@@ -897,7 +897,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                                         </div>
                                                         <span class="cat-item-costo">$<?php echo number_format((float)$entrada_cat['costo'], 2); ?></span>
                                                         <button type="button" class="btn-cat-icon" onclick='editarProductoCatalogo(<?php echo htmlspecialchars(json_encode($entrada_cat, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, "UTF-8"); ?>)' data-tooltip="Editar costo"><i class="bi bi-pencil-square"></i></button>
-                                                        <button type="button" class="btn-cat-icon btn-cat-del" onclick="provEliminarCat(<?php echo (int)$entrada_cat['id_catalogo']; ?>, '<?php echo htmlspecialchars(addslashes($entrada_cat['nombre_producto'])); ?>')" data-tooltip="Quitar del cat&aacute;logo"><i class="bi bi-trash3"></i></button>
+                                                        <button type="button" class="btn-cat-icon btn-cat-del" onclick="provEliminarCat(<?php echo (int)$entrada_cat['id_catalogo']; ?>, <?php echo htmlspecialchars(json_encode((string)$entrada_cat['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" data-tooltip="Quitar del cat&aacute;logo"><i class="bi bi-trash3"></i></button>
                                                     </div>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
@@ -1109,7 +1109,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
 <!-- Prefill de solicitud para compras.js (se ejecuta antes que los scripts js_extra) -->
 <script>
-    window.COMPRAS_SOLICITUD = <?php echo !empty($solicitud_prefill) ? json_encode($solicitud_prefill, JSON_UNESCAPED_UNICODE) : 'null'; ?>;
+    window.COMPRAS_SOLICITUD = <?php echo !empty($solicitud_prefill) ? json_encode($solicitud_prefill, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) : 'null'; ?>;
 </script>
 
 <!-- ============================================================

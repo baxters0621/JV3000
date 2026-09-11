@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$BaseUrl = 'http://localhost/JV3000_db',
-    [string]$Database = 'jv3000_db_test',
+    [string]$Database = 'jv3000_db',
     [string]$MySql = 'C:\xampp\mysql\bin\mysql.exe',
     [string]$Php = 'php',
     [string]$Node = 'node'
@@ -29,7 +29,7 @@ Get-ChildItem (Join-Path $root 'assets') -Filter '*.js' -Recurse | Where-Object 
 }
 
 Write-Host '== Rutas HTTP internas =='
-$internalPaths = @('backups/jv3000_db_2026-08-13_153655.sql', 'db/jv3000_portable_v4.sql', 'models/Producto.php', 'controllers/SalidasController.php', 'views/productos/index.php', 'config/config.php', 'includes/config.php', 'core/Router.php')
+$internalPaths = @('backups/jv3000_db_2026-08-13_153655.sql', 'db/jv3000_portable_v5.sql', 'models/Producto.php', 'controllers/SalidasController.php', 'views/productos/index.php', 'config/config.php', 'includes/config.php', 'core/Router.php')
 foreach ($path in $internalPaths) {
     $status = & curl.exe -s -o NUL -w '%{http_code}' "$BaseUrl/$path"
     Assert-Equal "Bloqueo $path" '403' ([string]$status)
@@ -52,8 +52,8 @@ $configText = Get-Content (Join-Path $root 'includes/config.php') -Raw
 $backupText = Get-Content (Join-Path $root 'backups/backup.bat') -Raw
 $environmentFile = Join-Path $root 'config/.env'
 $environmentText = if (Test-Path $environmentFile) { Get-Content $environmentFile -Raw } else { '' }
-$applicationFallbackDatabase = [regex]::Match($configText, "DB_NAME', getenv\('JV_DB_NAME'\) \?: '([^']+)'").Groups[1].Value
-$backupDefaultDatabase = [regex]::Match($backupText, 'if not defined JV_DB_NAME set JV_DB_NAME=(.+)').Groups[1].Value.Trim()
+$applicationFallbackDatabase = [regex]::Match($configText, 'define\(''DB_NAME'', \$jv_config_value\(''JV_DB_NAME'', ''([^'']+)''\)\)').Groups[1].Value
+$backupDefaultDatabase = [regex]::Match($backupText, 'set "JV_DB_NAME=([^"]+)"').Groups[1].Value.Trim()
 $environmentDatabase = [regex]::Match($environmentText, '(?m)^JV_DB_NAME=(.+)$').Groups[1].Value.Trim()
 $applicationDatabase = if ($env:JV_DB_NAME) { $env:JV_DB_NAME } elseif ($environmentDatabase) { $environmentDatabase } else { $applicationFallbackDatabase }
 $backupDatabase = if ($env:JV_DB_NAME) { $env:JV_DB_NAME } elseif ($environmentDatabase) { $environmentDatabase } else { $backupDefaultDatabase }

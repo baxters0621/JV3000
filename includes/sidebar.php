@@ -52,6 +52,8 @@ $es_op_ventas = $id_rol === 3;
         $ver_abasto     = $es_admin || $es_op_carga;
         $ver_ventas     = $es_admin || $es_op_ventas;
         $ver_estadisticas = $es_admin || $es_op_ventas;
+
+        $ver_reporte = true;
         $ver_usuarios   = $es_admin;
 
         // Detecta rama activa para auto-expandir
@@ -120,21 +122,21 @@ $es_op_ventas = $id_rol === 3;
         <?php endif; ?>
 
         <!-- ═══ ANÁLISIS (admin + ventas) ═══ -->
-        <?php if ($ver_estadisticas): ?>
+        <?php if ($ver_estadisticas || $ver_reporte): ?>
         <div class="nav-group nav-ram-anal <?php echo $rama_analisis_activo ? 'open' : ''; ?>">
             <button type="button" class="nav-group-toggle" aria-expanded="<?php echo $rama_analisis_activo ? 'true' : 'false'; ?>">
                 <i class="bi bi-graph-up"></i>
                 <span>Análisis</span>
                 <i class="bi bi-chevron-down nav-chevron"></i>
             </button>
-            <div class="nav-group-items">
+            <div class="nav-group-items"><?php if ($ver_estadisticas): ?>
                 <div class="nav-item <?php echo $mvc_activa('estadisticas') ? 'active' : ''; ?>">
                     <a href="<?php echo $prefijo; ?>index.php?url=estadisticas" class="nav-link">
                         <i class="bi bi-bar-chart-line"></i>
                         <span>Estadísticas</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                                <?php endif; ?><div class="nav-item">
                     <a href="#" class="nav-link" onclick="imprimirReporte(event)">
                         <i class="bi bi-printer"></i>
                         <span>Imprimir Reporte</span>

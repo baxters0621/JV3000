@@ -688,7 +688,7 @@
             Swal.fire({
                 icon: 'info',
                 title: 'Detalle del Movimiento',
-                html: '<div style="text-align:left;"><strong>Tipo:</strong> ' + tipo + '<br><strong>Causa:</strong> ' + (causa || 'No especificada') + '</div>',
+                html: '<div style="text-align:left;"><strong>Tipo:</strong> ' + escapeHtml(tipo) + '<br><strong>Causa:</strong> ' + escapeHtml(causa || 'No especificada') + '</div>',
                 background: '#fff',
                 color: '#212529',
                 confirmButtonColor: '#EA580C',

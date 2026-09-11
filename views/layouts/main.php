@@ -36,9 +36,9 @@ $__base_assets = BASE_PATH . 'assets/';
     <script src="<?php echo $__base_assets; ?>js/sweetalert2.all.min.js"></script>
     <script>
         window.JV_CONFIG = window.JV_CONFIG || {};
-        window.JV_CONFIG.csrfToken = '<?php echo $csrf ?? ''; ?>';
+        window.JV_CONFIG.csrfToken = <?php echo json_encode($csrf ?? '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         <?php if (!empty($js_config) && is_array($js_config)): foreach ($js_config as $k => $v): ?>
-                window.JV_CONFIG.<?php echo preg_replace('/[^A-Za-z0-9_]/', '', (string)$k); ?> = <?php echo json_encode($v, JSON_UNESCAPED_UNICODE); ?>;
+                window.JV_CONFIG.<?php echo preg_replace('/[^A-Za-z0-9_]/', '', (string)$k); ?> = <?php echo json_encode($v, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         <?php endforeach;
         endif; ?>
     </script>

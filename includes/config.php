@@ -16,7 +16,7 @@ $jv_config_value = static function (string $key, string $fallback) use ($jv_env)
 define('DB_HOST', $jv_config_value('JV_DB_HOST', 'localhost'));
 define('DB_USER', $jv_config_value('JV_DB_USER', 'root'));
 define('DB_PASS', $jv_config_value('JV_DB_PASS', ''));
-define('DB_NAME', $jv_config_value('JV_DB_NAME', 'jv3000_db_test'));
+define('DB_NAME', $jv_config_value('JV_DB_NAME', 'jv3000_db'));
 define('APP_NAME', 'JV3000 C.A.');
 define('VERSION', '3.0.0');
 define('AUDIT_RETENCION_MESES', 6);

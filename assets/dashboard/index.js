@@ -3,8 +3,12 @@
 
         // Actualización en tiempo real del dashboard
         function actualizarDashboard() {
-            fetch('index.php?ajax_dashboard=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(response => response.json())
+            fetch((window.JV_BASE || '') + 'index.php?url=dashboard&ajax_dashboard=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => {
+                    if (response.status === 401 || response.redirected) { window.location.href = '../login/login.php?error=expired'; throw new Error('Sesión expirada'); }
+                    if (!response.ok) throw new Error('Respuesta HTTP ' + response.status);
+                    return response.json();
+                })
                 .then(data => {
                     try {
                         if (data.success) {
@@ -175,7 +179,11 @@
 
         function actualizarAlertas() {
             fetch('../includes/ajax/alertas_ajax.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(function(response) { return response.json(); })
+                .then(function(response) {
+                    if (response.status === 401 || response.redirected) { window.location.href = '../login/login.php?error=expired'; throw new Error('Sesión expirada'); }
+                    if (!response.ok) throw new Error('Respuesta HTTP ' + response.status);
+                    return response.json();
+                })
                 .then(function(data) {
                     if (!data || !data.success) return;
                     var badge = $id('dashBellBadge');

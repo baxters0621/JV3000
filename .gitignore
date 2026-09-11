@@ -10,14 +10,12 @@ Thumbs.db
 .env.local
 
 # Assets descargables (se restauran desde CDN)
-assets/css/bootstrap.min.css
-assets/css/bootstrap-icons.css
-assets/js/bootstrap.bundle.min.js
 
 # Base de datos (dumps manuales aparte)
 *.sql
 *.dump
 !db/jv3000_portable_v4.sql
+!db/jv3000_portable_v5.sql
 
 # IDE / Editor
 .vscode/

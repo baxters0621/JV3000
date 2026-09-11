@@ -193,9 +193,13 @@
     function refreshEstadisticas() {
         document.body.classList.add('stats-refrescando');
         fetch((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.json())
+            .then(r => {
+                if (r.status === 401 || r.redirected) { window.location.href = (window.JV_BASE || '') + 'login/login.php?error=expired'; throw new Error('Sesión expirada'); }
+                if (!r.ok) throw new Error('Respuesta HTTP ' + r.status);
+                return r.json();
+            })
             .then(statisticsResponse => { try { actualizarUI(statisticsResponse); } catch (error) { console.error('Stats refresh error:', error); } })
-            .catch(() => {})
+            .catch(error => console.error('Stats refresh error:', error))
             .finally(() => document.body.classList.remove('stats-refrescando'));
     }
     setInterval(refreshEstadisticas, 60000);
