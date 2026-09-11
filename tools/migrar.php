@@ -44,10 +44,51 @@ try {
         }
         $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_precio_venta CHECK (precio_venta > 0)');
         $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_precio_costo CHECK (precio_costo > 0)');
-        $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_stock CHECK (stock_actual >= 0 AND stock_minimo > 0 AND stock_maximo >= stock_minimo)');
+        $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_stock CHECK (stock_actual >= 0 AND stock_minimo > 0 AND (stock_maximo = 0 OR stock_maximo >= stock_minimo))');
         $db->execute('INSERT INTO schema_migrations(version) VALUES(?)', [$constraintsVersion]);
         echo "[OK] Migracion completada: {$constraintsVersion}\n";
     } else {
         echo "[OK] Migracion ya aplicada: {$constraintsVersion}\n";
+    }
+    $controlVersion = '004_product_expiration_control';
+    if (!$db->fetchOne('SELECT version FROM schema_migrations WHERE version = ?', [$controlVersion])) {
+        foreach ([
+            ['fecha_vencimiento', "DATE NULL"],
+            ['requiere_vencimiento', "TINYINT(1) NOT NULL DEFAULT 1 AFTER fecha_vencimiento"],
+            ['tipo_control', "ENUM('FEFO','FIFO') NOT NULL DEFAULT 'FEFO' AFTER requiere_vencimiento"],
+        ] as [$columnName, $definition]) {
+            if ($columnName === 'fecha_vencimiento') {
+                $db->execute("ALTER TABLE productos MODIFY fecha_vencimiento DATE NULL");
+            } elseif (!$column('productos', $columnName)) {
+                $db->execute("ALTER TABLE productos ADD COLUMN {$columnName} {$definition}");
+            }
+        }
+        $db->execute("ALTER TABLE detalle_compras MODIFY fecha_vencimiento DATE NULL");
+        $db->execute("UPDATE productos SET requiere_vencimiento = 1, tipo_control = 'FEFO' WHERE requiere_vencimiento IS NULL OR tipo_control IS NULL");
+        $db->execute('INSERT INTO schema_migrations(version) VALUES(?)', [$controlVersion]);
+        echo "[OK] Migracion completada: {$controlVersion}\n";
+    } else {
+        echo "[OK] Migracion ya aplicada: {$controlVersion}\n";
+    }
+    $capacityVersion = '005_product_capacity_inheritance';
+    if (!$db->fetchOne('SELECT version FROM schema_migrations WHERE version = ?', [$capacityVersion])) {
+        $db->execute('ALTER TABLE productos DROP CONSTRAINT chk_prod_stock');
+        $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_stock CHECK (stock_actual >= 0 AND stock_minimo > 0 AND (stock_maximo = 0 OR stock_maximo >= stock_minimo))');
+        $db->execute('INSERT INTO schema_migrations(version) VALUES(?)', [$capacityVersion]);
+        echo "[OK] Migracion completada: {$capacityVersion}\n";
+    } else {
+        echo "[OK] Migracion ya aplicada: {$capacityVersion}\n";
+    }
+    $expirationConstraintVersion = '006_product_expiration_consistency';
+    if (!$db->fetchOne('SELECT version FROM schema_migrations WHERE version = ?', [$expirationConstraintVersion])) {
+        $invalidExpiration = $db->fetchOne("SELECT COUNT(*) AS total FROM productos WHERE requiere_vencimiento = 1 AND fecha_vencimiento IS NULL");
+        if ((int)($invalidExpiration['total'] ?? 0) > 0) {
+            throw new RuntimeException('No se puede aplicar la migracion: existen productos FEFO sin fecha de vencimiento.');
+        }
+        $db->execute('ALTER TABLE productos ADD CONSTRAINT chk_prod_vencimiento CHECK (requiere_vencimiento = 0 OR fecha_vencimiento IS NOT NULL)');
+        $db->execute('INSERT INTO schema_migrations(version) VALUES(?)', [$expirationConstraintVersion]);
+        echo "[OK] Migracion completada: {$expirationConstraintVersion}\n";
+    } else {
+        echo "[OK] Migracion ya aplicada: {$expirationConstraintVersion}\n";
     }
 } catch (Throwable $e) { fwrite(STDERR,"[ERROR] Migracion fallida: ".$e->getMessage()."\n"); exit(1); }

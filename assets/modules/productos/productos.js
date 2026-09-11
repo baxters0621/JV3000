@@ -220,7 +220,8 @@
                 if (!primerError) primerError = pvp;
             }
             const vencimiento = document.getElementById('edit_vencimiento');
-            if (!vencimiento.value.trim()) {
+            const requiereVencimiento = document.getElementById('edit_requiere_vencimiento').value === '1';
+            if (requiereVencimiento && !vencimiento.value.trim()) {
                 marcarError(vencimiento, 'FECHA DE VENCIMIENTO REQUERIDA');
                 if (!primerError) primerError = vencimiento;
             }
@@ -252,6 +253,8 @@
             formatearPrecioEdicion(document.getElementById('edit_costo'));
             document.getElementById('edit_status').value = row.getAttribute('data-status');
             document.getElementById('edit_vencimiento').value = row.getAttribute('data-venc');
+            document.getElementById('edit_requiere_vencimiento').value = row.getAttribute('data-requiere-venc') || '1';
+            document.getElementById('edit_tipo_control').value = row.getAttribute('data-control') || 'FEFO';
             if (modalEditar) modalEditar.show();
         }
 

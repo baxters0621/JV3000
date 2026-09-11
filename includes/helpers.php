@@ -581,6 +581,12 @@ if (!function_exists('lotesConsumibles')) {
     function lotesConsumibles(Database $db, int $id_producto, bool $solo_vencidos = false, bool $lock = false): array
     {
         $forUpdate = $lock ? ' FOR UPDATE' : '';
+        $producto = $db->fetchOne("SELECT requiere_vencimiento, tipo_control FROM productos WHERE id_producto = ?", [$id_producto]);
+        $requiereVencimiento = (int)($producto['requiere_vencimiento'] ?? 1) === 1;
+        $tipoControl = ($producto['tipo_control'] ?? 'FEFO') === 'FIFO' ? 'FIFO' : 'FEFO';
+        if ($solo_vencidos && !$requiereVencimiento) {
+            return [];
+        }
         if ($solo_vencidos) {
             return $db->fetchAll(
                 "SELECT id_lote, cantidad_restante, fecha_vencimiento
@@ -591,12 +597,18 @@ if (!function_exists('lotesConsumibles')) {
                 [$id_producto]
             );
         }
+        $orden = $tipoControl === 'FIFO'
+            ? 'id_lote ASC'
+            : '(fecha_vencimiento IS NULL) ASC, fecha_vencimiento ASC, id_lote ASC';
+        $condicion = $requiereVencimiento
+            ? '(fecha_vencimiento IS NULL OR fecha_vencimiento > CURDATE())'
+            : '1=1';
         return $db->fetchAll(
             "SELECT id_lote, cantidad_restante, fecha_vencimiento
              FROM lotes
              WHERE id_producto = ? AND cantidad_restante > 0
-               AND (fecha_vencimiento IS NULL OR fecha_vencimiento > CURDATE())
-             ORDER BY (fecha_vencimiento IS NULL) ASC, fecha_vencimiento ASC, id_lote ASC" . $forUpdate,
+               AND $condicion
+             ORDER BY $orden" . $forUpdate,
             [$id_producto]
         );
     }
@@ -672,7 +684,7 @@ if (!function_exists('jv_alertas_por_rol')) {
                         WHEN fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 'pronto'
                     END as categoria
              FROM productos
-             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
+             WHERE status = 'Activo' AND requiere_vencimiento = 1 AND fecha_vencimiento IS NOT NULL
                AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
              ORDER BY fecha_vencimiento ASC"
         );

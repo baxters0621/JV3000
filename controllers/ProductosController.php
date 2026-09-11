@@ -75,6 +75,8 @@ class ProductosController extends Controller
                 'precio_venta'    => $parsePrice($_POST['precio_venta'] ?? 0),
                 'status'          => $_POST['status'] ?? 'Activo',
                 'fecha_vencimiento' => trim($_POST['fecha_vencimiento'] ?? ''),
+                'requiere_vencimiento' => (int)($_POST['requiere_vencimiento'] ?? 1),
+                'tipo_control'      => $_POST['tipo_control'] ?? 'FEFO',
             ]);
             $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
             $this->redirect('productos');
@@ -124,7 +126,7 @@ class ProductosController extends Controller
             'titulo'       => 'Inventario | JV3000 C.A.',
             'wrapper_class' => 'pagina-productos',
             'css_extra'    => ['modules/productos/productos.css?v=23'],
-            'js_extra'     => ['modules/productos/productos.js?v=18'],
+            'js_extra'     => ['modules/productos/productos.js?v=19'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,
             'esAdmin'      => $esAdmin,

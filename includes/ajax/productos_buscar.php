@@ -76,7 +76,7 @@ $stock_expr = $vencidos
             ELSE (SELECT COALESCE(SUM(l.cantidad_restante),0) FROM lotes l WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0 AND (l.fecha_vencimiento IS NULL OR l.fecha_vencimiento > CURDATE())) END)";
 
 $sql = "SELECT p.id_producto, p.sku, p.nombre_producto, p.precio_venta, p.precio_costo,
-               p.stock_actual, p.status, p.id_categoria, c.nombre AS categoria,
+               p.stock_actual, p.status, p.id_categoria, p.requiere_vencimiento, p.tipo_control, c.nombre AS categoria,
                $stock_expr AS stock,
                (SELECT MIN(l.fecha_vencimiento) FROM lotes l WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0 AND l.fecha_vencimiento IS NOT NULL) AS proximo_vencimiento
         FROM productos p
@@ -102,6 +102,8 @@ foreach ($db->fetchAll($sql, $params) as $r) {
         'categoria' => (string)($r['categoria'] ?? ''),
         'id_categoria' => (int)$r['id_categoria'],
         'proximo_vencimiento' => $r['proximo_vencimiento'],
+        'requiere_vencimiento' => (int)$r['requiere_vencimiento'],
+        'tipo_control' => (string)$r['tipo_control'],
         'vencido' => $vencidos,
     ];
 }

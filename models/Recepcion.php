@@ -64,7 +64,8 @@ class Recepcion extends Model
         $ids = array_keys($solicitado);
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $filas = $this->db->fetchAll(
-            "SELECT d.id_detalle, d.id_producto, d.cantidad, d.cantidad_recibida, d.precio_costo, d.fecha_vencimiento, p.nombre_producto
+            "SELECT d.id_detalle, d.id_producto, d.cantidad, d.cantidad_recibida, d.precio_costo, d.fecha_vencimiento,
+                    p.nombre_producto, p.requiere_vencimiento
              FROM detalle_compras d JOIN productos p ON d.id_producto = p.id_producto
              WHERE d.id_compra = ? AND d.id_detalle IN ($placeholders)",
             array_merge([$id_compra], $ids)
@@ -78,6 +79,9 @@ class Recepcion extends Model
         // el control FEFO del inventario se rompe, así que la recepción se rechaza.
         foreach ($filas as $f) {
             $venc_final = trim((string)($solicitado[(int)$f['id_detalle']]['fecha_vencimiento'] ?? ''));
+            if ((int)($f['requiere_vencimiento'] ?? 1) === 0) {
+                continue;
+            }
             if ($venc_final === '') {
                 $venc_final = trim((string)($f['fecha_vencimiento'] ?? ''));
             }
@@ -116,6 +120,9 @@ class Recepcion extends Model
                 $id_detalle = (int)$f['id_detalle'];
                 $recibir = $solicitado[$id_detalle]['cantidad'];
                 $venc = $solicitado[$id_detalle]['fecha_vencimiento'] ?? $f['fecha_vencimiento'];
+                if ((int)($f['requiere_vencimiento'] ?? 1) === 0) {
+                    $venc = null;
+                }
 
                 // Costo promedio ponderado: mezcla el costo del inventario existente
                 // con el de la mercancía que entra, para reflejar el costo real.

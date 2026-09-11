@@ -119,7 +119,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                         $venc_badge = 'badge-secondary';
                         $venc_icono = 'dash-circle';
                         $venc_fecha = '';
-                        if ($expirationDate) {
+                        if ((int)($productRecord['requiere_vencimiento'] ?? 1) === 1 && $expirationDate) {
                             $dias_vencer = floor((strtotime($expirationDate) - time()) / 86400);
                             $venc_fecha = date('d/m/Y', strtotime($expirationDate));
                             if ($dias_vencer < 0) {
@@ -141,7 +141,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                             }
                         }
                         ?>
-                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
+                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-requiere-venc="<?php echo (int)($productRecord['requiere_vencimiento'] ?? 1); ?>" data-control="<?php echo htmlspecialchars($productRecord['tipo_control'] ?? 'FEFO', ENT_QUOTES, 'UTF-8'); ?>" data-venc-cls="<?php echo $venc_cls; ?>">
                             <td class="td-prod-sku">
                                 <span class="codigo-badge"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
                             </td>
@@ -169,9 +169,9 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                                 <span class="prod-precio">$<?php echo number_format($productRecord['precio_venta'], 2); ?></span>
                             </td>
                             <td class="text-center td-vencimiento">
-                                <span class="badge-jv <?php echo $venc_badge; ?>" data-tooltip="<?php echo htmlspecialchars($venc_fecha ?: 'Sin fecha de vencimiento', ENT_QUOTES, 'UTF-8'); ?>">
+                                <span class="badge-jv <?php echo ((int)($productRecord['requiere_vencimiento'] ?? 1) === 0) ? 'badge-secondary' : $venc_badge; ?>" data-tooltip="<?php echo htmlspecialchars(((int)($productRecord['requiere_vencimiento'] ?? 1) === 0) ? 'No aplica: producto no perecedero' : ($venc_fecha ?: 'Sin fecha de vencimiento'), ENT_QUOTES, 'UTF-8'); ?>">
                                     <i class="bi bi-<?php echo $venc_icono; ?>"></i>
-                                    <span class="venc-fecha"><?php echo $venc_fecha ?: '—'; ?></span>
+                                    <span class="venc-fecha"><?php echo ((int)($productRecord['requiere_vencimiento'] ?? 1) === 0) ? 'N/A' : ($venc_fecha ?: '—'); ?></span>
                                 </span>
                             </td>
                             <td class="text-center">
@@ -190,7 +190,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                                             <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" data-tooltip="Desactivar">
                                                 <i class="bi bi-power"></i>
                                             </button>
-                                            <?php if ($venc_cls === 'vencido'): ?>
+                                            <?php if ((int)($productRecord['requiere_vencimiento'] ?? 1) === 1 && $venc_cls === 'vencido'): ?>
                                                 <button type="button" class="btn btn-sm p-0 ms-1" style="width:30px;height:30px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" data-tooltip="Dar de baja por vencimiento">
                                                     <i class="bi bi-archive"></i>
                                                 </button>
@@ -508,7 +508,23 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                             </div>
                             <div class="col-6">
                                 <label class="small fw-bold text-secondary mb-1">VENCIMIENTO <span class="text-danger">*</span></label>
-                                <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento" required>
+                                <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="small fw-bold text-secondary mb-1">CONTROL DE VENCIMIENTO</label>
+                                <select class="input-jv" id="edit_requiere_vencimiento" name="requiere_vencimiento">
+                                    <option value="1">Sí, requiere fecha</option>
+                                    <option value="0">No aplica</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="small fw-bold text-secondary mb-1">ROTACIÓN DE LOTES</label>
+                                <select class="input-jv" id="edit_tipo_control" name="tipo_control">
+                                    <option value="FEFO">FEFO · vence primero</option>
+                                    <option value="FIFO">FIFO · entra primero</option>
+                                </select>
                             </div>
                         </div>
                         </div>

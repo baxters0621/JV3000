@@ -133,7 +133,7 @@ CREATE TABLE `detalle_compras` (
   `cantidad` int(11) NOT NULL,
   `precio_costo` decimal(10,2) NOT NULL,
   `cantidad_recibida` int(11) NOT NULL DEFAULT 0,
-  `fecha_vencimiento` date NOT NULL,
+  `fecha_vencimiento` date DEFAULT NULL,
   `observaciones` text DEFAULT NULL,
   PRIMARY KEY (`id_detalle`),
   KEY `fk_detcomp_compra` (`id_compra`),
@@ -230,7 +230,7 @@ CREATE TABLE `lotes` (
   `cantidad` int(11) NOT NULL DEFAULT 0,
   `cantidad_restante` int(11) NOT NULL DEFAULT 0,
   `precio_costo` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `fecha_vencimiento` date NOT NULL,
+  `fecha_vencimiento` date DEFAULT NULL,
   `fecha_ingreso` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id_lote`),
   KEY `fk_lot_prod` (`id_producto`),
@@ -268,7 +268,9 @@ CREATE TABLE `productos` (
   `stock_actual` int(11) DEFAULT 0,
   `stock_minimo` int(11) DEFAULT 5,
   `stock_maximo` int(11) NOT NULL DEFAULT 0,
-  `fecha_vencimiento` date NOT NULL,
+  `fecha_vencimiento` date DEFAULT NULL,
+  `requiere_vencimiento` tinyint(1) NOT NULL DEFAULT 1,
+  `tipo_control` enum('FEFO','FIFO') NOT NULL DEFAULT 'FEFO',
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `id_categoria` int(11) NOT NULL,
   PRIMARY KEY (`id_producto`),
@@ -277,7 +279,8 @@ CREATE TABLE `productos` (
   KEY `idx_prod_status` (`status`),
   CONSTRAINT `chk_prod_precio_venta` CHECK (`precio_venta` > 0),
   CONSTRAINT `chk_prod_precio_costo` CHECK (`precio_costo` > 0),
-  CONSTRAINT `chk_prod_stock` CHECK (`stock_actual` >= 0 AND `stock_minimo` > 0 AND `stock_maximo` >= `stock_minimo`),
+  CONSTRAINT `chk_prod_stock` CHECK (`stock_actual` >= 0 AND `stock_minimo` > 0 AND (`stock_maximo` = 0 OR `stock_maximo` >= `stock_minimo`)),
+  CONSTRAINT `chk_prod_vencimiento` CHECK (`requiere_vencimiento` = 0 OR `fecha_vencimiento` IS NOT NULL),
   CONSTRAINT `fk_prod_cat` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

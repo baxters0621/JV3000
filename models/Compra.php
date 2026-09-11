@@ -270,7 +270,8 @@ class Compra extends Model
             }
             if ($id_producto <= 0) continue;
             $prod_fila = $this->db->fetchOne(
-                "SELECT sku, nombre_producto, precio_venta, precio_costo, fecha_vencimiento, id_categoria
+                "SELECT sku, nombre_producto, precio_venta, precio_costo, fecha_vencimiento, id_categoria,
+                        requiere_vencimiento, tipo_control
                  FROM productos WHERE id_producto = ? AND status = 'Activo'",
                 [$id_producto]
             );
@@ -290,7 +291,10 @@ class Compra extends Model
             if (!empty($prod['fecha_vencimiento']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($prod['fecha_vencimiento']))) {
                 $lote_venc = trim($prod['fecha_vencimiento']);
             }
-            if (!$lote_venc) {
+            $requiere_vencimiento = (int)($prod_fila['requiere_vencimiento'] ?? 1) === 1;
+            if (!$requiere_vencimiento) {
+                $lote_venc = null;
+            } elseif (!$lote_venc) {
                 return ['ok' => false, 'mensaje' => "FECHA DE VENCIMIENTO REQUERIDA PARA: {$prod_fila['nombre_producto']} ({$prod_fila['sku']})."];
             }
             $items_validos[] = ['id' => $id_producto, 'cantidad' => $cantidad, 'precio' => $precio_costo, 'fecha_vencimiento' => $lote_venc];

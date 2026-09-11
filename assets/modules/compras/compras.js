@@ -137,6 +137,7 @@
                 div.dataset.id = product.id;
                 div.dataset.nombre = product.nombre;
                 div.dataset.precio = product.precio_costo;
+                div.dataset.requiereVencimiento = product.requiere_vencimiento ? '1' : '0';
 
                 const left = document.createElement('div');
                 const nombreEl = document.createElement('div');
@@ -183,7 +184,8 @@
             const idProducto = parseInt(productElement.dataset.id, 10);
             productoSeleccionado = {
                 id: idProducto,
-                nombre: productElement.dataset.nombre
+                nombre: productElement.dataset.nombre,
+                requiereVencimiento: productElement.dataset.requiereVencimiento === '1'
             };
             toolboxInput.value = productoSeleccionado.nombre;
             const precioEl = document.getElementById('inputPrecio');
@@ -251,7 +253,7 @@
                 return;
             }
             // REGLA DE NEGOCIO: todo lote exige fecha de vencimiento (control FEFO)
-            if (!expirationDate) {
+            if (productoSeleccionado.requiereVencimiento && !expirationDate) {
                 Swal.fire({
                     title: 'Fecha de vencimiento requerida',
                     text: 'Indique la fecha de vencimiento del lote para agregar el producto',

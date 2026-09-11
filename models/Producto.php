@@ -52,7 +52,10 @@ class Producto extends Model
     public function bajaVencido(int $idProducto): void
     {
         $this->db->execute(
-            "UPDATE lotes SET cantidad_restante = 0 WHERE id_producto = ? AND fecha_vencimiento IS NOT NULL AND fecha_vencimiento <= CURDATE()",
+            "UPDATE lotes l JOIN productos p ON p.id_producto = l.id_producto
+             SET l.cantidad_restante = 0
+             WHERE l.id_producto = ? AND p.requiere_vencimiento = 1
+               AND l.fecha_vencimiento IS NOT NULL AND l.fecha_vencimiento <= CURDATE()",
             [$idProducto]
         );
         $this->db->execute(
@@ -83,12 +86,14 @@ class Producto extends Model
         $precioVenta = (float)$precioVentaRaw;
         $status = $datosProducto['status'];
         $fechaVencimiento = trim((string)($datosProducto['fecha_vencimiento'] ?? ''));
+        $requiereVencimiento = (int)($datosProducto['requiere_vencimiento'] ?? 1) === 1 ? 1 : 0;
+        $tipoControl = ($datosProducto['tipo_control'] ?? 'FEFO') === 'FIFO' ? 'FIFO' : 'FEFO';
 
         if ($idProducto <= 0) return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO.'];
-        if ($fechaVencimiento === '') {
+        if ($requiereVencimiento && $fechaVencimiento === '') {
             return ['ok' => false, 'mensaje' => 'LA FECHA DE VENCIMIENTO ES OBLIGATORIA.'];
         }
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) {
+        if ($fechaVencimiento !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) {
             return ['ok' => false, 'mensaje' => 'FORMATO DE FECHA DE VENCIMIENTO INVÁLIDO. USE AAAA-MM-DD.'];
         }
         // Stocks: enteros puros en rango (rechaza decimales, negativos y desbordes)
@@ -107,8 +112,8 @@ class Producto extends Model
         // Optimistic locking: verificar updated_at antes de actualizar
         $current = $this->db->fetchOne("SELECT updated_at FROM productos WHERE id_producto = ?", [$idProducto]);
         $this->db->execute(
-            "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=? WHERE id_producto=? AND updated_at=?",
-            [$stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $idProducto, $current['updated_at'] ?? '']
+            "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=?, requiere_vencimiento=?, tipo_control=? WHERE id_producto=? AND updated_at=?",
+            [$stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento !== '' ? $fechaVencimiento : null, $requiereVencimiento, $tipoControl, $idProducto, $current['updated_at'] ?? '']
         );
         if ($this->db->affectedRows() === 0) {
             return ['ok' => false, 'mensaje' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL PRODUCTO. RECARGUE LA PÁGINA.'];
@@ -135,9 +140,10 @@ class Producto extends Model
             "SELECT p.*, c.nombre as nombre_cat, COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
                 -- Vencimiento real del producto = el lote con stock que vence primero (FEFO);
                 -- si no tiene lotes activos se usa la fecha legacy del producto
+                p.requiere_vencimiento, p.tipo_control,
                 COALESCE((
                     SELECT MIN(l.fecha_vencimiento) FROM lotes l
-                    WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0
+                    WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0 AND p.requiere_vencimiento = 1
                 ), p.fecha_vencimiento) as fecha_vencimiento,
                 -- Proveedores que lo suministran según el catálogo de costos
                 (SELECT GROUP_CONCAT(pr.nombre_empresa SEPARATOR ', ')

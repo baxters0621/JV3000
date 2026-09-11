@@ -214,7 +214,7 @@ class NotaEntrega extends Model
                 return ['ok' => false, 'error' => "PRECIO DE AJUSTE INVÁLIDO PARA PRODUCTO #$pid."];
             }
             if ($pid) {
-                $pc = $this->db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$pid]);
+                $pc = $this->db->fetchOne("SELECT stock_actual, fecha_vencimiento, requiere_vencimiento FROM productos WHERE id_producto = ?", [$pid]);
                 if (!$pc) {
                     return ['ok' => false, 'error' => "PRODUCTO #$pid NO EXISTE."];
                 }
@@ -231,7 +231,7 @@ class NotaEntrega extends Model
                         if (empty($pc['fecha_vencimiento']) || $pc['fecha_vencimiento'] > date('Y-m-d')) {
                             return ['ok' => false, 'error' => 'EN EL MODO AJUSTE SOLO SE PUEDEN SELECCIONAR PRODUCTOS VENCIDOS.'];
                         }
-                    } elseif ($pc['fecha_vencimiento'] && $pc['fecha_vencimiento'] <= date('Y-m-d')) {
+                    } elseif ((int)($pc['requiere_vencimiento'] ?? 1) === 1 && $pc['fecha_vencimiento'] && $pc['fecha_vencimiento'] <= date('Y-m-d')) {
                         return ['ok' => false, 'error' => 'PRODUCTO VENCIDO. NO SE PUEDE VENDER.'];
                     }
                     if ((int)$pc['stock_actual'] < $cant) {
