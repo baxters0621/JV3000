@@ -1,9 +1,7 @@
--- JV3000 C.A. - Base de Datos Portable v5 (Instalación limpia)
+-- JV3000 C.A. - Base de Datos Portable v6 (Instalación limpia)
 -- Estructura completa + datos de sistema (roles, tipos, configuración, usuarios, contadores).
 -- Sin datos demo: categorías, proveedores, clientes, productos, catálogo de costos y movimientos se inician vacíos.
--- Novedades v5: tabla catalogo_costos (entidad asociativa Proveedor-Producto);
--- sin sistema de crédito (limite_credito/dias_credito/condiciones_pago eliminados);
--- productos.id_proveedor eliminado (la relación vive SOLO en el catálogo).
+-- Incluye estados de pago Pendiente/Parcial/Pagada y el historial de pagos.
 -- Usuarios iniciales: Administrador / Admin123* (cambiar tras el primer inicio).
 
 SET FOREIGN_KEY_CHECKS = 0;
@@ -26,7 +24,7 @@ CREATE TABLE `auditoria` (
   PRIMARY KEY (`id_auditoria`),
   KEY `idx_usuario` (`id_usuario`),
   KEY `idx_fecha` (`fecha_hora`)
-) ENGINE=InnoDB AUTO_INCREMENT=249 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -41,7 +39,7 @@ CREATE TABLE `catalogo_costos` (
   KEY `fk_cat_prod` (`id_producto`),
   CONSTRAINT `fk_cat_prod` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE,
   CONSTRAINT `fk_cat_prov` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -66,20 +64,20 @@ CREATE TABLE `categorias` (
   `ubicacion_defecto` varchar(50) DEFAULT NULL,
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   PRIMARY KEY (`id_categoria`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `clientes` (
   `id_cliente` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(150) NOT NULL,
-  `documento` varchar(20) DEFAULT NULL COMMENT 'RIF o c??dula',
+  `documento` varchar(20) DEFAULT NULL COMMENT 'RIF o cédula',
   `telefono` varchar(20) DEFAULT NULL,
   `direccion` text DEFAULT NULL,
   `status` enum('Activo','Inactivo') DEFAULT 'Activo',
   PRIMARY KEY (`id_cliente`),
   UNIQUE KEY `idx_cli_documento` (`documento`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -96,7 +94,7 @@ CREATE TABLE `compras` (
   `status` enum('Activa','Anulada') NOT NULL DEFAULT 'Activa',
   `tipo_entrada` varchar(50) DEFAULT 'Compra a proveedor',
   `observaciones` text DEFAULT NULL,
-  `status_pago` enum('Pendiente','Pagada') DEFAULT 'Pendiente',
+  `status_pago` enum('Pendiente','Parcial','Pagada') NOT NULL DEFAULT 'Pendiente',
   `monto_pago` decimal(12,2) DEFAULT 0.00,
   `fecha_pago` datetime DEFAULT NULL,
   `metodo_pago` varchar(30) DEFAULT NULL,
@@ -110,7 +108,7 @@ CREATE TABLE `compras` (
   KEY `idx_comp_fecha` (`fecha_compra`),
   CONSTRAINT `fk_comp_prov` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`),
   CONSTRAINT `fk_comp_user` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -140,7 +138,7 @@ CREATE TABLE `detalle_compras` (
   KEY `fk_detcomp_producto` (`id_producto`),
   CONSTRAINT `fk_detcomp_compra` FOREIGN KEY (`id_compra`) REFERENCES `compras` (`id_compra`) ON DELETE CASCADE,
   CONSTRAINT `fk_detcomp_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -172,7 +170,7 @@ CREATE TABLE `detalle_movimientos` (
   KEY `fk_detmov_producto` (`id_producto`),
   CONSTRAINT `fk_detmov_movimiento` FOREIGN KEY (`id_movimiento`) REFERENCES `movimientos` (`id_movimiento`) ON DELETE CASCADE,
   CONSTRAINT `fk_detmov_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -191,7 +189,7 @@ CREATE TABLE `detalle_salidas` (
   CONSTRAINT `fk_detsal_lote` FOREIGN KEY (`id_lote`) REFERENCES `lotes` (`id_lote`) ON DELETE SET NULL,
   CONSTRAINT `fk_detsal_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`),
   CONSTRAINT `fk_detsal_salida` FOREIGN KEY (`id_salida`) REFERENCES `salidas` (`id_salida`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -205,7 +203,7 @@ CREATE TABLE `detalle_solicitud_compra` (
   KEY `fk_dsc_producto` (`id_producto`),
   CONSTRAINT `fk_dsc_producto` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`),
   CONSTRAINT `fk_dsc_solicitud` FOREIGN KEY (`id_solicitud`) REFERENCES `solicitudes_compra` (`id_solicitud`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -218,7 +216,7 @@ CREATE TABLE `login_intentos` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_ip_user_unique` (`ip_address`,`usuario`),
   KEY `idx_ip` (`ip_address`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -238,7 +236,7 @@ CREATE TABLE `lotes` (
   KEY `idx_lot_venc` (`fecha_vencimiento`),
   CONSTRAINT `fk_lot_compra` FOREIGN KEY (`id_compra`) REFERENCES `compras` (`id_compra`) ON DELETE SET NULL,
   CONSTRAINT `fk_lot_prod` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -255,7 +253,7 @@ CREATE TABLE `movimientos` (
   KEY `idx_ref` (`tipo_referencia`,`id_referencia`),
   KEY `fk_mov_usuario` (`id_usuario`),
   CONSTRAINT `fk_mov_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -276,7 +274,7 @@ CREATE TABLE `productos` (
   KEY `fk_prod_cat` (`id_categoria`),
   KEY `idx_prod_status` (`status`),
   CONSTRAINT `fk_prod_cat` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -293,7 +291,7 @@ CREATE TABLE `proveedores` (
   `direccion` text DEFAULT NULL,
   PRIMARY KEY (`id_proveedor`),
   UNIQUE KEY `idx_rif` (`rif`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -330,7 +328,7 @@ CREATE TABLE `salidas` (
   CONSTRAINT `fk_sal_cliente` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`) ON DELETE SET NULL,
   CONSTRAINT `fk_sal_tipo` FOREIGN KEY (`id_tipo_mov`) REFERENCES `tipos_movimientos` (`id_tipo_mov`),
   CONSTRAINT `fk_sal_user` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -356,7 +354,7 @@ CREATE TABLE `solicitudes_compra` (
   KEY `idx_sol_estado` (`estado`),
   CONSTRAINT `fk_sol_compra` FOREIGN KEY (`id_compra`) REFERENCES `compras` (`id_compra`) ON DELETE SET NULL,
   CONSTRAINT `fk_sol_user` FOREIGN KEY (`id_usuario_solicitante`) REFERENCES `usuarios` (`id_usuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -386,18 +384,34 @@ CREATE TABLE `usuarios` (
   UNIQUE KEY `idx_email` (`correo`),
   KEY `fk_rol` (`id_rol`),
   CONSTRAINT `fk_usuarios_rol` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id_rol`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 -- --------------------------------------------------------
 -- Datos de sistema
 -- --------------------------------------------------------
 
-INSERT INTO `roles` VALUES (1,'Administrador','Acceso total al sistema','2026-07-23 21:54:53'),(2,'Operador de Carga','Gesti??n de compras, productos, proveedores y categor??as','2026-07-23 21:54:53'),(3,'Operador de Ventas','Gesti??n de ventas, reportes y estad??sticas','2026-07-23 21:54:53');
-INSERT INTO `tipos_movimientos` VALUES (1,'Venta','Salida'),(2,'Mermas','Salida'),(3,'Regalias','Salida'),(4,'Da??os','Salida'),(5,'Devoluciones','Entrada'),(6,'Ajuste de Inventario','Entrada'),(7,'Compra','Entrada');
-INSERT INTO `configuracion` VALUES (1,'iva_porcentaje','16','Porcentaje de IVA aplicado a las ventas','2026-07-14 19:18:02'),(2,'empresa_nombre','JV3000 C.A.','Nombre de la empresa','2026-07-14 19:18:02'),(3,'empresa_rif','J-50287309-0','RIF de la empresa','2026-07-14 21:18:43'),(4,'empresa_telefono','+58 0414-4014690','Tel??fono de la empresa','2026-08-06 01:46:15'),(5,'empresa_direccion','Naguanagua, Edo. Carabobo','Direcci??n de la empresa','2026-08-08 22:41:40'),(6,'empresa_email','jv3000ca@gmail.com','Correo de la empresa','2026-07-14 21:17:48'),(7,'documentos_normalizados','1','Migracion de formato de documento fiscal aplicada (v1)','2026-08-06 23:31:23');
-INSERT INTO `usuarios` (`id_usuario`, `usuario`, `correo`, `password`, `password_check`, `id_rol`, `status`, `aprobado`, `pregunta_seguridad`, `respuesta_seguridad`, `pin_emergencia`) VALUES (1,'Administrador','admin@jv3000.com','$2y$10$rBAWGt9S7uWap0xNOF6UxO7.Urg.gPSgRBe6TuVwfLKv9PXXv9aDe','0208788aa2035cd5be6697efbd285df1afa881c8fd25e4bd5bbb247c29c58454',1,'Activo',1,'Nombre de tu mascota','$2y$10$m4gAG5wq1mWddoZsLFZF7u587virmloOs3BNhwkBRA0qpTLpkRnBG',NULL),(2,'Operador','operador@jv3000.com','$2y$10$17w0GaA5NJy2ieJhkJEIUeQwi43V.VV.Q7yFfis1iwh2567fQz5wy','215734bd5c5e147ffeb1d2f533141b964de8de2e1e41fabb17fe8c537220aec6',2,'Inactivo',0,'Nombre de tu mascota','$2y$10$X6.tFFcCnrL21m9Ji3QBreO1870X7MIid7nGpykNQQPgwSwJNqKoy',NULL),(3,'Operador_Ventas','ventas123@gmail.com','$2y$10$2s3JyEMFmHGUHvPqKMwqF.IRXwfsC18a/vK9P9tm5Heh2NDLCMs0S','0b1bb2dfcfcf243e527b16be4d68627b71f40d36245070c82550ff42a12f61f5',3,'Activo',1,'Nombre de tu mascota','$2y$10$vdHIKGFfG1JTFUqH1kBWz.BojzTZ3RIJ5/1xtNXfvQLeGgZIqErE2',NULL);
-INSERT INTO `sku_contadores` VALUES ('CAT',0),('CTRL',0),('FAC',0),('NDE',0),('PROD',0);
+INSERT INTO `roles` (`id_rol`, `nombre_rol`, `descripcion`) VALUES
+(1, 'Administrador', 'Acceso total al sistema'),
+(2, 'Operador de Carga', 'Gestión de compras, productos, proveedores y categorías'),
+(3, 'Operador de Ventas', 'Gestión de ventas, reportes y estadísticas');
+INSERT INTO `tipos_movimientos` (`id_tipo_mov`, `nombre`, `tipo_movimiento`) VALUES
+(1, 'Venta', 'Salida'), (2, 'Mermas', 'Salida'), (3, 'Regalias', 'Salida'),
+(4, 'Daños', 'Salida'), (5, 'Devoluciones', 'Entrada'),
+(6, 'Ajuste de Inventario', 'Entrada'), (7, 'Compra', 'Entrada');
+INSERT INTO `configuracion` (`clave`, `valor`, `descripcion`) VALUES
+('iva_porcentaje', '16', 'Porcentaje de IVA aplicado a las ventas'),
+('empresa_nombre', 'JV3000 C.A.', 'Nombre de la empresa'),
+('empresa_rif', 'J-50287309-0', 'RIF de la empresa'),
+('empresa_telefono', '+58 0414-4014690', 'Teléfono de la empresa'),
+('empresa_direccion', 'Naguanagua, Edo. Carabobo', 'Dirección de la empresa'),
+('empresa_email', 'jv3000ca@gmail.com', 'Correo de la empresa'),
+('documentos_normalizados', '1', 'Migración de formato de documento fiscal aplicada');
+INSERT INTO `usuarios` (`id_usuario`, `usuario`, `correo`, `password`, `password_check`, `id_rol`, `status`, `aprobado`) VALUES
+(1, 'Administrador', 'admin@jv3000.com', '$2y$10$rBAWGt9S7uWap0xNOF6UxO7.Urg.gPSgRBe6TuVwfLKv9PXXv9aDe',
+ '0208788aa2035cd5be6697efbd285df1afa881c8fd25e4bd5bbb247c29c58454', 1, 'Activo', 1);
+INSERT INTO `sku_contadores` (`sku_prefix`, `ultimo_numero`) VALUES
+('CAT', 0), ('CTRL', 0), ('FAC', 0), ('NDE', 0), ('PROD', 0);
 
 
 COMMIT;

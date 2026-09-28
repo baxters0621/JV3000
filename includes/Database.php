@@ -23,9 +23,9 @@ class Database
     }
 
     // Conectar a MySQL
-    public function connect(string $host, string $user, string $pass, string $db): void
+    public function connect(string $host, string $user, string $pass, string $db, int $port = 3306): void
     {
-        $this->conn = new mysqli($host, $user, $pass, $db);
+        $this->conn = new mysqli($host, $user, $pass, $db, $port);
         if ($this->conn->connect_error) {
             throw new RuntimeException('Error de conexión: ' . $this->conn->connect_error);
         }

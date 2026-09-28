@@ -30,40 +30,43 @@ class PagoCompra extends Model
      */
     public function registrar(int $idCompra, float $monto, string $metodo, array $detalle, int $idUsuario): array
     {
-        $compra = $this->db->fetchOne(
-            "SELECT id_compra, total, status, status_pago, COALESCE(monto_pago, 0) as monto_pago
-             FROM compras WHERE id_compra = ?",
-            [$idCompra]
-        );
-
-        if (!$compra) {
-            return ['ok' => false, 'mensaje' => 'LA COMPRA NO EXISTE.'];
-        }
-        if ($compra['status'] === 'Anulada') {
-            return ['ok' => false, 'mensaje' => 'LA COMPRA ESTÁ ANULADA.'];
-        }
-        if ($monto <= 0) {
+        if (!is_finite($monto) || $monto <= 0) {
             return ['ok' => false, 'mensaje' => 'EL MONTO DEBE SER MAYOR A CERO.'];
         }
-
-        $total = (float)$compra['total'];
-        $yaPagado = (float)$compra['monto_pago'];
-        $saldo = $total - $yaPagado;
-
-        if ($saldo <= 0) {
-            return ['ok' => false, 'mensaje' => 'LA COMPRA YA ESTÁ PAGADA COMPLETAMENTE.'];
-        }
-        if ($monto > $saldo + 0.01) {
-            return ['ok' => false, 'mensaje' => "EL MONTO EXCEDE EL SALDO PENDIENTE (\$" . number_format($saldo, 2) . ")."];
-        }
-
         $metodosValidos = ['Efectivo', 'Transferencia', 'Cheque', 'Otro'];
         if (!in_array($metodo, $metodosValidos, true)) {
             return ['ok' => false, 'mensaje' => 'MÉTODO DE PAGO INVÁLIDO.'];
         }
 
+        $monto = round($monto, 2);
         $this->db->begin();
         try {
+            $compra = $this->db->fetchOne(
+                "SELECT id_compra, total, status, status_pago, COALESCE(monto_pago, 0) as monto_pago
+                 FROM compras WHERE id_compra = ? FOR UPDATE",
+                [$idCompra]
+            );
+            $rechazar = function (string $mensaje): array {
+                $this->db->rollback();
+                return ['ok' => false, 'mensaje' => $mensaje];
+            };
+            if (!$compra) {
+                return $rechazar('LA COMPRA NO EXISTE.');
+            }
+            if ($compra['status'] === 'Anulada') {
+                return $rechazar('LA COMPRA ESTÁ ANULADA.');
+            }
+
+            $total = (float)$compra['total'];
+            $yaPagado = (float)$compra['monto_pago'];
+            $saldo = max(0, $total - $yaPagado);
+            if ($saldo <= 0) {
+                return $rechazar('LA COMPRA YA ESTÁ PAGADA COMPLETAMENTE.');
+            }
+            if ($monto > round($saldo, 2)) {
+                return $rechazar("EL MONTO EXCEDE EL SALDO PENDIENTE (\$" . number_format($saldo, 2) . ").");
+            }
+
             // Insertar pago
             $this->db->execute(
                 "INSERT INTO pagos_compra (id_compra, id_usuario, monto, metodo_pago, detalle_pago, fecha_pago)
@@ -79,17 +82,16 @@ class PagoCompra extends Model
                 [$nuevoPagado, $nuevoStatus, $idCompra]
             );
 
+            registrarAuditoria('crear', "Pago de \$" . number_format($monto, 2) . " registrado en Compra #$idCompra ($metodo)");
             $this->db->commit();
 
             $saldoPendiente = max(0, $total - $nuevoPagado);
-            registrarAuditoria('crear', "Pago de \$" . number_format($monto, 2) . " registrado en Compra #$idCompra ($metodo)");
-
             $mensaje = $saldoPendiente <= 0.01
                 ? 'PAGO REGISTRADO. COMPRA PAGADA COMPLETAMENTE.'
                 : 'PAGO REGISTRADO. SALDO PENDIENTE: $' . number_format($saldoPendiente, 2) . '.';
 
             return ['ok' => true, 'mensaje' => $mensaje, 'saldo_pendiente' => $saldoPendiente];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->db->rollback();
             return ['ok' => false, 'mensaje' => 'ERROR AL REGISTRAR EL PAGO.'];
         }
@@ -122,7 +124,11 @@ class PagoCompra extends Model
     public function totalPagado(int $idCompra): float
     {
         $row = $this->db->fetchOne(
-            "SELECT COALESCE(SUM(monto), 0) as total FROM pagos_compra WHERE id_compra = ?",
+            "SELECT GREATEST(COALESCE(c.monto_pago, 0), COALESCE(SUM(p.monto), 0)) AS total
+             FROM compras c
+             LEFT JOIN pagos_compra p ON p.id_compra = c.id_compra
+             WHERE c.id_compra = ?
+             GROUP BY c.id_compra, c.monto_pago",
             [$idCompra]
         );
         return (float)($row['total'] ?? 0);

@@ -238,8 +238,23 @@ class Salida extends Model
 
         $this->db->begin();
         try {
+            if (empty($productos_raw)) {
+                throw new Exception('DEBE AGREGAR AL MENOS UN PRODUCTO.');
+            }
             if (count($productos_raw) > self::LIMITE_PRODUCTOS) {
                 throw new Exception("MÁXIMO " . self::LIMITE_PRODUCTOS . " PRODUCTOS POR VENTA.");
+            }
+            $cantidades_por_producto = [];
+            foreach ($productos_raw as $producto_raw) {
+                if (!is_array($producto_raw)) {
+                    throw new Exception('DETALLE DE PRODUCTO INVÁLIDO.');
+                }
+                $id_producto = filter_var($producto_raw['id_producto'] ?? null, FILTER_VALIDATE_INT);
+                $cantidad = filter_var($producto_raw['cantidad'] ?? null, FILTER_VALIDATE_INT);
+                if ($id_producto === false || $id_producto <= 0 || $cantidad === false || $cantidad <= 0 || $cantidad > 999999) {
+                    throw new Exception('PRODUCTO O CANTIDAD INVÁLIDOS.');
+                }
+                $cantidades_por_producto[$id_producto] = ($cantidades_por_producto[$id_producto] ?? 0) + $cantidad;
             }
 
             // Validar documento fiscal (cédula o RIF) en ventas
@@ -253,7 +268,7 @@ class Salida extends Model
 
             // 0. Si es edición: restaurar el stock y los lotes de los detalles actuales
             if ($es_edicion) {
-                $salida_vieja = $this->db->fetchOne("SELECT id_salida FROM salidas WHERE id_salida = ? AND status = 'Activa'", [$id_editar]);
+                $salida_vieja = $this->db->fetchOne("SELECT id_salida FROM salidas WHERE id_salida = ? AND status = 'Activa' FOR UPDATE", [$id_editar]);
                 if (!$salida_vieja) throw new Exception("LA SALIDA A EDITAR NO EXISTE O YA FUE ANULADA.");
                 $ant_detalles = $this->db->fetchAll("SELECT id_producto, id_lote, cantidad FROM detalle_salidas WHERE id_salida = ?", [$id_editar]);
                 foreach ($ant_detalles as $det) {
@@ -266,16 +281,14 @@ class Salida extends Model
             $solo_vencidos = $grupo_data === 'merma';
 
             // Bloquear filas de productos involucrados (prevenir race condition)
-            $ids_producto = array_unique(array_filter(array_map(fn($p) => intval($p['id_producto'] ?? 0), $productos_raw), fn($id) => $id > 0));
+            $ids_producto = array_keys($cantidades_por_producto);
+            sort($ids_producto, SORT_NUMERIC);
             if (!empty($ids_producto)) {
                 $ph = implode(',', array_fill(0, count($ids_producto), '?'));
-                $this->db->fetchAll("SELECT id_producto, stock_actual FROM productos WHERE id_producto IN ($ph) FOR UPDATE", $ids_producto);
+                $this->db->fetchAll("SELECT id_producto, stock_actual FROM productos WHERE id_producto IN ($ph) ORDER BY id_producto FOR UPDATE", $ids_producto);
             }
 
-            foreach ($productos_raw as $prod) {
-                $id_producto = intval($prod['id_producto'] ?? 0);
-                $cantidad = intval($prod['cantidad'] ?? 0);
-                if ($id_producto <= 0 || $cantidad <= 0) continue;
+            foreach ($cantidades_por_producto as $id_producto => $cantidad) {
                 $pi = $this->db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [$id_producto]);
                 if (!$pi) throw new Exception("Producto #$id_producto no encontrado");
                 $tiene_lotes = (int)$this->db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE id_producto = ?", [$id_producto])['n'];
@@ -392,8 +405,6 @@ class Salida extends Model
                 ]);
             }
 
-            $this->db->commit();
-
             // Auditoría y resultado
             $causa_data = $data['causa_ajuste'] ?? '';
             if ($es_edicion) {
@@ -401,6 +412,7 @@ class Salida extends Model
                     ? "Ajuste (-) editado: Causa: $causa_data, " . count($productos_raw) . " producto(s)"
                     : "Venta editada, " . count($productos_raw) . " producto(s)";
                 registrarAuditoria('editar', $det_auditoria);
+                $this->db->commit();
                 return ['ok' => true, 'id_salida' => $salida_id, 'edicion' => true];
             }
 
@@ -408,8 +420,9 @@ class Salida extends Model
                 ? "Ajuste (-): Causa: $causa_data, " . count($productos_raw) . " producto(s)"
                 : "Venta registrada, " . count($productos_raw) . " producto(s)";
             registrarAuditoria('crear', $det_auditoria);
+            $this->db->commit();
             return ['ok' => true, 'id_salida' => $salida_id, 'edicion' => false];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->db->rollback();
             return ['ok' => false, 'error' => $e->getMessage()];
         }

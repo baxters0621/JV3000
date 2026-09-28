@@ -50,8 +50,8 @@ _Nota de seguridad: Nunca recortes en validaciones de seguridad, accesibilidad o
 
 ## DB
 
-- Portable: `db/jv3000_portable_v4.sql` — seed de **instalación limpia** (esquema completo + solo datos de sistema: roles, tipos de movimiento, configuración, usuarios, contadores en 0). **No incluye datos demo**.
-- Auto-instalador en `init.php` apunta a `v4`.
+- Portable: `db/jv3000_portable_v6.sql` — seed de **instalación limpia** (esquema completo + solo datos de sistema: roles, tipos de movimiento, configuración, usuario administrador, contadores en 0). **No incluye datos demo**.
+- Auto-instalador en `init.php` apunta a `v6`.
 - Usuario inicial: `Administrador` / `Admin123*` (cambiar tras el primer inicio)
 - Backups en `backups/`
 

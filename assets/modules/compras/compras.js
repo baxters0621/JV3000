@@ -1071,9 +1071,21 @@
                 formData.append('csrf_token', (window.JV_CONFIG || {}).csrfToken || '');
                 fetch((window.JV_BASE || '') + 'index.php?url=solicitudes/cancelar', {
                     method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
                     body: formData
-                }).then(function() {
-                    window.location.reload();
+                }).then(function(response) {
+                    return response.json().then(function(data) {
+                        if (!response.ok || !data.ok) {
+                            throw new Error(data.error || 'No se pudo cancelar la solicitud.');
+                        }
+                        window.location.reload();
+                    });
+                }).catch(function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'NO SE PUDO CANCELAR',
+                        text: 'Verifica la conexión y vuelve a intentarlo.'
+                    });
                 });
             });
         }

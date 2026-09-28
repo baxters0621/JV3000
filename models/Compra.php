@@ -63,7 +63,7 @@ class Compra extends Model
      * estado de pago. Limitado a las 100 facturas más recientes.
      *
      * @param int    $filtro_proveedor Id del proveedor (0 = sin filtro).
-     * @param string $filtro_pago      Estado de pago ('Pendiente'/'Pagada' o '').
+     * @param string $filtro_pago      Estado de pago (Pendiente/Parcial/Pagada o '').
      * @return array Facturas activas con resumen.
      */
     public function obtenerCompras(int $filtro_proveedor = 0, string $filtro_pago = ''): array
@@ -138,7 +138,7 @@ class Compra extends Model
     public function kpis(): array
     {
         $total = (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM compras WHERE status = 'Activa'")['t'] ?? 0);
-        $por_pagar = (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM compras WHERE status = 'Activa' AND status_pago = 'Pendiente'")['t'] ?? 0);
+        $por_pagar = (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM compras WHERE status = 'Activa' AND status_pago IN ('Pendiente', 'Parcial')")['t'] ?? 0);
         $mes = $this->db->fetchOne(
             "SELECT COALESCE(SUM(c.total),0) as t FROM compras c
              WHERE c.fecha_compra >= DATE_FORMAT(CURDATE(),'%Y-%m-01')
@@ -298,7 +298,7 @@ class Compra extends Model
         if ($monto_pago > 99999999.99) {
             return ['ok' => false, 'mensaje' => 'MONTO DE PAGO INVÁLIDO. MÁXIMO 99,999,999.99.'];
         }
-        $status_pago = $monto_pago >= $total ? 'Pagada' : 'Pendiente';
+        $status_pago = $monto_pago <= 0 ? 'Pendiente' : ($monto_pago >= $total ? 'Pagada' : 'Parcial');
         $fecha_compra = date('Y-m-d H:i:s');
         $fecha_pago = date('Y-m-d H:i:s');
 
@@ -331,7 +331,7 @@ class Compra extends Model
                 $detalle_pago['fecha_tasa'] = date('Y-m-d');
                 // Sobrescribir monto_pago con el equivalente en VES
                 $monto_pago = $equivalente_ves;
-                $status_pago = $monto_pago >= $total ? 'Pagada' : 'Pendiente';
+                $status_pago = $monto_pago >= $total ? 'Pagada' : 'Parcial';
             }
         } elseif ($metodo_pago === 'Transferencia') {
             $cedula = trim($purchaseFormData['pm_cedula'] ?? '');
@@ -370,6 +370,12 @@ class Compra extends Model
             $detalle_pago = ['descripcion' => $desc];
         }
 
+        if ($monto_pago > $total) {
+            return ['ok' => false, 'mensaje' => 'EL PAGO INICIAL NO PUEDE EXCEDER EL TOTAL DE LA COMPRA.'];
+        }
+        $monto_pago = min($monto_pago, $total);
+        $status_pago = $monto_pago <= 0 ? 'Pendiente' : ($monto_pago >= $total ? 'Pagada' : 'Parcial');
+
         $this->db->begin();
         try {
             $compra_id = $this->db->insert('compras', [
@@ -386,11 +392,19 @@ class Compra extends Model
                 'observaciones'    => $observaciones,
                 'status_pago'      => $status_pago,
                 'monto_pago'       => $monto_pago,
-                'fecha_pago'       => $fecha_pago,
+                'fecha_pago'       => $monto_pago > 0 ? $fecha_pago : null,
                 'metodo_pago'      => $metodo_pago,
                 'detalle_pago'     => $detalle_pago ? json_encode($detalle_pago) : null,
                 'estado_recepcion' => 'Pendiente',
             ]);
+
+            if ($monto_pago > 0) {
+                $this->db->execute(
+                    "INSERT INTO pagos_compra (id_compra, id_usuario, monto, metodo_pago, detalle_pago, fecha_pago)
+                     VALUES (?, ?, ?, ?, ?, ?)",
+                    [$compra_id, $id_usuario, $monto_pago, $metodo_pago, $detalle_pago ? json_encode($detalle_pago) : null, $fecha_pago]
+                );
+            }
 
             foreach ($items_validos as $it) {
                 $this->db->insert('detalle_compras', [
@@ -415,7 +429,13 @@ class Compra extends Model
             $this->db->commit();
 
             $msg = "COMPRA REGISTRADA: factura $nro_factura, " . count($items_validos) . " producto(s). ";
-            $msg .= $status_pago === 'Pagada' ? 'COMPROBANTE DE PAGO REGISTRADO.' : 'PAGO PENDIENTE (' . number_format($monto_pago, 2) . ' DE ' . number_format($total, 2) . ').';
+            if ($status_pago === 'Pagada') {
+                $msg .= 'COMPROBANTE DE PAGO REGISTRADO.';
+            } elseif ($status_pago === 'Parcial') {
+                $msg .= 'ABONO REGISTRADO: ' . number_format($monto_pago, 2) . ' DE ' . number_format($total, 2) . '.';
+            } else {
+                $msg .= 'PAGO PENDIENTE (' . number_format($monto_pago, 2) . ' DE ' . number_format($total, 2) . ').';
+            }
             return ['ok' => true, 'mensaje' => $msg];
         } catch (Exception $e) {
             $this->db->rollback();

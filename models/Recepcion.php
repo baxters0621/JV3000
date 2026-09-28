@@ -99,6 +99,45 @@ class Recepcion extends Model
 
         $this->db->begin();
         try {
+            $compra = $this->db->fetchOne(
+                "SELECT id_compra, nro_factura, id_proveedor, status, estado_recepcion
+                 FROM compras WHERE id_compra = ? FOR UPDATE",
+                [$id_compra]
+            );
+            if (!$compra || $compra['status'] !== 'Activa' || $compra['estado_recepcion'] === 'Completa') {
+                throw new RuntimeException('LA COMPRA YA NO ESTÁ DISPONIBLE PARA RECIBIR.');
+            }
+
+            $filas = $this->db->fetchAll(
+                "SELECT d.id_detalle, d.id_producto, d.cantidad, d.cantidad_recibida, d.precio_costo, d.fecha_vencimiento, p.nombre_producto
+                 FROM detalle_compras d JOIN productos p ON d.id_producto = p.id_producto
+                 WHERE d.id_compra = ? AND d.id_detalle IN ($placeholders)
+                 ORDER BY d.id_detalle
+                 FOR UPDATE",
+                array_merge([$id_compra], $ids)
+            );
+            if (count($filas) !== count($ids)) {
+                throw new RuntimeException('ALGUNO DE LOS PRODUCTOS YA NO PERTENECE A LA COMPRA.');
+            }
+            foreach ($filas as $fila) {
+                $pendiente = (int)$fila['cantidad'] - (int)$fila['cantidad_recibida'];
+                if ($solicitado[(int)$fila['id_detalle']]['cantidad'] > $pendiente) {
+                    throw new RuntimeException('LA RECEPCIÓN EXCEDE LA CANTIDAD PENDIENTE.');
+                }
+            }
+
+            $ids_producto = array_values(array_unique(array_map(
+                static fn($fila): int => (int)$fila['id_producto'],
+                $filas
+            )));
+            sort($ids_producto, SORT_NUMERIC);
+            $placeholders_producto = implode(',', array_fill(0, count($ids_producto), '?'));
+            $this->db->fetchAll(
+                "SELECT id_producto FROM productos WHERE id_producto IN ($placeholders_producto) ORDER BY id_producto FOR UPDATE",
+                $ids_producto
+            );
+
+            $id_proveedor = $compra['id_proveedor'] ? (int)$compra['id_proveedor'] : null;
             $mov_id = $this->db->insert('movimientos', [
                 'id_referencia'      => $id_compra,
                 'tipo_referencia'    => 'compra',
