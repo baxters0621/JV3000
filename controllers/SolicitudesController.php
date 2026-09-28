@@ -55,18 +55,15 @@ class SolicitudesController extends Controller
      */
     public function cancelar(): void
     {
+        if (!Security::puedeCargar()) {
+            $this->json(['ok' => false, 'error' => 'SIN PERMISOS PARA CANCELAR SOLICITUDES.'], 403);
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('compras');
+            $this->json(['ok' => false, 'error' => 'MÉTODO NO PERMITIDO.'], 405);
         }
 
         $requestId = (int)($_POST['id_solicitud'] ?? 0);
         $cancellationResult = (new Solicitud())->cancelar($requestId);
-
-        if ($cancellationResult['ok']) {
-            $this->flash('success', 'SOLICITUD CANCELADA.');
-        } else {
-            $this->flash('danger', $cancellationResult['error'] ?? 'ERROR AL CANCELAR LA SOLICITUD.');
-        }
-        $this->redirect('compras');
+        $this->json($cancellationResult, $cancellationResult['ok'] ? 200 : 400);
     }
 }

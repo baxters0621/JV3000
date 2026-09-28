@@ -44,11 +44,21 @@ docs/                     Documentación del proyecto y bitácora de cambios
 ## Instalación local
 
 1. Clonar el repositorio en `C:\xampp\htdocs\JV3000_db`
-2. Iniciar el servicio `mysql` (Windows) y Apache (XAMPP)
-3. El auto-instalador `init.php` crea la BD a partir de `db/jv3000_portable_v4.sql`
-   (esquema completo + datos de sistema, sin datos demo)
-4. Usuario inicial: `Administrador` / `Admin123*` (cambiar tras el primer inicio)
-5. Acceder via `http://localhost/JV3000_db`
+2. Requiere PHP 8.2 o superior, Apache con `mysqli` habilitado y MySQL/MariaDB iniciado.
+3. Abrir `http://localhost/JV3000_db`. Se prueban primero los valores habituales de XAMPP
+   (`localhost`, `root`, contraseña vacía, puerto 3306). Si no conectan, aparece un asistente
+   disponible desde el mismo equipo para ingresar y guardar localmente una sola vez los datos.
+   Para servidores remotos, configurar `config/.env` manualmente a partir de
+   `config/.env.example`.
+4. El usuario MySQL debe poder crear la base de datos y tablas en una instalación limpia.
+   Si la base es nueva, usar **Instalar sistema**;
+   `init.php` la crea desde `db/jv3000_portable_v6.sql` (sin datos demo).
+5. Usuario inicial: `Administrador` / `Admin123*` (cambiar tras el primer inicio).
+6. Acceder a `http://localhost/JV3000_db`.
+
+La configuración local se guarda en `config/.env`, excluido de Git. La contraseña la escribe
+el asistente codificada en Base64 para conservar cualquier carácter especial; esto no es cifrado,
+por lo que el archivo debe mantenerse privado. El asistente no borra bases existentes.
 
 ## Orden operativo del sistema
 

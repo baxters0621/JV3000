@@ -15,8 +15,22 @@ $jv_config_value = static function (string $key, string $fallback) use ($jv_env)
 
 define('DB_HOST', $jv_config_value('JV_DB_HOST', 'localhost'));
 define('DB_USER', $jv_config_value('JV_DB_USER', 'root'));
-define('DB_PASS', $jv_config_value('JV_DB_PASS', ''));
-define('DB_NAME', $jv_config_value('JV_DB_NAME', 'jv3000_db_test'));
+$jv_db_pass = getenv('JV_DB_PASS');
+if ($jv_db_pass === false) {
+    if (array_key_exists('JV_DB_PASS', $jv_env)) {
+        $jv_db_pass = (string)$jv_env['JV_DB_PASS'];
+    } elseif (isset($jv_env['JV_DB_PASS_B64'])) {
+        $jv_db_pass = base64_decode((string)$jv_env['JV_DB_PASS_B64'], true);
+        if ($jv_db_pass === false) {
+            throw new RuntimeException('JV_DB_PASS_B64 en config/.env no contiene Base64 válido.');
+        }
+    } else {
+        $jv_db_pass = '';
+    }
+}
+define('DB_PASS', (string)$jv_db_pass);
+define('DB_NAME', $jv_config_value('JV_DB_NAME', 'jv3000_db'));
+define('DB_PORT', (int)$jv_config_value('JV_DB_PORT', '3306'));
 define('APP_NAME', 'JV3000 C.A.');
 define('VERSION', '3.0.0');
 define('AUDIT_RETENCION_MESES', 6);

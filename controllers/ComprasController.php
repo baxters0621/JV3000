@@ -153,7 +153,7 @@ class ComprasController extends Controller
 
         // --- GET: filtros ---
         $filtro_proveedor = (int)($_GET['filtro_proveedor'] ?? 0);
-        $filtro_pago = in_array($_GET['filtro_pago'] ?? '', ['Pendiente', 'Pagada'], true) ? $_GET['filtro_pago'] : '';
+        $filtro_pago = in_array($_GET['filtro_pago'] ?? '', ['Pendiente', 'Parcial', 'Pagada'], true) ? $_GET['filtro_pago'] : '';
         $sol_seleccionada = $_SESSION['sol_seleccionada'] ?? null;
         $iva_pct = (float)getConfig('iva_porcentaje', '16');
 
@@ -184,7 +184,7 @@ class ComprasController extends Controller
             ],
             'js_extra'            => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
-                'modules/compras/compras.js?v=11',
+                'modules/compras/compras.js?v=12',
             ],
             'compras'             => $comprasData,
             'proveedores'         => $modelo->obtenerProveedores(),

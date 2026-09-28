@@ -29,7 +29,7 @@ Get-ChildItem (Join-Path $root 'assets') -Filter '*.js' -Recurse | Where-Object 
 }
 
 Write-Host '== Rutas HTTP internas =='
-$internalPaths = @('backups/jv3000_db_2026-08-13_153655.sql', 'db/jv3000_portable_v4.sql', 'models/Producto.php', 'controllers/SalidasController.php', 'views/productos/index.php', 'config/config.php', 'includes/config.php', 'core/Router.php')
+$internalPaths = @('backups/jv3000_db_2026-08-13_153655.sql', 'db/jv3000_portable_v6.sql', 'models/Producto.php', 'controllers/SalidasController.php', 'views/productos/index.php', 'config/config.php', 'includes/config.php', 'core/Router.php')
 foreach ($path in $internalPaths) {
     $status = & curl.exe -s -o NUL -w '%{http_code}' "$BaseUrl/$path"
     Assert-Equal "Bloqueo $path" '403' ([string]$status)

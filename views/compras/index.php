@@ -165,6 +165,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         <select class="input-jv ms-auto" id="filtroPago" aria-label="Filtrar por estado de pago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value">
             <option value="">Todos los pagos</option>
             <option value="Pendiente" <?php echo $filtro_pago === 'Pendiente' ? 'selected' : ''; ?>>Pendiente</option>
+            <option value="Parcial" <?php echo $filtro_pago === 'Parcial' ? 'selected' : ''; ?>>Parcial</option>
             <option value="Pagada" <?php echo $filtro_pago === 'Pagada' ? 'selected' : ''; ?>>Pagada</option>
         </select>
     </div>
@@ -435,7 +436,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <div class="comp-step-title">Forma de Pago</div>
                                 <div class="comp-step-desc">Indica c&oacute;mo se est&aacute; cancelando esta compra</div>
                             </div>
-                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Si el monto pagado es menor al total, la factura queda como Pendiente. Si es igual o mayor, queda como Pagada."></i>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Sin pagos queda Pendiente; con un abono parcial queda Parcial; al cubrir el total queda Pagada."></i>
                         </div>
                         <div class="comp-step-body">
                             <div class="row g-3">

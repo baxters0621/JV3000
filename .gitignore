@@ -8,6 +8,7 @@ Thumbs.db
 # Configuración sensible local
 .env
 .env.local
+/config/.env
 
 # Assets descargables (se restauran desde CDN)
 assets/css/bootstrap.min.css
@@ -17,7 +18,7 @@ assets/js/bootstrap.bundle.min.js
 # Base de datos (dumps manuales aparte)
 *.sql
 *.dump
-!db/jv3000_portable_v4.sql
+!db/jv3000_portable_v6.sql
 
 # IDE / Editor
 .vscode/

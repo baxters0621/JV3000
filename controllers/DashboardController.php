@@ -109,13 +109,13 @@ class DashboardController extends Controller
     {
         $datos = [];
 
-        // Última venta registrada
-        $vd = $db->fetchOne("SELECT COALESCE(ds.cantidad * ds.precio_venta, 0) as total
+        // Total vendido hoy
+        $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total
             FROM salidas s
             JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
             WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'
-            ORDER BY s.fecha_salida DESC, s.id_salida DESC
-            LIMIT 1");
+              AND s.fecha_salida >= CURDATE()
+              AND s.fecha_salida < CURDATE() + INTERVAL 1 DAY");
         $datos['ventas_dia'] = number_format((float)($vd['total'] ?? 0), 2);
 
         // Valor del inventario (costo de lotes + fallback a productos)

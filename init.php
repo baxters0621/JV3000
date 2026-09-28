@@ -47,6 +47,15 @@ define('INIT_LOADED', true);
 // --- 4. Cargar constantes ---
 require_once __DIR__ . '/includes/config.php';
 
+if (PHP_VERSION_ID < 80200) {
+    http_response_code(500);
+    die('JV3000 requiere PHP 8.2 o superior. Selecciona PHP 8.2+ en la configuración de Apache/XAMPP.');
+}
+if (!extension_loaded('mysqli')) {
+    http_response_code(500);
+    die('JV3000 requiere la extensión mysqli. Actívala en el php.ini que utiliza Apache y reinicia Apache.');
+}
+
 // --- 5. Cargar clases core ---
 require_once __DIR__ . '/includes/Database.php';
 require_once __DIR__ . '/includes/Security.php';
@@ -57,12 +66,26 @@ require_once __DIR__ . '/includes/helpers.php';
 // ==========================================
 
 // --- 6/7. Conectar BD (auto-restaurar backup si la BD no existe) ---
-function jv_db_error_page()
+function jv_db_error_page(?Throwable $error = null): void
 {
-    die("<div style='background:#020617;color:#f87171;font-family:sans-serif;text-align:center;padding:100px;height:100vh;'>
-            <div style='max-width:600px;margin:auto;border:1px solid rgba(248,113,113,0.3);padding:40px;border-radius:20px;background:#0f172a;'>
+    $errorCode = $error ? (int)$error->getCode() : 0;
+    $diagnostic = match ($errorCode) {
+        1044, 1045 => 'MySQL rechazó el usuario o la contraseña. Usa el asistente de conexión para configurar los datos de este equipo.',
+        1049 => 'La base de datos configurada no existe. El asistente de instalación puede crearla si el usuario tiene permiso CREATE DATABASE.',
+        2002, 2003 => 'No se pudo alcanzar el servidor MySQL. Verifica que MySQL esté iniciado y usa el asistente para indicar el host y puerto correctos.',
+        default => 'Revisa que MySQL esté iniciado y usa el asistente para comprobar la configuración. El registro de Apache contiene el diagnóstico técnico.',
+    };
+    if ($error) {
+        error_log("[JV3000] Error de conexión a la base de datos (código {$errorCode}): " . $error->getMessage());
+    }
+
+    http_response_code(500);
+    die("<div style='background:#020617;color:#f87171;font-family:sans-serif;text-align:center;padding:100px;min-height:100vh;box-sizing:border-box;'>
+            <div style='max-width:650px;margin:auto;border:1px solid rgba(248,113,113,0.3);padding:40px;border-radius:20px;background:#0f172a;'>
                 <h2 style='color:#ef4444;text-transform:uppercase;letter-spacing:2px;'>Error de Conexión</h2>
                 <p style='color:#94a3b8;margin-top:20px;'>No se pudo conectar a la base de datos.</p>
+                <p style='color:#fbbf24;margin-top:20px;'>" . htmlspecialchars($diagnostic, ENT_QUOTES, 'UTF-8') . "</p>
+                <p style='color:#94a3b8;margin-top:20px;'>Recarga la página para abrir el asistente de conexión y guardar la configuración local de este equipo.</p>
             </div>
          </div>");
 }
@@ -78,21 +101,37 @@ function jv_importar_sql(mysqli $conn, string $sql_path): bool
         return false;
     }
     @mysqli_query($conn, "SET FOREIGN_KEY_CHECKS = 0");
+    if (!is_file($sql_path) || !is_readable($sql_path)) {
+        error_log("[JV3000] Archivo SQL no encontrado o no legible: " . $sql_path);
+        return false;
+    }
     $sql_content = file_get_contents($sql_path);
-    if (empty($sql_content)) {
+    if ($sql_content === false || trim($sql_content) === '') {
         error_log("[JV3000] Archivo SQL vacío: " . $sql_path);
         return false;
     }
-    @mysqli_multi_query($conn, $sql_content);
-    do {
-        if ($res = @mysqli_store_result($conn)) {
-            @mysqli_free_result($res);
+    try {
+        if (!mysqli_multi_query($conn, $sql_content)) {
+            error_log("[JV3000] No se pudo iniciar la importación SQL: " . mysqli_error($conn));
+            return false;
         }
-    } while (@mysqli_next_result($conn));
+        do {
+            if ($res = mysqli_store_result($conn)) {
+                mysqli_free_result($res);
+            }
+            if (mysqli_errno($conn) !== 0) {
+                error_log("[JV3000] Error durante la importación SQL: " . mysqli_error($conn));
+                return false;
+            }
+        } while (mysqli_more_results($conn) && mysqli_next_result($conn));
+    } catch (mysqli_sql_exception $e) {
+        error_log("[JV3000] Importación SQL fallida: " . $e->getMessage());
+        return false;
+    }
     $check = @mysqli_query($conn, "SELECT COUNT(*) AS total FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . DB_NAME . "'");
     $row = $check ? @mysqli_fetch_assoc($check) : null;
-    if (!$row || (int)$row['total'] === 0) {
-        error_log("[JV3000] Import fallido (sin tablas): " . $sql_path);
+    if (!$row || (int)$row['total'] < 20) {
+        error_log("[JV3000] Importación incompleta (menos de 20 tablas): " . $sql_path);
         return false;
     }
     error_log("[JV3000] BD auto-instalada desde: " . basename($sql_path));
@@ -104,10 +143,10 @@ function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm)
     $demo_error = false;
     if ($showDemoForm && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['instalar_demo'])) {
         Security::validateCSRF();
-        $conn_demo = @mysqli_connect(DB_HOST, DB_USER, DB_PASS);
-        if ($conn_demo && jv_importar_sql($conn_demo, __DIR__ . '/db/jv3000_portable_v5.sql')) {
+        $conn_demo = @mysqli_connect(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
+        if ($conn_demo && jv_importar_sql($conn_demo, __DIR__ . '/db/jv3000_portable_v6.sql')) {
             mysqli_close($conn_demo);
-            header('Location: dashboard/index.php');
+            header('Location: ' . BASE_PATH . 'dashboard/index.php');
             exit;
         }
         if ($conn_demo) {
@@ -119,7 +158,7 @@ function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm)
 
     $csrfToken = Security::generateToken();
     $additionalMessage = $demo_error
-        ? "<p style='color:#fbbf24;margin-top:20px;'>La instalación falló. Revisa que exista db/jv3000_portable_v5.sql o coloca un respaldo en backups/.</p>"
+        ? "<p style='color:#fbbf24;margin-top:20px;'>La instalación falló. Revisa config/.env, que MySQL permita crear la base y sus tablas, que db/jv3000_portable_v6.sql exista y que el registro de Apache no muestre errores SQL.</p>"
         : '';
     $installationForm = '';
     if ($showDemoForm) {
@@ -139,16 +178,161 @@ function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm)
          </div>");
 }
 
+/**
+ * Prueba y guarda las credenciales locales de MySQL mediante un formulario protegido por CSRF.
+ */
+function jv_db_setup_page(?Throwable $initialError = null): never
+{
+    if (!in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1', '::ffff:127.0.0.1'], true)) {
+        http_response_code(403);
+        die('Por seguridad, el asistente de base de datos solo está disponible desde el mismo equipo. Configura config/.env localmente.');
+    }
+
+    $errorMessage = '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_conexion'])) {
+        Security::validateCSRF();
+        $host = trim((string)($_POST['db_host'] ?? ''));
+        $user = trim((string)($_POST['db_user'] ?? ''));
+        $password = (string)($_POST['db_pass'] ?? '');
+        $database = trim((string)($_POST['db_name'] ?? ''));
+        $port = filter_var($_POST['db_port'] ?? null, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1, 'max_range' => 65535],
+        ]);
+
+        if (filter_var($host, FILTER_VALIDATE_IP) === false && !preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9.-]{0,252}\z/', $host)) {
+            $errorMessage = 'El host debe ser un nombre o dirección válida, por ejemplo localhost o 127.0.0.1.';
+        } elseif (!preg_match('/\A[A-Za-z0-9_][A-Za-z0-9_.@-]{0,127}\z/', $user)) {
+            $errorMessage = 'El usuario MySQL contiene caracteres no permitidos.';
+        } elseif (!preg_match('/\A[A-Za-z0-9_]{1,64}\z/', $database)) {
+            $errorMessage = 'El nombre de la base solo puede contener letras, números y guion bajo.';
+        } elseif ($port === false) {
+            $errorMessage = 'El puerto debe ser un número entre 1 y 65535.';
+        } elseif (strlen($password) > 1024 || str_contains($password, "\0")) {
+            $errorMessage = 'La contraseña no es válida.';
+        } else {
+            $probe = null;
+            try {
+                $probe = @mysqli_connect($host, $user, $password, '', (int)$port);
+                if (!$probe) {
+                    throw new RuntimeException('No se pudo conectar al servidor MySQL.', mysqli_connect_errno());
+                }
+                mysqli_set_charset($probe, 'utf8mb4');
+                try {
+                    mysqli_select_db($probe, $database);
+                } catch (mysqli_sql_exception $e) {
+                    if ((int)$e->getCode() !== 1049) {
+                        throw $e;
+                    }
+                }
+                mysqli_close($probe);
+                $probe = null;
+
+                $envPath = __DIR__ . '/config/.env';
+                $envContent = "JV_DB_HOST={$host}\n"
+                    . "JV_DB_USER={$user}\n"
+                    . "JV_DB_PASS_B64=" . base64_encode($password) . "\n"
+                    . "JV_DB_NAME={$database}\n"
+                    . "JV_DB_PORT={$port}\n";
+                if (file_put_contents($envPath, $envContent, LOCK_EX) === false) {
+                    throw new RuntimeException('No se pudo guardar config/.env. Verifica permisos de escritura en la carpeta config.');
+                }
+                if (DIRECTORY_SEPARATOR !== '\\' && !chmod($envPath, 0600)) {
+                    throw new RuntimeException('No se pudieron restringir los permisos del archivo config/.env.');
+                }
+                error_log('[JV3000] Configuración local de MySQL guardada desde el asistente.');
+                header('Location: ' . BASE_PATH . 'index.php');
+                exit;
+            } catch (Throwable $e) {
+                if ($probe instanceof mysqli) {
+                    mysqli_close($probe);
+                }
+                $errorMessage = match ((int)$e->getCode()) {
+                    1044, 1045 => 'MySQL rechazó el usuario o la contraseña. Verifica los datos e inténtalo de nuevo.',
+                    1049 => 'La base aún no existe; se instalará después de guardar. El usuario necesita permiso para crearla.',
+                    2002, 2003 => 'No se encontró MySQL en ese host y puerto. Confirma que el servicio esté iniciado.',
+                    default => $e instanceof mysqli_sql_exception
+                        ? 'MySQL rechazó la conexión o el acceso a esa base. Verifica credenciales y permisos.'
+                        : $e->getMessage(),
+                };
+                error_log('[JV3000] Asistente de conexión MySQL: ' . $e->getMessage());
+            }
+        }
+    } elseif ($initialError) {
+        $errorCode = (int)$initialError->getCode();
+        $errorMessage = match ($errorCode) {
+            1044, 1045 => 'Los valores XAMPP habituales no conectaron: MySQL rechazó el usuario o la contraseña. Configura aquí los datos de este equipo.',
+            2002, 2003 => 'No se pudo alcanzar MySQL con la configuración habitual. Confirma que esté iniciado e indica aquí el host y puerto.',
+            default => 'No se pudo conectar con la configuración actual. Comprueba los datos de MySQL para este equipo.',
+        };
+    }
+
+    $token = htmlspecialchars(Security::generateToken(), ENT_QUOTES, 'UTF-8');
+    $host = htmlspecialchars((string)($_POST['db_host'] ?? DB_HOST), ENT_QUOTES, 'UTF-8');
+    $user = htmlspecialchars((string)($_POST['db_user'] ?? DB_USER), ENT_QUOTES, 'UTF-8');
+    $database = htmlspecialchars((string)($_POST['db_name'] ?? DB_NAME), ENT_QUOTES, 'UTF-8');
+    $port = htmlspecialchars((string)($_POST['db_port'] ?? DB_PORT), ENT_QUOTES, 'UTF-8');
+    $errorHtml = $errorMessage !== ''
+        ? "<p role='alert' style='color:#fca5a5;margin:20px 0;'>" . htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8') . "</p>"
+        : '';
+
+    http_response_code(200);
+    die("<main style='background:#020617;color:#e2e8f0;font-family:sans-serif;min-height:100vh;padding:40px 16px;box-sizing:border-box;'>
+        <section style='max-width:560px;margin:auto;border:1px solid #334155;padding:32px;border-radius:16px;background:#0f172a;'>
+            <h1 style='color:#fbbf24;font-size:1.5rem;'>Configurar conexión de JV3000</h1>
+            <p style='color:#cbd5e1;'>Se probaron los valores habituales de XAMPP. Ingresa los datos de MySQL de este equipo una sola vez; se guardarán localmente y no se subirán al repositorio. La contraseña se codifica para guardarla, pero Base64 no es cifrado.</p>
+            {$errorHtml}
+            <form method='post' autocomplete='off'>
+                <input type='hidden' name='csrf_token' value='{$token}'>
+                <label style='display:block;margin-top:14px;'>Servidor MySQL
+                    <input required maxlength='253' name='db_host' value='{$host}' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
+                </label>
+                <label style='display:block;margin-top:14px;'>Puerto
+                    <input required type='number' min='1' max='65535' name='db_port' value='{$port}' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
+                </label>
+                <label style='display:block;margin-top:14px;'>Usuario MySQL
+                    <input required maxlength='128' name='db_user' value='{$user}' autocomplete='username' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
+                </label>
+                <label style='display:block;margin-top:14px;'>Contraseña MySQL
+                    <input type='password' maxlength='1024' name='db_pass' autocomplete='new-password' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
+                </label>
+                <label style='display:block;margin-top:14px;'>Base de datos
+                    <input required maxlength='64' name='db_name' value='{$database}' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
+                </label>
+                <button type='submit' name='guardar_conexion' value='1' style='margin-top:22px;background:#2563eb;color:white;border:0;padding:12px 18px;border-radius:8px;font-weight:600;cursor:pointer;'>Probar y guardar conexión</button>
+            </form>
+            <p style='color:#94a3b8;margin-top:20px;font-size:.9rem;'>Si la base es nueva, el usuario MySQL necesitará permiso para crear la base y sus tablas. Este asistente no borra bases existentes.</p>
+        </section>
+    </main>");
+}
+
 try {
-    Database::getInstance()->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    Database::getInstance()->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
 } catch (Throwable $e) {
     $installed = false;
     $noBackup = false;
     $restoreFailed = false;
-    $connectionWithoutDatabase = @mysqli_connect(DB_HOST, DB_USER, DB_PASS);
+    try {
+        $connectionWithoutDatabase = @mysqli_connect(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
+    } catch (Throwable $connectionError) {
+        $connectionWithoutDatabase = false;
+    }
+    if (!$connectionWithoutDatabase) {
+        jv_db_setup_page($e);
+    }
     if ($connectionWithoutDatabase) {
-        $databaseCheck = @mysqli_query($connectionWithoutDatabase, "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '" . DB_NAME . "'");
-        if ($databaseCheck && mysqli_num_rows($databaseCheck) == 0) {
+        $databaseExists = true;
+        try {
+            if (!mysqli_select_db($connectionWithoutDatabase, DB_NAME)) {
+                throw new RuntimeException('No se pudo seleccionar la base de datos configurada.', mysqli_errno($connectionWithoutDatabase));
+            }
+        } catch (Throwable $databaseCheckError) {
+            if ((int)$databaseCheckError->getCode() !== 1049) {
+                mysqli_close($connectionWithoutDatabase);
+                jv_db_setup_page($databaseCheckError);
+            }
+            $databaseExists = false;
+        }
+        if (!$databaseExists) {
             $backup_files = glob(__DIR__ . '/backups/jv3000_db_*.sql');
             if (!$backup_files) {
                 $noBackup = true;
@@ -168,10 +352,10 @@ try {
 
     if ($installed) {
         try {
-            Database::getInstance()->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+            Database::getInstance()->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
         } catch (Throwable $e2) {
             error_log("[JV3000] DB connection failed after auto-install: " . $e2->getMessage());
-            jv_db_error_page();
+            jv_db_error_page($e2);
         }
     } elseif ($noBackup) {
         error_log("[JV3000] No hay backups en backups/ — instalación detenida.");
@@ -190,7 +374,7 @@ try {
         );
     } else {
         error_log("[JV3000] DB connection failed: " . $e->getMessage());
-        jv_db_error_page();
+        jv_db_setup_page($e);
     }
 }
 
@@ -307,6 +491,37 @@ if (!$pagosTable || (int)$pagosTable['n'] === 0) {
         CONSTRAINT fk_pago_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
     error_log("[JV3000] Tabla pagos_compra creada.");
+}
+
+// --- 7e.1. Estado de pago parcial (idempotente) ---
+$migracion_estado_pago = $jv_db->fetchOne(
+    "SELECT valor FROM configuracion WHERE clave = 'status_pago_parcial_v6'"
+);
+if (!$migracion_estado_pago) {
+    $columna_estado_pago = $jv_db->fetchOne(
+        "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'compras' AND COLUMN_NAME = 'status_pago'",
+        [DB_NAME]
+    );
+    if ($columna_estado_pago && strpos($columna_estado_pago['COLUMN_TYPE'], "'Parcial'") === false) {
+        $jv_db->execute(
+            "ALTER TABLE compras MODIFY status_pago ENUM('Pendiente','Parcial','Pagada') NOT NULL DEFAULT 'Pendiente'"
+        );
+    }
+    $jv_db->execute(
+        "UPDATE compras
+         SET status_pago = CASE
+             WHEN COALESCE(monto_pago, 0) <= 0 THEN 'Pendiente'
+             WHEN monto_pago >= total THEN 'Pagada'
+             ELSE 'Parcial'
+         END"
+    );
+    $jv_db->execute(
+        "INSERT INTO configuracion (clave, valor, descripcion, fecha_actualizado)
+         VALUES ('status_pago_parcial_v6', '1', 'Estado de pago parcial habilitado', NOW())
+         ON DUPLICATE KEY UPDATE valor = '1'"
+    );
+    error_log("[JV3000] Migración de estados de pago parciales aplicada.");
 }
 
 // --- 7f. Optimistic locking: columna updated_at en tablas clave ---
