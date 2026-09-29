@@ -3,19 +3,20 @@
 // PERFIL — JS DEL MÓDULO
 // ==========================================
 
-// Toggle ver contraseña
-function togglePass(inputId, btn) {
-    var input = document.getElementById(inputId);
-    var icon = btn.querySelector('i');
-    if (!input || !icon) return;
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.className = 'bi bi-eye-slash-fill';
-    } else {
-        input.type = 'password';
-        icon.className = 'bi bi-eye-fill';
-    }
-}
+document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
+    button.addEventListener('click', function() {
+        var inputId = button.getAttribute('aria-controls');
+        var input = inputId ? document.getElementById(inputId) : null;
+        var icon = button.querySelector('i');
+        if (!input || !icon) return;
+
+        var mostrar = input.type === 'password';
+        input.type = mostrar ? 'text' : 'password';
+        button.setAttribute('aria-pressed', String(mostrar));
+        button.setAttribute('aria-label', (mostrar ? 'Ocultar ' : 'Mostrar ') + button.dataset.passwordLabel);
+        icon.className = mostrar ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+});
 
 // Permitir solo dígitos en el PIN de emergencia
 (function() {

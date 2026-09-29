@@ -1,6 +1,22 @@
 
         /* === THEME: INVENTARIO (Cyan/Teal) ================ */
 
+        .pagina-productos.container-fluid {
+            padding-inline: clamp(24px, 2.5vw, 40px) !important;
+        }
+
+        .pagina-productos > .card-jv:first-child {
+            margin-bottom: 24px !important;
+        }
+
+        @media (max-width: 992px) {
+            .pagina-productos.container-fluid { padding-inline: 20px !important; }
+        }
+
+        @media (max-width: 576px) {
+            .pagina-productos.container-fluid { padding-inline: 16px !important; }
+        }
+
         /* ── Tabla: simetría y ancho completo ── */
         /* La tabla COMPACTA cabe sin scroll horizontal en pantallas normales */
         .table-jv {
@@ -647,7 +663,14 @@
         }
 
         /* ── Toolbar: búsqueda ── */
-        .pagina-productos .cat-search { position: relative; flex: 1; min-width: 220px; max-width: 320px; }
+        .pagina-productos #modalCategorias .cat-toolbar {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) auto auto;
+            align-items: center;
+            gap: 12px;
+        }
+        .pagina-productos .cat-search { position: relative; min-width: 0; }
+        .pagina-productos .cat-search .input-jv { width: 100%; }
         .pagina-productos .cat-search > i {
             position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
             color: var(--jv-text-muted); font-size: .9rem; pointer-events: none;
@@ -678,6 +701,21 @@
             border-color: #2563EB;
             color: #fff;
             box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+        .pagina-productos #modalCategorias .cat-toolbar > .module-action-btn {
+            white-space: nowrap;
+            justify-self: end;
+        }
+        @media (max-width: 767.98px) {
+            .pagina-productos #modalCategorias .cat-toolbar {
+                grid-template-columns: minmax(0, 1fr);
+            }
+            .pagina-productos #modalCategorias .cat-filter-group {
+                flex-wrap: wrap;
+            }
+            .pagina-productos #modalCategorias .cat-toolbar > .module-action-btn {
+                justify-self: start;
+            }
         }
 
         /* ── Contador de resultados ── */
@@ -870,4 +908,3 @@
         .pagina-productos #modalCat .jv-modal-section { padding: 18px 20px; margin-bottom: 16px; }
         .pagina-productos #modalCat .jv-modal-footer { padding: 16px 24px; }
         .pagina-productos #modalCat .jv-modal-footer .btn { padding: 10px 24px; font-size: .88rem; }
-

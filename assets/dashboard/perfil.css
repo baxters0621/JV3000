@@ -64,6 +64,29 @@
         border:1px solid var(--jv-border);
         border-radius:var(--jv-radius-xl);
     }
+    .profile-section-card {
+        min-width: 0;
+        padding: clamp(16px, 2vw, 24px);
+        background: #fff;
+        border: 1px solid #E2E8F0;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(15, 26, 46, 0.055);
+    }
+    .profile-section-title {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin: 0 0 20px;
+        padding-bottom: 13px;
+        border-bottom: 1px solid #E8EDF4;
+        color: #1E3A8A;
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.4;
+    }
+    .profile-section-title > i { color: #EA580C; font-size: 1.1rem; }
+    .profile-section-title span { color: #64748B; font-size: .82rem; font-weight: 500; }
     .perfil-info .label, .perfil-form .label {
         font-size:.75rem;font-weight:800;letter-spacing:1px;
         color:var(--jv-text-secondary);text-transform:uppercase;
@@ -107,10 +130,31 @@
     /* ── Form ── */
     .form-label-jv {
         display:block;
-        font-size:.75rem;font-weight:800;text-transform:uppercase;
-        letter-spacing:1px;color:var(--jv-text-secondary);margin-bottom:8px;
+        font-size:.78rem;font-weight:800;text-transform:uppercase;
+        letter-spacing:.65px;color:#334155;margin-bottom:8px;
     }
     .perfil-form .input-jv { font-size:1rem;padding:12px 14px; }
+    .password-field { position: relative; }
+    .password-field .input-jv { padding-right: 48px; }
+    .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        display: inline-flex;
+        width: 36px;
+        height: 36px;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-50%);
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: #475569;
+        font-size: 1.1rem;
+        cursor: pointer;
+    }
+    .password-toggle:hover { background: #F1F5F9; color: #1E3A8A; }
+    .password-toggle:focus-visible { outline: 3px solid rgba(79, 70, 229, .35); outline-offset: 2px; }
     .perfil-form .btn-jv-primary {
         background:linear-gradient(135deg,#1e3a8a,#4f46e5);
         border:none;
@@ -122,4 +166,9 @@
     .perfil-form .input-jv:focus {
         border-color:#4f46e5;
         box-shadow:0 0 0 3px rgba(79,70,229,0.15);
+    }
+
+    @media (max-width: 576px) {
+        .profile-section-card { padding: 16px; }
+        .profile-section-title { margin-bottom: 16px; }
     }

@@ -35,15 +35,21 @@
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion" value="actualizar_perfil">
 
-                <div class="col-md-6">
-                    <label class="form-label-jv" for="perfil_usuario">USUARIO</label>
-                    <input type="text" id="perfil_usuario" name="usuario" class="input-jv" required maxlength="20" value="<?php echo htmlspecialchars($usuario_data['usuario']); ?>" autocomplete="username">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label-jv" for="perfil_correo">CORREO ELECTRÓNICO</label>
-                    <input type="email" id="perfil_correo" name="correo" class="input-jv" required maxlength="100" value="<?php echo htmlspecialchars($usuario_data['correo'] ?? ''); ?>" autocomplete="email">
-                </div>
-                <div class="col-12">
+                <section class="col-12 profile-section-card" aria-labelledby="profile-account-title">
+                    <h2 class="profile-section-title" id="profile-account-title"><i class="bi bi-person-vcard"></i>Datos de la cuenta</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-jv" for="perfil_usuario">USUARIO</label>
+                            <input type="text" id="perfil_usuario" name="usuario" class="input-jv" required maxlength="20" value="<?php echo htmlspecialchars($usuario_data['usuario']); ?>" autocomplete="username">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-jv" for="perfil_correo">CORREO ELECTRÓNICO</label>
+                            <input type="email" id="perfil_correo" name="correo" class="input-jv" required maxlength="100" value="<?php echo htmlspecialchars($usuario_data['correo'] ?? ''); ?>" autocomplete="email">
+                        </div>
+                    </div>
+                </section>
+                <section class="col-12 profile-section-card" aria-labelledby="profile-role-title">
+                    <h2 class="profile-section-title" id="profile-role-title"><i class="bi bi-shield-lock"></i>Acceso al sistema</h2>
                     <div class="info-row">
                         <div class="info-icon"><i class="bi bi-shield-lock"></i></div>
                         <div class="info-text">
@@ -51,44 +57,44 @@
                             <div class="info-value"><?php echo htmlspecialchars($rol_perfil); ?></div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="col-12">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-12">
-                            <hr style="border-color:rgba(30,58,138,0.15);">
-                            <span class="fw-bold small text-secondary text-uppercase"><i class="bi bi-key me-1"></i>Cambiar Contraseña <span class="text-jv-muted">(opcional, deja en blanco para conservarla)</span></span>
-                        </div>
+                <section class="col-12 profile-section-card" aria-labelledby="profile-password-title">
+                    <h2 class="profile-section-title" id="profile-password-title"><i class="bi bi-key"></i>Cambiar contraseña <span>(opcional; deja en blanco para conservarla)</span></h2>
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label-jv" for="perfil_password_actual">CONTRASEÑA ACTUAL *</label>
-                            <div style="position:relative;">
-                                <input type="password" id="perfil_password_actual" name="password_actual" class="input-jv" required autocomplete="current-password" placeholder="Necesaria para guardar cambios" style="padding-right:40px;">
-                                <button type="button" onclick="togglePass('perfil_password_actual', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                            <div class="password-field">
+                                <input type="password" id="perfil_password_actual" name="password_actual" class="input-jv" required autocomplete="current-password" placeholder="Necesaria para guardar cambios">
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la contraseña actual" aria-label="Mostrar contraseña actual" aria-controls="perfil_password_actual" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label-jv" for="perfil_password_nueva">NUEVA CONTRASEÑA</label>
-                            <div style="position:relative;">
-                                <input type="password" id="perfil_password_nueva" name="password_nueva" class="input-jv" autocomplete="new-password" placeholder="••••••••" style="padding-right:40px;">
-                                <button type="button" onclick="togglePass('perfil_password_nueva', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                            <div class="password-field">
+                                <input type="password" id="perfil_password_nueva" name="password_nueva" class="input-jv" autocomplete="new-password" placeholder="••••••••">
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar nueva contraseña" aria-controls="perfil_password_nueva" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label-jv" for="perfil_password_confirm">CONFIRMAR NUEVA</label>
-                            <div style="position:relative;">
-                                <input type="password" id="perfil_password_confirm" name="password_confirm" class="input-jv" autocomplete="new-password" placeholder="••••••••" style="padding-right:40px;">
-                                <button type="button" onclick="togglePass('perfil_password_confirm', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                            <div class="password-field">
+                                <input type="password" id="perfil_password_confirm" name="password_confirm" class="input-jv" autocomplete="new-password" placeholder="••••••••">
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de contraseña" aria-label="Mostrar confirmación de contraseña" aria-controls="perfil_password_confirm" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="col-12">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-12">
-                            <hr style="border-color:rgba(30,58,138,0.15);">
-                            <span class="fw-bold small text-secondary text-uppercase"><i class="bi bi-shield-question me-1"></i>Pregunta de Seguridad <span class="text-jv-muted">(para recuperar tu contraseña)</span></span>
-                        </div>
+                <section class="col-12 profile-section-card" aria-labelledby="profile-security-title">
+                    <h2 class="profile-section-title" id="profile-security-title"><i class="bi bi-shield-question"></i>Pregunta de seguridad <span>(para recuperar tu contraseña)</span></h2>
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label-jv" for="perfil_pregunta">SELECCIONA UNA PREGUNTA</label>
                             <select id="perfil_pregunta" name="pregunta_seguridad" class="input-jv" required>
@@ -103,38 +109,39 @@
                             <input type="text" id="perfil_respuesta" name="respuesta_seguridad" class="input-jv" required maxlength="255" autocomplete="off" placeholder="Escribe tu respuesta">
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="col-12">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-12">
-                            <hr style="border-color:rgba(30,58,138,0.15);">
-                            <span class="fw-bold small text-secondary text-uppercase"><i class="bi bi-shield-exclamation me-1"></i>PIN de Emergencia <span class="text-jv-muted">(6 dígitos, para recuperar tu contraseña si olvidas la respuesta)</span></span>
-                        </div>
+                <section class="col-12 profile-section-card" aria-labelledby="profile-pin-title">
+                    <h2 class="profile-section-title" id="profile-pin-title"><i class="bi bi-shield-exclamation"></i>PIN de emergencia <span>(6 dígitos; alternativa de recuperación)</span></h2>
+                    <div class="row g-3 align-items-end">
                         <div class="col-md-6">
                             <label class="form-label-jv" for="perfil_pin">PIN DE EMERGENCIA</label>
-                            <div style="position:relative;">
-                                <input type="password" id="perfil_pin" name="pin_emergencia" class="input-jv" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="<?php echo !empty($usuario_data['pin_emergencia']) ? '•••••• (configurado)' : '6 dígitos'; ?>" style="padding-right:40px;">
-                                <button type="button" onclick="togglePass('perfil_pin', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                            <div class="password-field">
+                                <input type="password" id="perfil_pin" name="pin_emergencia" class="input-jv" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="<?php echo !empty($usuario_data['pin_emergencia']) ? '•••••• (configurado)' : '6 dígitos'; ?>">
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="el PIN de emergencia" aria-label="Mostrar PIN de emergencia" aria-controls="perfil_pin" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label-jv" for="perfil_pin_confirm">CONFIRMAR PIN</label>
-                            <div style="position:relative;">
-                                <input type="password" id="perfil_pin_confirm" name="pin_emergencia_confirm" class="input-jv" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Repite el PIN" style="padding-right:40px;">
-                                <button type="button" onclick="togglePass('perfil_pin_confirm', this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:1.1rem;"><i class="bi bi-eye-slash-fill"></i></button>
+                            <div class="password-field">
+                                <input type="password" id="perfil_pin_confirm" name="pin_emergencia_confirm" class="input-jv" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Repite el PIN">
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación del PIN" aria-label="Mostrar confirmación del PIN" aria-controls="perfil_pin_confirm" aria-pressed="false">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
-                        <div class="col-md-2 d-flex align-items-end pb-2">
-                            <div class="form-check">
+                        <div class="col-md-2">
+                            <div class="form-check pb-2">
                                 <input class="form-check-input" type="checkbox" id="perfil_pin_eliminar" name="pin_emergencia_eliminar" value="1">
                                 <label class="form-check-label small text-secondary" for="perfil_pin_eliminar">Eliminar PIN</label>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="col-12 d-flex flex-wrap gap-2">
+                <div class="col-12 d-flex flex-wrap gap-2 pt-2">
                     <button type="submit" class="btn btn-jv-primary px-5 py-3 fw-bolder text-uppercase">
                         <i class="bi bi-check2-circle me-2"></i>GUARDAR CAMBIOS
                     </button>

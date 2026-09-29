@@ -6,8 +6,8 @@
 .main-wrapper .container-fluid {
     max-width: 1320px;
     margin: 0 auto;
-    padding-left: 30px;
-    padding-right: 30px;
+    padding-left: clamp(30px, 2.8vw, 40px);
+    padding-right: clamp(30px, 2.8vw, 40px);
 }
 
 /* ==========================================
@@ -336,7 +336,7 @@
    SECCIONES
    ========================================== */
 
-.dash-section { margin-bottom: 34px; }
+.dash-section { margin-bottom: 40px; }
 
 .sec-title {
     font-family: var(--jv-font-brand);
@@ -361,7 +361,7 @@
 .quick-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+    gap: 24px;
 }
 
 .quick-btn {

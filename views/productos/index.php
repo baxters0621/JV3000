@@ -269,7 +269,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                 </button>
             </div>
             <div class="modal-body p-3">
-                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <div class="cat-toolbar mb-3">
                     <div class="cat-search">
                         <i class="bi bi-search"></i>
                         <input type="text" class="input-jv" id="buscarCat" placeholder="Buscar por nombre o c&oacute;digo..." oninput="catFiltrar()" aria-label="Buscar categor&iacute;a">
@@ -279,7 +279,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                         <button type="button" class="btn-filter" data-status="Activo" onclick="catFiltrarEstado(this)">Activas</button>
                         <button type="button" class="btn-filter" data-status="Inactivo" onclick="catFiltrarEstado(this)">Inactivas</button>
                     </div>
-                    <button type="button" class="btn btn-jv-primary module-action-btn ms-auto" onclick="nuevaCat()">
+                    <button type="button" class="btn btn-jv-primary module-action-btn" onclick="nuevaCat()">
                         <i class="bi bi-plus-lg me-1"></i>NUEVA CATEGOR&Iacute;A
                     </button>
                 </div>

@@ -115,7 +115,7 @@ function jv_importar_sql(mysqli $conn, string $sql_path): bool
             error_log("[JV3000] No se pudo iniciar la importación SQL: " . mysqli_error($conn));
             return false;
         }
-        do {
+        while (true) {
             if ($res = mysqli_store_result($conn)) {
                 mysqli_free_result($res);
             }
@@ -123,7 +123,14 @@ function jv_importar_sql(mysqli $conn, string $sql_path): bool
                 error_log("[JV3000] Error durante la importación SQL: " . mysqli_error($conn));
                 return false;
             }
-        } while (mysqli_more_results($conn) && mysqli_next_result($conn));
+            if (!mysqli_more_results($conn)) {
+                break;
+            }
+            if (!mysqli_next_result($conn)) {
+                error_log("[JV3000] Error avanzando durante la importación SQL: " . mysqli_error($conn));
+                return false;
+            }
+        }
     } catch (mysqli_sql_exception $e) {
         error_log("[JV3000] Importación SQL fallida: " . $e->getMessage());
         return false;
@@ -491,6 +498,65 @@ if (!$pagosTable || (int)$pagosTable['n'] === 0) {
         CONSTRAINT fk_pago_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
     error_log("[JV3000] Tabla pagos_compra creada.");
+}
+
+// --- 7e.1. Completar el historial con abonos iniciales previos al ledger ---
+$ledgerBackfillFlag = $jv_db->fetchOne(
+    "SELECT valor FROM configuracion WHERE clave = 'ledger_pagos_compra_v6'"
+);
+if (!$ledgerBackfillFlag) {
+    $jv_db->begin();
+    try {
+        $legacyPayments = $jv_db->fetchAll(
+            "SELECT c.id_compra, c.id_usuario, c.monto_pago, c.metodo_pago,
+                    CASE
+                        WHEN JSON_VALID(c.detalle_pago)
+                            THEN JSON_SET(c.detalle_pago, '$._migracion_legacy_ledger', 'Abono reconstruido desde monto_pago')
+                        WHEN c.detalle_pago IS NOT NULL
+                            THEN JSON_OBJECT('_migracion_legacy_ledger', 'Abono reconstruido desde monto_pago', 'detalle_original', c.detalle_pago)
+                        ELSE JSON_OBJECT('_migracion_legacy_ledger', 'Abono reconstruido desde monto_pago')
+                    END AS detalle_pago,
+                    CASE
+                        WHEN COALESCE((
+                            SELECT SUM(p.monto) FROM pagos_compra p WHERE p.id_compra = c.id_compra
+                        ), 0) > 0 THEN c.fecha_compra
+                        ELSE COALESCE(c.fecha_pago, c.fecha_compra, NOW())
+                    END AS fecha_pago,
+                    COALESCE((
+                        SELECT SUM(p.monto) FROM pagos_compra p WHERE p.id_compra = c.id_compra
+                    ), 0) AS total_ledger
+             FROM compras c
+             WHERE COALESCE(c.monto_pago, 0) > COALESCE((
+                 SELECT SUM(p.monto) FROM pagos_compra p WHERE p.id_compra = c.id_compra
+             ), 0)
+             ORDER BY c.id_compra
+             FOR UPDATE"
+        );
+        $metodosPagoValidos = ['Efectivo', 'Transferencia', 'Cheque', 'Otro'];
+        foreach ($legacyPayments as $legacyPayment) {
+            $metodoPago = in_array($legacyPayment['metodo_pago'], $metodosPagoValidos, true)
+                ? $legacyPayment['metodo_pago']
+                : 'Otro';
+            $jv_db->insert('pagos_compra', [
+                'id_compra'   => (int)$legacyPayment['id_compra'],
+                'id_usuario'  => (int)$legacyPayment['id_usuario'],
+                'monto'       => round((float)$legacyPayment['monto_pago'] - (float)$legacyPayment['total_ledger'], 2),
+                'metodo_pago' => $metodoPago,
+                'detalle_pago' => $legacyPayment['detalle_pago'],
+                'fecha_pago'  => $legacyPayment['fecha_pago'],
+            ]);
+        }
+        $jv_db->execute(
+            "INSERT INTO configuracion (clave, valor, descripcion, fecha_actualizado)
+             VALUES ('ledger_pagos_compra_v6', '1', 'Abonos históricos iniciales migrados al ledger', NOW())
+             ON DUPLICATE KEY UPDATE valor = '1'"
+        );
+        $jv_db->commit();
+        error_log("[JV3000] Historial de pagos históricos conciliado.");
+    } catch (Throwable $e) {
+        $jv_db->rollback();
+        throw $e;
+    }
 }
 
 // --- 7e.1. Estado de pago parcial (idempotente) ---

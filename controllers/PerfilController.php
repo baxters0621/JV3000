@@ -29,9 +29,9 @@ class PerfilController extends Controller
 
         $this->view('perfil/index', [
             'titulo'             => 'Mi Perfil | JV3000 C.A.',
-            'wrapper_class'      => '',
-            'css_extra'          => ['dashboard/perfil.css'],
-            'js_extra'           => ['dashboard/perfil.js'],
+            'wrapper_class'      => 'pagina-perfil',
+            'css_extra'          => ['dashboard/perfil.css?v=3'],
+            'js_extra'           => ['dashboard/perfil.js?v=3'],
             'usuario_data'       => $usuario,
             'rol_perfil'         => $rolPerfil,
             'inicial'            => $inicial,

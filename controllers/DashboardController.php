@@ -78,7 +78,7 @@ class DashboardController extends Controller
         // Renderizar vista standalone (sin layout principal)
         $this->view('dashboard/index', [
             'titulo'        => 'Panel de Inicio | JV3000 C.A.',
-            'css_extra'     => ['dashboard/index.css?v=31'],
+            'css_extra'     => ['dashboard/index.css?v=33'],
             'js_extra'      => ['js/chart.umd.min.js', 'dashboard/index.js?v=13'],
             'csrf'          => Security::generateToken(),
             'nombre_user'   => $nombre_user,
