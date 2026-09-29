@@ -118,33 +118,42 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
             <span class="small text-secondary fw-semibold"><i class="bi bi-info-circle me-1"></i>Se generan desde Ventas cuando un producto queda sin stock</span>
         </div>
         <div class="table-responsive">
-            <table class="table-jv mb-0">
+            <table class="table-jv comp-sol-table mb-0">
+                <colgroup>
+                    <col class="comp-sol-col-numero">
+                    <col class="comp-sol-col-solicitante">
+                    <col class="comp-sol-col-motivo">
+                    <col class="comp-sol-col-productos">
+                    <col class="comp-sol-col-unidades">
+                    <col class="comp-sol-col-fecha">
+                    <col class="comp-sol-col-acciones">
+                </colgroup>
                 <thead>
                     <tr>
-                        <th style="width:10%;">Solicitud</th>
-                        <th style="width:14%;">Solicitante</th>
+                        <th>Solicitud</th>
+                        <th>Solicitante</th>
                         <th>Motivo</th>
-                        <th class="text-center" style="width:8%;">Productos</th>
-                        <th class="text-center" style="width:8%;">Unidades</th>
-                        <th style="width:10%;">Fecha</th>
-                        <th class="text-center" style="width:160px;">Acción</th>
+                        <th class="text-center comp-sol-cantidad">Productos</th>
+                        <th class="text-center comp-sol-cantidad">Unidades</th>
+                        <th>Fecha</th>
+                        <th class="text-center">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="tablaSolicitudes">
                     <?php foreach ($solicitudes_pendientes as $sol_pend): ?>
                         <tr>
-                            <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge sol-num-badge"><?php echo '#' . (int)$sol_pend['id_solicitud']; ?></span></td>
-                            <td class="text-uppercase fw-bold small"><?php echo htmlspecialchars($sol_pend['solicitante']); ?></td>
-                            <td style="color:var(--jv-text-secondary);"><?php echo htmlspecialchars($sol_pend['motivo'] ?? 'Solicitud de reposición'); ?></td>
-                            <td class="text-center"><span class="cant-badge"><?php echo (int)$sol_pend['num_productos']; ?></span></td>
-                            <td class="text-center fw-bold"><?php echo (int)$sol_pend['total_unidades']; ?></td>
-                            <td class="small" style="color:var(--jv-text-muted);"><?php echo date('d/m/Y H:i', strtotime($sol_pend['fecha_solicitud'])); ?></td>
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center gap-1">
+                            <td class="sol-celda-numero" data-label="Solicitud" style="vertical-align:middle;text-align:center;"><span class="codigo-badge sol-num-badge"><?php echo '#' . (int)$sol_pend['id_solicitud']; ?></span></td>
+                            <td class="sol-celda-solicitante text-uppercase fw-bold small" data-label="Solicitante"><?php echo htmlspecialchars($sol_pend['solicitante']); ?></td>
+                            <td class="sol-celda-motivo" data-label="Motivo" style="color:var(--jv-text-secondary);"><?php echo htmlspecialchars($sol_pend['motivo'] ?? 'Solicitud de reposición'); ?></td>
+                            <td class="sol-celda-productos text-center" data-label="Productos"><span class="cant-badge"><?php echo (int)$sol_pend['num_productos']; ?></span></td>
+                            <td class="sol-celda-unidades text-center fw-bold" data-label="Unidades"><?php echo (int)$sol_pend['total_unidades']; ?></td>
+                            <td class="sol-celda-fecha small" data-label="Fecha"><?php echo date('d/m/Y H:i', strtotime($sol_pend['fecha_solicitud'])); ?></td>
+                            <td class="sol-celda-acciones text-center" data-label="Acción">
+                                <div class="sol-acciones-grupo">
                                     <a href="<?php echo APP_URL_BASE; ?>index.php?url=compras&atender_solicitud=<?php echo (int)$sol_pend['id_solicitud']; ?>" class="btn btn-sm btn-jv-success comp-sol-atender" data-tooltip="Atender esta solicitud creando la compra">
-                                        <i class="bi bi-cart-check me-1"></i>ATENDER
+                                        <i class="bi bi-cart-check"></i><span>Atender</span>
                                     </a>
-                                    <button type="button" class="btn-action comp-sol-cancelar" onclick="confirmarCancelarSolicitud(<?php echo (int)$sol_pend['id_solicitud']; ?>)" data-tooltip="Cancelar solicitud"><i class="bi bi-x-circle"></i></button>
+                                    <button type="button" class="btn-action comp-sol-cancelar" onclick="confirmarCancelarSolicitud(<?php echo (int)$sol_pend['id_solicitud']; ?>)" data-tooltip="Cancelar solicitud" aria-label="Cancelar solicitud"><i class="bi bi-x-circle"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -169,8 +178,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
             <option value="Pagada" <?php echo $filtro_pago === 'Pagada' ? 'selected' : ''; ?>>Pagada</option>
         </select>
     </div>
-    <div class="table-responsive">
-        <table class="table-jv mb-0">
+    <div class="table-responsive compras-list-responsive">
+        <table class="table-jv mb-0 compras-list-table">
             <colgroup>
                 <col class="col-factura">
                 <col class="col-proveedor">
@@ -194,39 +203,43 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
             <tbody id="tablaEntradas">
                 <?php if (count($compras) > 0): foreach ($compras as $compra): ?>
                         <tr>
-                            <td class="td-factura">
-                                <span class="codigo-badge" data-tooltip="<?php echo htmlspecialchars($compra['nro_control'] ?: 'Sin control'); ?>"><?php echo htmlspecialchars($compra['nro_factura'] ?: '-'); ?></span>
+                            <td class="td-factura" data-label="Factura">
+                                <span class="codigo-badge" data-tooltip="<?php echo htmlspecialchars('Factura: ' . ($compra['nro_factura'] ?: '-') . ' · Control: ' . ($compra['nro_control'] ?: 'Sin control'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['nro_factura'] ?: '-'); ?></span>
                             </td>
-                            <td class="td-proveedor" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?>">
+                            <td class="td-proveedor" data-label="Proveedor" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?>">
                                 <span class="proveedor-nombre"><?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?></span>
                             </td>
-                            <td class="td-detalle" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? ''); ?>">
-                                <span class="cant-pill">+<?php echo (int)$compra['total_cantidad']; ?></span>
-                                <span class="detalle-nombres"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></span>
+                            <td class="td-detalle" data-label="Detalle" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? ''); ?>">
+                                <div class="detalle-resumen">
+                                    <span class="cant-pill" data-tooltip="Unidades totales incluidas en esta compra"><?php echo (int)$compra['total_cantidad']; ?> unidades</span>
+                                    <span class="detalle-nombres"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></span>
+                                </div>
                             </td>
-                            <td class="td-total text-end">
+                            <td class="td-total text-end" data-label="Total">
                                 <span class="total-monto">$<?php echo number_format($compra['total'], 2); ?></span>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center" data-label="Pago">
                                 <?php $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
                                 <span class="badge-jv <?php echo $status_pago === 'Pagada' ? 'badge-success' : 'badge-warning'; ?>"><i class="bi <?php echo $status_pago === 'Pagada' ? 'bi-check-circle' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $status_pago; ?></span>
                                 <?php if ($status_pago !== 'Pagada' && (float)($compra['saldo_pendiente'] ?? 0) > 0): ?>
                                     <div class="mt-1" style="font-size:.75rem;color:var(--jv-red);">Saldo: $<?php echo number_format($compra['saldo_pendiente'], 2); ?></div>
                                 <?php endif; ?>
                             </td>
-                            <td class="td-fecha"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
-                            <td class="text-center">
+                            <td class="td-fecha" data-label="Fecha"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
+                            <td class="text-center" data-label="Acciones">
+                                <div class="compra-actions">
                                 <?php if ($status_pago !== 'Pagada' && (float)($compra['saldo_pendiente'] ?? 0) > 0): ?>
-                                    <button type="button" class="btn-action" style="color:var(--jv-green);border-color:var(--jv-green);" onclick="abrirModalPago(<?php echo (int)$compra['id_compra']; ?>, '<?php echo htmlspecialchars(addslashes($compra['nro_factura'] ?? ''), ENT_QUOTES); ?>', <?php echo (float)$compra['total']; ?>, <?php echo (float)($compra['saldo_pendiente'] ?? 0); ?>)" data-tooltip="Registrar pago"><i class="bi bi-cash-coin"></i></button>
+                                    <button type="button" class="btn-action" style="color:var(--jv-green);border-color:var(--jv-green);" onclick="abrirModalPago(<?php echo (int)$compra['id_compra']; ?>, '<?php echo htmlspecialchars(addslashes($compra['nro_factura'] ?? ''), ENT_QUOTES); ?>', <?php echo (float)$compra['total']; ?>, <?php echo (float)($compra['saldo_pendiente'] ?? 0); ?>)" data-tooltip="Registrar pago" aria-label="Registrar pago"><i class="bi bi-cash-coin"></i></button>
                                 <?php endif; ?>
                                 <?php if ($es_admin): ?>
-                                    <button type="button" class="btn-action" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="Anular compra"><i class="bi bi-trash"></i></button>
+                                    <button type="button" class="btn-action btn-anular-compra" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="Anular compra" aria-label="Anular compra"><i class="bi bi-slash-circle"></i></button>
                                 <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach;
                 else: ?>
-                    <tr>
+                    <tr class="compras-empty-row">
                         <td colspan="7">
                             <div class="estado-vacio">
                                 <i class="bi bi-cart-x"></i>
@@ -323,8 +336,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($recepcion['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($recepcion['proveedor'] ?? 'S/P'); ?></td>
                             <td class="text-center"><span class="cant-badge">+<?php echo (int)$recepcion['num_items']; ?></span></td>
                             <td class="text-center fw-bold text-success">+<?php echo (int)$recepcion['unidades']; ?></td>
-                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($recepcion['documento_recepcion'] ?: '-'); ?></td>
-                            <td style="color:var(--jv-text-muted);"><?php echo htmlspecialchars($recepcion['operador'] ?? '-'); ?></td>
+                            <td class="rec-documento"><?php echo htmlspecialchars($recepcion['documento_recepcion'] ?: '-'); ?></td>
+                            <td class="rec-operador"><?php echo htmlspecialchars($recepcion['operador'] ?? '-'); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

@@ -145,6 +145,7 @@
                 const skuEl = document.createElement('div');
                 skuEl.className = 'r-sku';
                 skuEl.textContent = product.sku || '';
+                if (product.sku) skuEl.dataset.tooltip = product.sku;
                 left.appendChild(nombreEl);
                 left.appendChild(skuEl);
 

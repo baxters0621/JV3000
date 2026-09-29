@@ -82,6 +82,7 @@
             text-align: center;
             white-space: nowrap;
         }
+        .td-prod-sku .codigo-badge { cursor: help; }
 
         .prod-precio {
             font-weight: 700;

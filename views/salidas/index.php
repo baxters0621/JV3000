@@ -104,18 +104,29 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
         <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nota, control, cliente, RIF, producto..." id="buscarSal" aria-label="Buscar salida" onkeyup="filtrarSalidas()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;">
     </div>
     <div class="table-responsive">
-        <table class="table-jv mb-0">
+        <table class="table-jv salidas-list-table mb-0">
+            <colgroup>
+                <col class="sal-col-nota">
+                <col class="sal-col-control">
+                <col class="sal-col-cliente">
+                <col class="sal-col-productos">
+                <col class="sal-col-cantidad">
+                <col class="sal-col-tipo">
+                <col class="sal-col-total">
+                <col class="sal-col-fecha">
+                <col class="sal-col-acciones">
+            </colgroup>
             <thead>
                 <tr>
-                    <th style="width:10%;">Nota</th>
-                    <th style="width:10%;">N° Control</th>
-                    <th style="width:15%;">Cliente</th>
-                    <th style="width:20%;">Productos</th>
-                    <th class="text-center" style="width:6%;">Cant</th>
-                    <th class="text-center" style="width:12%;">Tipo</th>
-                    <th style="width:9%;">Total</th>
-                    <th class="text-center" style="width:8%;">Fecha</th>
-                    <th class="text-center" style="width:10%;">Acciones</th>
+                    <th>Nota</th>
+                    <th>N° Control</th>
+                    <th>Cliente</th>
+                    <th>Productos</th>
+                    <th class="text-center">Cant</th>
+                    <th class="text-center">Tipo</th>
+                    <th>Total</th>
+                    <th class="text-center">Fecha</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody id="tablaSalidas">
@@ -146,18 +157,20 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                                     ?></td>
                             <td class="td-total" style="<?php echo $grupo_mov === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($outgoingRecord['total_monto'] ?? 0, 2); ?></td>
                             <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($outgoingRecord['fecha_salida'])); ?></td>
-                            <td class="text-center" style="white-space:nowrap;">
-                                <button class="btn-action" onclick="verFactura(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Ver Nota">
+                            <td class="sal-celda-acciones text-center">
+                                <div class="sal-acciones-grupo">
+                                <button class="btn-action" onclick="verFactura(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Ver Nota" aria-label="Ver nota">
                                     <i class="bi bi-receipt"></i>
                                 </button>
-                                <button class="btn-action" onclick='editarSalida(<?php echo json_encode($outgoingRecord); ?>)' data-tooltip="Editar">
+                                <button class="btn-action" onclick='editarSalida(<?php echo json_encode($outgoingRecord); ?>)' data-tooltip="Editar" aria-label="Editar salida">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
                                 <?php if (Security::esAdmin()): ?>
-                                    <button class="btn-action" onclick="confirmarEliminar(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Anular">
-                                        <i class="bi bi-trash3"></i>
+                                    <button class="btn-action" onclick="confirmarEliminar(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Anular" aria-label="Anular salida">
+                                        <i class="bi bi-slash-circle"></i>
                                     </button>
                                 <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -75,26 +75,29 @@
 
         .pagina-compras .card-jv-table .table-responsive {
             border-radius: 0 0 var(--jv-radius) var(--jv-radius);
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: hidden;
         }
 
         .pagina-compras .table-jv {
             table-layout: fixed;
             width: 100%;
-            min-width: 0;
+            min-width: 1120px;
             border-collapse: separate;
             border-spacing: 0 8px;
             background: transparent;
+            font-family: var(--jv-font-main);
+            color: var(--jv-text-primary);
         }
 
         /* Column widths (7 columns) — sum = 100% */
-        .pagina-compras .table-jv colgroup .col-factura   { width: 10%; }
+        .pagina-compras .table-jv colgroup .col-factura   { width: 14%; }
         .pagina-compras .table-jv colgroup .col-proveedor { width: 20%; }
-        .pagina-compras .table-jv colgroup .col-detalle   { width: 28%; }
+        .pagina-compras .table-jv colgroup .col-detalle   { width: 22%; }
         .pagina-compras .table-jv colgroup .col-total     { width: 12%; }
         .pagina-compras .table-jv colgroup .col-pago      { width: 12%; }
         .pagina-compras .table-jv colgroup .col-fecha     { width: 10%; }
-        .pagina-compras .table-jv colgroup .col-acciones  { width: 8%; }
+        .pagina-compras .table-jv colgroup .col-acciones  { width: 10%; }
 
         /* Header: continuous green strip — gradient on row, not cells */
         .pagina-compras .table-jv thead {
@@ -148,10 +151,12 @@
             border: none;
             padding: 20px 16px;
             font-size: 1rem;
+            font-family: var(--jv-font-main);
             vertical-align: middle;
             color: var(--jv-text-primary);
             line-height: 1.5;
             text-align: center;
+            overflow: hidden;
         }
 
         .pagina-compras .table-jv tbody td:first-child {
@@ -167,6 +172,12 @@
 
         /* ── Celda factura: badge + tooltip N° Control ── */
         .pagina-compras .td-factura .codigo-badge {
+            display: inline-block;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
             cursor: help;
         }
 
@@ -175,39 +186,58 @@
             cursor: help;
         }
         .pagina-compras .proveedor-nombre {
+            display: -webkit-box;
+            max-width: 100%;
+            overflow: hidden;
+            overflow-wrap: anywhere;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            font-family: var(--jv-font-main);
             font-weight: 800;
-            font-size: 1.05rem;
+            font-size: .9rem;
             color: #065F46;
             text-transform: uppercase;
-            letter-spacing: .3px;
+            letter-spacing: .15px;
         }
 
         /* ── Celda detalle: pill + nombres ── */
         .pagina-compras .td-detalle {
-            max-width: 320px;
+            overflow: hidden;
+            text-align: left !important;
             cursor: help;
+        }
+        .pagina-compras .detalle-resumen {
+            display: flex;
+            min-width: 0;
+            align-items: center;
+            gap: 8px;
         }
         .pagina-compras .cant-pill {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
+            max-width: 100%;
             background: linear-gradient(135deg, #EA580C, #DC2626);
             color: #fff;
-            padding: 4px 10px;
+            padding: 5px 10px;
             border-radius: 12px;
-            font-size: .78rem;
+            font-family: var(--jv-font-main);
+            font-size: .76rem;
             font-weight: 800;
-            margin-right: 8px;
             box-shadow: 0 2px 6px rgba(234,88,12,0.25);
             flex-shrink: 0;
             vertical-align: middle;
+            white-space: nowrap;
         }
         .pagina-compras .detalle-nombres {
+            display: inline-block;
+            min-width: 0;
+            flex: 1 1 auto;
             font-weight: 600;
             color: var(--jv-text-primary);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            display: inline;
             vertical-align: middle;
         }
 
@@ -232,6 +262,23 @@
 
         .pagina-compras .btn-jv-primary {
             background: linear-gradient(135deg, #059669, #065f46);
+        }
+
+        .pagina-compras .compra-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .pagina-compras .btn-anular-compra {
+            border-color: rgba(220, 38, 38, .28);
+            background: rgba(220, 38, 38, .07);
+            color: #B91C1C;
+        }
+        .pagina-compras .btn-anular-compra:hover {
+            border-color: #DC2626;
+            background: #DC2626;
+            color: #fff;
         }
 
         .pagina-compras .btn-jv-primary:hover {
@@ -913,6 +960,11 @@
             gap: 8px;
         }
 
+        .com-resultados .com-resultado > div:first-child {
+            flex: 1;
+            min-width: 0;
+        }
+
         .com-resultados .com-resultado:hover {
             background: rgba(16, 185, 129, 0.08);
         }
@@ -924,8 +976,15 @@
         }
 
         .com-resultados .com-resultado .r-sku {
-            font-size: .85rem;
-            color: var(--jv-text-muted);
+            width: fit-content;
+            max-width: 100%;
+            margin-top: 2px;
+            color: var(--jv-text-secondary);
+            font-size: .9rem;
+            font-weight: 700;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+            cursor: help;
         }
 
         .com-resultados .com-resultado .r-stock {
@@ -1457,15 +1516,53 @@
 .pagina-compras .rec-table th {
     color: #B45309;
 }
+.pagina-compras .rec-table .rec-documento,
+.pagina-compras .rec-table .rec-operador {
+    color: #334155;
+    font-family: var(--jv-font-main);
+    font-weight: 600;
+}
 .pagina-compras .comp-sol-card {
     border-top: 3px solid #7C3AED;
 }
+.pagina-compras .comp-sol-table thead th {
+    padding-right: 18px;
+    padding-left: 18px;
+    white-space: nowrap;
+}
+.pagina-compras .comp-sol-table .comp-sol-cantidad {
+    text-align: center;
+}
+.pagina-compras .comp-sol-table {
+    table-layout: fixed;
+    min-width: 1120px;
+}
+.pagina-compras .comp-sol-table .comp-sol-col-numero { width: 10%; }
+.pagina-compras .comp-sol-table .comp-sol-col-solicitante { width: 14%; }
+.pagina-compras .comp-sol-table .comp-sol-col-motivo { width: 16%; }
+.pagina-compras .comp-sol-table .comp-sol-col-productos { width: 12%; }
+.pagina-compras .comp-sol-table .comp-sol-col-unidades { width: 12%; }
+.pagina-compras .comp-sol-table .comp-sol-col-fecha { width: 14%; }
+.pagina-compras .comp-sol-table .comp-sol-col-acciones { width: 22%; }
+.pagina-compras .sol-acciones-grupo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    white-space: nowrap;
+}
 .pagina-compras .comp-sol-atender {
-    padding: 7px 12px;
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 16px;
     font-size: .72rem;
     font-weight: 800;
-    letter-spacing: 1px;
+    letter-spacing: .7px;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 .pagina-compras .sol-num-badge {
     color: #7C3AED;
@@ -1474,16 +1571,20 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     background: rgba(220, 38, 38, .1);
     color: #DC2626;
+    font-size: 1rem;
+    transition: background .15s ease, color .15s ease, transform .15s ease;
 }
 .pagina-compras .comp-sol-cancelar:hover {
     background: #DC2626;
     color: #fff;
+    transform: translateY(-1px);
 }
 .pagina-compras .fecha-cell {
     color: var(--jv-text-muted);
@@ -1563,6 +1664,123 @@
 .pagina-compras #btnRecibir {
     padding: 12px 32px;
     font-size: 1rem;
+}
+@media (max-width: 767.98px) {
+    .pagina-compras .compras-list-responsive {
+        overflow: visible !important;
+        padding: 0 12px 12px;
+    }
+    .pagina-compras .compras-list-table {
+        display: block;
+        min-width: 0 !important;
+        border-spacing: 0;
+    }
+    .pagina-compras .compras-list-table thead,
+    .pagina-compras .compras-list-table colgroup {
+        display: none;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas {
+        display: grid;
+        gap: 14px;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr:not(.compras-empty-row) {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px 18px;
+        padding: 18px;
+        border-radius: 14px;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr:not(.compras-empty-row):hover {
+        transform: none;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr > td,
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr > td:first-child {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        padding: 0 !important;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        text-align: left;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr > td::before {
+        content: attr(data-label);
+        color: var(--jv-text-muted);
+        font-size: .68rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        line-height: 1.2;
+        text-transform: uppercase;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr > .td-detalle {
+        display: flex !important;
+        grid-column: 1 / -1;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+    }
+    .pagina-compras .compras-list-table .detalle-resumen {
+        display: flex;
+        width: 100%;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .pagina-compras .compras-list-table .detalle-resumen .cant-pill {
+        flex: 0 0 auto;
+    }
+    .pagina-compras .compras-list-table .detalle-resumen .detalle-nombres {
+        display: block;
+        min-width: 0;
+        flex: 1 1 auto;
+        margin: 0;
+        overflow-wrap: anywhere;
+        white-space: normal;
+        line-height: 1.45;
+    }
+    .pagina-compras .compras-list-table .td-factura .codigo-badge {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+    .pagina-compras .compras-list-table .proveedor-nombre {
+        -webkit-line-clamp: 3;
+    }
+    .pagina-compras .compras-list-table .detalle-nombres {
+        display: block;
+        max-width: 100%;
+        margin-top: 2px;
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        line-height: 1.5;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr > td[data-label="Acciones"] {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding-top: 12px !important;
+        border-top: 1px solid var(--jv-border) !important;
+    }
+    .pagina-compras .compras-list-table .compra-actions {
+        justify-content: flex-start;
+        gap: 12px;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr.compras-empty-row {
+        display: block;
+        padding: 0;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr.compras-empty-row td {
+        display: block;
+        padding: 0 !important;
+    }
+    .pagina-compras .compras-list-table tbody#tablaEntradas > tr.compras-empty-row td::before {
+        content: none;
+    }
 }
 @media (max-width: 576px) {
     .pagina-compras .rec-modal-header {

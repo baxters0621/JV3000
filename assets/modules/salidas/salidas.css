@@ -112,6 +112,77 @@
             min-width: 1000px;
         }
 
+        .pagina-salidas .salidas-list-table {
+            min-width: 1380px;
+        }
+
+        .pagina-salidas .salidas-list-table .sal-col-nota { width: 9%; }
+        .pagina-salidas .salidas-list-table .sal-col-control { width: 10%; }
+        .pagina-salidas .salidas-list-table .sal-col-cliente { width: 14%; }
+        .pagina-salidas .salidas-list-table .sal-col-productos { width: 21%; }
+        .pagina-salidas .salidas-list-table .sal-col-cantidad { width: 6%; }
+        .pagina-salidas .salidas-list-table .sal-col-tipo { width: 11%; }
+        .pagina-salidas .salidas-list-table .sal-col-total { width: 8%; }
+        .pagina-salidas .salidas-list-table .sal-col-fecha { width: 8%; }
+        .pagina-salidas .salidas-list-table .sal-col-acciones { width: 13%; }
+
+        .pagina-salidas .salidas-list-table thead th {
+            padding: 14px 12px !important;
+            color: #fff;
+            font-size: .82rem;
+            font-weight: 800;
+            letter-spacing: .65px;
+        }
+
+        .pagina-salidas .salidas-list-table tbody td {
+            padding: 16px 12px !important;
+            color: #263449;
+            font-size: .94rem;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .pagina-salidas .salidas-list-table .td-cliente .cli-nombre {
+            color: #17324D;
+            font-size: .98rem;
+            font-weight: 800;
+        }
+
+        .pagina-salidas .salidas-list-table .td-cliente .cli-rif {
+            color: #526477;
+            font-weight: 600;
+        }
+
+        .pagina-salidas .salidas-list-table .td-control,
+        .pagina-salidas .salidas-list-table .td-productos {
+            color: #334155;
+        }
+
+        .pagina-salidas .salidas-list-table .td-total {
+            font-weight: 800;
+        }
+
+        .pagina-salidas .salidas-list-table .sal-acciones-grupo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .pagina-salidas .salidas-list-table .sal-celda-acciones .btn-action {
+            flex: 0 0 40px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+        }
+
+        .pagina-salidas .salidas-list-table .sal-celda-acciones .btn-action:hover {
+            background: #FEF2F2;
+            border-color: #DC2626;
+            color: #B91C1C;
+        }
+
         .pagina-salidas .table-jv thead th {
             background: linear-gradient(135deg, #7f1d1d, #b91c1c);
             color: #fff;

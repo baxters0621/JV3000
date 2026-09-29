@@ -143,7 +143,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                         ?>
                         <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
                             <td class="td-prod-sku">
-                                <span class="codigo-badge"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
+                                <span class="codigo-badge" data-tooltip="<?php echo htmlspecialchars($productRecord['sku'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
                             </td>
                             <td class="td-prod-nombre" data-tooltip="<?php echo htmlspecialchars($productRecord['nombre_producto']); ?>">
                                 <span class="prod-nombre text-uppercase"><?php echo htmlspecialchars($productRecord['nombre_producto']); ?></span>
