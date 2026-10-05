@@ -186,24 +186,57 @@ class Salida extends Model
      */
     public function anular(int $id_salida): array
     {
-        $detalles = $this->db->fetchAll("SELECT id_producto, id_lote, cantidad FROM detalle_salidas WHERE id_salida = ?", [$id_salida]);
-        if (empty($detalles)) {
-            return ['ok' => false, 'error' => 'SALIDA SIN DETALLES PARA ANULAR.'];
-        }
-
         $this->db->begin();
         try {
+            $salida = $this->db->fetchOne(
+                "SELECT id_salida, status FROM salidas WHERE id_salida = ? FOR UPDATE",
+                [$id_salida]
+            );
+            if (!$salida || $salida['status'] !== 'Activa') {
+                $this->db->rollback();
+                return ['ok' => false, 'error' => 'LA SALIDA NO EXISTE O YA FUE ANULADA.'];
+            }
+
+            $detalles = $this->db->fetchAll(
+                "SELECT id_producto, id_lote, cantidad FROM detalle_salidas WHERE id_salida = ? ORDER BY id_detalle",
+                [$id_salida]
+            );
+            if (empty($detalles)) {
+                $this->db->rollback();
+                return ['ok' => false, 'error' => 'SALIDA SIN DETALLES PARA ANULAR.'];
+            }
+
+            $ids_producto = array_values(array_unique(array_map(
+                static fn(array $detalle): int => (int)$detalle['id_producto'],
+                $detalles
+            )));
+            sort($ids_producto, SORT_NUMERIC);
+            $placeholders = implode(',', array_fill(0, count($ids_producto), '?'));
+            $this->db->fetchAll(
+                "SELECT id_producto FROM productos WHERE id_producto IN ($placeholders) ORDER BY id_producto FOR UPDATE",
+                $ids_producto
+            );
+
             foreach ($detalles as $det) {
                 $this->db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
                 if (!empty($det['id_lote'])) devolverLote($this->db, (int)$det['id_lote'], (int)$det['cantidad']);
             }
-            $this->db->execute("UPDATE salidas SET status = 'Anulada' WHERE id_salida = ?", [$id_salida]);
+
+            $this->db->execute("UPDATE salidas SET status = 'Anulada' WHERE id_salida = ? AND status = 'Activa'", [$id_salida]);
+            $salidaActualizada = $this->db->fetchOne(
+                "SELECT status FROM salidas WHERE id_salida = ?",
+                [$id_salida]
+            );
+            if (!$salidaActualizada || $salidaActualizada['status'] !== 'Anulada') {
+                throw new RuntimeException('No se pudo actualizar el estado de la salida.');
+            }
             $this->db->execute("UPDATE movimientos SET status = 'Anulado' WHERE id_referencia = ? AND tipo_referencia = 'venta'", [$id_salida]);
-            $this->db->commit();
             registrarAuditoria('anular', "Salida #$id_salida anulada, " . count($detalles) . " producto(s)");
+            $this->db->commit();
             return ['ok' => true];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->db->rollback();
+            error_log('Error al anular la salida #' . $id_salida . ': ' . $e->getMessage());
             return ['ok' => false, 'error' => 'ERROR EN LA BASE DE DATOS.'];
         }
     }

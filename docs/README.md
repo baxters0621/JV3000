@@ -96,6 +96,23 @@ El menú lateral sigue las fases reales de trabajo. Este es el procedimiento est
 | Imprimir reporte | ✔ | ✔ | ✔ |
 | Historial | ✔ | ✖ | ✖ |
 
+## Pruebas aisladas del piloto de ventas/stock
+
+`tests/ventas_stock_piloto.php` verifica FEFO, rollback, concurrencia, anulación,
+permisos, CSRF y render MVC con fixtures sintéticos. No carga `config/.env`, no
+incluye `init.php` ni ejecuta migraciones. Para simular un fallo tardío usa
+triggers temporales de prueba y los elimina al terminar cada escenario.
+Requiere una instancia MariaDB temporal exclusiva en `127.0.0.1:33316`, con el
+esquema limpio v6 y una ruta de datos dedicada que no se use en otra instalación.
+
+Antes de ejecutarla, compruebe que el servidor, puerto, nombre de base y datadir
+son exclusivamente de prueba. Configure `JV_PILOT_TEST_DB_NAME`,
+`JV_PILOT_TEST_HOST`, `JV_PILOT_TEST_PORT` y `JV_PILOT_TEST_DATADIR` en el
+proceso de PowerShell que ejecutará `php tests\ventas_stock_piloto.php`. El
+runner vuelve a comparar esos valores con `DATABASE()`, `@@datadir`, `@@port`
+y `@@bind_address`; aborta antes de insertar fixtures si no coinciden. Nunca
+apunte estas pruebas al servicio o configuración local de la aplicación.
+
 ## Control de cambios
 
 Todo cambio de código debe registrarse en `docs/BITACORA.md` (regla obligatoria en `AGENTS.md`).
