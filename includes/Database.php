@@ -9,6 +9,7 @@ class Database
     private static ?self $instance = null;
     private ?mysqli $conn = null;
     private int $transactionDepth = 0;
+    private int $lastAffectedRows = 0;
 
     // Constructor privado
     private function __construct() {}
@@ -77,6 +78,7 @@ class Database
             throw new RuntimeException('Error ejecutando consulta: ' . $stmt->error);
         }
 
+        $this->lastAffectedRows = $stmt->affected_rows;
         return $stmt;
     }
 
@@ -128,7 +130,7 @@ class Database
     // Filas afectadas por la última operación
     public function affectedRows(): int
     {
-        return $this->conn->affected_rows;
+        return $this->lastAffectedRows;
     }
 
     // Iniciar transacción

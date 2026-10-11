@@ -98,6 +98,7 @@ class NotaEntregaController extends Controller
 
         $noteData = $modelo->armarNota($previewData, $previewDetails, $previewToken);
         $noteData['csrf'] = Security::generateToken();
+        $noteData['flash'] = $this->consumeFlash();
 
         $this->renderRaw('nota_entrega/nota', $noteData);
     }

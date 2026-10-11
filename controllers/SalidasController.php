@@ -101,8 +101,8 @@ class SalidasController extends Controller
      *
      * Lee el preview indicado por el token, ejecuta la confirmación en el
      * modelo Salida (inserta/actualiza salida, descuenta stock y lotes FEFO,
-     * registra el movimiento) y limpia el preview usado. Al final redirige
-     * con flash y, en caso de éxito, apunta al ancla de la salida creada.
+     * registra el movimiento) y consume el preview solo tras éxito. Ante un
+     * fallo explícito conserva el preview para corregir o reintentar.
      *
      * @return void
      */
@@ -120,25 +120,28 @@ class SalidasController extends Controller
             : ($_SESSION['preview_data'] ?? null);
 
         if (!$previewData) {
+            $this->flash('danger', 'EL PREVIEW YA NO ESTÁ DISPONIBLE. REVISE SALIDAS PARA CONFIRMAR EL ESTADO ANTES DE VOLVER A REGISTRAR.');
             $this->redirect('salidas');
         }
 
         $confirmationResult = (new Salida())->confirmar($previewData);
 
-        // Limpiar el preview usado (éxito o error), como hacía el original
-        if ($previewToken !== '') {
-            unset($_SESSION['preview_data'][$previewToken]);
-        } else {
-            unset($_SESSION['preview_data']);
-        }
-
         if ($confirmationResult['ok']) {
+            if ($previewToken !== '') {
+                unset($_SESSION['preview_data'][$previewToken]);
+            } else {
+                unset($_SESSION['preview_data']);
+            }
             $this->flash('success', $confirmationResult['edicion'] ? 'SALIDA ACTUALIZADA CORRECTAMENTE.' : 'VENTA REGISTRADA EXITOSAMENTE.');
             header('Location: ' . APP_URL_BASE . 'index.php?url=salidas#salida-' . (int)$confirmationResult['id_salida']);
             exit;
         }
 
-        $this->flash('danger', $confirmationResult['error'] ?? 'ERROR AL REGISTRAR LA SALIDA.');
-        $this->redirect('salidas');
+        $errorMessage = $confirmationResult['error'] ?? 'ERROR AL REGISTRAR LA SALIDA.';
+        $this->flash(
+            'danger',
+            $errorMessage . ' SI EL RESULTADO ES INCIERTO, REVISE SALIDAS ANTES DE REINTENTAR.'
+        );
+        $this->redirect('nota_entrega', $previewToken !== '' ? ['token' => $previewToken] : []);
     }
 }

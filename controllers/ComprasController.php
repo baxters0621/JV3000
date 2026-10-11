@@ -109,7 +109,26 @@ class ComprasController extends Controller
             // Recepción de mercancía (modal integrado en Compras)
             if (isset($_POST['accion_recepcion'])) {
                 $resultado = (new Recepcion())->registrar($_POST);
-                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $mensaje = $resultado['mensaje'];
+                if ($resultado['ok']) {
+                    unset($_SESSION['compras_recuperacion']);
+                } else {
+                    $recuperacion = prepararRecuperacionRecepcion($_POST);
+                    if ($recuperacion === null) {
+                        unset($_SESSION['compras_recuperacion']);
+                        $mensaje .= ' NO SE PUDO RESTAURAR EL FORMULARIO; REVISE LA COMPRA ANTES DE CONTINUAR.';
+                    } else {
+                        $_SESSION['compras_recuperacion'] = [
+                            'tipo' => 'recepcion',
+                            'datos' => $recuperacion,
+                        ];
+                        if ($recuperacion['items'] === null) {
+                            $mensaje .= ' LAS CANTIDADES NO SE RESTAURARON PORQUE EL DETALLE NO ES UNÍVOCO; REVÍSELO MANUALMENTE.';
+                        }
+                    }
+                    $mensaje .= ' SI EL RESULTADO NO ESTÁ CLARO, REVISE EL ESTADO DE LA RECEPCIÓN ANTES DE MODIFICAR DATOS O REENVIAR.';
+                }
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $mensaje);
                 $this->redirect('compras');
             }
 
@@ -135,6 +154,19 @@ class ComprasController extends Controller
                 $resultado = $modelo->registrar($_POST, (int)($_SESSION['id_usuario'] ?? 0));
                 if ($resultado['ok']) {
                     unset($_SESSION['sol_seleccionada']);
+                    unset($_SESSION['compras_recuperacion']);
+                } else {
+                    $recuperacion = prepararRecuperacionCompra($_POST);
+                    if ($recuperacion === null) {
+                        unset($_SESSION['compras_recuperacion']);
+                        $resultado['mensaje'] .= ' NO SE PUDO RESTAURAR EL DETALLE COMPLETO; REVISE Y COMPLETE EL FORMULARIO ANTES DE REINTENTAR.';
+                    } else {
+                        $_SESSION['compras_recuperacion'] = [
+                            'tipo' => 'compra',
+                            'datos' => $recuperacion,
+                        ];
+                    }
+                    $resultado['mensaje'] .= ' EL ANTICIPO Y LOS DATOS DE PAGO NO SE CONSERVARON; DEBE INGRESARLOS NUEVAMENTE.';
                 }
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
                 $this->redirect('compras');
@@ -165,6 +197,37 @@ class ComprasController extends Controller
         // datos de recepción de mercancía (compras por recibir, stock entrante).
         $sol_pendientes = (new Solicitud())->obtenerPendientes();
         $rec_datos = (new Recepcion())->dashboard();
+        foreach ($rec_datos['datos_recepcion'] as &$datos_compra_recepcion) {
+            $datos_compra_recepcion['clave_idempotencia'] = bin2hex(random_bytes(32));
+        }
+        unset($datos_compra_recepcion);
+        $recuperacion_formulario = $_SESSION['compras_recuperacion'] ?? null;
+        unset($_SESSION['compras_recuperacion']);
+        $recuperacion_compra = null;
+        $recuperacion_recepcion = null;
+        if (
+            is_array($recuperacion_formulario)
+            && isset($recuperacion_formulario['tipo'], $recuperacion_formulario['datos'])
+            && is_array($recuperacion_formulario['datos'])
+        ) {
+            if ($recuperacion_formulario['tipo'] === 'compra') {
+                $recuperacion_compra = $recuperacion_formulario['datos'];
+            } elseif (
+                $recuperacion_formulario['tipo'] === 'recepcion'
+                && isset($rec_datos['datos_recepcion'][(int)($recuperacion_formulario['datos']['id_compra'] ?? 0)])
+            ) {
+                $recuperacion_recepcion = $recuperacion_formulario['datos'];
+            } elseif ($recuperacion_formulario['tipo'] === 'recepcion') {
+                $mensajeFlash = $_SESSION['flash_msg'] ?? ['tipo' => 'warning', 'texto' => ''];
+                if (!is_array($mensajeFlash)) {
+                    $mensajeFlash = ['tipo' => 'warning', 'texto' => ''];
+                }
+                $mensajeFlash['tipo'] = $mensajeFlash['tipo'] ?? 'warning';
+                $mensajeFlash['texto'] = ($mensajeFlash['texto'] ?? '')
+                    . ' LA COMPRA YA NO APARECE PENDIENTE; REVISE EL TABLERO ANTES DE CONTINUAR.';
+                $_SESSION['flash_msg'] = $mensajeFlash;
+            }
+        }
 
         // Datos de pagos para cada compra
         $pagoModelo = new PagoCompra();
@@ -184,7 +247,7 @@ class ComprasController extends Controller
             ],
             'js_extra'            => [
                 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
-                'modules/compras/compras.js?v=13',
+                'modules/compras/compras.js?v=15',
             ],
             'compras'             => $comprasData,
             'proveedores'         => $modelo->obtenerProveedores(),
@@ -200,6 +263,8 @@ class ComprasController extends Controller
             'js_config'           => [
                 'taxPercentage'      => $iva_pct,
                 'recepcionDatos'     => $rec_datos['datos_recepcion'],
+                'compraRecuperacion' => $recuperacion_compra,
+                'recepcionRecuperacion' => $recuperacion_recepcion,
             ],
             'prov_gestion'        => $provModelo->listar(),
             'prov_activos'        => $provModelo->totalActivos(),

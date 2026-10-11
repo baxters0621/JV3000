@@ -16,6 +16,12 @@
             return tipo && tipo.value ? (movementTypeGroups[tipo.value] || '') : '';
         }
 
+        // Detecta un producto repetido solo en VENTA; otros movimientos conservan sus reglas actuales.
+        function productoYaAgregadoEnVenta(productos, grupo, idProducto) {
+            return grupo === 'venta'
+                && productos.some(product => Number(product.id_producto) === Number(idProducto));
+        }
+
         // ---- Toolbox de PRODUCTOS (AJAX) ----
         const toolboxInput = document.getElementById('buscarProductoSal');
         const resultadosBox = document.getElementById('resultadosBusquedaSal');
@@ -236,11 +242,12 @@
                 if (toolboxInput) toolboxInput.focus();
                 return;
             }
-            const requestedQuantity = parseInt(document.getElementById('s_cant').value) || 0;
-            if (requestedQuantity < 1 || requestedQuantity > 999999) {
+            const quantityText = document.getElementById('s_cant').value.trim();
+            const requestedQuantity = Number(quantityText);
+            if (!/^\d+(?:\.0+)?$/.test(quantityText) || !Number.isInteger(requestedQuantity) || requestedQuantity < 1 || requestedQuantity > 999999) {
                 Swal.fire({
                     title: 'Cantidad inválida',
-                    text: 'Ingrese una cantidad entre 1 y 999,999',
+                    text: 'Ingrese una cantidad entera entre 1 y 999,999',
                     icon: 'warning',
                     background: '#fff',
                     color: '#212529',
@@ -250,6 +257,17 @@
                 return;
             }
             const grupo = grupoActual();
+            if (productoYaAgregadoEnVenta(selectedProducts, grupo, productoSeleccionado.id)) {
+                Swal.fire({
+                    title: 'Producto ya agregado',
+                    text: 'La venta admite una sola línea por producto. Elimine la línea existente y vuelva a agregarlo con la cantidad total.',
+                    icon: 'warning',
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#EA580C'
+                });
+                return;
+            }
             const availableStock = productoSeleccionado.stock;
             if (requestedQuantity > availableStock) {
                 if (grupo === 'venta') {
@@ -660,7 +678,7 @@
             if (!pj) { pj = document.createElement('input'); pj.type = 'hidden'; pj.name = 'productos_data'; document.getElementById('formSalida').appendChild(pj); }
             const payload = selectedProducts.map(p => ({
                 id_producto: parseInt(p.id_producto),
-                cantidad: parseInt(p.cantidad),
+                cantidad: Number(p.cantidad),
                 precio: parseFloat(p.precio_venta)
             }));
             pj.value = JSON.stringify(payload);

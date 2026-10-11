@@ -5,8 +5,18 @@
 // ==========================================
 $jv_env = [];
 $jv_env_file = dirname(__DIR__) . '/config/.env';
+$jv_env_valido = true;
 if (is_file($jv_env_file)) {
-    $jv_env = parse_ini_file($jv_env_file, false, INI_SCANNER_RAW) ?: [];
+    try {
+        $jv_env = parse_ini_file($jv_env_file, false, INI_SCANNER_RAW);
+        if (!is_array($jv_env)) {
+            $jv_env = [];
+            $jv_env_valido = false;
+        }
+    } catch (Throwable) {
+        $jv_env = [];
+        $jv_env_valido = false;
+    }
 }
 $jv_config_value = static function (string $key, string $fallback) use ($jv_env): string {
     $environmentValue = getenv($key);
@@ -16,13 +26,18 @@ $jv_config_value = static function (string $key, string $fallback) use ($jv_env)
 define('DB_HOST', $jv_config_value('JV_DB_HOST', 'localhost'));
 define('DB_USER', $jv_config_value('JV_DB_USER', 'root'));
 $jv_db_pass = getenv('JV_DB_PASS');
+$jv_password_configurado = $jv_db_pass !== false
+    || array_key_exists('JV_DB_PASS', $jv_env)
+    || array_key_exists('JV_DB_PASS_B64', $jv_env);
+$jv_password_valido = true;
 if ($jv_db_pass === false) {
     if (array_key_exists('JV_DB_PASS', $jv_env)) {
         $jv_db_pass = (string)$jv_env['JV_DB_PASS'];
     } elseif (isset($jv_env['JV_DB_PASS_B64'])) {
         $jv_db_pass = base64_decode((string)$jv_env['JV_DB_PASS_B64'], true);
         if ($jv_db_pass === false) {
-            throw new RuntimeException('JV_DB_PASS_B64 en config/.env no contiene Base64 válido.');
+            $jv_db_pass = '';
+            $jv_password_valido = false;
         }
     } else {
         $jv_db_pass = '';
@@ -31,6 +46,48 @@ if ($jv_db_pass === false) {
 define('DB_PASS', (string)$jv_db_pass);
 define('DB_NAME', $jv_config_value('JV_DB_NAME', 'jv3000_db'));
 define('DB_PORT', (int)$jv_config_value('JV_DB_PORT', '3306'));
+$jv_configuracion_faltante = [];
+$jv_configuracion_invalida = false;
+foreach (['JV_DB_HOST', 'JV_DB_USER', 'JV_DB_NAME', 'JV_DB_PORT'] as $jv_clave_configuracion) {
+    $jv_valor_entorno = getenv($jv_clave_configuracion);
+    $jv_configuracion_explicita = $jv_valor_entorno !== false
+        || array_key_exists($jv_clave_configuracion, $jv_env);
+    if (!$jv_configuracion_explicita) {
+        $jv_configuracion_faltante[] = $jv_clave_configuracion;
+        continue;
+    }
+
+    $jv_valor_configuracion = trim((string)($jv_valor_entorno !== false
+        ? $jv_valor_entorno
+        : $jv_env[$jv_clave_configuracion]));
+    if (
+        $jv_valor_configuracion === ''
+        || str_contains(strtoupper($jv_valor_configuracion), 'CAMBIAR_POR_')
+    ) {
+        $jv_configuracion_invalida = true;
+    }
+}
+if (!$jv_password_configurado) {
+    $jv_configuracion_faltante[] = 'JV_DB_PASS';
+}
+$jv_puerto_configurado = getenv('JV_DB_PORT');
+$jv_puerto_configurado = $jv_puerto_configurado !== false
+    ? $jv_puerto_configurado
+    : ($jv_env['JV_DB_PORT'] ?? '');
+if (
+    filter_var($jv_puerto_configurado, FILTER_VALIDATE_INT) === false
+    || (int)$jv_puerto_configurado < 1
+    || (int)$jv_puerto_configurado > 65535
+) {
+    $jv_configuracion_invalida = true;
+}
+define(
+    'DB_CONFIG_STATUS',
+    !$jv_env_valido || !$jv_password_valido || $jv_configuracion_invalida
+        ? 'invalid'
+        : ($jv_configuracion_faltante === [] ? 'ready' : 'missing')
+);
+define('DB_CONFIG_MISSING', $jv_configuracion_faltante);
 define('APP_NAME', 'JV3000 C.A.');
 define('VERSION', '3.0.0');
 define('AUDIT_RETENCION_MESES', 6);

@@ -287,6 +287,9 @@ class Salida extends Model
                 if ($id_producto === false || $id_producto <= 0 || $cantidad === false || $cantidad <= 0 || $cantidad > 999999) {
                     throw new Exception('PRODUCTO O CANTIDAD INVÁLIDOS.');
                 }
+                if ($grupo_data === 'venta' && isset($cantidades_por_producto[$id_producto])) {
+                    throw new Exception('NO REPITA PRODUCTOS EN LA VENTA. CONSOLIDE LA CANTIDAD EN UNA SOLA LÍNEA.');
+                }
                 $cantidades_por_producto[$id_producto] = ($cantidades_por_producto[$id_producto] ?? 0) + $cantidad;
             }
 

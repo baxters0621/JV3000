@@ -44,560 +44,536 @@ set_error_handler(function ($severity, $msg, $file, $line) {
 // --- 3. Marcar que venimos de init.php ---
 define('INIT_LOADED', true);
 
-// --- 4. Cargar constantes ---
-require_once __DIR__ . '/includes/config.php';
-
 if (PHP_VERSION_ID < 80200) {
     http_response_code(500);
-    die('JV3000 requiere PHP 8.2 o superior. Selecciona PHP 8.2+ en la configuración de Apache/XAMPP.');
+    die('Componente: PHP del servidor web. Evidencia: JV3000 requiere PHP 8.2 o superior y el proceso web está usando PHP '
+        . htmlspecialchars(PHP_VERSION, ENT_QUOTES, 'UTF-8')
+        . '. Revisa con la persona administradora qué versión usa Apache; si no puede corregirse mediante el procedimiento local autorizado, detente y contacta soporte. No se modificó el servidor.');
 }
 if (!extension_loaded('mysqli')) {
     http_response_code(500);
-    die('JV3000 requiere la extensión mysqli. Actívala en el php.ini que utiliza Apache y reinicia Apache.');
+    die('Componente: requisitos de PHP del servidor web. Evidencia: la extensión mysqli no está disponible para el proceso web. Pide al administrador del PC servidor que revise el php.ini que utiliza Apache; no compartas configuraciones privadas ni actives extensiones desde esta página. Si persiste, detente y contacta soporte.');
 }
+
+// --- 4. Cargar constantes ---
+require_once __DIR__ . '/includes/config.php';
 
 // --- 5. Cargar clases core ---
 require_once __DIR__ . '/includes/Database.php';
 require_once __DIR__ . '/includes/Security.php';
 require_once __DIR__ . '/includes/helpers.php';
+require_once __DIR__ . '/includes/StartupDiagnostics.php';
+require_once __DIR__ . '/includes/InstaladorInicial.php';
+require_once __DIR__ . '/includes/EstadoInstalacion.php';
+
+/**
+ * Presenta orientación segura y consistente para cada estado bloqueado.
+ *
+ * @param array $diagnostic Resultado fijo de StartupDiagnostics.
+ * @return string HTML escapado del diagnóstico.
+ */
+function jv_render_diagnostico(array $diagnostic): string
+{
+    $checks = $diagnostic['checks'] ?? [];
+    $checksHtml = $checks !== []
+        ? '<ol>' . implode('', array_map(
+            static fn(string $check): string => '<li>' . htmlspecialchars($check, ENT_QUOTES, 'UTF-8') . '</li>',
+            $checks
+        )) . '</ol>'
+        : '';
+    $support = $diagnostic['support_data'] ?? [];
+    $supportHtml = $support !== []
+        ? '<ul>' . implode('', array_map(
+            static fn(string $item): string => '<li>' . htmlspecialchars($item, ENT_QUOTES, 'UTF-8') . '</li>',
+            $support
+        )) . '</ul>'
+        : '';
+    $optionsHtml = !empty($diagnostic['options'])
+        ? '<ul>' . implode('', array_map(
+            static fn(string $option): string => '<li>' . htmlspecialchars($option, ENT_QUOTES, 'UTF-8') . '</li>',
+            $diagnostic['options']
+        )) . '</ul>'
+        : '';
+
+    return '<p><strong>Componente:</strong> ' . htmlspecialchars((string)($diagnostic['component'] ?? 'JV3000'), ENT_QUOTES, 'UTF-8') . '</p>'
+        . '<p><strong>Qué se observó:</strong> ' . htmlspecialchars((string)($diagnostic['evidence'] ?? $diagnostic['message'] ?? ''), ENT_QUOTES, 'UTF-8') . '</p>'
+        . '<p><strong>' . (($diagnostic['cause_status'] ?? 'posible') === 'confirmada' ? 'Causa confirmada' : 'Causa posible') . ':</strong> '
+        . htmlspecialchars((string)($diagnostic['cause'] ?? $diagnostic['message'] ?? ''), ENT_QUOTES, 'UTF-8') . '</p>'
+        . $checksHtml
+        . $optionsHtml
+        . '<p><strong>Cuándo detenerse:</strong> ' . htmlspecialchars((string)($diagnostic['escalate'] ?? $diagnostic['next_step'] ?? ''), ENT_QUOTES, 'UTF-8') . '</p>'
+        . ($supportHtml !== '' ? '<p><strong>Información no sensible para soporte:</strong></p>' . $supportHtml : '');
+}
+
+/**
+ * Crea el lector del marcador con configuración local y raíz web canónica.
+ *
+ * @return EstadoInstalacion Lector del estado privado de instalación.
+ */
+function jv_crear_estado_instalacion(): EstadoInstalacion
+{
+    $directorio = getenv('JV_INSTALL_STATE_DIR');
+
+    return new EstadoInstalacion(
+        $directorio === false ? null : $directorio,
+        (string)($_SERVER['DOCUMENT_ROOT'] ?? ''),
+        DB_HOST,
+        DB_PORT,
+        DB_NAME
+    );
+}
+
+if (DB_CONFIG_STATUS !== 'ready') {
+    $configurationDiagnostic = StartupDiagnostics::fromConfigurationProblem(
+        DB_CONFIG_STATUS,
+        DB_CONFIG_MISSING
+    );
+    if (DB_CONFIG_STATUS === 'invalid') {
+        $configurationDiagnostic = StartupDiagnostics::fromConfigurationProblem('invalid');
+    }
+    http_response_code(503);
+    die("<main style='background:#020617;color:#e2e8f0;font-family:sans-serif;min-height:100vh;padding:40px 16px;box-sizing:border-box;'>
+        <section style='max-width:720px;margin:auto;border:1px solid #334155;padding:32px;border-radius:16px;background:#0f172a;'>
+            <h1 style='color:#fbbf24;'>" . htmlspecialchars($configurationDiagnostic['title'], ENT_QUOTES, 'UTF-8') . '</h1>'
+            . jv_render_diagnostico($configurationDiagnostic) .
+        '</section>
+    </main>');
+}
 
 // ==========================================
 // BASE DE DATOS
 // ==========================================
 
-// --- 6/7. Conectar BD (auto-restaurar backup si la BD no existe) ---
+// --- 6. Conectar a la base configurada o detenerse en diagnóstico seguro ---
 function jv_db_error_page(?Throwable $error = null): void
 {
     $errorCode = $error ? (int)$error->getCode() : 0;
-    $diagnostic = match ($errorCode) {
-        1044, 1045 => 'MySQL rechazó el usuario o la contraseña. Usa el asistente de conexión para configurar los datos de este equipo.',
-        1049 => 'La base de datos configurada no existe. El asistente de instalación puede crearla si el usuario tiene permiso CREATE DATABASE.',
-        2002, 2003 => 'No se pudo alcanzar el servidor MySQL. Verifica que MySQL esté iniciado y usa el asistente para indicar el host y puerto correctos.',
-        default => 'Revisa que MySQL esté iniciado y usa el asistente para comprobar la configuración. El registro de Apache contiene el diagnóstico técnico.',
-    };
+    $diagnostic = StartupDiagnostics::fromConnectionError(
+        $error ?? new RuntimeException('No se proporcionó detalle de conexión.')
+    );
+    if ($diagnostic['category'] === StartupDiagnostics::DATABASE_MISSING) {
+        jv_installation_page('ausente');
+    }
     if ($error) {
-        error_log("[JV3000] Error de conexión a la base de datos (código {$errorCode}): " . $error->getMessage());
+        error_log("[JV3000] Diagnóstico de conexión: {$diagnostic['category']} (código {$errorCode}).");
     }
 
     http_response_code(500);
     die("<div style='background:#020617;color:#f87171;font-family:sans-serif;text-align:center;padding:100px;min-height:100vh;box-sizing:border-box;'>
             <div style='max-width:650px;margin:auto;border:1px solid rgba(248,113,113,0.3);padding:40px;border-radius:20px;background:#0f172a;'>
-                <h2 style='color:#ef4444;text-transform:uppercase;letter-spacing:2px;'>Error de Conexión</h2>
-                <p style='color:#94a3b8;margin-top:20px;'>No se pudo conectar a la base de datos.</p>
-                <p style='color:#fbbf24;margin-top:20px;'>" . htmlspecialchars($diagnostic, ENT_QUOTES, 'UTF-8') . "</p>
-                <p style='color:#94a3b8;margin-top:20px;'>Recarga la página para abrir el asistente de conexión y guardar la configuración local de este equipo.</p>
-            </div>
-         </div>");
-}
-
-function jv_importar_sql(mysqli $conn, string $sql_path): bool
-{
-    if (!@mysqli_query($conn, "CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci")) {
-        error_log("[JV3000] No se pudo crear la BD: " . mysqli_error($conn));
-        return false;
-    }
-    if (!@mysqli_select_db($conn, DB_NAME)) {
-        error_log("[JV3000] No se pudo seleccionar la BD: " . mysqli_error($conn));
-        return false;
-    }
-    @mysqli_query($conn, "SET FOREIGN_KEY_CHECKS = 0");
-    if (!is_file($sql_path) || !is_readable($sql_path)) {
-        error_log("[JV3000] Archivo SQL no encontrado o no legible: " . $sql_path);
-        return false;
-    }
-    $sql_content = file_get_contents($sql_path);
-    if ($sql_content === false || trim($sql_content) === '') {
-        error_log("[JV3000] Archivo SQL vacío: " . $sql_path);
-        return false;
-    }
-    try {
-        if (!mysqli_multi_query($conn, $sql_content)) {
-            error_log("[JV3000] No se pudo iniciar la importación SQL: " . mysqli_error($conn));
-            return false;
-        }
-        while (true) {
-            if ($res = mysqli_store_result($conn)) {
-                mysqli_free_result($res);
-            }
-            if (mysqli_errno($conn) !== 0) {
-                error_log("[JV3000] Error durante la importación SQL: " . mysqli_error($conn));
-                return false;
-            }
-            if (!mysqli_more_results($conn)) {
-                break;
-            }
-            if (!mysqli_next_result($conn)) {
-                error_log("[JV3000] Error avanzando durante la importación SQL: " . mysqli_error($conn));
-                return false;
-            }
-        }
-    } catch (mysqli_sql_exception $e) {
-        error_log("[JV3000] Importación SQL fallida: " . $e->getMessage());
-        return false;
-    }
-    $check = @mysqli_query($conn, "SELECT COUNT(*) AS total FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . DB_NAME . "'");
-    $row = $check ? @mysqli_fetch_assoc($check) : null;
-    if (!$row || (int)$row['total'] < 20) {
-        error_log("[JV3000] Importación incompleta (menos de 20 tablas): " . $sql_path);
-        return false;
-    }
-    error_log("[JV3000] BD auto-instalada desde: " . basename($sql_path));
-    return true;
-}
-
-function jv_boot_page(string $titulo, string $mensaje, bool $showDemoForm)
-{
-    $demo_error = false;
-    if ($showDemoForm && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['instalar_demo'])) {
-        Security::validateCSRF();
-        $conn_demo = @mysqli_connect(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
-        if ($conn_demo && jv_importar_sql($conn_demo, __DIR__ . '/db/jv3000_portable_v6.sql')) {
-            mysqli_close($conn_demo);
-            header('Location: ' . BASE_PATH . 'dashboard/index.php');
-            exit;
-        }
-        if ($conn_demo) {
-            mysqli_close($conn_demo);
-        }
-        error_log("[JV3000] Fallo al instalar el sistema.");
-        $demo_error = true;
-    }
-
-    $csrfToken = Security::generateToken();
-    $additionalMessage = $demo_error
-        ? "<p style='color:#fbbf24;margin-top:20px;'>La instalación falló. Revisa config/.env, que MySQL permita crear la base y sus tablas, que db/jv3000_portable_v6.sql exista y que el registro de Apache no muestre errores SQL.</p>"
-        : '';
-    $installationForm = '';
-    if ($showDemoForm) {
-        $installationForm = "<hr style='border-color:rgba(148,163,184,0.2);margin:28px 0;'>
-                 <p style='color:#94a3b8;'>¿Es una instalación nueva? Puedes instalar el sistema en limpio (sin datos de ejemplo):</p>
-                 <form method='POST' action='" . htmlspecialchars($_SERVER['REQUEST_URI'] ?? 'login.php') . "' style='margin-top:16px;'>
-                     <input type='hidden' name='csrf_token' value='" . htmlspecialchars($csrfToken) . "'>
-                     <button type='submit' name='instalar_demo' value='1' style='background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:1px;'>Instalar sistema</button>
-                 </form>";
-    }
-    die("<div style='background:#020617;color:#f87171;font-family:sans-serif;text-align:center;padding:100px;height:100vh;'>
-            <div style='max-width:620px;margin:auto;border:1px solid rgba(251,191,36,0.3);padding:40px;border-radius:20px;background:#0f172a;'>
-                <h2 style='color:#fbbf24;text-transform:uppercase;letter-spacing:2px;'>" . htmlspecialchars($titulo) . "</h2>
-                <p style='color:#94a3b8;margin-top:20px;'>" . $mensaje . "</p>
-                " . $additionalMessage . $installationForm . "
+                <h2 style='color:#ef4444;text-transform:uppercase;letter-spacing:2px;'>" . htmlspecialchars($diagnostic['title'], ENT_QUOTES, 'UTF-8') . "</h2>
+                <div style='color:#cbd5e1;text-align:left;margin:20px auto;max-width:560px;'>" . jv_render_diagnostico($diagnostic) . "</div>
             </div>
          </div>");
 }
 
 /**
- * Prueba y guarda las credenciales locales de MySQL mediante un formulario protegido por CSRF.
+ * Detiene el arranque funcional ante un esquema no compatible o no verificable.
+ *
+ * @param array $diagnostic Mensaje seguro producido por StartupDiagnostics.
  */
-function jv_db_setup_page(?Throwable $initialError = null): never
+function jv_schema_error_page(array $diagnostic): never
 {
-    if (!in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1', '::ffff:127.0.0.1'], true)) {
-        http_response_code(403);
-        die('Por seguridad, el asistente de base de datos solo está disponible desde el mismo equipo. Configura config/.env localmente.');
+    http_response_code(503);
+    die("<main style='background:#020617;color:#e2e8f0;font-family:sans-serif;min-height:100vh;padding:40px 16px;box-sizing:border-box;'>
+        <section style='max-width:720px;margin:auto;border:1px solid #7f1d1d;padding:32px;border-radius:16px;background:#0f172a;'>
+            <h1 style='color:#f87171;font-size:1.5rem;'>" . htmlspecialchars($diagnostic['title'], ENT_QUOTES, 'UTF-8') . "</h1>
+            <div style='color:#cbd5e1;margin-top:20px;'>" . jv_render_diagnostico($diagnostic) . "</div>
+        </section>
+    </main>");
+}
+
+/**
+ * Cuenta tablas de la base seleccionada usando solo metadatos.
+ *
+ * @param mysqli $connection Conexión a la base configurada.
+ * @return int Cantidad de tablas visibles.
+ */
+function jv_contar_tablas_destino(mysqli $connection): int
+{
+    $statement = $connection->prepare(
+        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'"
+    );
+    if (!$statement) {
+        throw new RuntimeException('No se pudieron consultar los metadatos del destino.');
+    }
+    $databaseName = DB_NAME;
+    $statement->bind_param('s', $databaseName);
+    $statement->execute();
+    $statement->bind_result($tableCount);
+    $statement->fetch();
+    $statement->close();
+
+    return (int)$tableCount;
+}
+
+/**
+ * Comprueba el destino sin crearlo ni modificarlo.
+ *
+ * @return string Estado observable: ausente, vacio, existente o desconocido.
+ */
+function jv_estado_destino_instalacion(): string
+{
+    $connection = null;
+    try {
+        $connection = @mysqli_connect(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
+        if (!$connection) {
+            return 'desconocido';
+        }
+        if (!@mysqli_select_db($connection, DB_NAME)) {
+            return mysqli_errno($connection) === 1049 ? 'ausente' : 'desconocido';
+        }
+
+        return jv_contar_tablas_destino($connection) === 0 ? 'vacio' : 'existente';
+    } catch (Throwable) {
+        return 'desconocido';
+    } finally {
+        if ($connection instanceof mysqli) {
+            mysqli_close($connection);
+        }
+    }
+}
+
+/**
+ * Importa v6 únicamente a un destino que vuelve a comprobarse como ausente o vacío.
+ *
+ * @return bool True si el SQL terminó sin errores.
+ */
+function jv_importar_esquema_inicial(): bool
+{
+    $connection = @mysqli_connect(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
+    if (!$connection) {
+        return false;
     }
 
-    $errorMessage = '';
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_conexion'])) {
-        Security::validateCSRF();
-        $host = trim((string)($_POST['db_host'] ?? ''));
-        $user = trim((string)($_POST['db_user'] ?? ''));
-        $password = (string)($_POST['db_pass'] ?? '');
-        $database = trim((string)($_POST['db_name'] ?? ''));
-        $port = filter_var($_POST['db_port'] ?? null, FILTER_VALIDATE_INT, [
-            'options' => ['min_range' => 1, 'max_range' => 65535],
-        ]);
+    try {
+        $destinationState = jv_estado_destino_instalacion();
+        if (!in_array($destinationState, ['ausente', 'vacio'], true)) {
+            return false;
+        }
 
-        if (filter_var($host, FILTER_VALIDATE_IP) === false && !preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9.-]{0,252}\z/', $host)) {
-            $errorMessage = 'El host debe ser un nombre o dirección válida, por ejemplo localhost o 127.0.0.1.';
-        } elseif (!preg_match('/\A[A-Za-z0-9_][A-Za-z0-9_.@-]{0,127}\z/', $user)) {
-            $errorMessage = 'El usuario MySQL contiene caracteres no permitidos.';
-        } elseif (!preg_match('/\A[A-Za-z0-9_]{1,64}\z/', $database)) {
-            $errorMessage = 'El nombre de la base solo puede contener letras, números y guion bajo.';
-        } elseif ($port === false) {
-            $errorMessage = 'El puerto debe ser un número entre 1 y 65535.';
-        } elseif (strlen($password) > 1024 || str_contains($password, "\0")) {
-            $errorMessage = 'La contraseña no es válida.';
-        } else {
-            $probe = null;
-            try {
-                $probe = @mysqli_connect($host, $user, $password, '', (int)$port);
-                if (!$probe) {
-                    throw new RuntimeException('No se pudo conectar al servidor MySQL.', mysqli_connect_errno());
-                }
-                mysqli_set_charset($probe, 'utf8mb4');
-                try {
-                    mysqli_select_db($probe, $database);
-                } catch (mysqli_sql_exception $e) {
-                    if ((int)$e->getCode() !== 1049) {
-                        throw $e;
-                    }
-                }
-                mysqli_close($probe);
-                $probe = null;
-
-                $envPath = __DIR__ . '/config/.env';
-                $envContent = "JV_DB_HOST={$host}\n"
-                    . "JV_DB_USER={$user}\n"
-                    . "JV_DB_PASS_B64=" . base64_encode($password) . "\n"
-                    . "JV_DB_NAME={$database}\n"
-                    . "JV_DB_PORT={$port}\n";
-                if (file_put_contents($envPath, $envContent, LOCK_EX) === false) {
-                    throw new RuntimeException('No se pudo guardar config/.env. Verifica permisos de escritura en la carpeta config.');
-                }
-                if (DIRECTORY_SEPARATOR !== '\\' && !chmod($envPath, 0600)) {
-                    throw new RuntimeException('No se pudieron restringir los permisos del archivo config/.env.');
-                }
-                error_log('[JV3000] Configuración local de MySQL guardada desde el asistente.');
-                header('Location: ' . BASE_PATH . 'index.php');
-                exit;
-            } catch (Throwable $e) {
-                if ($probe instanceof mysqli) {
-                    mysqli_close($probe);
-                }
-                $errorMessage = match ((int)$e->getCode()) {
-                    1044, 1045 => 'MySQL rechazó el usuario o la contraseña. Verifica los datos e inténtalo de nuevo.',
-                    1049 => 'La base aún no existe; se instalará después de guardar. El usuario necesita permiso para crearla.',
-                    2002, 2003 => 'No se encontró MySQL en ese host y puerto. Confirma que el servicio esté iniciado.',
-                    default => $e instanceof mysqli_sql_exception
-                        ? 'MySQL rechazó la conexión o el acceso a esa base. Verifica credenciales y permisos.'
-                        : $e->getMessage(),
-                };
-                error_log('[JV3000] Asistente de conexión MySQL: ' . $e->getMessage());
+        if ($destinationState === 'ausente') {
+            $databaseIdentifier = '`' . str_replace('`', '``', DB_NAME) . '`';
+            if (!$connection->query(
+                "CREATE DATABASE {$databaseIdentifier} CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"
+            )) {
+                return false;
             }
         }
-    } elseif ($initialError) {
-        $errorCode = (int)$initialError->getCode();
-        $errorMessage = match ($errorCode) {
-            1044, 1045 => 'Los valores XAMPP habituales no conectaron: MySQL rechazó el usuario o la contraseña. Configura aquí los datos de este equipo.',
-            2002, 2003 => 'No se pudo alcanzar MySQL con la configuración habitual. Confirma que esté iniciado e indica aquí el host y puerto.',
-            default => 'No se pudo conectar con la configuración actual. Comprueba los datos de MySQL para este equipo.',
-        };
+        if (!mysqli_select_db($connection, DB_NAME) || jv_contar_tablas_destino($connection) !== 0) {
+            return false;
+        }
+
+        $sqlContent = file_get_contents(__DIR__ . '/db/jv3000_portable_v6.sql');
+        if ($sqlContent === false || trim($sqlContent) === '' || !mysqli_multi_query($connection, $sqlContent)) {
+            return false;
+        }
+        do {
+            $result = mysqli_store_result($connection);
+            if ($result instanceof mysqli_result) {
+                mysqli_free_result($result);
+            }
+            if (mysqli_errno($connection) !== 0) {
+                return false;
+            }
+        } while (mysqli_more_results($connection) && mysqli_next_result($connection));
+
+        return mysqli_errno($connection) === 0;
+    } catch (Throwable) {
+        return false;
+    } finally {
+        mysqli_close($connection);
+    }
+}
+
+/**
+ * Presenta la confirmación separada de instalación inicial y detiene el arranque.
+ *
+ * @param string $estadoInicial Estado observado antes de mostrar la ruta.
+ */
+function jv_installation_page(string $estadoInicial): never
+{
+    $resultado = null;
+    $marcador = jv_crear_estado_instalacion();
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['confirmar_instalacion'])) {
+        $csrfRecibido = $_POST['csrf_token'] ?? '';
+        $csrfValido = is_string($csrfRecibido)
+            && isset($_SESSION['csrf_token'])
+            && is_string($_SESSION['csrf_token'])
+            && hash_equals($_SESSION['csrf_token'], $csrfRecibido);
+        $estadoDestino = jv_estado_destino_instalacion();
+        try {
+            $schemaSql = file_get_contents(__DIR__ . '/db/jv3000_portable_v6.sql');
+            $perfilActual = $schemaSql === false
+                ? []
+                : SchemaCompatibility::profileFromSql($schemaSql, 'v6');
+        } catch (Throwable) {
+            $perfilActual = [];
+        }
+        $resultado = InstaladorInicial::procesar(
+            'POST',
+            ($_POST['confirmacion_instalacion_nueva'] ?? '') === '1',
+            $csrfValido,
+            $estadoDestino,
+            'jv_importar_esquema_inicial',
+            static function () use ($perfilActual): array {
+                $connection = @mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
+                if (!$connection) {
+                    return ['status' => SchemaCompatibility::UNKNOWN];
+                }
+                try {
+                    $perfilObservado = jv_read_schema_profile($connection, DB_NAME);
+                    return SchemaCompatibility::compare($perfilObservado, $perfilActual);
+                } finally {
+                    mysqli_close($connection);
+                }
+            },
+            static function (): void {
+                header('Location: ' . BASE_PATH . 'index.php');
+                exit;
+            },
+            $marcador
+        );
+    }
+
+    $fallo = match ($resultado['estado'] ?? null) {
+        InstaladorInicial::CSRF_INVALIDO => 'La confirmación de seguridad no es válida o venció. No se modificó la base; vuelve a cargar la página y confirma de nuevo.',
+        InstaladorInicial::REQUIERE_CONFIRMACION => 'La instalación no comenzó porque falta la confirmación humana explícita.',
+        InstaladorInicial::DESTINO_EXISTENTE => 'El destino contiene tablas o no se pudo confirmar como ausente/vacío. La importación está bloqueada.',
+        InstaladorInicial::INCOMPLETA => 'La importación no terminó o no pudo verificarse. El marcador bloquea nuevos intentos; solicita revisión manual.',
+        InstaladorInicial::ESQUEMA_INCOMPATIBLE => 'El esquema importado no pudo verificarse como compatible. El marcador bloquea nuevos intentos; no borres tablas ni el marcador.',
+        default => '',
+    };
+    $estadoPantalla = in_array($resultado['estado'] ?? null, [
+        InstaladorInicial::INCOMPLETA,
+        InstaladorInicial::ESQUEMA_INCOMPATIBLE,
+    ], true)
+        ? $resultado['estado']
+        : $estadoInicial;
+    if (($resultado['estado'] ?? null) === InstaladorInicial::DESTINO_EXISTENTE) {
+        $estadoPantalla = 'existente';
+    }
+    if ($estadoPantalla === 'desconocido') {
+        $fallo = 'No fue posible confirmar el estado del destino. No se realizó ninguna instalación.';
+    } elseif ($estadoPantalla === 'existente') {
+        $fallo = 'El destino ya contiene tablas. La instalación nueva está bloqueada y no se modificó.';
+    }
+    $estadoMarcador = $marcador->diagnosticar();
+    if (($resultado['estado'] ?? null) === InstaladorInicial::MARCADOR_NO_VALIDO) {
+        $estadoMarcador = (string)($resultado['motivo'] ?? $estadoMarcador);
+    } elseif (in_array($resultado['estado'] ?? null, [
+        EstadoInstalacion::EN_PROGRESO,
+        EstadoInstalacion::INCOMPLETA,
+        EstadoInstalacion::COMPLETADA,
+    ], true)) {
+        $estadoMarcador = $resultado['estado'];
     }
 
     $token = htmlspecialchars(Security::generateToken(), ENT_QUOTES, 'UTF-8');
-    $host = htmlspecialchars((string)($_POST['db_host'] ?? DB_HOST), ENT_QUOTES, 'UTF-8');
-    $user = htmlspecialchars((string)($_POST['db_user'] ?? DB_USER), ENT_QUOTES, 'UTF-8');
-    $database = htmlspecialchars((string)($_POST['db_name'] ?? DB_NAME), ENT_QUOTES, 'UTF-8');
-    $port = htmlspecialchars((string)($_POST['db_port'] ?? DB_PORT), ENT_QUOTES, 'UTF-8');
-    $errorHtml = $errorMessage !== ''
-        ? "<p role='alert' style='color:#fca5a5;margin:20px 0;'>" . htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8') . "</p>"
+    $errorHtml = $fallo !== ''
+        ? "<p role='alert' style='color:#fca5a5;margin:20px 0;'>" . htmlspecialchars($fallo, ENT_QUOTES, 'UTF-8') . '</p>'
+        : '';
+    $installationForm = in_array($estadoPantalla, ['ausente', 'vacio'], true)
+        && $estadoMarcador === EstadoInstalacion::LISTA
+        && !in_array($resultado['estado'] ?? null, [
+            InstaladorInicial::INCOMPLETA,
+            InstaladorInicial::ESQUEMA_INCOMPATIBLE,
+            InstaladorInicial::LISTA,
+            InstaladorInicial::DESTINO_EXISTENTE,
+            InstaladorInicial::MARCADOR_NO_VALIDO,
+        ], true)
+        ? "<form method='post' autocomplete='off' style='text-align:left;margin-top:24px;'>
+                <input type='hidden' name='csrf_token' value='{$token}'>
+                <label style='display:flex;gap:10px;align-items:flex-start;color:#e2e8f0;'>
+                    <input type='checkbox' name='confirmacion_instalacion_nueva' value='1' required>
+                    <span>Confirmo que este destino es para una instalación nueva y entiendo que JV3000 creará/importará el esquema limpio v6, sin recuperar datos anteriores.</span>
+                </label>
+                <button type='submit' name='confirmar_instalacion' value='1' style='margin-top:18px;background:#b45309;color:white;border:0;padding:12px 18px;border-radius:8px;font-weight:600;cursor:pointer;'>Confirmar instalación limpia</button>
+            </form>"
         : '';
 
-    http_response_code(200);
+    http_response_code(($resultado['estado'] ?? null) === InstaladorInicial::CSRF_INVALIDO
+        ? 403
+        : ($fallo !== '' || $estadoMarcador !== EstadoInstalacion::LISTA ? 409 : 200));
+    $titulo = match ($estadoPantalla) {
+        'vacio' => 'Base de datos vacía',
+        InstaladorInicial::INCOMPLETA => 'Instalación incompleta',
+        InstaladorInicial::ESQUEMA_INCOMPATIBLE => 'Esquema incompatible',
+        InstaladorInicial::DESTINO_EXISTENTE, 'existente' => 'Instalación bloqueada',
+        default => 'Base de datos no encontrada',
+    };
+    $observedMessage = $estadoPantalla === 'vacio'
+        ? 'El servidor respondió y la base configurada existe, pero no contiene tablas visibles. Esto no demuestra por sí solo que sea correcto usarla.'
+        : ($estadoPantalla === 'ausente'
+            ? 'El servidor respondió y no encontró la base configurada. Esto no demuestra por sí solo que el nombre sea correcto ni que se autorice crearla.'
+            : 'No se pudo confirmar de forma segura el estado del destino.');
+    $diagnosticoBase = StartupDiagnostics::fromConnectionError(
+        new RuntimeException(
+            'Estado de destino para la orientación de instalación.',
+            $estadoPantalla === 'ausente' ? 1049 : 9999
+        )
+    );
+    $diagnosticoBase['evidence'] = $observedMessage;
+    $diagnosticoBase['message'] = $observedMessage;
+    if ($estadoPantalla === 'vacio') {
+        $diagnosticoBase['component'] = 'Existencia y contenido estructural de la base.';
+        $diagnosticoBase['cause'] = 'La base existe sin tablas visibles; el sistema no infiere que esté autorizada para importar datos.';
+        $diagnosticoBase['checks'] = [
+            'Confirma con la persona administradora que el nombre corresponde al destino previsto.',
+            'Si se esperaban datos, detente y localiza primero el procedimiento de respaldo institucional.',
+            'La instalación limpia solo está disponible después de revisar el marcador y confirmar deliberadamente.',
+        ];
+    } elseif ($estadoPantalla === 'existente') {
+        $diagnosticoBase['component'] = 'Destino de base existente.';
+        $diagnosticoBase['evidence'] = 'La comprobación del POST observó tablas o no pudo confirmar un destino ausente/vacío.';
+        $diagnosticoBase['message'] = $diagnosticoBase['evidence'];
+        $diagnosticoBase['cause_status'] = 'confirmada';
+        $diagnosticoBase['cause'] = 'El destino no cumple las condiciones para una instalación limpia.';
+        $diagnosticoBase['checks'] = [
+            'No se inició la importación.',
+            'Conserva la base y solicita una revisión del esquema existente.',
+        ];
+    }
+    $diagnosticoMarcador = StartupDiagnostics::fromInstallationState($estadoMarcador);
+    $installationWarning = in_array($estadoPantalla, ['ausente', 'vacio'], true)
+        ? '<p style="color:#fca5a5;margin-top:16px;">La opción siguiente creará una instalación limpia sin recuperar datos anteriores. No continúes si esperas encontrar información previa.</p>'
+        : '';
     die("<main style='background:#020617;color:#e2e8f0;font-family:sans-serif;min-height:100vh;padding:40px 16px;box-sizing:border-box;'>
-        <section style='max-width:560px;margin:auto;border:1px solid #334155;padding:32px;border-radius:16px;background:#0f172a;'>
-            <h1 style='color:#fbbf24;font-size:1.5rem;'>Configurar conexión de JV3000</h1>
-            <p style='color:#cbd5e1;'>Se probaron los valores habituales de XAMPP. Ingresa los datos de MySQL de este equipo una sola vez; se guardarán localmente y no se subirán al repositorio. La contraseña se codifica para guardarla, pero Base64 no es cifrado.</p>
-            {$errorHtml}
-            <form method='post' autocomplete='off'>
-                <input type='hidden' name='csrf_token' value='{$token}'>
-                <label style='display:block;margin-top:14px;'>Servidor MySQL
-                    <input required maxlength='253' name='db_host' value='{$host}' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
-                </label>
-                <label style='display:block;margin-top:14px;'>Puerto
-                    <input required type='number' min='1' max='65535' name='db_port' value='{$port}' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
-                </label>
-                <label style='display:block;margin-top:14px;'>Usuario MySQL
-                    <input required maxlength='128' name='db_user' value='{$user}' autocomplete='username' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
-                </label>
-                <label style='display:block;margin-top:14px;'>Contraseña MySQL
-                    <input type='password' maxlength='1024' name='db_pass' autocomplete='new-password' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
-                </label>
-                <label style='display:block;margin-top:14px;'>Base de datos
-                    <input required maxlength='64' name='db_name' value='{$database}' style='display:block;width:100%;padding:10px;margin-top:5px;box-sizing:border-box;'>
-                </label>
-                <button type='submit' name='guardar_conexion' value='1' style='margin-top:22px;background:#2563eb;color:white;border:0;padding:12px 18px;border-radius:8px;font-weight:600;cursor:pointer;'>Probar y guardar conexión</button>
-            </form>
-            <p style='color:#94a3b8;margin-top:20px;font-size:.9rem;'>Si la base es nueva, el usuario MySQL necesitará permiso para crear la base y sus tablas. Este asistente no borra bases existentes.</p>
+        <section style='max-width:760px;margin:auto;border:1px solid #334155;padding:32px;border-radius:16px;background:#0f172a;'>
+            <h1 style='color:#fbbf24;font-size:1.5rem;'>{$titulo}</h1>
+            <div style='color:#cbd5e1;margin-top:20px;'>" . jv_render_diagnostico($diagnosticoBase) . '</div>'
+            . $errorHtml
+            . ($estadoMarcador !== EstadoInstalacion::LISTA
+                ? "<h2 style='color:#f87171;margin-top:24px;'>Preparación privada de instalación</h2><div style='color:#cbd5e1;'>" . jv_render_diagnostico($diagnosticoMarcador) . '</div>'
+                : $installationWarning)
+            . $installationForm
+            . '
         </section>
-    </main>");
+    </main>');
+}
+
+/**
+ * Lee solo metadatos estructurales de las tablas de la base seleccionada.
+ *
+ * @param mysqli $connection Conexión ya establecida.
+ * @param string $database Nombre de la base configurada.
+ * @return array Perfil estructural observado.
+ */
+function jv_read_schema_profile(?mysqli $connection, string $database): array
+{
+    if (!$connection) {
+        throw new RuntimeException('La conexión no está disponible para leer metadatos.');
+    }
+
+    $statement = $connection->prepare(
+        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'"
+    );
+    if (!$statement) {
+        throw new RuntimeException('No se pudieron consultar los metadatos del esquema.', $connection->errno);
+    }
+    $statement->bind_param('s', $database);
+    $statement->execute();
+    $result = $statement->get_result();
+    $tableNames = $result->fetch_all(MYSQLI_NUM);
+    $result->free();
+    $statement->close();
+
+    $definitions = [];
+    foreach ($tableNames as $tableName) {
+        $escapedName = str_replace('`', '``', (string)$tableName[0]);
+        $definitionResult = $connection->query("SHOW CREATE TABLE `{$escapedName}`");
+        if (!$definitionResult) {
+            throw new RuntimeException('No se pudo leer la definición de una tabla.', $connection->errno);
+        }
+        $definition = $definitionResult->fetch_row();
+        $definitionResult->free();
+        if (!isset($definition[1])) {
+            throw new RuntimeException('La definición estructural de una tabla no está disponible.');
+        }
+        $definitions[] = $definition[1] . ';';
+    }
+
+    if ($definitions === []) {
+        return ['version' => 'observed', 'tables' => []];
+    }
+
+    return SchemaCompatibility::profileFromSql(implode("\n", $definitions), 'observed');
 }
 
 try {
     Database::getInstance()->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
 } catch (Throwable $e) {
-    $installed = false;
-    $noBackup = false;
-    $restoreFailed = false;
+    $connectionDiagnostic = StartupDiagnostics::fromConnectionError($e);
+    error_log(
+        "[JV3000] Diagnóstico de conexión de arranque: {$connectionDiagnostic['category']} "
+        . '(código ' . (int)$e->getCode() . ').'
+    );
     try {
         $connectionWithoutDatabase = @mysqli_connect(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
-    } catch (Throwable $connectionError) {
+    } catch (Throwable) {
         $connectionWithoutDatabase = false;
     }
     if (!$connectionWithoutDatabase) {
-        jv_db_setup_page($e);
-    }
-    if ($connectionWithoutDatabase) {
-        $databaseExists = true;
-        try {
-            if (!mysqli_select_db($connectionWithoutDatabase, DB_NAME)) {
-                throw new RuntimeException('No se pudo seleccionar la base de datos configurada.', mysqli_errno($connectionWithoutDatabase));
-            }
-        } catch (Throwable $databaseCheckError) {
-            if ((int)$databaseCheckError->getCode() !== 1049) {
-                mysqli_close($connectionWithoutDatabase);
-                jv_db_setup_page($databaseCheckError);
-            }
-            $databaseExists = false;
-        }
-        if (!$databaseExists) {
-            $backup_files = glob(__DIR__ . '/backups/jv3000_db_*.sql');
-            if (!$backup_files) {
-                $noBackup = true;
-            } else {
-                usort($backup_files, fn($a, $b) => filemtime($b) <=> filemtime($a));
-                foreach ($backup_files as $candidate) {
-                    $installed = jv_importar_sql($connectionWithoutDatabase, $candidate);
-                    if ($installed) {
-                        break;
-                    }
-                }
-                $restoreFailed = !$installed;
-            }
-        }
-        mysqli_close($connectionWithoutDatabase);
+        jv_db_error_page($e);
     }
 
-    if ($installed) {
-        try {
-            Database::getInstance()->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
-        } catch (Throwable $e2) {
-            error_log("[JV3000] DB connection failed after auto-install: " . $e2->getMessage());
-            jv_db_error_page($e2);
-        }
-    } elseif ($noBackup) {
-        error_log("[JV3000] No hay backups en backups/ — instalación detenida.");
-        jv_boot_page(
-            'Base de Datos no encontrada',
-            'No se encontró ningún respaldo en <b>backups/</b> para restaurar.<br>
-             Para restaurar tu información, coloca un archivo <b>jv3000_db_*.sql</b> (genéralo con <b>backups/backup.bat</b> en el equipo donde trabajas) y vuelve a cargar la página.',
-            true
-        );
-    } elseif ($restoreFailed) {
-        error_log("[JV3000] No se pudo restaurar ningún backup de backups/.");
-        jv_boot_page(
-            'Restauración fallida',
-            'No se pudo restaurar ninguno de los respaldos en <b>backups/</b>. Revisa los archivos <b>jv3000_db_*.sql</b> y el log del servidor.',
-            false
-        );
-    } else {
-        error_log("[JV3000] DB connection failed: " . $e->getMessage());
-        jv_db_setup_page($e);
-    }
-}
-
-// ==========================================
-// MIGRACIÓN AUTOMÁTICA DE DOCUMENTOS (una sola vez)
-// ==========================================
-
-// --- 7b. Normalización de documento fiscal (cédula/RIF) ---
-// Se ejecuta una única vez (flag en configuracion). Idempotente.
-$jv_db = Database::getInstance();
-
-// -- Compatibilidad de auditoría: columnas de trazabilidad del request
-foreach (
-    [
-        ['auditoria', 'ip_origen', 'VARCHAR(45) NULL'],
-        ['auditoria', 'ruta', 'VARCHAR(255) NULL'],
-        ['auditoria', 'metodo', 'VARCHAR(10) NULL'],
-        ['login_intentos', 'ultimo_intento', 'TIMESTAMP NOT NULL DEFAULT current_timestamp()'],
-    ] as [$tabla, $columna, $tipo]
-) {
-    $exists = $jv_db->fetchOne(
-        "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
-        [DB_NAME, $tabla, $columna]
-    );
-    if (!$exists || (int)($exists['n'] ?? 0) === 0) {
-        $jv_db->execute("ALTER TABLE {$tabla} ADD COLUMN {$columna} {$tipo}");
-    }
-}
-
-$loginUniqueIndex = $jv_db->fetchOne(
-    "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'login_intentos' AND INDEX_NAME = 'idx_ip_unique'",
-    [DB_NAME]
-);
-if (!$loginUniqueIndex || (int)($loginUniqueIndex['n'] ?? 0) === 0) {
-    $jv_db->execute("DELETE FROM login_intentos WHERE id NOT IN (SELECT id FROM (SELECT MIN(id) AS id FROM login_intentos GROUP BY ip_address) AS intentos_unicos)");
-    $jv_db->execute("ALTER TABLE login_intentos ADD UNIQUE INDEX idx_ip_unique (ip_address)");
-}
-
-$normalizationFlag = $jv_db->fetchOne("SELECT valor FROM configuracion WHERE clave = 'documentos_normalizados'");
-if (!$normalizationFlag) {
-    $migrationFile = __DIR__ . '/db/migrar_documentos.php';
-    if (is_file($migrationFile)) {
-        require_once $migrationFile;
-        if (function_exists('migrar_documentos')) {
-            ob_start();
-            migrar_documentos($jv_db->getConnection(), DB_NAME);
-            ob_end_clean();
-        }
-    }
-    @mysqli_query($jv_db->getConnection(), "INSERT INTO configuracion (clave, valor, descripcion, fecha_actualizado) VALUES ('documentos_normalizados', '1', 'Migración de formato de documento fiscal aplicada (v1)', NOW()) ON DUPLICATE KEY UPDATE valor = '1'");
-    error_log("[JV3000] Migración de documentos fiscales ejecutada.");
-}
-
-// --- 7c. Esquema: solicitudes de compra + documento de recepción (idempotente) ---
-$jv_db->execute("CREATE TABLE IF NOT EXISTS solicitudes_compra (
-    id_solicitud int(11) NOT NULL AUTO_INCREMENT,
-    id_usuario_solicitante int(11) NOT NULL,
-    fecha_solicitud timestamp NOT NULL DEFAULT current_timestamp(),
-    motivo varchar(150) DEFAULT NULL,
-    estado enum('Pendiente','Atendida','Cancelada') NOT NULL DEFAULT 'Pendiente',
-    id_compra int(11) DEFAULT NULL,
-    fecha_atendida datetime DEFAULT NULL,
-    PRIMARY KEY (id_solicitud),
-    KEY fk_sol_user (id_usuario_solicitante),
-    KEY fk_sol_compra (id_compra),
-    KEY idx_sol_estado (estado),
-    CONSTRAINT fk_sol_user FOREIGN KEY (id_usuario_solicitante) REFERENCES usuarios (id_usuario),
-    CONSTRAINT fk_sol_compra FOREIGN KEY (id_compra) REFERENCES compras (id_compra) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-$jv_db->execute("CREATE TABLE IF NOT EXISTS detalle_solicitud_compra (
-    id_detalle int(11) NOT NULL AUTO_INCREMENT,
-    id_solicitud int(11) NOT NULL,
-    id_producto int(11) NOT NULL,
-    cantidad_solicitada int(11) NOT NULL,
-    PRIMARY KEY (id_detalle),
-    KEY fk_dsc_solicitud (id_solicitud),
-    KEY fk_dsc_producto (id_producto),
-    CONSTRAINT fk_dsc_solicitud FOREIGN KEY (id_solicitud) REFERENCES solicitudes_compra (id_solicitud) ON DELETE CASCADE,
-    CONSTRAINT fk_dsc_producto FOREIGN KEY (id_producto) REFERENCES productos (id_producto)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-$receptionDocumentColumn = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'movimientos' AND COLUMN_NAME = 'documento_recepcion'");
-if (!$receptionDocumentColumn || (int)$receptionDocumentColumn['n'] === 0) {
-    $jv_db->execute("ALTER TABLE movimientos ADD COLUMN documento_recepcion VARCHAR(100) DEFAULT NULL AFTER status");
-}
-$pinEmergenciaColumn = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = 'pin_emergencia'");
-if (!$pinEmergenciaColumn || (int)$pinEmergenciaColumn['n'] === 0) {
-    $jv_db->execute("ALTER TABLE usuarios ADD COLUMN pin_emergencia VARCHAR(60) DEFAULT NULL COMMENT 'bcrypt hash de PIN 6 digitos de emergencia' AFTER respuesta_seguridad");
-}
-
-// --- 7d. Login intentos: columna usuario (doble bloqueo IP + usuario) ---
-$loginUsuarioColumn = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'login_intentos' AND COLUMN_NAME = 'usuario'");
-if (!$loginUsuarioColumn || (int)$loginUsuarioColumn['n'] === 0) {
-    $jv_db->execute("ALTER TABLE login_intentos ADD COLUMN usuario VARCHAR(100) DEFAULT NULL AFTER ip_address");
-    $jv_db->execute("ALTER TABLE login_intentos DROP INDEX idx_ip_unique");
-    $jv_db->execute("ALTER TABLE login_intentos ADD UNIQUE INDEX idx_ip_user_unique (ip_address, usuario)");
-    error_log("[JV3000] Migración login_intentos: columna usuario agregada.");
-}
-
-// --- 7e. Cuentas por pagar: tabla pagos_compra (historial de pagos parciales) ---
-$pagosTable = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'pagos_compra'");
-if (!$pagosTable || (int)$pagosTable['n'] === 0) {
-    $jv_db->execute("CREATE TABLE IF NOT EXISTS pagos_compra (
-        id_pago int(11) NOT NULL AUTO_INCREMENT,
-        id_compra int(11) NOT NULL,
-        id_usuario int(11) NOT NULL,
-        monto decimal(10,2) NOT NULL,
-        metodo_pago enum('Efectivo','Transferencia','Cheque','Otro') NOT NULL,
-        detalle_pago json DEFAULT NULL,
-        fecha_pago timestamp NOT NULL DEFAULT current_timestamp(),
-        PRIMARY KEY (id_pago),
-        KEY fk_pago_compra (id_compra),
-        KEY fk_pago_usuario (id_usuario),
-        CONSTRAINT fk_pago_compra FOREIGN KEY (id_compra) REFERENCES compras (id_compra) ON DELETE CASCADE,
-        CONSTRAINT fk_pago_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-    error_log("[JV3000] Tabla pagos_compra creada.");
-}
-
-// --- 7e.1. Completar el historial con abonos iniciales previos al ledger ---
-$ledgerBackfillFlag = $jv_db->fetchOne(
-    "SELECT valor FROM configuracion WHERE clave = 'ledger_pagos_compra_v6'"
-);
-if (!$ledgerBackfillFlag) {
-    $jv_db->begin();
     try {
-        $legacyPayments = $jv_db->fetchAll(
-            "SELECT c.id_compra, c.id_usuario, c.monto_pago, c.metodo_pago,
-                    CASE
-                        WHEN JSON_VALID(c.detalle_pago)
-                            THEN JSON_SET(c.detalle_pago, '$._migracion_legacy_ledger', 'Abono reconstruido desde monto_pago')
-                        WHEN c.detalle_pago IS NOT NULL
-                            THEN JSON_OBJECT('_migracion_legacy_ledger', 'Abono reconstruido desde monto_pago', 'detalle_original', c.detalle_pago)
-                        ELSE JSON_OBJECT('_migracion_legacy_ledger', 'Abono reconstruido desde monto_pago')
-                    END AS detalle_pago,
-                    CASE
-                        WHEN COALESCE((
-                            SELECT SUM(p.monto) FROM pagos_compra p WHERE p.id_compra = c.id_compra
-                        ), 0) > 0 THEN c.fecha_compra
-                        ELSE COALESCE(c.fecha_pago, c.fecha_compra, NOW())
-                    END AS fecha_pago,
-                    COALESCE((
-                        SELECT SUM(p.monto) FROM pagos_compra p WHERE p.id_compra = c.id_compra
-                    ), 0) AS total_ledger
-             FROM compras c
-             WHERE COALESCE(c.monto_pago, 0) > COALESCE((
-                 SELECT SUM(p.monto) FROM pagos_compra p WHERE p.id_compra = c.id_compra
-             ), 0)
-             ORDER BY c.id_compra
-             FOR UPDATE"
-        );
-        $metodosPagoValidos = ['Efectivo', 'Transferencia', 'Cheque', 'Otro'];
-        foreach ($legacyPayments as $legacyPayment) {
-            $metodoPago = in_array($legacyPayment['metodo_pago'], $metodosPagoValidos, true)
-                ? $legacyPayment['metodo_pago']
-                : 'Otro';
-            $jv_db->insert('pagos_compra', [
-                'id_compra'   => (int)$legacyPayment['id_compra'],
-                'id_usuario'  => (int)$legacyPayment['id_usuario'],
-                'monto'       => round((float)$legacyPayment['monto_pago'] - (float)$legacyPayment['total_ledger'], 2),
-                'metodo_pago' => $metodoPago,
-                'detalle_pago' => $legacyPayment['detalle_pago'],
-                'fecha_pago'  => $legacyPayment['fecha_pago'],
-            ]);
+        if (!mysqli_select_db($connectionWithoutDatabase, DB_NAME)) {
+            throw new RuntimeException('No se pudo seleccionar la base configurada.', mysqli_errno($connectionWithoutDatabase));
         }
-        $jv_db->execute(
-            "INSERT INTO configuracion (clave, valor, descripcion, fecha_actualizado)
-             VALUES ('ledger_pagos_compra_v6', '1', 'Abonos históricos iniciales migrados al ledger', NOW())
-             ON DUPLICATE KEY UPDATE valor = '1'"
-        );
-        $jv_db->commit();
-        error_log("[JV3000] Historial de pagos históricos conciliado.");
-    } catch (Throwable $e) {
-        $jv_db->rollback();
-        throw $e;
+    } catch (Throwable $databaseCheckError) {
+        mysqli_close($connectionWithoutDatabase);
+        if ((int)$databaseCheckError->getCode() === 1049) {
+            $databaseDiagnostic = StartupDiagnostics::fromConnectionError($databaseCheckError);
+            error_log("[JV3000] Diagnóstico de base de datos: {$databaseDiagnostic['category']}.");
+            jv_db_error_page($databaseCheckError);
+        }
+        jv_db_error_page($databaseCheckError);
+    }
+    mysqli_close($connectionWithoutDatabase);
+    error_log("[JV3000] La base existe, pero la conexión normal falló; categoría {$connectionDiagnostic['category']}.");
+    jv_db_error_page($e);
+}
+
+$activeConnection = Database::getInstance()->getConnection();
+if ($activeConnection instanceof mysqli) {
+    try {
+        if (jv_contar_tablas_destino($activeConnection) === 0) {
+            jv_installation_page('vacio');
+        }
+    } catch (Throwable) {
+        jv_installation_page('desconocido');
     }
 }
 
-// --- 7e.1. Estado de pago parcial (idempotente) ---
-$migracion_estado_pago = $jv_db->fetchOne(
-    "SELECT valor FROM configuracion WHERE clave = 'status_pago_parcial_v6'"
-);
-if (!$migracion_estado_pago) {
-    $columna_estado_pago = $jv_db->fetchOne(
-        "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'compras' AND COLUMN_NAME = 'status_pago'",
-        [DB_NAME]
-    );
-    if ($columna_estado_pago && strpos($columna_estado_pago['COLUMN_TYPE'], "'Parcial'") === false) {
-        $jv_db->execute(
-            "ALTER TABLE compras MODIFY status_pago ENUM('Pendiente','Parcial','Pagada') NOT NULL DEFAULT 'Pendiente'"
-        );
+try {
+    $schemaSql = file_get_contents(__DIR__ . '/db/jv3000_portable_v6.sql');
+    if ($schemaSql === false) {
+        throw new RuntimeException('No se pudo leer el perfil de esquema versionado.');
     }
-    $jv_db->execute(
-        "UPDATE compras
-         SET status_pago = CASE
-             WHEN COALESCE(monto_pago, 0) <= 0 THEN 'Pendiente'
-             WHEN monto_pago >= total THEN 'Pagada'
-             ELSE 'Parcial'
-         END"
+    $currentSchemaProfile = SchemaCompatibility::profileFromSql($schemaSql, 'v6');
+    $observedSchemaProfile = jv_read_schema_profile(
+        Database::getInstance()->getConnection(),
+        DB_NAME
     );
-    $jv_db->execute(
-        "INSERT INTO configuracion (clave, valor, descripcion, fecha_actualizado)
-         VALUES ('status_pago_parcial_v6', '1', 'Estado de pago parcial habilitado', NOW())
-         ON DUPLICATE KEY UPDATE valor = '1'"
-    );
-    error_log("[JV3000] Migración de estados de pago parciales aplicada.");
+    $schemaComparison = SchemaCompatibility::compare($observedSchemaProfile, $currentSchemaProfile);
+    $schemaDiagnostic = StartupDiagnostics::fromSchemaComparison($schemaComparison);
+} catch (Throwable $schemaError) {
+    $schemaComparison = ['status' => SchemaCompatibility::UNKNOWN];
+    $schemaDiagnostic = StartupDiagnostics::fromConnectionError($schemaError);
+    if ($schemaDiagnostic['category'] === StartupDiagnostics::CONNECTION_UNKNOWN) {
+        $schemaDiagnostic = StartupDiagnostics::fromSchemaComparison($schemaComparison);
+    }
 }
 
-// --- 7f. Optimistic locking: columna updated_at en tablas clave ---
-foreach (['productos', 'compras', 'proveedores', 'clientes'] as $tablaLock) {
-    $colCheck = $jv_db->fetchOne("SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = '$tablaLock' AND COLUMN_NAME = 'updated_at'");
-    if (!$colCheck || (int)$colCheck['n'] === 0) {
-        $jv_db->execute("ALTER TABLE $tablaLock ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
-        error_log("[JV3000] Migración optimistic locking: updated_at agregada a $tablaLock.");
-    }
+$_SESSION['_jv_schema_diagnostic'] = $schemaDiagnostic['category'];
+error_log("[JV3000] Diagnóstico estructural de arranque: {$schemaDiagnostic['category']}.");
+if (!StartupDiagnostics::allowsNormalStartup($schemaComparison)) {
+    jv_schema_error_page($schemaDiagnostic);
 }
+
+// Las migraciones históricas están separadas en includes/MigracionesPendientes.php.
+// El arranque normal no incluye ni ejecuta ese archivo.
 
 // ==========================================
 // SEGURIDAD Y SESIÓN

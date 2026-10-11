@@ -18,6 +18,7 @@
 /** @var float $total_neto */
 /** @var string $preview_token */
 /** @var string $csrf */
+/** @var array<string, string>|null $flash */
 
 // ==========================================
 // VISTA: Nota de Entrega / Salida (imprimible)
@@ -62,6 +63,11 @@
             <span class="num-item"><strong>FECHA:</strong> <?php echo date('d/m/Y', strtotime($data['fecha_salida'])); ?></span>
             <span class="num-item"><strong>HORA:</strong> <?php echo $hora_actual; ?></span>
         </div>
+
+        <?php if (!empty($flash)): ?>
+            <?php $flashType = in_array($flash['tipo'] ?? '', ['success', 'danger', 'warning', 'info'], true) ? $flash['tipo'] : 'info'; ?>
+            <div class="alert alert-<?php echo $flashType; ?>" role="alert"><?php echo htmlspecialchars((string)($flash['texto'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></div>
+        <?php endif; ?>
 
         <?php foreach ($alertas_venc as $expirationAlert): ?>
             <div style="padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:.75rem;font-weight:600;text-align:center;<?php echo $expirationAlert['tipo'] === 'vencido' ? 'background:rgba(220,38,38,0.1);color:#DC2626;border:1px solid rgba(220,38,38,0.3);' : 'background:rgba(217,119,6,0.1);color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);'; ?>">

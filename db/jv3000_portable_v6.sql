@@ -75,6 +75,7 @@ CREATE TABLE `clientes` (
   `telefono` varchar(20) DEFAULT NULL,
   `direccion` text DEFAULT NULL,
   `status` enum('Activo','Inactivo') DEFAULT 'Activo',
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id_cliente`),
   UNIQUE KEY `idx_cli_documento` (`documento`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -98,8 +99,9 @@ CREATE TABLE `compras` (
   `monto_pago` decimal(12,2) DEFAULT 0.00,
   `fecha_pago` datetime DEFAULT NULL,
   `metodo_pago` varchar(30) DEFAULT NULL,
-  `detalle_pago` longtext DEFAULT NULL CHECK (json_valid(`detalle_pago`)),
+  `detalle_pago` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`detalle_pago`)),
   `estado_recepcion` enum('Pendiente','Parcial','Completa') DEFAULT 'Pendiente',
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id_compra`),
   UNIQUE KEY `uq_comp_prov_factura` (`id_proveedor`,`nro_factura`),
   KEY `fk_comp_prov` (`id_proveedor`),
@@ -131,7 +133,7 @@ CREATE TABLE `detalle_compras` (
   `cantidad` int(11) NOT NULL,
   `precio_costo` decimal(10,2) NOT NULL,
   `cantidad_recibida` int(11) NOT NULL DEFAULT 0,
-  `fecha_vencimiento` date NOT NULL,
+  `fecha_vencimiento` date DEFAULT NULL,
   `observaciones` text DEFAULT NULL,
   PRIMARY KEY (`id_detalle`),
   KEY `fk_detcomp_compra` (`id_compra`),
@@ -148,7 +150,7 @@ CREATE TABLE `pagos_compra` (
   `id_usuario` int(11) NOT NULL,
   `monto` decimal(10,2) NOT NULL,
   `metodo_pago` enum('Efectivo','Transferencia','Cheque','Otro') NOT NULL,
-  `detalle_pago` json DEFAULT NULL,
+  `detalle_pago` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`detalle_pago`)),
   `fecha_pago` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id_pago`),
   KEY `fk_pago_compra` (`id_compra`),
@@ -210,12 +212,13 @@ CREATE TABLE `detalle_solicitud_compra` (
 CREATE TABLE `login_intentos` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `ip_address` varchar(45) NOT NULL,
-  `usuario` varchar(100) DEFAULT NULL,
+  `usuario` varchar(50) DEFAULT NULL,
   `intentos` int(11) DEFAULT 0,
   `ultimo_intento` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_ip_user_unique` (`ip_address`,`usuario`),
-  KEY `idx_ip` (`ip_address`)
+  UNIQUE KEY `idx_ip_unique` (`ip_address`),
+  UNIQUE KEY `idx_login_lockout` (`ip_address`,`usuario`),
+  UNIQUE KEY `idx_ip_user_unique` (`ip_address`,`usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -228,7 +231,7 @@ CREATE TABLE `lotes` (
   `cantidad` int(11) NOT NULL DEFAULT 0,
   `cantidad_restante` int(11) NOT NULL DEFAULT 0,
   `precio_costo` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `fecha_vencimiento` date NOT NULL,
+  `fecha_vencimiento` date DEFAULT NULL,
   `fecha_ingreso` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id_lote`),
   KEY `fk_lot_prod` (`id_producto`),
@@ -249,9 +252,12 @@ CREATE TABLE `movimientos` (
   `fecha_movimiento` timestamp NOT NULL DEFAULT current_timestamp(),
   `status` enum('Activo','Anulado') NOT NULL DEFAULT 'Activo',
   `documento_recepcion` varchar(100) DEFAULT NULL,
+  `clave_idempotencia` char(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
+  `huella_solicitud` char(64) CHARACTER SET ascii COLLATE ascii_bin DEFAULT NULL,
   PRIMARY KEY (`id_movimiento`),
   KEY `idx_ref` (`tipo_referencia`,`id_referencia`),
   KEY `fk_mov_usuario` (`id_usuario`),
+  UNIQUE KEY `uq_mov_clave_idempotencia` (`clave_idempotencia`),
   CONSTRAINT `fk_mov_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -261,14 +267,18 @@ CREATE TABLE `productos` (
   `id_producto` int(11) NOT NULL AUTO_INCREMENT,
   `sku` varchar(50) NOT NULL,
   `nombre_producto` varchar(150) NOT NULL,
+  `descripcion` varchar(500) DEFAULT NULL,
   `precio_venta` decimal(10,2) NOT NULL,
   `precio_costo` decimal(10,2) DEFAULT 0.00,
   `stock_actual` int(11) DEFAULT 0,
   `stock_minimo` int(11) DEFAULT 5,
   `stock_maximo` int(11) NOT NULL DEFAULT 0,
   `fecha_vencimiento` date DEFAULT NULL,
+  `requiere_vencimiento` tinyint(1) NOT NULL DEFAULT 1,
+  `tipo_control` enum('FEFO','FIFO') NOT NULL DEFAULT 'FEFO',
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `id_categoria` int(11) NOT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id_producto`),
   UNIQUE KEY `idx_sku` (`sku`),
   KEY `fk_prod_cat` (`id_categoria`),
@@ -289,6 +299,7 @@ CREATE TABLE `proveedores` (
   `telefono` varchar(20) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
   `direccion` text DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id_proveedor`),
   UNIQUE KEY `idx_rif` (`rif`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -328,6 +339,14 @@ CREATE TABLE `salidas` (
   CONSTRAINT `fk_sal_cliente` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id_cliente`) ON DELETE SET NULL,
   CONSTRAINT `fk_sal_tipo` FOREIGN KEY (`id_tipo_mov`) REFERENCES `tipos_movimientos` (`id_tipo_mov`),
   CONSTRAINT `fk_sal_user` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `schema_migrations` (
+  `version` varchar(50) NOT NULL,
+  `applied_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`version`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

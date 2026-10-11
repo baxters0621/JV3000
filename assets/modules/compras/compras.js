@@ -225,14 +225,15 @@
                 if (toolboxInput) toolboxInput.focus();
                 return;
             }
-            const requestedQuantity = parseInt(document.getElementById('inputCant').value) || 0;
+            const quantityText = document.getElementById('inputCant').value.trim();
+            const requestedQuantity = Number(quantityText);
             const precio = parseFloat(document.getElementById('inputPrecio').value.replace(/,/g, '')) || 0;
             const expirationDate = document.getElementById('inputVencimiento').value || '';
 
-            if (requestedQuantity < 1 || requestedQuantity > 999999) {
+            if (!/^\d+(?:\.0+)?$/.test(quantityText) || !Number.isInteger(requestedQuantity) || requestedQuantity < 1 || requestedQuantity > 999999) {
                 Swal.fire({
                     title: 'Cantidad inválida',
-                    text: 'Ingrese una cantidad entre 1 y 999,999',
+                    text: 'Ingrese una cantidad entera entre 1 y 999,999',
                     icon: 'warning',
                     background: '#fff',
                     color: '#212529',
@@ -910,8 +911,40 @@
         document.addEventListener('DOMContentLoaded', function() {
             // (El auto-cierre de mensajes flash lo maneja diseno.js globalmente.)
 
+            const compraRecuperacion = (window.JV_CONFIG || {}).compraRecuperacion;
+            const recepcionRecuperacion = (window.JV_CONFIG || {}).recepcionRecuperacion;
+            if (compraRecuperacion) {
+                document.getElementById('selProveedor').value = String(compraRecuperacion.id_proveedor || '');
+                document.getElementById('selProveedor').dispatchEvent(new Event('change', { bubbles: true }));
+                document.querySelector('input[name="nro_factura"]').value = compraRecuperacion.nro_factura || '';
+                document.querySelector('input[name="nro_control"]').value = compraRecuperacion.nro_control || '';
+                document.getElementById('selMetodo').value = '';
+                document.getElementById('montoPago').value = '0.00';
+                productos = Array.isArray(compraRecuperacion.productos)
+                    ? compraRecuperacion.productos.map(function(producto) {
+                        const cantidad = Number(producto.cantidad);
+                        const precio = Number(producto.precio);
+                        return {
+                            id: Number(producto.id),
+                            nombre: String(producto.nombre || ''),
+                            cantidad: cantidad,
+                            precio: precio,
+                            fecha_vencimiento: producto.fecha_vencimiento || '',
+                            total: cantidad * precio
+                        };
+                    })
+                    : [];
+                actualizarTabla();
+                const modalRecuperado = document.getElementById('modalCompra');
+                if (modalRecuperado) {
+                    setTimeout(function() {
+                        bootstrap.Modal.getOrCreateInstance(modalRecuperado).show();
+                    }, 200);
+                }
+            }
+
             // Prefill desde una solicitud de compra (atender_solicitud)
-            if (window.COMPRAS_SOLICITUD && window.COMPRAS_SOLICITUD.items && window.COMPRAS_SOLICITUD.items.length) {
+            else if (!recepcionRecuperacion && window.COMPRAS_SOLICITUD && window.COMPRAS_SOLICITUD.items && window.COMPRAS_SOLICITUD.items.length) {
                 window.COMPRAS_SOLICITUD.items.forEach(function(requestItem) {
                     productos.push({
                         id: requestItem.id,
@@ -930,6 +963,12 @@
                         m.show();
                     }, 200);
                 }
+            }
+
+            if (recepcionRecuperacion) {
+                setTimeout(function() {
+                    abrirRecepcion(Number(recepcionRecuperacion.id_compra), recepcionRecuperacion);
+                }, 250);
             }
 
             document.querySelectorAll('input, select, textarea').forEach(function(el) {
@@ -1100,7 +1139,7 @@
 
         // Abre el modal de recepción cargando los datos de la compra y la tabla
         // de productos pendientes por recibir (desde window.JV_CONFIG.recepcionDatos).
-        function abrirRecepcion(idCompra) {
+        function abrirRecepcion(idCompra, recuperacion) {
             const recConfig = window.JV_CONFIG || {};
             const purchaseData = recConfig.recepcionDatos && recConfig.recepcionDatos[idCompra];
             if (!purchaseData || !purchaseData.items || !purchaseData.items.length) {
@@ -1116,13 +1155,41 @@
             }
             recepcionCompraId = idCompra;
             document.getElementById('recIdCompra').value = idCompra;
+            const recuperando = recuperacion && Number(recuperacion.id_compra) === Number(idCompra);
+            const itemsRecuperados = new Map();
+            if (recuperando && Array.isArray(recuperacion.items)) {
+                recuperacion.items.forEach(function(item) {
+                    itemsRecuperados.set(Number(item.id_detalle), item);
+                });
+            }
+            const idsDetallePendientes = new Set(purchaseData.items.map(function(item) {
+                return Number(item.id_detalle);
+            }));
+            document.getElementById('recClaveIdempotencia').value = recuperando
+                ? recuperacion.clave_idempotencia
+                : purchaseData.clave_idempotencia;
             document.getElementById('recFactura').value = purchaseData.nro_factura;
             document.getElementById('recProveedor').value = purchaseData.proveedor;
-            document.getElementById('recDocumento').value = '';
+            document.getElementById('recDocumento').value = recuperando ? recuperacion.documento_recepcion : '';
+            const recoveryNotice = document.getElementById('recuperacionRecepcionAviso');
+            const detailRestored = recuperando
+                && Array.isArray(recuperacion.items)
+                && itemsRecuperados.size === recuperacion.items.length
+                && recuperacion.items.every(function(item) {
+                    return idsDetallePendientes.has(Number(item.id_detalle));
+                });
+            if (recoveryNotice) {
+                recoveryNotice.textContent = recuperando && !detailRestored
+                    ? 'No se restauraron las cantidades porque el detalle no se pudo interpretar de forma unívoca. Revise cantidades y vencimientos antes de continuar; si el resultado es incierto, verifique el estado de la recepción.'
+                    : '';
+                recoveryNotice.style.display = recuperando && !detailRestored ? '' : 'none';
+            }
 
             const recBody = document.getElementById('recItemsBody');
             recBody.innerHTML = '';
+            // Al restaurar, las líneas omitidas quedan en cero para no convertir el reintento en recepción completa.
             purchaseData.items.forEach(function(pendingItem, itemIndex) {
+                const restoredItem = recuperando ? itemsRecuperados.get(Number(pendingItem.id_detalle)) : null;
                 const tr = document.createElement('tr');
                 tr.innerHTML =
                     '<td style="padding:10px 12px;color:var(--jv-text-muted);text-align:center;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + (itemIndex + 1) + '</td>' +
@@ -1133,10 +1200,10 @@
                     '<td style="padding:10px 12px;text-align:center;color:var(--jv-text-muted);font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + pendingItem.cantidad + '</td>' +
                     '<td style="padding:10px 12px;text-align:center;color:var(--jv-text-muted);font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + pendingItem.recibida + '</td>' +
                     '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--jv-border);">' +
-                        '<input type="number" class="input-jv rec-cant" data-id="' + pendingItem.id_detalle + '" data-restante="' + pendingItem.restante + '" value="' + pendingItem.restante + '" min="1" max="' + pendingItem.restante + '" style="width:86px;padding:8px 10px;text-align:center;">' +
+                        '<input type="number" class="input-jv rec-cant" data-id="' + pendingItem.id_detalle + '" data-restante="' + pendingItem.restante + '" value="' + (recuperando ? (restoredItem ? restoredItem.cantidad : 0) : pendingItem.restante) + '" min="0" max="' + pendingItem.restante + '" style="width:86px;padding:8px 10px;text-align:center;">' +
                     '</td>' +
                     '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--jv-border);">' +
-                        '<input type="date" class="input-jv rec-venc" data-id="' + pendingItem.id_detalle + '" value="' + (pendingItem.vence || '') + '" style="width:130px;padding:8px 10px;">' +
+                        '<input type="date" class="input-jv rec-venc" data-id="' + pendingItem.id_detalle + '" value="' + (restoredItem ? restoredItem.fecha_vencimiento : (pendingItem.vence || '')) + '" style="width:130px;padding:8px 10px;">' +
                     '</td>' +
                     '<td style="padding:10px 12px;text-align:right;color:var(--jv-text-primary);font-weight:600;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + pendingItem.precio.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</td>';
                 recBody.appendChild(tr);
@@ -1166,7 +1233,7 @@
             }
         }
 
-        // Valida las cantidades a recibir (entre 1 y el restante), arma el array de ítems,
+        // Valida las cantidades a recibir (entre 0 y el restante), arma el array de ítems,
         // lo guarda en el campo oculto y envía el formulario para registrar la recepción.
         function confirmarRecepcion(submitButton) {
             if (!recepcionCompraId) return false;
@@ -1178,12 +1245,12 @@
             filas.forEach(function(receivingRow) {
                 const quantityInput = receivingRow.querySelector('.rec-cant');
                 if (!quantityInput) return;
-                const receivedQuantity = parseInt(quantityInput.value, 10);
-                const remainingQuantity = parseInt(quantityInput.dataset.restante, 10);
-                if (isNaN(receivedQuantity) || receivedQuantity < 1 || receivedQuantity > remainingQuantity) {
+                const receivedQuantity = Number(quantityInput.value);
+                const remainingQuantity = Number(quantityInput.dataset.restante);
+                if (!Number.isInteger(receivedQuantity) || receivedQuantity < 0 || receivedQuantity > remainingQuantity) {
                     errores.push('Cantidad inv\u00e1lida para un producto (m\u00e1x. ' + remainingQuantity + ').');
                     quantityInput.classList.add('input-error');
-                } else {
+                } else if (receivedQuantity > 0) {
                     const expirationInput = receivingRow.querySelector('.rec-venc');
                     // REGLA DE NEGOCIO: todo lote exige fecha de vencimiento (control FEFO)
                     if (!expirationInput || !expirationInput.value) {
@@ -1195,10 +1262,15 @@
                         cantidad: receivedQuantity,
                         fecha_vencimiento: expirationInput && expirationInput.value ? expirationInput.value : ''
                     });
+                } else {
+                    quantityInput.classList.remove('input-error');
                 }
             });
 
-            if (errores.length > 0 || items.length === 0) {
+            if (items.length === 0) {
+                errores.push('Indique una cantidad mayor que cero en al menos un producto.');
+            }
+            if (errores.length > 0) {
                 Swal.fire({
                     title: 'CANTIDADES INV\u00c1LIDAS',
                     text: errores.join(' '),

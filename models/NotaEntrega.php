@@ -118,7 +118,8 @@ class NotaEntrega extends Model
      * Normaliza cliente/RIF, identifica el grupo según el tipo de movimiento
      * (venta/regalías/merma), valida los campos obligatorios por grupo y
      * verifica stock y vencimiento (FEFO) de cada producto. En regalías
-     * fuerza precio 0. No toca $_SESSION: solo devuelve los datos validados.
+     * fuerza precio 0. En VENTA exige una sola línea por producto. No toca
+     * $_SESSION: solo devuelve los datos validados.
      *
      * @param array $input     Datos del formulario de venta.
      * @param int   $idUsuario Usuario que genera la venta.
@@ -132,7 +133,6 @@ class NotaEntrega extends Model
         $rif_cliente = mb_strtoupper(trim($input['rif_cliente'] ?? ''));
         $id_cliente = intval($input['id_cliente'] ?? 0) ?: null;
         $fecha_salida = $input['fecha_salida'] ?? date('Y-m-d');
-        $nro_control = generarControlNumero();
 
         $tipo_nombre = $this->obtenerTipoNombre($id_tipo_mov);
         $n2 = mb_strtoupper(trim($tipo_nombre));
@@ -165,7 +165,7 @@ class NotaEntrega extends Model
         } else {
             $productos[] = [
                 'id_producto' => intval($input['id_producto'] ?? 0),
-                'cantidad'    => intval($input['cantidad'] ?? 0),
+                'cantidad'    => $input['cantidad'] ?? null,
                 'precio'      => floatval($input['precio_venta'] ?? 0),
             ];
         }
@@ -200,11 +200,18 @@ class NotaEntrega extends Model
         }
 
         // Check de vencimiento y stock disponible (según grupo y lotes FEFO)
+        $cantidades_por_producto = [];
         foreach ($productos as $p) {
             $pid = intval($p['id_producto'] ?? 0);
-            $cant = intval($p['cantidad'] ?? 0);
-            if ($cant < 1 || $cant > self::LIMITE_UNIDADES) {
+            $cant = normalizarCantidadUnidades($p['cantidad'] ?? null);
+            if ($cant === null) {
                 return ['ok' => false, 'error' => 'CANTIDAD INVÁLIDA POR PRODUCTO. RANGO: 1 A 999,999.'];
+            }
+            if ($pid > 0) {
+                if ($grupo === 'venta' && isset($cantidades_por_producto[$pid])) {
+                    return ['ok' => false, 'error' => 'NO REPITA PRODUCTOS EN LA VENTA. CONSOLIDE LA CANTIDAD EN UNA SOLA LÍNEA.'];
+                }
+                $cantidades_por_producto[$pid] = ($cantidades_por_producto[$pid] ?? 0) + $cant;
             }
             $precio_entrante = floatval($p['precio'] ?? 0);
             if ($grupo === 'venta' && ($precio_entrante <= 0 || $precio_entrante > 99999999.99)) {
@@ -219,12 +226,13 @@ class NotaEntrega extends Model
                     return ['ok' => false, 'error' => "PRODUCTO #$pid NO EXISTE."];
                 }
                 $tiene_lotes = (int)$this->db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE id_producto = ?", [$pid])['n'];
+                $cantidad_solicitada = $cantidades_por_producto[$pid];
                 if ($tiene_lotes > 0) {
                     $solo_venc = $grupo === 'merma';
                     $disp = stockLoteDisponible($this->db, $pid, $solo_venc);
-                    if ($disp < $cant) {
+                    if ($disp < $cantidad_solicitada) {
                         $modo = $solo_venc ? 'VENCIDO' : 'VIGENTE';
-                        return ['ok' => false, 'error' => "STOCK $modo INSUFICIENTE. Disponible: $disp, solicitado: $cant."];
+                        return ['ok' => false, 'error' => "STOCK $modo INSUFICIENTE. Disponible: $disp, solicitado: $cantidad_solicitada."];
                     }
                 } else {
                     if ($grupo === 'merma') {
@@ -234,8 +242,8 @@ class NotaEntrega extends Model
                     } elseif ($pc['fecha_vencimiento'] && $pc['fecha_vencimiento'] <= date('Y-m-d')) {
                         return ['ok' => false, 'error' => 'PRODUCTO VENCIDO. NO SE PUEDE VENDER.'];
                     }
-                    if ((int)$pc['stock_actual'] < $cant) {
-                        return ['ok' => false, 'error' => "STOCK INSUFICIENTE. Disponible: {$pc['stock_actual']}, solicitado: $cant."];
+                    if ((int)$pc['stock_actual'] < $cantidad_solicitada) {
+                        return ['ok' => false, 'error' => "STOCK INSUFICIENTE. Disponible: {$pc['stock_actual']}, solicitado: $cantidad_solicitada."];
                     }
                 }
             }
@@ -246,6 +254,8 @@ class NotaEntrega extends Model
             foreach ($productos as &$p) $p['precio'] = 0;
             unset($p);
         }
+
+        $nro_control = generarControlNumero();
 
         return [
             'ok' => true,

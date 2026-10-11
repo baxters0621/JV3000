@@ -3,9 +3,9 @@
 /**
  * Pruebas de integración aisladas para el piloto de ventas y existencias.
  *
- * Ejecutar con JV_PILOT_TEST_DB_NAME, JV_PILOT_TEST_HOST, JV_PILOT_TEST_PORT
- * y JV_PILOT_TEST_DATADIR apuntando a una instancia temporal exclusiva. El
- * script valida su identidad antes de escribir; no carga config/.env ni init.php.
+ * Ejecutar con las variables JV_PILOT_TEST_* apuntando a una instancia temporal
+ * exclusiva y un usuario limitado a esa base. El script valida su identidad
+ * antes de escribir; no carga config/.env ni init.php.
  * Usa y elimina triggers temporales para simular fallos tardíos de auditoría.
  */
 
@@ -22,6 +22,7 @@ require_once $root . '/includes/helpers.php';
 require_once $root . '/core/Model.php';
 require_once $root . '/core/Controller.php';
 require_once $root . '/models/Salida.php';
+require_once $root . '/models/NotaEntrega.php';
 
 function pilotoAfirmar(bool $condicion, string $mensaje): void
 {
@@ -42,19 +43,25 @@ function pilotoConectar(): Database
     $nombre = (string)getenv('JV_PILOT_TEST_DB_NAME');
     $puerto = filter_var(getenv('JV_PILOT_TEST_PORT'), FILTER_VALIDATE_INT);
     $datadir = (string)getenv('JV_PILOT_TEST_DATADIR');
+    $usuario = (string)getenv('JV_PILOT_TEST_USER');
+    $contrasena = (string)getenv('JV_PILOT_TEST_PASS');
 
     if (
         $host !== '127.0.0.1'
         || !preg_match('/^jv3000_pilot_[a-zA-Z0-9_]+$/', $nombre)
-        || $puerto !== 33316
+        || $puerto === false
+        || $puerto < 1
+        || $puerto > 65535
         || $datadir === ''
         || !is_dir($datadir)
+        || $usuario !== 'jv_sales_test'
+        || $contrasena === ''
     ) {
         throw new RuntimeException('Destino de pruebas ausente o fuera de la instancia temporal aprobada.');
     }
 
     $db = Database::getInstance();
-    $db->connect($host, 'root', '', $nombre, $puerto);
+    $db->connect($host, $usuario, $contrasena, $nombre, $puerto);
     $identidad = $db->fetchOne(
         'SELECT DATABASE() AS nombre, @@datadir AS datadir, @@port AS puerto, @@bind_address AS bind_address'
     );
@@ -108,13 +115,18 @@ function pilotoCrearProducto(Database $db, string $sku, int $stock, array $lotes
 
 function pilotoConfirmar(int $idProducto, int $cantidad): array
 {
+    return pilotoConfirmarLineas([[
+        'id_producto' => $idProducto,
+        'cantidad' => $cantidad,
+        'precio' => 10.00,
+    ]]);
+}
+
+function pilotoConfirmarLineas(array $productos): array
+{
     return (new Salida())->confirmar([
         'grupo' => 'venta',
-        'productos_data' => json_encode([[
-            'id_producto' => $idProducto,
-            'cantidad' => $cantidad,
-            'precio' => 10.00,
-        ]], JSON_THROW_ON_ERROR),
+        'productos_data' => json_encode($productos, JSON_THROW_ON_ERROR),
         'id_tipo_mov' => 1,
         'id_usuario' => 1,
         'cliente' => 'Cliente sintético',
@@ -122,6 +134,17 @@ function pilotoConfirmar(int $idProducto, int $cantidad): array
         'nro_control' => '',
         'observaciones' => 'Prueba sintética del piloto',
     ]);
+}
+
+function pilotoPreview(array $productos): array
+{
+    return (new NotaEntrega())->construirPreview([
+        'grupo' => 'venta',
+        'productos_data' => json_encode($productos, JSON_THROW_ON_ERROR),
+        'id_tipo_mov' => 1,
+        'cliente' => 'Cliente sintético',
+        'rif_cliente' => 'V-12345678',
+    ], 1);
 }
 
 function pilotoPrepararSesion(): void
@@ -293,6 +316,92 @@ $idProductoFefo = pilotoCrearProducto($db, 'PILOT-FEFO-' . bin2hex(random_bytes(
     [3, 30],
     [4, 60],
 ]);
+$idProductoPreviewOtro = pilotoCrearProducto($db, 'PILOT-PREVIEW-' . bin2hex(random_bytes(3)), 4, [[4, 45]]);
+$productosPreview = [
+    ['id_producto' => $idProductoFefo, 'cantidad' => 4, 'precio' => 10.00],
+    ['id_producto' => $idProductoPreviewOtro, 'cantidad' => 1, 'precio' => 10.00],
+];
+$snapshotPreview = static function () use ($db, $idProductoFefo, $idProductoPreviewOtro): array {
+    return [
+        'stock' => $db->fetchAll(
+            'SELECT id_producto, stock_actual FROM productos WHERE id_producto IN (?, ?) ORDER BY id_producto',
+            [$idProductoFefo, $idProductoPreviewOtro]
+        ),
+        'lotes' => $db->fetchAll(
+            'SELECT id_producto, id_lote, cantidad_restante FROM lotes WHERE id_producto IN (?, ?) ORDER BY id_producto, id_lote',
+            [$idProductoFefo, $idProductoPreviewOtro]
+        ),
+        'salidas' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas'),
+        'detalles' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_salidas'),
+        'movimientos' => pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'"),
+        'detalles_movimiento' => pilotoContar(
+            $db,
+            "SELECT COUNT(*) AS total FROM detalle_movimientos dm
+             JOIN movimientos m ON m.id_movimiento = dm.id_movimiento
+             WHERE m.tipo_referencia = 'venta'"
+        ),
+        'auditoria' => pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'"),
+        'contador_ctrl' => (int)$db->fetchOne(
+            "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'"
+        )['ultimo_numero'],
+    ];
+};
+$contadorCtrlAntesPreviewValido = (int)$db->fetchOne(
+    "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'"
+)['ultimo_numero'];
+$resultadoPreviewValido = pilotoPreview($productosPreview);
+pilotoAfirmar($resultadoPreviewValido['ok'] === true, 'El preview rechazó la venta válida con productos distintos: ' . ($resultadoPreviewValido['error'] ?? ''));
+$contadorCtrlDespuesPreviewValido = (int)$db->fetchOne(
+    "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'"
+)['ultimo_numero'];
+$siguienteCtrlEsperado = $contadorCtrlAntesPreviewValido + 1;
+$controlEsperado = str_pad((string)$siguienteCtrlEsperado, 10, '0', STR_PAD_LEFT);
+$controlEsperado = substr($controlEsperado, 0, 2) . '-' . substr($controlEsperado, 2);
+pilotoAfirmar(
+    $contadorCtrlDespuesPreviewValido === $siguienteCtrlEsperado
+    && ($resultadoPreviewValido['data']['nro_control'] ?? null) === $controlEsperado,
+    'El preview válido no reservó exactamente el siguiente número CTRL.'
+);
+$lineasPreview = json_decode($resultadoPreviewValido['data']['productos_data'], true);
+pilotoAfirmar(
+    count($lineasPreview) === count($productosPreview)
+    && array_column($lineasPreview, 'id_producto') === array_column($productosPreview, 'id_producto')
+    && array_column($lineasPreview, 'cantidad') === array_column($productosPreview, 'cantidad')
+    && array_map(static fn(array $linea): float => (float)$linea['precio'], $lineasPreview) === array_map(static fn(array $linea): float => (float)$linea['precio'], $productosPreview),
+    'El preview multiítem válido no conservó las líneas, cantidades ni precios.'
+);
+$estadoAntesPreview = $snapshotPreview();
+$resultadoPreviewFraccionario = pilotoPreview([
+    ['id_producto' => $idProductoFefo, 'cantidad' => 1.5, 'precio' => 10.00],
+]);
+$estadoDespuesPreviewFraccionario = $snapshotPreview();
+pilotoAfirmar(
+    $resultadoPreviewFraccionario['ok'] === false
+    && str_contains($resultadoPreviewFraccionario['error'] ?? '', 'CANTIDAD INVÁLIDA'),
+    'El preview aceptó o truncó una cantidad fraccionaria.'
+);
+pilotoAfirmar(
+    $estadoAntesPreview === $estadoDespuesPreviewFraccionario,
+    'El preview fraccionario alteró stock, lotes, cabeceras, detalles, movimientos, auditoría o contador CTRL.'
+);
+$resultadoPreviewDuplicado = pilotoPreview([
+    ['id_producto' => $idProductoFefo, 'cantidad' => 4, 'precio' => 10.00],
+    ['id_producto' => $idProductoPreviewOtro, 'cantidad' => 1, 'precio' => 10.00],
+    ['id_producto' => $idProductoFefo, 'cantidad' => 4, 'precio' => 10.00],
+]);
+$estadoDespuesPreview = $snapshotPreview();
+pilotoAfirmar($resultadoPreviewDuplicado['ok'] === false, 'El preview aceptó un producto repetido en la venta.');
+pilotoAfirmar(
+    isset($resultadoPreviewDuplicado['error'])
+    && str_contains($resultadoPreviewDuplicado['error'], 'NO REPITA PRODUCTOS EN LA VENTA'),
+    'El rechazo del preview no indicó consolidar el producto en una sola línea.'
+);
+pilotoAfirmar(
+    $estadoAntesPreview === $estadoDespuesPreview,
+    'El preview repetido alteró stock, lotes, cabeceras, detalles, movimientos, auditoría o contador CTRL.'
+);
+echo "OK preview acepta productos distintos y rechaza repetidos sin escrituras\n";
+
 $auditoriasAntesVenta = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'");
 $resultadoVenta = pilotoConfirmar($idProductoFefo, 4);
 pilotoAfirmar($resultadoVenta['ok'] === true, 'La venta FEFO válida no se confirmó: ' . ($resultadoVenta['error'] ?? json_encode($resultadoVenta)));
@@ -312,6 +421,104 @@ pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_movimient
 pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'") === $auditoriasAntesVenta + 1, 'La auditoría de venta no se registró exactamente una vez.');
 echo "OK venta múltiple FEFO y auditoría atómica\n";
 
+$idProductoMultiA = pilotoCrearProducto($db, 'PILOT-MULTI-A-' . bin2hex(random_bytes(3)), 4, [[4, 35]]);
+$idProductoMultiB = pilotoCrearProducto($db, 'PILOT-MULTI-B-' . bin2hex(random_bytes(3)), 4, [[4, 55]]);
+$ventasAntesMulti = pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas');
+$movimientosAntesMulti = pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'");
+$auditoriasAntesMulti = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'");
+$contadorNdeAntesMulti = (int)$db->fetchOne(
+    "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'NDE'"
+)['ultimo_numero'];
+$resultadoMulti = pilotoConfirmarLineas([
+    ['id_producto' => $idProductoMultiA, 'cantidad' => 2, 'precio' => 10.00],
+    ['id_producto' => $idProductoMultiB, 'cantidad' => 1, 'precio' => 10.00],
+]);
+pilotoAfirmar($resultadoMulti['ok'] === true, 'La venta válida con productos distintos fue rechazada: ' . ($resultadoMulti['error'] ?? ''));
+$idSalidaMulti = (int)$resultadoMulti['id_salida'];
+$numeroNdeMulti = $db->fetchOne(
+    'SELECT nro_factura_manual FROM salidas WHERE id_salida = ?',
+    [$idSalidaMulti]
+)['nro_factura_manual'];
+$numeroNdeEsperadoMulti = 'NDE-' . str_pad((string)($contadorNdeAntesMulti + 1), 6, '0', STR_PAD_LEFT);
+pilotoAfirmar(
+    $numeroNdeMulti === $numeroNdeEsperadoMulti,
+    'La venta válida no conservó el formato o secuencia esperados para el número NDE.'
+);
+pilotoAfirmar(
+    (int)$db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'NDE'")['ultimo_numero']
+        === $contadorNdeAntesMulti + 1,
+    'La venta válida no avanzó el contador NDE exactamente una vez.'
+);
+$movimientoMulti = $db->fetchOne(
+    "SELECT id_movimiento FROM movimientos WHERE id_referencia = ? AND tipo_referencia = 'venta'",
+    [$idSalidaMulti]
+);
+pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_salidas WHERE id_salida = ?', [$idSalidaMulti]) === 2, 'La venta multiítem no conservó sus dos líneas.');
+pilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoMultiA])['stock_actual'] === 2, 'La venta multiítem descontó incorrectamente el primer producto.');
+pilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoMultiB])['stock_actual'] === 3, 'La venta multiítem descontó incorrectamente el segundo producto.');
+pilotoAfirmar((int)$db->fetchOne('SELECT cantidad_restante FROM lotes WHERE id_producto = ?', [$idProductoMultiA])['cantidad_restante'] === 2, 'La venta multiítem descontó incorrectamente el lote del primer producto.');
+pilotoAfirmar((int)$db->fetchOne('SELECT cantidad_restante FROM lotes WHERE id_producto = ?', [$idProductoMultiB])['cantidad_restante'] === 3, 'La venta multiítem descontó incorrectamente el lote del segundo producto.');
+pilotoAfirmar($movimientoMulti !== null, 'La venta multiítem no creó su movimiento.');
+pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_movimientos WHERE id_movimiento = ?', [(int)$movimientoMulti['id_movimiento']]) === 2, 'El movimiento no conservó los dos productos distintos.');
+pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas') === $ventasAntesMulti + 1, 'La venta multiítem no creó exactamente una cabecera.');
+pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'") === $movimientosAntesMulti + 1, 'La venta multiítem no creó exactamente un movimiento.');
+pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'") === $auditoriasAntesMulti + 1, 'La venta multiítem no creó exactamente una auditoría.');
+echo "OK control de venta confirmada con dos productos distintos\n";
+
+$idProductoFalloNde = pilotoCrearProducto(
+    $db,
+    'PILOT-NDE-FAIL-' . bin2hex(random_bytes(3)),
+    5,
+    [[5, 30]]
+);
+$snapshotFalloNde = static function () use ($db, $idProductoFalloNde): array {
+    return [
+        'stock' => (int)$db->fetchOne(
+            'SELECT stock_actual FROM productos WHERE id_producto = ?',
+            [$idProductoFalloNde]
+        )['stock_actual'],
+        'lotes' => $db->fetchAll(
+            'SELECT id_lote, cantidad, cantidad_restante FROM lotes WHERE id_producto = ? ORDER BY id_lote',
+            [$idProductoFalloNde]
+        ),
+        'salidas' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas'),
+        'detalles' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_salidas'),
+        'movimientos' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM movimientos'),
+        'detalles_movimiento' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_movimientos'),
+        'auditoria' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria'),
+        'contador_nde' => (int)$db->fetchOne(
+            "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'NDE'"
+        )['ultimo_numero'],
+        'nde_error' => pilotoContar(
+            $db,
+            "SELECT COUNT(*) AS total FROM salidas WHERE nro_factura_manual = 'NDE-ERROR'"
+        ),
+        'transaccion_activa' => $db->inTransaction(),
+    ];
+};
+$estadoAntesFalloNde = $snapshotFalloNde();
+$db->getConnection()->query(
+    "CREATE TRIGGER piloto_falla_generador_nde BEFORE UPDATE ON sku_contadores
+     FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo sintético del generador NDE'"
+);
+try {
+    $resultadoFalloNde = pilotoConfirmar($idProductoFalloNde, 2);
+} finally {
+    $db->getConnection()->query('DROP TRIGGER IF EXISTS piloto_falla_generador_nde');
+}
+$estadoDespuesFalloNde = $snapshotFalloNde();
+pilotoAfirmar(
+    ($resultadoFalloNde['ok'] ?? null) === false
+    && isset($resultadoFalloNde['error'])
+    && $resultadoFalloNde['error'] !== '',
+    'La venta no informó el fallo sintético al generar el número NDE.'
+);
+pilotoAfirmar(
+    $estadoAntesFalloNde === $estadoDespuesFalloNde,
+    'El fallo del generador NDE dejó cambios en venta, inventario, auditoría, contador o transacción.'
+);
+echo "OK fallo del generador NDE aborta la venta sin escrituras\n";
+
 $idProductoInsuficiente = pilotoCrearProducto($db, 'PILOT-STOCK-' . bin2hex(random_bytes(3)), 3, [[3, 20]]);
 $salidasAntes = pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas');
 $movimientosAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'");
@@ -330,6 +537,9 @@ $contadorAntes = (int)$db->fetchOne("SELECT ultimo_numero FROM sku_contadores WH
 $salidasAntes = pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas');
 $movimientosAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'");
 $auditoriasAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria");
+$contadorCtrlAntesRollback = (int)$db->fetchOne(
+    "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'"
+)['ultimo_numero'];
 $db->getConnection()->query("CREATE TRIGGER piloto_falla_auditoria BEFORE INSERT ON auditoria FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo sintético de auditoría'");
 try {
     $resultadoRollback = pilotoConfirmar($idProductoRollback, 2);
@@ -340,6 +550,10 @@ pilotoAfirmar($resultadoRollback['ok'] === false, 'La venta no notificó el fall
 pilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoRollback])['stock_actual'] === 5, 'El rollback no restauró el stock agregado.');
 pilotoAfirmar((int)$db->fetchOne('SELECT cantidad_restante FROM lotes WHERE id_producto = ?', [$idProductoRollback])['cantidad_restante'] === 5, 'El rollback no restauró el lote.');
 pilotoAfirmar((int)$db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'NDE'")['ultimo_numero'] === $contadorAntes, 'El rollback no revirtió el contador NDE.');
+pilotoAfirmar(
+    (int)$db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'")['ultimo_numero'] === $contadorCtrlAntesRollback,
+    'El fallo tardío de confirmación modificó el contador CTRL reservado durante el preview.'
+);
 pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas') === $salidasAntes, 'El rollback dejó una cabecera de venta.');
 pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'") === $movimientosAntes, 'El rollback dejó un movimiento de venta.');
 pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes, 'El rollback dejó una auditoría parcial.');
@@ -419,4 +633,48 @@ pilotoAfirmar(str_contains($html, 'NUEVA VENTA') && str_contains($html, 'id="tab
 pilotoAfirmar(str_contains($html, 'csrfToken') && str_contains($html, 'modules/salidas/salidas.js'), 'La interfaz omitió su token o el módulo JavaScript.');
 pilotoAfirmar(!str_contains($html, 'CLIENTES</button>'), 'La interfaz expuso controles administrativos al operador de ventas.');
 echo "OK render UI MVC para operador de ventas\n";
+
+$idProductoDuplicado = pilotoCrearProducto($db, 'PILOT-DUPLICADO-' . bin2hex(random_bytes(3)), 6, [[6, 45]]);
+$snapshotDuplicado = static function () use ($db, $idProductoDuplicado): array {
+    return [
+        'stock' => (int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoDuplicado])['stock_actual'],
+        'lotes' => $db->fetchAll(
+            'SELECT id_lote, cantidad, cantidad_restante FROM lotes WHERE id_producto = ? ORDER BY id_lote',
+            [$idProductoDuplicado]
+        ),
+        'salidas' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas'),
+        'detalles' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_salidas'),
+        'movimientos' => pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'"),
+        'detalles_movimiento' => pilotoContar(
+            $db,
+            "SELECT COUNT(*) AS total FROM detalle_movimientos dm
+             JOIN movimientos m ON m.id_movimiento = dm.id_movimiento
+             WHERE m.tipo_referencia = 'venta'"
+        ),
+        'auditoria' => pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'"),
+        'contador_ctrl' => (int)$db->fetchOne(
+            "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'"
+        )['ultimo_numero'],
+    ];
+};
+$estadoAntesDuplicado = $snapshotDuplicado();
+$resultadoDuplicado = pilotoConfirmarLineas([
+    ['id_producto' => $idProductoDuplicado, 'cantidad' => 1, 'precio' => 10.00],
+    ['id_producto' => $idProductoDuplicado, 'cantidad' => 1, 'precio' => 10.00],
+]);
+$estadoDespuesDuplicado = $snapshotDuplicado();
+$esErrorCorregible = $resultadoDuplicado['ok'] === false
+    && isset($resultadoDuplicado['error'])
+    && str_contains($resultadoDuplicado['error'], 'NO REPITA PRODUCTOS EN LA VENTA');
+$estadoSinCambios = $estadoAntesDuplicado === $estadoDespuesDuplicado;
+if (!$esErrorCorregible || !$estadoSinCambios) {
+    fwrite(STDERR, "FALLO regresión de líneas repetidas: resultado=" . json_encode($resultadoDuplicado, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+        . "; estado_antes=" . json_encode($estadoAntesDuplicado)
+        . "; estado_despues=" . json_encode($estadoDespuesDuplicado) . "\n");
+}
+pilotoAfirmar(
+    $esErrorCorregible && $estadoSinCambios,
+    'La venta repetida debe rechazarse con error corregible y sin cambios en existencias, lotes, cabeceras, detalles, movimientos, auditoría ni contador CTRL.'
+);
+echo "OK servidor rechaza líneas repetidas sin escrituras\n";
 echo "Todas las pruebas del piloto pasaron en la base temporal identificada.\n";

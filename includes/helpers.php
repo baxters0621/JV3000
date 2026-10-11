@@ -3,6 +3,198 @@
 // ==========================================
 // FUNCIONES AUXILIARES
 // ==========================================
+
+if (!function_exists('normalizarCantidadUnidades')) {
+    /**
+     * Acepta una cantidad de unidades entera dentro del rango comercial común.
+     *
+     * Admite enteros y cadenas decimales exactas con fracción cero. Rechaza
+     * floats porque la decodificación puede redondear una fracción a entero.
+     *
+     * @param mixed $valor Valor recibido del formulario o del payload JSON.
+     * @return int|null Cantidad normalizada o null si no es válida.
+     */
+    function normalizarCantidadUnidades($valor): ?int
+    {
+        if (is_int($valor)) {
+            $cantidad = (float)$valor;
+        } elseif (
+            is_string($valor)
+            && preg_match('/^[+-]?\d+(?:\.0+)?$/D', trim($valor))
+        ) {
+            $cantidad = (float)trim($valor);
+        } else {
+            return null;
+        }
+
+        if (
+            !is_finite($cantidad)
+            || floor($cantidad) !== $cantidad
+            || $cantidad < 1
+            || $cantidad > 999999
+        ) {
+            return null;
+        }
+
+        return (int)$cantidad;
+    }
+}
+
+if (!function_exists('prepararRecuperacionCompra')) {
+    /**
+     * Conserva solo los datos no sensibles necesarios para rehidratar un alta fallida.
+     *
+     * Excluye deliberadamente anticipo, método y detalles de pago, CSRF y cualquier
+     * campo ajeno a la lista permitida. Mantiene las líneas repetidas sin alterarlas.
+     *
+     * @param array $datos Datos POST del alta de compra.
+     * @return array|null Borrador limitado para la sesión, o null si el detalle no es recuperable.
+     */
+    function prepararRecuperacionCompra(array $datos): ?array
+    {
+        $productos_json = $datos['productos_data'] ?? '';
+        if (!is_string($productos_json) || strlen($productos_json) > 131072) {
+            return null;
+        }
+
+        $productos_recibidos = $productos_json === ''
+            ? []
+            : json_decode($productos_json, true, 16);
+        if (!is_array($productos_recibidos) || !array_is_list($productos_recibidos) || count($productos_recibidos) > 200) {
+            return null;
+        }
+
+        $productos = [];
+        foreach ($productos_recibidos as $producto) {
+            if (!is_array($producto)) {
+                return null;
+            }
+            $id_producto = filter_var($producto['id'] ?? null, FILTER_VALIDATE_INT);
+            if ($id_producto === false || $id_producto <= 0) {
+                return null;
+            }
+
+            foreach (['nombre', 'cantidad', 'precio', 'fecha_vencimiento'] as $campo) {
+                if (isset($producto[$campo]) && !is_scalar($producto[$campo])) {
+                    return null;
+                }
+            }
+
+            $nombre = (string)($producto['nombre'] ?? '');
+            $cantidad = (string)($producto['cantidad'] ?? '');
+            $precio = (string)($producto['precio'] ?? '');
+            $fecha_vencimiento = (string)($producto['fecha_vencimiento'] ?? '');
+            if (strlen($nombre) > 200 || strlen($cantidad) > 32 || strlen($precio) > 32) {
+                return null;
+            }
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/D', $fecha_vencimiento)) {
+                $fecha_vencimiento = '';
+            }
+
+            $productos[] = [
+                'id' => (int)$id_producto,
+                'nombre' => $nombre,
+                'cantidad' => $cantidad,
+                'precio' => $precio,
+                'fecha_vencimiento' => $fecha_vencimiento,
+            ];
+        }
+
+        $id_proveedor = filter_var($datos['id_proveedor'] ?? null, FILTER_VALIDATE_INT);
+        $nro_factura = is_scalar($datos['nro_factura'] ?? null) ? (string)$datos['nro_factura'] : '';
+        $nro_control = is_scalar($datos['nro_control'] ?? null) ? (string)$datos['nro_control'] : '';
+        if (strlen($nro_factura) > 8 || strlen($nro_control) > 11) {
+            return null;
+        }
+
+        return [
+            'id_proveedor' => $id_proveedor !== false && $id_proveedor > 0 ? (int)$id_proveedor : 0,
+            'nro_factura' => $nro_factura,
+            'nro_control' => $nro_control,
+            'productos' => $productos,
+        ];
+    }
+}
+
+if (!function_exists('prepararRecuperacionRecepcion')) {
+    /**
+     * Prepara el contexto seguro de una recepción fallida para reabrir el modal.
+     *
+     * Si el detalle no puede representarse sin ambigüedad, conserva la compra y la
+     * clave idempotente, pero deja los ítems en null para que la interfaz pida revisión.
+     *
+     * @param array $datos Datos POST de la recepción.
+     * @return array|null Datos limitados para sesión, o null si compra/clave no son válidos.
+     */
+    function prepararRecuperacionRecepcion(array $datos): ?array
+    {
+        $id_compra = filter_var($datos['id_compra'] ?? null, FILTER_VALIDATE_INT);
+        $clave_idempotencia = strtolower((string)($datos['clave_idempotencia'] ?? ''));
+        if (
+            $id_compra === false
+            || $id_compra <= 0
+            || !preg_match('/^[a-f0-9]{64}$/D', $clave_idempotencia)
+        ) {
+            return null;
+        }
+
+        $items_json = $datos['items_data'] ?? '';
+        $items_recibidos = is_string($items_json) && strlen($items_json) <= 65536
+            ? json_decode($items_json, true, 12)
+            : null;
+        $documento_recepcion = is_scalar($datos['documento_recepcion'] ?? null)
+            ? (string)$datos['documento_recepcion']
+            : '';
+        if (strlen($documento_recepcion) > 100) {
+            return null;
+        }
+        $items = [];
+        $ids_detalle = [];
+        $items_recuperables = is_array($items_recibidos)
+            && array_is_list($items_recibidos)
+            && count($items_recibidos) <= 200;
+
+        if ($items_recuperables) {
+            foreach ($items_recibidos as $item) {
+                if (!is_array($item)) {
+                    $items_recuperables = false;
+                    break;
+                }
+                $id_detalle = filter_var($item['id_detalle'] ?? null, FILTER_VALIDATE_INT);
+                $cantidad = filter_var($item['cantidad'] ?? null, FILTER_VALIDATE_INT);
+                if (
+                    $id_detalle === false
+                    || $id_detalle <= 0
+                    || $cantidad === false
+                    || $cantidad < 0
+                    || isset($ids_detalle[$id_detalle])
+                    || (isset($item['fecha_vencimiento']) && !is_scalar($item['fecha_vencimiento']))
+                ) {
+                    $items_recuperables = false;
+                    break;
+                }
+                $ids_detalle[$id_detalle] = true;
+                $fecha_vencimiento = (string)($item['fecha_vencimiento'] ?? '');
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/D', $fecha_vencimiento)) {
+                    $fecha_vencimiento = '';
+                }
+                $items[] = [
+                    'id_detalle' => (int)$id_detalle,
+                    'cantidad' => (int)$cantidad,
+                    'fecha_vencimiento' => $fecha_vencimiento,
+                ];
+            }
+        }
+
+        return [
+            'id_compra' => (int)$id_compra,
+            'clave_idempotencia' => $clave_idempotencia,
+            'documento_recepcion' => $documento_recepcion,
+            'items' => $items_recuperables ? $items : null,
+        ];
+    }
+}
+
 // ==========================================
 // DOCUMENTO FISCAL (CÉDULA / RIF)
 // ==========================================
@@ -231,9 +423,10 @@ if (!function_exists('generarFacturaNumero')) {
      *
      * Lee e incrementa el contador sku_contadores con bloqueo FOR UPDATE
      * dentro de una transacción y devuelve el número formateado como
-     * "NDE-000001". Ante un error devuelve 'NDE-ERROR'.
+     * "NDE-000001". Ante un error revierte y propaga la excepción.
      *
      * @return string Número de Nota de Entrega formateado.
+     * @throws Throwable Si no puede reservarse el siguiente número.
      */
     function generarFacturaNumero()
     {
@@ -250,9 +443,9 @@ if (!function_exists('generarFacturaNumero')) {
             $db->execute("UPDATE sku_contadores SET ultimo_numero=? WHERE sku_prefix='NDE'", [$prox]);
             $db->commit();
             return 'NDE-' . str_pad($prox, 6, '0', STR_PAD_LEFT);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $db->rollback();
-            return 'NDE-ERROR';
+            throw $e;
         }
     }
 }

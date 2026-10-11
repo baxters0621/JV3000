@@ -259,18 +259,25 @@ class Compra extends Model
         $items_validos = [];
         $subtotal = 0;
         foreach ($productos as $prod) {
+            if (!is_array($prod)) {
+                return ['ok' => false, 'mensaje' => 'LÍNEA DE PRODUCTO INVÁLIDA.'];
+            }
             $id_producto = intval($prod['id'] ?? 0);
-            $cantidad = intval($prod['cantidad'] ?? 0);
+            $cantidad = normalizarCantidadUnidades($prod['cantidad'] ?? null);
             $precio_costo = round((float)($prod['precio'] ?? 0), 2);
-            if ($cantidad < 1 || $cantidad > 999999) {
+            if ($cantidad === null) {
                 return ['ok' => false, 'mensaje' => 'CANTIDAD INVÁLIDA POR PRODUCTO. RANGO: 1 A 999,999.'];
             }
             if ($precio_costo < 0 || $precio_costo > 99999999.99) {
                 return ['ok' => false, 'mensaje' => "PRECIO DE COSTO INVÁLIDO PARA PRODUCTO #$id_producto. RANGO: 0 A 99,999,999.99."];
             }
-            if ($id_producto <= 0) continue;
+            if ($id_producto <= 0) {
+                return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO EN EL DETALLE DE LA COMPRA.'];
+            }
             $prod_fila = $this->db->fetchOne("SELECT sku, nombre_producto FROM productos WHERE id_producto = ?", [$id_producto]);
-            if (!$prod_fila) continue;
+            if (!$prod_fila) {
+                return ['ok' => false, 'mensaje' => "EL PRODUCTO #$id_producto NO EXISTE."];
+            }
             // REGLA DE NEGOCIO: todo lote nace de una compra y TODO lote exige
             // fecha de vencimiento. Sin ella se rompe el control FEFO del inventario.
             $lote_venc = null;
@@ -424,6 +431,9 @@ class Compra extends Model
                     "UPDATE solicitudes_compra SET estado = 'Atendida', id_compra = ?, fecha_atendida = NOW() WHERE id_solicitud = ? AND estado = 'Pendiente'",
                     [$compra_id, $id_solicitud]
                 );
+                if ($this->db->affectedRows() !== 1) {
+                    throw new DomainException('LA SOLICITUD YA FUE ATENDIDA POR OTRA COMPRA. NO SE REGISTRÓ ESTA COMPRA.');
+                }
             }
 
             $this->db->commit();
@@ -437,6 +447,9 @@ class Compra extends Model
                 $msg .= 'PAGO PENDIENTE (' . number_format($monto_pago, 2) . ' DE ' . number_format($total, 2) . ').';
             }
             return ['ok' => true, 'mensaje' => $msg];
+        } catch (DomainException $e) {
+            $this->db->rollback();
+            return ['ok' => false, 'mensaje' => $e->getMessage()];
         } catch (Exception $e) {
             $this->db->rollback();
             return ['ok' => false, 'mensaje' => 'ERROR AL REGISTRAR LA COMPRA. VERIFICA LOS DATOS E INTENTA DE NUEVO.'];
@@ -454,17 +467,44 @@ class Compra extends Model
      */
     public function anular(int $id_compra): array
     {
-        $compra = $this->db->fetchOne("SELECT nro_factura, status FROM compras WHERE id_compra = ?", [$id_compra]);
-        if (!$compra || $compra['status'] === 'Anulada') {
-            return ['ok' => false, 'mensaje' => 'LA COMPRA NO EXISTE O YA FUE ANULADA.'];
+        try {
+            $this->db->begin();
+            $compra = $this->db->fetchOne(
+                "SELECT nro_factura, status FROM compras WHERE id_compra = ? FOR UPDATE",
+                [$id_compra]
+            );
+            if (!$compra || $compra['status'] !== 'Activa') {
+                $this->db->rollback();
+                return ['ok' => false, 'mensaje' => 'LA COMPRA NO EXISTE O YA FUE ANULADA.'];
+            }
+
+            $recibida = (int)($this->db->fetchOne(
+                "SELECT COUNT(*) AS n FROM lotes WHERE id_compra = ?",
+                [$id_compra]
+            )['n'] ?? 0);
+            if ($recibida > 0) {
+                $this->db->rollback();
+                return ['ok' => false, 'mensaje' => 'NO SE PUEDE ANULAR: la compra ya tiene mercancía recibida en inventario.'];
+            }
+
+            $this->db->execute(
+                "UPDATE compras SET status = 'Anulada' WHERE id_compra = ? AND status = 'Activa'",
+                [$id_compra]
+            );
+            if ($this->db->affectedRows() !== 1) {
+                throw new RuntimeException('No se pudo actualizar el estado de la compra.');
+            }
+
+            registrarAuditoria('anular', "Compra #$id_compra (factura {$compra['nro_factura']}) anulada");
+            $this->db->commit();
+            return ['ok' => true, 'mensaje' => 'COMPRA ANULADA.'];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollback();
+            }
+            error_log('Error al anular la compra #' . $id_compra . ': ' . $e->getMessage());
+            return ['ok' => false, 'mensaje' => 'ERROR AL ANULAR LA COMPRA. VERIFICA LOS DATOS E INTENTA DE NUEVO.'];
         }
-        $recibida = (int)($this->db->fetchOne("SELECT COUNT(*) AS n FROM lotes WHERE id_compra = ?", [$id_compra])['n'] ?? 0);
-        if ($recibida > 0) {
-            return ['ok' => false, 'mensaje' => 'NO SE PUEDE ANULAR: la compra ya tiene mercancía recibida en inventario.'];
-        }
-        $this->db->execute("UPDATE compras SET status = 'Anulada' WHERE id_compra = ?", [$id_compra]);
-        registrarAuditoria('anular', "Compra #$id_compra (factura {$compra['nro_factura']}) anulada");
-        return ['ok' => true, 'mensaje' => 'COMPRA ANULADA.'];
     }
 
     /**

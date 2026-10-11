@@ -904,9 +904,6 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                                     <div class="prov-cat-item">
                                                         <div class="cat-item-info">
                                                             <span class="cat-item-nombre" data-tooltip="<?php echo htmlspecialchars($entrada_cat['nombre_producto']); ?>"><?php echo htmlspecialchars($entrada_cat['nombre_producto']); ?></span>
-                                                            <?php if (!empty($entrada_cat['descripcion'])): ?>
-                                                                <small class="cat-item-desc"><?php echo htmlspecialchars($entrada_cat['descripcion']); ?></small>
-                                                            <?php endif; ?>
                                                             <small class="cat-item-meta"><?php echo htmlspecialchars($entrada_cat['sku']); ?><?php echo !empty($entrada_cat['codigo_proveedor']) ? ' · C&oacute;d. prov: ' . htmlspecialchars($entrada_cat['codigo_proveedor']) : ''; ?></small>
                                                         </div>
                                                         <span class="cat-item-costo">$<?php echo number_format((float)$entrada_cat['costo'], 2); ?></span>
@@ -1138,6 +1135,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_recepcion" value="recibir">
                 <input type="hidden" name="id_compra" id="recIdCompra">
+                <input type="hidden" name="clave_idempotencia" id="recClaveIdempotencia">
                 <input type="hidden" name="items_data" id="recItemsData">
 
                 <!-- Header receptivo -->
@@ -1151,6 +1149,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 </div>
 
                 <div class="p-3">
+                    <div id="recuperacionRecepcionAviso" class="alert alert-warning" role="alert" style="display:none;"></div>
                     <div class="rec-section">
                         <div class="rec-section-label"><i class="bi bi-receipt me-1"></i>Compra</div>
                         <div class="row g-2">

@@ -18,6 +18,53 @@
 class Recepcion extends Model
 {
     /**
+     * Devuelve el resultado existente si se recibió de nuevo la misma clave.
+     *
+     * @param string $claveIdempotencia Clave técnica del intento.
+     * @param int $idCompra Compra a la que pertenece el intento.
+     * @param int $idUsuario Operador que envió el intento.
+     * @param string $huellaSolicitud Huella del contenido normalizado.
+     * @param bool $bloquear Si debe bloquear la fila durante la transacción.
+     * @return array|null Resultado de replay/conflicto, o null si no existe.
+     */
+    private function resultadoIdempotencia(
+        string $claveIdempotencia,
+        int $idCompra,
+        int $idUsuario,
+        string $huellaSolicitud,
+        bool $bloquear = false
+    ): ?array {
+        $sql = "SELECT id_referencia, tipo_referencia, tipo, id_usuario, huella_solicitud
+                FROM movimientos
+                WHERE clave_idempotencia = ?";
+        if ($bloquear) {
+            $sql .= ' FOR UPDATE';
+        }
+        $movimiento = $this->db->fetchOne($sql, [$claveIdempotencia]);
+        if (!$movimiento) {
+            return null;
+        }
+
+        if (
+            (int)$movimiento['id_referencia'] !== $idCompra
+            || $movimiento['tipo_referencia'] !== 'compra'
+            || $movimiento['tipo'] !== 'Entrada'
+            || (int)$movimiento['id_usuario'] !== $idUsuario
+            || !hash_equals((string)$movimiento['huella_solicitud'], $huellaSolicitud)
+        ) {
+            return [
+                'ok' => false,
+                'mensaje' => 'LA CLAVE DE RECEPCIÓN YA SE UTILIZÓ CON DATOS DISTINTOS. REVISE EL ESTADO ANTES DE CONTINUAR.',
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'mensaje' => 'ESTA RECEPCIÓN YA FUE REGISTRADA. NO SE REPITIERON CAMBIOS.',
+        ];
+    }
+
+    /**
      * Procesa la recepción de mercancía de una compra.
      *
      * Valida la compra, los ítems recibidos (cantidad vs. pendiente) y, en
@@ -32,12 +79,10 @@ class Recepcion extends Model
     public function registrar(array $receptionFormData): array
     {
         $id_compra = intval($receptionFormData['id_compra'] ?? 0);
-        $compra = $this->db->fetchOne(
-            "SELECT id_compra, nro_factura, id_proveedor, status, estado_recepcion FROM compras WHERE id_compra = ? AND status = 'Activa'",
-            [$id_compra]
-        );
-        if (!$compra || $compra['estado_recepcion'] === 'Completa') {
-            return ['ok' => false, 'mensaje' => 'LA COMPRA NO EXISTE O YA FUE RECIBIDA POR COMPLETO.'];
+        $id_usuario_sesion = intval($_SESSION['id_usuario'] ?? 0);
+        $clave_idempotencia = strtolower(trim((string)($receptionFormData['clave_idempotencia'] ?? '')));
+        if (!preg_match('/^[a-f0-9]{64}$/D', $clave_idempotencia)) {
+            return ['ok' => false, 'mensaje' => 'CLAVE DE RECEPCIÓN INVÁLIDA. RECARGUE COMPRAS E INTENTE DE NUEVO.'];
         }
 
         $items_raw = json_decode($receptionFormData['items_data'] ?? '[]', true);
@@ -48,9 +93,15 @@ class Recepcion extends Model
 
         $solicitado = [];
         foreach ($items as $it) {
-            $id_detalle = intval($it['id_detalle'] ?? 0);
-            $cantidad = intval($it['cantidad'] ?? 0);
-            if ($id_detalle <= 0 || $cantidad <= 0) continue;
+            if (!is_array($it)) {
+                return ['ok' => false, 'mensaje' => 'LÍNEA DE RECEPCIÓN INVÁLIDA.'];
+            }
+            $id_detalle = filter_var($it['id_detalle'] ?? null, FILTER_VALIDATE_INT);
+            $cantidad = filter_var($it['cantidad'] ?? null, FILTER_VALIDATE_INT);
+            if ($id_detalle === false || $id_detalle <= 0 || $cantidad === false || $cantidad < 0) {
+                return ['ok' => false, 'mensaje' => 'CANTIDAD O PRODUCTO INVÁLIDOS PARA RECIBIR.'];
+            }
+            if ($cantidad === 0) continue;
             $venc = null;
             if (!empty($it['fecha_vencimiento']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($it['fecha_vencimiento']))) {
                 $venc = trim($it['fecha_vencimiento']);
@@ -59,6 +110,33 @@ class Recepcion extends Model
         }
         if (empty($solicitado)) {
             return ['ok' => false, 'mensaje' => 'DEBE INDICAR CANTIDADES VÁLIDAS PARA RECIBIR.'];
+        }
+
+        ksort($solicitado, SORT_NUMERIC);
+        $documento_recepcion = trim(substr((string)($receptionFormData['documento_recepcion'] ?? ''), 0, 100));
+        $huella_solicitud = hash('sha256', json_encode([
+            'id_compra' => $id_compra,
+            'id_usuario' => $id_usuario_sesion,
+            'items' => $solicitado,
+            'documento_recepcion' => $documento_recepcion,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR));
+
+        $resultadoRepetido = $this->resultadoIdempotencia(
+            $clave_idempotencia,
+            $id_compra,
+            $id_usuario_sesion,
+            $huella_solicitud
+        );
+        if ($resultadoRepetido !== null) {
+            return $resultadoRepetido;
+        }
+
+        $compra = $this->db->fetchOne(
+            "SELECT id_compra, nro_factura, id_proveedor, status, estado_recepcion FROM compras WHERE id_compra = ? AND status = 'Activa'",
+            [$id_compra]
+        );
+        if (!$compra || $compra['estado_recepcion'] === 'Completa') {
+            return ['ok' => false, 'mensaje' => 'LA COMPRA NO EXISTE O YA FUE RECIBIDA POR COMPLETO.'];
         }
 
         $ids = array_keys($solicitado);
@@ -93,9 +171,7 @@ class Recepcion extends Model
             }
         }
 
-        $id_usuario_sesion = intval($_SESSION['id_usuario'] ?? 0);
         $id_proveedor = $compra['id_proveedor'] ? intval($compra['id_proveedor']) : null;
-        $documento_recepcion = trim(substr((string)($receptionFormData['documento_recepcion'] ?? ''), 0, 100));
 
         $this->db->begin();
         try {
@@ -104,6 +180,17 @@ class Recepcion extends Model
                  FROM compras WHERE id_compra = ? FOR UPDATE",
                 [$id_compra]
             );
+            $resultadoRepetido = $this->resultadoIdempotencia(
+                $clave_idempotencia,
+                $id_compra,
+                $id_usuario_sesion,
+                $huella_solicitud,
+                true
+            );
+            if ($resultadoRepetido !== null) {
+                $this->db->rollback();
+                return $resultadoRepetido;
+            }
             if (!$compra || $compra['status'] !== 'Activa' || $compra['estado_recepcion'] === 'Completa') {
                 throw new RuntimeException('LA COMPRA YA NO ESTÁ DISPONIBLE PARA RECIBIR.');
             }
@@ -138,18 +225,40 @@ class Recepcion extends Model
             );
 
             $id_proveedor = $compra['id_proveedor'] ? (int)$compra['id_proveedor'] : null;
-            $mov_id = $this->db->insert('movimientos', [
-                'id_referencia'      => $id_compra,
-                'tipo_referencia'    => 'compra',
-                'tipo'               => 'Entrada',
-                'id_usuario'         => $id_usuario_sesion,
-                'status'             => 'Activo',
-                'documento_recepcion' => $documento_recepcion !== '' ? $documento_recepcion : null,
-            ]);
+            $movimientoStmt = $this->db->execute(
+                "INSERT INTO movimientos (
+                    id_referencia, tipo_referencia, tipo, id_usuario, status,
+                    documento_recepcion, clave_idempotencia, huella_solicitud
+                 ) VALUES (?, 'compra', 'Entrada', ?, 'Activo', ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE id_movimiento = LAST_INSERT_ID(id_movimiento)",
+                [
+                    $id_compra,
+                    $id_usuario_sesion,
+                    $documento_recepcion !== '' ? $documento_recepcion : null,
+                    $clave_idempotencia,
+                    $huella_solicitud,
+                ]
+            );
+            $filasAfectadas = $movimientoStmt->affected_rows;
+            $mov_id = (int)$movimientoStmt->insert_id;
+            $movimientoStmt->close();
+            if ($filasAfectadas !== 1) {
+                $resultadoRepetido = $this->resultadoIdempotencia(
+                    $clave_idempotencia,
+                    $id_compra,
+                    $id_usuario_sesion,
+                    $huella_solicitud,
+                    true
+                );
+                $this->db->rollback();
+                if ($resultadoRepetido !== null) {
+                    return $resultadoRepetido;
+                }
+                return ['ok' => false, 'mensaje' => 'NO SE PUDO REGISTRAR LA CLAVE ÚNICA DE RECEPCIÓN.'];
+            }
 
             $total_productos = 0;
             $total_unidades = 0;
-            $faltante = false;
 
             foreach ($filas as $f) {
                 $id_detalle = (int)$f['id_detalle'];
@@ -196,11 +305,24 @@ class Recepcion extends Model
                     'precio_unitario' => (float)$f['precio_costo'],
                 ]);
 
-                if (((int)$f['cantidad_recibida'] + $recibir) < (int)$f['cantidad']) {
-                    $faltante = true;
-                }
                 $total_productos++;
                 $total_unidades += $recibir;
+            }
+
+            $detalles_compra = $this->db->fetchAll(
+                "SELECT cantidad, cantidad_recibida
+                 FROM detalle_compras
+                 WHERE id_compra = ?
+                 ORDER BY id_detalle
+                 FOR UPDATE",
+                [$id_compra]
+            );
+            $faltante = false;
+            foreach ($detalles_compra as $detalle_compra) {
+                if ((int)$detalle_compra['cantidad_recibida'] < (int)$detalle_compra['cantidad']) {
+                    $faltante = true;
+                    break;
+                }
             }
 
             $this->db->execute("UPDATE compras SET estado_recepcion = ? WHERE id_compra = ?", [$faltante ? 'Parcial' : 'Completa', $id_compra]);
