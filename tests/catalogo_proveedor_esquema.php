@@ -56,8 +56,8 @@ afirmarContrato(
     'No se encontró la definición de productos en el esquema v6.'
 );
 afirmarContrato(
-    !preg_match('/^\s*`descripcion`\s/m', $coincidencia[1]),
-    'El esquema v6 ahora define descripcion en productos; revisar la expectativa de esta prueba.'
+    preg_match('/^\s*`descripcion`\s/m', $coincidencia[1]) === 1,
+    'El esquema v6 debe definir productos.descripcion (realineamiento 2026-10-10).'
 );
 afirmarContrato(
     str_contains($consulta, 'p.nombre_producto')
