@@ -232,6 +232,23 @@ La decisión D2 es excluir el anticipo y todos los detalles de pago de la recupe
 
 Todo cambio de código debe registrarse en `docs/BITACORA.md` (regla obligatoria en `AGENTS.md`).
 
+### Artefactos citados pero no versionados
+
+Algunas entradas de la bitácora (tareas de arranque/instalación del 2026-10-09 y 2026-10-10) citan
+`specs/SPEC-startup-installation-safety.md`, `tasks/plan.md`, `tasks/todo.md`, `docs/INSTALACION.md`
+y las suites `tests/startup_diagnostics.php`, `tests/startup_schema_compatibility.php`,
+`tests/politica_restauracion_arranque.php`, `tests/bloqueo_migraciones_arranque.php`,
+`tests/flujo_instalacion_nueva.php`, `tests/estado_instalacion.php` y `tests/diff_esquema.php`.
+
+Ninguno de esos archivos está en el control de versiones ni existe en el proyecto
+(`git log --diff-filter=A -- specs` no devuelve resultados), por lo que **la evidencia
+de esas entradas no es reproducible**. Se documentan aquí solo como referencia histórica:
+no deben regenerarse asumiendo que son el estado vigente. Cualquier trabajo de
+actualización de esquema o instalación requiere un procedimiento nuevo, autorizado y
+respaldado. Los auxiliares activos del arranque son `includes/StartupDiagnostics.php`,
+`includes/SchemaCompatibility.php`, `includes/EstadoInstalacion.php` e
+`includes/InstaladorInicial.php`.
+
 ## Licencia
 
 Uso interno exclusivo de JV3000 C.A.
