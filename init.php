@@ -572,9 +572,6 @@ if (!StartupDiagnostics::allowsNormalStartup($schemaComparison)) {
     jv_schema_error_page($schemaDiagnostic);
 }
 
-// Las migraciones históricas están separadas en includes/MigracionesPendientes.php.
-// El arranque normal no incluye ni ejecuta ese archivo.
-
 // ==========================================
 // SEGURIDAD Y SESIÓN
 // ==========================================
