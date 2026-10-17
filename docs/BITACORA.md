@@ -10,6 +10,10 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-10-16 22:46] · Módulo: Login/Registro · Cambio: Corregida la validación de la pregunta y respuesta de seguridad del modal de registro de usuarios. (1) `assets/login/login.js`: `validarReg()` solo se disparaba al escribir el usuario (`r-user`) y al cambiar la pregunta (`r-preg`), así que al escribir la respuesta el campo no se revalidaba (quedaba sin marca de válido) y `btn-reg` podía permanecer deshabilitado hasta cambiar la pregunta; ahora `r-email`, `r-pass`, `r-pass2` y `r-resp` validan en `input` y la pregunta en `change`, con guarda de existencia, y se eliminó la rama muerta `respuesta.length < 1`. (2) `login/login.php`: el `<select>` de preguntas se genera con `getPreguntasRespuestas()` en vez de duplicar la lista a mano y el servidor rechaza cualquier `reg_pregunta` fuera del catálogo antes de continuar. · Archivos: assets/login/login.js, login/login.php, docs/BITACORA.md · Prueba: `php -l login\login.php` y `node --check assets\login\login.js` sin errores; banco de pruebas con DOM simulado confirmó listener en `r-resp`, `btn-reg` habilitado y estado `status-ok` en la respuesta; POST real con token CSRF y pregunta manipulada devolvió "SELECCIONE UNA PREGUNTA DE SEGURIDAD VÁLIDA." sin crear usuario; GET /login/login.php 200 con 9 opciones (placeholder + las 8 del catálogo).
+
+---
+
 [2026-10-16 22:29] · Módulo: Convenciones del proyecto · Cambio: Se registró en las reglas la condición de que los "modos de aprendizaje" derivados de la guía "Prompt para usar ChatGPT para aprender" (profesor, pair, senior y debug) se apliquen únicamente cuando el usuario los pida expresamente; por defecto el agente responde de forma directa, sin esos modos. · Archivos: AGENTS.md, docs/BITACORA.md · Prueba: revisión documental; sin cambios de código, DB, HTTP ni navegador.
 
 ---

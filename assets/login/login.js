@@ -152,8 +152,6 @@ function validarReg() {
     var respDefault = 'Escribe una respuesta que recuerdes fácilmente.';
     if (respuesta.length === 0) {
         setFieldState('r-resp', 'r-resp-status', 'r-resp-hint', 'neutral', respDefault);
-    } else if (respuesta.length < 1) {
-        setFieldState('r-resp', 'r-resp-status', 'r-resp-hint', 'invalid', 'Escribe al menos 1 carácter.');
     } else {
         setFieldState('r-resp', 'r-resp-status', 'r-resp-hint', 'valid', 'Respuesta válida.');
     }
@@ -163,8 +161,18 @@ function validarReg() {
     btn.disabled = !(usernameIsValid && emailIsValid && passwordIsValid && passwordsMatch && preguntaIsValid && answerIsValid);
 }
 
-// Listener para select de pregunta
-document.getElementById('r-preg').addEventListener('change', function() { validarReg(); });
+// ==========================================
+// VALIDACIÓN CONTINUA — CAMPOS DEL REGISTRO
+// ==========================================
+// Validar también al escribir en correo, contraseñas y respuesta. Antes solo el
+// usuario y la pregunta disparaban validarReg(), así que la respuesta se quedaba
+// sin marcar como válida y el botón de envío podía permanecer deshabilitado.
+['r-email', 'r-pass', 'r-pass2', 'r-resp'].forEach(function (id) {
+    var campo = document.getElementById(id);
+    if (campo) campo.addEventListener('input', validarReg);
+});
+var selPregunta = document.getElementById('r-preg');
+if (selPregunta) selPregunta.addEventListener('change', validarReg);
 
 // ==========================================
 // CONTADOR REGRESIVO DE BLOQUEO

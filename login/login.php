@@ -102,6 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
         $reg_respuesta = trim($_POST['reg_respuesta'] ?? '');
         if ($reg_pregunta === '' || $reg_respuesta === '') {
             $error = "DEBE SELECCIONAR UNA PREGUNTA DE SEGURIDAD Y SU RESPUESTA.";
+        } elseif (!in_array($reg_pregunta, $preguntas_opciones, true)) {
+            $error = "SELECCIONE UNA PREGUNTA DE SEGURIDAD VÁLIDA.";
         } elseif (!validarRespuestaSeguridad($reg_respuesta)) {
             $error = "RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.";
         } else {
@@ -398,14 +400,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                                 <i class="reg-field-icon bi bi-question-circle-fill"></i>
                                 <select name="reg_pregunta" id="r-preg" class="reg-input" required>
                                     <option value="">Seleccione una pregunta...</option>
-                                    <option value="Nombre de tu mascota">Nombre de tu mascota</option>
-                                    <option value="Ciudad donde naciste">Ciudad donde naciste</option>
-                                    <option value="Nombre de tu mejor amigo">Nombre de tu mejor amigo</option>
-                                    <option value="Comida favorita">Comida favorita</option>
-                                    <option value="Nombre de tu escuela primaria">Nombre de tu escuela primaria</option>
-                                    <option value="Apellido de tu abuela materna">Apellido de tu abuela materna</option>
-                                    <option value="Marca de tu primer auto">Marca de tu primer auto</option>
-                                    <option value="Color favorito">Color favorito</option>
+                                    <?php foreach ($preguntas_opciones as $p): ?>
+                                        <option value="<?php echo htmlspecialchars($p); ?>"><?php echo htmlspecialchars($p); ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
 
