@@ -236,3 +236,5 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 [2026-09-02 12:00] · Módulo: Documentación · Cambio: Actualizada guía de usuario (MANUAL_USUARIO.md) descripción de Imprimir Reporte para reflejar columnas actuales (SKU, categoría, proveedor, stock, capacidad, precio, valor total). · Archivos: docs/MANUAL_USUARIO.md · Prueba: manual renderiza correctamente en el sistema.
 
 ---
+
+[2026-10-16 22:05] · Módulo: Revertir a pre-curso · Cambio: Se restauró el proyecto a origin/main (14aa545) eliminando artefactos del curso (specs, .agents, .opencode, opencode.json, docs/constitution.md, tests/exportar_csv.php) y se restauró docs/MANUAL_USUARIO.md (requerido por ManualController). · Archivos: docs/MANUAL_USUARIO.md, docs/BITACORA.md · Prueba: php tests\cantidad_unidades.php, php tests\recuperacion_formularios.php, php tests\catalogo_proveedor_esquema.php, sintaxis PHP/JS, tools\validar.ps1 exit=0, HTTP 200 root/login
