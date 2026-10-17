@@ -9,6 +9,9 @@
                 <h1 class="module-title">COLABORADORES</h1>
                 <p class="module-subtitle">Gestión de Personal Autorizado</p>
             </div>
+            <button type="button" class="btn btn-jv-primary module-action-btn ms-auto" onclick="abrirCreacion()" data-tooltip="Registrar un nuevo colaborador">
+                <i class="bi bi-person-plus-fill me-1"></i>NUEVO COLABORADOR
+            </button>
         </div>
 
         <?php if (!empty($flash)): ?>
@@ -83,13 +86,15 @@
                             <th style="width:20%;">CORREO</th>
                             <th style="width:19%;">ROL</th>
                             <th class="text-center" style="width:14%;">ESTADO</th>
-                            <th class="text-center" style="width:230px;">ACCIONES</th>
+                            <th class="text-center" style="width:260px;">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoUsuarios">
                         <?php if (!empty($usuarios)): ?>
                             <?php foreach ($usuarios as $row):
                                 $es_pendiente = ((int)$row['aprobado'] === 0) && ($row['id_rol'] === null);
+                                // Nombre escapado para pasarlo con seguridad al JS de las acciones.
+                                $nombre_json = htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8');
                                 if ($es_pendiente) {
                                     $estado_key  = 'pendiente';
                                     $estado_css  = 'badge-pendiente';
@@ -135,33 +140,41 @@
                                         <?php if ($row['id_usuario'] == $id_propio): ?>
                                             <span class="badge-jv badge-secondary" style="font-size:.7rem;padding:6px 12px;"><i class="bi bi-lock-fill me-1"></i>CUENTA PRINCIPAL</span>
                                         <?php elseif ($es_pendiente): ?>
-                                            <form method="POST" class="form-aprobar">
-                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
-                                                <input type="hidden" name="aprobar_usuario" value="<?php echo (int)$row['id_usuario']; ?>">
-                                                <select name="id_rol" class="input-jv select-rol-aprobar" aria-label="Rol para <?php echo htmlspecialchars($row['usuario']); ?>" required>
-                                                    <option value="">Asignar rol...</option>
-                                                    <?php foreach ($roles_lista as $role): if (in_array((int)$role['id_rol'], [2, 3], true)): ?>
-                                                            <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
-                                                    <?php endif; endforeach; ?>
-                                                </select>
-                                                <button type="submit" class="btn-accion btn-aprobar-mini" title="Aprobar acceso">
-                                                    <i class="bi bi-person-check-fill"></i>
+                                            <div class="acciones-usuario">
+                                                <form method="POST" class="form-aprobar">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
+                                                    <input type="hidden" name="aprobar_usuario" value="<?php echo (int)$row['id_usuario']; ?>">
+                                                    <select name="id_rol" class="input-jv select-rol-aprobar" aria-label="Rol para <?php echo htmlspecialchars($row['usuario']); ?>" required>
+                                                        <option value="">Asignar rol...</option>
+                                                        <?php foreach ($roles_lista as $role): if (in_array((int)$role['id_rol'], [2, 3], true)): ?>
+                                                                <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
+                                                        <?php endif; endforeach; ?>
+                                                    </select>
+                                                    <button type="submit" class="btn-accion btn-aprobar-mini" title="Aprobar acceso">
+                                                        <i class="bi bi-person-check-fill"></i>
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="btn-accion btn-eliminar" data-tooltip="Rechazar y eliminar solicitud" onclick="confirmarEliminacion(<?php echo (int)$row['id_usuario']; ?>, <?php echo $nombre_json; ?>)">
+                                                    <i class="bi bi-trash3"></i>
                                                 </button>
-                                            </form>
+                                            </div>
                                         <?php else: ?>
                                             <div class="acciones-usuario">
                                                 <button type="button" class="btn-accion btn-editar" data-tooltip="Editar colaborador" onclick="abrirEdicion(this)">
                                                     <i class="bi bi-pencil-square"></i>
                                                 </button>
                                                 <?php if ($row['status'] == 'Activo'): ?>
-                                                    <button type="button" class="btn-accion btn-suspender" data-tooltip="Suspender acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'suspender')">
+                                                    <button type="button" class="btn-accion btn-suspender" data-tooltip="Suspender acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo $nombre_json; ?>, 'suspender')">
                                                         <i class="bi bi-person-lock"></i>
                                                     </button>
                                                 <?php else: ?>
-                                                    <button type="button" class="btn-accion btn-reactivar" data-tooltip="Reactivar acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo htmlspecialchars(json_encode($row['usuario'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')">
+                                                    <button type="button" class="btn-accion btn-reactivar" data-tooltip="Reactivar acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo $nombre_json; ?>, 'activar')">
                                                         <i class="bi bi-person-check-fill"></i>
                                                     </button>
                                                 <?php endif; ?>
+                                                <button type="button" class="btn-accion btn-eliminar" data-tooltip="Eliminar colaborador" onclick="confirmarEliminacion(<?php echo (int)$row['id_usuario']; ?>, <?php echo $nombre_json; ?>)">
+                                                    <i class="bi bi-trash3"></i>
+                                                </button>
                                             </div>
                                         <?php endif; ?>
                                     </td>
@@ -223,10 +236,98 @@
                             </div>
                         </div>
                     </div>
+                    <div class="section-bg">
+                        <div class="section-label"><i class="bi bi-shield-lock-fill"></i> SEGURIDAD (OPCIONAL)</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="section-label" for="edit_pregunta"><i class="bi bi-question-circle-fill"></i> PREGUNTA DE SEGURIDAD</label>
+                                <select class="input-jv w-100" id="edit_pregunta">
+                                    <option value="">Sin cambios...</option>
+                                    <?php foreach ($preguntas_seguridad as $pregunta): ?>
+                                        <option value="<?php echo htmlspecialchars($pregunta); ?>"><?php echo htmlspecialchars($pregunta); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="section-label" for="edit_respuesta"><i class="bi bi-key-fill"></i> RESPUESTA</label>
+                                <input type="text" class="input-jv w-100" id="edit_respuesta" maxlength="255" autocomplete="off" placeholder="Nueva respuesta">
+                            </div>
+                        </div>
+                        <div class="form-text jv-form-text">Rellena ambas para reasignar la recuperación de la cuenta (por ejemplo, si el colaborador olvidó su respuesta). Si las dejas vacías, se conservan las actuales.</div>
+                    </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">
                     <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
                     <button type="submit" class="btn-jv-primary"><i class="bi bi-check-lg me-1"></i>GUARDAR CAMBIOS</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCrear" tabindex="-1" aria-labelledby="modalCrearLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <form id="formCrear" novalidate>
+                <div class="modal-header modal-header-jv">
+                    <h5 class="modal-title fw-bold" id="modalCrearLabel"><i class="bi bi-person-plus-fill me-2"></i>NUEVO COLABORADOR</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="section-bg">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="section-label" for="crear_usuario"><i class="bi bi-person-fill"></i> NOMBRE DE USUARIO</label>
+                                <input type="text" class="input-jv w-100" id="crear_usuario" maxlength="20" autocomplete="off" placeholder="Ej: Juan_Perez" required>
+                                <div class="form-text jv-form-text">Mín 4 - Máx 20 caracteres (letras, números, guion bajo).</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="section-label" for="crear_correo"><i class="bi bi-envelope-fill"></i> CORREO ELECTRÓNICO</label>
+                                <input type="email" class="input-jv w-100" id="crear_correo" maxlength="100" autocomplete="off" placeholder="usuario@empresa.com" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="section-label" for="crear_password"><i class="bi bi-key-fill"></i> CONTRASEÑA TEMPORAL</label>
+                                <input type="password" class="input-jv w-100" id="crear_password" autocomplete="new-password" placeholder="Contraseña temporal" required>
+                                <div class="form-text jv-form-text">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="section-label" for="crear_password_confirm"><i class="bi bi-key-fill"></i> CONFIRMAR CONTRASEÑA</label>
+                                <input type="password" class="input-jv w-100" id="crear_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="section-label" for="crear_rol"><i class="bi bi-shield-fill-check"></i> ROL DEL USUARIO</label>
+                                <select class="input-jv w-100" id="crear_rol" required>
+                                    <option value="">Seleccionar rol...</option>
+                                    <?php foreach ($roles_lista as $role): if (in_array((int)$role['id_rol'], [2, 3], true)): ?>
+                                        <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
+                                    <?php endif; endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-bg">
+                        <div class="section-label"><i class="bi bi-shield-lock-fill"></i> RECUPERACIÓN DE CUENTA</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="section-label" for="crear_pregunta"><i class="bi bi-question-circle-fill"></i> PREGUNTA DE SEGURIDAD</label>
+                                <select class="input-jv w-100" id="crear_pregunta" required>
+                                    <option value="">Seleccionar pregunta...</option>
+                                    <?php foreach ($preguntas_seguridad as $pregunta): ?>
+                                        <option value="<?php echo htmlspecialchars($pregunta); ?>"><?php echo htmlspecialchars($pregunta); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="section-label" for="crear_respuesta"><i class="bi bi-key-fill"></i> RESPUESTA</label>
+                                <input type="text" class="input-jv w-100" id="crear_respuesta" maxlength="255" autocomplete="off" placeholder="Respuesta" required>
+                            </div>
+                        </div>
+                        <div class="form-text jv-form-text">Comunícale estas credenciales al colaborador; con la pregunta podrá recuperar su cuenta si olvida la contraseña. Puede cambiarla después desde Mi Perfil.</div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-jv">
+                    <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="submit" class="btn-jv-primary"><i class="bi bi-person-check-fill me-1"></i>CREAR COLABORADOR</button>
                 </div>
             </form>
         </div>

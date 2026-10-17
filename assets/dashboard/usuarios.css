@@ -222,6 +222,12 @@
     }
     .btn-reactivar:hover { box-shadow:0 8px 18px -5px rgba(22,163,74,0.6); }
 
+    .btn-eliminar {
+        background:linear-gradient(135deg,#0f172a,#334155);
+        box-shadow:0 4px 12px -4px rgba(15,23,42,0.5);
+    }
+    .btn-eliminar:hover { box-shadow:0 8px 18px -5px rgba(15,23,42,0.6); }
+
     .btn-aprobar-mini {
         background:linear-gradient(135deg,#2563eb,#1d4ed8);
         box-shadow:0 4px 12px -4px rgba(37,99,235,0.5);

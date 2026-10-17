@@ -3,8 +3,8 @@
 // ==========================================
 // CONTROLADOR: Usuarios
 // ==========================================
-// Gestión de usuarios: listar, editar, aprobar,
-// activar/desactivar.
+// Gestión de usuarios: listar, crear, editar,
+// aprobar, activar/desactivar y eliminar.
 
 /**
  * UsuariosController: gestiona el módulo de administración de usuarios.
@@ -18,6 +18,12 @@ class UsuariosController extends Controller
         $modelo = new Usuario();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (isset($_POST['accion_usuario']) && $_POST['accion_usuario'] === 'crear') {
+                $resultado = $modelo->crear($_POST);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->redirect('usuarios');
+            }
+
             if (isset($_POST['accion_usuario']) && $_POST['accion_usuario'] === 'editar') {
                 $resultado = $modelo->editar($_POST, (int)($_SESSION['id_usuario'] ?? 0));
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
@@ -42,6 +48,15 @@ class UsuariosController extends Controller
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
                 $this->redirect('usuarios');
             }
+
+            if (isset($_POST['eliminar_usuario'])) {
+                $resultado = $modelo->eliminar(
+                    (int)$_POST['eliminar_usuario'],
+                    (int)($_SESSION['id_usuario'] ?? 0)
+                );
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->redirect('usuarios');
+            }
         }
 
         $this->view('usuarios/index', [
@@ -50,6 +65,7 @@ class UsuariosController extends Controller
             'css_extra'     => ['dashboard/usuarios.css'],
             'js_extra'      => ['dashboard/usuarios.js'],
             'roles_lista'   => $modelo->listarRoles(),
+            'preguntas_seguridad' => getPreguntasRespuestas(),
             'usuarios'      => $modelo->listar(),
             'total_users'   => $modelo->total(),
             'activos'       => $modelo->totalActivos(),

@@ -159,9 +159,40 @@ function abrirEdicion(btn) {
     document.getElementById('edit_correo').value = tr.dataset.correo;
     document.getElementById('edit_rol').value = tr.dataset.rol;
     document.getElementById('edit_status').value = tr.dataset.status;
+    // Seguridad opcional: siempre se abre en blanco ("sin cambios").
+    document.getElementById('edit_pregunta').value = '';
+    document.getElementById('edit_respuesta').value = '';
     document.getElementById('edit_usuario').classList.remove('input-error');
     document.getElementById('edit_correo').classList.remove('input-error');
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditar')).show();
+}
+
+// Confirma y envía la eliminación definitiva de un colaborador.
+function confirmarEliminacion(id, nombre) {
+    Swal.fire({
+        title: '¿ELIMINAR USUARIO?',
+        html: 'Se eliminará la cuenta de <strong>' + escapeHtml(nombre) + '</strong>.<br>'
+            + '<small>Si tiene operaciones registradas, el sistema impedirá el borrado y sugerirá desactivarlo.</small>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#DC2626',
+        cancelButtonColor: '#CED4DA',
+        confirmButtonText: 'SÍ, ELIMINAR',
+        cancelButtonText: 'CANCELAR',
+        background: '#fff',
+        color: '#212529'
+    }).then((result) => {
+        if (result.isConfirmed) jvPost({ eliminar_usuario: id, csrf_token: window.JV_CONFIG.csrfToken });
+    });
+}
+
+// Abre el modal de alta con el formulario limpio.
+function abrirCreacion() {
+    document.getElementById('formCrear').reset();
+    ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_respuesta'].forEach(function (id) {
+        document.getElementById(id).classList.remove('input-error');
+    });
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCrear')).show();
 }
 
 // Validación y envío del formulario de edición.
@@ -195,6 +226,14 @@ document.getElementById('formEditar').addEventListener('submit', function (e) {
         return;
     }
 
+    // Seguridad opcional: o se rellenan las dos, o ninguna.
+    const preguntaSeg = document.getElementById('edit_pregunta').value;
+    const respuestaSeg = document.getElementById('edit_respuesta').value.trim();
+    if ((preguntaSeg !== '' || respuestaSeg !== '') && (preguntaSeg === '' || respuestaSeg === '')) {
+        Swal.fire('DATOS INCOMPLETOS', 'Para cambiar la seguridad, selecciona la pregunta y escribe la respuesta.', 'error');
+        return;
+    }
+
     Swal.fire({
         title: '¿GUARDAR CAMBIOS?',
         text: `Se actualizarán los datos del colaborador ${usuario}.`,
@@ -213,6 +252,88 @@ document.getElementById('formEditar').addEventListener('submit', function (e) {
                 correo: correo,
                 id_rol: rol,
                 status: status,
+                pregunta_seguridad: preguntaSeg,
+                respuesta_seguridad: respuestaSeg,
+                csrf_token: window.JV_CONFIG.csrfToken
+            });
+        }
+    });
+});
+
+// Validación y envío del formulario de alta de colaborador.
+document.getElementById('formCrear').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const inputUsuario = document.getElementById('crear_usuario');
+    const inputCorreo = document.getElementById('crear_correo');
+    const inputPassword = document.getElementById('crear_password');
+    const inputConfirm = document.getElementById('crear_password_confirm');
+
+    const usuario = normalizarUsuarioCliente(inputUsuario.value);
+    const correo = inputCorreo.value.trim();
+    const password = inputPassword.value;
+    const passwordConfirm = inputConfirm.value;
+    const rol = document.getElementById('crear_rol').value;
+    const pregunta = document.getElementById('crear_pregunta').value;
+    const respuesta = document.getElementById('crear_respuesta').value.trim();
+
+    if (usuario.length < 4 || usuario.length > 20 || !/^[a-zA-Z0-9_]+$/.test(usuario)) {
+        inputUsuario.classList.add('input-error');
+        Swal.fire('DATOS INVÁLIDOS', 'El usuario debe tener 4 a 20 caracteres: letras, números y guion bajo.', 'error');
+        return;
+    }
+    inputUsuario.classList.remove('input-error');
+
+    if (correo.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+        inputCorreo.classList.add('input-error');
+        Swal.fire('DATOS INVÁLIDOS', 'Escribe un correo electrónico válido (máx 100 caracteres).', 'error');
+        return;
+    }
+    inputCorreo.classList.remove('input-error');
+
+    if (!(password.length >= 8 && /[a-z]/.test(password) && /[A-Z]/.test(password) && /\d/.test(password) && /[\W_]/.test(password))) {
+        inputPassword.classList.add('input-error');
+        Swal.fire('CONTRASEÑA DÉBIL', 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.', 'error');
+        return;
+    }
+    inputPassword.classList.remove('input-error');
+
+    if (password !== passwordConfirm) {
+        inputConfirm.classList.add('input-error');
+        Swal.fire('DATOS INVÁLIDOS', 'Las contraseñas no coinciden.', 'error');
+        return;
+    }
+    inputConfirm.classList.remove('input-error');
+
+    if (!rol) {
+        Swal.fire('DATOS INVÁLIDOS', 'Selecciona un rol para el colaborador.', 'error');
+        return;
+    }
+
+    if (!pregunta || respuesta === '') {
+        Swal.fire('DATOS INCOMPLETOS', 'Selecciona la pregunta de seguridad y escribe su respuesta.', 'error');
+        return;
+    }
+
+    Swal.fire({
+        title: '¿CREAR COLABORADOR?',
+        text: `Se registrará la cuenta de ${usuario} como activa.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#7C3AED',
+        cancelButtonColor: '#CED4DA',
+        confirmButtonText: 'SÍ, CREAR',
+        cancelButtonText: 'CANCELAR'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            jvPost({
+                accion_usuario: 'crear',
+                usuario: usuario,
+                correo: correo,
+                password: password,
+                password_confirm: passwordConfirm,
+                id_rol: rol,
+                pregunta_seguridad: pregunta,
+                respuesta_seguridad: respuesta,
                 csrf_token: window.JV_CONFIG.csrfToken
             });
         }
