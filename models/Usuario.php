@@ -97,8 +97,6 @@ class Usuario extends Model
         $password = trim($datos['password'] ?? '');
         $idRol = (int)($datos['id_rol'] ?? 0);
         $status = $datos['status'] ?? 'Activo';
-        $pregunta = trim($datos['pregunta_seguridad'] ?? '');
-        $respuesta = trim($datos['respuesta_seguridad'] ?? '');
 
         if ($id <= 0) return ['ok' => false, 'mensaje' => 'USUARIO INVÁLIDO.'];
 
@@ -142,25 +140,21 @@ class Usuario extends Model
             $passCheck = generarPasswordCheck($password);
         }
 
-        // Seguridad
-        if ($pregunta !== '' && $respuesta !== '') {
-            $respuestaHash = password_hash(mb_strtolower(trim($respuesta)), PASSWORD_BCRYPT);
-        } else {
-            $pregunta = null;
-            $respuestaHash = null;
-        }
+        // La pregunta y la respuesta de seguridad NO se tocan aquí: el modal de
+        // colaboradores no las gestiona, así que incluirlas en el UPDATE las
+        // borraría en cada edición. Se administran desde Mi Perfil.
 
         $this->db->begin();
         try {
             if ($passHash) {
                 $this->db->execute(
-                    "UPDATE usuarios SET usuario=?, correo=?, password=?, password_check=?, id_rol=?, status=?, pregunta_seguridad=?, respuesta_seguridad=? WHERE id_usuario=?",
-                    [$usuario, $correo, $passHash, $passCheck, $idRol, $status, $pregunta, $respuestaHash, $id]
+                    "UPDATE usuarios SET usuario=?, correo=?, password=?, password_check=?, id_rol=?, status=? WHERE id_usuario=?",
+                    [$usuario, $correo, $passHash, $passCheck, $idRol, $status, $id]
                 );
             } else {
                 $this->db->execute(
-                    "UPDATE usuarios SET usuario=?, correo=?, id_rol=?, status=?, pregunta_seguridad=?, respuesta_seguridad=? WHERE id_usuario=?",
-                    [$usuario, $correo, $idRol, $status, $pregunta, $respuestaHash, $id]
+                    "UPDATE usuarios SET usuario=?, correo=?, id_rol=?, status=? WHERE id_usuario=?",
+                    [$usuario, $correo, $idRol, $status, $id]
                 );
             }
             $this->db->commit();
@@ -287,9 +281,12 @@ class Usuario extends Model
             }
         }
 
-        // Seguridad
+        // Seguridad: se normaliza igual que en el registro (trim + minúsculas +
+        // sin acentos) para que la respuesta se pueda verificar después.
         if ($pregunta === '' || $respuesta === '') $errores[] = 'PREGUNTA Y RESPUESTA DE SEGURIDAD SON OBLIGATORIAS.';
-        $respuestaHash = password_verify(mb_strtolower($respuesta), $current['respuesta_seguridad'] ?? '') ? $current['respuesta_seguridad'] : password_hash(mb_strtolower($respuesta), PASSWORD_BCRYPT);
+        $respuestaHash = verificarRespuestaSeguridad($respuesta, $current['respuesta_seguridad'] ?? '')
+            ? $current['respuesta_seguridad']
+            : password_hash(normalizarRespuestaSeguridad($respuesta), PASSWORD_BCRYPT);
 
         // PIN
         $pinHash = $current['pin_emergencia'];
