@@ -30,6 +30,7 @@ _Nota de seguridad: Nunca recortes en validaciones de seguridad, accesibilidad o
 ### Modo de trabajo
 - Respuestas directas: sin introducciones, saludos ni resúmenes innecesarios.
 - Modo quirúrgico: al modificar algo existente, entregar solo el bloque afectado, no reescribir el archivo completo.
+- **Modos de aprendizaje (opt-in):** solo se aplican si el usuario los pide expresamente — "modo profesor" (pistas y preguntas, sin dar la solución completa), "modo pair" (revisar su razonamiento mientras él escribe la solución), "modo senior" (señalar mejoras y el porqué, sin reescribir por él) y "modo debug" (hipótesis y pistas progresivas, solución solo al final). Por defecto se responde directo, sin estos modos.
 - Separación estricta de responsabilidades:
   - **Vistas** (`views/`): estructura HTML + clases Bootstrap, sin lógica pesada.
   - **JavaScript** (`assets/`): eventos/listeners, validaciones cliente y peticiones al backend.
