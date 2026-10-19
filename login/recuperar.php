@@ -60,6 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $recoveryInput = trim($_POST['rec_input'] ?? '');
         if ($recoveryInput === '') {
             $error = "INGRESE SU CORREO O NOMBRE DE USUARIO.";
+        } elseif (strlen($recoveryInput) > 120) {
+            $error = "EL CAMPO USUARIO/CORREO NO PUEDE EXCEDER 120 CARACTERES.";
         } else {
             if (filter_var($recoveryInput, FILTER_VALIDATE_EMAIL)) {
                 $normalizedRecoveryInput = strtolower($recoveryInput);
@@ -279,7 +281,7 @@ if ($step == 4) {
                 <label class="rec-label"><i class="bi bi-envelope me-1"></i>Correo Electrónico <span class="rec-label-or">o</span> <i class="bi bi-person me-1"></i>Usuario</label>
                 <div class="field-group">
                     <i class="field-icon bi bi-person-badge"></i>
-                    <input type="text" name="rec_input" class="field-input" required placeholder="ejemplo@correo.com o Usuario" autofocus>
+                    <input type="text" name="rec_input" class="field-input" required maxlength="120" placeholder="ejemplo@correo.com o Usuario" autofocus>
                 </div>
                 <button type="submit" class="btn-access"><span><i class="bi bi-search me-2"></i>BUSCAR</span></button>
                 <a href="login.php" class="login-link-pill login-link-pill--outline"><i class="bi bi-arrow-left"></i>Volver al inicio</a>
