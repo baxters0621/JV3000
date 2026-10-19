@@ -74,8 +74,6 @@ function validarReg() {
     var email     = document.getElementById('r-email').value.trim();
     var password  = document.getElementById('r-pass').value;
     var pass2     = document.getElementById('r-pass2').value;
-    var pregunta  = document.getElementById('r-preg').value;
-    var respuesta = document.getElementById('r-resp').value.trim();
     var btn       = document.getElementById('btn-reg');
 
     // --- USUARIO ---
@@ -145,34 +143,19 @@ function validarReg() {
     }
     var passwordsMatch = password.length > 0 && password === pass2;
 
-    // --- PREGUNTA ---
-    var preguntaIsValid = pregunta !== '';
-
-    // --- RESPUESTA ---
-    var respDefault = 'Escribe una respuesta que recuerdes fácilmente.';
-    if (respuesta.length === 0) {
-        setFieldState('r-resp', 'r-resp-status', 'r-resp-hint', 'neutral', respDefault);
-    } else {
-        setFieldState('r-resp', 'r-resp-status', 'r-resp-hint', 'valid', 'Respuesta válida.');
-    }
-    var answerIsValid = respuesta.length >= 1;
-
     // --- BOTÓN HABILITAR ---
-    btn.disabled = !(usernameIsValid && emailIsValid && passwordIsValid && passwordsMatch && preguntaIsValid && answerIsValid);
+    btn.disabled = !(usernameIsValid && emailIsValid && passwordIsValid && passwordsMatch);
 }
 
 // ==========================================
 // VALIDACIÓN CONTINUA — CAMPOS DEL REGISTRO
 // ==========================================
-// Validar también al escribir en correo, contraseñas y respuesta. Antes solo el
-// usuario y la pregunta disparaban validarReg(), así que la respuesta se quedaba
-// sin marcar como válida y el botón de envío podía permanecer deshabilitado.
-['r-email', 'r-pass', 'r-pass2', 'r-resp'].forEach(function (id) {
+// Validar también al escribir en correo y contraseñas. Antes solo el usuario
+// disparaba validarReg(), así que los demás campos se quedaban sin revisar.
+['r-email', 'r-pass', 'r-pass2'].forEach(function (id) {
     var campo = document.getElementById(id);
     if (campo) campo.addEventListener('input', validarReg);
 });
-var selPregunta = document.getElementById('r-preg');
-if (selPregunta) selPregunta.addEventListener('change', validarReg);
 
 // ==========================================
 // CONTADOR REGRESIVO DE BLOQUEO

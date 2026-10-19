@@ -21,7 +21,7 @@ if (isset($_SESSION['id_usuario'])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['reset'])) {
     $_SESSION['rec_step'] = 1;
     $_SESSION['rec_id'] = 0;
-    unset($_SESSION['rec_user'], $_SESSION['rec_pregunta'], $_SESSION['rec_intentos'], $_SESSION['rec_modo'], $_SESSION['rec_pin_intentos']);
+    unset($_SESSION['rec_user'], $_SESSION['rec_intentos'], $_SESSION['rec_modo'], $_SESSION['rec_pin_intentos']);
     limpiarCodigoRecuperacion();
 }
 

@@ -122,8 +122,6 @@ $datosBase = [
     'password'              => 'Abc12345!',
     'password_confirm'      => 'Abc12345!',
     'id_rol'                => 2,
-    'pregunta_seguridad'    => 'Nombre de tu mascota',
-    'respuesta_seguridad'   => 'Toby',
 ];
 
 $db->escrituras = [];
@@ -135,6 +133,11 @@ $escritura = escrituraPor('INSERT usuarios');
 afirmar(
     !array_key_exists('pin_emergencia', $escritura['params']),
     'El alta ya no debe persistir un PIN por usuario.'
+);
+afirmar(
+    !array_key_exists('pregunta_seguridad', $escritura['params'])
+        && !array_key_exists('respuesta_seguridad', $escritura['params']),
+    'El alta ya no debe persistir la pregunta/respuesta de seguridad.'
 );
 
 // Regresión: la contraseña débil sigue rechazándose.
@@ -154,15 +157,12 @@ $fila = [
     'id_usuario' => 5, 'usuario' => 'OPERADOR', 'correo' => 'op@empresa.com',
     'password' => password_hash('Abc12345!', PASSWORD_BCRYPT),
     'password_check' => 'x', 'pin_emergencia' => null,
-    'pregunta_seguridad' => 'Nombre de tu mascota',
-    'respuesta_seguridad' => password_hash(normalizarRespuestaSeguridad('Toby'), PASSWORD_BCRYPT),
 ];
 $db->respuestas = [$fila, null, null]; // actual + sin duplicados
 $db->escrituras = [];
 
 $perfil = [
     'password_actual' => 'Abc12345!', 'usuario' => 'operador', 'correo' => 'op@empresa.com',
-    'pregunta_seguridad' => $fila['pregunta_seguridad'], 'respuesta_seguridad' => 'Toby',
 ];
 $resultado = (new Usuario())->actualizarPerfil($perfil);
 afirmar($resultado['ok'] === true, 'El perfil sin PIN debe guardarse sin exigirlo: ' . $resultado['mensaje']);
@@ -171,6 +171,10 @@ $escritura = escrituraPor('UPDATE usuarios SET usuario=?');
 afirmar(
     !str_contains($escritura['sql'], 'pin_emergencia'),
     'El UPDATE del perfil ya no debe tocar pin_emergencia.'
+);
+afirmar(
+    !str_contains($escritura['sql'], 'pregunta_seguridad'),
+    'El UPDATE del perfil ya no debe tocar la pregunta/respuesta de seguridad.'
 );
 
 // -----------------------------------------------

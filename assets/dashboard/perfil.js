@@ -55,7 +55,7 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
 
         Swal.fire({
             title: '¿Está seguro de estos cambios?',
-            text: 'Se actualizarán los datos de tu cuenta y pregunta de seguridad.',
+            text: 'Se actualizarán los datos de tu cuenta.',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#4F46E5',

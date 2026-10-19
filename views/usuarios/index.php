@@ -271,27 +271,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="section-bg">
-                        <div class="section-label"><i class="bi bi-shield-lock-fill"></i> SEGURIDAD (OPCIONAL)</div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="section-label" for="edit_pregunta"><i class="bi bi-question-circle-fill"></i> PREGUNTA DE SEGURIDAD</label>
-                                <select class="input-jv w-100" id="edit_pregunta">
-                                    <option value="">Sin cambios...</option>
-                                    <?php foreach ($preguntas_seguridad as $pregunta): ?>
-                                        <option value="<?php echo htmlspecialchars($pregunta); ?>"><?php echo htmlspecialchars($pregunta); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="form-text jv-form-text" id="edit_pregunta_guia">Se aplica solo si también escribes la respuesta.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="section-label" for="edit_respuesta"><i class="bi bi-key-fill"></i> RESPUESTA</label>
-                                <input type="text" class="input-jv w-100" id="edit_respuesta" maxlength="255" autocomplete="off" placeholder="Nueva respuesta">
-                                <div class="form-text jv-form-text" id="edit_respuesta_guia">Se aplica solo si también eliges la pregunta.</div>
-                            </div>
-                        </div>
-                        <div class="form-text jv-form-text">Rellena ambas para reasignar la recuperación de la cuenta (por ejemplo, si el colaborador olvidó su respuesta). Si las dejas vacías, se conservan las actuales.</div>
-                    </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">
                     <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
@@ -347,24 +326,7 @@
                     </div>
                     <div class="section-bg">
                         <div class="section-label"><i class="bi bi-shield-lock-fill"></i> RECUPERACIÓN DE CUENTA</div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="section-label" for="crear_pregunta"><i class="bi bi-question-circle-fill"></i> PREGUNTA DE SEGURIDAD</label>
-                                <select class="input-jv w-100" id="crear_pregunta" required>
-                                    <option value="">Seleccionar pregunta...</option>
-                                    <?php foreach ($preguntas_seguridad as $pregunta): ?>
-                                        <option value="<?php echo htmlspecialchars($pregunta); ?>"><?php echo htmlspecialchars($pregunta); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="form-text jv-form-text" id="crear_pregunta_guia">Obligatoria para recuperar la cuenta.</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="section-label" for="crear_respuesta"><i class="bi bi-key-fill"></i> RESPUESTA</label>
-                                <input type="text" class="input-jv w-100" id="crear_respuesta" maxlength="255" autocomplete="off" placeholder="Respuesta" required>
-                                <div class="form-text jv-form-text" id="crear_respuesta_guia">Escribe una respuesta que recuerdes fácilmente.</div>
-                            </div>
-                        </div>
-                        <div class="form-text jv-form-text">Entregue estos datos al colaborador. El PIN de emergencia no se asigna aquí: es un PIN compartido que el Administrador define una sola vez y cada operador consulta en <em>Mi Perfil</em>.</div>
+                        <div class="form-text jv-form-text">La cuenta se recupera con el <strong>código que llega al correo</strong> del colaborador o con el <strong>PIN de emergencia compartido</strong>, que el Administrador define una sola vez en esta misma pantalla y cada operador consulta en <em>Mi Perfil</em>. Confirma que el correo sea real y que el colaborador pueda abrirlo.</div>
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">

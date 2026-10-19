@@ -99,7 +99,6 @@ class UsuariosController extends Controller
             'css_extra'     => ['dashboard/usuarios.css'],
             'js_extra'      => ['dashboard/usuarios.js'],
             'roles_lista'   => $modelo->listarRoles(),
-            'preguntas_seguridad' => getPreguntasRespuestas(),
             'usuarios'      => $modelo->listar(),
             'total_users'   => $modelo->total(),
             'activos'       => $modelo->totalActivos(),

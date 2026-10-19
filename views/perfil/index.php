@@ -92,25 +92,6 @@
                     </div>
                 </section>
 
-                <section class="col-12 profile-section-card" aria-labelledby="profile-security-title">
-                    <h2 class="profile-section-title" id="profile-security-title"><i class="bi bi-shield-question"></i>Pregunta de seguridad <span>(para recuperar tu contraseña)</span></h2>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label-jv" for="perfil_pregunta">SELECCIONA UNA PREGUNTA</label>
-                            <select id="perfil_pregunta" name="pregunta_seguridad" class="input-jv" required>
-                                <option value="">Seleccione una pregunta...</option>
-                                <?php foreach ($preguntas_opciones as $p): ?>
-                                    <option value="<?php echo htmlspecialchars($p); ?>" <?php echo ($p === ($usuario_data['pregunta_seguridad'] ?? '')) ? 'selected' : ''; ?>><?php echo htmlspecialchars($p); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label-jv" for="perfil_respuesta">TU RESPUESTA</label>
-                            <input type="text" id="perfil_respuesta" name="respuesta_seguridad" class="input-jv" required maxlength="255" autocomplete="off" placeholder="Escribe tu respuesta">
-                        </div>
-                    </div>
-                </section>
-
                 <section class="col-12 profile-section-card" aria-labelledby="profile-pin-title">
                     <h2 class="profile-section-title" id="profile-pin-title"><i class="bi bi-shield-exclamation"></i>PIN de emergencia</h2>
                     <?php if ((int)($usuario_data['id_rol'] ?? 0) === 1): ?>

@@ -39,7 +39,6 @@ Este manual explica, en orden, qué debe hacer un **Administrador**, un **Operad
    - **Usuario:** de 4 a 20 caracteres (letras, números y guion bajo). Se guarda normalizado: `juan_perez` se muestra como `Juan_Perez`. No puede repetirse (ni con distintas mayúsculas).
    - **Correo:** válido y único.
    - **Contraseña:** mínimo 8 caracteres con mayúscula, minúscula, número y símbolo. No puede ser igual a la de otro usuario.
-   - **Pregunta y respuesta de seguridad:** obligatorias.
 3. Enviar. La cuenta queda en estado **PENDIENTE** hasta que el administrador la apruebe.
 4. **Aviso al colaborador:** el correo que uses es el vehículo para recuperar acceso; asegúrate de que sea real. Además, el administrador define un **PIN de emergencia compartido** que permite recuperar la cuenta **sin internet**: podrás consultarlo en **Mi Perfil** y conviene anotarlo.
 
@@ -198,7 +197,7 @@ En la tarjeta **"Compras Pendientes de Recepción"** (dentro de Compras) pulsa e
 ## 8. Mi Perfil
 
 `Mi Perfil` (todos los roles):
-1. Cambia tu **usuario** (normalizado, 4–20 caracteres), **correo** y **pregunta de seguridad**.
+1. Cambia tu **usuario** (normalizado, 4–20 caracteres) y **correo**.
 2. Cambia tu **contraseña** con la misma regla de seguridad (mín 8, mayúscula, minúscula, número, símbolo; no repetida entre usuarios).
 3. Consulta y anota tu **PIN de emergencia**: es de solo lectura y es el respaldo para recuperar la cuenta sin internet. Lo define el administrador para todos los operadores; si eres Administrador verás que tu cuenta no usa PIN (se recupera por correo).
 

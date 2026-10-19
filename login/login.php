@@ -52,8 +52,6 @@ $sistema_vacio = ($db->fetchOne("SELECT COUNT(*) as total FROM usuarios")['total
 
 $csrf_token = Security::generateToken();
 
-$preguntas_opciones = getPreguntasRespuestas();
-
 // ==========================================
 // LIMPIAR INTENTOS EXPIRADOS
 // ==========================================
@@ -98,39 +96,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
     } elseif ($new_pass !== $_POST['reg_password_confirm']) {
         $error = "LAS CONTRASEÑAS NO COINCIDEN";
     } else {
-        $reg_pregunta = trim($_POST['reg_pregunta'] ?? '');
-        $reg_respuesta = trim($_POST['reg_respuesta'] ?? '');
-        if ($reg_pregunta === '' || $reg_respuesta === '') {
-            $error = "DEBE SELECCIONAR UNA PREGUNTA DE SEGURIDAD Y SU RESPUESTA.";
-        } elseif (!in_array($reg_pregunta, $preguntas_opciones, true)) {
-            $error = "SELECCIONE UNA PREGUNTA DE SEGURIDAD VÁLIDA.";
-        } elseif (!validarRespuestaSeguridad($reg_respuesta)) {
-            $error = "RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARACTER.";
+        $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) OR LOWER(correo) = LOWER(?)", [$new_user, $new_email]);
+        if ($dup) {
+            $error = "EL USUARIO O CORREO YA ESTA EN USO";
         } else {
-            $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) OR LOWER(correo) = LOWER(?)", [$new_user, $new_email]);
-            if ($dup) {
-                $error = "EL USUARIO O CORREO YA ESTA EN USO";
-            } else {
-                $pass_check = generarPasswordCheck($new_pass);
-                $pass_hash = password_hash($new_pass, PASSWORD_BCRYPT);
-                $resp_hash = password_hash(normalizarRespuestaSeguridad($reg_respuesta), PASSWORD_BCRYPT);
-                $es_admin = $sistema_vacio;
-                $db->insert('usuarios', [
-                    'usuario'             => $new_user,
-                    'correo'              => $new_email,
-                    'password'            => $pass_hash,
-                    'password_check'      => $pass_check,
-                    'id_rol'              => $es_admin ? 1 : NULL,
-                    'pregunta_seguridad'  => $reg_pregunta,
-                    'respuesta_seguridad' => $resp_hash,
-                    'status'              => $es_admin ? 'Activo' : 'Inactivo',
-                    'aprobado'            => $es_admin ? 1 : 0,
-                ]);
-                registrarAuditoria('crear', 'Nuevo usuario registrado');
-                $exito = $es_admin
-                    ? "ADMINISTRADOR CREADO. YA PUEDES INICIAR SESION."
-                    : "REGISTRO EXITOSO. ESPERE A QUE EL ADMINISTRADOR APROBE SU CUENTA.";
-            }
+            $pass_check = generarPasswordCheck($new_pass);
+            $pass_hash = password_hash($new_pass, PASSWORD_BCRYPT);
+            $es_admin = $sistema_vacio;
+            $db->insert('usuarios', [
+                'usuario'             => $new_user,
+                'correo'              => $new_email,
+                'password'            => $pass_hash,
+                'password_check'      => $pass_check,
+                'id_rol'              => $es_admin ? 1 : NULL,
+                'status'              => $es_admin ? 'Activo' : 'Inactivo',
+                'aprobado'            => $es_admin ? 1 : 0,
+            ]);
+            registrarAuditoria('crear', 'Nuevo usuario registrado');
+            $exito = $es_admin
+                ? "ADMINISTRADOR CREADO. YA PUEDES INICIAR SESION."
+                : "REGISTRO EXITOSO. ESPERE A QUE EL ADMINISTRADOR APROBE SU CUENTA.";
         }
     }
 }
@@ -379,36 +364,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                                 <span class="reg-field-status" id="r-match-status"></span>
                             </div>
                             <small class="reg-hint" id="r-match-hint">Debe coincidir con la contraseña anterior.</small>
-                        </div>
-
-                        <!-- SECCION: SEGURIDAD -->
-                        <div class="reg-section sec-seguridad">
-                            <div class="reg-section-header">
-                                <span class="reg-section-chip chip-seguridad"><i class="bi bi-shield-lock-fill"></i></span>
-                                <div>
-                                    <div class="reg-section-title">Pregunta de Seguridad</div>
-                                    <div class="reg-section-sub">Se usará para recuperar tu contraseña si la olvidas.</div>
-                                </div>
-                            </div>
-
-                            <label class="reg-label" for="r-preg">PREGUNTA <span class="text-danger">*</span></label>
-                            <div class="reg-field">
-                                <i class="reg-field-icon bi bi-question-circle-fill"></i>
-                                <select name="reg_pregunta" id="r-preg" class="reg-input" required>
-                                    <option value="">Seleccione una pregunta...</option>
-                                    <?php foreach ($preguntas_opciones as $p): ?>
-                                        <option value="<?php echo htmlspecialchars($p); ?>"><?php echo htmlspecialchars($p); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-
-                            <label class="reg-label" for="r-resp">RESPUESTA <span class="text-danger">*</span></label>
-                            <div class="reg-field">
-                                <i class="reg-field-icon bi bi-shield-check"></i>
-                                <input type="text" name="reg_respuesta" id="r-resp" class="reg-input" required maxlength="255" placeholder="Escribe tu respuesta" autocomplete="off">
-                                <span class="reg-field-status" id="r-resp-status"></span>
-                            </div>
-                            <small class="reg-hint" id="r-resp-hint">Escribe una respuesta que recuerdes fácilmente.</small>
                         </div>
 
                     </div>

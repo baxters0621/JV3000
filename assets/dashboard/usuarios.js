@@ -159,9 +159,6 @@ function abrirEdicion(btn) {
     document.getElementById('edit_correo').value = tr.dataset.correo;
     document.getElementById('edit_rol').value = tr.dataset.rol;
     document.getElementById('edit_status').value = tr.dataset.status;
-    // Seguridad opcional: siempre se abre en blanco ("sin cambios").
-    document.getElementById('edit_pregunta').value = '';
-    document.getElementById('edit_respuesta').value = '';
     document.getElementById('edit_usuario').classList.remove('input-error');
     document.getElementById('edit_correo').classList.remove('input-error');
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditar')).show();
@@ -199,13 +196,9 @@ const TEXTO_GUIA_USU = {
     crear_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
     crear_password_confirm: 'Debe coincidir con la contraseña anterior.',
     crear_rol: 'Solo se pueden crear Operadores de Carga y de Ventas.',
-    crear_pregunta: 'Obligatoria para recuperar la cuenta.',
-    crear_respuesta: 'Escribe una respuesta que recuerdes fácilmente.',
     edit_usuario: 'Mín 4 - Máx 20 caracteres (letras, números, guion bajo).',
     edit_correo: 'Formato válido de correo electrónico.',
     edit_rol: 'Controla los permisos del colaborador dentro del sistema.',
-    edit_pregunta: 'Se aplica solo si también escribes la respuesta.',
-    edit_respuesta: 'Se aplica solo si también eliges la pregunta.',
     reset_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
     reset_password_confirm: 'Debe coincidir con la contraseña anterior.'
 };
@@ -265,22 +258,16 @@ function validarAlta() {
         'Las contraseñas coinciden.', 'Las contraseñas no coinciden.');
     const rolOk = validarCampoUsu('crear_rol', document.getElementById('crear_rol').value !== '',
         '', 'Selecciona un rol para el colaborador.');
-    const preguntaOk = validarCampoUsu('crear_pregunta', document.getElementById('crear_pregunta').value !== '',
-        '', 'Selecciona una pregunta de seguridad.');
-    const respuestaOk = validarCampoUsu('crear_respuesta', document.getElementById('crear_respuesta').value.trim() !== '',
-        'Respuesta válida.', 'Escribe la respuesta de seguridad.');
 
-    const todoOk = usuarioOk && correoOk && passwordOk && confirmarOk && rolOk && preguntaOk && respuestaOk;
+    const todoOk = usuarioOk && correoOk && passwordOk && confirmarOk && rolOk;
     document.getElementById('btnCrear').disabled = !todoOk;
     return todoOk;
 }
 
-// Valida el modal de edición (la seguridad es un par opcional).
+// Valida el modal de edición.
 function validarEdicion() {
     const usuario = normalizarUsuarioCliente(document.getElementById('edit_usuario').value);
     const correo = document.getElementById('edit_correo').value.trim();
-    const pregunta = document.getElementById('edit_pregunta').value;
-    const respuesta = document.getElementById('edit_respuesta').value.trim();
 
     const usuarioOk = validarCampoUsu('edit_usuario',
         usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario),
@@ -289,15 +276,7 @@ function validarEdicion() {
         'Correo electrónico válido.', 'El correo no tiene un formato válido.');
     const rolOk = document.getElementById('edit_rol').value !== '';
 
-    // La seguridad se aplica completa o no se aplica: si se rellena una mitad
-    // sola, se marca la otra en rojo.
-    const seguridadIncompleta = (pregunta !== '' || respuesta !== '') && !(pregunta !== '' && respuesta !== '');
-    marcarCampoUsu('edit_pregunta', seguridadIncompleta && pregunta === '' ? 'err' : '',
-        seguridadIncompleta && pregunta === '' ? 'Selecciona la pregunta que va con la respuesta.' : '');
-    marcarCampoUsu('edit_respuesta', seguridadIncompleta && respuesta === '' ? 'err' : '',
-        seguridadIncompleta && respuesta === '' ? 'Escribe la respuesta que va con la pregunta.' : '');
-
-    const todoOk = usuarioOk && correoOk && rolOk && !seguridadIncompleta;
+    const todoOk = usuarioOk && correoOk && rolOk;
     document.getElementById('btnEditar').disabled = !todoOk;
     return todoOk;
 }
@@ -318,19 +297,19 @@ function validarReset() {
 }
 
 // Revalida los tres modales en cada tecla de sus campos.
-['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_respuesta'].forEach(function (id) {
+['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm'].forEach(function (id) {
     const campo = document.getElementById(id);
     if (campo) campo.addEventListener('input', validarAlta);
 });
-['crear_rol', 'crear_pregunta'].forEach(function (id) {
+['crear_rol'].forEach(function (id) {
     const campo = document.getElementById(id);
     if (campo) campo.addEventListener('change', validarAlta);
 });
-['edit_usuario', 'edit_correo', 'edit_respuesta'].forEach(function (id) {
+['edit_usuario', 'edit_correo'].forEach(function (id) {
     const campo = document.getElementById(id);
     if (campo) campo.addEventListener('input', validarEdicion);
 });
-['edit_rol', 'edit_pregunta'].forEach(function (id) {
+['edit_rol'].forEach(function (id) {
     const campo = document.getElementById(id);
     if (campo) campo.addEventListener('change', validarEdicion);
 });
@@ -342,7 +321,7 @@ function validarReset() {
 // Abre el modal de alta con el formulario limpio.
 function abrirCreacion() {
     document.getElementById('formCrear').reset();
-    ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol', 'crear_pregunta', 'crear_respuesta'].forEach(function (id) {
+    ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol'].forEach(function (id) {
         marcarCampoUsu(id, '', '');
     });
     validarAlta();
@@ -392,14 +371,6 @@ document.getElementById('formEditar').addEventListener('submit', function (e) {
         return;
     }
 
-    // Seguridad opcional: o se rellenan las dos, o ninguna.
-    const preguntaSeg = document.getElementById('edit_pregunta').value;
-    const respuestaSeg = document.getElementById('edit_respuesta').value.trim();
-    if ((preguntaSeg !== '' || respuestaSeg !== '') && (preguntaSeg === '' || respuestaSeg === '')) {
-        Swal.fire('DATOS INCOMPLETOS', 'Para cambiar la seguridad, selecciona la pregunta y escribe la respuesta.', 'error');
-        return;
-    }
-
     Swal.fire({
         title: '¿GUARDAR CAMBIOS?',
         text: `Se actualizarán los datos del colaborador ${usuario}.`,
@@ -418,8 +389,6 @@ document.getElementById('formEditar').addEventListener('submit', function (e) {
                 correo: correo,
                 id_rol: rol,
                 status: status,
-                pregunta_seguridad: preguntaSeg,
-                respuesta_seguridad: respuestaSeg,
                 csrf_token: window.JV_CONFIG.csrfToken
             });
         }
@@ -439,8 +408,6 @@ document.getElementById('formCrear').addEventListener('submit', function (e) {
     const password = inputPassword.value;
     const passwordConfirm = inputConfirm.value;
     const rol = document.getElementById('crear_rol').value;
-    const pregunta = document.getElementById('crear_pregunta').value;
-    const respuesta = document.getElementById('crear_respuesta').value.trim();
 
     if (usuario.length < 4 || usuario.length > 20 || !/^[a-zA-Z0-9_]+$/.test(usuario)) {
         inputUsuario.classList.add('input-error');
@@ -475,11 +442,6 @@ document.getElementById('formCrear').addEventListener('submit', function (e) {
         return;
     }
 
-    if (!pregunta || respuesta === '') {
-        Swal.fire('DATOS INCOMPLETOS', 'Selecciona la pregunta de seguridad y escribe su respuesta.', 'error');
-        return;
-    }
-
     Swal.fire({
         title: '¿CREAR COLABORADOR?',
         text: `Se registrará la cuenta de ${usuario} como activa.`,
@@ -498,8 +460,6 @@ document.getElementById('formCrear').addEventListener('submit', function (e) {
                 password: password,
                 password_confirm: passwordConfirm,
                 id_rol: rol,
-                pregunta_seguridad: pregunta,
-                respuesta_seguridad: respuesta,
                 csrf_token: window.JV_CONFIG.csrfToken
             });
         }

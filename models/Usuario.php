@@ -24,7 +24,7 @@ class Usuario extends Model
     {
         return $this->db->fetchAll(
             "SELECT u.id_usuario, u.usuario, u.correo, u.id_rol, r.nombre_rol,
-                    u.status, COALESCE(u.aprobado, 1) as aprobado, u.pregunta_seguridad
+                    u.status, COALESCE(u.aprobado, 1) as aprobado
              FROM usuarios u
              LEFT JOIN roles r ON u.id_rol = r.id_rol
              ORDER BY u.usuario ASC"
@@ -86,10 +86,10 @@ class Usuario extends Model
     /**
      * Crea un colaborador desde el panel del administrador.
      *
-     * Valida nombre, correo, rol (solo Operador de Carga o de Ventas), fortaleza
-     * de la contraseña y pregunta/respuesta de seguridad. El PIN de emergencia
-     * no se asigna aquí: es un PIN único compartido que el Administrador define
-     * en el módulo de Colaboradores y que sirve para todos los operadores.
+     * Valida nombre, correo, rol (solo Operador de Carga o de Ventas) y fortaleza
+     * de la contraseña. Ni el PIN de emergencia ni la pregunta de seguridad se
+     * asignan aquí: el PIN es único y compartido, y lo define el Administrador
+     * en el módulo de Colaboradores.
      *
      * @param array $datos Datos del formulario.
      * @return array ['ok'=>bool, 'mensaje'=>string].
@@ -101,8 +101,6 @@ class Usuario extends Model
         $password = trim($datos['password'] ?? '');
         $passwordConfirm = trim($datos['password_confirm'] ?? '');
         $idRol = (int)($datos['id_rol'] ?? 0);
-        $pregunta = trim($datos['pregunta_seguridad'] ?? '');
-        $respuesta = trim($datos['respuesta_seguridad'] ?? '');
 
         if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $usuario)) {
             return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];
@@ -121,12 +119,7 @@ class Usuario extends Model
         if ($password !== $passwordConfirm) {
             return ['ok' => false, 'mensaje' => 'LAS CONTRASEÑAS NO COINCIDEN.'];
         }
-        if ($pregunta === '' || !in_array($pregunta, getPreguntasRespuestas(), true)) {
-            return ['ok' => false, 'mensaje' => 'SELECCIONE UNA PREGUNTA DE SEGURIDAD VÁLIDA.'];
-        }
-        if (!validarRespuestaSeguridad($respuesta)) {
-            return ['ok' => false, 'mensaje' => 'RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARÁCTER.'];
-        }
+
 
         $dup = $this->db->fetchOne(
             "SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) OR LOWER(correo) = LOWER(?)",
@@ -145,8 +138,6 @@ class Usuario extends Model
                 'password'            => password_hash($password, PASSWORD_BCRYPT),
                 'password_check'      => $passCheck,
                 'id_rol'              => $idRol,
-                'pregunta_seguridad'  => $pregunta,
-                'respuesta_seguridad' => password_hash(normalizarRespuestaSeguridad($respuesta), PASSWORD_BCRYPT),
                 'status'              => 'Activo',
                 'aprobado'            => 1,
             ]);
@@ -213,23 +204,8 @@ class Usuario extends Model
             $passCheck = generarPasswordCheck($password);
         }
 
-        // Pregunta y respuesta de seguridad: cambio OPCIONAL. El admin puede
-        // reasignarlas a un colaborador que olvidó su respuesta. Si ambos campos
-        // llegan vacíos se conservan las actuales (nunca se ponen a NULL).
-        $pregunta = trim($datos['pregunta_seguridad'] ?? '');
-        $respuesta = trim($datos['respuesta_seguridad'] ?? '');
-        $cambiaSeguridad = ($pregunta !== '' || $respuesta !== '');
-        if ($cambiaSeguridad) {
-            if (!in_array($pregunta, getPreguntasRespuestas(), true)) {
-                return ['ok' => false, 'mensaje' => 'SELECCIONE UNA PREGUNTA DE SEGURIDAD VÁLIDA.'];
-            }
-            if (!validarRespuestaSeguridad($respuesta)) {
-                return ['ok' => false, 'mensaje' => 'RESPUESTA DE SEGURIDAD INVÁLIDA. ESCRIBE AL MENOS UN CARÁCTER.'];
-            }
-        }
-
-        // El SET se arma dinámicamente: contraseña y seguridad solo se incluyen
-        // cuando realmente cambian.
+        // El SET se arma dinámicamente: la contraseña solo se incluye cuando
+        // realmente cambia.
         $campos = ['usuario = ?', 'correo = ?', 'id_rol = ?', 'status = ?'];
         $params = [$usuario, $correo, $idRol, $status];
         if ($passHash) {
@@ -237,12 +213,6 @@ class Usuario extends Model
             $params[] = $passHash;
             $campos[] = 'password_check = ?';
             $params[] = $passCheck;
-        }
-        if ($cambiaSeguridad) {
-            $campos[] = 'pregunta_seguridad = ?';
-            $params[] = $pregunta;
-            $campos[] = 'respuesta_seguridad = ?';
-            $params[] = password_hash(normalizarRespuestaSeguridad($respuesta), PASSWORD_BCRYPT);
         }
         $params[] = $id;
 
@@ -434,8 +404,6 @@ class Usuario extends Model
         $correo = strtolower(trim($datos['correo'] ?? ''));
         $passwordNueva = trim($datos['password_nueva'] ?? '');
         $passwordConfirm = trim($datos['password_confirm'] ?? '');
-        $pregunta = trim($datos['pregunta_seguridad'] ?? '');
-        $respuesta = trim($datos['respuesta_seguridad'] ?? '');
 
         $errores = [];
 
@@ -471,18 +439,11 @@ class Usuario extends Model
             }
         }
 
-        // Seguridad: se normaliza igual que en el registro (trim + minúsculas +
-        // sin acentos) para que la respuesta se pueda verificar después.
-        if ($pregunta === '' || $respuesta === '') $errores[] = 'PREGUNTA Y RESPUESTA DE SEGURIDAD SON OBLIGATORIAS.';
-        $respuestaHash = verificarRespuestaSeguridad($respuesta, $current['respuesta_seguridad'] ?? '')
-            ? $current['respuesta_seguridad']
-            : password_hash(normalizarRespuestaSeguridad($respuesta), PASSWORD_BCRYPT);
-
         if (!empty($errores)) return ['ok' => false, 'mensaje' => implode(' ', $errores)];
 
         $this->db->execute(
-            "UPDATE usuarios SET usuario=?, correo=?, password=?, password_check=?, pregunta_seguridad=?, respuesta_seguridad=? WHERE id_usuario=?",
-            [$usuario, $correo, $passHash, $passCheck, $pregunta, $respuestaHash, $id]
+            "UPDATE usuarios SET usuario=?, correo=?, password=?, password_check=? WHERE id_usuario=?",
+            [$usuario, $correo, $passHash, $passCheck, $id]
         );
 
         $_SESSION['usuario'] = $usuario;

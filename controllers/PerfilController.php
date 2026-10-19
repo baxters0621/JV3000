@@ -25,17 +25,15 @@ class PerfilController extends Controller
         $rolesMap = [1 => 'Administrador', 2 => 'Operador de Carga', 3 => 'Operador de Ventas'];
         $rolPerfil = $rolesMap[$usuario['id_rol'] ?? 0] ?? 'Sin rol';
         $inicial = strtoupper(substr($usuario['usuario'] ?? 'U', 0, 1));
-        $preguntasOpciones = getPreguntasRespuestas();
 
         $this->view('perfil/index', [
             'titulo'             => 'Mi Perfil | JV3000 C.A.',
             'wrapper_class'      => 'pagina-perfil',
             'css_extra'          => ['dashboard/perfil.css?v=3'],
-            'js_extra'           => ['dashboard/perfil.js?v=4'],
+            'js_extra'           => ['dashboard/perfil.js?v=5'],
             'usuario_data'       => $usuario,
             'rol_perfil'         => $rolPerfil,
             'inicial'            => $inicial,
-            'preguntas_opciones' => $preguntasOpciones,
             'pin_global'         => trim(getConfig('pin_emergencia_global', '')),
             'flash'              => $this->consumeFlash(),
             'csrf'               => Security::generateToken(),
