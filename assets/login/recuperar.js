@@ -1,19 +1,46 @@
 
-        function validarRespuesta() {
-            var securityAnswer = document.getElementById('rec-resp').value.trim();
-            var submitButton = document.getElementById('rec-btn');
-            var validationHint = document.getElementById('rec-resp-hint');
-            if (securityAnswer.length === 0) {
-                submitButton.disabled = true;
-                validationHint.textContent = '';
-                document.getElementById('rec-resp').style.borderColor = '';
+        // Validar código de recuperación: exactamente 6 dígitos numéricos
+        function validarCodigoRec() {
+            var codigoInput = document.getElementById('rec-codigo');
+            if (!codigoInput) return;
+            var submitBtn = document.getElementById('rec-btn-codigo');
+            var hint = document.getElementById('rec-codigo-hint');
+            if (codigoInput.value.length === 0) {
+                submitBtn.disabled = true;
+                hint.textContent = '';
+                codigoInput.style.borderColor = '';
                 return;
             }
-            var answerIsValid = securityAnswer.length >= 1;
-            submitButton.disabled = !answerIsValid;
-            document.getElementById('rec-resp').style.borderColor = answerIsValid ? '#16A34A' : '';
-            validationHint.textContent = '';
+            var esValido = /^[0-9]{6}$/.test(codigoInput.value);
+            submitBtn.disabled = !esValido;
+            codigoInput.style.borderColor = esValido ? '#16A34A' : '#ef4444';
+            hint.textContent = esValido ? '' : 'El código debe tener exactamente 6 dígitos numéricos.';
+            hint.style.color = '#ef4444';
         }
+
+        // Cuenta regresiva antes de poder pedir un reenvío del código.
+        // El servidor entrega los segundos restantes en #rec-reenvio-espera.
+        function iniciarConteoReenvio() {
+            var submitBtn = document.getElementById('rec-btn-reenviar');
+            var label = document.getElementById('rec-reenviar-texto');
+            var campo = document.getElementById('rec-reenvio-espera');
+            if (!submitBtn || !label || !campo) return;
+            var segundos = parseInt(campo.value, 10) || 0;
+            if (segundos <= 0) return;
+            submitBtn.disabled = true;
+            label.textContent = 'REENVIAR EN ' + segundos + ' S';
+            var temporizador = setInterval(function() {
+                segundos--;
+                if (segundos <= 0) {
+                    clearInterval(temporizador);
+                    submitBtn.disabled = false;
+                    label.textContent = 'REENVIAR CÓDIGO';
+                    return;
+                }
+                label.textContent = 'REENVIAR EN ' + segundos + ' S';
+            }, 1000);
+        }
+        iniciarConteoReenvio();
 
         // Validar PIN de emergencia: exactamente 6 dígitos numéricos
         function validarPin() {
@@ -101,4 +128,6 @@
         setupEyeRec('btnEyeRec1', 'iconEyeRec1', 'rec-pass');
         setupEyeRec('btnEyeRec2', 'iconEyeRec2', 'rec-pass2');
         setupEyeRec('btnEyePin', 'iconEyePin', 'rec-pin');
+        // Estado inicial: sin 6 dígitos no se puede verificar el código.
+        validarCodigoRec();
     

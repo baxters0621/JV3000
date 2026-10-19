@@ -745,6 +745,150 @@ if (!function_exists('getPreguntasRespuestas')) {
 }
 
 // ==========================================
+// RECUPERACIÓN POR CORREO ELECTRÓNICO
+// ==========================================
+// El código de 6 dígitos vive solo en la sesión: se pide y se teclea en el mismo
+// navegador, así que no hace falta persistirlo en la base. Tampoco se toca la
+// tabla login_intentos para limitar los envíos, porque comparte filas con el
+// bloqueo de login (login.php:70) y un usuario que pidiera varios códigos se
+// quedaría sin poder iniciar sesión.
+if (!function_exists('solicitarCodigoRecuperacion')) {
+    /**
+     * Genera el código de recuperación y lo guarda hasheado en la sesión.
+     *
+     * Aplica un máximo de 3 envíos cada 15 minutos dentro de la propia sesión,
+     * el mismo patrón que ya usan `rec_intentos` y `rec_pin_intentos`.
+     *
+     * @return array ['ok'=>bool, 'codigo'=>int|null, 'mensaje'=>string].
+     *                'codigo' solo viene en claro cuando ok=true, para que el
+     *                llamador lo envíe por correo; nunca se guarda sin hashear.
+     */
+    function solicitarCodigoRecuperacion(): array
+    {
+        $max_envios = 3;
+        $ventana = 900; // 15 minutos
+        $ahora = time();
+
+        $envios = $_SESSION['rec_envios'] ?? ['total' => 0, 'inicio' => $ahora];
+        if ($ahora - (int)$envios['inicio'] >= $ventana) {
+            $envios = ['total' => 0, 'inicio' => $ahora];
+        }
+        if ($envios['total'] >= $max_envios) {
+            $restante = (int)ceil(($ventana - ($ahora - (int)$envios['inicio'])) / 60);
+            return [
+                'ok' => false,
+                'codigo' => null,
+                'mensaje' => "DEMASIADOS ENVÍOS. INTENTE DE NUEVO EN $restante MINUTO(S).",
+            ];
+        }
+
+        $codigo = random_int(100000, 999999);
+        $_SESSION['rec_codigo_hash'] = hash('sha256', (string)$codigo);
+        $_SESSION['rec_codigo_expira'] = $ahora + $ventana;
+        $_SESSION['rec_codigo_intentos'] = 0;
+        $_SESSION['rec_ultimo_envio'] = $ahora;
+        $_SESSION['rec_envios'] = ['total' => $envios['total'] + 1, 'inicio' => $envios['inicio']];
+
+        return ['ok' => true, 'codigo' => $codigo, 'mensaje' => ''];
+    }
+}
+
+if (!function_exists('verificarCodigoRecuperacion')) {
+    /**
+     * Comprueba un código de recuperación ingresado contra el hash de sesión.
+     *
+     * Valida formato, vigencia (15 min) y un máximo de 3 intentos, igual que
+     * el PIN de emergencia. Usa hash_equals para comparar.
+     *
+     * @param string $ingresado Código tecleado por el usuario.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
+    function verificarCodigoRecuperacion(string $ingresado): array
+    {
+        $hash = $_SESSION['rec_codigo_hash'] ?? '';
+        if ($hash === '' || empty($_SESSION['rec_codigo_expira'])) {
+            return ['ok' => false, 'mensaje' => 'NO HAY UN CÓDIGO PENDIENTE. SOLICITE UNO NUEVO.'];
+        }
+        if (time() > (int)$_SESSION['rec_codigo_expira']) {
+            limpiarCodigoRecuperacion();
+            return ['ok' => false, 'mensaje' => 'EL CÓDIGO EXPIRÓ. SOLICITE UNO NUEVO.'];
+        }
+        if (!preg_match('/^\d{6}$/', $ingresado)) {
+            return ['ok' => false, 'mensaje' => 'EL CÓDIGO DEBE SER DE 6 DÍGITOS.'];
+        }
+        if (!hash_equals($hash, hash('sha256', $ingresado))) {
+            $_SESSION['rec_codigo_intentos'] = ($_SESSION['rec_codigo_intentos'] ?? 0) + 1;
+            if ($_SESSION['rec_codigo_intentos'] >= 3) {
+                limpiarCodigoRecuperacion();
+                return ['ok' => false, 'mensaje' => 'DEMASIADOS INTENTOS. SOLICITE UN CÓDIGO NUEVO.'];
+            }
+            $restantes = 3 - $_SESSION['rec_codigo_intentos'];
+            return ['ok' => false, 'mensaje' => "CÓDIGO INCORRECTO. INTENTOS RESTANTES: $restantes"];
+        }
+        // Un solo uso: verificado el código, deja de existir por esta sesión.
+        limpiarCodigoRecuperacion();
+        return ['ok' => true, 'mensaje' => ''];
+    }
+}
+
+if (!function_exists('limpiarCodigoRecuperacion')) {
+    /**
+     * Descarta el código pendiente de la sesión (tras usarlo, expirar o agotar
+     * intentos). No borra el contador de envíos: esa ventana caduca sola.
+     */
+    function limpiarCodigoRecuperacion(): void
+    {
+        unset(
+            $_SESSION['rec_codigo_hash'],
+            $_SESSION['rec_codigo_expira'],
+            $_SESSION['rec_codigo_intentos']
+        );
+    }
+}
+
+if (!function_exists('codigoRecuperacionCuerpo')) {
+    /**
+     * Cuerpo del correo con el código de recuperación de 6 dígitos.
+     *
+     * @param string $correo Destinatario, solo para personalizar el saludo.
+     * @return string HTML mínimo apto para el cuerpo del mensaje.
+     */
+    function codigoRecuperacionCuerpo(string $correo): string
+    {
+        $saludo = htmlspecialchars(enmascararCorreo($correo), ENT_QUOTES, 'UTF-8');
+        return '<p>Hola:</p>'
+            . '<p>Tu código de recuperación de acceso es:</p>'
+            . '<p style="font-size:26px;font-weight:700;letter-spacing:6px;">{CODIGO}</p>'
+            . '<p>Es de <strong>un solo uso</strong> y vence en <strong>15 minutos</strong>.</p>'
+            . '<p>Si no solicitaste este código, ignora este mensaje.</p>'
+            . '<p style="color:#777;font-size:12px;">Enviado a ' . $saludo . ' · JV3000 C.A.</p>';
+    }
+}
+
+if (!function_exists('enmascararCorreo')) {
+    /**
+     * Enmascara un correo para mostrarlo en pantalla sin exponerlo completo.
+     *
+     * Evita filtrar la dirección registrada de una cuenta a partir de solo
+     * conocer el nombre de usuario (p. ej. "gu••••••16@gmail.com").
+     *
+     * @param string $correo Direpción completa.
+     * @return string Dirección enmascarada; "***" si no tiene formato de correo.
+     */
+    function enmascararCorreo(string $correo): string
+    {
+        $partes = explode('@', trim($correo));
+        if (count($partes) !== 2 || $partes[0] === '' || $partes[1] === '') {
+            return '***';
+        }
+        [$local, $dominio] = $partes;
+        $visible = substr($local, 0, 2);
+        $oculto = str_repeat('*', max(3, strlen($local) - 2));
+        return $visible . $oculto . '@' . $dominio;
+    }
+}
+
+// ==========================================
 // LOTES DE INVENTARIO (FEFO)
 // ==========================================
 if (!function_exists('capacidadProducto')) {
