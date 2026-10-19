@@ -56,6 +56,37 @@
             </div>
         </div>
 
+        <div class="card-jv p-0 overflow-hidden mb-4">
+            <div class="header-card d-flex align-items-center gap-2">
+                <i class="bi bi-shield-exclamation" style="color:var(--jv-warning);"></i>
+                <span class="fw-bold small text-secondary text-uppercase">PIN de Emergencia Compartido</span>
+                <span class="codigo-badge ms-auto"><?php echo $pin_global !== '' ? 'DEFINIDO' : 'SIN DEFINIR'; ?></span>
+            </div>
+            <div class="p-3">
+                <div class="alert-jv alert-jv-info mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Es un <strong>único PIN de 6 dígitos</strong> que sirve para que los Operadores de Carga y Ventas recuperen su contraseña <strong>sin internet</strong>. Cada operador lo verá en <em>Mi Perfil</em>. La cuenta del Administrador <strong>no</strong> usa este PIN: se recupera por correo electrónico.
+                </div>
+                <?php if ($pin_global !== ''): ?>
+                    <p class="mb-3">PIN vigente: <strong class="fs-5"><?php echo htmlspecialchars($pin_global); ?></strong></p>
+                <?php endif; ?>
+                <form method="POST" class="row g-3 align-items-end">
+                    <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                    <input type="hidden" name="accion_usuario" value="pin_global">
+                    <div class="col-md-4">
+                        <label class="form-label-jv" for="pin_emergencia_global"><?php echo $pin_global !== '' ? 'NUEVO PIN' : 'PIN'; ?></label>
+                        <input type="password" class="input-jv w-100" id="pin_emergencia_global" name="pin_emergencia_global" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 dígitos" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label-jv" for="pin_emergencia_global_confirm">CONFIRMAR PIN</label>
+                        <input type="password" class="input-jv w-100" id="pin_emergencia_global_confirm" name="pin_emergencia_global_confirm" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="Repite el PIN" required>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-jv-primary w-100"><i class="bi bi-shield-check me-1"></i>GUARDAR PIN</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <div class="card-jv p-0 overflow-hidden">
             <div class="header-card d-flex align-items-center gap-2">
                 <i class="bi bi-person-lines-fill" style="color:#7c3aed;"></i>
@@ -163,6 +194,9 @@
                                                 <button type="button" class="btn-accion btn-editar" data-tooltip="Editar colaborador" onclick="abrirEdicion(this)">
                                                     <i class="bi bi-pencil-square"></i>
                                                 </button>
+                                                <button type="button" class="btn-accion btn-reset" data-tooltip="Restablecer contraseña" onclick="abrirResetPassword(<?php echo (int)$row['id_usuario']; ?>, <?php echo $nombre_json; ?>)">
+                                                    <i class="bi bi-key-fill"></i>
+                                                </button>
                                                 <?php if ($row['status'] == 'Activo'): ?>
                                                     <button type="button" class="btn-accion btn-suspender" data-tooltip="Suspender acceso" onclick="confirmarToggle(<?php echo (int)$row['id_usuario']; ?>, <?php echo $nombre_json; ?>, 'suspender')">
                                                         <i class="bi bi-person-lock"></i>
@@ -218,11 +252,12 @@
                             <div class="col-md-6">
                                 <label class="section-label" for="edit_usuario"><i class="bi bi-person-fill"></i> NOMBRE DE USUARIO</label>
                                 <input type="text" class="input-jv w-100" id="edit_usuario" maxlength="20" autocomplete="off" placeholder="Ej: Juan_Perez" required>
-                                <div class="form-text jv-form-text">Mín 4 - Máx 20 caracteres (letras, números, guion bajo).</div>
+                                <div class="form-text jv-form-text" id="edit_usuario_guia">Mín 4 - Máx 20 caracteres (letras, números, guion bajo).</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="edit_correo"><i class="bi bi-envelope-fill"></i> CORREO ELECTRÓNICO</label>
                                 <input type="email" class="input-jv w-100" id="edit_correo" maxlength="100" autocomplete="off" placeholder="usuario@empresa.com" required>
+                                <div class="form-text jv-form-text" id="edit_correo_guia">Formato válido de correo electrónico.</div>
                             </div>
                             <div class="col-12">
                                 <label class="section-label" for="edit_rol"><i class="bi bi-shield-fill-check"></i> ROL DEL USUARIO</label>
@@ -232,7 +267,7 @@
                                         <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                                <div class="form-text jv-form-text">Controla los permisos del colaborador dentro del sistema.</div>
+                                <div class="form-text jv-form-text" id="edit_rol_guia">Controla los permisos del colaborador dentro del sistema.</div>
                             </div>
                         </div>
                     </div>
@@ -247,10 +282,12 @@
                                         <option value="<?php echo htmlspecialchars($pregunta); ?>"><?php echo htmlspecialchars($pregunta); ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                                <div class="form-text jv-form-text" id="edit_pregunta_guia">Se aplica solo si también escribes la respuesta.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="edit_respuesta"><i class="bi bi-key-fill"></i> RESPUESTA</label>
                                 <input type="text" class="input-jv w-100" id="edit_respuesta" maxlength="255" autocomplete="off" placeholder="Nueva respuesta">
+                                <div class="form-text jv-form-text" id="edit_respuesta_guia">Se aplica solo si también eliges la pregunta.</div>
                             </div>
                         </div>
                         <div class="form-text jv-form-text">Rellena ambas para reasignar la recuperación de la cuenta (por ejemplo, si el colaborador olvidó su respuesta). Si las dejas vacías, se conservan las actuales.</div>
@@ -258,7 +295,7 @@
                 </div>
                 <div class="modal-footer modal-footer-jv">
                     <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                    <button type="submit" class="btn-jv-primary"><i class="bi bi-check-lg me-1"></i>GUARDAR CAMBIOS</button>
+                    <button type="submit" class="btn-jv-primary" id="btnEditar"><i class="bi bi-check-lg me-1"></i>GUARDAR CAMBIOS</button>
                 </div>
             </form>
         </div>
@@ -279,20 +316,22 @@
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_usuario"><i class="bi bi-person-fill"></i> NOMBRE DE USUARIO</label>
                                 <input type="text" class="input-jv w-100" id="crear_usuario" maxlength="20" autocomplete="off" placeholder="Ej: Juan_Perez" required>
-                                <div class="form-text jv-form-text">Mín 4 - Máx 20 caracteres (letras, números, guion bajo).</div>
+                                <div class="form-text jv-form-text" id="crear_usuario_guia">Mín 4 - Máx 20 caracteres (letras, números, guion bajo).</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_correo"><i class="bi bi-envelope-fill"></i> CORREO ELECTRÓNICO</label>
                                 <input type="email" class="input-jv w-100" id="crear_correo" maxlength="100" autocomplete="off" placeholder="usuario@empresa.com" required>
+                                <div class="form-text jv-form-text" id="crear_correo_guia">Formato válido de correo electrónico.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_password"><i class="bi bi-key-fill"></i> CONTRASEÑA TEMPORAL</label>
                                 <input type="password" class="input-jv w-100" id="crear_password" autocomplete="new-password" placeholder="Contraseña temporal" required>
-                                <div class="form-text jv-form-text">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
+                                <div class="form-text jv-form-text" id="crear_password_guia">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_password_confirm"><i class="bi bi-key-fill"></i> CONFIRMAR CONTRASEÑA</label>
                                 <input type="password" class="input-jv w-100" id="crear_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
+                                <div class="form-text jv-form-text" id="crear_password_confirm_guia">Debe coincidir con la contraseña anterior.</div>
                             </div>
                             <div class="col-12">
                                 <label class="section-label" for="crear_rol"><i class="bi bi-shield-fill-check"></i> ROL DEL USUARIO</label>
@@ -302,6 +341,7 @@
                                         <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
                                     <?php endif; endforeach; ?>
                                 </select>
+                                <div class="form-text jv-form-text" id="crear_rol_guia">Solo se pueden crear Operadores de Carga y de Ventas.</div>
                             </div>
                         </div>
                     </div>
@@ -316,18 +356,57 @@
                                         <option value="<?php echo htmlspecialchars($pregunta); ?>"><?php echo htmlspecialchars($pregunta); ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                                <div class="form-text jv-form-text" id="crear_pregunta_guia">Obligatoria para recuperar la cuenta.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_respuesta"><i class="bi bi-key-fill"></i> RESPUESTA</label>
                                 <input type="text" class="input-jv w-100" id="crear_respuesta" maxlength="255" autocomplete="off" placeholder="Respuesta" required>
+                                <div class="form-text jv-form-text" id="crear_respuesta_guia">Escribe una respuesta que recuerdes fácilmente.</div>
                             </div>
                         </div>
-                        <div class="form-text jv-form-text">Comunícale estas credenciales al colaborador; con la pregunta podrá recuperar su cuenta si olvida la contraseña. Puede cambiarla después desde Mi Perfil.</div>
+                        <div class="form-text jv-form-text">Entregue estos datos al colaborador. El PIN de emergencia no se asigna aquí: es un PIN compartido que el Administrador define una sola vez y cada operador consulta en <em>Mi Perfil</em>.</div>
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">
                     <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                    <button type="submit" class="btn-jv-primary"><i class="bi bi-person-check-fill me-1"></i>CREAR COLABORADOR</button>
+                    <button type="submit" class="btn-jv-primary" id="btnCrear"><i class="bi bi-person-check-fill me-1"></i>CREAR COLABORADOR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalResetPassword" tabindex="-1" aria-labelledby="modalResetLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <form id="formResetPassword" novalidate>
+                <div class="modal-header modal-header-jv">
+                    <h5 class="modal-title fw-bold" id="modalResetLabel"><i class="bi bi-key-fill me-2"></i>RESTABLECER CONTRASEÑA</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="reset_id_usuario">
+                    <div class="alert-jv alert-jv-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>Se asignará una nueva contraseña a <strong id="reset_usuario_nombre"></strong>. Comunícasela para que pueda entrar; luego puede cambiarla desde <em>Mi Perfil</em>.
+                    </div>
+                    <div class="section-bg">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="section-label" for="reset_password"><i class="bi bi-key-fill"></i> NUEVA CONTRASEÑA</label>
+                                <input type="password" class="input-jv w-100" id="reset_password" autocomplete="new-password" placeholder="Nueva contraseña" required>
+                                <div class="form-text jv-form-text" id="reset_password_guia">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="section-label" for="reset_password_confirm"><i class="bi bi-key-fill"></i> CONFIRMAR CONTRASEÑA</label>
+                                <input type="password" class="input-jv w-100" id="reset_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
+                                <div class="form-text jv-form-text" id="reset_password_confirm_guia">Debe coincidir con la contraseña anterior.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-jv">
+                    <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                    <button type="submit" class="btn-jv-primary" id="btnResetPassword"><i class="bi bi-key-fill me-1"></i>RESTABLECER</button>
                 </div>
             </form>
         </div>

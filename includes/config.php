@@ -92,6 +92,19 @@ define('APP_NAME', 'JV3000 C.A.');
 define('VERSION', '3.0.0');
 define('AUDIT_RETENCION_MESES', 6);
 
+// ==========================================
+// CORREO SALIENTE (SMTP) — recuperación de contraseña
+// ==========================================
+// Llegan de config/.env con prefijo JV_SMTP_. Si faltan, Mail::hayInternet()
+// devuelve false y la aplicación deja de ofrecer el canal de correo sin romper
+// nada: el usuario recurre al PIN de emergencia, que no necesita red.
+define('SMTP_HOST', $jv_config_value('JV_SMTP_HOST', 'smtp.gmail.com'));
+define('SMTP_PORT', (int)$jv_config_value('JV_SMTP_PORT', '587'));
+define('SMTP_USER', $jv_config_value('JV_SMTP_USER', ''));
+define('SMTP_PASS', $jv_config_value('JV_SMTP_PASS', ''));
+define('SMTP_FROM', $jv_config_value('JV_SMTP_FROM', ''));
+define('SMTP_FROM_NOMBRE', $jv_config_value('JV_SMTP_FROM_NAME', 'JV3000 C.A.'));
+
 // Ruta base relativa desde el script actual hasta la raíz de la app
 // ('', '../', '../../' según la profundidad: raíz, login/dashboard/modules, ...)
 $jv_app_fs = str_replace('\\', '/', realpath(__DIR__ . '/..'));

@@ -347,12 +347,39 @@ if (!function_exists('getConfig')) {
      */
     function getConfig(string $clave, string $default = ''): string
     {
-        static $cache = [];
-        if (isset($cache[$clave])) return $cache[$clave];
+        if (isset($GLOBALS['jv_config_cache'][$clave])) {
+            return $GLOBALS['jv_config_cache'][$clave];
+        }
         $db = Database::getInstance();
         $row = $db->fetchOne("SELECT valor FROM configuracion WHERE clave = ?", [$clave]);
-        $cache[$clave] = $row ? $row['valor'] : $default;
-        return $cache[$clave];
+        $valor = $row ? $row['valor'] : $default;
+        $GLOBALS['jv_config_cache'][$clave] = $valor;
+        return $valor;
+    }
+}
+
+if (!function_exists('setConfig')) {
+    /**
+     * Guarda o actualiza un valor de configuración.
+     *
+     * @param string $clave Clave de configuración.
+     * @param string $valor Nuevo valor.
+     * @return bool
+     */
+    function setConfig(string $clave, string $valor): bool
+    {
+        $db = Database::getInstance();
+        $existe = $db->fetchOne("SELECT id_config FROM configuracion WHERE clave = ? LIMIT 1", [$clave]);
+        $ok = false;
+        if ($existe) {
+            $ok = $db->execute("UPDATE configuracion SET valor = ?, fecha_actualizado = NOW() WHERE clave = ?", [$valor, $clave]);
+        } else {
+            $ok = $db->execute("INSERT INTO configuracion (clave, valor, descripcion) VALUES (?, ?, '')", [$clave, $valor]);
+        }
+        if (isset($GLOBALS['jv_config_cache'])) {
+            unset($GLOBALS['jv_config_cache'][$clave]);
+        }
+        return (bool)$ok;
     }
 }
 

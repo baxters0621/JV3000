@@ -39,9 +39,9 @@ Este manual explica, en orden, qué debe hacer un **Administrador**, un **Operad
    - **Usuario:** de 4 a 20 caracteres (letras, números y guion bajo). Se guarda normalizado: `juan_perez` se muestra como `Juan_Perez`. No puede repetirse (ni con distintas mayúsculas).
    - **Correo:** válido y único.
    - **Contraseña:** mínimo 8 caracteres con mayúscula, minúscula, número y símbolo. No puede ser igual a la de otro usuario.
-   - **Pregunta y respuesta de seguridad:** obligatorias (sirven para recuperar la contraseña).
+   - **Pregunta y respuesta de seguridad:** obligatorias.
 3. Enviar. La cuenta queda en estado **PENDIENTE** hasta que el administrador la apruebe.
-4. **Aviso al colaborador:** el correo que uses es el vehículo para recuperar acceso; asegúrate de que sea real y verificarlo.
+4. **Aviso al colaborador:** el correo que uses es el vehículo para recuperar acceso; asegúrate de que sea real. Además, el administrador define un **PIN de emergencia compartido** que permite recuperar la cuenta **sin internet**: podrás consultarlo en **Mi Perfil** y conviene anotarlo.
 
 > El primer usuario registrado en una instalación vacía es Administrador automáticamente y NO queda pendiente.
 
@@ -55,6 +55,7 @@ Este manual explica, en orden, qué debe hacer un **Administrador**, un **Operad
 2. En la fila del colaborador, pulsa **APROBAR** (botón ✔ azul) **después de elegir un rol** en el selector:
    - **Operador de Carga** (solo compras/recepción) o **Operador de Ventas** (solo ventas).
 3. Confirmar. El colaborador queda **ACTIVO** y ya puede iniciar sesión.
+4. Define el **PIN de emergencia compartido** en la tarjeta *PIN de Emergencia Compartido* (6 dígitos, dos veces). Es un único PIN para todos los Operadores de Carga y Ventas, y permite recuperar la cuenta **sin internet**. Cada operador lo consulta en **Mi Perfil**. Tu cuenta de Administrador **no** usa ese PIN: se recupera por el correo registrado.
 
 Acciones disponibles por fila (consejo de uso):
 
@@ -79,7 +80,10 @@ Acciones disponibles por fila (consejo de uso):
 
 **Recuperar contraseña** (`login/recuperar.php`):
 1. Escribe tu correo o usuario.
-2. Responde tu **pregunta de seguridad** (3 intentos) o usa tu **PIN de 6 dígitos** (si el administrador lo configuró).
+2. Elige cómo verificar tu identidad:
+   - **Enviar código a mi correo:** recibes un código de 6 dígitos que vence en 15 minutos (requiere internet).
+   - **Usar PIN de emergencia:** el PIN compartido de 6 dígitos, que funciona **sin internet**; consultalo en **Mi Perfil**.
+   Si eres **Administrador**, tu cuenta no usa el PIN: se recupera por correo.
 3. Escribe una **nueva contraseña fuerte**.
 4. Listo, inicia sesión con la nueva contraseña.
 
@@ -196,6 +200,7 @@ En la tarjeta **"Compras Pendientes de Recepción"** (dentro de Compras) pulsa e
 `Mi Perfil` (todos los roles):
 1. Cambia tu **usuario** (normalizado, 4–20 caracteres), **correo** y **pregunta de seguridad**.
 2. Cambia tu **contraseña** con la misma regla de seguridad (mín 8, mayúscula, minúscula, número, símbolo; no repetida entre usuarios).
+3. Consulta y anota tu **PIN de emergencia**: es de solo lectura y es el respaldo para recuperar la cuenta sin internet. Lo define el administrador para todos los operadores; si eres Administrador verás que tu cuenta no usa PIN (se recupera por correo).
 
 ---
 
@@ -206,7 +211,7 @@ En la tarjeta **"Compras Pendientes de Recepción"** (dentro de Compras) pulsa e
 3. **Toda mercancía entra por RECEPCIÓN**: un producto comprado y no recibido no existe en el inventario.
 4. **Los vencimientos son sagrados**: la fecha de vencimiento es obligatoria al crear producto, comprar y recibir; el sistema consume *primero lo que vence antes* (FEFO) y alerta lo vencido/próximo.
 5. **RIF/Cédula con formato válido**: el sistema valida los documentos fiscales; corrige antes de guardar.
-6. **Contraseñas y seguridad**: contraseñas fuertes, pregunta de seguridad configurada; si un colaborador deja el equipo, suspéndelo y niega el acceso.
+6. **Contraseñas y seguridad**: contraseñas fuertes y correo real; anota tu **PIN de emergencia** (respaldo sin internet); si un colaborador deja el equipo, suspéndelo y niega el acceso.
 7. **El IVA y la tasa BCV**: el IVA lo defines en la configuración y el total lo calcula el sistema; al pagar en divisas usa la *tasa del día* que el sistema trae (editable).
 8. **Revisa el Historial**: si algo no cuadra, el Historial dice quién, qué y cuándo.
 
@@ -214,7 +219,8 @@ En la tarjeta **"Compras Pendientes de Recepción"** (dentro de Compras) pulsa e
 
 ## 10. Resumen rápido "qué hago hoy"
 
-- **¿Soy administrador y llega un colaborador nuevo?** → `Control → Usuarios` → APROBAR con su rol.
+- **¿Soy administrador y llega un colaborador nuevo?** → `Control → Usuarios` → APROBAR con su rol → definir el **PIN de emergencia compartido** en esa misma pantalla.
+- **¿Olvidé mi contraseña?** → `login/recuperar.php` → código al correo o **PIN de emergencia** (sin internet).
 - **¿Falta producto en el almacén?** → `Compras` → Solicitudes Pendientes → ATENDER → COMPRAR → RECIBIR.
 - **¿Llegó un cliente y quiere mercancía?** → `Salidas → Ventas` → NUEVA VENTA → productos → VISTA PREVIA → CONFIRMAR.
 - **¿Vence mercancía o hay merma?** → NUEVA VENTA tipo **Merma/Ajuste** con la causa.

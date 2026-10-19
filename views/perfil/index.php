@@ -112,33 +112,28 @@
                 </section>
 
                 <section class="col-12 profile-section-card" aria-labelledby="profile-pin-title">
-                    <h2 class="profile-section-title" id="profile-pin-title"><i class="bi bi-shield-exclamation"></i>PIN de emergencia <span>(6 dígitos; alternativa de recuperación)</span></h2>
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-6">
-                            <label class="form-label-jv" for="perfil_pin">PIN DE EMERGENCIA</label>
-                            <div class="password-field">
-                                <input type="password" id="perfil_pin" name="pin_emergencia" class="input-jv" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="<?php echo !empty($usuario_data['pin_emergencia']) ? '•••••• (configurado)' : '6 dígitos'; ?>">
-                                <button type="button" class="password-toggle" data-toggle-password data-password-label="el PIN de emergencia" aria-label="Mostrar PIN de emergencia" aria-controls="perfil_pin" aria-pressed="false">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
+                    <h2 class="profile-section-title" id="profile-pin-title"><i class="bi bi-shield-exclamation"></i>PIN de emergencia</h2>
+                    <?php if ((int)($usuario_data['id_rol'] ?? 0) === 1): ?>
+                        <p class="small text-jv-muted mb-0">
+                            <i class="bi bi-info-circle me-1"></i>La cuenta del Administrador no usa PIN: se recupera por el correo electrónico registrado. Asegúrate de que ese correo sea real y que puedas abrirlo.
+                        </p>
+                    <?php elseif ($pin_global !== ''): ?>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-6">
+                                <label class="form-label-jv" for="perfil_pin">TU PIN DE EMERGENCIA</label>
+                                <input type="text" id="perfil_pin" class="input-jv" value="<?php echo htmlspecialchars($pin_global); ?>" readonly aria-readonly="true">
+                            </div>
+                            <div class="col-12">
+                                <p class="small text-jv-muted mb-0">
+                                    <i class="bi bi-envelope-paper me-1"></i><strong>Escríbelo y guárdalo en un lugar seguro</strong> (cartera, gaveta): es tu respaldo si no tienes internet o no te llega el correo. Lo define el Administrador para todos los operadores.
+                                </p>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label-jv" for="perfil_pin_confirm">CONFIRMAR PIN</label>
-                            <div class="password-field">
-                                <input type="password" id="perfil_pin_confirm" name="pin_emergencia_confirm" class="input-jv" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Repite el PIN">
-                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación del PIN" aria-label="Mostrar confirmación del PIN" aria-controls="perfil_pin_confirm" aria-pressed="false">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-check pb-2">
-                                <input class="form-check-input" type="checkbox" id="perfil_pin_eliminar" name="pin_emergencia_eliminar" value="1">
-                                <label class="form-check-label small text-secondary" for="perfil_pin_eliminar">Eliminar PIN</label>
-                            </div>
-                        </div>
-                    </div>
+                    <?php else: ?>
+                        <p class="small text-jv-muted mb-0">
+                            <i class="bi bi-exclamation-triangle me-1"></i>El Administrador todavía no ha definido el PIN de emergencia. Si olvidas tu contraseña y no tienes internet, pídele que lo configure.
+                        </p>
+                    <?php endif; ?>
                 </section>
 
                 <div class="col-12 d-flex flex-wrap gap-2 pt-2">

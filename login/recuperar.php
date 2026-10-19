@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // --- Step 2c: Verify emergency PIN (fallback sin internet) ---
+    // --- Step 2b: Verify emergency PIN (fallback sin internet)
     elseif ($action === 'pin') {
         if ($_SESSION['rec_step'] != 2 || $_SESSION['rec_id'] == 0) {
             $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
@@ -143,22 +143,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (!preg_match('/^[0-9]{6}$/', $pin)) {
                 $error = "PIN DE EMERGENCIA INVÁLIDO. DEBE SER DE 6 DÍGITOS NUMÉRICOS.";
             } else {
-                $pinRecord = $db->fetchOne("SELECT pin_emergencia FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
-                if (!$pinRecord || empty($pinRecord['pin_emergencia'])) {
-                    $error = "ESTA CUENTA NO TIENE PIN DE EMERGENCIA CONFIGURADO. CONTACTE AL ADMINISTRADOR.";
+                $usuarioRec = $db->fetchOne("SELECT id_usuario, id_rol FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
+                if (!$usuarioRec) {
+                    $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
                     $_SESSION['rec_step'] = 1;
-                } elseif (password_verify($pin, $pinRecord['pin_emergencia'])) {
-                    $_SESSION['rec_step'] = 3;
-                    unset($_SESSION['rec_modo'], $_SESSION['rec_pin_intentos']);
+                } elseif ((int)$usuarioRec['id_rol'] === 1) {
+                    $error = "LA CUENTA DEL ADMINISTRADOR SE RECUPERA POR CORREO ELECTRÓNICO.";
+                    $_SESSION['rec_step'] = 1;
                 } else {
-                    $_SESSION['rec_pin_intentos'] = ($_SESSION['rec_pin_intentos'] ?? 0) + 1;
-                    if ($_SESSION['rec_pin_intentos'] >= 3) {
-                        $error = "DEMASIADOS INTENTOS. INICIE EL PROCESO DE NUEVO.";
+                    $pinGlobal = trim(getConfig('pin_emergencia_global', ''));
+                    if ($pinGlobal === '') {
+                        $error = "ESTA CUENTA NO TIENE PIN DE EMERGENCIA CONFIGURADO. CONTACTE AL ADMINISTRADOR.";
                         $_SESSION['rec_step'] = 1;
-                        $_SESSION['rec_id'] = 0;
+                    } elseif (hash_equals($pinGlobal, $pin)) {
+                        $_SESSION['rec_step'] = 3;
+                        unset($_SESSION['rec_modo'], $_SESSION['rec_pin_intentos']);
                     } else {
-                        $remainingAttempts = 3 - $_SESSION['rec_pin_intentos'];
-                        $error = "PIN INCORRECTO. INTENTOS RESTANTES: $remainingAttempts";
+                        $_SESSION['rec_pin_intentos'] = ($_SESSION['rec_pin_intentos'] ?? 0) + 1;
+                        if ($_SESSION['rec_pin_intentos'] >= 3) {
+                            $error = "DEMASIADOS INTENTOS. INICIE EL PROCESO DE NUEVO.";
+                            $_SESSION['rec_step'] = 1;
+                            $_SESSION['rec_id'] = 0;
+                        } else {
+                            $remainingAttempts = 3 - $_SESSION['rec_pin_intentos'];
+                            $error = "PIN INCORRECTO. INTENTOS RESTANTES: $remainingAttempts";
+                        }
                     }
                 }
             }
@@ -207,10 +216,13 @@ $show_exito = ($step == 4);
 // y si ya hay un código pendiente de verificar.
 $rec_correo = '';
 $rec_tiene_pin = false;
+$rec_es_admin = false;
 if (($_SESSION['rec_id'] ?? 0) > 0) {
-    $cuentaRec = $db->fetchOne("SELECT correo, pin_emergencia FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
+    $cuentaRec = $db->fetchOne("SELECT correo, id_rol FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
     $rec_correo = $cuentaRec['correo'] ?? '';
-    $rec_tiene_pin = !empty($cuentaRec['pin_emergencia']);
+    $rec_es_admin = ((int)$cuentaRec['id_rol'] ?? 0) === 1;
+    $pinGlobal = trim(getConfig('pin_emergencia_global', ''));
+    $rec_tiene_pin = !$rec_es_admin && $pinGlobal !== '';
 }
 // Sin internet no se ofrece el canal de correo: el PIN cubre esa emergencia.
 // El sondeo solo se hace en el paso 2, donde el canal de correo se muestra.
@@ -295,7 +307,27 @@ if ($step == 4) {
         <div class="rec-step <?php echo $show_elegir ? 'active' : ''; ?>">
             <div class="rec-user">Usuario: <strong><?php echo htmlspecialchars($_SESSION['rec_user'] ?? ''); ?></strong></div>
 
-            <?php if (!$rec_puede_correo && !$rec_tiene_pin): ?>
+            <?php if ($rec_es_admin): ?>
+                <div class="rec-question">
+                    <i class="bi bi-envelope-paper me-2"></i>
+                    La cuenta del Administrador se recupera por correo electrónico.
+                </div>
+                <?php if ($rec_puede_correo): ?>
+                    <p class="rec-label mb-2"><i class="bi bi-ui-checks me-1"></i>Elija cómo verificar su identidad</p>
+                    <a href="recuperar.php?modo=codigo" class="btn-access text-decoration-none d-flex flex-column mb-2" style="width:100%;">
+                        <span><i class="bi bi-envelope-paper me-2"></i>ENVIAR CÓDIGO A MI CORREO</span>
+                        <small class="fw-normal" style="font-size:.72rem;opacity:.85;">
+                            Se enviará a <?php echo htmlspecialchars(enmascararCorreo($rec_correo)); ?> · vence en 15 min
+                        </small>
+                    </a>
+                <?php else: ?>
+                    <div class="rec-question">
+                        <i class="bi bi-wifi-off me-2"></i>
+                        Sin conexión a internet no hay forma de verificar esta cuenta.
+                        Restablezca su contraseña desde el equipo servidor.
+                    </div>
+                <?php endif; ?>
+            <?php elseif (!$rec_puede_correo && !$rec_tiene_pin): ?>
                 <div class="rec-question">
                     <i class="bi bi-exclamation-triangle me-2"></i>
                     Esta cuenta no tiene ningún método de verificación disponible.

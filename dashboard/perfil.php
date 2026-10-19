@@ -4,6 +4,12 @@
 // ==========================================
 require_once __DIR__ . '/../init.php';
 
+// Legado migrado a MVC (2026-09-01): esta pantalla vive ahora en ?url=perfil.
+// Se redirige en lugar de borrar el archivo para no romper favoritos antiguos
+// y para que el checkbox que permitía eliminar el PIN deje de ser alcanzable.
+header('Location: ' . BASE_PATH . 'index.php?url=perfil');
+exit();
+
 $db = Database::getInstance();
 $csrf_token = Security::generateToken();
 $base_assets = BASE_PATH . 'assets/';

@@ -186,13 +186,179 @@ function confirmarEliminacion(id, nombre) {
     });
 }
 
+// ==========================================
+// VALIDACIÓN EN VIVO DE LOS MODALES
+// ==========================================
+// Cada campo se marca mientras se escribe: verde con ✓ si es válido, rojo con ✗
+// y el motivo si no lo es. El botón de envío solo se habilita con todo correcto.
+
+// Texto que vuelve a mostrarse cuando el campo queda vacío.
+const TEXTO_GUIA_USU = {
+    crear_usuario: 'Mín 4 - Máx 20 caracteres (letras, números, guion bajo).',
+    crear_correo: 'Formato válido de correo electrónico.',
+    crear_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
+    crear_password_confirm: 'Debe coincidir con la contraseña anterior.',
+    crear_rol: 'Solo se pueden crear Operadores de Carga y de Ventas.',
+    crear_pregunta: 'Obligatoria para recuperar la cuenta.',
+    crear_respuesta: 'Escribe una respuesta que recuerdes fácilmente.',
+    edit_usuario: 'Mín 4 - Máx 20 caracteres (letras, números, guion bajo).',
+    edit_correo: 'Formato válido de correo electrónico.',
+    edit_rol: 'Controla los permisos del colaborador dentro del sistema.',
+    edit_pregunta: 'Se aplica solo si también escribes la respuesta.',
+    edit_respuesta: 'Se aplica solo si también eliges la pregunta.',
+    reset_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
+    reset_password_confirm: 'Debe coincidir con la contraseña anterior.'
+};
+
+// Marca un campo como válido ('ok'), inválido ('err') o neutro (vacío).
+// El mensaje se pinta en la guía que está debajo del campo.
+function marcarCampoUsu(campoId, estado, mensaje) {
+    const input = document.getElementById(campoId);
+    const guia = document.getElementById(campoId + '_guia');
+    if (!input) return;
+    input.classList.remove('is-valid', 'is-invalid');
+    if (guia) guia.classList.remove('guia-ok', 'guia-err');
+
+    if (estado === 'ok') {
+        input.classList.add('is-valid');
+        if (guia) { guia.classList.add('guia-ok'); if (mensaje) guia.textContent = mensaje; }
+    } else if (estado === 'err') {
+        input.classList.add('is-invalid');
+        if (guia) { guia.classList.add('guia-err'); if (mensaje) guia.textContent = mensaje; }
+    } else if (guia) {
+        guia.textContent = TEXTO_GUIA_USU[campoId] || '';
+    }
+}
+
+// Un campo vacío queda neutro (sin color) pero con su texto guía.
+function validarCampoUsu(campoId, valorOk, mensajeOk, mensajeErr) {
+    const vacio = document.getElementById(campoId).value.trim() === '';
+    if (vacio) marcarCampoUsu(campoId, '', '');
+    else marcarCampoUsu(campoId, valorOk ? 'ok' : 'err', valorOk ? mensajeOk : mensajeErr);
+    return !vacio && valorOk;
+}
+
+function correoValidoUsu(correo) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+}
+
+function passwordSeguraUsu(password) {
+    return password.length >= 8 && /[a-z]/.test(password) && /[A-Z]/.test(password)
+        && /\d/.test(password) && /[\W_]/.test(password);
+}
+
+// Valida todo el modal de alta y habilita el botón solo si todo está correcto.
+function validarAlta() {
+    const usuario = normalizarUsuarioCliente(document.getElementById('crear_usuario').value);
+    const correo = document.getElementById('crear_correo').value.trim();
+    const password = document.getElementById('crear_password').value;
+    const confirmar = document.getElementById('crear_password_confirm').value;
+
+    const usuarioOk = validarCampoUsu('crear_usuario',
+        usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario),
+        'Nombre de usuario válido.', 'Solo letras, números y guion bajo (4 a 20 caracteres).');
+    const correoOk = validarCampoUsu('crear_correo', correoValidoUsu(correo),
+        'Correo electrónico válido.', 'El correo no tiene un formato válido.');
+    const passwordOk = validarCampoUsu('crear_password', passwordSeguraUsu(password),
+        'Contraseña segura.', 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.');
+    const confirmarOk = validarCampoUsu('crear_password_confirm', password !== '' && password === confirmar,
+        'Las contraseñas coinciden.', 'Las contraseñas no coinciden.');
+    const rolOk = validarCampoUsu('crear_rol', document.getElementById('crear_rol').value !== '',
+        '', 'Selecciona un rol para el colaborador.');
+    const preguntaOk = validarCampoUsu('crear_pregunta', document.getElementById('crear_pregunta').value !== '',
+        '', 'Selecciona una pregunta de seguridad.');
+    const respuestaOk = validarCampoUsu('crear_respuesta', document.getElementById('crear_respuesta').value.trim() !== '',
+        'Respuesta válida.', 'Escribe la respuesta de seguridad.');
+
+    const todoOk = usuarioOk && correoOk && passwordOk && confirmarOk && rolOk && preguntaOk && respuestaOk;
+    document.getElementById('btnCrear').disabled = !todoOk;
+    return todoOk;
+}
+
+// Valida el modal de edición (la seguridad es un par opcional).
+function validarEdicion() {
+    const usuario = normalizarUsuarioCliente(document.getElementById('edit_usuario').value);
+    const correo = document.getElementById('edit_correo').value.trim();
+    const pregunta = document.getElementById('edit_pregunta').value;
+    const respuesta = document.getElementById('edit_respuesta').value.trim();
+
+    const usuarioOk = validarCampoUsu('edit_usuario',
+        usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario),
+        'Nombre de usuario válido.', 'Solo letras, números y guion bajo (4 a 20 caracteres).');
+    const correoOk = validarCampoUsu('edit_correo', correoValidoUsu(correo),
+        'Correo electrónico válido.', 'El correo no tiene un formato válido.');
+    const rolOk = document.getElementById('edit_rol').value !== '';
+
+    // La seguridad se aplica completa o no se aplica: si se rellena una mitad
+    // sola, se marca la otra en rojo.
+    const seguridadIncompleta = (pregunta !== '' || respuesta !== '') && !(pregunta !== '' && respuesta !== '');
+    marcarCampoUsu('edit_pregunta', seguridadIncompleta && pregunta === '' ? 'err' : '',
+        seguridadIncompleta && pregunta === '' ? 'Selecciona la pregunta que va con la respuesta.' : '');
+    marcarCampoUsu('edit_respuesta', seguridadIncompleta && respuesta === '' ? 'err' : '',
+        seguridadIncompleta && respuesta === '' ? 'Escribe la respuesta que va con la pregunta.' : '');
+
+    const todoOk = usuarioOk && correoOk && rolOk && !seguridadIncompleta;
+    document.getElementById('btnEditar').disabled = !todoOk;
+    return todoOk;
+}
+
+// Valida el modal de restablecer contraseña.
+function validarReset() {
+    const password = document.getElementById('reset_password').value;
+    const confirmar = document.getElementById('reset_password_confirm').value;
+
+    const passwordOk = validarCampoUsu('reset_password', passwordSeguraUsu(password),
+        'Contraseña segura.', 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.');
+    const confirmarOk = validarCampoUsu('reset_password_confirm', password !== '' && password === confirmar,
+        'Las contraseñas coinciden.', 'Las contraseñas no coinciden.');
+
+    const todoOk = passwordOk && confirmarOk;
+    document.getElementById('btnResetPassword').disabled = !todoOk;
+    return todoOk;
+}
+
+// Revalida los tres modales en cada tecla de sus campos.
+['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_respuesta'].forEach(function (id) {
+    const campo = document.getElementById(id);
+    if (campo) campo.addEventListener('input', validarAlta);
+});
+['crear_rol', 'crear_pregunta'].forEach(function (id) {
+    const campo = document.getElementById(id);
+    if (campo) campo.addEventListener('change', validarAlta);
+});
+['edit_usuario', 'edit_correo', 'edit_respuesta'].forEach(function (id) {
+    const campo = document.getElementById(id);
+    if (campo) campo.addEventListener('input', validarEdicion);
+});
+['edit_rol', 'edit_pregunta'].forEach(function (id) {
+    const campo = document.getElementById(id);
+    if (campo) campo.addEventListener('change', validarEdicion);
+});
+['reset_password', 'reset_password_confirm'].forEach(function (id) {
+    const campo = document.getElementById(id);
+    if (campo) campo.addEventListener('input', validarReset);
+});
+
 // Abre el modal de alta con el formulario limpio.
 function abrirCreacion() {
     document.getElementById('formCrear').reset();
-    ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_respuesta'].forEach(function (id) {
-        document.getElementById(id).classList.remove('input-error');
+    ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol', 'crear_pregunta', 'crear_respuesta'].forEach(function (id) {
+        marcarCampoUsu(id, '', '');
     });
+    validarAlta();
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCrear')).show();
+}
+
+// Abre el modal para que el administrador le restablezca la contraseña a un colaborador.
+function abrirResetPassword(id, nombre) {
+    document.getElementById('formResetPassword').reset();
+    document.getElementById('reset_id_usuario').value = id;
+    document.getElementById('reset_usuario_nombre').textContent = nombre;
+    ['reset_password', 'reset_password_confirm'].forEach(function (id) {
+        marcarCampoUsu(id, '', '');
+    });
+    validarReset();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalResetPassword')).show();
 }
 
 // Validación y envío del formulario de edición.

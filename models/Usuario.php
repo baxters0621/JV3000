@@ -4,14 +4,14 @@
 // MODELO: Usuario
 // ==========================================
 // CRUD de usuarios: listar, crear, editar,
-// aprobar, toggle status, eliminar y
-// validación de uniqueness.
+// aprobar, toggle status, eliminar,
+// restablecer contraseña y uniqueness.
 
 /**
  * Usuario: modelo del módulo de gestión de usuarios.
  *
  * Capa de acceso a datos: listar, crear, editar, aprobar, toggle status,
- * eliminar, validación de nombre/correo duplicados y cambio de contraseña.
+ * eliminar, restablecer contraseña y validación de nombre/correo duplicados.
  */
 class Usuario extends Model
 {
@@ -87,8 +87,9 @@ class Usuario extends Model
      * Crea un colaborador desde el panel del administrador.
      *
      * Valida nombre, correo, rol (solo Operador de Carga o de Ventas), fortaleza
-     * y unicidad de la contraseña, y pregunta/respuesta de seguridad. La cuenta
-     * nace directamente Activa y Aprobada, sin pasar por la cola de aprobación.
+     * de la contraseña y pregunta/respuesta de seguridad. El PIN de emergencia
+     * no se asigna aquí: es un PIN único compartido que el Administrador define
+     * en el módulo de Colaboradores y que sirve para todos los operadores.
      *
      * @param array $datos Datos del formulario.
      * @return array ['ok'=>bool, 'mensaje'=>string].
@@ -133,10 +134,9 @@ class Usuario extends Model
         );
         if ($dup) return ['ok' => false, 'mensaje' => 'EL USUARIO O CORREO YA ESTÁ EN USO.'];
 
+        // Lo único que debe ser único es el usuario (y el correo): la contraseña
+        // puede repetirse entre cuentas sin problema.
         $passCheck = generarPasswordCheck($password);
-        if (existePasswordDuplicado($this->db, $passCheck)) {
-            return ['ok' => false, 'mensaje' => 'LA CONTRASEÑA YA ESTÁ EN USO POR OTRO USUARIO. ELIGE OTRA DIFERENTE.'];
-        }
 
         try {
             $this->db->insert('usuarios', [
@@ -207,10 +207,7 @@ class Usuario extends Model
         if ($password !== '') {
             if (!validarPasswordFuerte($password)) {
                 $faltantes = requisitosFaltantesPassword($password);
-                return ['ok' => false, 'mensaje' => 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper(implode(', ', $faltantes)) . '.'];
-            }
-            if (existePasswordDuplicado($password, $id)) {
-                return ['ok' => false, 'mensaje' => 'LA CONTRASEÑA YA FUE UTILIZADA. ELIGE OTRA.'];
+                return ['ok' => false, 'mensaje' => 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper($faltantes) . '.'];
             }
             $passHash = password_hash($password, PASSWORD_BCRYPT);
             $passCheck = generarPasswordCheck($password);
@@ -259,6 +256,46 @@ class Usuario extends Model
             $this->db->rollback();
             return ['ok' => false, 'mensaje' => 'ERROR AL EDITAR USUARIO.'];
         }
+    }
+
+    /**
+     * Restablece la contraseña de un colaborador desde el panel del administrador.
+     *
+     * Se usa cuando el colaborador olvidó su clave: el admin define una nueva
+     * temporal y se la comunica. No se fuerza el cambio en el próximo ingreso;
+     * el colaborador puede cambiarla luego desde Mi Perfil.
+     *
+     * @param int    $idUsuario ID del usuario al que se le restablece la clave.
+     * @param string $nueva     Nueva contraseña temporal.
+     * @param string $confirmar Repetición de la nueva contraseña.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
+    public function resetearPassword(int $idUsuario, string $nueva, string $confirmar): array
+    {
+        if ($idUsuario <= 0) return ['ok' => false, 'mensaje' => 'USUARIO INVÁLIDO.'];
+
+        $user = $this->db->fetchOne("SELECT usuario FROM usuarios WHERE id_usuario = ?", [$idUsuario]);
+        if (!$user) return ['ok' => false, 'mensaje' => 'USUARIO NO ENCONTRADO.'];
+
+        if (!validarPasswordFuerte($nueva)) {
+            $faltantes = requisitosFaltantesPassword($nueva);
+            return ['ok' => false, 'mensaje' => 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper($faltantes) . '.'];
+        }
+        if ($nueva !== $confirmar) {
+            return ['ok' => false, 'mensaje' => 'LAS CONTRASEÑAS NO COINCIDEN.'];
+        }
+
+        try {
+            $this->db->execute(
+                "UPDATE usuarios SET password = ?, password_check = ? WHERE id_usuario = ?",
+                [password_hash($nueva, PASSWORD_BCRYPT), generarPasswordCheck($nueva), $idUsuario]
+            );
+        } catch (Exception $e) {
+            return ['ok' => false, 'mensaje' => 'ERROR AL RESTABLECER LA CONTRASEÑA.'];
+        }
+
+        registrarAuditoria('editar', "Contraseña restablecida por el administrador a: " . $user['usuario']);
+        return ['ok' => true, 'mensaje' => 'CONTRASEÑA RESTABLECIDA.'];
     }
 
     /**
@@ -399,9 +436,6 @@ class Usuario extends Model
         $passwordConfirm = trim($datos['password_confirm'] ?? '');
         $pregunta = trim($datos['pregunta_seguridad'] ?? '');
         $respuesta = trim($datos['respuesta_seguridad'] ?? '');
-        $pin = trim($datos['pin_emergencia'] ?? '');
-        $pinConfirm = trim($datos['pin_emergencia_confirm'] ?? '');
-        $pinEliminar = !empty($datos['pin_emergencia_eliminar']);
 
         $errores = [];
 
@@ -426,13 +460,10 @@ class Usuario extends Model
             if ($passwordNueva !== $passwordConfirm) $errores[] = 'LAS CONTRASEÑAS NO COINCIDEN.';
             if (!validarPasswordFuerte($passwordNueva)) {
                 $faltantes = requisitosFaltantesPassword($passwordNueva);
-                $errores[] = 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper(implode(', ', $faltantes)) . '.';
+                $errores[] = 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper($faltantes) . '.';
             }
             if (password_verify($passwordNueva, $current['password'])) {
                 $errores[] = 'LA NUEVA CONTRASEÑA DEBE SER DIFERENTE A LA ACTUAL.';
-            }
-            if (existePasswordDuplicado($passwordNueva, $id)) {
-                $errores[] = 'LA CONTRASEÑA YA FUE UTILIZADA.';
             }
             if (empty($errores)) {
                 $passHash = password_hash($passwordNueva, PASSWORD_BCRYPT);
@@ -447,21 +478,11 @@ class Usuario extends Model
             ? $current['respuesta_seguridad']
             : password_hash(normalizarRespuestaSeguridad($respuesta), PASSWORD_BCRYPT);
 
-        // PIN
-        $pinHash = $current['pin_emergencia'];
-        if ($pinEliminar) {
-            $pinHash = null;
-        } elseif ($pin !== '') {
-            if (!preg_match('/^\d{6}$/', $pin)) $errores[] = 'EL PIN DEBE SER 6 DÍGITOS.';
-            if ($pin !== $pinConfirm) $errores[] = 'LOS PINES NO COINCIDEN.';
-            if (empty($errores)) $pinHash = password_hash($pin, PASSWORD_BCRYPT);
-        }
-
         if (!empty($errores)) return ['ok' => false, 'mensaje' => implode(' ', $errores)];
 
         $this->db->execute(
-            "UPDATE usuarios SET usuario=?, correo=?, password=?, password_check=?, pregunta_seguridad=?, respuesta_seguridad=?, pin_emergencia=? WHERE id_usuario=?",
-            [$usuario, $correo, $passHash, $passCheck, $pregunta, $respuestaHash, $pinHash, $id]
+            "UPDATE usuarios SET usuario=?, correo=?, password=?, password_check=?, pregunta_seguridad=?, respuesta_seguridad=? WHERE id_usuario=?",
+            [$usuario, $correo, $passHash, $passCheck, $pregunta, $respuestaHash, $id]
         );
 
         $_SESSION['usuario'] = $usuario;
