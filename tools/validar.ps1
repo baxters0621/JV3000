@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$BaseUrl = 'http://localhost/JV3000_db',
-    [string]$Database = 'jv3000_db_test',
+    [string]$Database = 'jv3000_db',
     [string]$MySql = 'C:\xampp\mysql\bin\mysql.exe',
     [string]$Php = 'php',
     [string]$Node = 'node'
