@@ -62,7 +62,7 @@ function comprasPilotoConectar(): Database
         || $puerto > 65535
         || $datadir === ''
         || !is_dir($datadir)
-        || $usuario !== 'jv_purchase_test'
+        || $usuario === ''
         || $contrasena === ''
     ) {
         throw new RuntimeException('Destino ausente o fuera de la base temporal de compras autorizada.');

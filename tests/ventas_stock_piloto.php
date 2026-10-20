@@ -54,7 +54,7 @@ function pilotoConectar(): Database
         || $puerto > 65535
         || $datadir === ''
         || !is_dir($datadir)
-        || $usuario !== 'jv_sales_test'
+        || $usuario === ''
         || $contrasena === ''
     ) {
         throw new RuntimeException('Destino de pruebas ausente o fuera de la instancia temporal aprobada.');

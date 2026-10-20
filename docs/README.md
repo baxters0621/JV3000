@@ -121,8 +121,9 @@ con esquema limpio v6, datadir dedicado y cuenta restringida a la base de
 prueba. No use la cuenta root. En el mismo proceso de PowerShell configure
 `JV_PILOT_TEST_DB_NAME` (prefijo `jv3000_pilot_`), `JV_PILOT_TEST_HOST`
 (`127.0.0.1`), `JV_PILOT_TEST_PORT`, `JV_PILOT_TEST_DATADIR`,
-`JV_PILOT_TEST_USER` (`jv_sales_test`) y `JV_PILOT_TEST_PASS`; la contraseña
-debe generarse para la ejecución y no guardarse en el repositorio. El runner
+`JV_PILOT_TEST_USER` y `JV_PILOT_TEST_PASS`; tanto la cuenta (efímera, de mínimo
+privilegio y con permisos solo sobre esa base) como la contraseña deben crearse
+para la ejecución y no guardarse en el repositorio. El runner
 compara la conexión con `DATABASE()`, `@@datadir`, `@@port` y
 `@@bind_address`, y aborta antes de insertar fixtures si no coinciden.
 Verifique también fuera del runner que la cuenta solo tenga permisos sobre
@@ -146,8 +147,9 @@ Use únicamente MariaDB desechable enlazado a `127.0.0.1`, datadir dedicado,
 esquema v6 y cuenta de mínimo privilegio. Configure en el proceso PowerShell
 `JV_PURCHASES_TEST_DB_NAME` (prefijo `jv3000_compras_piloto_`),
 `JV_PURCHASES_TEST_HOST` (`127.0.0.1`), `JV_PURCHASES_TEST_PORT`,
-`JV_PURCHASES_TEST_DATADIR`, `JV_PURCHASES_TEST_USER` (`jv_purchase_test`) y
-`JV_PURCHASES_TEST_PASS` con una contraseña efímera no persistida. El runner
+`JV_PURCHASES_TEST_DATADIR`, `JV_PURCHASES_TEST_USER` y
+`JV_PURCHASES_TEST_PASS` con una cuenta efímera de mínimo privilegio y una
+contraseña no persistida. El runner
 verifica nombre, datadir, puerto y bind del servidor antes de insertar
 fixtures; compruebe además que el usuario solo tenga permisos sobre esa base.
 No reutilice bases, datadirs, puertos ni cuentas de ejecuciones anteriores.
