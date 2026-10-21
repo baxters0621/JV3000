@@ -366,12 +366,13 @@
     .pagina-usuarios .input-jv.is-valid { border-color:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.15); }
     .pagina-usuarios .input-jv.is-invalid { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.15); }
 
-    /* ── Ayuda de la tarjeta del PIN: solo el «?», con la explicación en
-       un globo que aparece al pasar el mouse o al enfocarlo con el
-       tabulador (y al tocarlo en móvil). Sin JavaScript. */
-    .pin-ayuda { position:relative; display:flex; justify-content:flex-end; }
+    /* ── Ayuda de la tarjeta del PIN: el «?» vive en el encabezado, junto
+       al título, y la explicación aparece solo al posar el mouse encima o
+       al enfocarlo (clic o tabulador). El contenedor abraza el círculo, así
+       que no hay banda propia ni zona muerta alrededor. Sin JavaScript. */
+    .pin-ayuda { position:relative; display:inline-flex; }
     .pin-ayuda-icono {
-        width:40px;height:40px;
+        width:30px;height:30px;
         padding:0;
         border:0;
         border-radius:50%;
@@ -380,7 +381,7 @@
         justify-content:center;
         background:linear-gradient(135deg,#7c3aed,#5b21b6);
         color:#fff;
-        font-size:1.4rem;
+        font-size:1.05rem;
         font-weight:800;
         line-height:1;
         cursor:help;
@@ -395,9 +396,9 @@
     }
     .pin-ayuda-globo {
         position:absolute;
-        top:48px;right:0;
+        top:calc(100% + 12px);right:0;
         z-index:5;
-        width:min(430px, 100%);
+        width:min(430px, 86vw);
         padding:12px 14px;
         border-radius:12px;
         background:#0f2a4a;
