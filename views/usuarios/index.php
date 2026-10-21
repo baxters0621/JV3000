@@ -349,7 +349,7 @@
                     </div>
                     <div class="section-bg">
                         <div class="section-label"><i class="bi bi-shield-lock-fill"></i> RECUPERACIÓN DE CUENTA</div>
-                        <div class="form-text jv-form-text">La cuenta se recupera con el <strong>código que llega al correo</strong> del colaborador o con el <strong>PIN de emergencia compartido</strong>, que el Administrador define una sola vez en esta misma pantalla y cada usuario consulta en <em>Mi Perfil</em>. Confirma que el correo sea real y que el colaborador pueda abrirlo.</div>
+                        <div class="form-text jv-form-text alert-lectura">La cuenta se recupera con el <strong>código que llega al correo</strong> del colaborador o con el <strong>PIN de emergencia compartido</strong>, que el Administrador define una sola vez en esta misma pantalla y cada usuario consulta en <em>Mi Perfil</em>. Confirma que el correo sea real y que el colaborador pueda abrirlo.</div>
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">
@@ -371,7 +371,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <input type="hidden" id="reset_id_usuario">
-                    <div class="alert-jv alert-jv-info mb-3">
+                    <div class="alert-jv alert-jv-info alert-lectura mb-3">
                         <i class="bi bi-info-circle me-2"></i>Se asignará una nueva contraseña a <strong id="reset_usuario_nombre"></strong>. Comunícasela para que pueda entrar; luego puede cambiarla desde <em>Mi Perfil</em>.
                     </div>
                     <div class="section-bg">

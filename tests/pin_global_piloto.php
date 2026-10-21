@@ -285,6 +285,12 @@ afirmar(
     'Los seis campos con ojo deben arrancar con el icono tachado, porque empiezan ocultos.'
 );
 
+// Los textos explicativos de los modales se leen a tamaño cómodo.
+afirmar(
+    substr_count($vistaUsuarios, 'alert-lectura') === 2,
+    'La alerta de restablecer y el aviso de recuperación del alta deben usar la clase de lectura cómoda.'
+);
+
 $js = file_get_contents($root . '/assets/dashboard/usuarios.js');
 afirmar(strpos($js, 'crear_pin') === false, 'El JS del alta ya no debe validar un PIN por usuario.');
 afirmar(
@@ -305,6 +311,10 @@ afirmar(
 afirmar(
     strpos($cssUsuarios, '.pin-ayuda-icono') !== false && strpos($cssUsuarios, '.pin-ayuda-globo') !== false,
     'El «?» y su globo de explicación deben tener estilo en el CSS del módulo.'
+);
+afirmar(
+    strpos($cssUsuarios, '.pagina-usuarios .alert-lectura') !== false,
+    'La clase de lectura cómoda de los textos explicativos debe estar en el CSS del módulo.'
 );
 
 // El ojo abierto significa "visible": la lógica no puede estar invertida.

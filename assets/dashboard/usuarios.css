@@ -419,3 +419,8 @@
         transform:translateY(0);
         pointer-events:auto;
     }
+
+    /* ── Texto explicativo de los modales: tamaño y ritmo de lectura cómodos ──
+       La base .alert-jv va en .85rem y .jv-form-text en .78rem: demasiado
+       apretados para leer una instrucción entera. */
+    .pagina-usuarios .alert-lectura { font-size:1rem; line-height:1.65; font-weight:500; }
