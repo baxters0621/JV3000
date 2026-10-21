@@ -189,19 +189,21 @@
         min-width:100px;
     }
     .btn-accion {
-        width:38px;height:38px;
+        width:40px;height:40px;
         border:none;
         border-radius:10px;
         display:inline-flex;
         align-items:center;
         justify-content:center;
-        font-size:1rem;
+        font-size:1.15rem;
         color:#fff;
         cursor:pointer;
         transition:all .15s ease;
         box-shadow:0 4px 12px -4px rgba(15,26,46,0.4);
     }
     .btn-accion:hover { transform:translateY(-2px); }
+    /* Teclado: el contorno debe verse sobre cualquier variante de color. */
+    .btn-accion:focus-visible { outline:3px solid rgba(245,158,11,0.55); outline-offset:2px; }
     .btn-accion i { pointer-events:none; }
 
     .btn-editar {
@@ -209,6 +211,14 @@
         box-shadow:0 4px 12px -4px rgba(124,58,237,0.5);
     }
     .btn-editar:hover { box-shadow:0 8px 18px -5px rgba(124,58,237,0.6); }
+
+    /* Restablecer contraseña: llave ámbar (color de aviso del sistema).
+       Sin esta regla el botón quedaba transparente con icono blanco. */
+    .btn-reset {
+        background:linear-gradient(135deg,#f59e0b,#d97706);
+        box-shadow:0 4px 12px -4px rgba(245,158,11,0.5);
+    }
+    .btn-reset:hover { box-shadow:0 8px 18px -5px rgba(245,158,11,0.6); }
 
     .btn-suspender {
         background:linear-gradient(135deg,#dc2626,#b91c1c);
