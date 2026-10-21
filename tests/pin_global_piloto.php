@@ -269,10 +269,20 @@ afirmar(
     'Los dos campos del PIN deben disparar la validación en vivo al teclear.'
 );
 
-// La ayuda de la tarjeta queda plegada tras un «?» grande, sin JavaScript.
+// La ayuda de la tarjeta: solo el «?», con la explicación en un globo al pasar el mouse.
 afirmar(
-    strpos($vistaUsuarios, '<details>') !== false && strpos($vistaUsuarios, 'pin-ayuda-icono') !== false,
-    'La ayuda del PIN debe plegarse detrás de un círculo «?» (details/summary del navegador).'
+    strpos($vistaUsuarios, 'pin-ayuda-icono') !== false && strpos($vistaUsuarios, 'pin-ayuda-globo') !== false,
+    'La ayuda del PIN debe ser un «?» con su globo de explicación al pasar el mouse.'
+);
+afirmar(
+    strpos($vistaUsuarios, '<details>') === false,
+    'La ayuda ya no debe usar el desplegable details/summary del cambio anterior.'
+);
+
+// El ojo nace tachado: el campo está enmascarado hasta que se pide verlo.
+afirmar(
+    substr_count($vistaUsuarios, 'bi bi-eye-slash" aria-hidden') === 6,
+    'Los seis campos con ojo deben arrancar con el icono tachado, porque empiezan ocultos.'
 );
 
 $js = file_get_contents($root . '/assets/dashboard/usuarios.js');
@@ -293,8 +303,19 @@ afirmar(
     'Las guías de validación en vivo deben pintarse en verde y rojo.'
 );
 afirmar(
-    strpos($cssUsuarios, '.pin-ayuda-icono') !== false,
-    'El círculo «?» de la ayuda debe tener su estilo en el CSS del módulo.'
+    strpos($cssUsuarios, '.pin-ayuda-icono') !== false && strpos($cssUsuarios, '.pin-ayuda-globo') !== false,
+    'El «?» y su globo de explicación deben tener estilo en el CSS del módulo.'
+);
+
+// El ojo abierto significa "visible": la lógica no puede estar invertida.
+afirmar(
+    strpos($js, "'bi bi-eye' : 'bi bi-eye-slash'") !== false,
+    'El ojo de Colaboradores debe abrirse al mostrar el texto y tacharse al ocultarlo.'
+);
+$jsPerfil = file_get_contents($root . '/assets/dashboard/perfil.js');
+afirmar(
+    strpos($jsPerfil, "'bi bi-eye' : 'bi bi-eye-slash'") !== false,
+    'El ojo de Mi Perfil debe usar la misma lógica: abierto = visible.'
 );
 
 $controlador = file_get_contents($root . '/controllers/UsuariosController.php');

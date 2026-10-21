@@ -4,6 +4,8 @@
 // ==========================================
 
 // Ojo para ver u ocultar el PIN mientras se teclea (mismo patrón que Mi Perfil).
+// El ojo abierto significa "el texto se ve" y el tachado "está oculto", así que
+// el icono nace tachado: los campos arrancan enmascarados.
 document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
     button.addEventListener('click', function() {
         var inputId = button.getAttribute('aria-controls');
@@ -15,7 +17,7 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
         input.type = mostrar ? 'text' : 'password';
         button.setAttribute('aria-pressed', String(mostrar));
         button.setAttribute('aria-label', (mostrar ? 'Ocultar ' : 'Mostrar ') + button.dataset.passwordLabel);
-        icon.className = mostrar ? 'bi bi-eye-slash' : 'bi bi-eye';
+        icon.className = mostrar ? 'bi bi-eye' : 'bi bi-eye-slash';
     });
 });
 

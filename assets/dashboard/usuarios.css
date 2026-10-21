@@ -366,24 +366,14 @@
     .pagina-usuarios .input-jv.is-valid { border-color:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.15); }
     .pagina-usuarios .input-jv.is-invalid { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.15); }
 
-    /* ── Ayuda de la tarjeta del PIN: texto plegado tras un «?» grande ──
-       Es el <details>/<summary> del navegador: sin JavaScript y accesible
-       con el tabulador. */
-    .pin-ayuda summary {
-        list-style:none;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:12px;
-        cursor:pointer;
-        font-size:.9rem;
-        font-weight:800;
-    }
-    .pin-ayuda summary::-webkit-details-marker { display:none; }
-    .pin-ayuda summary:focus-visible { outline:3px solid rgba(124,58,237,.35); outline-offset:2px; border-radius:8px; }
+    /* ── Ayuda de la tarjeta del PIN: solo el «?», con la explicación en
+       un globo que aparece al pasar el mouse o al enfocarlo con el
+       tabulador (y al tocarlo en móvil). Sin JavaScript. */
+    .pin-ayuda { position:relative; display:flex; justify-content:flex-end; }
     .pin-ayuda-icono {
-        flex:0 0 auto;
         width:40px;height:40px;
+        padding:0;
+        border:0;
         border-radius:50%;
         display:inline-flex;
         align-items:center;
@@ -393,13 +383,39 @@
         font-size:1.4rem;
         font-weight:800;
         line-height:1;
+        cursor:help;
         box-shadow:0 4px 12px -4px rgba(124,58,237,.45);
         transition:transform .15s ease, box-shadow .15s ease;
     }
-    .pin-ayuda summary:hover .pin-ayuda-icono {
+    .pin-ayuda-icono:focus-visible { outline:3px solid rgba(124,58,237,.35); outline-offset:2px; }
+    .pin-ayuda:hover .pin-ayuda-icono,
+    .pin-ayuda:focus-within .pin-ayuda-icono {
         transform:translateY(-2px);
         box-shadow:0 8px 18px -5px rgba(124,58,237,.6);
     }
-    /* Al abrirlo el «?» gira, para que se note que el texto queda desplegado. */
-    .pin-ayuda details[open] .pin-ayuda-icono { transform:rotate(180deg); }
-    .pin-ayuda-texto { margin-top:10px; font-size:.9rem; }
+    .pin-ayuda-globo {
+        position:absolute;
+        top:48px;right:0;
+        z-index:5;
+        width:min(430px, 100%);
+        padding:12px 14px;
+        border-radius:12px;
+        background:#0f2a4a;
+        color:#fff;
+        font-size:.85rem;
+        font-weight:600;
+        line-height:1.5;
+        text-align:left;
+        box-shadow:0 12px 30px rgba(15,26,46,.28);
+        opacity:0;
+        transform:translateY(-4px);
+        pointer-events:none;
+        transition:opacity .15s ease, transform .15s ease;
+    }
+    /* El globo se queda visible mientras el ratón o el foco sigan en el «?». */
+    .pin-ayuda:hover .pin-ayuda-globo,
+    .pin-ayuda:focus-within .pin-ayuda-globo {
+        opacity:1;
+        transform:translateY(0);
+        pointer-events:auto;
+    }

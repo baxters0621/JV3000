@@ -67,7 +67,7 @@
                             <div class="password-field">
                                 <input type="password" id="perfil_password_actual" name="password_actual" class="input-jv" autocomplete="current-password" placeholder="Solo si vas a cambiar la contraseña">
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la contraseña actual" aria-label="Mostrar contraseña actual" aria-controls="perfil_password_actual" aria-pressed="false">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -76,7 +76,7 @@
                             <div class="password-field">
                                 <input type="password" id="perfil_password_nueva" name="password_nueva" class="input-jv" autocomplete="new-password" placeholder="••••••••">
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar nueva contraseña" aria-controls="perfil_password_nueva" aria-pressed="false">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -85,7 +85,7 @@
                             <div class="password-field">
                                 <input type="password" id="perfil_password_confirm" name="password_confirm" class="input-jv" autocomplete="new-password" placeholder="••••••••">
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de contraseña" aria-label="Mostrar confirmación de contraseña" aria-controls="perfil_password_confirm" aria-pressed="false">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>

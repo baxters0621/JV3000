@@ -116,12 +116,13 @@
             var input = document.getElementById(inputId);
             if (!btn || !icon || !input) return;
             btn.addEventListener('click', function() {
+                // Ojo abierto = texto visible; ojo tachado = oculto.
                 if (input.type === 'password') {
                     input.type = 'text';
-                    icon.className = 'bi bi-eye-slash-fill';
+                    icon.className = 'bi bi-eye-fill';
                 } else {
                     input.type = 'password';
-                    icon.className = 'bi bi-eye-fill';
+                    icon.className = 'bi bi-eye-slash-fill';
                 }
             });
         }

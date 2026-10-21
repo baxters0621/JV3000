@@ -8,12 +8,13 @@ function setupEye(btnId, iconId, inputId) {
     var input = document.getElementById(inputId);
     if (!btn || !icon || !input) return;
     btn.addEventListener('click', function() {
+        // Ojo abierto = contraseña visible; ojo tachado = oculta.
         if (input.type === 'password') {
             input.type = 'text';
-            icon.className = 'bi bi-eye-slash-fill';
+            icon.className = 'bi bi-eye-fill';
         } else {
             input.type = 'password';
-            icon.className = 'bi bi-eye-fill';
+            icon.className = 'bi bi-eye-slash-fill';
         }
     });
 }

@@ -63,14 +63,9 @@
                 <span class="codigo-badge ms-auto"><?php echo $pin_global !== '' ? 'DEFINIDO' : 'SIN DEFINIR'; ?></span>
             </div>
             <div class="p-3">
-                <div class="alert-jv alert-jv-info pin-ayuda mb-3">
-                    <details>
-                        <summary>
-                            <span class="pin-ayuda-titulo">¿Qué es el PIN de emergencia?</span>
-                            <span class="pin-ayuda-icono" aria-hidden="true">?</span>
-                        </summary>
-                        <p class="pin-ayuda-texto mb-0">Es un <strong>único PIN de 6 dígitos</strong> que sirve para que todas las cuentas (Operadores de Carga y Ventas, y también la del Administrador) recuperen su contraseña <strong>sin internet</strong>. Cada usuario lo verá en <em>Mi Perfil</em>. El PIN es el respaldo cuando el correo electrónico no llega.</p>
-                    </details>
+                <div class="pin-ayuda mb-3">
+                    <button type="button" class="pin-ayuda-icono" aria-label="¿Qué es el PIN de emergencia?" aria-describedby="pin-ayuda-texto">?</button>
+                    <div class="pin-ayuda-globo" id="pin-ayuda-texto" role="tooltip">Es un <strong>único PIN de 6 dígitos</strong> que sirve para que todas las cuentas (Operadores de Carga y Ventas, y también la del Administrador) recuperen su contraseña <strong>sin internet</strong>. Cada usuario lo verá en <em>Mi Perfil</em>. El PIN es el respaldo cuando el correo electrónico no llega.</div>
                 </div>
                 <?php if ($pin_global !== ''): ?>
                     <p class="mb-3">PIN vigente: <strong class="fs-5"><?php echo htmlspecialchars($pin_global); ?></strong></p>
@@ -83,7 +78,7 @@
                         <div class="password-field">
                             <input type="password" class="input-jv w-100" id="pin_emergencia_global" name="pin_emergencia_global" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 dígitos" required oninput="validarPinGlobal()">
                             <button type="button" class="password-toggle" data-toggle-password data-password-label="el PIN" aria-label="Mostrar el PIN" aria-controls="pin_emergencia_global" aria-pressed="false">
-                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                <i class="bi bi-eye-slash" aria-hidden="true"></i>
                             </button>
                         </div>
                         <div class="form-text jv-form-text" id="pin_emergencia_global_guia">6 dígitos, sin letras.</div>
@@ -93,7 +88,7 @@
                         <div class="password-field">
                             <input type="password" class="input-jv w-100" id="pin_emergencia_global_confirm" name="pin_emergencia_global_confirm" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="Repite el PIN" required oninput="validarPinGlobal()">
                             <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación del PIN" aria-label="Mostrar la confirmación del PIN" aria-controls="pin_emergencia_global_confirm" aria-pressed="false">
-                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                <i class="bi bi-eye-slash" aria-hidden="true"></i>
                             </button>
                         </div>
                         <div class="form-text jv-form-text" id="pin_emergencia_global_confirm_guia">Repite el mismo PIN.</div>
@@ -325,7 +320,7 @@
                                 <div class="password-field">
                                     <input type="password" class="input-jv w-100" id="crear_password" autocomplete="new-password" placeholder="Contraseña temporal" required>
                                     <button type="button" class="password-toggle" data-toggle-password data-password-label="la contraseña temporal" aria-label="Mostrar la contraseña temporal" aria-controls="crear_password" aria-pressed="false">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                        <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
                                 </div>
                                 <div class="form-text jv-form-text" id="crear_password_guia">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
@@ -335,7 +330,7 @@
                                 <div class="password-field">
                                     <input type="password" class="input-jv w-100" id="crear_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
                                     <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="crear_password_confirm" aria-pressed="false">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                        <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
                                 </div>
                                 <div class="form-text jv-form-text" id="crear_password_confirm_guia">Debe coincidir con la contraseña anterior.</div>
@@ -386,7 +381,7 @@
                                 <div class="password-field">
                                     <input type="password" class="input-jv w-100" id="reset_password" autocomplete="new-password" placeholder="Nueva contraseña" required>
                                     <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar la nueva contraseña" aria-controls="reset_password" aria-pressed="false">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                        <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
                                 </div>
                                 <div class="form-text jv-form-text" id="reset_password_guia">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
@@ -396,7 +391,7 @@
                                 <div class="password-field">
                                     <input type="password" class="input-jv w-100" id="reset_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
                                     <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="reset_password_confirm" aria-pressed="false">
-                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                        <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
                                 </div>
                                 <div class="form-text jv-form-text" id="reset_password_confirm_guia">Debe coincidir con la contraseña anterior.</div>
