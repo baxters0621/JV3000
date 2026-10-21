@@ -75,20 +75,22 @@
                     <div class="col-md-4">
                         <label class="form-label-jv" for="pin_emergencia_global"><?php echo $pin_global !== '' ? 'NUEVO PIN' : 'PIN'; ?></label>
                         <div class="password-field">
-                            <input type="password" class="input-jv w-100" id="pin_emergencia_global" name="pin_emergencia_global" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 dígitos" required>
+                            <input type="password" class="input-jv w-100" id="pin_emergencia_global" name="pin_emergencia_global" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 dígitos" required oninput="validarPinGlobal()">
                             <button type="button" class="password-toggle" data-toggle-password data-password-label="el PIN" aria-label="Mostrar el PIN" aria-controls="pin_emergencia_global" aria-pressed="false">
                                 <i class="bi bi-eye" aria-hidden="true"></i>
                             </button>
                         </div>
+                        <div class="form-text jv-form-text" id="pin_emergencia_global_guia">6 dígitos, sin letras.</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label-jv" for="pin_emergencia_global_confirm">CONFIRMAR PIN</label>
                         <div class="password-field">
-                            <input type="password" class="input-jv w-100" id="pin_emergencia_global_confirm" name="pin_emergencia_global_confirm" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="Repite el PIN" required>
+                            <input type="password" class="input-jv w-100" id="pin_emergencia_global_confirm" name="pin_emergencia_global_confirm" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="Repite el PIN" required oninput="validarPinGlobal()">
                             <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación del PIN" aria-label="Mostrar la confirmación del PIN" aria-controls="pin_emergencia_global_confirm" aria-pressed="false">
                                 <i class="bi bi-eye" aria-hidden="true"></i>
                             </button>
                         </div>
+                        <div class="form-text jv-form-text" id="pin_emergencia_global_confirm_guia">Repite el mismo PIN.</div>
                     </div>
                     <div class="col-md-4">
                         <button type="submit" class="btn btn-jv-primary w-100"><i class="bi bi-shield-check me-1"></i>GUARDAR PIN</button>
@@ -314,12 +316,22 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_password"><i class="bi bi-key-fill"></i> CONTRASEÑA TEMPORAL</label>
-                                <input type="password" class="input-jv w-100" id="crear_password" autocomplete="new-password" placeholder="Contraseña temporal" required>
+                                <div class="password-field">
+                                    <input type="password" class="input-jv w-100" id="crear_password" autocomplete="new-password" placeholder="Contraseña temporal" required>
+                                    <button type="button" class="password-toggle" data-toggle-password data-password-label="la contraseña temporal" aria-label="Mostrar la contraseña temporal" aria-controls="crear_password" aria-pressed="false">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text jv-form-text" id="crear_password_guia">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_password_confirm"><i class="bi bi-key-fill"></i> CONFIRMAR CONTRASEÑA</label>
-                                <input type="password" class="input-jv w-100" id="crear_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
+                                <div class="password-field">
+                                    <input type="password" class="input-jv w-100" id="crear_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
+                                    <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="crear_password_confirm" aria-pressed="false">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text jv-form-text" id="crear_password_confirm_guia">Debe coincidir con la contraseña anterior.</div>
                             </div>
                             <div class="col-12">
@@ -365,12 +377,22 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="section-label" for="reset_password"><i class="bi bi-key-fill"></i> NUEVA CONTRASEÑA</label>
-                                <input type="password" class="input-jv w-100" id="reset_password" autocomplete="new-password" placeholder="Nueva contraseña" required>
+                                <div class="password-field">
+                                    <input type="password" class="input-jv w-100" id="reset_password" autocomplete="new-password" placeholder="Nueva contraseña" required>
+                                    <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar la nueva contraseña" aria-controls="reset_password" aria-pressed="false">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text jv-form-text" id="reset_password_guia">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="reset_password_confirm"><i class="bi bi-key-fill"></i> CONFIRMAR CONTRASEÑA</label>
-                                <input type="password" class="input-jv w-100" id="reset_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
+                                <div class="password-field">
+                                    <input type="password" class="input-jv w-100" id="reset_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" required>
+                                    <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="reset_password_confirm" aria-pressed="false">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                                 <div class="form-text jv-form-text" id="reset_password_confirm_guia">Debe coincidir con la contraseña anterior.</div>
                             </div>
                         </div>

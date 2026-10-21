@@ -216,7 +216,9 @@ const TEXTO_GUIA_USU = {
     edit_correo: 'Formato válido de correo electrónico.',
     edit_rol: 'Controla los permisos del colaborador dentro del sistema.',
     reset_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
-    reset_password_confirm: 'Debe coincidir con la contraseña anterior.'
+    reset_password_confirm: 'Debe coincidir con la contraseña anterior.',
+    pin_emergencia_global: '6 dígitos, sin letras.',
+    pin_emergencia_global_confirm: 'Repite el mismo PIN.'
 };
 
 // Marca un campo como válido ('ok'), inválido ('err') o neutro (vacío).
@@ -321,6 +323,39 @@ function validarReset() {
     const boton = document.getElementById('btnResetPassword');
     if (boton) boton.disabled = !todoOk;
     return todoOk;
+}
+
+// Validación en vivo del formulario del PIN global, sin enviar el formulario.
+// Normaliza a dígitos, avisa si faltan y si la confirmación no coincide. El
+// servidor vuelve a validar todo al guardar: esto solo evita el viaje inútil.
+function validarPinGlobal() {
+    const pin = document.getElementById('pin_emergencia_global');
+    const confirm = document.getElementById('pin_emergencia_global_confirm');
+    if (!pin || !confirm) return;
+
+    // Solo dígitos, con el mismo criterio que la recuperación por PIN.
+    [pin, confirm].forEach(function(campo) {
+        const limpio = campo.value.replace(/[^0-9]/g, '').slice(0, 6);
+        if (campo.value !== limpio) campo.value = limpio;
+    });
+
+    const pinCompleto = /^[0-9]{6}$/.test(pin.value);
+
+    if (pin.value === '') {
+        marcarCampoUsu('pin_emergencia_global', '', '');
+    } else {
+        marcarCampoUsu('pin_emergencia_global', pinCompleto, 'PIN de 6 dígitos.',
+            'Faltan dígitos: llevas ' + pin.value.length + ' de 6.');
+    }
+
+    if (pin.value === '' && confirm.value === '') {
+        marcarCampoUsu('pin_emergencia_global_confirm', '', '');
+    } else if (!pinCompleto) {
+        marcarCampoUsu('pin_emergencia_global_confirm', 'err', 'Termina el PIN antes de confirmarlo.');
+    } else {
+        marcarCampoUsu('pin_emergencia_global_confirm', confirm.value === pin.value,
+            'Los PIN coinciden.', 'Los PIN no coinciden.');
+    }
 }
 
 // Revalida los tres modales en cada tecla de sus campos.

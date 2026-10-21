@@ -251,10 +251,22 @@ $vistaUsuarios = file_get_contents($root . '/views/usuarios/index.php');
 afirmar(strpos($vistaUsuarios, 'pin_emergencia_global') !== false, 'La vista de Colaboradores debe permitir definir el PIN compartido.');
 afirmar(strpos($vistaUsuarios, 'crear_pin') === false, 'El alta ya no debe pedir PIN por colaborador.');
 
-// El PIN se puede ver mientras se teclea: ojo en los dos campos del formulario.
+// El PIN y las contraseñas de los modales se pueden ver mientras se teclea.
 afirmar(
-    substr_count($vistaUsuarios, 'data-toggle-password') === 2,
-    'Los dos campos del PIN (PIN y confirmación) deben llevar el botón para verlo.'
+    substr_count($vistaUsuarios, 'data-toggle-password') === 6
+        && substr_count($vistaUsuarios, 'class="password-field"') === 6,
+    'El PIN y los cuatro campos de contraseña de alta y restablecer deben envolverse en .password-field con su ojo.'
+);
+
+// El PIN se valida en vivo antes de enviar: guías bajo los dos campos.
+afirmar(
+    strpos($vistaUsuarios, 'id="pin_emergencia_global_guia"') !== false
+        && strpos($vistaUsuarios, 'id="pin_emergencia_global_confirm_guia"') !== false,
+    'Los dos campos del PIN deben tener su guía de validación en vivo.'
+);
+afirmar(
+    substr_count($vistaUsuarios, 'oninput="validarPinGlobal()"') === 2,
+    'Los dos campos del PIN deben disparar la validación en vivo al teclear.'
 );
 
 $js = file_get_contents($root . '/assets/dashboard/usuarios.js');
@@ -262,6 +274,17 @@ afirmar(strpos($js, 'crear_pin') === false, 'El JS del alta ya no debe validar u
 afirmar(
     strpos($js, "querySelectorAll('[data-toggle-password]')") !== false,
     'El JS de Colaboradores debe alternar la visibilidad del PIN al pulsar el ojo.'
+);
+afirmar(
+    strpos($js, 'function validarPinGlobal()') !== false,
+    'El JS debe validar el PIN en vivo: 6 dígitos y confirmación coincidente.'
+);
+
+// El color de esa validación vive en el CSS del módulo (antes no existía en ningún sitio).
+$cssUsuarios = file_get_contents($root . '/assets/dashboard/usuarios.css');
+afirmar(
+    strpos($cssUsuarios, '.guia-ok') !== false && strpos($cssUsuarios, '.guia-err') !== false,
+    'Las guías de validación en vivo deben pintarse en verde y rojo.'
 );
 
 $controlador = file_get_contents($root . '/controllers/UsuariosController.php');

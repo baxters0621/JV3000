@@ -349,3 +349,9 @@
     }
     .password-toggle:hover { background: #F1F5F9; color: #5b21b6; }
     .password-toggle:focus-visible { outline: 3px solid rgba(124, 58, 237, .35); outline-offset: 2px; }
+
+    /* ── Validación en vivo: color de la guía y del campo ── */
+    .pagina-usuarios .guia-ok { color:#15803d; font-weight:700; }
+    .pagina-usuarios .guia-err { color:#dc2626; font-weight:700; }
+    .pagina-usuarios .input-jv.is-valid { border-color:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.15); }
+    .pagina-usuarios .input-jv.is-invalid { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.15); }
