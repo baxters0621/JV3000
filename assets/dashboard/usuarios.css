@@ -365,3 +365,41 @@
     .pagina-usuarios .guia-err { color:#dc2626; font-weight:700; }
     .pagina-usuarios .input-jv.is-valid { border-color:#16a34a; box-shadow:0 0 0 3px rgba(22,163,74,.15); }
     .pagina-usuarios .input-jv.is-invalid { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.15); }
+
+    /* ── Ayuda de la tarjeta del PIN: texto plegado tras un «?» grande ──
+       Es el <details>/<summary> del navegador: sin JavaScript y accesible
+       con el tabulador. */
+    .pin-ayuda summary {
+        list-style:none;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        cursor:pointer;
+        font-size:.9rem;
+        font-weight:800;
+    }
+    .pin-ayuda summary::-webkit-details-marker { display:none; }
+    .pin-ayuda summary:focus-visible { outline:3px solid rgba(124,58,237,.35); outline-offset:2px; border-radius:8px; }
+    .pin-ayuda-icono {
+        flex:0 0 auto;
+        width:40px;height:40px;
+        border-radius:50%;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        background:linear-gradient(135deg,#7c3aed,#5b21b6);
+        color:#fff;
+        font-size:1.4rem;
+        font-weight:800;
+        line-height:1;
+        box-shadow:0 4px 12px -4px rgba(124,58,237,.45);
+        transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .pin-ayuda summary:hover .pin-ayuda-icono {
+        transform:translateY(-2px);
+        box-shadow:0 8px 18px -5px rgba(124,58,237,.6);
+    }
+    /* Al abrirlo el «?» gira, para que se note que el texto queda desplegado. */
+    .pin-ayuda details[open] .pin-ayuda-icono { transform:rotate(180deg); }
+    .pin-ayuda-texto { margin-top:10px; font-size:.9rem; }

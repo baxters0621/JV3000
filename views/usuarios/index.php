@@ -63,8 +63,14 @@
                 <span class="codigo-badge ms-auto"><?php echo $pin_global !== '' ? 'DEFINIDO' : 'SIN DEFINIR'; ?></span>
             </div>
             <div class="p-3">
-                <div class="alert-jv alert-jv-info mb-3">
-                    <i class="bi bi-info-circle me-2"></i>Es un <strong>único PIN de 6 dígitos</strong> que sirve para que todas las cuentas (Operadores de Carga y Ventas, y también la del Administrador) recuperen su contraseña <strong>sin internet</strong>. Cada usuario lo verá en <em>Mi Perfil</em>. El PIN es el respaldo cuando el correo electrónico no llega.
+                <div class="alert-jv alert-jv-info pin-ayuda mb-3">
+                    <details>
+                        <summary>
+                            <span class="pin-ayuda-titulo">¿Qué es el PIN de emergencia?</span>
+                            <span class="pin-ayuda-icono" aria-hidden="true">?</span>
+                        </summary>
+                        <p class="pin-ayuda-texto mb-0">Es un <strong>único PIN de 6 dígitos</strong> que sirve para que todas las cuentas (Operadores de Carga y Ventas, y también la del Administrador) recuperen su contraseña <strong>sin internet</strong>. Cada usuario lo verá en <em>Mi Perfil</em>. El PIN es el respaldo cuando el correo electrónico no llega.</p>
+                    </details>
                 </div>
                 <?php if ($pin_global !== ''): ?>
                     <p class="mb-3">PIN vigente: <strong class="fs-5"><?php echo htmlspecialchars($pin_global); ?></strong></p>

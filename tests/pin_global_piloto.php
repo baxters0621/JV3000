@@ -269,6 +269,12 @@ afirmar(
     'Los dos campos del PIN deben disparar la validación en vivo al teclear.'
 );
 
+// La ayuda de la tarjeta queda plegada tras un «?» grande, sin JavaScript.
+afirmar(
+    strpos($vistaUsuarios, '<details>') !== false && strpos($vistaUsuarios, 'pin-ayuda-icono') !== false,
+    'La ayuda del PIN debe plegarse detrás de un círculo «?» (details/summary del navegador).'
+);
+
 $js = file_get_contents($root . '/assets/dashboard/usuarios.js');
 afirmar(strpos($js, 'crear_pin') === false, 'El JS del alta ya no debe validar un PIN por usuario.');
 afirmar(
@@ -285,6 +291,10 @@ $cssUsuarios = file_get_contents($root . '/assets/dashboard/usuarios.css');
 afirmar(
     strpos($cssUsuarios, '.guia-ok') !== false && strpos($cssUsuarios, '.guia-err') !== false,
     'Las guías de validación en vivo deben pintarse en verde y rojo.'
+);
+afirmar(
+    strpos($cssUsuarios, '.pin-ayuda-icono') !== false,
+    'El círculo «?» de la ayuda debe tener su estilo en el CSS del módulo.'
 );
 
 $controlador = file_get_contents($root . '/controllers/UsuariosController.php');
