@@ -5,8 +5,9 @@
  *
  * El PIN dejó de ser un dato por usuario: ahora es una sola clave que el
  * Administrador define en la tabla `configuracion` y que sirve para todos los
- * Operadores (Carga y Ventas). La cuenta del Administrador queda fuera del PIN
- * y solo se recupera por correo. Ejecutar con PHP CLI; sin base de datos real.
+ * usuarios, incluida la propia cuenta del Administrador. Es el respaldo de
+ * recuperación cuando el canal de correo no está disponible. Ejecutar con PHP
+ * CLI; sin base de datos real.
  */
 
 if (PHP_SAPI !== 'cli') {
@@ -178,12 +179,46 @@ afirmar(
 );
 
 // -----------------------------------------------
+// 3b) Perfil: cambiar solo usuario/correo sin contraseña actual
+// -----------------------------------------------
+$db->escrituras = [];
+$db->respuestas = [];
+$fila = [
+    'id_usuario' => 5, 'usuario' => 'OPERADOR', 'correo' => 'op@empresa.com',
+    'password' => password_hash('Abc12345!', PASSWORD_BCRYPT),
+    'password_check' => 'hash_chk',
+];
+$db->respuestas = [$fila, null, null]; // actual + sin duplicados
+$soloDatos = ['password_actual' => '', 'usuario' => 'operador2', 'correo' => 'op2@empresa.com'];
+$res = (new Usuario())->actualizarPerfil($soloDatos);
+afirmar($res['ok'] === true, 'Debe permitir cambiar usuario/correo sin contraseña actual: ' . ($res['mensaje'] ?? ''));
+$upd = escrituraPor('UPDATE usuarios SET usuario=?');
+$params = $upd['params'];
+// Debe mantener el hash y el password_check originales
+afirmar($params[2] === $fila['password'], 'Al no cambiar contraseña debe conservarse el hash original.');
+afirmar($params[3] === $fila['password_check'], 'Al no cambiar contraseña debe conservarse el password_check original.');
+
+// Nueva contraseña sin contraseña actual debe rechazarse
+$db->escrituras = [];
+$db->respuestas = [];
+$fila = [
+    'id_usuario' => 5, 'usuario' => 'OPERADOR', 'correo' => 'op@empresa.com',
+    'password' => password_hash('Abc12345!', PASSWORD_BCRYPT),
+    'password_check' => 'hash_chk',
+];
+$db->respuestas = [$fila];
+$sinActual = ['password_actual' => '', 'usuario' => 'operador', 'correo' => 'op@empresa.com', 'password_nueva' => 'NuevaClave9!', 'password_confirm' => 'NuevaClave9!'];
+$r2 = (new Usuario())->actualizarPerfil($sinActual);
+afirmar($r2['ok'] === false && stripos($r2['mensaje'], 'CONTRASEÑA ACTUAL') !== false, 'Al poner nueva contraseña sin la actual debe rechazarse.');
+
+// -----------------------------------------------
 // 4) El PIN dejó de ser un dato del usuario
 // -----------------------------------------------
 $modelo = file_get_contents($root . '/models/Usuario.php');
 afirmar(strpos($modelo, 'pin_emergencia') === false, 'El modelo de Usuario ya no debe usar la columna pin_emergencia.');
 
-// La recuperación verifica contra el PIN compartido y excluye al Administrador.
+// El PIN sirve para todas las cuentas, incluida la del Administrador: no se
+// excluye a nadie, es el respaldo cuando el canal de correo falla.
 $recuperacion = file_get_contents($root . '/login/recuperar.php');
 afirmar(
     strpos($recuperacion, "getConfig('pin_emergencia_global'") !== false,
@@ -194,12 +229,18 @@ afirmar(
     'La recuperación ya no debe leer el PIN desde usuarios.'
 );
 afirmar(
-    strpos($recuperacion, '$rec_es_admin') !== false && strpos($recuperacion, '=== 1') !== false,
-    'La recuperación debe detectar al Administrador por su rol.'
+    strpos($recuperacion, '$rec_es_admin && $pinGlobal') === false
+        && strpos($recuperacion, '!$rec_es_admin && $pinGlobal') === false,
+    'La recuperación no debe excluir al Administrador del PIN compartido.'
 );
 afirmar(
-    strpos($recuperacion, 'SE RECUPERA POR CORREO') !== false,
-    'La recuperación debe explicar que el Administrador se recupera por correo.'
+    strpos($recuperacion, 'o con el PIN de emergencia') !== false,
+    'La recuperación debe informar que el Administrador también puede usar el PIN.'
+);
+// El código de recuperación se sustituye en el cuerpo antes de enviarlo.
+afirmar(
+    strpos($recuperacion, "'{CODIGO}'") !== false && strpos($recuperacion, '$solicitud[\'codigo\']') !== false,
+    'El cuerpo del correo debe llevar el código real, no el marcador {CODIGO}.'
 );
 
 // El Administrador define el PIN compartido desde el módulo de Colaboradores.
@@ -229,5 +270,34 @@ afirmar(strpos($seed, "'pin_emergencia_global'") !== false, 'El seed debe traer 
 // El rescate del Administrador existe y es solo para CLI.
 $rescate = @file_get_contents($root . '/tools/resetear_admin.php');
 afirmar(is_string($rescate) && strpos($rescate, "PHP_SAPI !== 'cli'") !== false, 'El rescate del admin debe existir y rechazar la web.');
+
+// -----------------------------------------------
+// 6) Los assets propios se versionan con su mtime
+// -----------------------------------------------
+// Evita mantener ?v=N a mano: el navegador recibe la fecha real del archivo y
+// solo vuelve a descargarlo cuando cambia (bug de JS viejo en caché).
+require_once $root . '/core/Controller.php';
+
+afirmar(function_exists('jv_asset_version'), 'Debe existir el helper jv_asset_version().');
+afirmar(
+    preg_match('/^\?v=\d+$/', jv_asset_version('dashboard/usuarios.js')) === 1,
+    'El helper debe devolver ?v=<mtime> para un asset existente.'
+);
+afirmar(jv_asset_version('no/existe.js') === '', 'El helper debe devolver cadena vacía si el asset no existe.');
+
+$layout = file_get_contents($root . '/views/layouts/main.php');
+afirmar(strpos($layout, '$this->viewData') !== false, 'El layout debe recibir los assets ya versionados desde el controlador.');
+
+$controladorBase = file_get_contents($root . '/core/Controller.php');
+afirmar(
+    strpos($controladorBase, 'versionarAssets') !== false && strpos($controladorBase, "jv_asset_version(") !== false,
+    'El Controller base debe versionar automáticamente css_extra/js_extra.'
+);
+
+$dashboardVista = file_get_contents($root . '/dashboard/index.php');
+afirmar(strpos($dashboardVista, 'index.js?v=13') === false, 'El panel legacy ya no debe llevar ?v fijo.');
+
+$loginVista = file_get_contents($root . '/login/login.php');
+afirmar(strpos($loginVista, "login.js<?php") !== false, 'El login debe versionar login.js con su mtime.');
 
 echo "OK - pin_global_piloto: $afirmaciones aserciones superadas.\n";

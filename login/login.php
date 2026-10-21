@@ -4,6 +4,10 @@
 // ==========================================
 require_once __DIR__ . '/../init.php';
 
+// Cache-busting: el navegador revalida el JS propio con el mtime del archivo.
+// Así el login siempre sirve la última versión sin mantener ?v= a mano.
+$jv_cache_bust = static fn(string $ruta): string => is_file($ruta) ? '?v=' . filemtime($ruta) : '';
+
 $db = Database::getInstance();
 $base_assets = BASE_PATH . 'assets/';
 
@@ -155,13 +159,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                         $login_exitoso = true;
                         session_regenerate_id(true);
                         $_SESSION['id_usuario']   = $row['id_usuario'];
-                        $_SESSION['usuario']      = $row['usuario'];
-                        $_SESSION['id_rol']       = (int)$row['id_rol'];
-                        $_SESSION['ip_addr']      = $_SERVER['REMOTE_ADDR'];
-                        $_SESSION['fresh_login']  = true;
-                        registrarAuditoria('login', "Inicio de sesión");
-                        header("Location: ../dashboard/index.php");
-                        exit();
+    $_SESSION['usuario'] = $row['usuario'];
+    $_SESSION['id_rol']       = (int)$row['id_rol'];
+    $_SESSION['ip_addr']      = $_SERVER['REMOTE_ADDR'];
+    registrarAuditoria('login', "Inicio de sesión");
+    header("Location: ../dashboard/index.php");
+    exit();
                     }
                 }
             }
@@ -388,7 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
             remainingLockoutSeconds: <?php echo $segundos_restantes; ?>
         };
     </script>
-    <script src="../assets/login/login.js"></script>
+    <script src="../assets/login/login.js<?php echo $jv_cache_bust(__DIR__ . '/../assets/login/login.js'); ?>"></script>
 
 
 </body>

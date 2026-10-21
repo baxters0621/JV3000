@@ -197,8 +197,8 @@ En la tarjeta **"Compras Pendientes de Recepción"** (dentro de Compras) pulsa e
 ## 8. Mi Perfil
 
 `Mi Perfil` (todos los roles):
-1. Cambia tu **usuario** (normalizado, 4–20 caracteres) y **correo**.
-2. Cambia tu **contraseña** con la misma regla de seguridad (mín 8, mayúscula, minúscula, número, símbolo; no repetida entre usuarios).
+1. Cambia tu **usuario** (normalizado, 4–20 caracteres) y **correo** sin necesidad de escribir tu contraseña actual.
+2. Cambia tu **contraseña** con la misma regla de seguridad (mín 8, mayúscula, minúscula, número, símbolo; no repetida entre usuarios): para hacerlo **sí es obligatorio** escribir la **contraseña actual**.
 3. Consulta y anota tu **PIN de emergencia**: es de solo lectura y es el respaldo para recuperar la cuenta sin internet. Lo define el administrador para todos los operadores; si eres Administrador verás que tu cuenta no usa PIN (se recupera por correo).
 
 ---

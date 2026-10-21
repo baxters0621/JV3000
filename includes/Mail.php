@@ -89,8 +89,12 @@ final class Mail
             $correo->setFrom(SMTP_FROM, SMTP_FROM_NOMBRE);
             $correo->addAddress($para);
             $correo->Subject = $asunto;
+            // El cuerpo es HTML (el código de recuperación se muestra grande y
+            // centrado). AltBody da la versión en texto plano para los clientes
+            // que no renderizan HTML.
+            $correo->isHTML(true);
+            $correo->AltBody = trim(html_entity_decode(strip_tags($cuerpo), ENT_QUOTES, 'UTF-8'));
             $correo->Body    = $cuerpo;
-            $correo->isHTML(false);
 
             $correo->send();
             return ['ok' => true, 'mensaje' => 'CORREO ENVIADO.'];

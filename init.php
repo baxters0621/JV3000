@@ -1,7 +1,7 @@
 <?php
 
 // ==========================================
-// CONFIGURACIÓN INICIAL
+// CONFIGURACIÃ“N INICIAL
 // ==========================================
 
 // --- 1. Session (strict mode) ---
@@ -46,13 +46,13 @@ define('INIT_LOADED', true);
 
 if (PHP_VERSION_ID < 80200) {
     http_response_code(500);
-    die('Componente: PHP del servidor web. Evidencia: JV3000 requiere PHP 8.2 o superior y el proceso web está usando PHP '
+    die('Componente: PHP del servidor web. Evidencia: JV3000 requiere PHP 8.2 o superior y el proceso web estÃ¡ usando PHP '
         . htmlspecialchars(PHP_VERSION, ENT_QUOTES, 'UTF-8')
-        . '. Revisa con la persona administradora qué versión usa Apache; si no puede corregirse mediante el procedimiento local autorizado, detente y contacta soporte. No se modificó el servidor.');
+        . '. Revisa con la persona administradora quÃ© versiÃ³n usa Apache; si no puede corregirse mediante el procedimiento local autorizado, detente y contacta soporte. No se modificÃ³ el servidor.');
 }
 if (!extension_loaded('mysqli')) {
     http_response_code(500);
-    die('Componente: requisitos de PHP del servidor web. Evidencia: la extensión mysqli no está disponible para el proceso web. Pide al administrador del PC servidor que revise el php.ini que utiliza Apache; no compartas configuraciones privadas ni actives extensiones desde esta página. Si persiste, detente y contacta soporte.');
+    die('Componente: requisitos de PHP del servidor web. Evidencia: la extensiÃ³n mysqli no estÃ¡ disponible para el proceso web. Pide al administrador del PC servidor que revise el php.ini que utiliza Apache; no compartas configuraciones privadas ni actives extensiones desde esta pÃ¡gina. Si persiste, detente y contacta soporte.');
 }
 
 // --- 4. Cargar constantes ---
@@ -67,10 +67,10 @@ require_once __DIR__ . '/includes/InstaladorInicial.php';
 require_once __DIR__ . '/includes/EstadoInstalacion.php';
 
 /**
- * Presenta orientación segura y consistente para cada estado bloqueado.
+ * Presenta orientaciÃ³n segura y consistente para cada estado bloqueado.
  *
  * @param array $diagnostic Resultado fijo de StartupDiagnostics.
- * @return string HTML escapado del diagnóstico.
+ * @return string HTML escapado del diagnÃ³stico.
  */
 function jv_render_diagnostico(array $diagnostic): string
 {
@@ -96,19 +96,19 @@ function jv_render_diagnostico(array $diagnostic): string
         : '';
 
     return '<p><strong>Componente:</strong> ' . htmlspecialchars((string)($diagnostic['component'] ?? 'JV3000'), ENT_QUOTES, 'UTF-8') . '</p>'
-        . '<p><strong>Qué se observó:</strong> ' . htmlspecialchars((string)($diagnostic['evidence'] ?? $diagnostic['message'] ?? ''), ENT_QUOTES, 'UTF-8') . '</p>'
+        . '<p><strong>QuÃ© se observÃ³:</strong> ' . htmlspecialchars((string)($diagnostic['evidence'] ?? $diagnostic['message'] ?? ''), ENT_QUOTES, 'UTF-8') . '</p>'
         . '<p><strong>' . (($diagnostic['cause_status'] ?? 'posible') === 'confirmada' ? 'Causa confirmada' : 'Causa posible') . ':</strong> '
         . htmlspecialchars((string)($diagnostic['cause'] ?? $diagnostic['message'] ?? ''), ENT_QUOTES, 'UTF-8') . '</p>'
         . $checksHtml
         . $optionsHtml
-        . '<p><strong>Cuándo detenerse:</strong> ' . htmlspecialchars((string)($diagnostic['escalate'] ?? $diagnostic['next_step'] ?? ''), ENT_QUOTES, 'UTF-8') . '</p>'
-        . ($supportHtml !== '' ? '<p><strong>Información no sensible para soporte:</strong></p>' . $supportHtml : '');
+        . '<p><strong>CuÃ¡ndo detenerse:</strong> ' . htmlspecialchars((string)($diagnostic['escalate'] ?? $diagnostic['next_step'] ?? ''), ENT_QUOTES, 'UTF-8') . '</p>'
+        . ($supportHtml !== '' ? '<p><strong>InformaciÃ³n no sensible para soporte:</strong></p>' . $supportHtml : '');
 }
 
 /**
- * Crea el lector del marcador con configuración local y raíz web canónica.
+ * Crea el lector del marcador con configuraciÃ³n local y raÃ­z web canÃ³nica.
  *
- * @return EstadoInstalacion Lector del estado privado de instalación.
+ * @return EstadoInstalacion Lector del estado privado de instalaciÃ³n.
  */
 function jv_crear_estado_instalacion(): EstadoInstalacion
 {
@@ -144,18 +144,18 @@ if (DB_CONFIG_STATUS !== 'ready') {
 // BASE DE DATOS
 // ==========================================
 
-// --- 6. Conectar a la base configurada o detenerse en diagnóstico seguro ---
+// --- 6. Conectar a la base configurada o detenerse en diagnÃ³stico seguro ---
 function jv_db_error_page(?Throwable $error = null): void
 {
     $errorCode = $error ? (int)$error->getCode() : 0;
     $diagnostic = StartupDiagnostics::fromConnectionError(
-        $error ?? new RuntimeException('No se proporcionó detalle de conexión.')
+        $error ?? new RuntimeException('No se proporcionÃ³ detalle de conexiÃ³n.')
     );
     if ($diagnostic['category'] === StartupDiagnostics::DATABASE_MISSING) {
         jv_installation_page('ausente');
     }
     if ($error) {
-        error_log("[JV3000] Diagnóstico de conexión: {$diagnostic['category']} (código {$errorCode}).");
+        error_log("[JV3000] DiagnÃ³stico de conexiÃ³n: {$diagnostic['category']} (cÃ³digo {$errorCode}).");
     }
 
     http_response_code(500);
@@ -186,7 +186,7 @@ function jv_schema_error_page(array $diagnostic): never
 /**
  * Cuenta tablas de la base seleccionada usando solo metadatos.
  *
- * @param mysqli $connection Conexión a la base configurada.
+ * @param mysqli $connection ConexiÃ³n a la base configurada.
  * @return int Cantidad de tablas visibles.
  */
 function jv_contar_tablas_destino(mysqli $connection): int
@@ -208,6 +208,26 @@ function jv_contar_tablas_destino(mysqli $connection): int
 }
 
 /**
+ * Selecciona la base sin dejar que la excepción de mysqli decida el resultado.
+ *
+ * PHP 8.1+ activa MYSQLI_REPORT_STRICT por defecto: una base ausente lanza
+ * mysqli_sql_exception en lugar de devolver false, y eso convertía el estado
+ * legítimo "ausente" en "desconocido", bloqueando la instalación limpia.
+ *
+ * @param mysqli $connection Conexión ya abierta al servidor.
+ * @param string $base Nombre lógico de la base a seleccionar.
+ * @return bool True si la selección terminó sin error.
+ */
+function seleccionarBaseSinExcepcion(mysqli $connection, string $base): bool
+{
+    try {
+        return @mysqli_select_db($connection, $base);
+    } catch (mysqli_sql_exception) {
+        return false;
+    }
+}
+
+/**
  * Comprueba el destino sin crearlo ni modificarlo.
  *
  * @return string Estado observable: ausente, vacio, existente o desconocido.
@@ -220,7 +240,7 @@ function jv_estado_destino_instalacion(): string
         if (!$connection) {
             return 'desconocido';
         }
-        if (!@mysqli_select_db($connection, DB_NAME)) {
+        if (!seleccionarBaseSinExcepcion($connection, DB_NAME)) {
             return mysqli_errno($connection) === 1049 ? 'ausente' : 'desconocido';
         }
 
@@ -235,9 +255,9 @@ function jv_estado_destino_instalacion(): string
 }
 
 /**
- * Importa v6 únicamente a un destino que vuelve a comprobarse como ausente o vacío.
+ * Importa v6 Ãºnicamente a un destino que vuelve a comprobarse como ausente o vacÃ­o.
  *
- * @return bool True si el SQL terminó sin errores.
+ * @return bool True si el SQL terminÃ³ sin errores.
  */
 function jv_importar_esquema_inicial(): bool
 {
@@ -287,7 +307,7 @@ function jv_importar_esquema_inicial(): bool
 }
 
 /**
- * Presenta la confirmación separada de instalación inicial y detiene el arranque.
+ * Presenta la confirmaciÃ³n separada de instalaciÃ³n inicial y detiene el arranque.
  *
  * @param string $estadoInicial Estado observado antes de mostrar la ruta.
  */
@@ -337,10 +357,10 @@ function jv_installation_page(string $estadoInicial): never
     }
 
     $fallo = match ($resultado['estado'] ?? null) {
-        InstaladorInicial::CSRF_INVALIDO => 'La confirmación de seguridad no es válida o venció. No se modificó la base; vuelve a cargar la página y confirma de nuevo.',
-        InstaladorInicial::REQUIERE_CONFIRMACION => 'La instalación no comenzó porque falta la confirmación humana explícita.',
-        InstaladorInicial::DESTINO_EXISTENTE => 'El destino contiene tablas o no se pudo confirmar como ausente/vacío. La importación está bloqueada.',
-        InstaladorInicial::INCOMPLETA => 'La importación no terminó o no pudo verificarse. El marcador bloquea nuevos intentos; solicita revisión manual.',
+        InstaladorInicial::CSRF_INVALIDO => 'La confirmaciÃ³n de seguridad no es vÃ¡lida o venciÃ³. No se modificÃ³ la base; vuelve a cargar la pÃ¡gina y confirma de nuevo.',
+        InstaladorInicial::REQUIERE_CONFIRMACION => 'La instalaciÃ³n no comenzÃ³ porque falta la confirmaciÃ³n humana explÃ­cita.',
+        InstaladorInicial::DESTINO_EXISTENTE => 'El destino contiene tablas o no se pudo confirmar como ausente/vacÃ­o. La importaciÃ³n estÃ¡ bloqueada.',
+        InstaladorInicial::INCOMPLETA => 'La importaciÃ³n no terminÃ³ o no pudo verificarse. El marcador bloquea nuevos intentos; solicita revisiÃ³n manual.',
         InstaladorInicial::ESQUEMA_INCOMPATIBLE => 'El esquema importado no pudo verificarse como compatible. El marcador bloquea nuevos intentos; no borres tablas ni el marcador.',
         default => '',
     };
@@ -354,9 +374,9 @@ function jv_installation_page(string $estadoInicial): never
         $estadoPantalla = 'existente';
     }
     if ($estadoPantalla === 'desconocido') {
-        $fallo = 'No fue posible confirmar el estado del destino. No se realizó ninguna instalación.';
+        $fallo = 'No fue posible confirmar el estado del destino. No se realizÃ³ ninguna instalaciÃ³n.';
     } elseif ($estadoPantalla === 'existente') {
-        $fallo = 'El destino ya contiene tablas. La instalación nueva está bloqueada y no se modificó.';
+        $fallo = 'El destino ya contiene tablas. La instalaciÃ³n nueva estÃ¡ bloqueada y no se modificÃ³.';
     }
     $estadoMarcador = $marcador->diagnosticar();
     if (($resultado['estado'] ?? null) === InstaladorInicial::MARCADOR_NO_VALIDO) {
@@ -386,9 +406,9 @@ function jv_installation_page(string $estadoInicial): never
                 <input type='hidden' name='csrf_token' value='{$token}'>
                 <label style='display:flex;gap:10px;align-items:flex-start;color:#e2e8f0;'>
                     <input type='checkbox' name='confirmacion_instalacion_nueva' value='1' required>
-                    <span>Confirmo que este destino es para una instalación nueva y entiendo que JV3000 creará/importará el esquema limpio v6, sin recuperar datos anteriores.</span>
+                    <span>Confirmo que este destino es para una instalaciÃ³n nueva y entiendo que JV3000 crearÃ¡/importarÃ¡ el esquema limpio v6, sin recuperar datos anteriores.</span>
                 </label>
-                <button type='submit' name='confirmar_instalacion' value='1' style='margin-top:18px;background:#b45309;color:white;border:0;padding:12px 18px;border-radius:8px;font-weight:600;cursor:pointer;'>Confirmar instalación limpia</button>
+                <button type='submit' name='confirmar_instalacion' value='1' style='margin-top:18px;background:#b45309;color:white;border:0;padding:12px 18px;border-radius:8px;font-weight:600;cursor:pointer;'>Confirmar instalaciÃ³n limpia</button>
             </form>"
         : '';
 
@@ -396,20 +416,20 @@ function jv_installation_page(string $estadoInicial): never
         ? 403
         : ($fallo !== '' || $estadoMarcador !== EstadoInstalacion::LISTA ? 409 : 200));
     $titulo = match ($estadoPantalla) {
-        'vacio' => 'Base de datos vacía',
-        InstaladorInicial::INCOMPLETA => 'Instalación incompleta',
+        'vacio' => 'Base de datos vacÃ­a',
+        InstaladorInicial::INCOMPLETA => 'InstalaciÃ³n incompleta',
         InstaladorInicial::ESQUEMA_INCOMPATIBLE => 'Esquema incompatible',
-        InstaladorInicial::DESTINO_EXISTENTE, 'existente' => 'Instalación bloqueada',
+        InstaladorInicial::DESTINO_EXISTENTE, 'existente' => 'InstalaciÃ³n bloqueada',
         default => 'Base de datos no encontrada',
     };
     $observedMessage = $estadoPantalla === 'vacio'
-        ? 'El servidor respondió y la base configurada existe, pero no contiene tablas visibles. Esto no demuestra por sí solo que sea correcto usarla.'
+        ? 'El servidor respondiÃ³ y la base configurada existe, pero no contiene tablas visibles. Esto no demuestra por sÃ­ solo que sea correcto usarla.'
         : ($estadoPantalla === 'ausente'
-            ? 'El servidor respondió y no encontró la base configurada. Esto no demuestra por sí solo que el nombre sea correcto ni que se autorice crearla.'
+            ? 'El servidor respondiÃ³ y no encontrÃ³ la base configurada. Esto no demuestra por sÃ­ solo que el nombre sea correcto ni que se autorice crearla.'
             : 'No se pudo confirmar de forma segura el estado del destino.');
     $diagnosticoBase = StartupDiagnostics::fromConnectionError(
         new RuntimeException(
-            'Estado de destino para la orientación de instalación.',
+            'Estado de destino para la orientaciÃ³n de instalaciÃ³n.',
             $estadoPantalla === 'ausente' ? 1049 : 9999
         )
     );
@@ -417,26 +437,26 @@ function jv_installation_page(string $estadoInicial): never
     $diagnosticoBase['message'] = $observedMessage;
     if ($estadoPantalla === 'vacio') {
         $diagnosticoBase['component'] = 'Existencia y contenido estructural de la base.';
-        $diagnosticoBase['cause'] = 'La base existe sin tablas visibles; el sistema no infiere que esté autorizada para importar datos.';
+        $diagnosticoBase['cause'] = 'La base existe sin tablas visibles; el sistema no infiere que estÃ© autorizada para importar datos.';
         $diagnosticoBase['checks'] = [
             'Confirma con la persona administradora que el nombre corresponde al destino previsto.',
             'Si se esperaban datos, detente y localiza primero el procedimiento de respaldo institucional.',
-            'La instalación limpia solo está disponible después de revisar el marcador y confirmar deliberadamente.',
+            'La instalaciÃ³n limpia solo estÃ¡ disponible despuÃ©s de revisar el marcador y confirmar deliberadamente.',
         ];
     } elseif ($estadoPantalla === 'existente') {
         $diagnosticoBase['component'] = 'Destino de base existente.';
-        $diagnosticoBase['evidence'] = 'La comprobación del POST observó tablas o no pudo confirmar un destino ausente/vacío.';
+        $diagnosticoBase['evidence'] = 'La comprobaciÃ³n del POST observÃ³ tablas o no pudo confirmar un destino ausente/vacÃ­o.';
         $diagnosticoBase['message'] = $diagnosticoBase['evidence'];
         $diagnosticoBase['cause_status'] = 'confirmada';
-        $diagnosticoBase['cause'] = 'El destino no cumple las condiciones para una instalación limpia.';
+        $diagnosticoBase['cause'] = 'El destino no cumple las condiciones para una instalaciÃ³n limpia.';
         $diagnosticoBase['checks'] = [
-            'No se inició la importación.',
-            'Conserva la base y solicita una revisión del esquema existente.',
+            'No se iniciÃ³ la importaciÃ³n.',
+            'Conserva la base y solicita una revisiÃ³n del esquema existente.',
         ];
     }
     $diagnosticoMarcador = StartupDiagnostics::fromInstallationState($estadoMarcador);
     $installationWarning = in_array($estadoPantalla, ['ausente', 'vacio'], true)
-        ? '<p style="color:#fca5a5;margin-top:16px;">La opción siguiente creará una instalación limpia sin recuperar datos anteriores. No continúes si esperas encontrar información previa.</p>'
+        ? '<p style="color:#fca5a5;margin-top:16px;">La opciÃ³n siguiente crearÃ¡ una instalaciÃ³n limpia sin recuperar datos anteriores. No continÃºes si esperas encontrar informaciÃ³n previa.</p>'
         : '';
     die("<main style='background:#020617;color:#e2e8f0;font-family:sans-serif;min-height:100vh;padding:40px 16px;box-sizing:border-box;'>
         <section style='max-width:760px;margin:auto;border:1px solid #334155;padding:32px;border-radius:16px;background:#0f172a;'>
@@ -444,7 +464,7 @@ function jv_installation_page(string $estadoInicial): never
             <div style='color:#cbd5e1;margin-top:20px;'>" . jv_render_diagnostico($diagnosticoBase) . '</div>'
             . $errorHtml
             . ($estadoMarcador !== EstadoInstalacion::LISTA
-                ? "<h2 style='color:#f87171;margin-top:24px;'>Preparación privada de instalación</h2><div style='color:#cbd5e1;'>" . jv_render_diagnostico($diagnosticoMarcador) . '</div>'
+                ? "<h2 style='color:#f87171;margin-top:24px;'>PreparaciÃ³n privada de instalaciÃ³n</h2><div style='color:#cbd5e1;'>" . jv_render_diagnostico($diagnosticoMarcador) . '</div>'
                 : $installationWarning)
             . $installationForm
             . '
@@ -455,14 +475,14 @@ function jv_installation_page(string $estadoInicial): never
 /**
  * Lee solo metadatos estructurales de las tablas de la base seleccionada.
  *
- * @param mysqli $connection Conexión ya establecida.
+ * @param mysqli $connection ConexiÃ³n ya establecida.
  * @param string $database Nombre de la base configurada.
  * @return array Perfil estructural observado.
  */
 function jv_read_schema_profile(?mysqli $connection, string $database): array
 {
     if (!$connection) {
-        throw new RuntimeException('La conexión no está disponible para leer metadatos.');
+        throw new RuntimeException('La conexiÃ³n no estÃ¡ disponible para leer metadatos.');
     }
 
     $statement = $connection->prepare(
@@ -483,12 +503,12 @@ function jv_read_schema_profile(?mysqli $connection, string $database): array
         $escapedName = str_replace('`', '``', (string)$tableName[0]);
         $definitionResult = $connection->query("SHOW CREATE TABLE `{$escapedName}`");
         if (!$definitionResult) {
-            throw new RuntimeException('No se pudo leer la definición de una tabla.', $connection->errno);
+            throw new RuntimeException('No se pudo leer la definiciÃ³n de una tabla.', $connection->errno);
         }
         $definition = $definitionResult->fetch_row();
         $definitionResult->free();
         if (!isset($definition[1])) {
-            throw new RuntimeException('La definición estructural de una tabla no está disponible.');
+            throw new RuntimeException('La definiciÃ³n estructural de una tabla no estÃ¡ disponible.');
         }
         $definitions[] = $definition[1] . ';';
     }
@@ -505,8 +525,8 @@ try {
 } catch (Throwable $e) {
     $connectionDiagnostic = StartupDiagnostics::fromConnectionError($e);
     error_log(
-        "[JV3000] Diagnóstico de conexión de arranque: {$connectionDiagnostic['category']} "
-        . '(código ' . (int)$e->getCode() . ').'
+        "[JV3000] DiagnÃ³stico de conexiÃ³n de arranque: {$connectionDiagnostic['category']} "
+        . '(cÃ³digo ' . (int)$e->getCode() . ').'
     );
     try {
         $connectionWithoutDatabase = @mysqli_connect(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
@@ -525,13 +545,13 @@ try {
         mysqli_close($connectionWithoutDatabase);
         if ((int)$databaseCheckError->getCode() === 1049) {
             $databaseDiagnostic = StartupDiagnostics::fromConnectionError($databaseCheckError);
-            error_log("[JV3000] Diagnóstico de base de datos: {$databaseDiagnostic['category']}.");
+            error_log("[JV3000] DiagnÃ³stico de base de datos: {$databaseDiagnostic['category']}.");
             jv_db_error_page($databaseCheckError);
         }
         jv_db_error_page($databaseCheckError);
     }
     mysqli_close($connectionWithoutDatabase);
-    error_log("[JV3000] La base existe, pero la conexión normal falló; categoría {$connectionDiagnostic['category']}.");
+    error_log("[JV3000] La base existe, pero la conexiÃ³n normal fallÃ³; categorÃ­a {$connectionDiagnostic['category']}.");
     jv_db_error_page($e);
 }
 
@@ -567,16 +587,16 @@ try {
 }
 
 $_SESSION['_jv_schema_diagnostic'] = $schemaDiagnostic['category'];
-error_log("[JV3000] Diagnóstico estructural de arranque: {$schemaDiagnostic['category']}.");
+error_log("[JV3000] DiagnÃ³stico estructural de arranque: {$schemaDiagnostic['category']}.");
 if (!StartupDiagnostics::allowsNormalStartup($schemaComparison)) {
     jv_schema_error_page($schemaDiagnostic);
 }
 
 // ==========================================
-// SEGURIDAD Y SESIÓN
+// SEGURIDAD Y SESIÃ“N
 // ==========================================
 
-// --- 8. Validación de sesión (salvo páginas públicas) ---
+// --- 8. ValidaciÃ³n de sesiÃ³n (salvo pÃ¡ginas pÃºblicas) ---
 $publicPages = ['login.php', 'recuperar.php', 'logout.php'];
 $currentScript = basename($_SERVER['SCRIPT_NAME']);
 
@@ -584,22 +604,10 @@ if (!in_array($currentScript, $publicPages)) {
     Security::validateSession();
 }
 
-// --- 8b. Tab session marker (prevents reused session after tab close) ---
-if (isset($_SESSION['id_usuario'])) {
-    if (!isset($_SESSION['tab_marker'])) {
-        $_SESSION['tab_marker'] = bin2hex(random_bytes(16));
-    }
-    $freshLogin = !empty($_SESSION['fresh_login']);
-    define('_TAB_FRESH_LOGIN', $freshLogin);
-    if ($freshLogin) {
-        $_SESSION['fresh_login'] = false;
-    }
-}
-
-// --- 9. Sanitización global de inputs ---
+// --- 9. Sanitización global de inputs ---Ã³n global de inputs ---
 Security::sanitizeGlobals();
 
-// --- 10. Validación CSRF en peticiones POST ---
+// --- 10. ValidaciÃ³n CSRF en peticiones POST ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Security::validateCSRF();
 }
@@ -641,3 +649,4 @@ set_exception_handler(function (Throwable $e) {
 
 // --- 12. Variable global $db para compatibilidad con helpers legacy ---
 $db = Database::getInstance();
+

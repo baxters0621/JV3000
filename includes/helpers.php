@@ -1109,3 +1109,21 @@ function jv_sello(?float $pct): string
     // Variación negativa → flecha abajo (el número ya lleva su signo -).
     return '<span class="cmp-sello cmp-bajada" title="Descenso respecto al periodo anterior"><i class="bi bi-arrow-down-right"></i> ' . number_format($pct, 1) . '%</span>';
 }
+
+/**
+ * Devuelve el sufijo de versión (?v=mtime) de un asset propio.
+ *
+ * Evita mantener a mano los ?v=N de CSS/JS: el navegador recibe la fecha de
+ * modificación real del archivo y vuelve a descargarlo solo cuando cambia.
+ * Si el archivo no existe, devuelve cadena vacía (útil para plantillas que
+ * apuntan a recursos dinámicos).
+ *
+ * @param string $ruta Ruta del asset relativa a assets/ (p. ej. "dashboard/usuarios.js").
+ * @return string "?v=1234567890" o '' si el archivo no existe.
+ */
+function jv_asset_version(string $ruta): string
+{
+    $raiz = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__);
+    $archivo = $raiz . '/assets/' . ltrim($ruta, '/');
+    return is_file($archivo) ? '?v=' . filemtime($archivo) : '';
+}

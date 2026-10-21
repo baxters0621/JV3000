@@ -58,6 +58,48 @@ la ruta de instalación nueva es solo para un destino confirmado como ausente o
 vacío y requiere confirmación explícita. JV3000 no restaura respaldos ni aplica
 migraciones durante el arranque normal.
 
+### Primer arranque en el PC servidor
+
+1. **Crear el archivo de configuración.** Copia `config/.env.example` a
+   `config/.env` y rellena las claves. Las cinco de base de datos son
+   obligatorias; sin ellas el arranque se detiene con un aviso de
+   configuración incompleta:
+
+   | Clave | Ejemplo | Notas |
+   |---|---|---|
+   | `JV_DB_HOST` | `localhost` | Servidor MySQL accesible desde el PC servidor |
+   | `JV_DB_USER` | `root` | Usuario con permisos de crear bases |
+   | `JV_DB_PASS` | *(vacío en XAMPP por defecto)* | También admite `JV_DB_PASS_B64` en Base64 para caracteres especiales |
+   | `JV_DB_NAME` | `jv3000_db` | Nombre de la base que se creará |
+   | `JV_DB_PORT` | `3306` | Puerto del motor |
+
+2. **Claves de correo (opcionales).** Las seis `JV_SMTP_*` habilitan la
+   recuperación de contraseña por código. Si se omiten, la comprobación de red
+   del canal de correo devuelve falso, la aplicación oculta el envío de código
+   y el **PIN de emergencia** queda como único respaldo. El asunto no bloquea
+   el arranque.
+
+3. **Abrir la aplicación.** Entra a `index.php`. Si la base `JV_DB_NAME` no
+   existe, aparece una pantalla de diagnóstico con un formulario de
+   instalación. Confirma la instalación y el sistema importa el esquema limpio
+   `db/jv3000_portable_v6.sql`: 23 tablas, un usuario administrador inicial y
+   los catálogos base. Ese formulario solo se ofrece cuando el destino está
+   confirmado como ausente o vacío.
+
+4. **Directorio de estado.** El instalador usa un marcador privado que vive
+   fuera de la web servida. Si no defines la variable de entorno
+   `JV_INSTALL_STATE_DIR`, se usa por defecto una carpeta hermana del document
+   root (por ejemplo, con `C:/xampp/htdocs` se resuelve
+   `C:/xampp/jv3000_estado`). Puedes fijar esa variable si prefieres otra
+   ubicación; nunca debe quedar dentro de la raíz servida, porque el
+   instalador la rechaza por seguridad.
+
+5. **Cerrar la sesión inicial.** Entra con el administrador creado, ve a
+   **Usuarios** y cambia de inmediato la contraseña por defecto.
+
+Los equipos clientes solo necesitan un navegador apuntando al PC servidor; no
+repiten este proceso ni llevan un `config/.env` propio.
+
 ## Orden operativo del sistema
 
 El menú lateral sigue las fases reales de trabajo. Este es el procedimiento estándar:

@@ -242,7 +242,9 @@ function passwordSeguraUsu(password) {
 
 // Valida todo el modal de alta y habilita el botón solo si todo está correcto.
 function validarAlta() {
-    const usuario = normalizarUsuarioCliente(document.getElementById('crear_usuario').value);
+    const campoUsuario = document.getElementById('crear_usuario');
+    if (!campoUsuario) return false;
+    const usuario = normalizarUsuarioCliente(campoUsuario.value);
     const correo = document.getElementById('crear_correo').value.trim();
     const password = document.getElementById('crear_password').value;
     const confirmar = document.getElementById('crear_password_confirm').value;
@@ -260,13 +262,18 @@ function validarAlta() {
         '', 'Selecciona un rol para el colaborador.');
 
     const todoOk = usuarioOk && correoOk && passwordOk && confirmarOk && rolOk;
-    document.getElementById('btnCrear').disabled = !todoOk;
+    const boton = document.getElementById('btnCrear');
+    if (boton) boton.disabled = !todoOk;
     return todoOk;
 }
 
-// Valida el modal de edición.
+// Valida el modal de edición. Cada modal solo tiene sus propios campos, así que
+// se valida el que realmente existe: la misma función sirve para la vista MVC y
+// para cualquier variante sin dependencias cruzadas.
 function validarEdicion() {
-    const usuario = normalizarUsuarioCliente(document.getElementById('edit_usuario').value);
+    const campoUsuario = document.getElementById('edit_usuario');
+    if (!campoUsuario) return false;
+    const usuario = normalizarUsuarioCliente(campoUsuario.value);
     const correo = document.getElementById('edit_correo').value.trim();
 
     const usuarioOk = validarCampoUsu('edit_usuario',
@@ -277,13 +284,16 @@ function validarEdicion() {
     const rolOk = document.getElementById('edit_rol').value !== '';
 
     const todoOk = usuarioOk && correoOk && rolOk;
-    document.getElementById('btnEditar').disabled = !todoOk;
+    const boton = document.getElementById('btnEditar');
+    if (boton) boton.disabled = !todoOk;
     return todoOk;
 }
 
 // Valida el modal de restablecer contraseña.
 function validarReset() {
-    const password = document.getElementById('reset_password').value;
+    const campoPassword = document.getElementById('reset_password');
+    if (!campoPassword) return false;
+    const password = campoPassword.value;
     const confirmar = document.getElementById('reset_password_confirm').value;
 
     const passwordOk = validarCampoUsu('reset_password', passwordSeguraUsu(password),
@@ -292,7 +302,8 @@ function validarReset() {
         'Las contraseñas coinciden.', 'Las contraseñas no coinciden.');
 
     const todoOk = passwordOk && confirmarOk;
-    document.getElementById('btnResetPassword').disabled = !todoOk;
+    const boton = document.getElementById('btnResetPassword');
+    if (boton) boton.disabled = !todoOk;
     return todoOk;
 }
 
@@ -320,7 +331,9 @@ function validarReset() {
 
 // Abre el modal de alta con el formulario limpio.
 function abrirCreacion() {
-    document.getElementById('formCrear').reset();
+    const formulario = document.getElementById('formCrear');
+    if (!formulario) return;
+    formulario.reset();
     ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol'].forEach(function (id) {
         marcarCampoUsu(id, '', '');
     });
@@ -330,8 +343,11 @@ function abrirCreacion() {
 
 // Abre el modal para que el administrador le restablezca la contraseña a un colaborador.
 function abrirResetPassword(id, nombre) {
-    document.getElementById('formResetPassword').reset();
-    document.getElementById('reset_id_usuario').value = id;
+    const formulario = document.getElementById('formResetPassword');
+    const idOculto = document.getElementById('reset_id_usuario');
+    if (!formulario || !idOculto) return;
+    formulario.reset();
+    idOculto.value = id;
     document.getElementById('reset_usuario_nombre').textContent = nombre;
     ['reset_password', 'reset_password_confirm'].forEach(function (id) {
         marcarCampoUsu(id, '', '');
@@ -341,7 +357,8 @@ function abrirResetPassword(id, nombre) {
 }
 
 // Validación y envío del formulario de edición.
-document.getElementById('formEditar').addEventListener('submit', function (e) {
+const formEditar = document.getElementById('formEditar');
+if (formEditar) formEditar.addEventListener('submit', function (e) {
     e.preventDefault();
     const inputUsuario = document.getElementById('edit_usuario');
     const inputCorreo = document.getElementById('edit_correo');
@@ -390,13 +407,14 @@ document.getElementById('formEditar').addEventListener('submit', function (e) {
                 id_rol: rol,
                 status: status,
                 csrf_token: window.JV_CONFIG.csrfToken
-            });
+            }, 'index.php?url=usuarios');
         }
     });
 });
 
 // Validación y envío del formulario de alta de colaborador.
-document.getElementById('formCrear').addEventListener('submit', function (e) {
+const formCrear = document.getElementById('formCrear');
+if (formCrear) formCrear.addEventListener('submit', function (e) {
     e.preventDefault();
     const inputUsuario = document.getElementById('crear_usuario');
     const inputCorreo = document.getElementById('crear_correo');
@@ -461,7 +479,7 @@ document.getElementById('formCrear').addEventListener('submit', function (e) {
                 password_confirm: passwordConfirm,
                 id_rol: rol,
                 csrf_token: window.JV_CONFIG.csrfToken
-            });
+            }, 'index.php?url=usuarios');
         }
     });
 });

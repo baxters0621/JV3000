@@ -6,7 +6,7 @@
 require_once dirname(__DIR__) . '/includes/config.php';
 
 // Constantes de rutas de la aplicación MVC
-define('APP_ROOT', dirname(__DIR__));
+defined('APP_ROOT') || define('APP_ROOT', dirname(__DIR__));
 define('APP_CONFIG', APP_ROOT . '/config');
 define('APP_CORE', APP_ROOT . '/core');
 define('APP_CONTROLLERS', APP_ROOT . '/controllers');

@@ -60,12 +60,12 @@
                 </section>
 
                 <section class="col-12 profile-section-card" aria-labelledby="profile-password-title">
-                    <h2 class="profile-section-title" id="profile-password-title"><i class="bi bi-key"></i>Cambiar contraseña <span>(opcional; deja en blanco para conservarla)</span></h2>
+                    <h2 class="profile-section-title" id="profile-password-title"><i class="bi bi-key"></i>Cambiar contraseña <span>(opcional; deja ambos campos en blanco para conservarla)</span></h2>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label-jv" for="perfil_password_actual">CONTRASEÑA ACTUAL *</label>
+                            <label class="form-label-jv" for="perfil_password_actual">CONTRASEÑA ACTUAL</label>
                             <div class="password-field">
-                                <input type="password" id="perfil_password_actual" name="password_actual" class="input-jv" required autocomplete="current-password" placeholder="Necesaria para guardar cambios">
+                                <input type="password" id="perfil_password_actual" name="password_actual" class="input-jv" autocomplete="current-password" placeholder="Solo si vas a cambiar la contraseña">
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la contraseña actual" aria-label="Mostrar contraseña actual" aria-controls="perfil_password_actual" aria-pressed="false">
                                     <i class="bi bi-eye" aria-hidden="true"></i>
                                 </button>

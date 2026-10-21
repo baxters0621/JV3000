@@ -106,7 +106,7 @@ final class StartupDiagnostics
         };
         $diagnostic = self::messageFor($category);
         $states = [
-            'directorio_no_configurado' => 'No se configuró JV_INSTALL_STATE_DIR.',
+            'directorio_no_configurado' => 'No se pudo resolver una ubicación privada para el marcador de instalación.',
             'ruta_invalida' => 'La ubicación local del marcador no pudo validarse de forma canónica.',
             'ruta_publica' => 'La ubicación del marcador está dentro del directorio servido por la web.',
             'sin_acceso' => 'El proceso PHP no puede leer o actualizar de forma segura el marcador privado.',

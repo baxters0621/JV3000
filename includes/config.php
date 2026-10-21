@@ -90,6 +90,7 @@ define(
 define('DB_CONFIG_MISSING', $jv_configuracion_faltante);
 define('APP_NAME', 'JV3000 C.A.');
 define('VERSION', '3.0.0');
+defined('APP_ROOT') || define('APP_ROOT', dirname(__DIR__));
 define('AUDIT_RETENCION_MESES', 6);
 
 // ==========================================

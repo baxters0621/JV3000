@@ -30,7 +30,9 @@ final class EstadoInstalacion
     /**
      * Prepara la identidad del destino y valida la ubicación configurada.
      *
-     * @param ?string $directorio Ruta local indicada por JV_INSTALL_STATE_DIR.
+     * @param ?string $directorio Ruta indicada por JV_INSTALL_STATE_DIR. Si
+     *                            viene vacía se usa una hermana del document
+     *                            root, siempre fuera de la web servida.
      * @param string $documentRoot Raíz pública efectiva del servidor web.
      * @param string $host Host de base de datos, nunca persistido en claro.
      * @param int $puerto Puerto del motor de base de datos.
@@ -58,11 +60,21 @@ final class EstadoInstalacion
         }
         $this->huellaDestino = hash('sha256', $identidad);
 
+        // Sin variable explícita se usa una ruta hermana del document root
+        // (p. ej. C:/xampp/htdocs -> C:/xampp/jv3000_estado), que queda fuera
+        // de la web y permite instalar sin configurar nada a mano.
         if ($directorio === null || trim($directorio) === '') {
-            $this->errorRuta = self::DIRECTORIO_NO_CONFIGURADO;
+            $directorio = self::directorioPorDefecto($documentRoot);
+            if ($directorio === null) {
+                $this->errorRuta = self::DIRECTORIO_NO_CONFIGURADO;
+                return;
+            }
+        }
+        if (!self::esRutaAbsoluta($directorio)) {
+            $this->errorRuta = self::RUTA_INVALIDA;
             return;
         }
-        if (!self::esRutaAbsoluta($directorio) || !is_dir($directorio)) {
+        if (!is_dir($directorio) && !self::crearDirectorio($directorio)) {
             $this->errorRuta = self::RUTA_INVALIDA;
             return;
         }
@@ -84,6 +96,49 @@ final class EstadoInstalacion
         $this->documentRootCanonico = $documentRootReal;
         $this->rutaMarcador = $directorioReal . DIRECTORY_SEPARATOR . 'estado-instalacion.json';
         $this->rutaBloqueo = $directorioReal . DIRECTORY_SEPARATOR . 'estado-instalacion.lock';
+
+        $this->inicializarMarcadorSiFresco();
+    }
+
+    /**
+     * Siembra el marcador sin_iniciar cuando el directorio está vacío.
+     *
+     * Un equipo nuevo no tiene marcador previo y el instalador exige estado
+     * lista. Se crea aquí únicamente si el directorio no contiene nada, de
+     * modo que un directorio con historial (marcador o bloqueo presentes)
+     * nunca se reescribe y su diagnóstico se conserva intacto.
+     *
+     * @return void
+     */
+    private function inicializarMarcadorSiFresco(): void
+    {
+        if ($this->directorio === null || $this->rutaMarcador === null) {
+            return;
+        }
+        if (is_file($this->rutaMarcador) || is_link($this->rutaMarcador) || is_dir($this->rutaMarcador)) {
+            return;
+        }
+        if (is_file((string)$this->rutaBloqueo)) {
+            return;
+        }
+
+        $entradas = @scandir($this->directorio);
+        if ($entradas === false || array_diff($entradas, ['.', '..']) !== []) {
+            return;
+        }
+
+        $contenido = json_encode(
+            [
+                'version' => 1,
+                'estado' => 'sin_iniciar',
+                'destino_sha256' => null,
+                'actualizado_utc' => gmdate('Y-m-d\TH:i:s\Z'),
+            ],
+            JSON_UNESCAPED_SLASHES
+        );
+        if ($contenido !== false) {
+            $this->persistirMarcador($contenido);
+        }
     }
 
     /**
@@ -246,6 +301,25 @@ final class EstadoInstalacion
             return false;
         }
 
+        return $this->persistirMarcador($contenido);
+    }
+
+    /**
+     * Escribe el JSON del marcador mediante un temporal y rename atómico.
+     *
+     * @param string $contenido Serialización JSON ya validada.
+     * @return bool True si el reemplazo atómico se pudo completar.
+     */
+    private function persistirMarcador(string $contenido): bool
+    {
+        if (
+            $this->rutaMarcador === null
+            || $this->directorio === null
+            || is_link($this->rutaMarcador)
+        ) {
+            return false;
+        }
+
         try {
             $temporal = $this->directorio . DIRECTORY_SEPARATOR . '.estado-instalacion-' . bin2hex(random_bytes(16)) . '.tmp';
         } catch (Throwable) {
@@ -309,6 +383,50 @@ final class EstadoInstalacion
 
         return is_string($marcador['destino_sha256'])
             && preg_match('/\A[a-f0-9]{64}\z/', $marcador['destino_sha256']) === 1;
+    }
+
+    /**
+     * Ruta por defecto del directorio de estado: hermana del document root.
+     *
+     * Con C:/xampp/htdocs devuelve C:/xampp/jv3000_estado, que queda fuera de
+     * la web servida. Se usa cuando no hay variable de entorno configurada, de
+     * modo que un equipo nuevo pueda instalar sin preparar nada a mano.
+     *
+     * @param string $documentRoot Raíz pública efectiva del servidor web.
+     * @return ?string Ruta absoluta candidata, o null si no puede resolverse.
+     */
+    private static function directorioPorDefecto(string $documentRoot): ?string
+    {
+        $trim = trim($documentRoot);
+        if ($trim === '') {
+            return null;
+        }
+        $raiz = realpath($trim);
+        if ($raiz === false) {
+            return null;
+        }
+
+        $padre = dirname($raiz);
+        if ($padre === $raiz) {
+            return null;
+        }
+
+        return rtrim($padre, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'jv3000_estado';
+    }
+
+    /**
+     * Crea el directorio de estado si aún no existe.
+     *
+     * @param string $directorio Ruta absoluta candidata.
+     * @return bool True si al terminar el directorio existe y es un dir real.
+     */
+    private static function crearDirectorio(string $directorio): bool
+    {
+        if (@mkdir($directorio, 0700, true) === false && !is_dir($directorio)) {
+            return false;
+        }
+
+        return is_dir($directorio) && !is_link($directorio);
     }
 
     /**

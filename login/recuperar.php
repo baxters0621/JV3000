@@ -104,7 +104,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $error = "ESTA CUENTA NO TIENE UN CORREO VÁLIDO. USE EL PIN DE EMERGENCIA.";
                     $_SESSION['rec_modo'] = 'pin';
                 } else {
-                    $envio = Mail::enviar($destinatario, 'Codigo de recuperacion - JV3000', codigoRecuperacionCuerpo($destinatario));
+                    // El cuerpo trae el marcador {CODIGO}: se sustituye aquí, con el
+                    // código en claro solo el tiempo del envío. El hash ya está en sesión.
+                    $cuerpoCodigo = str_replace(
+                        '{CODIGO}',
+                        htmlspecialchars((string)$solicitud['codigo'], ENT_QUOTES, 'UTF-8'),
+                        codigoRecuperacionCuerpo($destinatario)
+                    );
+                    $envio = Mail::enviar($destinatario, 'Codigo de recuperacion - JV3000', $cuerpoCodigo);
                     if (empty($envio['ok'])) {
                         limpiarCodigoRecuperacion();
                         $error = "NO SE PUDO ENVIAR EL CORREO. REVISE LA CONEXIÓN O USE EL PIN DE EMERGENCIA.";
@@ -147,13 +154,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if (!$usuarioRec) {
                     $error = "SOLICITUD INVÁLIDA. INICIE DE NUEVO.";
                     $_SESSION['rec_step'] = 1;
-                } elseif ((int)$usuarioRec['id_rol'] === 1) {
-                    $error = "LA CUENTA DEL ADMINISTRADOR SE RECUPERA POR CORREO ELECTRÓNICO.";
-                    $_SESSION['rec_step'] = 1;
                 } else {
+                    // El PIN global sirve para todas las cuentas, incluida la del
+                    // Administrador: es el respaldo cuando el correo no llega.
                     $pinGlobal = trim(getConfig('pin_emergencia_global', ''));
                     if ($pinGlobal === '') {
-                        $error = "ESTA CUENTA NO TIENE PIN DE EMERGENCIA CONFIGURADO. CONTACTE AL ADMINISTRADOR.";
+                        $error = "EL PIN DE EMERGENCIA AÚN NO ESTÁ DEFINIDO. CONTACTE AL ADMINISTRADOR.";
                         $_SESSION['rec_step'] = 1;
                     } elseif (hash_equals($pinGlobal, $pin)) {
                         $_SESSION['rec_step'] = 3;
@@ -221,8 +227,10 @@ if (($_SESSION['rec_id'] ?? 0) > 0) {
     $cuentaRec = $db->fetchOne("SELECT correo, id_rol FROM usuarios WHERE id_usuario = ? LIMIT 1", [$_SESSION['rec_id']]);
     $rec_correo = $cuentaRec['correo'] ?? '';
     $rec_es_admin = ((int)$cuentaRec['id_rol'] ?? 0) === 1;
+    // El PIN global está disponible para cualquier cuenta, incluida la del
+    // Administrador: es el respaldo cuando el canal de correo falla.
     $pinGlobal = trim(getConfig('pin_emergencia_global', ''));
-    $rec_tiene_pin = !$rec_es_admin && $pinGlobal !== '';
+    $rec_tiene_pin = $pinGlobal !== '';
 }
 // Sin internet no se ofrece el canal de correo: el PIN cubre esa emergencia.
 // El sondeo solo se hace en el paso 2, donde el canal de correo se muestra.
@@ -310,22 +318,34 @@ if ($step == 4) {
             <?php if ($rec_es_admin): ?>
                 <div class="rec-question">
                     <i class="bi bi-envelope-paper me-2"></i>
-                    La cuenta del Administrador se recupera por correo electrónico.
+                    La cuenta del Administrador se recupera por correo electrónico o con el PIN de emergencia.
                 </div>
-                <?php if ($rec_puede_correo): ?>
-                    <p class="rec-label mb-2"><i class="bi bi-ui-checks me-1"></i>Elija cómo verificar su identidad</p>
-                    <a href="recuperar.php?modo=codigo" class="btn-access text-decoration-none d-flex flex-column mb-2" style="width:100%;">
-                        <span><i class="bi bi-envelope-paper me-2"></i>ENVIAR CÓDIGO A MI CORREO</span>
-                        <small class="fw-normal" style="font-size:.72rem;opacity:.85;">
-                            Se enviará a <?php echo htmlspecialchars(enmascararCorreo($rec_correo)); ?> · vence en 15 min
-                        </small>
-                    </a>
-                <?php else: ?>
+                <?php if (!$rec_puede_correo && !$rec_tiene_pin): ?>
                     <div class="rec-question">
                         <i class="bi bi-wifi-off me-2"></i>
                         Sin conexión a internet no hay forma de verificar esta cuenta.
                         Restablezca su contraseña desde el equipo servidor.
                     </div>
+                <?php else: ?>
+                    <p class="rec-label mb-2"><i class="bi bi-ui-checks me-1"></i>Elija cómo verificar su identidad</p>
+
+                    <?php if ($rec_puede_correo): ?>
+                        <a href="recuperar.php?modo=codigo" class="btn-access text-decoration-none d-flex flex-column mb-2" style="width:100%;">
+                            <span><i class="bi bi-envelope-paper me-2"></i>ENVIAR CÓDIGO A MI CORREO</span>
+                            <small class="fw-normal" style="font-size:.72rem;opacity:.85;">
+                                Se enviará a <?php echo htmlspecialchars(enmascararCorreo($rec_correo)); ?> · vence en 15 min
+                            </small>
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if ($rec_tiene_pin): ?>
+                        <a href="recuperar.php?modo=pin" class="btn-access text-decoration-none d-flex flex-column mb-2" style="width:100%;">
+                            <span><i class="bi bi-key me-2"></i>USAR PIN DE EMERGENCIA</span>
+                            <small class="fw-normal" style="font-size:.72rem;opacity:.85;">
+                                Funciona sin conexión a internet
+                            </small>
+                        </a>
+                    <?php endif; ?>
                 <?php endif; ?>
             <?php elseif (!$rec_puede_correo && !$rec_tiene_pin): ?>
                 <div class="rec-question">

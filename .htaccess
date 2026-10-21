@@ -6,7 +6,7 @@ RewriteRule ^includes/ajax/(alertas_ajax|clientes_buscar|productos_buscar)\.php$
 
 # Block internal directories and sensitive file types.
 
-RewriteRule ^(?:backups|db|models|controllers|views|config|includes|core)(?:/|$) - [F,L,NC]
+RewriteRule ^(?:backups|db|models|controllers|views|config|includes|core|jv3000_estado)(?:/|$) - [F,L,NC]
 
 <FilesMatch "\.(?:sql|bat|inc)$">
 Require all denied

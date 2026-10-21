@@ -77,8 +77,8 @@ class EstadisticasController extends Controller
         $this->view('estadisticas/index', [
             'titulo'        => 'Estadísticas | JV3000 C.A.',
             'wrapper_class' => 'pagina-estadisticas',
-            'css_extra'     => ['modules/estadisticas/estadisticas.css?v=4'],
-            'js_extra'      => ['js/chart.umd.min.js', 'modules/estadisticas/estadisticas.js?v=4'],
+            'css_extra'     => ['modules/estadisticas/estadisticas.css'],
+            'js_extra'      => ['js/chart.umd.min.js', 'modules/estadisticas/estadisticas.js'],
             'csrf'          => Security::generateToken(),
             'flash'         => $flash,
             'periodos'      => $periodos,

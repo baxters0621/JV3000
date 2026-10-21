@@ -53,6 +53,19 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
             }
         }
 
+        var passActual = document.getElementById('perfil_password_actual');
+        var passNueva = document.getElementById('perfil_password_nueva');
+        if (passNueva && passActual && passNueva.value.trim() !== '' && passActual.value.trim() === '') {
+            Swal.fire({
+                title: 'Falta la contraseña actual',
+                text: 'Para cambiar la contraseña debes escribir tu contraseña actual.',
+                icon: 'warning',
+                confirmButtonColor: '#4F46E5'
+            });
+            passActual.focus();
+            return;
+        }
+
         Swal.fire({
             title: '¿Está seguro de estos cambios?',
             text: 'Se actualizarán los datos de tu cuenta.',

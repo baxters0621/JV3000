@@ -44,8 +44,8 @@ class HistorialController extends Controller
         $this->view('historial/index', [
             'titulo'       => 'Historial | JV3000 C.A.',
             'wrapper_class'=> 'pagina-aud',
-            'css_extra'    => ['modules/historial/historial.css?v=5'],
-            'js_extra'     => ['modules/historial/historial.js?v=6'],
+            'css_extra'    => ['modules/historial/historial.css'],
+            'js_extra'     => ['modules/historial/historial.js'],
             'csrf'         => Security::generateToken(),
             'flash'        => $flash,
             'filtro_usuario' => $filtros['usuario'],

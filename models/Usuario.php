@@ -386,6 +386,9 @@ class Usuario extends Model
     /**
      * Actualiza el perfil del usuario logueado.
      *
+     * La contraseña actual solo se exige si se va a cambiar la contraseña.
+     * Nombre y correo se pueden actualizar sin escribir la contraseña actual.
+     *
      * @param array $datos Datos del formulario.
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
@@ -396,10 +399,6 @@ class Usuario extends Model
         if (!$current) return ['ok' => false, 'mensaje' => 'USUARIO NO ENCONTRADO.'];
 
         $passwordActual = trim($datos['password_actual'] ?? '');
-        if (!password_verify($passwordActual, $current['password'])) {
-            return ['ok' => false, 'mensaje' => 'LA CONTRASEÑA ACTUAL ES INCORRECTA.'];
-        }
-
         $usuario = mb_strtoupper(trim($datos['usuario'] ?? ''));
         $correo = strtolower(trim($datos['correo'] ?? ''));
         $passwordNueva = trim($datos['password_nueva'] ?? '');
@@ -421,10 +420,13 @@ class Usuario extends Model
         $dupEmail = $this->db->fetchOne("SELECT id_usuario FROM usuarios WHERE correo = ? AND id_usuario != ?", [$correo, $id]);
         if ($dupEmail) $errores[] = 'YA EXISTE UN USUARIO CON ESE CORREO.';
 
-        // Contraseña nueva (opcional)
+        // Contraseña nueva (opcional). Solo se pide la actual si se va a cambiar.
         $passHash = $current['password'];
         $passCheck = $current['password_check'];
         if ($passwordNueva !== '') {
+            if ($passwordActual === '' || !password_verify($passwordActual, $current['password'])) {
+                return ['ok' => false, 'mensaje' => 'LA CONTRASEÑA ACTUAL ES INCORRECTA.'];
+            }
             if ($passwordNueva !== $passwordConfirm) $errores[] = 'LAS CONTRASEÑAS NO COINCIDEN.';
             if (!validarPasswordFuerte($passwordNueva)) {
                 $faltantes = requisitosFaltantesPassword($passwordNueva);

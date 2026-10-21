@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/../init.php';
 
+// Cache-busting: el navegador revalida el JS propio con el mtime del archivo.
+// Así el login siempre sirve la última versión sin mantener ?v= a mano.
+$jv_cache_bust = static fn(string $ruta): string => is_file($ruta) ? '?v=' . filemtime($ruta) : '';
+
 $db = Database::getInstance();
 $nombre_user = $_SESSION['usuario'] ?? 'Usuario';
 $rol_user_id = $_SESSION['id_rol'] ?? 0;
@@ -355,7 +359,7 @@ $tabla_compras = $datos['tabla_compras'];
     // ========================================== 
     ?>
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/dashboard/index.js?v=13"></script>
+    <script src="../assets/dashboard/index.js<?php echo $jv_cache_bust(__DIR__ . '/../assets/dashboard/index.js'); ?>"></script>
 </body>
 
 </html>

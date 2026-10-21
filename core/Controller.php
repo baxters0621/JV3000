@@ -18,6 +18,50 @@ abstract class Controller
     protected array $viewData = [];
 
     /**
+     * Añade la versión de caché (?v=mtime) a los assets propios.
+     *
+     * Recorre $css_extra/$js_extra y añade ?v=<fecha de modificación> a cada
+     * archivo local que exista en assets/. Los recursos externos (http/https)
+     * y los que ya traen ?v= o # se respetan reemplazando la versión existente
+     * para evitar generar ?v=5?v=12345. Si el archivo no existe, se deja el
+     * recurso tal cual sin añadir nada nuevo.
+     *
+     * @param array $data Datos de vista que pueden contener css_extra/js_extra.
+     * @return array Datos con los assets versionados.
+     */
+    protected function versionarAssets(array $data): array
+    {
+        foreach (['css_extra', 'js_extra'] as $clave) {
+            if (empty($data[$clave])) {
+                continue;
+            }
+            $lista = is_array($data[$clave]) ? $data[$clave] : [$data[$clave]];
+            foreach ($lista as $indice => $recurso) {
+                if (!is_string($recurso) || preg_match('#^(https?:)?//#i', $recurso)) {
+                    continue;
+                }
+                $base = preg_split('/[?#]/', $recurso)[0];
+                $version = jv_asset_version($base);
+                if ($version === '') {
+                    $limpio = preg_replace('/([?&])v=[^&]*/', '$1', $recurso);
+                    $limpio = rtrim($limpio, '?&');
+                    $lista[$indice] = $limpio;
+                    continue;
+                }
+                $rutaLimpia = preg_replace('/([?&])v=[^&]*/', '$1', $base);
+                $rutaLimpia = rtrim($rutaLimpia, '?&');
+                if (strpos($rutaLimpia, '?') === false) {
+                    $lista[$indice] = $rutaLimpia . $version;
+                } else {
+                    $lista[$indice] = $rutaLimpia . '&' . ltrim($version, '?');
+                }
+            }
+            $data[$clave] = $lista;
+        }
+        return $data;
+    }
+
+    /**
      * Carga una vista dentro del layout principal.
      *
      * Guarda los datos en $this->viewData, extrae el arreglo $data a variables
@@ -30,6 +74,7 @@ abstract class Controller
      */
     protected function view(string $view, array $data = []): void
     {
+        $data = $this->versionarAssets($data);
         $this->viewData = $data;
         $__view = $view;
         extract($data);

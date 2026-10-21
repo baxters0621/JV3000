@@ -64,7 +64,7 @@
             </div>
             <div class="p-3">
                 <div class="alert-jv alert-jv-info mb-3">
-                    <i class="bi bi-info-circle me-2"></i>Es un <strong>único PIN de 6 dígitos</strong> que sirve para que los Operadores de Carga y Ventas recuperen su contraseña <strong>sin internet</strong>. Cada operador lo verá en <em>Mi Perfil</em>. La cuenta del Administrador <strong>no</strong> usa este PIN: se recupera por correo electrónico.
+                    <i class="bi bi-info-circle me-2"></i>Es un <strong>único PIN de 6 dígitos</strong> que sirve para que todas las cuentas (Operadores de Carga y Ventas, y también la del Administrador) recuperen su contraseña <strong>sin internet</strong>. Cada usuario lo verá en <em>Mi Perfil</em>. El PIN es el respaldo cuando el correo electrónico no llega.
                 </div>
                 <?php if ($pin_global !== ''): ?>
                     <p class="mb-3">PIN vigente: <strong class="fs-5"><?php echo htmlspecialchars($pin_global); ?></strong></p>
@@ -326,7 +326,7 @@
                     </div>
                     <div class="section-bg">
                         <div class="section-label"><i class="bi bi-shield-lock-fill"></i> RECUPERACIÓN DE CUENTA</div>
-                        <div class="form-text jv-form-text">La cuenta se recupera con el <strong>código que llega al correo</strong> del colaborador o con el <strong>PIN de emergencia compartido</strong>, que el Administrador define una sola vez en esta misma pantalla y cada operador consulta en <em>Mi Perfil</em>. Confirma que el correo sea real y que el colaborador pueda abrirlo.</div>
+                        <div class="form-text jv-form-text">La cuenta se recupera con el <strong>código que llega al correo</strong> del colaborador o con el <strong>PIN de emergencia compartido</strong>, que el Administrador define una sola vez en esta misma pantalla y cada usuario consulta en <em>Mi Perfil</em>. Confirma que el correo sea real y que el colaborador pueda abrirlo.</div>
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">

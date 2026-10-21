@@ -34,8 +34,8 @@ class ManualController extends Controller
         $this->view('manual/index', [
             'titulo'       => 'Guía de Uso | JV3000 C.A.',
             'wrapper_class'=> 'pagina-manual',
-            'css_extra'    => ['modules/manual/manual.css?v=2'],
-            'js_extra'     => ['modules/manual/manual.js?v=1'],
+            'css_extra'    => ['modules/manual/manual.css'],
+            'js_extra'     => ['modules/manual/manual.js'],
             'csrf'         => Security::generateToken(),
             'manual_html'  => self::mdToHtml($manual_md),
             'manual_toc'   => self::extraerToc($manual_md),
