@@ -60,13 +60,10 @@
             <div class="header-card d-flex align-items-center gap-2">
                 <i class="bi bi-shield-exclamation" style="color:var(--jv-warning);"></i>
                 <span class="fw-bold small text-secondary text-uppercase">PIN de Emergencia Compartido</span>
-                <span class="pin-ayuda">
-                    <button type="button" class="pin-ayuda-icono" aria-label="¿Qué es el PIN de emergencia?" aria-describedby="pin-ayuda-texto">?</button>
-                    <span class="pin-ayuda-globo" id="pin-ayuda-texto" role="tooltip">Es un <strong>único PIN de 6 dígitos</strong> que sirve para que todas las cuentas (Operadores de Carga y Ventas, y también la del Administrador) recuperen su contraseña <strong>sin internet</strong>. Cada usuario lo verá en <em>Mi Perfil</em>. El PIN es el respaldo cuando el correo electrónico no llega.</span>
-                </span>
                 <span class="codigo-badge ms-auto"><?php echo $pin_global !== '' ? 'DEFINIDO' : 'SIN DEFINIR'; ?></span>
             </div>
             <div class="p-3">
+                <p class="pin-info">PIN de 6 dígitos que comparten todas las cuentas (Operadores de Carga y Ventas, y también el Administrador) para recuperar su contraseña <strong>sin internet</strong>; cada usuario lo ve en <em>Mi Perfil</em>.</p>
                 <?php if ($pin_global !== ''): ?>
                     <p class="mb-3">PIN vigente: <strong class="fs-5"><?php echo htmlspecialchars($pin_global); ?></strong></p>
                 <?php endif; ?>

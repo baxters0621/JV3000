@@ -269,10 +269,14 @@ afirmar(
     'Los dos campos del PIN deben disparar la validación en vivo al teclear.'
 );
 
-// La ayuda de la tarjeta: solo el «?», con la explicación en un globo al pasar el mouse.
+// La ayuda de la tarjeta: texto fijo y visible, sin globos ni hover.
 afirmar(
-    strpos($vistaUsuarios, 'pin-ayuda-icono') !== false && strpos($vistaUsuarios, 'pin-ayuda-globo') !== false,
-    'La ayuda del PIN debe ser un «?» con su globo de explicación al pasar el mouse.'
+    strpos($vistaUsuarios, 'class="pin-info"') !== false,
+    'La ayuda del PIN debe ser una línea fija bajo el encabezado.'
+);
+afirmar(
+    strpos($vistaUsuarios, 'pin-ayuda') === false,
+    'La ayuda ya no debe usar el «?» con globo del cambio anterior.'
 );
 afirmar(
     strpos($vistaUsuarios, '<details>') === false,
@@ -309,8 +313,8 @@ afirmar(
     'Las guías de validación en vivo deben pintarse en verde y rojo.'
 );
 afirmar(
-    strpos($cssUsuarios, '.pin-ayuda-icono') !== false && strpos($cssUsuarios, '.pin-ayuda-globo') !== false,
-    'El «?» y su globo de explicación deben tener estilo en el CSS del módulo.'
+    strpos($cssUsuarios, '.pagina-usuarios .pin-info') !== false,
+    'La línea fija de ayuda del PIN debe tener estilo en el CSS del módulo.'
 );
 afirmar(
     strpos($cssUsuarios, '.pagina-usuarios .alert-lectura') !== false,
