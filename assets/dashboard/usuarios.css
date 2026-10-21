@@ -326,3 +326,26 @@
 
     /* ── Error de validación en inputs del modal ── */
     .input-error { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,0.15) !important; }
+
+    /* ── Campo con ojo para ver/ocultar el PIN de emergencia ── */
+    .password-field { position: relative; }
+    .password-field .input-jv { padding-right: 48px; }
+    .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        display: inline-flex;
+        width: 36px;
+        height: 36px;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-50%);
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: #475569;
+        font-size: 1.1rem;
+        cursor: pointer;
+    }
+    .password-toggle:hover { background: #F1F5F9; color: #5b21b6; }
+    .password-toggle:focus-visible { outline: 3px solid rgba(124, 58, 237, .35); outline-offset: 2px; }

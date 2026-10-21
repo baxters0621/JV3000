@@ -243,13 +243,26 @@ afirmar(
     'El cuerpo del correo debe llevar el código real, no el marcador {CODIGO}.'
 );
 
+// Al escribir el PIN en la recuperación también se puede ver: ojo en el campo.
+afirmar(strpos($recuperacion, 'btnEyePin') !== false, 'El campo del PIN en la recuperación debe llevar el botón para verlo.');
+
 // El Administrador define el PIN compartido desde el módulo de Colaboradores.
 $vistaUsuarios = file_get_contents($root . '/views/usuarios/index.php');
 afirmar(strpos($vistaUsuarios, 'pin_emergencia_global') !== false, 'La vista de Colaboradores debe permitir definir el PIN compartido.');
 afirmar(strpos($vistaUsuarios, 'crear_pin') === false, 'El alta ya no debe pedir PIN por colaborador.');
 
+// El PIN se puede ver mientras se teclea: ojo en los dos campos del formulario.
+afirmar(
+    substr_count($vistaUsuarios, 'data-toggle-password') === 2,
+    'Los dos campos del PIN (PIN y confirmación) deben llevar el botón para verlo.'
+);
+
 $js = file_get_contents($root . '/assets/dashboard/usuarios.js');
 afirmar(strpos($js, 'crear_pin') === false, 'El JS del alta ya no debe validar un PIN por usuario.');
+afirmar(
+    strpos($js, "querySelectorAll('[data-toggle-password]')") !== false,
+    'El JS de Colaboradores debe alternar la visibilidad del PIN al pulsar el ojo.'
+);
 
 $controlador = file_get_contents($root . '/controllers/UsuariosController.php');
 afirmar(

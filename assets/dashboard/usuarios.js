@@ -3,6 +3,22 @@
 // Paginación, búsqueda, filtros y edición
 // ==========================================
 
+// Ojo para ver u ocultar el PIN mientras se teclea (mismo patrón que Mi Perfil).
+document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
+    button.addEventListener('click', function() {
+        var inputId = button.getAttribute('aria-controls');
+        var input = inputId ? document.getElementById(inputId) : null;
+        var icon = button.querySelector('i');
+        if (!input || !icon) return;
+
+        var mostrar = input.type === 'password';
+        input.type = mostrar ? 'text' : 'password';
+        button.setAttribute('aria-pressed', String(mostrar));
+        button.setAttribute('aria-label', (mostrar ? 'Ocultar ' : 'Mostrar ') + button.dataset.passwordLabel);
+        icon.className = mostrar ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+});
+
 const POR_PAGINA = 10;
 let estadoFiltroUsu = 'todos';
 let paginaUsuActual = 1;
