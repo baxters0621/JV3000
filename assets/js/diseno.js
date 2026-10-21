@@ -30,3 +30,21 @@ function escapeHtml(value) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
     });
 }
+
+// ==========================================
+// MENSAJES FLASH — se cierran solos tras su cuenta atrás
+// ==========================================
+// El CSS ya dibuja la barra de tiempo (4 s) y la animación de salida
+// (.jv-flash-out): aquí solo se aplica esa salida al terminar y se retira el
+// nodo. Este bloque faltaba —los comentarios de historial.js y perfil.js
+// apuntaban a diseno.js, pero aquí no existía—, así que el mensaje se quedaba
+// pegado en pantalla en todos los módulos del panel.
+// Se espera a DOMContentLoaded porque este fichero se carga en el <head>.
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.flash-auto').forEach(function(el) {
+        window.setTimeout(function() {
+            el.classList.add('jv-flash-out');
+            window.setTimeout(function() { el.remove(); }, 500);
+        }, 4000);
+    });
+});

@@ -28,6 +28,12 @@ Get-ChildItem (Join-Path $root 'assets') -Filter '*.js' -Recurse | Where-Object 
     if ($LASTEXITCODE -ne 0) { $failures.Add("JavaScript: $($_.FullName)") }
 }
 
+Write-Host '== Comportamiento global esperado =='
+# El auto-cierre de los mensajes flash vive en diseno.js y se aplican en todos
+# los modulos del panel; si desaparece, el mensaje se queda pegado en pantalla.
+$designScript = Get-Content (Join-Path $root 'assets/js/diseno.js') -Raw
+if ($designScript -notmatch 'flash-auto') { $failures.Add('diseno.js debe auto-ocultar los mensajes .flash-auto del panel') }
+
 Write-Host '== Rutas HTTP internas =='
 $internalPaths = @('backups/jv3000_db_2026-08-13_153655.sql', 'db/jv3000_portable_v6.sql', 'models/Producto.php', 'controllers/SalidasController.php', 'views/productos/index.php', 'config/config.php', 'includes/config.php', 'core/Router.php')
 foreach ($path in $internalPaths) {
