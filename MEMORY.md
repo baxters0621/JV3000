@@ -10,6 +10,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - 9 módulos a HTTP 200 con sesión; tests en verde: `pin_global_piloto` (54 aserciones), `flash_auto_cierre`, `salidas_captura_duplicados`.
 - PIN de emergencia global fijado por la interfaz y probado E2E (recuperación completa y bloqueo a los 3 intentos); el valor lo cambia el administrador desde Colaboradores.
 - Interfaz del PIN pulida: ojos tachados por defecto, `.alert-lectura` en modales, ayuda como línea fija y flash que se auto-cierra a los 4 s.
+- Colaboradores revisado con las guías de interfaz: accesibilidad completa (aria-label/aria-pressed/role=status/scope/aria-describedby), paginación con `.pagination-jv` y botones, y respeto a `prefers-reduced-motion`.
 
 ## Decisiones (y por qué)
 
@@ -28,6 +29,8 @@ Sin datos sensibles (claves, tokens, PIN).
 - Assets versionados por mtime: basta recargar y el asset servido debe traer `?v` nuevo.
 - La bitácora se escribe con PHP y se verifica después (BOM, sin `Ã`/`Â`); PowerShell da falsos positivos.
 - `ventas_stock_piloto`, `compras_recepcion_piloto` y `envio_correo_piloto` se niegan contra la BD real: no es un fallo.
+- La paginación del listado de Colaboradores no llevaba `class="pagination-jv"`: salía como enlaces sueltos sin estilo.
+- Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines (`sess_jv*` puede llevarse ficheros ajenos).
 - Skills ya instaladas a nivel global (Starter Pack completo): `find-skills`, `grill-me`, `frontend-design`, `web-design-guidelines`, `systematic-debugging`.
 
 ## Próximos pasos

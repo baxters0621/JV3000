@@ -59,7 +59,7 @@ function manejarSinResultados(visible, sinFila) {
         const tbody = document.getElementById('cuerpoUsuarios');
         const tr = document.createElement('tr');
         tr.id = 'filaSinResultados';
-        tr.innerHTML = '<td colspan="6"><div class="estado-vacio"><i class="bi bi-search"></i><span>Sin colaboradores que coincidan con la búsqueda</span></div></td>';
+        tr.innerHTML = '<td colspan="6"><div class="estado-vacio"><i class="bi bi-search" aria-hidden="true"></i><span>Sin colaboradores que coincidan con la búsqueda</span></div></td>';
         tbody.appendChild(tr);
         return tr;
     }
@@ -98,42 +98,53 @@ function rendPaginacionUsuarios(totalPaginas) {
     nav.innerHTML = '';
     if (totalPaginas <= 1) { return; }
 
-    const boton = function (texto, pagina) {
-        const a = document.createElement('a');
-        a.href = '#';
-        a.textContent = texto;
-        a.className = pagina === paginaUsuActual ? 'active' : '';
-        a.addEventListener('click', function (e) {
-            e.preventDefault();
+    // Respeta la preferencia del sistema de reducir animaciones.
+    const reducirMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Botón de página: <button> (acción, no navegación) con etiqueta accesible.
+    const boton = function (texto, pagina, etiqueta) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = texto;
+        b.className = pagina === paginaUsuActual ? 'active' : '';
+        if (etiqueta) b.setAttribute('aria-label', etiqueta);
+        if (pagina === paginaUsuActual) b.setAttribute('aria-current', 'page');
+        b.addEventListener('click', function () {
             paginaUsuActual = pagina;
             rendTablaUsuarios();
-            document.getElementById('tablaUsuarios').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            document.getElementById('tablaUsuarios').scrollIntoView({
+                behavior: reducirMovimiento ? 'auto' : 'smooth',
+                block: 'nearest'
+            });
         });
-        return a;
+        return b;
     };
 
     const navItem = function (elemento, deshabilitado) {
-        if (deshabilitado) elemento.classList.add('disabled');
+        if (deshabilitado) {
+            elemento.classList.add('disabled');
+            elemento.disabled = true;
+        }
         nav.appendChild(elemento);
         return elemento;
     };
 
-    navItem(boton('‹', paginaUsuActual - 1), paginaUsuActual <= 1);
+    navItem(boton('‹', paginaUsuActual - 1, 'Página anterior'), paginaUsuActual <= 1);
 
     const inicioP = Math.max(1, paginaUsuActual - 2);
     const finP = Math.min(totalPaginas, paginaUsuActual + 2);
     for (let n = inicioP; n <= finP; n++) {
-        navItem(boton(n, n), false);
+        navItem(boton(String(n), n, 'Página ' + n), false);
     }
     if (finP < totalPaginas) {
         const puntos = document.createElement('span');
         puntos.textContent = '…';
         puntos.className = 'disabled';
         nav.appendChild(puntos);
-        navItem(boton(totalPaginas, totalPaginas), false);
+        navItem(boton(String(totalPaginas), totalPaginas, 'Página ' + totalPaginas), false);
     }
 
-    navItem(boton('›', paginaUsuActual + 1), paginaUsuActual >= totalPaginas);
+    navItem(boton('›', paginaUsuActual + 1, 'Página siguiente'), paginaUsuActual >= totalPaginas);
 }
 
 // Búsqueda en tiempo real: vuelve a página 1 al escribir.
@@ -143,10 +154,16 @@ function aplicarBusquedaUsuarios() {
 }
 
 // Cambio de filtro por estado: marca el botón activo y re-renderiza.
+// aria-pressed refleja el estado para lectores de pantalla (los botones
+// son un grupo de filtros, no tres acciones sueltas).
 function setFiltroUsuarios(btn) {
     estadoFiltroUsu = btn.dataset.statusFiltro;
-    document.querySelectorAll('.btn-filter-usu').forEach(function (b) { b.classList.remove('active'); });
+    document.querySelectorAll('.btn-filter-usu').forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-pressed', 'false');
+    });
     btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
     aplicarBusquedaUsuarios();
 }
 

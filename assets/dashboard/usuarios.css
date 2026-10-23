@@ -10,10 +10,11 @@
     }
 
     .codigo-badge {
-        background:rgba(124, 58, 237,0.12);color:var(--jv-orange);
+        background:rgba(124, 58, 237,0.12);color:#6D28D9;
         font-size:.8rem;font-weight:800;padding:4px 12px;
         border-radius:20px;display:inline-block;
         letter-spacing:.5px;
+        font-variant-numeric:tabular-nums;
     }
 
     .estado-vacio { padding:60px 20px;text-align:center; }
@@ -91,7 +92,7 @@
         display:flex;
         align-items:center;
         gap:18px;
-        transition:all .25s ease;
+        transition:border-color .25s ease, box-shadow .25s ease, transform .25s ease;
         min-height:90px;
     }
     .pagina-usuarios .widget-card:hover {
@@ -113,6 +114,7 @@
     .widget-card .widget-value {
         font-size:1.6rem;font-weight:800;color:var(--jv-navy);
         line-height:1.2;
+        font-variant-numeric:tabular-nums;
     }
 
     /* ── Buscador, filtros y contador ── */
@@ -165,9 +167,12 @@
         padding:7px 14px;
         border-radius:8px;
         cursor:pointer;
-        transition:all .15s ease;
+        transition:color .15s ease, background-color .15s ease, box-shadow .15s ease;
     }
     .btn-filter-usu:hover { color:#7c3aed; background:rgba(124,58,237,0.08); }
+    /* Foco visible: el grupo va sobre fondo violeta claro y el anillo debe
+       distinguirse del botón activo. */
+    .btn-filter-usu:focus-visible { outline:3px solid rgba(124,58,237,0.45); outline-offset:2px; }
     .btn-filter-usu.active {
         background:linear-gradient(135deg,#7c3aed,#5b21b6);
         color:#fff;
@@ -179,6 +184,35 @@
         border-top:1px solid var(--jv-border);
         background:rgba(124, 58, 237,0.02);
     }
+    /* Reutiliza el aspecto de .pagination-jv (global), pero aquí las
+       páginas son <button>: son acciones, no enlaces. */
+    .pagina-usuarios .pagination-jv { padding:0; }
+    .pagina-usuarios .pagination-jv button {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-width:36px;
+        height:36px;
+        padding:0 8px;
+        border:1px solid var(--jv-border);
+        border-radius:var(--jv-radius-sm);
+        background:var(--jv-bg-card);
+        color:var(--jv-text-primary);
+        font-size:.8rem;
+        font-weight:600;
+        cursor:pointer;
+        transition:border-color .15s ease, color .15s ease, background-color .15s ease;
+    }
+    .pagina-usuarios .pagination-jv button:hover:not(:disabled) { border-color:#7c3aed; color:#7c3aed; }
+    .pagina-usuarios .pagination-jv button:focus-visible { outline:3px solid rgba(124,58,237,0.45); outline-offset:2px; }
+    .pagina-usuarios .pagination-jv button.active {
+        background:linear-gradient(135deg,#7c3aed,#5b21b6);
+        border-color:#5b21b6;
+        color:#fff;
+    }
+    .pagina-usuarios .pagination-jv button:disabled { opacity:.4; cursor:default; }
+    /* Sin páginas que mostrar, el nav no deja un hueco vacío */
+    .paginacion-footer #paginacionUsuarios:empty { display:none; }
 
     /* ── Acciones: botones icono compactos ── */
     .acciones-usuario {
@@ -198,7 +232,7 @@
         font-size:1.15rem;
         color:#fff;
         cursor:pointer;
-        transition:all .15s ease;
+        transition:transform .15s ease, box-shadow .15s ease;
         box-shadow:0 4px 12px -4px rgba(15,26,46,0.4);
     }
     .btn-accion:hover { transform:translateY(-2px); }
@@ -293,7 +327,7 @@
         font-weight:700;
         padding:10px 22px;
         border-radius:10px;
-        transition:all .15s ease;
+        transition:color .15s ease, border-color .15s ease;
     }
     .modal-footer-jv .btn-jv-secondary:hover { border-color:#7c3aed; color:#7c3aed; }
 
@@ -383,3 +417,23 @@
        La base .alert-jv va en .85rem y .jv-form-text en .78rem: demasiado
        apretados para leer una instrucción entera. */
     .pagina-usuarios .alert-lectura { font-size:1rem; line-height:1.65; font-weight:500; }
+
+    /* ── Movimiento reducido: sin desplazamientos ni transiciones ── */
+    @media (prefers-reduced-motion: reduce) {
+        .pagina-usuarios .widget-card,
+        .pagina-usuarios .btn-accion,
+        .pagina-usuarios .btn-jv-primary,
+        .btn-filter-usu,
+        .pagina-usuarios .pagination-jv button,
+        .modal-footer-jv .btn-jv-secondary { transition:none; }
+        .pagina-usuarios .widget-card:hover,
+        .pagina-usuarios .btn-accion:hover,
+        .pagina-usuarios .btn-jv-primary:hover { transform:none; }
+    }
+
+    /* ── Pantallas estrechas: filtros a lo ancho y contador aparte ── */
+    @media (max-width: 575.98px) {
+        .filter-group-usu { width:100%; }
+        .btn-filter-usu { flex:1 1 0; padding:7px 6px; }
+        .pagina-usuarios .contador-usuarios { order:3; width:100%; margin-left:0 !important; }
+    }
