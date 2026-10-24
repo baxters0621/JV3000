@@ -4,14 +4,14 @@
 // MODELO: Usuario
 // ==========================================
 // CRUD de usuarios: listar, crear, editar,
-// aprobar, toggle status, eliminar,
-// restablecer contraseña y uniqueness.
+// aprobar, toggle status, restablecer
+// contraseña y uniqueness. Las cuentas no se eliminan: se suspenden.
 
 /**
  * Usuario: modelo del módulo de gestión de usuarios.
  *
  * Capa de acceso a datos: listar, crear, editar, aprobar, toggle status,
- * eliminar, restablecer contraseña y validación de nombre/correo duplicados.
+ * restablecer contraseña y validación de nombre/correo duplicados.
  */
 class Usuario extends Model
 {
@@ -317,70 +317,6 @@ class Usuario extends Model
         $accion = $nuevoStatus === 'Activo' ? 'reactivado' : 'desactivado';
         registrarAuditoria($accion, "Usuario $accion: " . $user['usuario']);
         return ['ok' => true, 'mensaje' => "USUARIO $accion."];
-    }
-
-    /**
-     * Elimina definitivamente un usuario.
-     *
-     * Guardas: no puede eliminarse a sí mismo ni al último administrador activo.
-     * Si el usuario tiene operaciones registradas (compras, pagos, movimientos,
-     * salidas o solicitudes) el borrado se bloquea —las claves foráneas lo
-     * impedirían igualmente— y se sugiere desactivarlo en su lugar. Al eliminar
-     * se limpian también sus intentos de login para no arrastrar bloqueos.
-     *
-     * @param int $idUsuario ID del usuario a eliminar.
-     * @param int $idPropio  ID del usuario logueado.
-     * @return array ['ok'=>bool, 'mensaje'=>string].
-     */
-    public function eliminar(int $idUsuario, int $idPropio): array
-    {
-        if ($idUsuario <= 0) return ['ok' => false, 'mensaje' => 'USUARIO INVÁLIDO.'];
-        if ($idUsuario === $idPropio) return ['ok' => false, 'mensaje' => 'NO PUEDES ELIMINAR TU PROPIA CUENTA.'];
-
-        $user = $this->db->fetchOne(
-            "SELECT id_usuario, usuario, id_rol, status, COALESCE(aprobado, 0) as aprobado
-             FROM usuarios WHERE id_usuario = ?",
-            [$idUsuario]
-        );
-        if (!$user) return ['ok' => false, 'mensaje' => 'USUARIO NO ENCONTRADO.'];
-
-        // No dejar el sistema sin administrador.
-        if ((int)$user['id_rol'] === 1) {
-            $otrosAdmins = (int)($this->db->fetchOne(
-                "SELECT COUNT(*) as t FROM usuarios
-                 WHERE id_rol = 1 AND status = 'Activo' AND COALESCE(aprobado, 1) = 1 AND id_usuario != ?",
-                [$idUsuario]
-            )['t'] ?? 0);
-            if ($otrosAdmins === 0) {
-                return ['ok' => false, 'mensaje' => 'NO PUEDES ELIMINAR AL ÚLTIMO ADMINISTRADOR ACTIVO.'];
-            }
-        }
-
-        // Historial operativo: las FK son RESTRICT, así que un DELETE fallaría.
-        $historial = (int)($this->db->fetchOne(
-            "SELECT
-                (SELECT COUNT(*) FROM compras             WHERE id_usuario = ?) +
-                (SELECT COUNT(*) FROM pagos_compra        WHERE id_usuario = ?) +
-                (SELECT COUNT(*) FROM movimientos         WHERE id_usuario = ?) +
-                (SELECT COUNT(*) FROM salidas             WHERE id_usuario = ?) +
-                (SELECT COUNT(*) FROM solicitudes_compra  WHERE id_usuario_solicitante = ?) AS t",
-            [$idUsuario, $idUsuario, $idUsuario, $idUsuario, $idUsuario]
-        )['t'] ?? 0);
-        if ($historial > 0) {
-            return ['ok' => false, 'mensaje' => 'TIENE OPERACIONES REGISTRADAS. DESACTÍVALO EN LUGAR DE ELIMINARLO.'];
-        }
-
-        $this->db->begin();
-        try {
-            $this->db->execute("DELETE FROM login_intentos WHERE usuario = ?", [$user['usuario']]);
-            $this->db->execute("DELETE FROM usuarios WHERE id_usuario = ?", [$idUsuario]);
-            $this->db->commit();
-            registrarAuditoria('eliminar', "Usuario eliminado: " . $user['usuario']);
-            return ['ok' => true, 'mensaje' => 'USUARIO ELIMINADO.'];
-        } catch (Exception $e) {
-            $this->db->rollback();
-            return ['ok' => false, 'mensaje' => 'ERROR AL ELIMINAR EL USUARIO.'];
-        }
     }
 
     /**

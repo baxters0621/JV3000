@@ -4,8 +4,8 @@
 // CONTROLADOR: Usuarios
 // ==========================================
 // Gestión de usuarios: listar, crear, editar,
-// aprobar, activar/desactivar, restablecer
-// contraseña y eliminar.
+// aprobar, activar/desactivar y restablecer
+// contraseña. Las cuentas no se eliminan: se suspenden.
 
 /**
  * UsuariosController: gestiona el módulo de administración de usuarios.
@@ -77,15 +77,6 @@ class UsuariosController extends Controller
             if (isset($_POST['toggle_status'])) {
                 $resultado = $modelo->toggleStatus(
                     (int)$_POST['toggle_status'],
-                    (int)($_SESSION['id_usuario'] ?? 0)
-                );
-                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
-                $this->redirect('usuarios');
-            }
-
-            if (isset($_POST['eliminar_usuario'])) {
-                $resultado = $modelo->eliminar(
-                    (int)$_POST['eliminar_usuario'],
                     (int)($_SESSION['id_usuario'] ?? 0)
                 );
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);

@@ -209,12 +209,8 @@
                                                         <i class="bi bi-person-check-fill" aria-hidden="true"></i>
                                                     </button>
                                                 </form>
-                                                <button type="button" class="btn-accion btn-eliminar" data-tooltip="Rechazar y eliminar solicitud" aria-label="Rechazar y eliminar la solicitud de <?php echo htmlspecialchars($row['usuario']); ?>" onclick="confirmarEliminacion(<?php echo (int)$row['id_usuario']; ?>, <?php echo $nombre_json; ?>)">
-                                                    <i class="bi bi-trash3" aria-hidden="true"></i>
-                                                </button>
                                             </div>
-                                        <?php else: ?>
-                                            <div class="acciones-usuario">
+                                        <?php else: ?>                                            <div class="acciones-usuario">
                                                 <button type="button" class="btn-accion btn-editar" data-tooltip="Editar colaborador" aria-label="Editar a <?php echo htmlspecialchars($row['usuario']); ?>" onclick="abrirEdicion(this)">
                                                     <i class="bi bi-pencil-square" aria-hidden="true"></i>
                                                 </button>
@@ -230,9 +226,6 @@
                                                         <i class="bi bi-person-check-fill" aria-hidden="true"></i>
                                                     </button>
                                                 <?php endif; ?>
-                                                <button type="button" class="btn-accion btn-eliminar" data-tooltip="Eliminar colaborador" aria-label="Eliminar a <?php echo htmlspecialchars($row['usuario']); ?>" onclick="confirmarEliminacion(<?php echo (int)$row['id_usuario']; ?>, <?php echo $nombre_json; ?>)">
-                                                    <i class="bi bi-trash3" aria-hidden="true"></i>
-                                                </button>
                                             </div>
                                         <?php endif; ?>
                                     </td>

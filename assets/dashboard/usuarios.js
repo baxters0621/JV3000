@@ -199,25 +199,6 @@ function abrirEdicion(btn) {
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditar')).show();
 }
 
-// Confirma y envía la eliminación definitiva de un colaborador.
-function confirmarEliminacion(id, nombre) {
-    Swal.fire({
-        title: '¿ELIMINAR USUARIO?',
-        html: 'Se eliminará la cuenta de <strong>' + escapeHtml(nombre) + '</strong>.<br>'
-            + '<small>Si tiene operaciones registradas, el sistema impedirá el borrado y sugerirá desactivarlo.</small>',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DC2626',
-        cancelButtonColor: '#CED4DA',
-        confirmButtonText: 'SÍ, ELIMINAR',
-        cancelButtonText: 'CANCELAR',
-        background: '#fff',
-        color: '#212529'
-    }).then((result) => {
-        if (result.isConfirmed) jvPost({ eliminar_usuario: id, csrf_token: window.JV_CONFIG.csrfToken });
-    });
-}
-
 // ==========================================
 // VALIDACIÓN EN VIVO DE LOS MODALES
 // ==========================================

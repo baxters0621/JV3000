@@ -35,6 +35,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - El ítem «Panel de Inicio» se oculta con `$en_panel_inicio` (`index.php` sin `?url=`): si se reutiliza esta condición en el sidebar, recordar que el chip del hero también contiene el texto, así que los `Contains()` de verificación deben apuntar a `nav-ram-panel`.
 - Al escribir la bitácora desde PHP, las cadenas con `\n` dentro de comillas simples no se expanden: quedan en una línea con `\n` literales. Usar concatenación con `PHP_EOL` (o comillas dobles).
 - El test `pin_global_piloto.php` fija el diseño de la tarjeta del PIN (botón (?) + #modalAyudaPin + pastilla + único .pin-info): si vuelve a cambiar el diseño, actualizar también esas aserciones.
+- **Las cuentas de Colaboradores NO se eliminan: solo se suspenden** (decisión del usuario, 2026-10-23). No volver a crear `Usuario::eliminar()`, `eliminar_usuario`, `confirmarEliminacion()` ni el botón de papelera; el borrado físico está en el historial de git si algún día se necesita.
 - Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines (`sess_jv*` puede llevarse ficheros ajenos).
 - Skills ya instaladas a nivel global (Starter Pack completo): `find-skills`, `grill-me`, `frontend-design`, `web-design-guidelines`, `systematic-debugging`.
 
