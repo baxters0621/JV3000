@@ -32,10 +32,13 @@ class UsuariosController extends Controller
             }
 
             if (isset($_POST['accion_usuario']) && $_POST['accion_usuario'] === 'restablecer_password') {
+                $idUsuario = filter_var($_POST['id_usuario'] ?? null, FILTER_VALIDATE_INT);
+                $password = is_string($_POST['password'] ?? null) ? $_POST['password'] : '';
+                $passwordConfirm = is_string($_POST['password_confirm'] ?? null) ? $_POST['password_confirm'] : '';
                 $resultado = $modelo->resetearPassword(
-                    (int)($_POST['id_usuario'] ?? 0),
-                    (string)($_POST['password'] ?? ''),
-                    (string)($_POST['password_confirm'] ?? '')
+                    $idUsuario === false ? 0 : $idUsuario,
+                    $password,
+                    $passwordConfirm
                 );
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
                 $this->redirect('usuarios');

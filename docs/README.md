@@ -136,6 +136,14 @@ El menú lateral sigue las fases reales de trabajo. Este es el procedimiento est
 | Imprimir reporte | ✔ | ✔ | ✔ |
 | Historial | ✔ | ✖ | ✖ |
 
+## Validación de formularios de Colaboradores
+
+`tests/usuarios_validacion_piloto.php` comprueba en aislamiento las reglas del
+servidor para nombre, correo, rol y restablecimiento de contraseña.
+`node tests/usuarios_reset_formulario.js` verifica que el modal envíe la acción,
+el identificador, ambas contraseñas y el token CSRF, y que bloquee una
+confirmación distinta.
+
 ## Pruebas aisladas del piloto de ventas/stock
 
 `tests/ventas_stock_piloto.php` verifica FEFO, rollback, concurrencia, anulación,

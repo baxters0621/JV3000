@@ -15,7 +15,7 @@
         </div>
 
         <?php if (!empty($flash)): ?>
-            <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" role="status" aria-live="polite">
+            <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>" role="status" aria-live="polite">
                 <i class="bi bi-shield-check me-2" aria-hidden="true"></i><?php echo htmlspecialchars($flash['texto']); ?>
             </div>
         <?php endif; ?>
@@ -254,44 +254,42 @@
 </div>
 
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-jv">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-usuarios-dialog">
+        <div class="modal-content modal-content-jv modal-usuarios">
             <form id="formEditar" novalidate>
                 <div class="modal-header modal-header-jv">
-                    <h2 class="modal-title fw-bold fs-5" id="modalEditarLabel"><i class="bi bi-pencil-square me-2" aria-hidden="true"></i>EDITAR COLABORADOR</h2>
+                    <h2 class="modal-title fw-bold" id="modalEditarLabel"><i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Editar colaborador</h2>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body modal-usuarios-body">
                     <input type="hidden" id="edit_id_usuario">
                     <input type="hidden" id="edit_status">
-                    <div class="section-bg">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="section-label" for="edit_usuario"><i class="bi bi-person-fill" aria-hidden="true"></i> NOMBRE DE USUARIO</label>
-                                <input type="text" class="input-jv w-100" id="edit_usuario" maxlength="20" autocomplete="off" placeholder="Ej: Juan_Perez" aria-describedby="edit_usuario_guia" required>
-                                <div class="form-text jv-form-text" id="edit_usuario_guia">Mín 4 - Máx 20 caracteres (letras, números, guion bajo).</div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="section-label" for="edit_correo"><i class="bi bi-envelope-fill" aria-hidden="true"></i> CORREO ELECTRÓNICO</label>
-                                <input type="email" class="input-jv w-100" id="edit_correo" maxlength="100" autocomplete="off" placeholder="usuario@empresa.com" aria-describedby="edit_correo_guia" required>
-                                <div class="form-text jv-form-text" id="edit_correo_guia">Formato válido de correo electrónico.</div>
-                            </div>
-                            <div class="col-12">
-                                <label class="section-label" for="edit_rol"><i class="bi bi-shield-fill-check" aria-hidden="true"></i> ROL DEL USUARIO</label>
-                                <select class="input-jv w-100" id="edit_rol" aria-describedby="edit_rol_guia" required>
-                                    <option value="">Seleccionar rol…</option>
-                                    <?php foreach ($roles_lista as $role): ?>
-                                        <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="form-text jv-form-text" id="edit_rol_guia">Controla los permisos del colaborador dentro del sistema.</div>
-                            </div>
+                    <div class="row g-4 modal-usuarios-fields">
+                        <div class="col-md-6 modal-usuarios-field">
+                            <label class="section-label" for="edit_usuario"><i class="bi bi-person-fill" aria-hidden="true"></i> Nombre de usuario</label>
+                            <input type="text" class="input-jv w-100" id="edit_usuario" maxlength="20" autocomplete="username" placeholder="Ej.: Juan_Perez" aria-describedby="edit_usuario_guia" required>
+                            <div class="form-text jv-form-text" id="edit_usuario_guia" aria-live="polite">De 4 a 20 letras, números o guiones bajos.</div>
+                        </div>
+                        <div class="col-md-6 modal-usuarios-field">
+                            <label class="section-label" for="edit_correo"><i class="bi bi-envelope-fill" aria-hidden="true"></i> Correo electrónico</label>
+                            <input type="email" class="input-jv w-100" id="edit_correo" maxlength="100" autocomplete="email" placeholder="usuario@empresa.com" aria-describedby="edit_correo_guia" required>
+                            <div class="form-text jv-form-text" id="edit_correo_guia" aria-live="polite">Correo válido y no asociado a otra cuenta.</div>
+                        </div>
+                        <div class="col-12 modal-usuarios-field">
+                            <label class="section-label" for="edit_rol"><i class="bi bi-shield-fill-check" aria-hidden="true"></i> Rol del colaborador</label>
+                            <select class="input-jv w-100" id="edit_rol" aria-describedby="edit_rol_guia" required>
+                                <option value="">Selecciona un rol</option>
+                                <?php foreach ($roles_lista as $role): ?>
+                                    <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text jv-form-text" id="edit_rol_guia" aria-live="polite">Define los permisos que tendrá dentro del sistema.</div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">
-                    <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                    <button type="submit" class="btn-jv-primary" id="btnEditar"><i class="bi bi-check-lg me-1"></i>GUARDAR CAMBIOS</button>
+                    <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-jv-primary" id="btnEditar"><i class="bi bi-check-lg me-1"></i>Guardar cambios</button>
                 </div>
             </form>
         </div>
@@ -366,46 +364,44 @@
 </div>
 
 <div class="modal fade" id="modalResetPassword" tabindex="-1" aria-labelledby="modalResetLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-jv">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-usuarios-dialog">
+        <div class="modal-content modal-content-jv modal-usuarios">
             <form id="formResetPassword" novalidate>
                 <div class="modal-header modal-header-jv">
-                    <h2 class="modal-title fw-bold fs-5" id="modalResetLabel"><i class="bi bi-key-fill me-2" aria-hidden="true"></i>RESTABLECER CONTRASEÑA</h2>
+                    <h2 class="modal-title fw-bold" id="modalResetLabel"><i class="bi bi-key-fill me-2" aria-hidden="true"></i>Restablecer contraseña</h2>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body modal-usuarios-body">
                     <input type="hidden" id="reset_id_usuario">
                     <div class="alert-jv alert-jv-info alert-lectura mb-3">
-                        <i class="bi bi-info-circle me-2" aria-hidden="true"></i>Se asignará una nueva contraseña a <strong id="reset_usuario_nombre"></strong>. Comunícasela para que pueda entrar; luego puede cambiarla desde <em>Mi Perfil</em>.
+                        <i class="bi bi-info-circle me-2" aria-hidden="true"></i>Se asignará una nueva contraseña a <strong id="reset_usuario_nombre"></strong>. Comunícasela para que pueda entrar; después podrá cambiarla desde <em>Mi Perfil</em>.
                     </div>
-                    <div class="section-bg">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="section-label" for="reset_password"><i class="bi bi-key-fill" aria-hidden="true"></i> NUEVA CONTRASEÑA</label>
-                                <div class="password-field">
-                                    <input type="password" class="input-jv w-100" id="reset_password" autocomplete="new-password" placeholder="Nueva contraseña" aria-describedby="reset_password_guia" required>
-                                    <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar la nueva contraseña" aria-controls="reset_password" aria-pressed="false">
-                                        <i class="bi bi-eye-slash" aria-hidden="true"></i>
-                                    </button>
-                                </div>
-                                <div class="form-text jv-form-text" id="reset_password_guia">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
+                    <div class="row g-4 modal-usuarios-fields">
+                        <div class="col-md-6 modal-usuarios-field">
+                            <label class="section-label" for="reset_password"><i class="bi bi-key-fill" aria-hidden="true"></i> Nueva contraseña</label>
+                            <div class="password-field">
+                                <input type="password" class="input-jv w-100" id="reset_password" autocomplete="new-password" placeholder="Escribe una contraseña" aria-describedby="reset_password_guia" required>
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar la nueva contraseña" aria-controls="reset_password" aria-pressed="false">
+                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                                </button>
                             </div>
-                            <div class="col-md-6">
-                                <label class="section-label" for="reset_password_confirm"><i class="bi bi-key-fill" aria-hidden="true"></i> CONFIRMAR CONTRASEÑA</label>
-                                <div class="password-field">
-                                    <input type="password" class="input-jv w-100" id="reset_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" aria-describedby="reset_password_confirm_guia" required>
-                                    <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="reset_password_confirm" aria-pressed="false">
-                                        <i class="bi bi-eye-slash" aria-hidden="true"></i>
-                                    </button>
-                                </div>
-                                <div class="form-text jv-form-text" id="reset_password_confirm_guia">Debe coincidir con la contraseña anterior.</div>
+                            <div class="form-text jv-form-text" id="reset_password_guia" aria-live="polite">Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.</div>
+                        </div>
+                        <div class="col-md-6 modal-usuarios-field">
+                            <label class="section-label" for="reset_password_confirm"><i class="bi bi-key-fill" aria-hidden="true"></i> Confirmar contraseña</label>
+                            <div class="password-field">
+                                <input type="password" class="input-jv w-100" id="reset_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" aria-describedby="reset_password_confirm_guia" required>
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="reset_password_confirm" aria-pressed="false">
+                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                                </button>
                             </div>
+                            <div class="form-text jv-form-text" id="reset_password_confirm_guia" aria-live="polite">Debe coincidir con la nueva contraseña.</div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">
-                    <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                    <button type="submit" class="btn-jv-primary" id="btnResetPassword"><i class="bi bi-key-fill me-1" aria-hidden="true"></i>RESTABLECER</button>
+                    <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-jv-primary" id="btnResetPassword"><i class="bi bi-key-fill me-1" aria-hidden="true"></i>Restablecer contraseña</button>
                 </div>
             </form>
         </div>

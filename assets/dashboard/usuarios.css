@@ -325,6 +325,90 @@
     }
     .modal-footer-jv .btn-jv-secondary:hover { border-color:#7c3aed; color:#7c3aed; }
 
+    .modal-usuarios-dialog { max-width:720px; }
+    .modal-usuarios {
+        overflow:hidden;
+        border:1px solid #dce3ee;
+        border-radius:20px;
+        box-shadow:0 24px 64px rgba(15,23,42,.2);
+    }
+    .modal-usuarios .modal-header-jv {
+        padding:20px 28px;
+        border-bottom:0;
+    }
+    .modal-usuarios .modal-title {
+        font-size:1.2rem;
+        line-height:1.35;
+        letter-spacing:-.015em;
+    }
+    .modal-usuarios-body {
+        padding:28px !important;
+        background:#fff;
+    }
+    .modal-usuarios-fields { row-gap:18px; }
+    .modal-usuarios-field { min-width:0; }
+    .modal-usuarios .section-label {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        margin:0 0 9px;
+        padding:0;
+        border:0;
+        color:#24324a;
+        font-size:.92rem;
+        font-weight:700;
+        letter-spacing:0;
+        line-height:1.4;
+        text-transform:none;
+    }
+    .modal-usuarios .section-label .bi { color:#6d28d9; }
+    .pagina-usuarios .modal-usuarios .input-jv {
+        min-height:52px;
+        padding:12px 15px;
+        border:1px solid #d7deea;
+        border-radius:11px;
+        background:#fff;
+        color:#17233b;
+        font-size:1rem;
+        box-shadow:none;
+    }
+    .pagina-usuarios .modal-usuarios .input-jv:focus {
+        border-color:#7c3aed;
+        box-shadow:0 0 0 3px rgba(124,58,237,.14);
+    }
+    .pagina-usuarios .modal-usuarios .input-jv:focus-visible {
+        outline:2px solid #7c3aed;
+        outline-offset:2px;
+    }
+    .modal-usuarios .jv-form-text {
+        min-height:2.5rem;
+        margin-top:8px;
+        font-size:.84rem;
+        line-height:1.5;
+    }
+    .modal-usuarios .alert-lectura {
+        padding:16px 18px;
+        border-radius:12px;
+    }
+    .modal-usuarios .modal-footer-jv {
+        gap:10px;
+        padding:18px 28px 22px;
+        background:#fff;
+    }
+    .modal-usuarios .modal-footer-jv .btn-jv-secondary,
+    .modal-usuarios .modal-footer-jv .btn-jv-primary {
+        min-height:48px;
+        padding:11px 20px;
+        border-radius:11px;
+        font-size:.92rem;
+    }
+    .modal-usuarios .modal-footer-jv .btn-jv-primary:disabled {
+        cursor:not-allowed;
+        opacity:.55;
+        box-shadow:none;
+        transform:none;
+    }
+
     .pagina-usuarios .input-jv { font-size:1rem; }
     .pagina-usuarios .badge-jv { font-size:.9rem; padding:6px 16px; white-space:nowrap; }
     .pagina-usuarios .role-badge {
@@ -543,6 +627,17 @@
         .pagina-usuarios .pin-help { width:44px; height:44px; }
         .pagina-usuarios .pin-vigente { padding:14px 20px; }
         .pagina-usuarios .pin-vigente-valor { letter-spacing:.14em; word-spacing:.4em; font-size:1.9rem; }
+        .modal-usuarios-dialog { max-width:calc(100% - 1rem); margin:.5rem auto; }
+        .modal-usuarios { border-radius:16px; }
+        .modal-usuarios .modal-header-jv { padding:17px 20px; }
+        .modal-usuarios-body { padding:20px !important; }
+        .modal-usuarios .modal-footer-jv {
+            align-items:stretch;
+            flex-direction:column-reverse;
+            padding:16px 20px 20px;
+        }
+        .modal-usuarios .modal-footer-jv .btn-jv-secondary,
+        .modal-usuarios .modal-footer-jv .btn-jv-primary { width:100%; }
     }
 
     /* ── Texto explicativo de los modales: tamaño y ritmo de lectura cómodos ──

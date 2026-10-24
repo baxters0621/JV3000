@@ -158,39 +158,64 @@ class Usuario extends Model
      */
     public function editar(array $datos, int $idPropio): array
     {
-        $id = (int)($datos['id_usuario'] ?? 0);
-        $usuario = mb_strtoupper(trim($datos['usuario'] ?? ''));
-        $correo = strtolower(trim($datos['correo'] ?? ''));
-        $password = trim($datos['password'] ?? '');
-        $idRol = (int)($datos['id_rol'] ?? 0);
-        $status = $datos['status'] ?? 'Activo';
-
-        if ($id <= 0) return ['ok' => false, 'mensaje' => 'USUARIO INVÁLIDO.'];
-
-        // Si edita a sí mismo, proteger rol y status
-        if ($id === $idPropio) {
-            $current = $this->db->fetchOne("SELECT id_rol, status FROM usuarios WHERE id_usuario = ?", [$id]);
-            $idRol = (int)$current['id_rol'];
-            $status = $current['status'];
+        $idEntrada = filter_var($datos['id_usuario'] ?? null, FILTER_VALIDATE_INT);
+        if ($idEntrada === false || $idEntrada <= 0) {
+            return ['ok' => false, 'mensaje' => 'USUARIO INVÁLIDO.'];
+        }
+        if (!is_string($datos['usuario'] ?? null)) {
+            return ['ok' => false, 'mensaje' => 'EL NOMBRE DE USUARIO NO ES VÁLIDO.'];
+        }
+        if (!is_string($datos['correo'] ?? null)) {
+            return ['ok' => false, 'mensaje' => 'ESCRIBE UN CORREO ELECTRÓNICO VÁLIDO DE MÁXIMO 100 CARACTERES.'];
+        }
+        if (isset($datos['password']) && !is_string($datos['password'])) {
+            return ['ok' => false, 'mensaje' => 'LA CONTRASEÑA NO ES VÁLIDA.'];
         }
 
-        if (!in_array($idRol, [1, 2, 3])) $idRol = 0;
+        $id = $idEntrada;
+        $usuario = mb_strtoupper(trim($datos['usuario']));
+        $correo = strtolower(trim($datos['correo']));
+        $password = trim($datos['password'] ?? '');
+        $idRolEntrada = filter_var($datos['id_rol'] ?? null, FILTER_VALIDATE_INT);
+        $status = $datos['status'] ?? 'Activo';
+
+        $actual = $this->db->fetchOne(
+            "SELECT id_rol, status FROM usuarios WHERE id_usuario = ?",
+            [$id]
+        );
+        if (!$actual) return ['ok' => false, 'mensaje' => 'COLABORADOR NO ENCONTRADO.'];
+
+        // Si edita a sí mismo, proteger rol y status.
+        if ($id === $idPropio) {
+            $idRolEntrada = (int)$actual['id_rol'];
+            $status = $actual['status'];
+        }
+
+        if ($idRolEntrada === false || !in_array($idRolEntrada, [1, 2, 3], true)) {
+            return ['ok' => false, 'mensaje' => 'SELECCIONA UN ROL VÁLIDO PARA EL COLABORADOR.'];
+        }
+        $idRol = $idRolEntrada;
+
+        if (!is_string($status) || !in_array($status, ['Activo', 'Inactivo'], true)) {
+            return ['ok' => false, 'mensaje' => 'EL ESTADO DEL COLABORADOR NO ES VÁLIDO.'];
+        }
+
         if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $usuario)) {
             return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];
         }
 
-        // Uniqueness: nombre (case-insensitive)
+        // El nombre de usuario debe ser único, sin distinguir mayúsculas.
         $dup = $this->db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) AND id_usuario != ?", [$usuario, $id]);
         if ($dup) return ['ok' => false, 'mensaje' => 'YA EXISTE UN USUARIO CON ESE NOMBRE.'];
 
-        // Uniqueness: correo
-        if ($correo !== '') {
-            if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-                return ['ok' => false, 'mensaje' => 'CORREO INVÁLIDO.'];
-            }
-            $dupEmail = $this->db->fetchOne("SELECT id_usuario FROM usuarios WHERE correo = ? AND id_usuario != ?", [$correo, $id]);
-            if ($dupEmail) return ['ok' => false, 'mensaje' => 'YA EXISTE UN USUARIO CON ESE CORREO.'];
+        if ($correo === '' || strlen($correo) > 100 || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+            return ['ok' => false, 'mensaje' => 'ESCRIBE UN CORREO ELECTRÓNICO VÁLIDO DE MÁXIMO 100 CARACTERES.'];
         }
+        $dupEmail = $this->db->fetchOne(
+            "SELECT id_usuario FROM usuarios WHERE LOWER(correo) = LOWER(?) AND id_usuario != ?",
+            [$correo, $id]
+        );
+        if ($dupEmail) return ['ok' => false, 'mensaje' => 'YA EXISTE UN COLABORADOR CON ESE CORREO.'];
 
         // Password opcional
         $passHash = null;
@@ -242,17 +267,17 @@ class Usuario extends Model
      */
     public function resetearPassword(int $idUsuario, string $nueva, string $confirmar): array
     {
-        if ($idUsuario <= 0) return ['ok' => false, 'mensaje' => 'USUARIO INVÁLIDO.'];
+        if ($idUsuario <= 0) return ['ok' => false, 'mensaje' => 'EL COLABORADOR NO ES VÁLIDO.'];
 
         $user = $this->db->fetchOne("SELECT usuario FROM usuarios WHERE id_usuario = ?", [$idUsuario]);
-        if (!$user) return ['ok' => false, 'mensaje' => 'USUARIO NO ENCONTRADO.'];
+        if (!$user) return ['ok' => false, 'mensaje' => 'NO SE ENCONTRÓ EL COLABORADOR PARA RESTABLECER SU CONTRASEÑA.'];
 
         if (!validarPasswordFuerte($nueva)) {
             $faltantes = requisitosFaltantesPassword($nueva);
-            return ['ok' => false, 'mensaje' => 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper($faltantes) . '.'];
+            return ['ok' => false, 'mensaje' => 'LA CONTRASEÑA NO CUMPLE LOS REQUISITOS: ' . $faltantes . '.'];
         }
         if ($nueva !== $confirmar) {
-            return ['ok' => false, 'mensaje' => 'LAS CONTRASEÑAS NO COINCIDEN.'];
+            return ['ok' => false, 'mensaje' => 'LAS CONTRASEÑAS NO COINCIDEN. VUELVE A ESCRIBIRLAS.'];
         }
 
         try {

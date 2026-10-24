@@ -10,6 +10,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 
 ---
 
+[2026-10-23 23:06] · Módulo: Colaboradores · Cambio: Se corrige el restablecimiento de contraseña (el modal no enviaba la acción ni los campos esperados por el controlador); se alinean las validaciones de usuario (4–20 caracteres), correo requerido (máximo 100, formato y unicidad sin distinguir mayúsculas), rol y estado permitidos, y contraseña fuerte con confirmación. Los errores del servidor enfocan el campo correspondiente y los dos modales mejoran su jerarquía, lectura y respuesta móvil sin salir del estilo JV3000. · Archivos: views/usuarios/index.php, assets/dashboard/usuarios.js, assets/dashboard/usuarios.css, controllers/UsuariosController.php, models/Usuario.php, tests/usuarios_validacion_piloto.php, tests/usuarios_reset_formulario.js, docs/README.md, MEMORY.md, docs/BITACORA.md · Prueba: tools/validar.ps1 completada; PHP 23 afirmaciones, JS de restablecimiento y pin_global_piloto (56 aserciones) en verde; assets CSS?v=mtime y JS HTTP 200. La ruta protegida respondió 302 sin sesión administrativa, así que no se afirma una comprobación visual autenticada.
+
 
 ---
 

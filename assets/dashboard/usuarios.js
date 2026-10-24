@@ -194,8 +194,11 @@ function abrirEdicion(btn) {
     document.getElementById('edit_correo').value = tr.dataset.correo;
     document.getElementById('edit_rol').value = tr.dataset.rol;
     document.getElementById('edit_status').value = tr.dataset.status;
-    document.getElementById('edit_usuario').classList.remove('input-error');
-    document.getElementById('edit_correo').classList.remove('input-error');
+    ['edit_usuario', 'edit_correo', 'edit_rol'].forEach(function (id) {
+        document.getElementById(id).classList.remove('input-error');
+        marcarCampoUsu(id, '', '');
+    });
+    validarEdicion(false);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditar')).show();
 }
 
@@ -212,11 +215,11 @@ const TEXTO_GUIA_USU = {
     crear_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
     crear_password_confirm: 'Debe coincidir con la contraseña anterior.',
     crear_rol: 'Solo se pueden crear Operadores de Carga y de Ventas.',
-    edit_usuario: 'Mín 4 - Máx 20 caracteres (letras, números, guion bajo).',
-    edit_correo: 'Formato válido de correo electrónico.',
-    edit_rol: 'Controla los permisos del colaborador dentro del sistema.',
+    edit_usuario: 'De 4 a 20 letras, números o guiones bajos.',
+    edit_correo: 'Correo válido y no asociado a otra cuenta.',
+    edit_rol: 'Define los permisos que tendrá dentro del sistema.',
     reset_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
-    reset_password_confirm: 'Debe coincidir con la contraseña anterior.',
+    reset_password_confirm: 'Debe coincidir con la nueva contraseña.',
     pin_emergencia_global: '6 dígitos, sin letras.',
     pin_emergencia_global_confirm: 'Repite el mismo PIN.'
 };
@@ -228,13 +231,16 @@ function marcarCampoUsu(campoId, estado, mensaje) {
     const guia = document.getElementById(campoId + '_guia');
     if (!input) return;
     input.classList.remove('is-valid', 'is-invalid');
+    input.removeAttribute('aria-invalid');
     if (guia) guia.classList.remove('guia-ok', 'guia-err');
 
     if (estado === 'ok') {
         input.classList.add('is-valid');
+        input.setAttribute('aria-invalid', 'false');
         if (guia) { guia.classList.add('guia-ok'); if (mensaje) guia.textContent = mensaje; }
     } else if (estado === 'err') {
         input.classList.add('is-invalid');
+        input.setAttribute('aria-invalid', 'true');
         if (guia) { guia.classList.add('guia-err'); if (mensaje) guia.textContent = mensaje; }
     } else if (guia) {
         guia.textContent = TEXTO_GUIA_USU[campoId] || '';
@@ -242,9 +248,9 @@ function marcarCampoUsu(campoId, estado, mensaje) {
 }
 
 // Un campo vacío queda neutro (sin color) pero con su texto guía.
-function validarCampoUsu(campoId, valorOk, mensajeOk, mensajeErr) {
+function validarCampoUsu(campoId, valorOk, mensajeOk, mensajeErr, mostrarVacio) {
     const vacio = document.getElementById(campoId).value.trim() === '';
-    if (vacio) marcarCampoUsu(campoId, '', '');
+    if (vacio && !mostrarVacio) marcarCampoUsu(campoId, '', '');
     else marcarCampoUsu(campoId, valorOk ? 'ok' : 'err', valorOk ? mensajeOk : mensajeErr);
     return !vacio && valorOk;
 }
@@ -256,6 +262,22 @@ function correoValidoUsu(correo) {
 function passwordSeguraUsu(password) {
     return password.length >= 8 && /[a-z]/.test(password) && /[A-Z]/.test(password)
         && /\d/.test(password) && /[\W_]/.test(password);
+}
+
+// Compara con los nombres ya visibles en la tabla, excluyendo la cuenta editada.
+function usuarioDuplicadoUsu(usuario, idActual) {
+    const nombreNormalizado = usuario.toLowerCase();
+    return Array.from(document.querySelectorAll('#cuerpoUsuarios tr.usuario-fila')).some(function (fila) {
+        return fila.dataset.id !== idActual && (fila.dataset.usuario || '').toLowerCase() === nombreNormalizado;
+    });
+}
+
+// Evita avisar como duplicado el correo que ya pertenece al mismo colaborador.
+function correoDuplicadoUsu(correo, idActual) {
+    const correoNormalizado = correo.toLowerCase();
+    return Array.from(document.querySelectorAll('#cuerpoUsuarios tr.usuario-fila')).some(function (fila) {
+        return fila.dataset.id !== idActual && (fila.dataset.correo || '').trim().toLowerCase() === correoNormalizado;
+    });
 }
 
 // Valida todo el modal de alta y habilita el botón solo si todo está correcto.
@@ -288,18 +310,33 @@ function validarAlta() {
 // Valida el modal de edición. Cada modal solo tiene sus propios campos, así que
 // se valida el que realmente existe: la misma función sirve para la vista MVC y
 // para cualquier variante sin dependencias cruzadas.
-function validarEdicion() {
+function validarEdicion(mostrarErrores) {
     const campoUsuario = document.getElementById('edit_usuario');
     if (!campoUsuario) return false;
     const usuario = normalizarUsuarioCliente(campoUsuario.value);
     const correo = document.getElementById('edit_correo').value.trim();
+    const idActual = document.getElementById('edit_id_usuario').value;
+    const rol = document.getElementById('edit_rol').value;
+    const usuarioDuplicado = usuarioDuplicadoUsu(usuario, idActual);
+    const correoDuplicado = correoDuplicadoUsu(correo, idActual);
 
-    const usuarioOk = validarCampoUsu('edit_usuario',
-        usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario),
-        'Nombre de usuario válido.', 'Solo letras, números y guion bajo (4 a 20 caracteres).');
-    const correoOk = validarCampoUsu('edit_correo', correoValidoUsu(correo),
-        'Correo electrónico válido.', 'El correo no tiene un formato válido.');
-    const rolOk = document.getElementById('edit_rol').value !== '';
+    const usuarioValido = usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario);
+    const usuarioOk = validarCampoUsu('edit_usuario', usuarioValido && !usuarioDuplicado,
+        'Nombre de usuario válido.', usuarioDuplicado
+            ? 'Ese nombre de usuario ya está en uso.'
+            : 'Usa de 4 a 20 letras, números o guiones bajos.', mostrarErrores);
+    const correoValido = correo.length <= 100 && correoValidoUsu(correo);
+    const correoOk = validarCampoUsu('edit_correo', correoValido && !correoDuplicado,
+        'Correo electrónico válido.', correoDuplicado
+            ? 'Ese correo ya está asociado a otro colaborador.'
+            : (correo.length > 100 ? 'El correo no puede superar 100 caracteres.' : 'Escribe un correo electrónico válido.'),
+        mostrarErrores);
+    const rolPermitido = ['1', '2', '3'].includes(rol)
+        && Array.from(document.getElementById('edit_rol').options).some(function (opcion) {
+            return opcion.value === rol && !opcion.disabled;
+        });
+    const rolOk = validarCampoUsu('edit_rol', rolPermitido, 'Rol válido.',
+        'Selecciona uno de los roles disponibles.', mostrarErrores);
 
     const todoOk = usuarioOk && correoOk && rolOk;
     const boton = document.getElementById('btnEditar');
@@ -308,16 +345,17 @@ function validarEdicion() {
 }
 
 // Valida el modal de restablecer contraseña.
-function validarReset() {
+function validarReset(mostrarErrores) {
     const campoPassword = document.getElementById('reset_password');
     if (!campoPassword) return false;
     const password = campoPassword.value;
     const confirmar = document.getElementById('reset_password_confirm').value;
 
     const passwordOk = validarCampoUsu('reset_password', passwordSeguraUsu(password),
-        'Contraseña segura.', 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.');
+        'Contraseña segura.', 'Usa mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.',
+        mostrarErrores);
     const confirmarOk = validarCampoUsu('reset_password_confirm', password !== '' && password === confirmar,
-        'Las contraseñas coinciden.', 'Las contraseñas no coinciden.');
+        'Las contraseñas coinciden.', 'Las contraseñas no coinciden.', mostrarErrores);
 
     const todoOk = passwordOk && confirmarOk;
     const boton = document.getElementById('btnResetPassword');
@@ -411,43 +449,29 @@ function abrirResetPassword(id, nombre) {
 const formEditar = document.getElementById('formEditar');
 if (formEditar) formEditar.addEventListener('submit', function (e) {
     e.preventDefault();
+    if (!validarEdicion(true)) {
+        const primerCampoInvalido = formEditar.querySelector('.is-invalid');
+        if (primerCampoInvalido) primerCampoInvalido.focus();
+        return;
+    }
+
     const inputUsuario = document.getElementById('edit_usuario');
-    const inputCorreo = document.getElementById('edit_correo');
     const idUsuario = document.getElementById('edit_id_usuario').value;
     const status = document.getElementById('edit_status').value;
 
     const usuario = normalizarUsuarioCliente(inputUsuario.value);
-    const correo = inputCorreo.value.trim();
+    const correo = document.getElementById('edit_correo').value.trim();
     const rol = document.getElementById('edit_rol').value;
 
-    if (usuario.length < 4 || usuario.length > 20 || !/^[a-zA-Z0-9_]+$/.test(usuario)) {
-        inputUsuario.classList.add('input-error');
-        Swal.fire('DATOS INVÁLIDOS', 'El usuario debe tener 4 a 20 caracteres: letras, números y guion bajo.', 'error');
-        return;
-    }
-    inputUsuario.classList.remove('input-error');
-
-    if (correo.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-        inputCorreo.classList.add('input-error');
-        Swal.fire('DATOS INVÁLIDOS', 'Escribe un correo electrónico válido (máx 100 caracteres).', 'error');
-        return;
-    }
-    inputCorreo.classList.remove('input-error');
-
-    if (!rol) {
-        Swal.fire('DATOS INVÁLIDOS', 'Selecciona un rol para el colaborador.', 'error');
-        return;
-    }
-
     Swal.fire({
-        title: '¿GUARDAR CAMBIOS?',
+        title: '¿Guardar cambios?',
         text: `Se actualizarán los datos del colaborador ${usuario}.`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#7C3AED',
         cancelButtonColor: '#CED4DA',
-        confirmButtonText: 'SÍ, GUARDAR',
-        cancelButtonText: 'CANCELAR'
+        confirmButtonText: 'Guardar cambios',
+        cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
             jvPost({
@@ -457,6 +481,44 @@ if (formEditar) formEditar.addEventListener('submit', function (e) {
                 correo: correo,
                 id_rol: rol,
                 status: status,
+                csrf_token: window.JV_CONFIG.csrfToken
+            }, 'index.php?url=usuarios');
+        }
+    });
+});
+
+// Valida y envía el restablecimiento con los nombres que procesa el controlador.
+const formResetPassword = document.getElementById('formResetPassword');
+if (formResetPassword) formResetPassword.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!validarReset(true)) {
+        const primerCampoInvalido = formResetPassword.querySelector('.is-invalid');
+        if (primerCampoInvalido) primerCampoInvalido.focus();
+        return;
+    }
+
+    const idUsuario = document.getElementById('reset_id_usuario').value;
+    if (!/^[1-9]\d*$/.test(idUsuario)) {
+        Swal.fire('No se pudo restablecer', 'Vuelve a seleccionar el colaborador e inténtalo otra vez.', 'error');
+        return;
+    }
+
+    Swal.fire({
+        title: '¿Restablecer contraseña?',
+        text: `Se asignará una nueva contraseña a ${document.getElementById('reset_usuario_nombre').textContent}.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#7C3AED',
+        cancelButtonColor: '#CED4DA',
+        confirmButtonText: 'Restablecer contraseña',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            jvPost({
+                accion_usuario: 'restablecer_password',
+                id_usuario: idUsuario,
+                password: document.getElementById('reset_password').value,
+                password_confirm: document.getElementById('reset_password_confirm').value,
                 csrf_token: window.JV_CONFIG.csrfToken
             }, 'index.php?url=usuarios');
         }
@@ -536,7 +598,38 @@ if (formCrear) formCrear.addEventListener('submit', function (e) {
 });
 
 // Paginación inicial al cargar la página.
-document.addEventListener('DOMContentLoaded', () => rendTablaUsuarios());
+document.addEventListener('DOMContentLoaded', function () {
+    rendTablaUsuarios();
+
+    const flash = document.getElementById('flashMsg');
+    if (!flash || !flash.classList.contains('alert-jv-danger')) return;
+
+    const mensaje = (flash.dataset.texto || '').toUpperCase();
+    let campoId = '';
+    let modalId = '';
+    if (mensaje.startsWith('LA CONTRASEÑA') || mensaje.startsWith('LAS CONTRASEÑAS')) {
+        modalId = 'modalResetPassword';
+        campoId = mensaje.includes('NO COINCIDEN') ? 'reset_password_confirm' : 'reset_password';
+    } else if (mensaje.includes('CORREO')) {
+        modalId = 'modalEditar';
+        campoId = 'edit_correo';
+    } else if (mensaje.includes('NOMBRE DE USUARIO') || mensaje.includes('USUARIO CON ESE NOMBRE')) {
+        modalId = 'modalEditar';
+        campoId = 'edit_usuario';
+    } else if (mensaje.includes('ROL')) {
+        modalId = 'modalEditar';
+        campoId = 'edit_rol';
+    }
+
+    if (campoId && modalId) {
+        marcarCampoUsu(campoId, 'err', flash.textContent.trim());
+        const modal = document.getElementById(modalId);
+        modal.addEventListener('shown.bs.modal', function () {
+            document.getElementById(campoId).focus();
+        }, { once: true });
+        bootstrap.Modal.getOrCreateInstance(modal).show();
+    }
+});
 
 // Sincronizar main-wrapper con sidebar
 const observer = new MutationObserver(() => {
