@@ -353,16 +353,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                             <label class="reg-label" for="r-pass">CONTRASEÑA <span class="text-danger">*</span></label>
                             <div class="reg-field">
                                 <i class="reg-field-icon bi bi-lock-fill"></i>
-                                <input type="password" name="reg_password" id="r-pass" class="reg-input" required maxlength="20" placeholder="Cree una clave fuerte" autocomplete="new-password">
+                                <input type="password" name="reg_password" id="r-pass" class="reg-input" required maxlength="36" placeholder="Cree una clave fuerte" autocomplete="new-password">
                                 <button type="button" class="reg-field-eye" id="btnEyeR1" aria-label="Mostrar contraseña"><i class="bi bi-eye-slash-fill" id="iconEyeR1"></i></button>
                             </div>
                             <div class="reg-meter"><div class="reg-meter-fill" id="r-meter"></div></div>
-                            <small class="reg-hint" id="r-pass-hint">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 símbolo.</small>
+                            <small class="reg-hint" id="r-pass-hint">De 8 a 18 caracteres, con mayúscula, minúscula, número y símbolo.</small>
 
                             <label class="reg-label" for="r-pass2">CONFIRMAR CONTRASEÑA <span class="text-danger">*</span></label>
                             <div class="reg-field">
                                 <i class="reg-field-icon bi bi-key-fill"></i>
-                                <input type="password" name="reg_password_confirm" id="r-pass2" class="reg-input" required maxlength="20" placeholder="Repita la contraseña" autocomplete="new-password">
+                                <input type="password" name="reg_password_confirm" id="r-pass2" class="reg-input" required maxlength="36" placeholder="Repita la contraseña" autocomplete="new-password">
                                 <button type="button" class="reg-field-eye" id="btnEyeR2" aria-label="Mostrar contraseña"><i class="bi bi-eye-slash-fill" id="iconEyeR2"></i></button>
                                 <span class="reg-field-status" id="r-match-status"></span>
                             </div>

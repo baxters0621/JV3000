@@ -480,22 +480,29 @@ if (!function_exists('generarFacturaNumero')) {
 if (!defined('MAX_PASSWORD_BYTES')) {
     define('MAX_PASSWORD_BYTES', 72);
 }
+if (!defined('MAX_PASSWORD_CHARACTERS')) {
+    define('MAX_PASSWORD_CHARACTERS', 18);
+}
 
 if (!function_exists('validarPasswordFuerte')) {
     /**
      * Valida que una contraseña sea fuerte.
      *
      * Requiere mínimo 8 caracteres, al menos una mayúscula, una minúscula,
-     * un dígito y un símbolo; no permite saltos de línea.
+     * un dígito y un símbolo; no permite saltos de línea y admite hasta
+     * 18 caracteres UTF-8 para mantenerse dentro del límite de bcrypt.
      *
      * @param string $password Contraseña a validar.
      * @return bool True si cumple la política de fortaleza.
      */
     function validarPasswordFuerte(string $password): bool
     {
-        return strlen($password) <= MAX_PASSWORD_BYTES
+        return mb_check_encoding($password, 'UTF-8')
+            && mb_strlen($password, 'UTF-8') <= MAX_PASSWORD_CHARACTERS
+            && strlen($password) <= MAX_PASSWORD_BYTES
             && !preg_match('/[\r\n]/', $password)
-            && preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}\z/', $password) === 1;
+            && mb_strlen($password, 'UTF-8') >= 8
+            && preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).*\z/', $password) === 1;
     }
 
     /**
@@ -511,12 +518,12 @@ if (!function_exists('validarPasswordFuerte')) {
     function clasificarFortalezaPassword(string $password): array
     {
         $puntos = 0;
-        if (strlen($password) >= 8)  $puntos++;
+        if (mb_strlen($password, 'UTF-8') >= 8)  $puntos++;
         if (preg_match('/[a-z]/', $password)) $puntos++;
         if (preg_match('/[A-Z]/', $password)) $puntos++;
         if (preg_match('/\d/', $password))    $puntos++;
         if (preg_match('/[\W_]/', $password)) $puntos++;
-        if (strlen($password) >= 12) $puntos++;
+        if (mb_strlen($password, 'UTF-8') >= 12) $puntos++;
 
         if ($puntos <= 1) {
             return ['nivel' => 0, 'texto' => 'Muy débil',   'color' => '#ef4444', 'porcentaje' => 15];
@@ -540,13 +547,15 @@ if (!function_exists('validarPasswordFuerte')) {
     function requisitosFaltantesPassword(string $password): string
     {
         $faltan = [];
-        if (strlen($password) < 8)          $faltan[] = 'mínimo 8 caracteres';
+        if (!mb_check_encoding($password, 'UTF-8')) $faltan[] = 'texto válido';
+        elseif (mb_strlen($password, 'UTF-8') < 8) $faltan[] = 'mínimo 8 caracteres';
         if (!preg_match('/[a-z]/', $password)) $faltan[] = '1 minúscula';
         if (!preg_match('/[A-Z]/', $password)) $faltan[] = '1 mayúscula';
         if (!preg_match('/\d/', $password))    $faltan[] = '1 número';
         if (!preg_match('/[\W_]/', $password)) $faltan[] = '1 símbolo';
         if (preg_match('/[\r\n]/', $password)) $faltan[] = 'sin saltos de línea';
-        if (strlen($password) > MAX_PASSWORD_BYTES) $faltan[] = 'máximo 72 bytes';
+        if (!mb_check_encoding($password, 'UTF-8')) $faltan[] = 'texto válido';
+        elseif (mb_strlen($password, 'UTF-8') > MAX_PASSWORD_CHARACTERS) $faltan[] = 'máximo 18 caracteres';
         return $faltan ? implode(', ', $faltan) : '';
     }
 }

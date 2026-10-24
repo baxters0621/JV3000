@@ -19,6 +19,18 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
     });
 });
 
+['perfil_password_nueva', 'perfil_password_confirm'].forEach(function(id) {
+    var input = document.getElementById(id);
+    if (!input) return;
+    input.addEventListener('input', function() {
+        var limitada = Array.from(input.value).slice(0, 18).join('');
+        if (limitada !== input.value) {
+            input.value = limitada;
+            input.setSelectionRange(limitada.length, limitada.length);
+        }
+    });
+});
+
 // Confirmación antes de guardar los cambios del perfil
 (function() {
     var form = document.getElementById('formPerfil');

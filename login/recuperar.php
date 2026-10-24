@@ -471,7 +471,7 @@ if ($step == 4) {
                 <label class="rec-label"><i class="bi bi-lock-fill me-1"></i>Nueva contraseña</label>
                 <div class="field-group">
                     <i class="field-icon bi bi-key-fill"></i>
-                    <input type="password" name="rec_password" id="rec-pass" class="field-input" required minlength="8" placeholder="Mín. 8 caracteres, mayús, minús, núm, símbolo" autofocus oninput="validarPassRec()">
+                    <input type="password" name="rec_password" id="rec-pass" class="field-input" required minlength="8" maxlength="36" placeholder="8 a 18 caracteres, mayús, minús, núm, símbolo" autofocus oninput="validarPassRec()">
                     <button type="button" class="field-eye" id="btnEyeRec1" aria-label="Mostrar"><i class="bi bi-eye-slash-fill" id="iconEyeRec1"></i></button>
                 </div>
                 <div class="strength-meter mb-3" style="height:5px;background:var(--jv-border);border-radius:4px;overflow:hidden;">
@@ -481,7 +481,7 @@ if ($step == 4) {
                 <label class="rec-label"><i class="bi bi-key me-1"></i>Confirmar contraseña</label>
                 <div class="field-group">
                     <i class="field-icon bi bi-lock"></i>
-                    <input type="password" name="rec_password2" id="rec-pass2" class="field-input" required minlength="8" placeholder="Repite la contraseña" oninput="validarPassRec()">
+                    <input type="password" name="rec_password2" id="rec-pass2" class="field-input" required minlength="8" maxlength="36" placeholder="Repite la contraseña" oninput="validarPassRec()">
                     <button type="button" class="field-eye" id="btnEyeRec2" aria-label="Mostrar"><i class="bi bi-eye-slash-fill" id="iconEyeRec2"></i></button>
                 </div>
                 <button type="submit" id="rec-btn-pass" class="btn-access"><span><i class="bi bi-check2 me-2"></i>CAMBIAR CONTRASEÑA</span></button>
@@ -503,7 +503,7 @@ if ($step == 4) {
         </div>
     </div>
 
-    <script src="../assets/login/recuperar.js"></script>
+    <script src="../assets/login/recuperar.js<?php echo jv_asset_version('login/recuperar.js'); ?>"></script>
     <script src="../assets/js/bootstrap.bundle.min.js?v=2"></script>
 </body>
 

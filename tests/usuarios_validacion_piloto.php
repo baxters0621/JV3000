@@ -198,25 +198,32 @@ $afirmar(
 );
 $afirmar($db->escrituras === [], 'Una contraseña con salto de línea no debe actualizar la cuenta.');
 
-$passwordMuyLargo = str_repeat('aA1!', 18) . 'a';
-$passwordMaximo = str_repeat('aA1!', 18);
-$passwordUnicodeMaximo = str_repeat('aA1!', 17) . 'ññ';
-$passwordUnicodeExcedido = str_repeat('aA1!', 17) . 'ñññ';
-$afirmar(strlen($passwordMaximo) === 72 && validarPasswordFuerte($passwordMaximo), 'El límite de 72 bytes debe aceptarse.');
+$passwordMuyLargo = str_repeat('aA1!', 4) . 'xYz';
+$passwordMaximo = str_repeat('aA1!', 4) . 'xY';
+$passwordUnicodeMaximo = str_repeat('aA1!', 4) . 'xñ';
+$passwordUnicodeExcedido = str_repeat('aA1!', 4) . 'xññ';
+$passwordMinimo = 'aA1!bbbb';
+$passwordMinimoUnicode = 'aA1!ññññ';
+$afirmar(mb_strlen($passwordMinimo, 'UTF-8') === 8 && validarPasswordFuerte($passwordMinimo), 'El mínimo debe aceptar exactamente 8 caracteres.');
 $afirmar(
-    strlen($passwordUnicodeMaximo) === 72 && validarPasswordFuerte($passwordUnicodeMaximo),
-    'Los caracteres UTF-8 deben contarse por bytes hasta el máximo permitido.'
+    mb_strlen($passwordMinimoUnicode, 'UTF-8') === 8 && validarPasswordFuerte($passwordMinimoUnicode),
+    'El mínimo también debe contar caracteres acentuados, no bytes.'
+);
+$afirmar(mb_strlen($passwordMaximo, 'UTF-8') === 18 && validarPasswordFuerte($passwordMaximo), 'El límite de 18 caracteres debe aceptarse.');
+$afirmar(
+    mb_strlen($passwordUnicodeMaximo, 'UTF-8') === 18 && validarPasswordFuerte($passwordUnicodeMaximo),
+    'El límite debe contar letras UTF-8 por caracteres, no por bytes.'
 );
 $afirmar(
-    strlen($passwordUnicodeExcedido) > 72 && !validarPasswordFuerte($passwordUnicodeExcedido),
-    'Los caracteres multibyte que excedan 72 bytes deben rechazarse.'
+    mb_strlen($passwordUnicodeExcedido, 'UTF-8') === 19 && !validarPasswordFuerte($passwordUnicodeExcedido),
+    'Debe rechazarse una contraseña que exceda 18 caracteres UTF-8.'
 );
 $db->escrituras = [];
 $resultado = $modelo->resetearPassword(25, $passwordMuyLargo, $passwordMuyLargo);
-$afirmar(!$resultado['ok'], 'El restablecimiento debe rechazar contraseñas de más de 72 bytes.');
+$afirmar(!$resultado['ok'], 'El restablecimiento debe rechazar contraseñas de más de 18 caracteres.');
 $afirmar(
-    strpos($resultado['mensaje'], '72 bytes') !== false,
-    'El error debe informar el límite máximo de 72 bytes.'
+    strpos($resultado['mensaje'], '18 caracteres') !== false,
+    'El error debe informar el límite máximo de 18 caracteres.'
 );
 $afirmar($db->escrituras === [], 'Una contraseña sobre el límite no debe actualizar la cuenta.');
 

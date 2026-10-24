@@ -11,8 +11,30 @@ const vista = fs.readFileSync(
     assert.match(vista, new RegExp(`id="reset_password_regla_${regla}"`));
 });
 assert.match(vista, /aria-describedby="reset_password_guia reset_password_estado reset_password_contador"/);
-assert.match(vista, /id="reset_password"[^>]*maxlength="72"/);
-assert.match(vista, /id="reset_password_confirm"[^>]*maxlength="72"/);
+assert.match(vista, /id="reset_password"[^>]*maxlength="36"/);
+assert.match(vista, /id="reset_password_confirm"[^>]*maxlength="36"/);
+assert.match(vista, /Máximo 18 caracteres/);
+assert.match(vista, /id="crear_password"[^>]*maxlength="36"/);
+assert.match(vista, /id="crear_password_confirm"[^>]*maxlength="36"/);
+
+const registro = fs.readFileSync(path.join(__dirname, '..', 'login', 'login.php'), 'utf8');
+assert.match(registro, /id="r-pass"[^>]*maxlength="36"/);
+assert.match(registro, /id="r-pass2"[^>]*maxlength="36"/);
+
+const recuperacion = fs.readFileSync(path.join(__dirname, '..', 'login', 'recuperar.php'), 'utf8');
+assert.match(recuperacion, /id="rec-pass"[^>]*maxlength="36"/);
+assert.match(recuperacion, /id="rec-pass2"[^>]*maxlength="36"/);
+
+const perfil = fs.readFileSync(path.join(__dirname, '..', 'views', 'perfil', 'index.php'), 'utf8');
+assert.match(perfil, /id="perfil_password_nueva"[^>]*maxlength="36"/);
+assert.match(perfil, /id="perfil_password_confirm"[^>]*maxlength="36"/);
+const estilos = fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.css'), 'utf8');
+assert.match(estilos, /\.modal-usuarios \.password-requirement \{[^}]*font-weight:700/s);
+assert.match(estilos, /\.modal-usuarios \.password-character-count \{[^}]*font-weight:700/s);
+assert.match(
+    fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.js'), 'utf8'),
+    /const MAX_PASSWORD_CHARACTERS = 18;/
+);
 
 function crearElemento(id, value = '') {
     const clases = new Set();
@@ -70,7 +92,7 @@ function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
         numero: 'Un número',
         simbolo: 'Un símbolo',
         sin_saltos: 'Sin saltos de línea',
-        maximo: 'Máximo 72 bytes'
+        maximo: 'Máximo 18 caracteres'
     };
     Object.entries(textosReglas).forEach(([regla, texto]) => {
         ids[`reset_password_regla_${regla}`] = crearElemento(`reset_password_regla_${regla}`);
@@ -160,18 +182,17 @@ assert.equal(envioConSalto.ids.reset_password.value, 'ClaveSegura1!\n');
 const entradaMuyLarga = ejecutarEnvio('', 'aA1!' + 'b'.repeat(80));
 entradaMuyLarga.ids.reset_password.listeners.input({ type: 'input' });
 assert.equal(
-    new TextEncoder().encode(entradaMuyLarga.ids.reset_password.value).length,
-    72,
-    'La nueva contraseña debe limitarse a 72 bytes al escribir o pegar.'
+    Array.from(entradaMuyLarga.ids.reset_password.value).length,
+    18,
+    'La nueva contraseña debe limitarse a 18 caracteres al escribir o pegar.'
 );
-assert.equal(entradaMuyLarga.ids.reset_password.value.length, 72);
-assert.equal(entradaMuyLarga.ids.reset_password_contador.textContent, '72 / 72 bytes');
+assert.equal(entradaMuyLarga.ids.reset_password_contador.textContent, '18 / 18 caracteres');
 
 const entradaUnicodeLarga = ejecutarEnvio('', 'aA1!' + 'ñ'.repeat(40));
 entradaUnicodeLarga.ids.reset_password.listeners.input({ type: 'input' });
 assert.ok(
-    new TextEncoder().encode(entradaUnicodeLarga.ids.reset_password.value).length <= 72,
-    'El límite debe contar bytes UTF-8 también para caracteres multibyte.'
+    Array.from(entradaUnicodeLarga.ids.reset_password.value).length <= 18,
+    'El límite debe contar caracteres multibyte como caracteres.'
 );
 assert.equal(
     Array.from(entradaUnicodeLarga.ids.reset_password.value).join(''),
@@ -181,8 +202,8 @@ assert.equal(
 entradaUnicodeLarga.ids.reset_password_confirm.value = 'aA1!' + 'ñ'.repeat(40);
 entradaUnicodeLarga.ids.reset_password_confirm.listeners.input({ type: 'input' });
 assert.ok(
-    new TextEncoder().encode(entradaUnicodeLarga.ids.reset_password_confirm.value).length <= 72,
-    'La confirmación también debe limitarse a 72 bytes.'
+    Array.from(entradaUnicodeLarga.ids.reset_password_confirm.value).length <= 18,
+    'La confirmación también debe limitarse a 18 caracteres.'
 );
 
 const envioInvalido = ejecutarEnvio('ClaveDistinta1!');

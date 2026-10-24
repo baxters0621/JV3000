@@ -215,7 +215,7 @@ function abrirEdicion(btn) {
 const TEXTO_GUIA_USU = {
     crear_usuario: 'Mín 4 - Máx 20 caracteres (letras, números, guion bajo).',
     crear_correo: 'Formato válido de correo electrónico.',
-    crear_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
+    crear_password: 'De 8 a 18 caracteres, con mayúscula, minúscula, número y símbolo.',
     crear_password_confirm: 'Debe coincidir con la contraseña anterior.',
     crear_rol: 'Solo se pueden crear Operadores de Carga y de Ventas.',
     edit_usuario: 'De 4 a 20 letras, números o guiones bajos.',
@@ -226,7 +226,7 @@ const TEXTO_GUIA_USU = {
     pin_emergencia_global_confirm: 'Repite el mismo PIN.'
 };
 
-const MAX_PASSWORD_BYTES = 72;
+const MAX_PASSWORD_CHARACTERS = 18;
 
 // Marca un campo como válido ('ok'), inválido ('err') o neutro (vacío).
 // El mensaje se pinta en la guía que está debajo del campo.
@@ -266,15 +266,15 @@ function correoValidoUsu(correo) {
 }
 
 function requisitosPasswordUsu(password) {
-    const bytes = new TextEncoder().encode(password).length;
+    const longitud = Array.from(password).length;
     return {
-        longitud: bytes >= 8,
+        longitud: longitud >= 8,
         minuscula: /[a-z]/.test(password),
         mayuscula: /[A-Z]/.test(password),
         numero: /\d/.test(password),
         simbolo: /[\W_]/.test(password),
         sin_saltos: !/[\r\n]/.test(password),
-        maximo: bytes <= MAX_PASSWORD_BYTES
+        maximo: longitud <= MAX_PASSWORD_CHARACTERS
     };
 }
 
@@ -282,20 +282,13 @@ function passwordSeguraUsu(password) {
     return Object.values(requisitosPasswordUsu(password)).every(Boolean);
 }
 
-function limitarPasswordBytes(campo) {
-    let bytes = 0;
-    let limitado = '';
-    for (const caracter of campo.value) {
-        const bytesCaracter = new TextEncoder().encode(caracter).length;
-        if (bytes + bytesCaracter > MAX_PASSWORD_BYTES) break;
-        limitado += caracter;
-        bytes += bytesCaracter;
-    }
+function limitarPasswordCaracteres(campo) {
+    const limitado = Array.from(campo.value).slice(0, MAX_PASSWORD_CHARACTERS).join('');
     if (limitado !== campo.value) {
         campo.value = limitado;
         campo.setSelectionRange(limitado.length, limitado.length);
     }
-    return bytes;
+    return Array.from(limitado).length;
 }
 
 // Compara con los nombres ya visibles en la tabla, excluyendo la cuenta editada.
@@ -403,7 +396,7 @@ function validarReset(mostrarErrores) {
                 }).join(', ') + '.');
     }
     const contador = document.getElementById('reset_password_contador');
-    if (contador) contador.textContent = new TextEncoder().encode(password).length + ' / ' + MAX_PASSWORD_BYTES + ' bytes';
+    if (contador) contador.textContent = Array.from(password).length + ' / ' + MAX_PASSWORD_CHARACTERS + ' caracteres';
 
     const passwordOk = validarCampoUsu('reset_password', reglasPendientes.length === 0,
         'Contraseña segura.', 'Completa los requisitos pendientes.', mostrarErrores);
@@ -458,9 +451,16 @@ function validarPinGlobal() {
 }
 
 // Revalida los tres modales en cada tecla de sus campos.
-['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm'].forEach(function (id) {
+['crear_usuario', 'crear_correo'].forEach(function (id) {
     const campo = document.getElementById(id);
     if (campo) campo.addEventListener('input', function () { validarAlta(false); });
+});
+['crear_password', 'crear_password_confirm'].forEach(function (id) {
+    const campo = document.getElementById(id);
+    if (campo) campo.addEventListener('input', function () {
+        limitarPasswordCaracteres(campo);
+        validarAlta(false);
+    });
 });
 ['crear_rol'].forEach(function (id) {
     const campo = document.getElementById(id);
@@ -477,7 +477,7 @@ function validarPinGlobal() {
 ['reset_password', 'reset_password_confirm'].forEach(function (id) {
     const campo = document.getElementById(id);
     if (campo) campo.addEventListener('input', function () {
-        limitarPasswordBytes(campo);
+        limitarPasswordCaracteres(campo);
         validarReset(false);
     });
 });

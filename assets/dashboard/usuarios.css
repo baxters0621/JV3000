@@ -393,23 +393,35 @@
         display:grid;
         gap:3px;
         margin:8px 0 0;
-        color:#64748b;
+        color:#334155;
         font-size:.82rem;
         line-height:1.45;
+    }
+    .modal-usuarios .password-requirement {
+        padding:3px 8px;
+        border-radius:6px;
+        background:#f1f5f9;
+        font-weight:700;
     }
     .modal-usuarios .password-requirement::before {
         content:"○";
         display:inline-block;
         width:1.35rem;
-        color:#64748b;
+        color:#475569;
         font-weight:700;
     }
     .modal-usuarios .password-requirement.cumplido {
         color:#166534;
+        background:#dcfce7;
     }
     .modal-usuarios .password-requirement.cumplido::before {
         content:"✓";
         color:#15803d;
+    }
+    .modal-usuarios .password-character-count {
+        margin-top:8px;
+        color:#334155;
+        font-weight:700;
     }
     .modal-usuarios .alert-lectura {
         padding:16px 18px;

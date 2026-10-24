@@ -63,19 +63,29 @@
         }
 
         function validarPassRec() {
-            var password = document.getElementById('rec-pass').value;
-            var passwordConfirmation = document.getElementById('rec-pass2').value;
+            var passwordInput = document.getElementById('rec-pass');
+            var confirmationInput = document.getElementById('rec-pass2');
+            [passwordInput, confirmationInput].forEach(function(input) {
+                var limitada = Array.from(input.value).slice(0, 18).join('');
+                if (limitada !== input.value) {
+                    input.value = limitada;
+                    input.setSelectionRange(limitada.length, limitada.length);
+                }
+            });
+            var password = passwordInput.value;
+            var passwordConfirmation = confirmationInput.value;
             var changePasswordButton = document.getElementById('rec-btn-pass');
             var passwordMeter = document.getElementById('rec-meter');
             var passwordHint = document.getElementById('rec-pass-hint');
 
+            var passwordLength = Array.from(password).length;
             var passwordStrength = 0;
-            if (password.length >= 8) passwordStrength++;
+            if (passwordLength >= 8) passwordStrength++;
             if (/[a-z]/.test(password)) passwordStrength++;
             if (/[A-Z]/.test(password)) passwordStrength++;
             if (/[0-9]/.test(password)) passwordStrength++;
             if (/[\W_]/.test(password)) passwordStrength++;
-            if (password.length >= 12) passwordStrength++;
+            if (passwordLength >= 12) passwordStrength++;
 
             var strengthColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a', '#16a34a'];
             var strengthWidths = ['15%', '35%', '55%', '80%', '100%', '100%'];
@@ -84,16 +94,17 @@
             passwordMeter.style.width = password.length > 0 ? strengthWidths[strengthIndex] : '0%';
             passwordMeter.style.backgroundColor = strengthColors[strengthIndex];
 
-            var passwordIsValid = password.length >= 8 && passwordStrength >= 5;
+            var passwordIsValid = passwordLength >= 8 && passwordLength <= 18 && passwordStrength >= 5;
             var passwordsMatch = password.length > 0 && password === passwordConfirmation;
 
             if (password.length > 0 && passwordStrength < 5) {
                 var faltan = [];
-                if (password.length < 8) faltan.push('mínimo 8 caracteres');
+                if (passwordLength < 8) faltan.push('mínimo 8 caracteres');
                 if (!/[a-z]/.test(password)) faltan.push('1 minúscula');
                 if (!/[A-Z]/.test(password)) faltan.push('1 mayúscula');
                 if (!/[0-9]/.test(password)) faltan.push('1 número');
                 if (!/[\W_]/.test(password)) faltan.push('1 símbolo');
+                if (passwordLength > 18) faltan.push('máximo 18 caracteres');
                 passwordHint.textContent = 'Falta: ' + faltan.join(', ');
                 passwordHint.style.color = '#ef4444';
             } else if (passwordConfirmation.length > 0 && !passwordsMatch) {

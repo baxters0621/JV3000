@@ -22,6 +22,14 @@ setupEye('btnEyePass', 'iconEyePass', 'f-pass');
 setupEye('btnEyeR1', 'iconEyeR1', 'r-pass');
 setupEye('btnEyeR2', 'iconEyeR2', 'r-pass2');
 
+function limitarPasswordNueva(input) {
+    var limitada = Array.from(input.value).slice(0, 18).join('');
+    if (limitada !== input.value) {
+        input.value = limitada;
+        input.setSelectionRange(limitada.length, limitada.length);
+    }
+}
+
 // ==========================================
 // NORMALIZACIÓN — USERNAME
 // ==========================================
@@ -105,15 +113,16 @@ function validarReg() {
     // --- CONTRASEÑA — STRENGTH METER ---
     var meter = document.getElementById('r-meter');
     var passHint = document.getElementById('r-pass-hint');
-    var passDefault = 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número, 1 símbolo.';
+    var passDefault = 'De 8 a 18 caracteres, con mayúscula, minúscula, número y símbolo.';
+    var passwordLength = Array.from(password).length;
     var strength = 0;
     if (password.length > 0) {
-        if (password.length >= 8) strength++;
+        if (passwordLength >= 8) strength++;
         if (/[a-z]/.test(password)) strength++;
         if (/[A-Z]/.test(password)) strength++;
         if (/[0-9]/.test(password)) strength++;
         if (/[\W_]/.test(password)) strength++;
-        if (password.length >= 12) strength++;
+        if (passwordLength >= 12) strength++;
 
         var colors = ['#dc2626', '#f97316', '#eab308', '#22c55e', '#16a34a', '#16a34a'];
         var widths = ['12%', '30%', '50%', '75%', '100%', '100%'];
@@ -131,7 +140,9 @@ function validarReg() {
         passHint.style.color = '';
         passHint.className = 'reg-hint';
     }
-    var passwordIsValid = password.length >= 8;
+    var passwordIsValid = passwordLength >= 8 && passwordLength <= 18
+        && /[a-z]/.test(password) && /[A-Z]/.test(password)
+        && /\d/.test(password) && /[\W_]/.test(password);
 
     // --- CONFIRMAR CONTRASEÑA ---
     var matchDefault = 'Debe coincidir con la contraseña anterior.';
@@ -155,7 +166,10 @@ function validarReg() {
 // disparaba validarReg(), así que los demás campos se quedaban sin revisar.
 ['r-email', 'r-pass', 'r-pass2'].forEach(function (id) {
     var campo = document.getElementById(id);
-    if (campo) campo.addEventListener('input', validarReg);
+    if (campo) campo.addEventListener('input', function() {
+        if (id === 'r-pass' || id === 'r-pass2') limitarPasswordNueva(campo);
+        validarReg();
+    });
 });
 
 // ==========================================

@@ -57,7 +57,7 @@ if ($password === '') {
 if (!validarPasswordFuerte($password)) {
     $faltantes = requisitosFaltantesPassword($password);
     echo 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper($faltantes) . ".\n";
-    echo "Mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo.\n";
+    echo "De 8 a 18 caracteres, con mayúscula, minúscula, número y símbolo.\n";
     exit(1);
 }
 

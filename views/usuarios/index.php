@@ -320,7 +320,7 @@
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_password"><i class="bi bi-key-fill" aria-hidden="true"></i> CONTRASEÑA TEMPORAL</label>
                                 <div class="password-field">
-                                    <input type="password" class="input-jv w-100" id="crear_password" autocomplete="new-password" placeholder="Contraseña temporal" aria-describedby="crear_password_guia" required>
+                                    <input type="password" class="input-jv w-100" id="crear_password" maxlength="36" autocomplete="new-password" placeholder="Contraseña temporal" aria-describedby="crear_password_guia" required>
                                     <button type="button" class="password-toggle" data-toggle-password data-password-label="la contraseña temporal" aria-label="Mostrar la contraseña temporal" aria-controls="crear_password" aria-pressed="false">
                                         <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
@@ -330,7 +330,7 @@
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_password_confirm"><i class="bi bi-key-fill" aria-hidden="true"></i> CONFIRMAR CONTRASEÑA</label>
                                 <div class="password-field">
-                                    <input type="password" class="input-jv w-100" id="crear_password_confirm" autocomplete="new-password" placeholder="Repite la contraseña" aria-describedby="crear_password_confirm_guia" required>
+                                    <input type="password" class="input-jv w-100" id="crear_password_confirm" maxlength="36" autocomplete="new-password" placeholder="Repite la contraseña" aria-describedby="crear_password_confirm_guia" required>
                                     <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="crear_password_confirm" aria-pressed="false">
                                         <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
@@ -380,7 +380,7 @@
                         <div class="col-md-6 modal-usuarios-field">
                             <label class="section-label" for="reset_password"><i class="bi bi-key-fill" aria-hidden="true"></i> Nueva contraseña</label>
                             <div class="password-field">
-                                <input type="password" class="input-jv w-100" id="reset_password" maxlength="72" autocomplete="new-password" placeholder="Escribe una contraseña" aria-describedby="reset_password_guia reset_password_estado reset_password_contador" required>
+                                <input type="password" class="input-jv w-100" id="reset_password" maxlength="36" autocomplete="new-password" placeholder="Escribe una contraseña" aria-describedby="reset_password_guia reset_password_estado reset_password_contador" required>
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar la nueva contraseña" aria-controls="reset_password" aria-pressed="false">
                                     <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
@@ -392,15 +392,15 @@
                                 <li class="password-requirement" id="reset_password_regla_numero">Un número</li>
                                 <li class="password-requirement" id="reset_password_regla_simbolo">Un símbolo</li>
                                 <li class="password-requirement" id="reset_password_regla_sin_saltos">Sin saltos de línea</li>
-                                <li class="password-requirement" id="reset_password_regla_maximo">Máximo 72 bytes</li>
+                                <li class="password-requirement" id="reset_password_regla_maximo">Máximo 18 caracteres</li>
                             </ul>
-                            <div class="form-text jv-form-text" id="reset_password_contador">0 / 72 bytes</div>
+                            <div class="form-text jv-form-text password-character-count" id="reset_password_contador">0 / 18 caracteres</div>
                             <span class="visually-hidden" id="reset_password_estado" role="status" aria-live="polite"></span>
                         </div>
                         <div class="col-md-6 modal-usuarios-field">
                             <label class="section-label" for="reset_password_confirm"><i class="bi bi-key-fill" aria-hidden="true"></i> Confirmar contraseña</label>
                             <div class="password-field">
-                                <input type="password" class="input-jv w-100" id="reset_password_confirm" maxlength="72" autocomplete="new-password" placeholder="Repite la contraseña" aria-describedby="reset_password_confirm_guia" required>
+                                <input type="password" class="input-jv w-100" id="reset_password_confirm" maxlength="36" autocomplete="new-password" placeholder="Repite la contraseña" aria-describedby="reset_password_confirm_guia" required>
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="reset_password_confirm" aria-pressed="false">
                                     <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
