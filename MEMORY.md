@@ -12,6 +12,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Interfaz del PIN pulida: ojos tachados por defecto, `.alert-lectura` en modales, ayuda como línea fija y flash que se auto-cierra a los 4 s.
 - Contraseñas: el modal de restablecimiento cuenta y limita a 72 bytes UTF-8 (límite de bcrypt), también en servidor; checklist vivo, confirmación vacía neutral y comparación/guardado sin recorte ni normalización.
 - Colaboradores: edición valida usuario/correo/duplicados/rol también en servidor; Administrador no se ofrece ni asigna a otros colaboradores.
+- Insignias de roles en Colaboradores: Administrador violeta, Operador de Carga verde y Operador de Ventas rojo.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
 - Tarjeta del PIN compartido (Colaboradores) rediseñada: cabecera violeta con pastilla de estado, botón (?) de 52 px que abre el modal #modalAyudaPin (el texto .pin-info vive ahí, ya no en la tarjeta), PIN vigente en panel centrado agrupado 3+3 vía `chunk_split` y formulario .pin-form centrado (letter-spacing .45em + padding-left .45em). La normalización/validación viven en usuarios.js sin cambios.
 
