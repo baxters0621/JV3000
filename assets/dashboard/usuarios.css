@@ -521,11 +521,22 @@
         font-size:1.5rem;
         letter-spacing:.45em;
         text-align:center;
-        font-weight:700;
+        font-weight:800;
+        /* Dígitos escritos en violeta vivo, color de marca del módulo */
+        color:#5b21b6;
         font-variant-numeric:tabular-nums;
         /* El letter-spacing agrega espacio tras el último dígito: compensa
            a la izquierda para que el texto quede visualmente centrado */
         padding-left:.45em;
+    }
+    /* El placeholder no hereda el espaciado grande: con .18em «Repite el
+       PIN» cabe completo y con color vivo se lee a la primera */
+    .pagina-usuarios .pin-form .input-jv::placeholder {
+        color:#475569;
+        font-weight:700;
+        font-size:1.1rem;
+        letter-spacing:.18em;
+        opacity:1;
     }
     .pagina-usuarios .pin-submit {
         min-width:220px;
