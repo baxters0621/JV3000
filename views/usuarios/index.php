@@ -392,9 +392,8 @@
                                 <li class="password-requirement" id="reset_password_regla_numero">Un número</li>
                                 <li class="password-requirement" id="reset_password_regla_simbolo">Un símbolo</li>
                                 <li class="password-requirement" id="reset_password_regla_sin_saltos">Sin saltos de línea</li>
-                                <li class="password-requirement" id="reset_password_regla_maximo">Máximo 18 caracteres</li>
                             </ul>
-                            <div class="form-text jv-form-text password-character-count" id="reset_password_contador">0 / 18 caracteres</div>
+                            <div class="form-text jv-form-text password-character-count" id="reset_password_contador">0 de 18 caracteres usados</div>
                             <span class="visually-hidden" id="reset_password_estado" role="status" aria-live="polite"></span>
                         </div>
                         <div class="col-md-6 modal-usuarios-field">

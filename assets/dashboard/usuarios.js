@@ -383,22 +383,24 @@ function validarReset(mostrarErrores) {
         if (elemento) elemento.classList.toggle('cumplido', requisitos[regla]);
     });
     const reglasPendientes = Object.keys(requisitos).filter(function (regla) {
-        return !requisitos[regla];
+        return regla !== 'maximo' && !requisitos[regla];
     });
+    const textosPendientes = reglasPendientes.map(function (regla) {
+        return document.getElementById('reset_password_regla_' + regla).textContent;
+    });
+    if (!requisitos.maximo) textosPendientes.push('Máximo 18 caracteres');
     const estadoRequisitos = document.getElementById('reset_password_estado');
     if (estadoRequisitos) {
         estadoRequisitos.textContent = password === ''
             ? ''
-            : (reglasPendientes.length === 0
+            : (textosPendientes.length === 0
                 ? 'Todos los requisitos se cumplen.'
-                : 'Pendientes: ' + reglasPendientes.map(function (regla) {
-                    return document.getElementById('reset_password_regla_' + regla).textContent;
-                }).join(', ') + '.');
+                : 'Pendientes: ' + textosPendientes.join(', ') + '.');
     }
     const contador = document.getElementById('reset_password_contador');
-    if (contador) contador.textContent = Array.from(password).length + ' / ' + MAX_PASSWORD_CHARACTERS + ' caracteres';
+    if (contador) contador.textContent = Array.from(password).length + ' de ' + MAX_PASSWORD_CHARACTERS + ' caracteres usados';
 
-    const passwordOk = validarCampoUsu('reset_password', reglasPendientes.length === 0,
+    const passwordOk = validarCampoUsu('reset_password', textosPendientes.length === 0,
         'Contraseña segura.', 'Completa los requisitos pendientes.', mostrarErrores);
     const mensajeErrorConfirmacion = password === ''
         ? 'Escribe primero la nueva contraseña.'

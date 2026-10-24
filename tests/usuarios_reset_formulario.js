@@ -7,13 +7,14 @@ const vista = fs.readFileSync(
     path.join(__dirname, '..', 'views', 'usuarios', 'index.php'),
     'utf8'
 );
-['longitud', 'minuscula', 'mayuscula', 'numero', 'simbolo', 'sin_saltos', 'maximo'].forEach((regla) => {
+['longitud', 'minuscula', 'mayuscula', 'numero', 'simbolo', 'sin_saltos'].forEach((regla) => {
     assert.match(vista, new RegExp(`id="reset_password_regla_${regla}"`));
 });
+assert.doesNotMatch(vista, /id="reset_password_regla_maximo"/);
+assert.match(vista, /id="reset_password_contador"[^>]*>0 de 18 caracteres usados</);
 assert.match(vista, /aria-describedby="reset_password_guia reset_password_estado reset_password_contador"/);
 assert.match(vista, /id="reset_password"[^>]*maxlength="36"/);
 assert.match(vista, /id="reset_password_confirm"[^>]*maxlength="36"/);
-assert.match(vista, /Máximo 18 caracteres/);
 assert.match(vista, /id="crear_password"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password_confirm"[^>]*maxlength="36"/);
 
@@ -91,8 +92,7 @@ function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
         mayuscula: 'Una letra mayúscula',
         numero: 'Un número',
         simbolo: 'Un símbolo',
-        sin_saltos: 'Sin saltos de línea',
-        maximo: 'Máximo 18 caracteres'
+        sin_saltos: 'Sin saltos de línea'
     };
     Object.entries(textosReglas).forEach(([regla, texto]) => {
         ids[`reset_password_regla_${regla}`] = crearElemento(`reset_password_regla_${regla}`);
@@ -186,7 +186,7 @@ assert.equal(
     18,
     'La nueva contraseña debe limitarse a 18 caracteres al escribir o pegar.'
 );
-assert.equal(entradaMuyLarga.ids.reset_password_contador.textContent, '18 / 18 caracteres');
+assert.equal(entradaMuyLarga.ids.reset_password_contador.textContent, '18 de 18 caracteres usados');
 
 const entradaUnicodeLarga = ejecutarEnvio('', 'aA1!' + 'ñ'.repeat(40));
 entradaUnicodeLarga.ids.reset_password.listeners.input({ type: 'input' });
@@ -230,6 +230,11 @@ assert.equal(validacionEnVivo.ids.reset_password_regla_minuscula.classList.conta
 assert.equal(validacionEnVivo.ids.reset_password_regla_mayuscula.classList.contains('cumplido'), false);
 assert.equal(validacionEnVivo.ids.reset_password_regla_simbolo.classList.contains('cumplido'), false);
 assert.match(validacionEnVivo.ids.reset_password_estado.textContent, /Una letra mayúscula/);
+
+const campoVacio = ejecutarEnvio('', '');
+campoVacio.ids.reset_password.listeners.input({ type: 'input' });
+assert.equal(campoVacio.ids.reset_password_contador.textContent, '0 de 18 caracteres usados');
+assert.equal(campoVacio.ids.reset_password_regla_longitud.classList.contains('cumplido'), false);
 
 const espaciosNoSonVacio = ejecutarEnvio('', '        ');
 assert.equal(espaciosNoSonVacio.ids.reset_password.classList.contains('is-invalid'), true);
