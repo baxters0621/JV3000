@@ -47,4 +47,4 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Próximos pasos
 
-- Cambiar el PIN provisional y hacer revisión visual en navegador cuando esté disponible.
+- Guía de Uso retirada de la app (menú/ruta/vista/assets) y manual externo eliminado por decisión del usuario (2026-10-24).

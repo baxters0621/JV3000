@@ -25,7 +25,7 @@ cambios quirúrgicos, siempre verificados y registrados.
   - `dashboard/` — panel tras el login · `login/` — login y recuperación de contraseña.
   - `db/jv3000_portable_v6.sql` — seed de instalación limpia · `backups/` — respaldos · `cache/`.
   - `tests/` — pilotos (8 PHP y 2 JS) · `tools/` — `validar.ps1` y `resetear_admin.php`.
-  - `docs/` — `BITACORA.md` (historial obligatorio), `README.md`, `MANUAL_USUARIO.md`.
+  - `docs/` — `BITACORA.md` (historial obligatorio) y `README.md`.
 
 ## Comandos
 

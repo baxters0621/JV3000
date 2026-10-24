@@ -175,14 +175,6 @@ $es_op_ventas = $id_rol === 3;
         </div>
         <?php endif; ?>
 
-        <!-- Guía de Uso (todos los roles) -->
-        <div class="nav-item nav-ram-guia <?php echo $mvc_activa('manual') ? 'active' : ''; ?>">
-            <a href="<?php echo $prefijo; ?>index.php?url=manual" class="nav-link">
-                <i class="bi bi-book"></i>
-                <span>Guía de Uso</span>
-            </a>
-        </div>
-
         <!-- Mi Perfil -->
         <div class="nav-item nav-ram-perfil <?php echo $mvc_activa('perfil') ? 'active' : ''; ?>">
             <a href="<?php echo $prefijo; ?>index.php?url=perfil" class="nav-link">
