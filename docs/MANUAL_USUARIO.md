@@ -36,7 +36,7 @@ Este manual explica, en orden, qué debe hacer un **Administrador**, un **Operad
 
 1. Abrir `login/login.php` y pulsar **REGISTRARSE**.
 2. Completar:
-   - **Usuario:** de 4 a 20 caracteres; debe comenzar con una letra y después puede incluir letras, números y guion bajo. Se guarda normalizado: `juan_perez` se muestra como `Juan_Perez`. No puede repetirse (ni con distintas mayúsculas).
+   - **Usuario:** de 4 a 20 caracteres; debe comenzar con una letra y después puede incluir letras de cualquier idioma, números y guion bajo, sin otros símbolos. Se guarda normalizado: `juan_perez` se muestra como `Juan_Perez`. No puede repetirse (ni con distintas mayúsculas).
    - **Correo:** válido, único y de máximo 100 caracteres.
    - **Contraseña:** de 8 a 18 caracteres, sin espacios, con mayúscula, minúscula, número y símbolo.
 3. Enviar. La cuenta queda en estado **PENDIENTE** hasta que el administrador la apruebe.

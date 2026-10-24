@@ -99,6 +99,10 @@ $datosAltaValidos = [
     'id_rol' => '2',
 ];
 $afirmar(validarNombreUsuario('Operador_25'), 'Un nombre que inicia con letra y continúa con números debe ser válido.');
+$afirmar(validarNombreUsuario('José_2026'), 'Debe aceptar letras latinas con tilde.');
+$afirmar(validarNombreUsuario('Жанна_42'), 'Debe aceptar letras de otros alfabetos.');
+$afirmar(normalizarUsuario('josé_2026') === 'José_2026', 'Debe normalizar correctamente mayúsculas con tilde.');
+$afirmar(!validarNombreUsuario('Saw_123*'), 'No debe aceptar símbolos en el nombre de usuario.');
 $afirmar(!validarNombreUsuario('123456'), 'Un nombre compuesto solo por números debe rechazarse.');
 $afirmar(!validarNombreUsuario('2Operador'), 'El nombre de usuario debe comenzar con una letra.');
 foreach (['usuario', 'correo', 'password', 'password_confirm', 'id_rol'] as $campo) {
@@ -178,6 +182,20 @@ $afirmar(
     $db->escrituras[0]['tabla'] === 'usuarios'
         && $db->escrituras[0]['datos']['password_check'] === generarPasswordCheck('Abc12345!'),
     'El alta válida debe guardar el usuario y verificar la contraseña exacta.'
+);
+
+$db->consultas = [];
+$db->escrituras = [];
+$db->usuarioDuplicado = null;
+$db->correoDuplicado = null;
+$datosAltaInternacional = $datosAltaValidos;
+$datosAltaInternacional['usuario'] = 'josé_2026';
+$datosAltaInternacional['correo'] = 'jose.internacional@jv3000.com';
+$resultado = $modelo->crear($datosAltaInternacional);
+$afirmar($resultado['ok'], 'El alta debe aceptar nombres de usuario con letras internacionales.');
+$afirmar(
+    $db->escrituras[0]['datos']['usuario'] === 'José_2026',
+    'El alta debe conservar y normalizar las letras internacionales.'
 );
 
 $db->consultas = [];

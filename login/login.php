@@ -100,10 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
         $new_pass = $password_entrada;
     }
 
-    if (isset($new_user) && strlen($new_user) > 20) {
+    if (isset($new_user) && mb_check_encoding($new_user, 'UTF-8') && mb_strlen($new_user, 'UTF-8') > 20) {
         $error = "USUARIO DEMASIADO LARGO (MAX 20 CARACTERES)";
     } elseif (isset($new_user) && !validarNombreUsuario($new_user)) {
-        $error = "USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO)";
+        $error = "USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO; SIN SÍMBOLOS)";
     } elseif (isset($new_user) && strlen($new_email) > 50) {
         $error = "CORREO DEMASIADO LARGO (MAX 50 CARACTERES)";
     } elseif (isset($new_user) && !filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     } else {
         $pass = $_POST['password'];
 
-        if (strlen($user_login) > 20) {
+        if (mb_strlen($user_login, 'UTF-8') > 20) {
             $error = "USUARIO DEMASIADO LARGO (MAX 20 CARACTERES)";
         } else {
             $login_exitoso = false;
@@ -277,7 +277,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
 
                     <div class="field-group">
                         <i class="field-icon bi bi-person-fill"></i>
-                        <input type="text" id="f-user" name="usuario" class="field-input" placeholder="Nombre de Usuario" required autofocus maxlength="20" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
+                        <input type="text" id="f-user" name="usuario" class="field-input" placeholder="Nombre de Usuario" required autofocus maxlength="40" <?php echo $segundos_restantes > 0 ? 'disabled' : ''; ?>>
                     </div>
 
                     <div class="field-group">
@@ -340,10 +340,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                             <label class="reg-label" for="r-user">NOMBRE DE USUARIO <span class="text-danger">*</span></label>
                             <div class="reg-field">
                                 <i class="reg-field-icon bi bi-at"></i>
-                                <input type="text" name="reg_usuario" id="r-user" class="reg-input" required maxlength="20" placeholder="Ej.: Ana_2026" autocomplete="username" aria-describedby="r-user-hint">
+                                <input type="text" name="reg_usuario" id="r-user" class="reg-input" required maxlength="40" placeholder="Ej.: Ana_2026" autocomplete="username" aria-describedby="r-user-hint">
                                 <span class="reg-field-status" id="r-user-status"></span>
                             </div>
-                            <small class="reg-hint" id="r-user-hint">Empieza con una letra; luego puedes usar letras, números y guion bajo (4 a 20 caracteres).</small>
+                            <small class="reg-hint" id="r-user-hint">Empieza con una letra; luego puedes usar letras de cualquier idioma, números y guion bajo (4 a 20 caracteres, sin otros símbolos).</small>
 
                             <label class="reg-label" for="r-email">CORREO ELECTRÓNICO <span class="text-danger">*</span></label>
                             <div class="reg-field">

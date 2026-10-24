@@ -12,7 +12,8 @@ Sin datos sensibles (claves, tokens, PIN).
 - Interfaz del PIN pulida: ojos tachados por defecto, `.alert-lectura` en modales, ayuda como línea fija y flash que se auto-cierra a los 4 s.
 - Contraseñas nuevas: entre 8 y 18 caracteres sin espacios, en creación, restablecimiento, recuperación y perfil. El cliente marca espacios en rojo, no los cuenta en el contador ni da por cumplidos requisitos; el servidor los rechaza. Se mantienen mínimo 8, mayúscula, minúscula, número y símbolo; bcrypt conserva su resguardo interno.
 - Colaboradores: edición valida usuario/correo/duplicados/rol también en servidor; Administrador no se ofrece ni asigna a otros colaboradores.
-- Alta de Colaboradores: usuario de 4–20 caracteres que empieza con letra, después letras/números/guion bajo; correo, contraseña/confirmación y rol se validan al escribir, enviar y en el servidor. La contraseña indica cuánto falta; el botón inicia desactivado y se activa solo con todos los campos correctos. El cuerpo del modal se desplaza y deja el pie de acciones visible.
+- Usuarios: nombres de 4–20 caracteres Unicode, empiezan con letra y luego admiten letras de cualquier idioma, números, marcas diacríticas y guion bajo; no admiten símbolos como `*`. Cliente, registro, perfil y servidor comparten la regla.
+- Alta de Colaboradores: correo, contraseña/confirmación y rol se validan al escribir, enviar y en el servidor. La contraseña indica cuánto falta; el botón inicia desactivado y se activa solo con todos los campos correctos. El cuerpo del modal se desplaza y deja el pie de acciones visible.
 - Insignias de roles en Colaboradores: Administrador violeta, Operador de Carga verde y Operador de Ventas rojo.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
 

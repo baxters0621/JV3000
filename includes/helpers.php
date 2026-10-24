@@ -579,38 +579,40 @@ if (!function_exists('generarPasswordCheck')) {
 
 if (!function_exists('normalizarUsuario')) {
     /**
-     * Normaliza un nombre de usuario a "Title_Case": primera letra de cada
-     * segmento en mayúscula y el resto en minúscula (ej: ADMINISTRADOR →
-     * Administrador, juan_perez → Juan_perez). Garantiza que un mismo nombre
-     * no exista con variantes de mayúsculas.
+     * Normaliza un nombre de usuario a "Title_Case", conservando letras
+     * Unicode y capitalizando el inicio y cada segmento separado por guion bajo.
      *
      * @param string $raw Nombre de usuario sin normalizar.
      * @return string Nombre de usuario normalizado.
      */
     function normalizarUsuario(string $raw): string
     {
-        $clean = strtolower(trim($raw));
+        $clean = trim($raw);
+        if (!mb_check_encoding($clean, 'UTF-8')) {
+            return strtolower($clean);
+        }
+        $clean = mb_strtolower($clean, 'UTF-8');
         return preg_replace_callback(
-            '/(^|_)([a-z])/',
+            '/(^|_)(\p{L})/u',
             function ($m) {
-                return ($m[1] === '_' ? '_' : '') . strtoupper($m[2]);
+                return ($m[1] === '_' ? '_' : '') . mb_strtoupper($m[2], 'UTF-8');
             },
             $clean
-        );
+        ) ?? $clean;
     }
 }
 
 if (!function_exists('validarNombreUsuario')) {
     /**
-     * Valida un nombre de usuario: empieza con letra y admite letras,
-     * números y guion bajo hasta completar entre 4 y 20 caracteres.
+     * Valida un nombre de usuario: empieza con una letra Unicode y admite
+     * letras, marcas diacríticas, números y guion bajo (4 a 20 caracteres).
      *
      * @param string $usuario Nombre ya normalizado.
      * @return bool true si respeta el formato permitido.
      */
     function validarNombreUsuario(string $usuario): bool
     {
-        return preg_match('/^[A-Za-z][A-Za-z0-9_]{3,19}$/D', $usuario) === 1;
+        return preg_match('/^[\p{L}][\p{L}\p{N}\p{M}_]{3,19}$/uD', $usuario) === 1;
     }
 }
 

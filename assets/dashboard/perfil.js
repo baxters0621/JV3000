@@ -45,7 +45,8 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
     if (fUser) {
         fUser.addEventListener('input', function() {
             var raw = fUser.value;
-            var norm = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').slice(0, 20);
+            var norm = Array.from(raw.toLowerCase().replace(/\s+/g, '_').replace(/[^\p{L}\p{N}\p{M}_]/gu, ''))
+                .slice(0, 20).join('');
             if (raw !== norm) fUser.value = norm;
         });
     }
@@ -55,10 +56,10 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
 
         if (fUser) {
             var u = fUser.value.trim();
-            if (!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(u)) {
+            if (!/^[\p{L}][\p{L}\p{N}\p{M}_]{3,19}$/u.test(u)) {
                 Swal.fire({
                     title: 'Usuario inválido',
-                    text: 'Debe comenzar con una letra y tener de 4 a 20 caracteres; después puedes usar letras, números y guion bajo.',
+                    text: 'Debe comenzar con una letra y tener de 4 a 20 caracteres; después puedes usar letras de cualquier idioma, números y guion bajo, sin otros símbolos.',
                     icon: 'error',
                     confirmButtonColor: '#DC2626'
                 });

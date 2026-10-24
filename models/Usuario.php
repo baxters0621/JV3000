@@ -116,7 +116,7 @@ class Usuario extends Model
         $idRol = (int)$rolIngresado;
 
         if (!validarNombreUsuario($usuario)) {
-            return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];
+            return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO; SIN SÍMBOLOS).'];
         }
         if ($correo === '' || strlen($correo) > 100 || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
             return ['ok' => false, 'mensaje' => 'CORREO INVÁLIDO.'];
@@ -215,7 +215,7 @@ class Usuario extends Model
         }
 
         if (!validarNombreUsuario($usuario)) {
-            return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];
+            return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO; SIN SÍMBOLOS).'];
         }
 
         // El nombre de usuario debe ser único, sin distinguir mayúsculas.
@@ -387,7 +387,7 @@ class Usuario extends Model
 
         // Nombre
         if (!validarNombreUsuario($usuario)) {
-            $errores[] = 'NOMBRE: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).';
+            $errores[] = 'NOMBRE: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO; SIN SÍMBOLOS).';
         }
         $dup = $this->db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) AND id_usuario != ?", [$usuario, $id]);
         if ($dup) $errores[] = 'YA EXISTE UN USUARIO CON ESE NOMBRE.';

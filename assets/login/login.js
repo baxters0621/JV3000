@@ -38,7 +38,7 @@ if (rUser) {
     rUser.addEventListener('input', function() {
         var pos = this.selectionStart;
         var raw = this.value;
-        var normalized = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        var normalized = raw.toLowerCase().replace(/\s+/g, '_').replace(/[^\p{L}\p{N}\p{M}_]/gu, '');
         if (raw !== normalized) {
             this.value = normalized;
             this.setSelectionRange(normalized.length, normalized.length);
@@ -80,23 +80,26 @@ function setFieldState(inputId, statusId, hintId, state, message) {
 
 function validarReg() {
     var username  = document.getElementById('r-user').value.trim();
+    var usernameLength = Array.from(username).length;
     var email     = document.getElementById('r-email').value.trim();
     var password  = document.getElementById('r-pass').value;
     var pass2     = document.getElementById('r-pass2').value;
     var btn       = document.getElementById('btn-reg');
 
     // --- USUARIO ---
-    var userDefault = 'Empieza con una letra; luego usa letras, números y guion bajo (4 a 20 caracteres).';
-    if (username.length === 0) {
+    var userDefault = 'Empieza con una letra; luego usa letras de cualquier idioma, números y guion bajo (4 a 20 caracteres, sin otros símbolos).';
+    if (usernameLength === 0) {
         setFieldState('r-user', 'r-user-status', 'r-user-hint', 'neutral', userDefault);
-    } else if (username.length < 4) {
-        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Faltan ' + (4 - username.length) + ' caracteres (mínimo 4).');
-    } else if (!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username)) {
-        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Debe comenzar con una letra; después usa letras, números o guion bajo.');
+    } else if (usernameLength < 4) {
+        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Faltan ' + (4 - usernameLength) + ' caracteres (mínimo 4).');
+    } else if (usernameLength > 20) {
+        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'El nombre de usuario no puede superar 20 caracteres.');
+    } else if (!/^[\p{L}][\p{L}\p{N}\p{M}_]{3,19}$/u.test(username)) {
+        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Debe comenzar con una letra; después usa letras de cualquier idioma, números o guion bajo, sin otros símbolos.');
     } else {
         setFieldState('r-user', 'r-user-status', 'r-user-hint', 'valid', 'Nombre de usuario válido.');
     }
-    var usernameIsValid = /^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username);
+    var usernameIsValid = /^[\p{L}][\p{L}\p{N}\p{M}_]{3,19}$/u.test(username);
 
     // --- CORREO ---
     var emailDefault = 'Formato válido de correo electrónico.';

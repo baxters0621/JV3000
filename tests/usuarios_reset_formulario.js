@@ -20,9 +20,9 @@ assert.match(vista, /id="crear_password"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password_confirm"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password_guia"[^>]*>[^<]*sin espacios/);
 assert.match(vista, /id="modalCrear"[\s\S]*class="modal-body modal-usuarios-body"/);
-assert.match(vista, /id="crear_usuario"[^>]*autocomplete="username"/);
-assert.match(vista, /id="crear_usuario"[^>]*placeholder="Ej\.: Ana_2026"/);
-assert.match(vista, /id="crear_usuario_guia"[^>]*>[^<]*Debe comenzar con una letra/);
+assert.match(vista, /id="crear_usuario"[^>]*maxlength="40"[^>]*autocomplete="username"/);
+assert.match(vista, /id="crear_usuario"[^>]*placeholder="Ej\.: José_2026"/);
+assert.match(vista, /id="crear_usuario_guia"[^>]*>[^<]*letras de cualquier idioma/);
 assert.match(vista, /id="modalCrear"[\s\S]*modal-dialog-scrollable/);
 assert.match(vista, /id="btnCrear"[^>]*disabled/);
 assert.doesNotMatch(vista, /Nuevo correo electrónico alternativo|Crea un correo electrónico aleatorio que se reenvía/);
@@ -44,10 +44,11 @@ const registro = fs.readFileSync(path.join(__dirname, '..', 'login', 'login.php'
 assert.match(registro, /id="r-pass"[^>]*maxlength="36"/);
 assert.match(registro, /id="r-pass2"[^>]*maxlength="36"/);
 assert.match(registro, /id="r-user"[^>]*autocomplete="username"/);
-assert.match(registro, /id="r-user-hint"[^>]*>[^<]*Empieza con una letra/);
+assert.match(registro, /id="r-user"[^>]*maxlength="40"/);
+assert.match(registro, /id="r-user-hint"[^>]*>[^<]*letras de cualquier idioma/);
 assert.match(
     fs.readFileSync(path.join(__dirname, '..', 'assets', 'login', 'login.js'), 'utf8'),
-    /\^\[a-zA-Z\]\[a-zA-Z0-9_\]\{3,19\}\$/
+    /\^\[\\p\{L\}\]\[\\p\{L\}\\p\{N\}\\p\{M\}_\]\{3,19\}\$\/u/
 );
 
 const recuperacion = fs.readFileSync(path.join(__dirname, '..', 'login', 'recuperar.php'), 'utf8');
@@ -57,10 +58,11 @@ assert.match(recuperacion, /id="rec-pass2"[^>]*maxlength="36"/);
 const perfil = fs.readFileSync(path.join(__dirname, '..', 'views', 'perfil', 'index.php'), 'utf8');
 assert.match(perfil, /id="perfil_password_nueva"[^>]*maxlength="36"/);
 assert.match(perfil, /id="perfil_password_confirm"[^>]*maxlength="36"/);
-assert.match(perfil, /id="perfil_usuario_guia"[^>]*>Debe comenzar con una letra/);
+assert.match(perfil, /id="perfil_usuario"[^>]*maxlength="40"/);
+assert.match(perfil, /id="perfil_usuario_guia"[^>]*>Debe comenzar con una letra; luego admite letras de cualquier idioma/);
 assert.match(
     fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'perfil.js'), 'utf8'),
-    /!\/\^\[a-zA-Z\]\[a-zA-Z0-9_\]\{3,19\}\$\/\.test\(u\)/
+    /!\/\^\[\\p\{L\}\]\[\\p\{L\}\\p\{N\}\\p\{M\}_\]\{3,19\}\$\/u\.test\(u\)/
 );
 const estilos = fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.css'), 'utf8');
 assert.match(estilos, /\.modal-usuarios \.password-requirement \{[^}]*font-weight:700/s);
@@ -280,6 +282,27 @@ assert.deepEqual(
 const altaVacia = ejecutarAlta({});
 assert.equal(altaVacia.ids.btnCrear.disabled, true);
 assert.equal(altaVacia.envio, null);
+
+const altaUsuarioInternacional = ejecutarAlta({
+    usuario: 'josé_2026',
+    correo: 'jose.internacional@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '2'
+});
+assert.ok(altaUsuarioInternacional.envio);
+assert.equal(altaUsuarioInternacional.envio.params.usuario, 'José_2026');
+assert.equal(altaUsuarioInternacional.ids.crear_usuario.classList.contains('is-valid'), true);
+
+const altaUsuarioConSimbolo = ejecutarAlta({
+    usuario: 'Saw_123*',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '2'
+});
+assert.equal(altaUsuarioConSimbolo.envio, null);
+assert.equal(altaUsuarioConSimbolo.ids.crear_usuario.classList.contains('is-invalid'), true);
 
 const altaPasswordDeSieteCaracteres = ejecutarAlta({
     usuario: 'Ana_2026',
