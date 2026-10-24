@@ -75,6 +75,24 @@ $datosBase = [
 
 $db->consultas = [];
 $db->escrituras = [];
+$resultado = $modelo->crear([
+    'usuario' => 'Operador',
+    'correo' => 'operador@jv3000.com',
+    'password' => 'Abc12345!',
+    'password_confirm' => 'Abc12345!',
+    'id_rol' => '1',
+]);
+$afirmar(!$resultado['ok'], 'El alta de colaboradores no debe aceptar el rol Administrador.');
+$afirmar($db->consultas === [] && $db->escrituras === [], 'El alta con rol Administrador debe rechazarse antes de consultar o escribir.');
+
+$db->consultas = [];
+$db->escrituras = [];
+$resultado = $modelo->aprobar(25, 1, 1);
+$afirmar(!$resultado['ok'], 'La aprobación de cuentas no debe aceptar el rol Administrador.');
+$afirmar($db->consultas === [] && $db->escrituras === [], 'La aprobación con rol Administrador debe rechazarse antes de consultar o escribir.');
+
+$db->consultas = [];
+$db->escrituras = [];
 $resultado = $modelo->editar(array_merge($datosBase, ['id_usuario' => ['25']]), 1);
 $afirmar(!$resultado['ok'], 'El identificador no debe aceptar valores compuestos.');
 $afirmar($db->consultas === [] && $db->escrituras === [], 'Un identificador mal formado no debe consultar ni escribir.');
@@ -90,6 +108,23 @@ $db->escrituras = [];
 $resultado = $modelo->editar(array_merge($datosBase, ['id_rol' => '99']), 1);
 $afirmar(!$resultado['ok'], 'Debe rechazarse un rol fuera de los roles permitidos.');
 $afirmar($db->escrituras === [], 'Un rol inválido no debe actualizar la cuenta.');
+
+$db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo'];
+$db->usuarioDuplicado = null;
+$db->correoDuplicado = null;
+$db->escrituras = [];
+$resultado = $modelo->editar(array_merge($datosBase, ['id_rol' => '1']), 1);
+$afirmar(!$resultado['ok'], 'No debe poder asignarse el rol de Administrador a otro colaborador.');
+$afirmar($db->escrituras === [], 'Una asignación del rol Administrador no debe actualizar la cuenta.');
+
+$db->usuarioActual = ['id_rol' => 1, 'status' => 'Activo'];
+$db->escrituras = [];
+$resultado = $modelo->editar(array_merge($datosBase, ['id_usuario' => 1, 'id_rol' => '2']), 1);
+$afirmar($resultado['ok'], 'La cuenta Administrador debe poder conservar su propio rol.');
+$afirmar(
+    $db->escrituras[0]['params'][2] === 1,
+    'La cuenta Administrador debe conservar el rol actual aunque el POST envíe otro rol.'
+);
 
 $db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo'];
 $db->usuarioDuplicado = null;

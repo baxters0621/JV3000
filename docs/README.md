@@ -139,7 +139,9 @@ El menú lateral sigue las fases reales de trabajo. Este es el procedimiento est
 ## Validación de formularios de Colaboradores
 
 `tests/usuarios_validacion_piloto.php` comprueba en aislamiento las reglas del
-servidor para nombre, correo, rol y restablecimiento de contraseña.
+servidor para nombre, correo, rol único de Administrador y restablecimiento de
+contraseña; los colaboradores solo pueden recibir los roles de Operador de
+Carga o de Ventas.
 `node tests/usuarios_reset_formulario.js` verifica que el modal envíe la acción,
 el identificador, ambas contraseñas y el token CSRF, y que bloquee una
 confirmación distinta.

@@ -279,11 +279,11 @@
                             <label class="section-label" for="edit_rol"><i class="bi bi-shield-fill-check" aria-hidden="true"></i> Rol del colaborador</label>
                             <select class="input-jv w-100" id="edit_rol" aria-describedby="edit_rol_guia" required>
                                 <option value="">Selecciona un rol</option>
-                                <?php foreach ($roles_lista as $role): ?>
+                                <?php foreach ($roles_lista as $role): if (in_array((int)$role['id_rol'], [2, 3], true)): ?>
                                     <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
-                                <?php endforeach; ?>
+                                <?php endif; endforeach; ?>
                             </select>
-                            <div class="form-text jv-form-text" id="edit_rol_guia" aria-live="polite">Define los permisos que tendrá dentro del sistema.</div>
+                            <div class="form-text jv-form-text" id="edit_rol_guia" aria-live="polite">Solo se puede asignar Operador de Carga o de Ventas. Administrador es un rol único.</div>
                         </div>
                     </div>
                 </div>

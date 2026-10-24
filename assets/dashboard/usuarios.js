@@ -220,7 +220,7 @@ const TEXTO_GUIA_USU = {
     crear_rol: 'Solo se pueden crear Operadores de Carga y de Ventas.',
     edit_usuario: 'De 4 a 20 letras, números o guiones bajos.',
     edit_correo: 'Correo válido y no asociado a otra cuenta.',
-    edit_rol: 'Define los permisos que tendrá dentro del sistema.',
+    edit_rol: 'Solo se puede asignar Operador de Carga o de Ventas. Administrador es un rol único.',
     reset_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
     reset_password_confirm: 'Debe coincidir con la nueva contraseña.',
     pin_emergencia_global: '6 dígitos, sin letras.',
@@ -334,7 +334,7 @@ function validarEdicion(mostrarErrores) {
             ? 'Ese correo ya está asociado a otro colaborador.'
             : (correo.length > 100 ? 'El correo no puede superar 100 caracteres.' : 'Escribe un correo electrónico válido.'),
         mostrarErrores);
-    const rolPermitido = ['1', '2', '3'].includes(rol)
+    const rolPermitido = ['2', '3'].includes(rol)
         && Array.from(document.getElementById('edit_rol').options).some(function (opcion) {
             return opcion.value === rol && !opcion.disabled;
         });

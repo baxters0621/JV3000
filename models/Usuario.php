@@ -191,8 +191,9 @@ class Usuario extends Model
             $status = $actual['status'];
         }
 
-        if ($idRolEntrada === false || !in_array($idRolEntrada, [1, 2, 3], true)) {
-            return ['ok' => false, 'mensaje' => 'SELECCIONA UN ROL VÁLIDO PARA EL COLABORADOR.'];
+        $rolesPermitidos = $id === $idPropio ? [1, 2, 3] : [2, 3];
+        if ($idRolEntrada === false || !in_array($idRolEntrada, $rolesPermitidos, true)) {
+            return ['ok' => false, 'mensaje' => 'SOLO SE PUEDE ASIGNAR EL ROL DE OPERADOR DE CARGA O DE VENTAS.'];
         }
         $idRol = $idRolEntrada;
 

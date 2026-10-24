@@ -10,7 +10,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - 9 módulos a HTTP 200 con sesión; tests en verde: `pin_global_piloto` (56 aserciones), `flash_auto_cierre`, `salidas_captura_duplicados`.
 - PIN de emergencia global fijado por la interfaz y probado E2E (recuperación completa y bloqueo a los 3 intentos); el valor lo cambia el administrador desde Colaboradores.
 - Interfaz del PIN pulida: ojos tachados por defecto, `.alert-lectura` en modales, ayuda como línea fija y flash que se auto-cierra a los 4 s.
-- Colaboradores: modales de edición y restablecimiento refinados con jerarquía visual, responsive y mensajes accesibles; la edición valida usuario/correo/duplicados/rol en cliente y servidor, y el restablecimiento ya envía la acción y los campos esperados por el controlador. La última pasada compactó el espacio vertical y aclaró el estado deshabilitado del botón.
+- Colaboradores: modales de edición y restablecimiento refinados con jerarquía visual, responsive y mensajes accesibles; la edición valida usuario/correo/duplicados/rol en cliente y servidor, Administrador no se ofrece ni asigna a otros colaboradores, y el restablecimiento envía la acción y campos esperados. La última pasada compactó el espacio vertical y aclaró el estado deshabilitado.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
 - Tarjeta del PIN compartido (Colaboradores) rediseñada: cabecera violeta con pastilla de estado, botón (?) de 52 px que abre el modal #modalAyudaPin (el texto .pin-info vive ahí, ya no en la tarjeta), PIN vigente en panel centrado agrupado 3+3 vía `chunk_split` y formulario .pin-form centrado (letter-spacing .45em + padding-left .45em). La normalización/validación viven en usuarios.js sin cambios.
 
@@ -21,6 +21,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Ojos tachados por defecto en todos los campos de contraseña/PIN: el icono indica el estado actual, no la acción.
 - CSS y JS por módulo, sin globalizar (decisión explícita del usuario).
 - Edición de colaborador valida los datos también en el servidor; los avisos por campo del cliente mejoran la experiencia, pero nunca sustituyen validación y unicidad en la base.
+- El rol Administrador es único: solo la cuenta principal conserva ese rol; creación, aprobación y edición de colaboradores solo asignan Operador de Carga o de Ventas.
 - Pregunta/respuesta de seguridad retirada de los formularios; columnas por legado, no usar.
 - `MEMORY.md` guarda solo estado y decisiones; el historial lineal sigue siendo `docs/BITACORA.md`.
 
