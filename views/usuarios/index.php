@@ -380,12 +380,20 @@
                         <div class="col-md-6 modal-usuarios-field">
                             <label class="section-label" for="reset_password"><i class="bi bi-key-fill" aria-hidden="true"></i> Nueva contraseña</label>
                             <div class="password-field">
-                                <input type="password" class="input-jv w-100" id="reset_password" autocomplete="new-password" placeholder="Escribe una contraseña" aria-describedby="reset_password_guia" required>
+                                <input type="password" class="input-jv w-100" id="reset_password" autocomplete="new-password" placeholder="Escribe una contraseña" aria-describedby="reset_password_guia reset_password_estado" required>
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar la nueva contraseña" aria-controls="reset_password" aria-pressed="false">
                                     <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
                             </div>
-                            <div class="form-text jv-form-text" id="reset_password_guia" aria-live="polite">Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.</div>
+                            <ul class="password-requirements list-unstyled" id="reset_password_guia" aria-label="Requisitos de la contraseña">
+                                <li class="password-requirement" id="reset_password_regla_longitud">8 caracteres como mínimo</li>
+                                <li class="password-requirement" id="reset_password_regla_minuscula">Una letra minúscula</li>
+                                <li class="password-requirement" id="reset_password_regla_mayuscula">Una letra mayúscula</li>
+                                <li class="password-requirement" id="reset_password_regla_numero">Un número</li>
+                                <li class="password-requirement" id="reset_password_regla_simbolo">Un símbolo</li>
+                                <li class="password-requirement" id="reset_password_regla_sin_saltos">Sin saltos de línea</li>
+                            </ul>
+                            <span class="visually-hidden" id="reset_password_estado" role="status" aria-live="polite"></span>
                         </div>
                         <div class="col-md-6 modal-usuarios-field">
                             <label class="section-label" for="reset_password_confirm"><i class="bi bi-key-fill" aria-hidden="true"></i> Confirmar contraseña</label>
@@ -395,7 +403,7 @@
                                     <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
                             </div>
-                            <div class="form-text jv-form-text" id="reset_password_confirm_guia" aria-live="polite">Debe coincidir con la nueva contraseña.</div>
+                            <div class="form-text jv-form-text" id="reset_password_confirm_guia" aria-live="polite">Repite la nueva contraseña.</div>
                         </div>
                     </div>
                 </div>

@@ -389,6 +389,28 @@
         font-size:.84rem;
         line-height:1.5;
     }
+    .modal-usuarios .password-requirements {
+        display:grid;
+        gap:3px;
+        margin:8px 0 0;
+        color:#64748b;
+        font-size:.82rem;
+        line-height:1.45;
+    }
+    .modal-usuarios .password-requirement::before {
+        content:"○";
+        display:inline-block;
+        width:1.35rem;
+        color:#64748b;
+        font-weight:700;
+    }
+    .modal-usuarios .password-requirement.cumplido {
+        color:#166534;
+    }
+    .modal-usuarios .password-requirement.cumplido::before {
+        content:"✓";
+        color:#15803d;
+    }
     .modal-usuarios .alert-lectura {
         padding:16px 18px;
         border-radius:12px;

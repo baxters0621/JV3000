@@ -221,8 +221,7 @@ const TEXTO_GUIA_USU = {
     edit_usuario: 'De 4 a 20 letras, números o guiones bajos.',
     edit_correo: 'Correo válido y no asociado a otra cuenta.',
     edit_rol: 'Solo se puede asignar Operador de Carga o de Ventas. Administrador es un rol único.',
-    reset_password: 'Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.',
-    reset_password_confirm: 'Debe coincidir con la nueva contraseña.',
+    reset_password_confirm: 'Repite la nueva contraseña.',
     pin_emergencia_global: '6 dígitos, sin letras.',
     pin_emergencia_global_confirm: 'Repite el mismo PIN.'
 };
@@ -237,22 +236,24 @@ function marcarCampoUsu(campoId, estado, mensaje) {
     input.removeAttribute('aria-invalid');
     if (guia) guia.classList.remove('guia-ok', 'guia-err');
 
+    const guiaEsLista = campoId === 'reset_password';
     if (estado === 'ok') {
         input.classList.add('is-valid');
         input.setAttribute('aria-invalid', 'false');
-        if (guia) { guia.classList.add('guia-ok'); if (mensaje) guia.textContent = mensaje; }
+        if (guia && !guiaEsLista) { guia.classList.add('guia-ok'); if (mensaje) guia.textContent = mensaje; }
     } else if (estado === 'err') {
         input.classList.add('is-invalid');
         input.setAttribute('aria-invalid', 'true');
-        if (guia) { guia.classList.add('guia-err'); if (mensaje) guia.textContent = mensaje; }
-    } else if (guia) {
+        if (guia && !guiaEsLista) { guia.classList.add('guia-err'); if (mensaje) guia.textContent = mensaje; }
+    } else if (guia && !guiaEsLista) {
         guia.textContent = TEXTO_GUIA_USU[campoId] || '';
     }
 }
 
 // Un campo vacío queda neutro (sin color) pero con su texto guía.
 function validarCampoUsu(campoId, valorOk, mensajeOk, mensajeErr, mostrarVacio) {
-    const vacio = document.getElementById(campoId).value.trim() === '';
+    const input = document.getElementById(campoId);
+    const vacio = input.type === 'password' ? input.value === '' : input.value.trim() === '';
     if (vacio && !mostrarVacio) marcarCampoUsu(campoId, '', '');
     else marcarCampoUsu(campoId, valorOk ? 'ok' : 'err', valorOk ? mensajeOk : mensajeErr);
     return !vacio && valorOk;
@@ -262,9 +263,19 @@ function correoValidoUsu(correo) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
 }
 
+function requisitosPasswordUsu(password) {
+    return {
+        longitud: new TextEncoder().encode(password).length >= 8,
+        minuscula: /[a-z]/.test(password),
+        mayuscula: /[A-Z]/.test(password),
+        numero: /\d/.test(password),
+        simbolo: /[\W_]/.test(password),
+        sin_saltos: !/[\r\n]/.test(password)
+    };
+}
+
 function passwordSeguraUsu(password) {
-    return password.length >= 8 && /[a-z]/.test(password) && /[A-Z]/.test(password)
-        && /\d/.test(password) && /[\W_]/.test(password);
+    return Object.values(requisitosPasswordUsu(password)).every(Boolean);
 }
 
 // Compara con los nombres ya visibles en la tabla, excluyendo la cuenta editada.
@@ -353,12 +364,37 @@ function validarReset(mostrarErrores) {
     if (!campoPassword) return false;
     const password = campoPassword.value;
     const confirmar = document.getElementById('reset_password_confirm').value;
+    const requisitos = requisitosPasswordUsu(password);
+    Object.keys(requisitos).forEach(function (regla) {
+        const elemento = document.getElementById('reset_password_regla_' + regla);
+        if (elemento) elemento.classList.toggle('cumplido', requisitos[regla]);
+    });
+    const reglasPendientes = Object.keys(requisitos).filter(function (regla) {
+        return !requisitos[regla];
+    });
+    const estadoRequisitos = document.getElementById('reset_password_estado');
+    if (estadoRequisitos) {
+        estadoRequisitos.textContent = password === ''
+            ? ''
+            : (reglasPendientes.length === 0
+                ? 'Todos los requisitos se cumplen.'
+                : 'Pendientes: ' + reglasPendientes.map(function (regla) {
+                    return document.getElementById('reset_password_regla_' + regla).textContent;
+                }).join(', ') + '.');
+    }
 
-    const passwordOk = validarCampoUsu('reset_password', passwordSeguraUsu(password),
-        'Contraseña segura.', 'Usa mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.',
-        mostrarErrores);
-    const confirmarOk = validarCampoUsu('reset_password_confirm', password !== '' && password === confirmar,
-        'Las contraseñas coinciden.', 'Las contraseñas no coinciden.', mostrarErrores);
+    const passwordOk = validarCampoUsu('reset_password', reglasPendientes.length === 0,
+        'Contraseña segura.', 'Completa los requisitos pendientes.', mostrarErrores);
+    const mensajeErrorConfirmacion = password === ''
+        ? 'Escribe primero la nueva contraseña.'
+        : (mostrarErrores ? 'Confirma la nueva contraseña.' : 'Las contraseñas no coinciden.');
+    const confirmarOk = validarCampoUsu(
+        'reset_password_confirm',
+        password !== '' && password === confirmar,
+        'Las contraseñas coinciden.',
+        mensajeErrorConfirmacion,
+        mostrarErrores
+    );
 
     const todoOk = passwordOk && confirmarOk;
     const boton = document.getElementById('btnResetPassword');
@@ -402,23 +438,23 @@ function validarPinGlobal() {
 // Revalida los tres modales en cada tecla de sus campos.
 ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm'].forEach(function (id) {
     const campo = document.getElementById(id);
-    if (campo) campo.addEventListener('input', validarAlta);
+    if (campo) campo.addEventListener('input', function () { validarAlta(false); });
 });
 ['crear_rol'].forEach(function (id) {
     const campo = document.getElementById(id);
-    if (campo) campo.addEventListener('change', validarAlta);
+    if (campo) campo.addEventListener('change', function () { validarAlta(false); });
 });
 ['edit_usuario', 'edit_correo'].forEach(function (id) {
     const campo = document.getElementById(id);
-    if (campo) campo.addEventListener('input', validarEdicion);
+    if (campo) campo.addEventListener('input', function () { validarEdicion(false); });
 });
 ['edit_rol'].forEach(function (id) {
     const campo = document.getElementById(id);
-    if (campo) campo.addEventListener('change', validarEdicion);
+    if (campo) campo.addEventListener('change', function () { validarEdicion(false); });
 });
 ['reset_password', 'reset_password_confirm'].forEach(function (id) {
     const campo = document.getElementById(id);
-    if (campo) campo.addEventListener('input', validarReset);
+    if (campo) campo.addEventListener('input', function () { validarReset(false); });
 });
 
 // Abre el modal de alta con el formulario limpio.

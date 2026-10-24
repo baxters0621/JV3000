@@ -188,4 +188,27 @@ $resultado = $modelo->resetearPassword(25, 'debil', 'debil');
 $afirmar(!$resultado['ok'], 'El restablecimiento debe rechazar contraseñas débiles.');
 $afirmar($db->escrituras === [], 'Una contraseña débil no debe actualizar la cuenta.');
 
+$passwordConSalto = "ClaveValida1!\n";
+$db->escrituras = [];
+$resultado = $modelo->resetearPassword(25, $passwordConSalto, $passwordConSalto);
+$afirmar(!$resultado['ok'], 'El restablecimiento debe rechazar contraseñas con saltos de línea.');
+$afirmar(
+    strpos($resultado['mensaje'], 'sin saltos de línea') !== false,
+    'La respuesta debe identificar el requisito del salto de línea.'
+);
+$afirmar($db->escrituras === [], 'Una contraseña con salto de línea no debe actualizar la cuenta.');
+
+$passwordExacto = ' ClaveValida1! ';
+$db->escrituras = [];
+$resultado = $modelo->resetearPassword(25, $passwordExacto, $passwordExacto);
+$afirmar($resultado['ok'], 'Una contraseña válida debe aceptarse sin normalizar sus espacios.');
+$afirmar(
+    password_verify($passwordExacto, $db->escrituras[0]['params'][0]),
+    'El hash debe conservar exactamente la contraseña escrita, incluidos los espacios.'
+);
+$afirmar(
+    $db->escrituras[0]['params'][1] === generarPasswordCheck($passwordExacto),
+    'La verificación debe calcularse con el valor exacto de la contraseña.'
+);
+
 echo "OK validación de edición y restablecimiento ({$afirmaciones} afirmaciones)\n";

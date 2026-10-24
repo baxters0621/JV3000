@@ -3,11 +3,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const vista = fs.readFileSync(
+    path.join(__dirname, '..', 'views', 'usuarios', 'index.php'),
+    'utf8'
+);
+['longitud', 'minuscula', 'mayuscula', 'numero', 'simbolo', 'sin_saltos'].forEach((regla) => {
+    assert.match(vista, new RegExp(`id="reset_password_regla_${regla}"`));
+});
+assert.match(vista, /aria-describedby="reset_password_guia reset_password_estado"/);
+
 function crearElemento(id, value = '') {
     const clases = new Set();
     return {
         id,
         value,
+        type: id.startsWith('reset_password') ? 'password' : '',
         textContent: '',
         disabled: false,
         attributes: {},
@@ -15,7 +25,11 @@ function crearElemento(id, value = '') {
         classList: {
             add: (...nombres) => nombres.forEach((nombre) => clases.add(nombre)),
             remove: (...nombres) => nombres.forEach((nombre) => clases.delete(nombre)),
-            contains: (nombre) => clases.has(nombre)
+            contains: (nombre) => clases.has(nombre),
+            toggle: (nombre, activo) => {
+                if (activo) clases.add(nombre);
+                else clases.delete(nombre);
+            }
         },
         addEventListener(evento, listener) {
             this.listeners[evento] = listener;
@@ -32,15 +46,30 @@ function crearElemento(id, value = '') {
     };
 }
 
-function ejecutarEnvio(confirmacion) {
+function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
     const ids = {
         formResetPassword: crearElemento('formResetPassword'),
         reset_id_usuario: crearElemento('reset_id_usuario', '42'),
         reset_usuario_nombre: crearElemento('reset_usuario_nombre'),
-        reset_password: crearElemento('reset_password', 'ClaveSegura1!'),
+        reset_password: crearElemento('reset_password', password),
         reset_password_confirm: crearElemento('reset_password_confirm', confirmacion),
-        btnResetPassword: crearElemento('btnResetPassword')
+        btnResetPassword: crearElemento('btnResetPassword'),
+        reset_password_estado: crearElemento('reset_password_estado')
     };
+    const textosReglas = {
+        longitud: '8 caracteres como mínimo',
+        minuscula: 'Una letra minúscula',
+        mayuscula: 'Una letra mayúscula',
+        numero: 'Un número',
+        simbolo: 'Un símbolo',
+        sin_saltos: 'Sin saltos de línea'
+    };
+    Object.entries(textosReglas).forEach(([regla, texto]) => {
+        ids[`reset_password_regla_${regla}`] = crearElemento(`reset_password_regla_${regla}`);
+        ids[`reset_password_regla_${regla}`].textContent = texto;
+    });
+    ids.reset_password_confirm_guia = crearElemento('reset_password_confirm_guia');
+    ids.reset_password_confirm_guia.textContent = 'Repite la nueva contraseña.';
     ids.reset_usuario_nombre.textContent = 'Operador';
     ids.formResetPassword.querySelector = function (selector) {
         return selector === '.is-invalid'
@@ -64,6 +93,7 @@ function ejecutarEnvio(confirmacion) {
     const contexto = {
         document,
         window: { JV_CONFIG: { csrfToken: 'csrf-piloto' } },
+        TextEncoder,
         MutationObserver: class {
             observe() {}
         },
@@ -83,6 +113,9 @@ function ejecutarEnvio(confirmacion) {
         'utf8'
     );
     vm.runInNewContext(script, contexto);
+    if (ids.reset_password.listeners.input) {
+        ids.reset_password.listeners.input({ type: 'input' });
+    }
     ids.formResetPassword.listeners.submit({
         preventDefault() {
             prevenido = true;
@@ -108,10 +141,41 @@ assert.deepEqual(
     }
 );
 
+const envioConEspacios = ejecutarEnvio(' ClaveSegura1! ', ' ClaveSegura1! ');
+assert.equal(envioConEspacios.envio.params.password, ' ClaveSegura1! ');
+assert.equal(envioConEspacios.envio.params.password_confirm, ' ClaveSegura1! ');
+
+const envioConSalto = ejecutarEnvio('', 'ClaveSegura1!\n');
+assert.equal(envioConSalto.envio, null);
+assert.equal(envioConSalto.ids.reset_password.value, 'ClaveSegura1!\n');
+
 const envioInvalido = ejecutarEnvio('ClaveDistinta1!');
 assert.equal(envioInvalido.prevenido, true);
 assert.equal(envioInvalido.envio, null);
 assert.equal(envioInvalido.ids.reset_password_confirm.classList.contains('is-invalid'), true);
 assert.equal(envioInvalido.ids.reset_password_confirm.focused, true);
+
+const validacionEnVivo = ejecutarEnvio('', '4444444444444444');
+validacionEnVivo.ids.reset_password.listeners.input({ type: 'input' });
+assert.equal(
+    validacionEnVivo.ids.reset_password_confirm.classList.contains('is-invalid'),
+    false,
+    'La confirmación vacía debe permanecer neutra mientras se escribe la contraseña nueva.'
+);
+assert.equal(
+    validacionEnVivo.ids.reset_password_confirm_guia.textContent,
+    'Repite la nueva contraseña.',
+    'La guía de confirmación vacía no debe afirmar que las contraseñas son distintas.'
+);
+assert.equal(validacionEnVivo.ids.reset_password_regla_longitud.classList.contains('cumplido'), true);
+assert.equal(validacionEnVivo.ids.reset_password_regla_numero.classList.contains('cumplido'), true);
+assert.equal(validacionEnVivo.ids.reset_password_regla_minuscula.classList.contains('cumplido'), false);
+assert.equal(validacionEnVivo.ids.reset_password_regla_mayuscula.classList.contains('cumplido'), false);
+assert.equal(validacionEnVivo.ids.reset_password_regla_simbolo.classList.contains('cumplido'), false);
+assert.match(validacionEnVivo.ids.reset_password_estado.textContent, /Una letra mayúscula/);
+
+const espaciosNoSonVacio = ejecutarEnvio('', '        ');
+assert.equal(espaciosNoSonVacio.ids.reset_password.classList.contains('is-invalid'), true);
+assert.equal(espaciosNoSonVacio.envio, null);
 
 console.log('OK envío y validación del formulario de restablecimiento');

@@ -141,7 +141,9 @@ El menú lateral sigue las fases reales de trabajo. Este es el procedimiento est
 `tests/usuarios_validacion_piloto.php` comprueba en aislamiento las reglas del
 servidor para nombre, correo, rol único de Administrador y restablecimiento de
 contraseña; los colaboradores solo pueden recibir los roles de Operador de
-Carga o de Ventas.
+Carga o de Ventas, y las contraseñas se validan y guardan exactamente como se
+escriben. `node tests/usuarios_reset_formulario.js` cubre la lista de requisitos
+en vivo y la confirmación vacía sin falsos errores.
 `node tests/usuarios_reset_formulario.js` verifica que el modal envíe la acción,
 el identificador, ambas contraseñas y el token CSRF, y que bloquee una
 confirmación distinta.

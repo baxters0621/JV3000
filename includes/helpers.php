@@ -482,14 +482,15 @@ if (!function_exists('validarPasswordFuerte')) {
      * Valida que una contraseña sea fuerte.
      *
      * Requiere mínimo 8 caracteres, al menos una mayúscula, una minúscula,
-     * un dígito y un símbolo.
+     * un dígito y un símbolo; no permite saltos de línea.
      *
      * @param string $password Contraseña a validar.
      * @return bool True si cumple la política de fortaleza.
      */
     function validarPasswordFuerte(string $password): bool
     {
-        return preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/', $password) === 1;
+        return !preg_match('/[\r\n]/', $password)
+            && preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}\z/', $password) === 1;
     }
 
     /**
@@ -539,6 +540,7 @@ if (!function_exists('validarPasswordFuerte')) {
         if (!preg_match('/[A-Z]/', $password)) $faltan[] = '1 mayúscula';
         if (!preg_match('/\d/', $password))    $faltan[] = '1 número';
         if (!preg_match('/[\W_]/', $password)) $faltan[] = '1 símbolo';
+        if (preg_match('/[\r\n]/', $password)) $faltan[] = 'sin saltos de línea';
         return $faltan ? implode(', ', $faltan) : '';
     }
 }
