@@ -268,6 +268,12 @@ afirmar(
     substr_count($vistaUsuarios, 'oninput="validarPinGlobal()"') === 2,
     'Los dos campos del PIN deben disparar la validación en vivo al teclear.'
 );
+afirmar(
+    strpos($vistaUsuarios, 'Protege la recuperación de cuentas') !== false
+        && substr_count($vistaUsuarios, 'class="pin-step pin-step-') === 2
+        && strpos($vistaUsuarios, 'class="pin-step-number"') !== false,
+    'La configuración visual debe presentar instrucciones claras y dos pasos numerados.'
+);
 
 // La ayuda del PIN abre desde el botón (?) de la cabecera en un modal
 // propio; los campos del formulario quedan como primer contenido de la tarjeta.
@@ -319,6 +325,12 @@ afirmar(
 
 // El color de esa validación vive en el CSS del módulo (antes no existía en ningún sitio).
 $cssUsuarios = file_get_contents($root . '/assets/dashboard/usuarios.css');
+afirmar(
+    strpos($cssUsuarios, '.pagina-usuarios .pin-form-intro') !== false
+        && strpos($cssUsuarios, '.pagina-usuarios .pin-step-confirmar') !== false
+        && strpos($cssUsuarios, '.pagina-usuarios .pin-form .form-label-jv') !== false,
+    'El formulario PIN debe tener superficies con color y etiquetas destacadas.'
+);
 afirmar(
     strpos($cssUsuarios, '.guia-ok') !== false && strpos($cssUsuarios, '.guia-err') !== false,
     'Las guías de validación en vivo deben pintarse en verde y rojo.'

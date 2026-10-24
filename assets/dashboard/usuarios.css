@@ -609,6 +609,132 @@
         background:linear-gradient(180deg, rgba(124,58,237,.05) 0%, transparent 55%);
     }
 
+    .pagina-usuarios .pin-form {
+        max-width:800px;
+    }
+    .pagina-usuarios .pin-form-intro {
+        display:flex;
+        align-items:center;
+        gap:14px;
+        max-width:710px;
+        margin:0 auto 22px;
+        padding:15px 18px;
+        border:1px solid #ddd6fe;
+        border-left:5px solid #7c3aed;
+        border-radius:12px;
+        background:linear-gradient(105deg,#f5f3ff 0%,#fff 72%);
+        text-align:left;
+    }
+    .pagina-usuarios .pin-form-intro-icon {
+        display:grid;
+        flex:0 0 42px;
+        width:42px;
+        height:42px;
+        place-items:center;
+        border-radius:12px;
+        background:#6d28d9;
+        color:#fff;
+        font-size:1.2rem;
+        box-shadow:0 5px 12px rgba(109,40,217,.22);
+    }
+    .pagina-usuarios .pin-form-intro strong,
+    .pagina-usuarios .pin-form-intro span:not(.pin-form-intro-icon) {
+        display:block;
+    }
+    .pagina-usuarios .pin-form-intro strong {
+        color:#312e81;
+        font-size:.98rem;
+        font-weight:850;
+        line-height:1.35;
+    }
+    .pagina-usuarios .pin-form-intro div > span {
+        margin-top:3px;
+        color:#475569;
+        font-size:.88rem;
+        font-weight:600;
+        line-height:1.45;
+    }
+    .pagina-usuarios .pin-form .col-md-6 {
+        text-align:left;
+    }
+    .pagina-usuarios .pin-step {
+        height:100%;
+        padding:17px 18px 15px;
+        border:1px solid #ddd6fe;
+        border-radius:14px;
+        background:linear-gradient(145deg,#fff 30%,#f5f3ff 100%);
+        box-shadow:0 5px 16px rgba(76,29,149,.07);
+    }
+    .pagina-usuarios .pin-step-confirmar {
+        border-color:#bae6fd;
+        background:linear-gradient(145deg,#fff 30%,#f0f9ff 100%);
+    }
+    .pagina-usuarios .pin-form .form-label-jv {
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin-bottom:12px;
+        color:#24324b;
+        font-size:1rem;
+        font-weight:850;
+        letter-spacing:0;
+        text-align:left;
+        text-transform:none;
+    }
+    .pagina-usuarios .pin-step-number {
+        display:inline-grid;
+        flex:0 0 30px;
+        width:30px;
+        height:30px;
+        place-items:center;
+        border-radius:9px;
+        background:#6d28d9;
+        color:#fff;
+        font-size:.88rem;
+        font-weight:900;
+        box-shadow:0 3px 8px rgba(109,40,217,.2);
+    }
+    .pagina-usuarios .pin-step-confirmar .pin-step-number {
+        background:#0284c7;
+        box-shadow:0 3px 8px rgba(2,132,199,.2);
+    }
+    .pagina-usuarios .pin-form .input-jv {
+        border:2px solid #c4b5fd;
+        background:#fff;
+        color:#4c1d95;
+        box-shadow:0 2px 7px rgba(76,29,149,.06);
+    }
+    .pagina-usuarios .pin-step-confirmar .input-jv {
+        border-color:#7dd3fc;
+        color:#075985;
+    }
+    .pagina-usuarios .pin-form .input-jv:focus {
+        border-color:#6d28d9;
+        box-shadow:0 0 0 4px rgba(124,58,237,.16);
+    }
+    .pagina-usuarios .pin-step-confirmar .input-jv:focus {
+        border-color:#0284c7;
+        box-shadow:0 0 0 4px rgba(2,132,199,.15);
+    }
+    .pagina-usuarios .pin-form .jv-form-text {
+        display:flex;
+        align-items:center;
+        gap:7px;
+        min-height:22px;
+        margin-top:9px;
+        color:#334155;
+        font-size:.83rem;
+        font-weight:700;
+        line-height:1.4;
+    }
+    .pagina-usuarios .pin-form .jv-form-text i {
+        color:#6d28d9;
+        font-size:1rem;
+    }
+    .pagina-usuarios .pin-step-confirmar .jv-form-text i {
+        color:#0284c7;
+    }
+
     /* Panel "caja fuerte" del PIN vigente: centrado, cifra grande y
        agrupada 3+3 (230 494) para dictarla sin perder la posición */
     .pagina-usuarios .pin-vigente {
@@ -641,8 +767,6 @@
 
     /* Formulario del PIN: centrado, con aire, campos anchos y texto
        espaciado 6 posiciones visibles */
-    .pagina-usuarios .pin-form { max-width:620px; }
-    .pagina-usuarios .pin-form .col-md-6 { text-align:center; }
     .pagina-usuarios .pin-form .input-jv {
         font-size:1.5rem;
         letter-spacing:.45em;
@@ -675,6 +799,8 @@
         .pagina-usuarios .pin-help { width:44px; height:44px; }
         .pagina-usuarios .pin-vigente { padding:14px 20px; }
         .pagina-usuarios .pin-vigente-valor { letter-spacing:.14em; word-spacing:.4em; font-size:1.9rem; }
+        .pagina-usuarios .pin-form-intro { align-items:flex-start; padding:13px; }
+        .pagina-usuarios .pin-step { padding:15px 14px 13px; }
         .pagina-usuarios .modal-usuarios-dialog {
             width:calc(100% - 1rem);
             max-width:none;

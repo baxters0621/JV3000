@@ -82,27 +82,44 @@
                 <form method="POST" class="pin-form mx-auto">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                     <input type="hidden" name="accion_usuario" value="pin_global">
-                    <div class="row g-4 justify-content-center">
-                        <div class="col-md-6">
-                            <label class="form-label-jv" for="pin_emergencia_global"><?php echo $pin_global !== '' ? 'NUEVO PIN' : 'PIN'; ?></label>
-                            <div class="password-field">
-                                <input type="password" class="input-jv w-100" id="pin_emergencia_global" name="pin_emergencia_global" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 dígitos" aria-describedby="pin_emergencia_global_guia" required oninput="validarPinGlobal()">
-                                <button type="button" class="password-toggle" data-toggle-password data-password-label="el PIN" aria-label="Mostrar el PIN" aria-controls="pin_emergencia_global" aria-pressed="false">
-                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
-                                </button>
+                        <div class="pin-form-intro">
+                            <span class="pin-form-intro-icon" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></span>
+                            <div>
+                                <strong>Protege la recuperación de cuentas</strong>
+                                <span>Elige seis dígitos y confírmalos para actualizar el PIN compartido.</span>
                             </div>
-                            <div class="form-text jv-form-text" id="pin_emergencia_global_guia" aria-live="polite">6 dígitos, sin letras.</div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label-jv" for="pin_emergencia_global_confirm">CONFIRMAR PIN</label>
-                            <div class="password-field">
-                                <input type="password" class="input-jv w-100" id="pin_emergencia_global_confirm" name="pin_emergencia_global_confirm" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="Repite el PIN" aria-describedby="pin_emergencia_global_confirm_guia" required oninput="validarPinGlobal()">
-                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación del PIN" aria-label="Mostrar la confirmación del PIN" aria-controls="pin_emergencia_global_confirm" aria-pressed="false">
-                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
-                                </button>
+                        <div class="row g-4 justify-content-center">
+                            <div class="col-md-6">
+                                <div class="pin-step pin-step-nuevo">
+                                    <label class="form-label-jv" for="pin_emergencia_global">
+                                        <span class="pin-step-number" aria-hidden="true">1</span>
+                                        <span><?php echo $pin_global !== '' ? 'Nuevo PIN' : 'PIN'; ?></span>
+                                    </label>
+                                    <div class="password-field">
+                                        <input type="password" class="input-jv w-100" id="pin_emergencia_global" name="pin_emergencia_global" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 dígitos" aria-describedby="pin_emergencia_global_guia" required oninput="validarPinGlobal()">
+                                        <button type="button" class="password-toggle" data-toggle-password data-password-label="el PIN" aria-label="Mostrar el PIN" aria-controls="pin_emergencia_global" aria-pressed="false">
+                                            <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text jv-form-text" id="pin_emergencia_global_guia" aria-live="polite"><i class="bi bi-123" aria-hidden="true"></i> 6 dígitos numéricos</div>
+                                </div>
                             </div>
-                            <div class="form-text jv-form-text" id="pin_emergencia_global_confirm_guia" aria-live="polite">Repite el mismo PIN.</div>
-                        </div>
+                            <div class="col-md-6">
+                                <div class="pin-step pin-step-confirmar">
+                                    <label class="form-label-jv" for="pin_emergencia_global_confirm">
+                                        <span class="pin-step-number" aria-hidden="true">2</span>
+                                        <span>Confirmar PIN</span>
+                                    </label>
+                                    <div class="password-field">
+                                        <input type="password" class="input-jv w-100" id="pin_emergencia_global_confirm" name="pin_emergencia_global_confirm" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="Repite el PIN" aria-describedby="pin_emergencia_global_confirm_guia" required oninput="validarPinGlobal()">
+                                        <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación del PIN" aria-label="Mostrar la confirmación del PIN" aria-controls="pin_emergencia_global_confirm" aria-pressed="false">
+                                            <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text jv-form-text" id="pin_emergencia_global_confirm_guia" aria-live="polite"><i class="bi bi-check2-circle" aria-hidden="true"></i> Repite los mismos seis dígitos</div>
+                                </div>
+                            </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-jv-primary pin-submit"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>GUARDAR PIN</button>
                         </div>

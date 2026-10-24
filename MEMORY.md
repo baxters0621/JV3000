@@ -15,6 +15,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Insignias de roles en Colaboradores: Administrador violeta, Operador de Carga verde y Operador de Ventas rojo.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
 - Tarjeta del PIN compartido (Colaboradores) rediseñada: cabecera violeta con pastilla de estado, botón (?) de 52 px que abre el modal #modalAyudaPin (el texto .pin-info vive ahí, ya no en la tarjeta), PIN vigente en panel centrado agrupado 3+3 vía `chunk_split` y formulario .pin-form centrado (letter-spacing .45em + padding-left .45em). La normalización/validación viven en usuarios.js sin cambios.
+- Formulario del PIN con jerarquía más visible: introducción breve y dos paneles numerados, violeta para definir y azul para confirmar, con etiquetas y ayudas más marcadas. Mantenerlo responsive y no alterar validación ni flujo del PIN.
 
 ## Decisiones (y por qué)
 
