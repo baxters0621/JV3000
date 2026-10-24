@@ -357,7 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                                 <button type="button" class="reg-field-eye" id="btnEyeR1" aria-label="Mostrar contraseña"><i class="bi bi-eye-slash-fill" id="iconEyeR1"></i></button>
                             </div>
                             <div class="reg-meter"><div class="reg-meter-fill" id="r-meter"></div></div>
-                            <small class="reg-hint" id="r-pass-hint">De 8 a 18 caracteres, con mayúscula, minúscula, número y símbolo.</small>
+                            <small class="reg-hint" id="r-pass-hint">De 8 a 18 caracteres, sin espacios, con mayúscula, minúscula, número y símbolo.</small>
 
                             <label class="reg-label" for="r-pass2">CONFIRMAR CONTRASEÑA <span class="text-danger">*</span></label>
                             <div class="reg-field">

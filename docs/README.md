@@ -141,8 +141,8 @@ El menú lateral sigue las fases reales de trabajo. Este es el procedimiento est
 `tests/usuarios_validacion_piloto.php` comprueba en aislamiento las reglas del
 servidor para nombre, correo, rol único de Administrador y restablecimiento de
 contraseña; los colaboradores solo pueden recibir los roles de Operador de
-Carga o de Ventas. Las contraseñas nuevas deben tener de 8 a 18 caracteres y
-cumplir los requisitos de complejidad.
+Carga o de Ventas. Las contraseñas nuevas deben tener de 8 a 18 caracteres, no
+contener espacios y cumplir los requisitos de complejidad.
 `node tests/usuarios_reset_formulario.js` cubre los límites visibles en los
 formularios, el contador de caracteres, la lista de requisitos en vivo, el envío
 con CSRF y la confirmación vacía o distinta.

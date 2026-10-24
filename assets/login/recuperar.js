@@ -74,17 +74,21 @@
             });
             var password = passwordInput.value;
             var passwordConfirmation = confirmationInput.value;
+            var confirmationHasWhitespace = /\s/.test(passwordConfirmation);
             var changePasswordButton = document.getElementById('rec-btn-pass');
             var passwordMeter = document.getElementById('rec-meter');
             var passwordHint = document.getElementById('rec-pass-hint');
 
-            var passwordLength = Array.from(password).length;
+            var passwordLength = Array.from(password).filter(function(character) {
+                return !/\s/.test(character);
+            }).length;
+            var passwordHasWhitespace = /\s/.test(password);
             var passwordStrength = 0;
             if (passwordLength >= 8) passwordStrength++;
             if (/[a-z]/.test(password)) passwordStrength++;
             if (/[A-Z]/.test(password)) passwordStrength++;
             if (/[0-9]/.test(password)) passwordStrength++;
-            if (/[\W_]/.test(password)) passwordStrength++;
+            if (/[^\w\s]|_/.test(password)) passwordStrength++;
             if (passwordLength >= 12) passwordStrength++;
 
             var strengthColors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a', '#16a34a'];
@@ -94,16 +98,25 @@
             passwordMeter.style.width = password.length > 0 ? strengthWidths[strengthIndex] : '0%';
             passwordMeter.style.backgroundColor = strengthColors[strengthIndex];
 
-            var passwordIsValid = passwordLength >= 8 && passwordLength <= 18 && passwordStrength >= 5;
+            var passwordIsValid = !passwordHasWhitespace
+                && passwordLength >= 8 && passwordLength <= 18 && passwordStrength >= 5;
+            passwordInput.classList.toggle('is-invalid', passwordHasWhitespace);
+            confirmationInput.classList.toggle('is-invalid', confirmationHasWhitespace);
             var passwordsMatch = password.length > 0 && password === passwordConfirmation;
 
-            if (password.length > 0 && passwordStrength < 5) {
+            if (passwordHasWhitespace) {
+                passwordHint.textContent = 'No se permiten espacios en la contraseña.';
+                passwordHint.style.color = '#ef4444';
+            } else if (confirmationHasWhitespace) {
+                passwordHint.textContent = 'No se permiten espacios en la confirmación.';
+                passwordHint.style.color = '#ef4444';
+            } else if (password.length > 0 && passwordStrength < 5) {
                 var faltan = [];
                 if (passwordLength < 8) faltan.push('mínimo 8 caracteres');
                 if (!/[a-z]/.test(password)) faltan.push('1 minúscula');
                 if (!/[A-Z]/.test(password)) faltan.push('1 mayúscula');
                 if (!/[0-9]/.test(password)) faltan.push('1 número');
-                if (!/[\W_]/.test(password)) faltan.push('1 símbolo');
+                if (!/[^\w\s]|_/.test(password)) faltan.push('1 símbolo');
                 if (passwordLength > 18) faltan.push('máximo 18 caracteres');
                 passwordHint.textContent = 'Falta: ' + faltan.join(', ');
                 passwordHint.style.color = '#ef4444';

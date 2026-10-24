@@ -74,7 +74,7 @@
                         <div class="col-md-3">
                             <label class="form-label-jv" for="perfil_password_nueva">NUEVA CONTRASEÑA</label>
                             <div class="password-field">
-                                <input type="password" id="perfil_password_nueva" name="password_nueva" class="input-jv" maxlength="36" autocomplete="new-password" placeholder="8 a 18 caracteres">
+                                <input type="password" id="perfil_password_nueva" name="password_nueva" class="input-jv" maxlength="36" autocomplete="new-password" placeholder="8 a 18 caracteres, sin espacios">
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la nueva contraseña" aria-label="Mostrar nueva contraseña" aria-controls="perfil_password_nueva" aria-pressed="false">
                                     <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>
@@ -83,7 +83,7 @@
                         <div class="col-md-3">
                             <label class="form-label-jv" for="perfil_password_confirm">CONFIRMAR NUEVA</label>
                             <div class="password-field">
-                                <input type="password" id="perfil_password_confirm" name="password_confirm" class="input-jv" maxlength="36" autocomplete="new-password" placeholder="8 a 18 caracteres">
+                                <input type="password" id="perfil_password_confirm" name="password_confirm" class="input-jv" maxlength="36" autocomplete="new-password" placeholder="8 a 18 caracteres, sin espacios">
                                 <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de contraseña" aria-label="Mostrar confirmación de contraseña" aria-controls="perfil_password_confirm" aria-pressed="false">
                                     <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                 </button>

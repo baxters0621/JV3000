@@ -325,7 +325,7 @@
                                         <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
                                 </div>
-                                <div class="form-text jv-form-text" id="crear_password_guia">Mín. 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
+                                <div class="form-text jv-form-text" id="crear_password_guia">Mín. 8 caracteres, sin espacios, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="section-label" for="crear_password_confirm"><i class="bi bi-key-fill" aria-hidden="true"></i> CONFIRMAR CONTRASEÑA</label>
@@ -392,8 +392,9 @@
                                 <li class="password-requirement" id="reset_password_regla_numero">Un número</li>
                                 <li class="password-requirement" id="reset_password_regla_simbolo">Un símbolo</li>
                                 <li class="password-requirement" id="reset_password_regla_sin_saltos">Sin saltos de línea</li>
+                                <li class="password-requirement" id="reset_password_regla_sin_espacios">Sin espacios</li>
                             </ul>
-                            <div class="form-text jv-form-text password-character-count" id="reset_password_contador">0 de 18 caracteres usados</div>
+                            <div class="form-text jv-form-text password-character-count" id="reset_password_contador">0 de 18 caracteres válidos</div>
                             <span class="visually-hidden" id="reset_password_estado" role="status" aria-live="polite"></span>
                         </div>
                         <div class="col-md-6 modal-usuarios-field">

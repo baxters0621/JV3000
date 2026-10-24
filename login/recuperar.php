@@ -189,7 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $newPassword = $_POST['rec_password'] ?? '';
             $newPasswordConfirmation = $_POST['rec_password2'] ?? '';
             if (!validarPasswordFuerte($newPassword)) {
-                $error = "CONTRASEÑA DÉBIL: MÍN 8 CARACTERES, MAYÚSCULAS, NÚMEROS Y SÍMBOLOS.";
+                $error = "CONTRASEÑA DÉBIL: 8 A 18 CARACTERES, SIN ESPACIOS, MAYÚSCULAS, MINÚSCULAS, NÚMEROS Y SÍMBOLOS.";
             } elseif ($newPassword !== $newPasswordConfirmation) {
                 $error = "LAS CONTRASEÑAS NO COINCIDEN.";
             } else {
@@ -471,7 +471,7 @@ if ($step == 4) {
                 <label class="rec-label"><i class="bi bi-lock-fill me-1"></i>Nueva contraseña</label>
                 <div class="field-group">
                     <i class="field-icon bi bi-key-fill"></i>
-                    <input type="password" name="rec_password" id="rec-pass" class="field-input" required minlength="8" maxlength="36" placeholder="8 a 18 caracteres, mayús, minús, núm, símbolo" autofocus oninput="validarPassRec()">
+                    <input type="password" name="rec_password" id="rec-pass" class="field-input" required minlength="8" maxlength="36" placeholder="8 a 18 caracteres, sin espacios" autofocus oninput="validarPassRec()">
                     <button type="button" class="field-eye" id="btnEyeRec1" aria-label="Mostrar"><i class="bi bi-eye-slash-fill" id="iconEyeRec1"></i></button>
                 </div>
                 <div class="strength-meter mb-3" style="height:5px;background:var(--jv-border);border-radius:4px;overflow:hidden;">

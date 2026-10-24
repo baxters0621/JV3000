@@ -418,6 +418,14 @@
         content:"✓";
         color:#15803d;
     }
+    .modal-usuarios .password-requirement.invalido {
+        color:#b91c1c;
+        background:#fee2e2;
+    }
+    .modal-usuarios .password-requirement.invalido::before {
+        content:"×";
+        color:#b91c1c;
+    }
     .modal-usuarios .password-character-count {
         margin-top:8px;
         color:#334155;

@@ -28,6 +28,10 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
             input.value = limitada;
             input.setSelectionRange(limitada.length, limitada.length);
         }
+        var contieneEspacios = /\s/.test(input.value);
+        input.classList.toggle('is-invalid', contieneEspacios);
+        if (contieneEspacios) input.setAttribute('aria-invalid', 'true');
+        else input.removeAttribute('aria-invalid');
     });
 });
 
@@ -68,6 +72,27 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
 
         var passActual = document.getElementById('perfil_password_actual');
         var passNueva = document.getElementById('perfil_password_nueva');
+        var passConfirm = document.getElementById('perfil_password_confirm');
+        var nuevaConEspacios = [passNueva, passNueva && passNueva.value !== '' ? passConfirm : null].find(function(input) {
+            return input && /\s/.test(input.value);
+        });
+        if (nuevaConEspacios) {
+            nuevaConEspacios.classList.add('is-invalid');
+            nuevaConEspacios.setAttribute('aria-invalid', 'true');
+            Swal.fire({
+                title: 'Contraseña inválida',
+                text: 'No se permiten espacios en la contraseña nueva.',
+                icon: 'error',
+                confirmButtonColor: '#DC2626'
+            });
+            nuevaConEspacios.focus();
+            return;
+        }
+        [passNueva, passConfirm].forEach(function(input) {
+            if (!input) return;
+            input.classList.remove('is-invalid');
+            input.removeAttribute('aria-invalid');
+        });
         if (passNueva && passActual && passNueva.value.trim() !== '' && passActual.value.trim() === '') {
             Swal.fire({
                 title: 'Falta la contraseña actual',

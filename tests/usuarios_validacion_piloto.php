@@ -204,6 +204,8 @@ $passwordUnicodeMaximo = str_repeat('aA1!', 4) . 'xñ';
 $passwordUnicodeExcedido = str_repeat('aA1!', 4) . 'xññ';
 $passwordMinimo = 'aA1!bbbb';
 $passwordMinimoUnicode = 'aA1!ññññ';
+$passwordConEspacio = 'Clave Valida1!';
+$passwordConEspacioComoSimbolo = 'Abc12345 ';
 $afirmar(mb_strlen($passwordMinimo, 'UTF-8') === 8 && validarPasswordFuerte($passwordMinimo), 'El mínimo debe aceptar exactamente 8 caracteres.');
 $afirmar(
     mb_strlen($passwordMinimoUnicode, 'UTF-8') === 8 && validarPasswordFuerte($passwordMinimoUnicode),
@@ -218,6 +220,17 @@ $afirmar(
     mb_strlen($passwordUnicodeExcedido, 'UTF-8') === 19 && !validarPasswordFuerte($passwordUnicodeExcedido),
     'Debe rechazarse una contraseña que exceda 18 caracteres UTF-8.'
 );
+$afirmar(!validarPasswordFuerte($passwordConEspacio), 'No se deben permitir espacios en una contraseña nueva.');
+$afirmar(
+    strpos(requisitosFaltantesPassword($passwordConEspacio), 'sin espacios') !== false,
+    'La validación debe indicar que los espacios no están permitidos.'
+);
+$faltanConEspacioComoSimbolo = requisitosFaltantesPassword($passwordConEspacioComoSimbolo);
+$afirmar(
+    strpos($faltanConEspacioComoSimbolo, '1 símbolo') !== false
+        && strpos($faltanConEspacioComoSimbolo, 'sin espacios') !== false,
+    'Un espacio no debe satisfacer el requisito de símbolo y debe rechazarse.'
+);
 $db->escrituras = [];
 $resultado = $modelo->resetearPassword(25, $passwordMuyLargo, $passwordMuyLargo);
 $afirmar(!$resultado['ok'], 'El restablecimiento debe rechazar contraseñas de más de 18 caracteres.');
@@ -227,17 +240,13 @@ $afirmar(
 );
 $afirmar($db->escrituras === [], 'Una contraseña sobre el límite no debe actualizar la cuenta.');
 
-$passwordExacto = ' ClaveValida1! ';
+$passwordExacto = 'Clave Valida1!';
 $db->escrituras = [];
 $resultado = $modelo->resetearPassword(25, $passwordExacto, $passwordExacto);
-$afirmar($resultado['ok'], 'Una contraseña válida debe aceptarse sin normalizar sus espacios.');
+$afirmar(!$resultado['ok'], 'El restablecimiento debe rechazar contraseñas con espacios.');
 $afirmar(
-    password_verify($passwordExacto, $db->escrituras[0]['params'][0]),
-    'El hash debe conservar exactamente la contraseña escrita, incluidos los espacios.'
-);
-$afirmar(
-    $db->escrituras[0]['params'][1] === generarPasswordCheck($passwordExacto),
-    'La verificación debe calcularse con el valor exacto de la contraseña.'
+    $db->escrituras === [],
+    'Una contraseña con espacios no debe actualizar la cuenta.'
 );
 
 echo "OK validación de edición y restablecimiento ({$afirmaciones} afirmaciones)\n";

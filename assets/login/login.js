@@ -114,14 +114,18 @@ function validarReg() {
     var meter = document.getElementById('r-meter');
     var passHint = document.getElementById('r-pass-hint');
     var passDefault = 'De 8 a 18 caracteres, con mayúscula, minúscula, número y símbolo.';
-    var passwordLength = Array.from(password).length;
+    var passwordLength = Array.from(password).filter(function(character) {
+        return !/\s/.test(character);
+    }).length;
+    var passwordHasWhitespace = /\s/.test(password);
+    var passwordInput = document.getElementById('r-pass');
     var strength = 0;
     if (password.length > 0) {
         if (passwordLength >= 8) strength++;
         if (/[a-z]/.test(password)) strength++;
         if (/[A-Z]/.test(password)) strength++;
         if (/[0-9]/.test(password)) strength++;
-        if (/[\W_]/.test(password)) strength++;
+        if (/[^\w\s]|_/.test(password)) strength++;
         if (passwordLength >= 12) strength++;
 
         var colors = ['#dc2626', '#f97316', '#eab308', '#22c55e', '#16a34a', '#16a34a'];
@@ -140,14 +144,22 @@ function validarReg() {
         passHint.style.color = '';
         passHint.className = 'reg-hint';
     }
-    var passwordIsValid = passwordLength >= 8 && passwordLength <= 18
+    if (passwordHasWhitespace) {
+        meter.style.backgroundColor = '#dc2626';
+        passHint.textContent = 'No se permiten espacios en la contraseña.';
+        passHint.style.color = '#dc2626';
+    }
+    if (passwordInput) passwordInput.classList.toggle('is-invalid', passwordHasWhitespace);
+    var passwordIsValid = !passwordHasWhitespace && passwordLength >= 8 && passwordLength <= 18
         && /[a-z]/.test(password) && /[A-Z]/.test(password)
-        && /\d/.test(password) && /[\W_]/.test(password);
+        && /\d/.test(password) && (/[^\w\s]|_/.test(password));
 
     // --- CONFIRMAR CONTRASEÑA ---
     var matchDefault = 'Debe coincidir con la contraseña anterior.';
     if (pass2.length === 0) {
         setFieldState('r-pass2', 'r-match-status', 'r-match-hint', 'neutral', matchDefault);
+    } else if (/\s/.test(pass2)) {
+        setFieldState('r-pass2', 'r-match-status', 'r-match-hint', 'invalid', 'No se permiten espacios en la contraseña.');
     } else if (password !== pass2) {
         setFieldState('r-pass2', 'r-match-status', 'r-match-hint', 'invalid', 'Las contraseñas no coinciden.');
     } else {

@@ -215,7 +215,7 @@ function abrirEdicion(btn) {
 const TEXTO_GUIA_USU = {
     crear_usuario: 'Mín 4 - Máx 20 caracteres (letras, números, guion bajo).',
     crear_correo: 'Formato válido de correo electrónico.',
-    crear_password: 'De 8 a 18 caracteres, con mayúscula, minúscula, número y símbolo.',
+    crear_password: 'De 8 a 18 caracteres, sin espacios, con mayúscula, minúscula, número y símbolo.',
     crear_password_confirm: 'Debe coincidir con la contraseña anterior.',
     crear_rol: 'Solo se pueden crear Operadores de Carga y de Ventas.',
     edit_usuario: 'De 4 a 20 letras, números o guiones bajos.',
@@ -266,14 +266,18 @@ function correoValidoUsu(correo) {
 }
 
 function requisitosPasswordUsu(password) {
-    const longitud = Array.from(password).length;
+    const longitud = Array.from(password).filter(function (caracter) {
+        return !/\s/u.test(caracter);
+    }).length;
+    const sinEspacios = !/\s/u.test(password);
     return {
         longitud: longitud >= 8,
         minuscula: /[a-z]/.test(password),
         mayuscula: /[A-Z]/.test(password),
         numero: /\d/.test(password),
-        simbolo: /[\W_]/.test(password),
+        simbolo: /[^\w\s]|_/.test(password),
         sin_saltos: !/[\r\n]/.test(password),
+        sin_espacios: sinEspacios,
         maximo: longitud <= MAX_PASSWORD_CHARACTERS
     };
 }
@@ -322,9 +326,13 @@ function validarAlta() {
     const correoOk = validarCampoUsu('crear_correo', correoValidoUsu(correo),
         'Correo electrónico válido.', 'El correo no tiene un formato válido.');
     const passwordOk = validarCampoUsu('crear_password', passwordSeguraUsu(password),
-        'Contraseña segura.', 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.');
+        'Contraseña segura.', /\s/u.test(password)
+            ? 'No se permiten espacios en la contraseña.'
+            : 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.');
     const confirmarOk = validarCampoUsu('crear_password_confirm', password !== '' && password === confirmar,
-        'Las contraseñas coinciden.', 'Las contraseñas no coinciden.');
+        'Las contraseñas coinciden.', /\s/u.test(confirmar)
+            ? 'No se permiten espacios en la contraseña.'
+            : 'Las contraseñas no coinciden.');
     const rolOk = validarCampoUsu('crear_rol', document.getElementById('crear_rol').value !== '',
         '', 'Selecciona un rol para el colaborador.');
 
@@ -378,9 +386,18 @@ function validarReset(mostrarErrores) {
     const password = campoPassword.value;
     const confirmar = document.getElementById('reset_password_confirm').value;
     const requisitos = requisitosPasswordUsu(password);
+    const contieneEspacios = !requisitos.sin_espacios;
     Object.keys(requisitos).forEach(function (regla) {
         const elemento = document.getElementById('reset_password_regla_' + regla);
-        if (elemento) elemento.classList.toggle('cumplido', requisitos[regla]);
+        if (!elemento) return;
+        elemento.classList.toggle(
+            'cumplido',
+            password !== '' && !contieneEspacios && requisitos[regla]
+        );
+        elemento.classList.toggle(
+            'invalido',
+            regla === 'sin_espacios' && password !== '' && contieneEspacios
+        );
     });
     const reglasPendientes = Object.keys(requisitos).filter(function (regla) {
         return regla !== 'maximo' && !requisitos[regla];
@@ -398,13 +415,20 @@ function validarReset(mostrarErrores) {
                 : 'Pendientes: ' + textosPendientes.join(', ') + '.');
     }
     const contador = document.getElementById('reset_password_contador');
-    if (contador) contador.textContent = Array.from(password).length + ' de ' + MAX_PASSWORD_CHARACTERS + ' caracteres usados';
+    const caracteresValidos = Array.from(password).filter(function (caracter) {
+        return !/\s/u.test(caracter);
+    }).length;
+    if (contador) contador.textContent = caracteresValidos + ' de ' + MAX_PASSWORD_CHARACTERS + ' caracteres válidos';
 
     const passwordOk = validarCampoUsu('reset_password', textosPendientes.length === 0,
-        'Contraseña segura.', 'Completa los requisitos pendientes.', mostrarErrores);
-    const mensajeErrorConfirmacion = password === ''
+        'Contraseña segura.', contieneEspacios
+            ? 'No se permiten espacios en la contraseña.'
+            : 'Completa los requisitos pendientes.', mostrarErrores);
+    const mensajeErrorConfirmacion = /\s/u.test(confirmar)
+        ? 'No se permiten espacios en la contraseña.'
+        : (password === ''
         ? 'Escribe primero la nueva contraseña.'
-        : (mostrarErrores ? 'Confirma la nueva contraseña.' : 'Las contraseñas no coinciden.');
+        : (mostrarErrores ? 'Confirma la nueva contraseña.' : 'Las contraseñas no coinciden.'));
     const confirmarOk = validarCampoUsu(
         'reset_password_confirm',
         password !== '' && password === confirmar,
@@ -620,9 +644,13 @@ if (formCrear) formCrear.addEventListener('submit', function (e) {
     }
     inputCorreo.classList.remove('input-error');
 
-    if (!(password.length >= 8 && /[a-z]/.test(password) && /[A-Z]/.test(password) && /\d/.test(password) && /[\W_]/.test(password))) {
+    if (!(Array.from(password).filter(function (caracter) { return !/\s/u.test(caracter); }).length >= 8
+        && !/\s/u.test(password) && /[a-z]/.test(password) && /[A-Z]/.test(password)
+        && /\d/.test(password) && (/[^\w\s]|_/.test(password)))) {
         inputPassword.classList.add('input-error');
-        Swal.fire('CONTRASEÑA DÉBIL', 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.', 'error');
+        Swal.fire('CONTRASEÑA DÉBIL', /\s/u.test(password)
+            ? 'No se permiten espacios en la contraseña.'
+            : 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.', 'error');
         return;
     }
     inputPassword.classList.remove('input-error');

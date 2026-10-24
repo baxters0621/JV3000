@@ -363,8 +363,8 @@ class Usuario extends Model
         $passwordActual = trim($datos['password_actual'] ?? '');
         $usuario = mb_strtoupper(trim($datos['usuario'] ?? ''));
         $correo = strtolower(trim($datos['correo'] ?? ''));
-        $passwordNueva = trim($datos['password_nueva'] ?? '');
-        $passwordConfirm = trim($datos['password_confirm'] ?? '');
+        $passwordNueva = (string)($datos['password_nueva'] ?? '');
+        $passwordConfirm = (string)($datos['password_confirm'] ?? '');
 
         $errores = [];
 
@@ -386,14 +386,15 @@ class Usuario extends Model
         $passHash = $current['password'];
         $passCheck = $current['password_check'];
         if ($passwordNueva !== '') {
+            if (!validarPasswordFuerte($passwordNueva)) {
+                $faltantes = requisitosFaltantesPassword($passwordNueva);
+                $errores[] = 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper($faltantes) . '.';
+                return ['ok' => false, 'mensaje' => implode(' ', $errores)];
+            }
             if ($passwordActual === '' || !password_verify($passwordActual, $current['password'])) {
                 return ['ok' => false, 'mensaje' => 'LA CONTRASEÑA ACTUAL ES INCORRECTA.'];
             }
             if ($passwordNueva !== $passwordConfirm) $errores[] = 'LAS CONTRASEÑAS NO COINCIDEN.';
-            if (!validarPasswordFuerte($passwordNueva)) {
-                $faltantes = requisitosFaltantesPassword($passwordNueva);
-                $errores[] = 'CONTRASEÑA DÉBIL. FALTA: ' . strtoupper($faltantes) . '.';
-            }
             if (password_verify($passwordNueva, $current['password'])) {
                 $errores[] = 'LA NUEVA CONTRASEÑA DEBE SER DIFERENTE A LA ACTUAL.';
             }

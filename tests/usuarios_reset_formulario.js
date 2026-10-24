@@ -7,16 +7,18 @@ const vista = fs.readFileSync(
     path.join(__dirname, '..', 'views', 'usuarios', 'index.php'),
     'utf8'
 );
-['longitud', 'minuscula', 'mayuscula', 'numero', 'simbolo', 'sin_saltos'].forEach((regla) => {
+['longitud', 'minuscula', 'mayuscula', 'numero', 'simbolo', 'sin_saltos', 'sin_espacios'].forEach((regla) => {
     assert.match(vista, new RegExp(`id="reset_password_regla_${regla}"`));
 });
 assert.doesNotMatch(vista, /id="reset_password_regla_maximo"/);
-assert.match(vista, /id="reset_password_contador"[^>]*>0 de 18 caracteres usados</);
+assert.match(vista, /id="reset_password_contador"[^>]*>0 de 18 caracteres válidos</);
+assert.match(fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.css'), 'utf8'), /\.password-requirement\.invalido \{[^}]*color:#b91c1c/s);
 assert.match(vista, /aria-describedby="reset_password_guia reset_password_estado reset_password_contador"/);
 assert.match(vista, /id="reset_password"[^>]*maxlength="36"/);
 assert.match(vista, /id="reset_password_confirm"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password_confirm"[^>]*maxlength="36"/);
+assert.match(vista, /id="crear_password_guia"[^>]*>[^<]*sin espacios/);
 
 const registro = fs.readFileSync(path.join(__dirname, '..', 'login', 'login.php'), 'utf8');
 assert.match(registro, /id="r-pass"[^>]*maxlength="36"/);
@@ -92,7 +94,8 @@ function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
         mayuscula: 'Una letra mayúscula',
         numero: 'Un número',
         simbolo: 'Un símbolo',
-        sin_saltos: 'Sin saltos de línea'
+        sin_saltos: 'Sin saltos de línea',
+        sin_espacios: 'Sin espacios'
     };
     Object.entries(textosReglas).forEach(([regla, texto]) => {
         ids[`reset_password_regla_${regla}`] = crearElemento(`reset_password_regla_${regla}`);
@@ -172,8 +175,9 @@ assert.deepEqual(
 );
 
 const envioConEspacios = ejecutarEnvio(' ClaveSegura1! ', ' ClaveSegura1! ');
-assert.equal(envioConEspacios.envio.params.password, ' ClaveSegura1! ');
-assert.equal(envioConEspacios.envio.params.password_confirm, ' ClaveSegura1! ');
+assert.equal(envioConEspacios.envio, null);
+assert.equal(envioConEspacios.ids.reset_password.classList.contains('is-invalid'), true);
+assert.equal(envioConEspacios.ids.reset_password_regla_sin_espacios.classList.contains('invalido'), true);
 
 const envioConSalto = ejecutarEnvio('', 'ClaveSegura1!\n');
 assert.equal(envioConSalto.envio, null);
@@ -186,7 +190,7 @@ assert.equal(
     18,
     'La nueva contraseña debe limitarse a 18 caracteres al escribir o pegar.'
 );
-assert.equal(entradaMuyLarga.ids.reset_password_contador.textContent, '18 de 18 caracteres usados');
+assert.equal(entradaMuyLarga.ids.reset_password_contador.textContent, '18 de 18 caracteres válidos');
 
 const entradaUnicodeLarga = ejecutarEnvio('', 'aA1!' + 'ñ'.repeat(40));
 entradaUnicodeLarga.ids.reset_password.listeners.input({ type: 'input' });
@@ -233,8 +237,47 @@ assert.match(validacionEnVivo.ids.reset_password_estado.textContent, /Una letra 
 
 const campoVacio = ejecutarEnvio('', '');
 campoVacio.ids.reset_password.listeners.input({ type: 'input' });
-assert.equal(campoVacio.ids.reset_password_contador.textContent, '0 de 18 caracteres usados');
+assert.equal(campoVacio.ids.reset_password_contador.textContent, '0 de 18 caracteres válidos');
 assert.equal(campoVacio.ids.reset_password_regla_longitud.classList.contains('cumplido'), false);
+
+const passwordConEspacio = ejecutarEnvio('Clave Valida1!', 'Clave Valida1!');
+passwordConEspacio.ids.reset_password.listeners.input({ type: 'input' });
+assert.equal(passwordConEspacio.ids.reset_password.classList.contains('is-invalid'), true);
+assert.equal(passwordConEspacio.ids.reset_password_regla_sin_espacios.classList.contains('invalido'), true);
+['longitud', 'minuscula', 'mayuscula', 'numero', 'simbolo', 'sin_saltos', 'sin_espacios'].forEach((regla) => {
+    assert.equal(
+        passwordConEspacio.ids[`reset_password_regla_${regla}`].classList.contains('cumplido'),
+        false,
+        'No se debe marcar ningún requisito como cumplido mientras haya espacios.'
+    );
+});
+assert.equal(passwordConEspacio.ids.reset_password_contador.textContent, '13 de 18 caracteres válidos');
+assert.match(passwordConEspacio.ids.reset_password_estado.textContent, /Sin espacios/);
+assert.equal(passwordConEspacio.envio, null);
+
+const espacioComoSimbolo = ejecutarEnvio('', 'Abc12345 ');
+espacioComoSimbolo.ids.reset_password.listeners.input({ type: 'input' });
+assert.match(espacioComoSimbolo.ids.reset_password_estado.textContent, /Un símbolo/);
+assert.match(espacioComoSimbolo.ids.reset_password_estado.textContent, /Sin espacios/);
+assert.equal(espacioComoSimbolo.ids.reset_password_regla_simbolo.classList.contains('cumplido'), false);
+assert.equal(espacioComoSimbolo.ids.reset_password_regla_sin_espacios.classList.contains('invalido'), true);
+assert.match(
+    fs.readFileSync(path.join(__dirname, '..', 'assets', 'login', 'login.js'), 'utf8'),
+    /passwordHasWhitespace/
+);
+assert.match(
+    fs.readFileSync(path.join(__dirname, '..', 'assets', 'login', 'recuperar.js'), 'utf8'),
+    /passwordHasWhitespace/
+);
+assert.match(
+    fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'perfil.js'), 'utf8'),
+    /No se permiten espacios/
+);
+
+const confirmacionConEspacio = ejecutarEnvio('ClaveSegura1! ', 'ClaveSegura1!');
+assert.equal(confirmacionConEspacio.envio, null);
+assert.equal(confirmacionConEspacio.ids.reset_password_confirm.classList.contains('is-invalid'), true);
+assert.match(confirmacionConEspacio.ids.reset_password_confirm_guia.textContent, /No se permiten espacios/);
 
 const espaciosNoSonVacio = ejecutarEnvio('', '        ');
 assert.equal(espaciosNoSonVacio.ids.reset_password.classList.contains('is-invalid'), true);
