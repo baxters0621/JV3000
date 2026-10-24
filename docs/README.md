@@ -60,10 +60,11 @@ migraciones durante el arranque normal.
 
 ### Primer arranque en el PC servidor
 
-1. **Crear el archivo de configuración.** Copia `config/.env.example` a
-   `config/.env` y rellena las claves. Las cinco de base de datos son
-   obligatorias; sin ellas el arranque se detiene con un aviso de
-   configuración incompleta:
+1. **Configuración de base de datos.** Si usas XAMPP con la configuración
+   habitual, JV3000 puede arrancar sin `config/.env`: usa `localhost`, el
+   usuario `root`, contraseña vacía, base `jv3000_db` y puerto `3306`. Si tu
+   servidor usa otros valores, copia `config/.env.example` a `config/.env` y
+   configúralos localmente:
 
    | Clave | Ejemplo | Notas |
    |---|---|---|

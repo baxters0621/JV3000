@@ -30,6 +30,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Aprendizajes y errores a evitar
 
+- Si falta `config/.env`, los valores predeterminados de XAMPP son válidos (`localhost`, `root`, sin contraseña, `jv3000_db`, puerto 3306); no convertir un puerto ausente en configuración inválida.
+- La copia universitaria debe probarse con su SQL y configuración en un entorno aislado; los pilotos por separado no garantizan el arranque del paquete entregado.
 - `diseno.js` se carga en el `<head>`: su código de DOM debe esperar a `DOMContentLoaded`.
 - El login ignora el POST si falta `btn_login` (sin error: solo vuelve a pintar la pantalla).
 - PowerShell 5.1 lee los `.ps1` como ANSI: guiones con ñ o tildes necesitan BOM o escribirse en ASCII.
