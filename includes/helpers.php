@@ -600,6 +600,20 @@ if (!function_exists('normalizarUsuario')) {
     }
 }
 
+if (!function_exists('validarNombreUsuario')) {
+    /**
+     * Valida un nombre de usuario: empieza con letra y admite letras,
+     * números y guion bajo hasta completar entre 4 y 20 caracteres.
+     *
+     * @param string $usuario Nombre ya normalizado.
+     * @return bool true si respeta el formato permitido.
+     */
+    function validarNombreUsuario(string $usuario): bool
+    {
+        return preg_match('/^[A-Za-z][A-Za-z0-9_]{3,19}$/D', $usuario) === 1;
+    }
+}
+
 if (!function_exists('existePasswordDuplicado')) {
     /**
      * Verifica si ya existe otro usuario con la misma contraseña (case-insensitive).

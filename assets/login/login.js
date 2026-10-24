@@ -86,17 +86,17 @@ function validarReg() {
     var btn       = document.getElementById('btn-reg');
 
     // --- USUARIO ---
-    var userDefault = 'Mínimo 4 caracteres, solo letras, números y guiones bajos.';
+    var userDefault = 'Empieza con una letra; luego usa letras, números y guion bajo (4 a 20 caracteres).';
     if (username.length === 0) {
         setFieldState('r-user', 'r-user-status', 'r-user-hint', 'neutral', userDefault);
     } else if (username.length < 4) {
         setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Faltan ' + (4 - username.length) + ' caracteres (mínimo 4).');
-    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Solo letras, números y guiones bajos.');
+    } else if (!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username)) {
+        setFieldState('r-user', 'r-user-status', 'r-user-hint', 'invalid', 'Debe comenzar con una letra; después usa letras, números o guion bajo.');
     } else {
         setFieldState('r-user', 'r-user-status', 'r-user-hint', 'valid', 'Nombre de usuario válido.');
     }
-    var usernameIsValid = username.length >= 4 && /^[a-zA-Z0-9_]+$/.test(username);
+    var usernameIsValid = /^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username);
 
     // --- CORREO ---
     var emailDefault = 'Formato válido de correo electrónico.';

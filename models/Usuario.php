@@ -115,8 +115,8 @@ class Usuario extends Model
         $correo = strtolower(trim($correoIngresado));
         $idRol = (int)$rolIngresado;
 
-        if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $usuario)) {
-            return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];
+        if (!validarNombreUsuario($usuario)) {
+            return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];
         }
         if ($correo === '' || strlen($correo) > 100 || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
             return ['ok' => false, 'mensaje' => 'CORREO INVÁLIDO.'];
@@ -214,8 +214,8 @@ class Usuario extends Model
             return ['ok' => false, 'mensaje' => 'EL ESTADO DEL COLABORADOR NO ES VÁLIDO.'];
         }
 
-        if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $usuario)) {
-            return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];
+        if (!validarNombreUsuario($usuario)) {
+            return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];
         }
 
         // El nombre de usuario debe ser único, sin distinguir mayúsculas.
@@ -373,6 +373,10 @@ class Usuario extends Model
         $current = $this->db->fetchOne("SELECT * FROM usuarios WHERE id_usuario = ?", [$id]);
         if (!$current) return ['ok' => false, 'mensaje' => 'USUARIO NO ENCONTRADO.'];
 
+        if (!is_string($datos['usuario'] ?? null) || !is_string($datos['correo'] ?? null)) {
+            return ['ok' => false, 'mensaje' => 'EL USUARIO O EL CORREO NO SON VÁLIDOS.'];
+        }
+
         $passwordActual = trim($datos['password_actual'] ?? '');
         $usuario = mb_strtoupper(trim($datos['usuario'] ?? ''));
         $correo = strtolower(trim($datos['correo'] ?? ''));
@@ -382,8 +386,8 @@ class Usuario extends Model
         $errores = [];
 
         // Nombre
-        if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $usuario)) {
-            $errores[] = 'NOMBRE: 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).';
+        if (!validarNombreUsuario($usuario)) {
+            $errores[] = 'NOMBRE: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).';
         }
         $dup = $this->db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) AND id_usuario != ?", [$usuario, $id]);
         if ($dup) $errores[] = 'YA EXISTE UN USUARIO CON ESE NOMBRE.';

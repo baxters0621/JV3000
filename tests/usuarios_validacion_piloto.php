@@ -98,6 +98,9 @@ $datosAltaValidos = [
     'password_confirm' => 'Abc12345!',
     'id_rol' => '2',
 ];
+$afirmar(validarNombreUsuario('Operador_25'), 'Un nombre que inicia con letra y continúa con números debe ser válido.');
+$afirmar(!validarNombreUsuario('123456'), 'Un nombre compuesto solo por números debe rechazarse.');
+$afirmar(!validarNombreUsuario('2Operador'), 'El nombre de usuario debe comenzar con una letra.');
 foreach (['usuario', 'correo', 'password', 'password_confirm', 'id_rol'] as $campo) {
     $db->consultas = [];
     $db->escrituras = [];
@@ -119,6 +122,8 @@ $afirmar($db->consultas === [] && $db->escrituras === [], 'La contraseña con es
 
 $casosAltaInvalidos = [
     ['usuario', 'abc', 'El alta debe rechazar un usuario demasiado corto.'],
+    ['usuario', '123456', 'El alta debe rechazar un usuario compuesto solo por números.'],
+    ['usuario', '2Operador', 'El alta debe rechazar un usuario que no empieza con letra.'],
     ['correo', 'correo-invalido', 'El alta debe rechazar un correo con formato inválido.'],
     ['correo', str_repeat('a', 90) . '@empresa.com', 'El alta debe rechazar un correo de más de 100 caracteres.'],
     ['id_rol', '1', 'El alta debe rechazar el rol Administrador.'],
@@ -221,6 +226,47 @@ $db->escrituras = [];
 $resultado = $modelo->editar(array_merge($datosBase, ['usuario' => 'abc']), 1);
 $afirmar(!$resultado['ok'], 'El nombre de usuario debe respetar la longitud mínima.');
 $afirmar($db->escrituras === [], 'Un nombre inválido no debe actualizar la cuenta.');
+
+$db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo'];
+$db->usuarioDuplicado = null;
+$db->escrituras = [];
+$resultado = $modelo->editar(array_merge($datosBase, ['usuario' => '123456']), 1);
+$afirmar(!$resultado['ok'], 'La edición debe rechazar nombres compuestos solo por números.');
+$afirmar($db->escrituras === [], 'Un nombre de solo números no debe actualizar la cuenta.');
+
+$db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo'];
+$db->usuarioDuplicado = null;
+$db->escrituras = [];
+$resultado = $modelo->editar(array_merge($datosBase, ['usuario' => '2Operador']), 1);
+$afirmar(!$resultado['ok'], 'La edición debe exigir que el usuario comience con una letra.');
+$afirmar($db->escrituras === [], 'Un nombre que comienza con número no debe actualizar la cuenta.');
+
+$db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo', 'password' => 'hash', 'password_check' => 'check'];
+$db->usuarioDuplicado = null;
+$db->correoDuplicado = null;
+$db->escrituras = [];
+$_SESSION = ['id_usuario' => 25];
+$resultado = $modelo->actualizarPerfil([
+    'usuario' => '123456',
+    'correo' => 'operador@jv3000.com',
+]);
+$afirmar(!$resultado['ok'], 'El perfil debe rechazar usuarios compuestos solo por números.');
+$afirmar($db->escrituras === [], 'Un usuario de solo números no debe actualizar el perfil.');
+
+$db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo', 'password' => 'hash', 'password_check' => 'check'];
+$db->escrituras = [];
+$resultado = $modelo->actualizarPerfil([
+    'usuario' => ['123456'],
+    'correo' => 'operador@jv3000.com',
+]);
+$afirmar(!$resultado['ok'], 'El perfil debe rechazar un usuario que no sea texto plano.');
+$afirmar($db->escrituras === [], 'Un usuario mal formado no debe actualizar el perfil.');
+
+$registroFuente = file_get_contents($root . '/login/login.php');
+$afirmar(
+    strpos($registroFuente, 'validarNombreUsuario($new_user)') !== false,
+    'El registro público debe compartir la validación de nombre de usuario del servidor.'
+);
 
 $db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo'];
 $db->escrituras = [];

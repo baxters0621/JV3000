@@ -20,6 +20,10 @@ assert.match(vista, /id="crear_password"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password_confirm"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password_guia"[^>]*>[^<]*sin espacios/);
 assert.match(vista, /id="modalCrear"[\s\S]*class="modal-body modal-usuarios-body"/);
+assert.match(vista, /id="crear_usuario"[^>]*autocomplete="username"/);
+assert.match(vista, /id="crear_usuario"[^>]*placeholder="Ej\.: Ana_2026"/);
+assert.match(vista, /id="crear_usuario_guia"[^>]*>[^<]*Debe comenzar con una letra/);
+assert.doesNotMatch(vista, /Nuevo correo electrónico alternativo|Crea un correo electrónico aleatorio que se reenvía/);
 ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol'].forEach((id) => {
     assert.match(vista, new RegExp(`id="${id}"[^>]*required`));
 });
@@ -35,6 +39,12 @@ assert.doesNotMatch(estilosUsuarios, /\.pagina-usuarios #modalCrear \.create-col
 const registro = fs.readFileSync(path.join(__dirname, '..', 'login', 'login.php'), 'utf8');
 assert.match(registro, /id="r-pass"[^>]*maxlength="36"/);
 assert.match(registro, /id="r-pass2"[^>]*maxlength="36"/);
+assert.match(registro, /id="r-user"[^>]*autocomplete="username"/);
+assert.match(registro, /id="r-user-hint"[^>]*>[^<]*Empieza con una letra/);
+assert.match(
+    fs.readFileSync(path.join(__dirname, '..', 'assets', 'login', 'login.js'), 'utf8'),
+    /\^\[a-zA-Z\]\[a-zA-Z0-9_\]\{3,19\}\$/
+);
 
 const recuperacion = fs.readFileSync(path.join(__dirname, '..', 'login', 'recuperar.php'), 'utf8');
 assert.match(recuperacion, /id="rec-pass"[^>]*maxlength="36"/);
@@ -43,6 +53,11 @@ assert.match(recuperacion, /id="rec-pass2"[^>]*maxlength="36"/);
 const perfil = fs.readFileSync(path.join(__dirname, '..', 'views', 'perfil', 'index.php'), 'utf8');
 assert.match(perfil, /id="perfil_password_nueva"[^>]*maxlength="36"/);
 assert.match(perfil, /id="perfil_password_confirm"[^>]*maxlength="36"/);
+assert.match(perfil, /id="perfil_usuario_guia"[^>]*>Debe comenzar con una letra/);
+assert.match(
+    fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'perfil.js'), 'utf8'),
+    /!\/\^\[a-zA-Z\]\[a-zA-Z0-9_\]\{3,19\}\$\/\.test\(u\)/
+);
 const estilos = fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.css'), 'utf8');
 assert.match(estilos, /\.modal-usuarios \.password-requirement \{[^}]*font-weight:700/s);
 assert.match(estilos, /\.modal-usuarios \.password-character-count \{[^}]*font-weight:700/s);
@@ -232,7 +247,7 @@ function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
 }
 
 const altaValida = ejecutarAlta({
-    usuario: 'Nuevo_Operador',
+    usuario: 'Ana_2026',
     correo: 'nuevo@empresa.com',
     password: 'Abc12345!',
     confirmar: 'Abc12345!',
@@ -244,7 +259,7 @@ assert.deepEqual(
     {
         params: {
             accion_usuario: 'crear',
-            usuario: 'Nuevo_Operador',
+            usuario: 'Ana_2026',
             correo: 'nuevo@empresa.com',
             password: 'Abc12345!',
             password_confirm: 'Abc12345!',
@@ -264,6 +279,27 @@ const altaCorreoInvalido = ejecutarAlta({
 });
 assert.equal(altaCorreoInvalido.envio, null);
 assert.equal(altaCorreoInvalido.ids.crear_correo.classList.contains('is-invalid'), true);
+
+const altaUsuarioSoloNumeros = ejecutarAlta({
+    usuario: '24234235435435',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '2'
+});
+assert.equal(altaUsuarioSoloNumeros.envio, null);
+assert.equal(altaUsuarioSoloNumeros.ids.crear_usuario.classList.contains('is-invalid'), true);
+assert.match(altaUsuarioSoloNumeros.ids.crear_usuario_guia.textContent, /comenzar con una letra/);
+
+const altaUsuarioIniciaNumero = ejecutarAlta({
+    usuario: '2Nuevo_2026',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '2'
+});
+assert.equal(altaUsuarioIniciaNumero.envio, null);
+assert.equal(altaUsuarioIniciaNumero.ids.crear_usuario.classList.contains('is-invalid'), true);
 
 const altaConfirmacionDistinta = ejecutarAlta({
     usuario: 'Nuevo_Operador',

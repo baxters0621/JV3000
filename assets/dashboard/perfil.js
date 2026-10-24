@@ -40,8 +40,7 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
     var form = document.getElementById('formPerfil');
     if (!form) return;
 
-    // Normaliza el nombre de usuario mientras se escribe: solo minúsculas,
-    // números y guiones bajos; espacios se convierten en guion bajo.
+    // Normaliza el nombre de usuario mientras se escribe; debe empezar con letra.
     var fUser = document.getElementById('perfil_usuario');
     if (fUser) {
         fUser.addEventListener('input', function() {
@@ -56,16 +55,13 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
 
         if (fUser) {
             var u = fUser.value.trim();
-            if (u.length < 4) {
-                Swal.fire({ title: 'Usuario muy corto', text: 'El nombre de usuario debe tener MÍN 4 caracteres.', icon: 'error', confirmButtonColor: '#DC2626' });
-                return;
-            }
-            if (u.length > 20) {
-                Swal.fire({ title: 'Usuario muy largo', text: 'El nombre de usuario debe tener MÁX 20 caracteres.', icon: 'error', confirmButtonColor: '#DC2626' });
-                return;
-            }
-            if (!/^[a-zA-Z0-9_]+$/.test(u)) {
-                Swal.fire({ title: 'Usuario inválido', text: 'Solo se permiten letras, números y guiones bajos.', icon: 'error', confirmButtonColor: '#DC2626' });
+            if (!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(u)) {
+                Swal.fire({
+                    title: 'Usuario inválido',
+                    text: 'Debe comenzar con una letra y tener de 4 a 20 caracteres; después puedes usar letras, números y guion bajo.',
+                    icon: 'error',
+                    confirmButtonColor: '#DC2626'
+                });
                 return;
             }
         }

@@ -213,12 +213,12 @@ function abrirEdicion(btn) {
 
 // Texto que vuelve a mostrarse cuando el campo queda vacío.
 const TEXTO_GUIA_USU = {
-    crear_usuario: 'Mín 4 - Máx 20 caracteres (letras, números, guion bajo).',
+    crear_usuario: 'Debe comenzar con una letra; luego admite letras, números y guion bajo (4 a 20 caracteres).',
     crear_correo: 'Formato válido de correo electrónico.',
     crear_password: 'De 8 a 18 caracteres, sin espacios, con mayúscula, minúscula, número y símbolo.',
     crear_password_confirm: 'Debe coincidir con la contraseña anterior.',
     crear_rol: 'Solo se pueden crear Operadores de Carga y de Ventas.',
-    edit_usuario: 'De 4 a 20 letras, números o guiones bajos.',
+    edit_usuario: 'Debe comenzar con una letra; luego admite letras, números y guion bajo (4 a 20 caracteres).',
     edit_correo: 'Correo válido y no asociado a otra cuenta.',
     edit_rol: 'Solo se puede asignar Operador de Carga o de Ventas. Administrador es un rol único.',
     reset_password_confirm: 'Repite la nueva contraseña.',
@@ -272,6 +272,10 @@ function correoValidoUsu(correo) {
         && !local.includes('..')
         && /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(local)
         && /^[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+$/i.test(dominio);
+}
+
+function usuarioValidoUsu(usuario) {
+    return /^[a-z][a-z0-9_]{3,19}$/i.test(usuario);
 }
 
 function requisitosPasswordUsu(password) {
@@ -329,14 +333,14 @@ function validarAlta(mostrarErrores) {
     const password = document.getElementById('crear_password').value;
     const confirmar = document.getElementById('crear_password_confirm').value;
     const rol = document.getElementById('crear_rol');
-    const usuarioValido = usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario);
+    const usuarioValido = usuarioValidoUsu(usuario);
     const correoValido = correo.length <= 100 && correoValidoUsu(correo);
     const usuarioDuplicado = usuarioValido && usuarioDuplicadoUsu(usuario, '');
     const correoDuplicado = correoValido && correoDuplicadoUsu(correo, '');
     const usuarioOk = validarCampoUsu('crear_usuario', usuarioValido && !usuarioDuplicado,
         'Nombre de usuario válido.', usuarioDuplicado
             ? 'Ese nombre de usuario ya está en uso.'
-            : 'Solo letras, números y guion bajo (4 a 20 caracteres).', mostrarErrores);
+            : 'Debe comenzar con una letra; luego usa letras, números o guion bajo (4 a 20 caracteres).', mostrarErrores);
     const correoOk = validarCampoUsu('crear_correo', correoValido && !correoDuplicado,
         'Correo electrónico válido.', correoDuplicado
             ? 'Ese correo ya está asociado a otro colaborador.'
@@ -380,11 +384,11 @@ function validarEdicion(mostrarErrores) {
     const usuarioDuplicado = usuarioDuplicadoUsu(usuario, idActual);
     const correoDuplicado = correoDuplicadoUsu(correo, idActual);
 
-    const usuarioValido = usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario);
+    const usuarioValido = usuarioValidoUsu(usuario);
     const usuarioOk = validarCampoUsu('edit_usuario', usuarioValido && !usuarioDuplicado,
         'Nombre de usuario válido.', usuarioDuplicado
             ? 'Ese nombre de usuario ya está en uso.'
-            : 'Usa de 4 a 20 letras, números o guiones bajos.', mostrarErrores);
+            : 'Debe comenzar con una letra; luego usa letras, números o guion bajo (4 a 20 caracteres).', mostrarErrores);
     const correoValido = correo.length <= 100 && correoValidoUsu(correo);
     const correoOk = validarCampoUsu('edit_correo', correoValido && !correoDuplicado,
         'Correo electrónico válido.', correoDuplicado

@@ -285,7 +285,7 @@
                         <div class="col-md-6 modal-usuarios-field">
                             <label class="section-label" for="edit_usuario"><i class="bi bi-person-fill" aria-hidden="true"></i> Nombre de usuario</label>
                             <input type="text" class="input-jv w-100" id="edit_usuario" maxlength="20" autocomplete="username" placeholder="Ej.: Juan_Perez" aria-describedby="edit_usuario_guia" required>
-                            <div class="form-text jv-form-text" id="edit_usuario_guia" aria-live="polite">De 4 a 20 letras, números o guiones bajos.</div>
+                            <div class="form-text jv-form-text" id="edit_usuario_guia" aria-live="polite">Debe comenzar con una letra; luego admite letras, números y guion bajo (4 a 20 caracteres).</div>
                         </div>
                         <div class="col-md-6 modal-usuarios-field">
                             <label class="section-label" for="edit_correo"><i class="bi bi-envelope-fill" aria-hidden="true"></i> Correo electrónico</label>
@@ -340,8 +340,8 @@
                         <div class="row g-4 modal-usuarios-fields">
                             <div class="col-md-6 modal-usuarios-field">
                                 <label class="section-label" for="crear_usuario"><i class="bi bi-person-fill" aria-hidden="true"></i> Nombre de usuario</label>
-                                <input type="text" class="input-jv w-100" id="crear_usuario" maxlength="20" autocomplete="off" placeholder="Ej.: Juan_Perez" aria-describedby="crear_usuario_guia" required>
-                                <div class="form-text jv-form-text" id="crear_usuario_guia" aria-live="polite">De 4 a 20 caracteres: letras, números y guion bajo.</div>
+                                <input type="text" class="input-jv w-100" id="crear_usuario" maxlength="20" autocomplete="username" placeholder="Ej.: Ana_2026" aria-describedby="crear_usuario_guia" required>
+                                <div class="form-text jv-form-text" id="crear_usuario_guia" aria-live="polite">Debe comenzar con una letra; luego admite letras, números y guion bajo (4 a 20 caracteres).</div>
                             </div>
                             <div class="col-md-6 modal-usuarios-field">
                                 <label class="section-label" for="crear_correo"><i class="bi bi-envelope-fill" aria-hidden="true"></i> Correo electrónico</label>

@@ -40,7 +40,8 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label-jv" for="perfil_usuario">USUARIO</label>
-                            <input type="text" id="perfil_usuario" name="usuario" class="input-jv" required maxlength="20" value="<?php echo htmlspecialchars($usuario_data['usuario']); ?>" autocomplete="username">
+                            <input type="text" id="perfil_usuario" name="usuario" class="input-jv" required maxlength="20" value="<?php echo htmlspecialchars($usuario_data['usuario']); ?>" autocomplete="username" aria-describedby="perfil_usuario_guia">
+                            <div class="form-text jv-form-text" id="perfil_usuario_guia">Debe comenzar con una letra; luego admite letras, números y guion bajo (4 a 20 caracteres).</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label-jv" for="perfil_correo">CORREO ELECTRÓNICO</label>

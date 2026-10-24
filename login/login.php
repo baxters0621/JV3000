@@ -82,24 +82,38 @@ if ($row_rest && $row_rest['restante'] > 0) {
 // PROCESAR REGISTRO
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_registro'])) {
-    $new_user = normalizarUsuario($_POST['reg_usuario']);
-    $new_email = strtolower(trim($_POST['reg_email']));
-    $new_pass = $_POST['reg_password'];
+    $usuario_entrada = $_POST['reg_usuario'] ?? null;
+    $correo_entrada = $_POST['reg_email'] ?? null;
+    $password_entrada = $_POST['reg_password'] ?? null;
+    $password_confirmacion = $_POST['reg_password_confirm'] ?? null;
 
-    if (strlen($new_user) > 20) {
+    if (
+        !is_string($usuario_entrada)
+        || !is_string($correo_entrada)
+        || !is_string($password_entrada)
+        || !is_string($password_confirmacion)
+    ) {
+        $error = "DATOS DE REGISTRO INVÁLIDOS";
+    } else {
+        $new_user = normalizarUsuario($usuario_entrada);
+        $new_email = strtolower(trim($correo_entrada));
+        $new_pass = $password_entrada;
+    }
+
+    if (isset($new_user) && strlen($new_user) > 20) {
         $error = "USUARIO DEMASIADO LARGO (MAX 20 CARACTERES)";
-    } elseif (!preg_match('/^[a-zA-Z0-9_]{4,20}$/', $new_user)) {
-        $error = "USUARIO: MIN 4 Y MAX 20 CARACTERES (letras, numeros, guion bajo)";
-    } elseif (strlen($new_email) > 50) {
+    } elseif (isset($new_user) && !validarNombreUsuario($new_user)) {
+        $error = "USUARIO: DEBE COMENZAR CON LETRA Y TENER 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO)";
+    } elseif (isset($new_user) && strlen($new_email) > 50) {
         $error = "CORREO DEMASIADO LARGO (MAX 50 CARACTERES)";
-    } elseif (!filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
+    } elseif (isset($new_user) && !filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
         $error = "CORREO: FORMATO INVALIDO";
-    } elseif (!validarPasswordFuerte($new_pass)) {
+    } elseif (isset($new_user) && !validarPasswordFuerte($new_pass)) {
         $faltan = requisitosFaltantesPassword($new_pass);
         $error = "CONTRASEÑA DÉBIL: FALTA $faltan.";
-    } elseif ($new_pass !== $_POST['reg_password_confirm']) {
+    } elseif (isset($new_user) && $new_pass !== $password_confirmacion) {
         $error = "LAS CONTRASEÑAS NO COINCIDEN";
-    } else {
+    } elseif (isset($new_user)) {
         $dup = $db->fetchOne("SELECT id_usuario FROM usuarios WHERE LOWER(usuario) = LOWER(?) OR LOWER(correo) = LOWER(?)", [$new_user, $new_email]);
         if ($dup) {
             $error = "EL USUARIO O CORREO YA ESTA EN USO";
@@ -326,10 +340,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                             <label class="reg-label" for="r-user">NOMBRE DE USUARIO <span class="text-danger">*</span></label>
                             <div class="reg-field">
                                 <i class="reg-field-icon bi bi-at"></i>
-                                <input type="text" name="reg_usuario" id="r-user" class="reg-input" required maxlength="20" placeholder="Ej: admin_sistema" autocomplete="off">
+                                <input type="text" name="reg_usuario" id="r-user" class="reg-input" required maxlength="20" placeholder="Ej.: Ana_2026" autocomplete="username" aria-describedby="r-user-hint">
                                 <span class="reg-field-status" id="r-user-status"></span>
                             </div>
-                            <small class="reg-hint" id="r-user-hint">Mínimo 4 caracteres, solo letras, números y guiones bajos.</small>
+                            <small class="reg-hint" id="r-user-hint">Empieza con una letra; luego puedes usar letras, números y guion bajo (4 a 20 caracteres).</small>
 
                             <label class="reg-label" for="r-email">CORREO ELECTRÓNICO <span class="text-danger">*</span></label>
                             <div class="reg-field">

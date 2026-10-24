@@ -12,12 +12,9 @@ Sin datos sensibles (claves, tokens, PIN).
 - Interfaz del PIN pulida: ojos tachados por defecto, `.alert-lectura` en modales, ayuda como línea fija y flash que se auto-cierra a los 4 s.
 - Contraseñas nuevas: entre 8 y 18 caracteres sin espacios, en creación, restablecimiento, recuperación y perfil. El cliente marca espacios en rojo, no los cuenta en el contador ni da por cumplidos requisitos; el servidor los rechaza. Se mantienen mínimo 8, mayúscula, minúscula, número y símbolo; bcrypt conserva su resguardo interno.
 - Colaboradores: edición valida usuario/correo/duplicados/rol también en servidor; Administrador no se ofrece ni asigna a otros colaboradores.
-- Alta directa de Colaboradores: usuario, correo, contraseña/confirmación y rol comparten una única validación al escribir y enviar; el cliente marca duplicados visibles, el servidor mantiene la validación definitiva y rechaza campos manipulados que no sean texto.
-- Alta de Colaboradores con modal más legible: introducción violeta, datos de acceso agrupados y aviso de recuperación azul; conservar clases e IDs de campos para no romper el JS ni accesibilidad.
+- Alta de Colaboradores: usuario de 4–20 caracteres que empieza con letra, después letras/números/guion bajo; correo, contraseña/confirmación y rol se validan igual al escribir, enviar y en el servidor. Modal usa `autocomplete="username"` para una mejor clasificación por el navegador.
 - Insignias de roles en Colaboradores: Administrador violeta, Operador de Carga verde y Operador de Ventas rojo.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
-- Tarjeta del PIN compartido (Colaboradores) rediseñada: cabecera violeta con pastilla de estado, botón (?) de 52 px que abre el modal #modalAyudaPin (el texto .pin-info vive ahí, ya no en la tarjeta), PIN vigente en panel centrado agrupado 3+3 vía `chunk_split` y formulario .pin-form centrado (letter-spacing .45em + padding-left .45em). La normalización/validación viven en usuarios.js sin cambios.
-- Formulario del PIN con jerarquía más visible: introducción breve y dos paneles numerados, violeta para definir y azul para confirmar, con etiquetas y ayudas más marcadas. Mantenerlo responsive y no alterar validación ni flujo del PIN.
 
 ## Decisiones (y por qué)
 
@@ -38,7 +35,6 @@ Sin datos sensibles (claves, tokens, PIN).
 - Assets versionados por mtime: basta recargar y el asset servido debe traer `?v` nuevo.
 - La bitácora se escribe con PHP y se verifica después (BOM, sin `Ã`/`Â`); PowerShell da falsos positivos.
 - `ventas_stock_piloto`, `compras_recepcion_piloto` y `envio_correo_piloto` se niegan contra la BD real: no es un fallo.
-- La paginación del listado de Colaboradores no llevaba `class="pagination-jv"`: salía como enlaces sueltos sin estilo.
 - Los modales de Colaboradores se renderizan después de cerrar `.pagina-usuarios`; no escribir reglas de modal bajo ese ancestro, porque no se aplican. Seleccionar el propio `#modalCrear` o `.modal-usuarios`.
 - El ítem «Panel de Inicio» se oculta con `$en_panel_inicio` (`index.php` sin `?url=`): si se reutiliza esta condición en el sidebar, recordar que el chip del hero también contiene el texto, así que los `Contains()` de verificación deben apuntar a `nav-ram-panel`.
 - Al escribir la bitácora desde PHP, las cadenas con `\n` dentro de comillas simples no se expanden: quedan en una línea con `\n` literales. Usar concatenación con `PHP_EOL` (o comillas dobles).
@@ -50,6 +46,4 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Próximos pasos
 
-- Cambiar el PIN provisional por uno definitivo desde Colaboradores.
-- Pruebas visuales en navegador: ojo de contraseña, tamaño de letra de los modales, auto-cierre del flash.
-- Instalar skills puntuales con `npx skills add` cuando haga falta (`npx skills update` para mantenerlas al día).
+- Cambiar el PIN provisional y hacer revisión visual en navegador cuando esté disponible.
