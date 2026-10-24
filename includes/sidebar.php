@@ -38,13 +38,19 @@ $es_op_ventas = $id_rol === 3;
          Panel → Inventario → Compras → Ventas → Análisis →
          Administración (admin) → Guía → Mi Perfil -->
     <nav class="sidebar-nav">
-        <!-- Panel de Inicio -->
-        <div class="nav-item nav-ram-panel <?php echo ($archivo_actual === 'index.php' && $ruta_mvc === '') ? 'active' : ''; ?>">
+        <?php
+        // Panel de Inicio: mientras estás en el panel el ítem no se pinta (el
+        // chip del hero ya dice dónde estás); en cualquier otra página vuelve
+        // a aparecer para poder regresar.
+        $en_panel_inicio = ($archivo_actual === 'index.php' && $ruta_mvc === '');
+        if (!$en_panel_inicio): ?>
+        <div class="nav-item nav-ram-panel">
             <a href="<?php echo $prefijo; ?>dashboard/index.php" class="nav-link">
                 <i class="bi bi-house-door"></i>
                 <span>Panel de Inicio</span>
             </a>
         </div>
+        <?php endif; ?>
 
         <?php
         // Visibilidad por módulo según el rol de la sesión

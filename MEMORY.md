@@ -11,6 +11,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - PIN de emergencia global fijado por la interfaz y probado E2E (recuperación completa y bloqueo a los 3 intentos); el valor lo cambia el administrador desde Colaboradores.
 - Interfaz del PIN pulida: ojos tachados por defecto, `.alert-lectura` en modales, ayuda como línea fija y flash que se auto-cierra a los 4 s.
 - Colaboradores revisado con las guías de interfaz: accesibilidad completa (aria-label/aria-pressed/role=status/scope/aria-describedby), paginación con `.pagination-jv` y botones, y respeto a `prefers-reduced-motion`.
+- Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
 
 ## Decisiones (y por qué)
 
@@ -30,6 +31,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - La bitácora se escribe con PHP y se verifica después (BOM, sin `Ã`/`Â`); PowerShell da falsos positivos.
 - `ventas_stock_piloto`, `compras_recepcion_piloto` y `envio_correo_piloto` se niegan contra la BD real: no es un fallo.
 - La paginación del listado de Colaboradores no llevaba `class="pagination-jv"`: salía como enlaces sueltos sin estilo.
+- El ítem «Panel de Inicio» se oculta con `$en_panel_inicio` (`index.php` sin `?url=`): si se reutiliza esta condición en el sidebar, recordar que el chip del hero también contiene el texto, así que los `Contains()` de verificación deben apuntar a `nav-ram-panel`.
 - Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines (`sess_jv*` puede llevarse ficheros ajenos).
 - Skills ya instaladas a nivel global (Starter Pack completo): `find-skills`, `grill-me`, `frontend-design`, `web-design-guidelines`, `systematic-debugging`.
 

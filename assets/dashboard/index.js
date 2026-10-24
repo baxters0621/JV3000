@@ -149,13 +149,16 @@
         function toggleAlertas(e) {
             if (e) e.stopPropagation();
             var panel = $id('dashBellPanel');
+            var btn = $id('dashBellBtn');
             if (!panel) return;
             if (panel.classList.contains('open')) {
                 panel.classList.remove('open');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
                 return;
             }
             posicionarPanelAlertas();
             panel.classList.add('open');
+            if (btn) btn.setAttribute('aria-expanded', 'true');
         }
 
         function renderAlertaSeccion(titulo, clase, urlAlerta, count, items, icono) {
@@ -226,9 +229,12 @@
 
         document.addEventListener('click', function(e) {
             var panel = $id('dashBellPanel');
+            var alertButton = $id('dashBellBtn');
             if (panel && panel.classList.contains('open')) {
-                var alertButton = $id('dashBellBtn');
-                if (alertButton && !alertButton.contains(e.target)) panel.classList.remove('open');
+                if (alertButton && !alertButton.contains(e.target)) {
+                    panel.classList.remove('open');
+                    if (alertButton) alertButton.setAttribute('aria-expanded', 'false');
+                }
             }
         });
 

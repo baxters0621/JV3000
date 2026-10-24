@@ -123,7 +123,7 @@ $tabla_compras = $datos['tabla_compras'];
     <title>Panel de Inicio | JV3000 C.A.</title>
     <?php include '../includes/diseno.php'; ?>
 
-    <link rel="stylesheet" href="../assets/dashboard/index.css?v=31">
+    <link rel="stylesheet" href="../assets/dashboard/index.css<?php echo $jv_cache_bust(__DIR__ . '/../assets/dashboard/index.css'); ?>">
 </head>
 
 <?php
@@ -148,64 +148,70 @@ $tabla_compras = $datos['tabla_compras'];
                     </div>
                 </div>
                 <div class="dash-hero-info">
-                    <div class="dash-user">
-                        <div class="dash-user-avatar"><?php echo $iniciales; ?></div>
-                        <div>
-                            <div class="dash-user-greeting"><?php echo $saludo; ?></div>
-                            <div class="dash-user-name"><?php echo htmlspecialchars($nombre_user); ?></div>
-                            <div class="dash-user-role"><?php echo strtoupper($rol_user); ?></div>
+                    <div class="dash-here" aria-current="page">
+                        <i class="bi bi-house-door-fill" aria-hidden="true"></i>
+                        <span>Panel de Inicio</span>
+                    </div>
+                    <div class="dash-hero-status">
+                        <div class="dash-date">
+                            <i class="bi bi-calendar3 me-2" aria-hidden="true"></i><?php echo $fecha_hoy; ?>
+                            <span class="dash-date-sep" aria-hidden="true">&middot;</span>
+                            <i class="bi bi-clock-fill me-1" aria-hidden="true"></i><span id="dash-clock">--:--</span>
                         </div>
-                    </div>
-                    <div class="dash-date">
-                        <i class="bi bi-calendar3 me-2"></i><?php echo $fecha_hoy; ?>
-                        <span class="dash-date-sep">&middot;</span>
-                        <i class="bi bi-clock-fill me-1"></i><span id="dash-clock">--:--</span>
-                    </div>
-                    <div class="dash-bell-wrap">
-                        <button type="button" class="dash-bell" id="dashBellBtn" onclick="toggleAlertas(event)" title="Alertas críticas de stock">
-                            <i class="bi bi-bell"></i>
-                            <?php if ($alertas['total'] > 0): ?><span class="dash-bell-badge" id="dashBellBadge"><?php echo min($alertas['total'], 99); ?></span><?php endif; ?>
-                        </button>
-                        <div class="dash-bell-panel" id="dashBellPanel">
-                            <div class="dash-bell-head">ALERTAS CRÍTICAS</div>
-                            <?php if ($alertas['total'] === 0): ?>
-                                <div class="dash-bell-empty"><i class="bi bi-check-circle"></i> Sin alertas críticas</div>
-                            <?php else: ?>
-                                <?php
-                                $secciones = [
-                                    'vencidos' => ['titulo' => 'VENCIDOS', 'clase' => 'ven', 'alerta' => 'vencidos', 'count' => $alertas['counts']['vencidos'], 'items' => $alertas['vencidos']],
-                                    'proximos' => ['titulo' => 'PRÓXIMOS (1-7 DÍAS)', 'clase' => 'prox', 'alerta' => 'proximos', 'count' => $alertas['counts']['proximos'], 'items' => $alertas['proximos']],
-                                    'prontos' => ['titulo' => 'PRONTO (8-30 DÍAS)', 'clase' => 'pronto', 'alerta' => 'prontos', 'count' => $alertas['counts']['prontos'], 'items' => $alertas['prontos']],
-                                ];
-                                if ($rol_user_id !== 3) {
-                                    $secciones['bajos'] = ['titulo' => 'STOCK BAJO', 'clase' => 'bajo', 'alerta' => 'bajos', 'count' => $alertas['counts']['bajos'], 'items' => $alertas['bajos']];
-                                }
-                                foreach ($secciones as $clave => $sec):
-                                    if ($sec['count'] <= 0) {
-                                        continue;
+                        <div class="dash-bell-wrap">
+                            <button type="button" class="dash-bell" id="dashBellBtn" onclick="toggleAlertas(event)" title="Alertas críticas de stock" aria-label="Alertas críticas de stock" aria-expanded="false" aria-controls="dashBellPanel">
+                                <i class="bi bi-bell" aria-hidden="true"></i>
+                                <?php if ($alertas['total'] > 0): ?><span class="dash-bell-badge" id="dashBellBadge"><?php echo min($alertas['total'], 99); ?></span><?php endif; ?>
+                            </button>
+                            <div class="dash-bell-panel" id="dashBellPanel" aria-label="Alertas críticas">
+                                <div class="dash-bell-head">ALERTAS CRÍTICAS</div>
+                                <?php if ($alertas['total'] === 0): ?>
+                                    <div class="dash-bell-empty"><i class="bi bi-check-circle"></i> Sin alertas críticas</div>
+                                <?php else: ?>
+                                    <?php
+                                    $secciones = [
+                                        'vencidos' => ['titulo' => 'VENCIDOS', 'clase' => 'ven', 'alerta' => 'vencidos', 'count' => $alertas['counts']['vencidos'], 'items' => $alertas['vencidos']],
+                                        'proximos' => ['titulo' => 'PRÓXIMOS (1-7 DÍAS)', 'clase' => 'prox', 'alerta' => 'proximos', 'count' => $alertas['counts']['proximos'], 'items' => $alertas['proximos']],
+                                        'prontos' => ['titulo' => 'PRONTO (8-30 DÍAS)', 'clase' => 'pronto', 'alerta' => 'prontos', 'count' => $alertas['counts']['prontos'], 'items' => $alertas['prontos']],
+                                    ];
+                                    if ($rol_user_id !== 3) {
+                                        $secciones['bajos'] = ['titulo' => 'STOCK BAJO', 'clase' => 'bajo', 'alerta' => 'bajos', 'count' => $alertas['counts']['bajos'], 'items' => $alertas['bajos']];
                                     }
-                                ?>
-                                    <div class="dash-bell-sec dash-bell-<?php echo $sec['clase']; ?>">
-                                        <div class="dash-bell-sec-titulo">
-                                            <span><?php echo $sec['titulo']; ?> (<?php echo $sec['count']; ?>)</span>
-                                            <a href="<?php echo BASE_PATH; ?>index.php?url=productos&alerta=<?php echo $sec['alerta']; ?>" class="dash-bell-ver">Ver todos</a>
+                                    foreach ($secciones as $clave => $sec):
+                                        if ($sec['count'] <= 0) {
+                                            continue;
+                                        }
+                                    ?>
+                                        <div class="dash-bell-sec dash-bell-<?php echo $sec['clase']; ?>">
+                                            <div class="dash-bell-sec-titulo">
+                                                <span><?php echo $sec['titulo']; ?> (<?php echo $sec['count']; ?>)</span>
+                                                <a href="<?php echo BASE_PATH; ?>index.php?url=productos&alerta=<?php echo $sec['alerta']; ?>" class="dash-bell-ver">Ver todos</a>
+                                            </div>
+                                            <?php foreach ($sec['items'] as $it): ?>
+                                                <a class="dash-bell-item" href="<?php echo BASE_PATH; ?>index.php?url=productos&producto=<?php echo (int)$it['id']; ?>">
+                                                    <i class="bi bi-<?php echo $clave === 'bajos' ? 'exclamation-triangle' : ($clave === 'proximos' ? 'clock-history' : ($clave === 'prontos' ? 'calendar3' : 'x-octagon')); ?>" aria-hidden="true"></i>
+                                                    <span class="dash-bell-item-nombre"><?php echo htmlspecialchars($it['nombre']); ?></span>
+                                                    <span class="dash-bell-item-meta">
+                                                        <?php if ($clave === 'bajos'): ?>
+                                                            <?php echo (int)$it['stock']; ?> / mín <?php echo (int)$it['minimo']; ?>
+                                                        <?php else: ?>
+                                                            <?php echo htmlspecialchars($it['fecha']); ?>
+                                                        <?php endif; ?>
+                                                    </span>
+                                                </a>
+                                            <?php endforeach; ?>
                                         </div>
-                                        <?php foreach ($sec['items'] as $it): ?>
-                                            <a class="dash-bell-item" href="<?php echo BASE_PATH; ?>index.php?url=productos&producto=<?php echo (int)$it['id']; ?>">
-                                                <i class="bi bi-<?php echo $clave === 'bajos' ? 'exclamation-triangle' : ($clave === 'proximos' ? 'clock-history' : ($clave === 'prontos' ? 'calendar3' : 'x-octagon')); ?>"></i>
-                                                <span class="dash-bell-item-nombre"><?php echo htmlspecialchars($it['nombre']); ?></span>
-                                                <span class="dash-bell-item-meta">
-                                                    <?php if ($clave === 'bajos'): ?>
-                                                        <?php echo (int)$it['stock']; ?> / mín <?php echo (int)$it['minimo']; ?>
-                                                    <?php else: ?>
-                                                        <?php echo htmlspecialchars($it['fecha']); ?>
-                                                    <?php endif; ?>
-                                                </span>
-                                            </a>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="dash-user">
+                            <div class="dash-user-avatar"><?php echo $iniciales; ?></div>
+                            <div>
+                                <div class="dash-user-greeting"><?php echo $saludo; ?></div>
+                                <div class="dash-user-name"><?php echo htmlspecialchars($nombre_user); ?></div>
+                                <div class="dash-user-role"><?php echo strtoupper($rol_user); ?></div>
+                            </div>
                         </div>
                     </div>
                 </div>
