@@ -39,6 +39,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - La bitácora se escribe con PHP y se verifica después (BOM, sin `Ã`/`Â`); PowerShell da falsos positivos.
 - `ventas_stock_piloto`, `compras_recepcion_piloto` y `envio_correo_piloto` se niegan contra la BD real: no es un fallo.
 - La paginación del listado de Colaboradores no llevaba `class="pagination-jv"`: salía como enlaces sueltos sin estilo.
+- Los modales de Colaboradores se renderizan después de cerrar `.pagina-usuarios`; no escribir reglas de modal bajo ese ancestro, porque no se aplican. Seleccionar el propio `#modalCrear` o `.modal-usuarios`.
 - El ítem «Panel de Inicio» se oculta con `$en_panel_inicio` (`index.php` sin `?url=`): si se reutiliza esta condición en el sidebar, recordar que el chip del hero también contiene el texto, así que los `Contains()` de verificación deben apuntar a `nav-ram-panel`.
 - Al escribir la bitácora desde PHP, las cadenas con `\n` dentro de comillas simples no se expanden: quedan en una línea con `\n` literales. Usar concatenación con `PHP_EOL` (o comillas dobles).
 - El test `pin_global_piloto.php` fija el diseño de la tarjeta del PIN (botón (?) + #modalAyudaPin + pastilla + único .pin-info): si vuelve a cambiar el diseño, actualizar también esas aserciones.

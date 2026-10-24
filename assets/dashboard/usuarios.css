@@ -325,7 +325,7 @@
     }
     .modal-footer-jv .btn-jv-secondary:hover { border-color:#7c3aed; color:#7c3aed; }
 
-    .pagina-usuarios .modal-usuarios-dialog {
+    .modal-usuarios-dialog {
         width: min(760px, calc(100vw - 2rem));
         max-width:none;
     }
@@ -348,7 +348,7 @@
         padding:28px !important;
         background:#fff;
     }
-    .pagina-usuarios #modalCrear .create-collab-intro {
+    #modalCrear .create-collab-intro {
         display:flex;
         align-items:center;
         gap:15px;
@@ -359,7 +359,7 @@
         border-radius:13px;
         background:linear-gradient(105deg,#f5f3ff 0%,#fff 78%);
     }
-    .pagina-usuarios #modalCrear .create-collab-intro-icon {
+    #modalCrear .create-collab-intro-icon {
         display:grid;
         flex:0 0 44px;
         width:44px;
@@ -371,30 +371,30 @@
         font-size:1.25rem;
         box-shadow:0 5px 13px rgba(109,40,217,.22);
     }
-    .pagina-usuarios #modalCrear .create-collab-intro strong,
-    .pagina-usuarios #modalCrear .create-collab-intro div > span {
+    #modalCrear .create-collab-intro strong,
+    #modalCrear .create-collab-intro div > span {
         display:block;
     }
-    .pagina-usuarios #modalCrear .create-collab-intro strong {
+    #modalCrear .create-collab-intro strong {
         color:#312e81;
         font-size:1rem;
         font-weight:850;
         line-height:1.4;
     }
-    .pagina-usuarios #modalCrear .create-collab-intro div > span {
+    #modalCrear .create-collab-intro div > span {
         margin-top:3px;
         color:#475569;
         font-size:.87rem;
         font-weight:600;
         line-height:1.5;
     }
-    .pagina-usuarios #modalCrear .create-collab-section {
+    #modalCrear .create-collab-section {
         padding:20px;
         border:1px solid #ddd6fe;
         border-radius:15px;
         background:linear-gradient(145deg,#faf9ff 0%,#f5f3ff 100%);
     }
-    .pagina-usuarios #modalCrear .create-collab-section-title {
+    #modalCrear .create-collab-section-title {
         display:flex;
         align-items:center;
         gap:12px;
@@ -402,7 +402,7 @@
         padding-bottom:13px;
         border-bottom:1px solid #ddd6fe;
     }
-    .pagina-usuarios #modalCrear .create-collab-section-icon {
+    #modalCrear .create-collab-section-icon {
         display:grid;
         flex:0 0 38px;
         width:38px;
@@ -413,19 +413,19 @@
         color:#6d28d9;
         font-size:1.05rem;
     }
-    .pagina-usuarios #modalCrear .create-collab-section-title h3 {
+    #modalCrear .create-collab-section-title h3 {
         margin:0;
         color:#312e81;
         font-size:1rem;
         font-weight:850;
     }
-    .pagina-usuarios #modalCrear .create-collab-section-title p {
+    #modalCrear .create-collab-section-title p {
         margin:3px 0 0;
         color:#475569;
         font-size:.83rem;
         font-weight:600;
     }
-    .pagina-usuarios #modalCrear .section-label {
+    #modalCrear .section-label {
         min-height:33px;
         padding-bottom:7px;
         border-bottom:1px solid #d8ccf7;
@@ -433,23 +433,23 @@
         font-size:.88rem;
         font-weight:800;
     }
-    .pagina-usuarios #modalCrear .section-label .bi { color:#6d28d9; }
-    .pagina-usuarios #modalCrear .jv-form-text {
+    #modalCrear .section-label .bi { color:#6d28d9; }
+    #modalCrear .jv-form-text {
         min-height:40px;
         color:#475569;
         font-size:.84rem;
         font-weight:600;
         line-height:1.5;
     }
-    .pagina-usuarios #modalCrear .input-jv.is-valid {
+    #modalCrear .input-jv.is-valid {
         border-color:#16a34a;
         box-shadow:0 0 0 3px rgba(22,163,74,.12);
     }
-    .pagina-usuarios #modalCrear .input-jv.is-invalid {
+    #modalCrear .input-jv.is-invalid {
         border-color:#dc2626;
         box-shadow:0 0 0 3px rgba(220,38,38,.12);
     }
-    .pagina-usuarios #modalCrear .create-collab-note {
+    #modalCrear .create-collab-note {
         display:flex;
         align-items:flex-start;
         gap:13px;
@@ -460,7 +460,7 @@
         border-radius:13px;
         background:linear-gradient(105deg,#f0f9ff 0%,#fff 78%);
     }
-    .pagina-usuarios #modalCrear .create-collab-note-icon {
+    #modalCrear .create-collab-note-icon {
         display:grid;
         flex:0 0 36px;
         width:36px;
@@ -471,12 +471,12 @@
         color:#0369a1;
         font-size:1rem;
     }
-    .pagina-usuarios #modalCrear .create-collab-note strong {
+    #modalCrear .create-collab-note strong {
         color:#075985;
         font-size:.9rem;
         font-weight:850;
     }
-    .pagina-usuarios #modalCrear .create-collab-note p {
+    #modalCrear .create-collab-note p {
         margin:4px 0 0;
         color:#334155;
         font-size:.84rem;
@@ -500,7 +500,7 @@
         text-transform:none;
     }
     .modal-usuarios .section-label .bi { color:#6d28d9; }
-    .pagina-usuarios .modal-usuarios .input-jv {
+    .modal-usuarios .input-jv {
         min-height:52px;
         padding:12px 15px;
         border:1px solid #d7deea;
@@ -510,11 +510,11 @@
         font-size:1rem;
         box-shadow:none;
     }
-    .pagina-usuarios .modal-usuarios .input-jv:focus {
+    .modal-usuarios .input-jv:focus {
         border-color:#7c3aed;
         box-shadow:0 0 0 3px rgba(124,58,237,.14);
     }
-    .pagina-usuarios .modal-usuarios .input-jv:focus-visible {
+    .modal-usuarios .input-jv:focus-visible {
         outline:2px solid #7c3aed;
         outline-offset:2px;
     }
@@ -930,18 +930,18 @@
     }
 
     @media (max-width: 575.98px) {
-        .pagina-usuarios #modalCrear .modal-usuarios-body { padding:18px !important; }
-        .pagina-usuarios #modalCrear .create-collab-section { padding:15px; }
-        .pagina-usuarios #modalCrear .create-collab-intro,
-        .pagina-usuarios #modalCrear .create-collab-note { padding:13px; }
-        .pagina-usuarios #modalCrear .create-collab-section-title p { line-height:1.45; }
+        #modalCrear .modal-usuarios-body { padding:18px !important; }
+        #modalCrear .create-collab-section { padding:15px; }
+        #modalCrear .create-collab-intro,
+        #modalCrear .create-collab-note { padding:13px; }
+        #modalCrear .create-collab-section-title p { line-height:1.45; }
         .pagina-usuarios .pin-card-head { flex-wrap:wrap; }
         .pagina-usuarios .pin-help { width:44px; height:44px; }
         .pagina-usuarios .pin-vigente { padding:14px 20px; }
         .pagina-usuarios .pin-vigente-valor { letter-spacing:.14em; word-spacing:.4em; font-size:1.9rem; }
         .pagina-usuarios .pin-form-intro { align-items:flex-start; padding:13px; }
         .pagina-usuarios .pin-step { padding:15px 14px 13px; }
-        .pagina-usuarios .modal-usuarios-dialog {
+        .modal-usuarios-dialog {
             width:calc(100% - 1rem);
             max-width:none;
             margin:.5rem auto;
@@ -961,7 +961,8 @@
     /* ── Texto explicativo de los modales: tamaño y ritmo de lectura cómodos ──
        La base .alert-jv va en .85rem y .jv-form-text en .78rem: demasiado
        apretados para leer una instrucción entera. */
-    .pagina-usuarios .alert-lectura { font-size:1rem; line-height:1.65; font-weight:500; }
+    .pagina-usuarios .alert-lectura,
+    .modal-usuarios .alert-lectura { font-size:1rem; line-height:1.65; font-weight:500; }
 
     /* ── Movimiento reducido: sin desplazamientos ni transiciones ── */
     @media (prefers-reduced-motion: reduce) {

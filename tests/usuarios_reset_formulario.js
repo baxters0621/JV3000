@@ -26,6 +26,11 @@ assert.match(vista, /id="modalCrear"[\s\S]*class="modal-body modal-usuarios-body
 assert.match(vista, /create-collab-intro/);
 assert.match(vista, /create-collab-section/);
 assert.match(vista, /create-collab-note/);
+const estilosUsuarios = fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.css'), 'utf8');
+assert.match(estilosUsuarios, /#modalCrear \.create-collab-intro \{/);
+assert.match(estilosUsuarios, /#modalCrear \.create-collab-section-title h3 \{/);
+assert.match(estilosUsuarios, /\.modal-usuarios \.input-jv \{/);
+assert.doesNotMatch(estilosUsuarios, /\.pagina-usuarios #modalCrear \.create-collab/);
 
 const registro = fs.readFileSync(path.join(__dirname, '..', 'login', 'login.php'), 'utf8');
 assert.match(registro, /id="r-pass"[^>]*maxlength="36"/);
