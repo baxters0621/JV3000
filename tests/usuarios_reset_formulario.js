@@ -254,6 +254,7 @@ const altaValida = ejecutarAlta({
     rol: '2'
 });
 assert.equal(altaValida.prevenido, true);
+assert.equal(altaValida.ids.crear_password.classList.contains('is-valid'), true);
 assert.deepEqual(
     JSON.parse(JSON.stringify(altaValida.envio)),
     {
@@ -269,6 +270,27 @@ assert.deepEqual(
         url: 'index.php?url=usuarios'
     }
 );
+
+const altaPasswordDeSieteCaracteres = ejecutarAlta({
+    usuario: 'Ana_2026',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc123!',
+    confirmar: 'Abc123!',
+    rol: '2'
+});
+assert.equal(altaPasswordDeSieteCaracteres.envio, null);
+assert.equal(altaPasswordDeSieteCaracteres.ids.crear_password.classList.contains('is-invalid'), true);
+assert.match(altaPasswordDeSieteCaracteres.ids.crear_password_guia.textContent, /falta 1 carácter/);
+
+const altaPasswordMinimaValida = ejecutarAlta({
+    usuario: 'Ana_2026',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc123!!',
+    confirmar: 'Abc123!!',
+    rol: '2'
+});
+assert.ok(altaPasswordMinimaValida.envio);
+assert.equal(altaPasswordMinimaValida.ids.crear_password.classList.contains('is-valid'), true);
 
 const altaCorreoInvalido = ejecutarAlta({
     usuario: 'Nuevo_Operador',

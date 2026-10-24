@@ -226,6 +226,7 @@ const TEXTO_GUIA_USU = {
     pin_emergencia_global_confirm: 'Repite el mismo PIN.'
 };
 
+const MIN_PASSWORD_CHARACTERS = 8;
 const MAX_PASSWORD_CHARACTERS = 18;
 
 // Marca un campo como válido ('ok'), inválido ('err') o neutro (vacío).
@@ -284,7 +285,7 @@ function requisitosPasswordUsu(password) {
     }).length;
     const sinEspacios = !/\s/u.test(password);
     return {
-        longitud: longitud >= 8,
+        longitud: longitud >= MIN_PASSWORD_CHARACTERS,
         minuscula: /[a-z]/.test(password),
         mayuscula: /[A-Z]/.test(password),
         numero: /\d/.test(password),
@@ -347,12 +348,15 @@ function validarAlta(mostrarErrores) {
             : (correo.length > 100 ? 'El correo no puede superar 100 caracteres.' : 'Escribe un correo electrónico válido.'),
         mostrarErrores);
     const passwordRequisitos = requisitosPasswordUsu(password);
+    const caracteresFaltantes = Math.max(0, MIN_PASSWORD_CHARACTERS - Array.from(password).length);
     const passwordOk = validarCampoUsu('crear_password', passwordSeguraUsu(password),
-        'Contraseña segura.', /\s/u.test(password)
+        'Contraseña válida. Cumple todos los requisitos.', /\s/u.test(password)
             ? 'No se permiten espacios en la contraseña.'
             : (!passwordRequisitos.maximo
                 ? 'La contraseña no puede superar 18 caracteres.'
-                : 'Debe tener de 8 a 18 caracteres, una mayúscula, una minúscula, un número y un símbolo.'),
+                : (!passwordRequisitos.longitud
+                    ? 'Te ' + (caracteresFaltantes === 1 ? 'falta 1 carácter' : 'faltan ' + caracteresFaltantes + ' caracteres') + ' para llegar al mínimo de ' + MIN_PASSWORD_CHARACTERS + '.'
+                    : 'Debe incluir una mayúscula, una minúscula, un número y un símbolo.')),
         mostrarErrores);
     const confirmarOk = validarCampoUsu('crear_password_confirm', password !== '' && password === confirmar,
         'Las contraseñas coinciden.', /\s/u.test(confirmar)

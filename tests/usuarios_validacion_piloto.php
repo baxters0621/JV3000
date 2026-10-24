@@ -120,6 +120,18 @@ $resultado = $modelo->crear($datosConEspaciosPassword);
 $afirmar(!$resultado['ok'], 'El alta no debe recortar espacios para convertir una contraseña inválida en válida.');
 $afirmar($db->consultas === [] && $db->escrituras === [], 'La contraseña con espacios exteriores debe rechazarse antes de consultar o escribir.');
 
+$datosPasswordCorta = $datosAltaValidos;
+$datosPasswordCorta['password'] = 'Abc123!';
+$datosPasswordCorta['password_confirm'] = 'Abc123!';
+$db->consultas = [];
+$db->escrituras = [];
+$resultado = $modelo->crear($datosPasswordCorta);
+$afirmar(!$resultado['ok'], 'El alta debe rechazar una contraseña que tiene solo 7 caracteres.');
+$afirmar(
+    strpos($resultado['mensaje'], '8 CARACTERES') !== false && $db->escrituras === [],
+    'El servidor debe explicar el mínimo de 8 y no crear la cuenta con una clave de 7 caracteres.'
+);
+
 $casosAltaInvalidos = [
     ['usuario', 'abc', 'El alta debe rechazar un usuario demasiado corto.'],
     ['usuario', '123456', 'El alta debe rechazar un usuario compuesto solo por números.'],
