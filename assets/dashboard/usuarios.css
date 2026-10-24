@@ -325,7 +325,10 @@
     }
     .modal-footer-jv .btn-jv-secondary:hover { border-color:#7c3aed; color:#7c3aed; }
 
-    .modal-usuarios-dialog { max-width:720px; }
+    .pagina-usuarios .modal-usuarios-dialog {
+        width: min(760px, calc(100vw - 2rem));
+        max-width:none;
+    }
     .modal-usuarios {
         overflow:hidden;
         border:1px solid #dce3ee;
@@ -345,7 +348,7 @@
         padding:28px !important;
         background:#fff;
     }
-    .modal-usuarios-fields { row-gap:18px; }
+    .modal-usuarios-fields { --bs-gutter-y:.75rem; }
     .modal-usuarios-field { min-width:0; }
     .modal-usuarios .section-label {
         display:flex;
@@ -381,7 +384,7 @@
         outline-offset:2px;
     }
     .modal-usuarios .jv-form-text {
-        min-height:2.5rem;
+        min-height:0;
         margin-top:8px;
         font-size:.84rem;
         line-height:1.5;
@@ -404,7 +407,10 @@
     }
     .modal-usuarios .modal-footer-jv .btn-jv-primary:disabled {
         cursor:not-allowed;
-        opacity:.55;
+        color:#526078;
+        background:#e2e8f0;
+        border-color:#e2e8f0;
+        opacity:1;
         box-shadow:none;
         transform:none;
     }
@@ -627,7 +633,11 @@
         .pagina-usuarios .pin-help { width:44px; height:44px; }
         .pagina-usuarios .pin-vigente { padding:14px 20px; }
         .pagina-usuarios .pin-vigente-valor { letter-spacing:.14em; word-spacing:.4em; font-size:1.9rem; }
-        .modal-usuarios-dialog { max-width:calc(100% - 1rem); margin:.5rem auto; }
+        .pagina-usuarios .modal-usuarios-dialog {
+            width:calc(100% - 1rem);
+            max-width:none;
+            margin:.5rem auto;
+        }
         .modal-usuarios { border-radius:16px; }
         .modal-usuarios .modal-header-jv { padding:17px 20px; }
         .modal-usuarios-body { padding:20px !important; }

@@ -199,6 +199,9 @@ function abrirEdicion(btn) {
         marcarCampoUsu(id, '', '');
     });
     validarEdicion(false);
+    ['edit_usuario', 'edit_correo', 'edit_rol'].forEach(function (id) {
+        marcarCampoUsu(id, '', '');
+    });
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditar')).show();
 }
 
