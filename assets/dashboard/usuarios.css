@@ -335,6 +335,22 @@
         border-radius:20px;
         box-shadow:0 24px 64px rgba(15,23,42,.2);
     }
+    #modalCrear .modal-usuarios > form {
+        display:flex;
+        flex:1 1 auto;
+        flex-direction:column;
+        min-height:0;
+    }
+    #modalCrear .modal-usuarios > form > .modal-header-jv,
+    #modalCrear .modal-usuarios > form > .modal-footer-jv {
+        flex:0 0 auto;
+    }
+    #modalCrear .modal-usuarios > form > .modal-body {
+        flex:1 1 auto;
+        min-height:0;
+        overflow-y:auto;
+        overscroll-behavior:contain;
+    }
     .modal-usuarios .modal-header-jv {
         padding:20px 28px;
         border-bottom:0;

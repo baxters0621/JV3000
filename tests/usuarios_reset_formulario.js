@@ -23,6 +23,8 @@ assert.match(vista, /id="modalCrear"[\s\S]*class="modal-body modal-usuarios-body
 assert.match(vista, /id="crear_usuario"[^>]*autocomplete="username"/);
 assert.match(vista, /id="crear_usuario"[^>]*placeholder="Ej\.: Ana_2026"/);
 assert.match(vista, /id="crear_usuario_guia"[^>]*>[^<]*Debe comenzar con una letra/);
+assert.match(vista, /id="modalCrear"[\s\S]*modal-dialog-scrollable/);
+assert.match(vista, /id="btnCrear"[^>]*disabled/);
 assert.doesNotMatch(vista, /Nuevo correo electrónico alternativo|Crea un correo electrónico aleatorio que se reenvía/);
 ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol'].forEach((id) => {
     assert.match(vista, new RegExp(`id="${id}"[^>]*required`));
@@ -34,6 +36,8 @@ const estilosUsuarios = fs.readFileSync(path.join(__dirname, '..', 'assets', 'da
 assert.match(estilosUsuarios, /#modalCrear \.create-collab-intro \{/);
 assert.match(estilosUsuarios, /#modalCrear \.create-collab-section-title h3 \{/);
 assert.match(estilosUsuarios, /\.modal-usuarios \.input-jv \{/);
+assert.match(estilosUsuarios, /#modalCrear \.modal-usuarios > form \{[^}]*display:flex[^}]*min-height:0/s);
+assert.match(estilosUsuarios, /#modalCrear \.modal-usuarios > form > \.modal-body \{[^}]*overflow-y:auto/s);
 assert.doesNotMatch(estilosUsuarios, /\.pagina-usuarios #modalCrear \.create-collab/);
 
 const registro = fs.readFileSync(path.join(__dirname, '..', 'login', 'login.php'), 'utf8');
@@ -156,13 +160,14 @@ function ejecutarAlta(valores, filas = []) {
         'utf8'
     );
     vm.runInNewContext(script, contexto);
+    contexto.validarAlta(false);
     let prevenido = false;
     ids.formCrear.listeners.submit({
         preventDefault() {
             prevenido = true;
         }
     });
-    return { envio, prevenido, ids };
+    return { envio, prevenido, ids, validarAlta: contexto.validarAlta };
 }
 
 function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
@@ -254,6 +259,7 @@ const altaValida = ejecutarAlta({
     rol: '2'
 });
 assert.equal(altaValida.prevenido, true);
+assert.equal(altaValida.ids.btnCrear.disabled, false);
 assert.equal(altaValida.ids.crear_password.classList.contains('is-valid'), true);
 assert.deepEqual(
     JSON.parse(JSON.stringify(altaValida.envio)),
@@ -271,6 +277,10 @@ assert.deepEqual(
     }
 );
 
+const altaVacia = ejecutarAlta({});
+assert.equal(altaVacia.ids.btnCrear.disabled, true);
+assert.equal(altaVacia.envio, null);
+
 const altaPasswordDeSieteCaracteres = ejecutarAlta({
     usuario: 'Ana_2026',
     correo: 'nuevo@empresa.com',
@@ -279,6 +289,7 @@ const altaPasswordDeSieteCaracteres = ejecutarAlta({
     rol: '2'
 });
 assert.equal(altaPasswordDeSieteCaracteres.envio, null);
+assert.equal(altaPasswordDeSieteCaracteres.ids.btnCrear.disabled, true);
 assert.equal(altaPasswordDeSieteCaracteres.ids.crear_password.classList.contains('is-invalid'), true);
 assert.match(altaPasswordDeSieteCaracteres.ids.crear_password_guia.textContent, /falta 1 carácter/);
 

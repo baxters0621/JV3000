@@ -390,7 +390,7 @@
                 </div>
                 <div class="modal-footer modal-footer-jv">
                     <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn-jv-primary" id="btnCrear"><i class="bi bi-person-check-fill me-1"></i>Crear colaborador</button>
+                    <button type="submit" class="btn-jv-primary" id="btnCrear" disabled><i class="bi bi-person-check-fill me-1"></i>Crear colaborador</button>
                 </div>
             </form>
         </div>
