@@ -262,7 +262,16 @@ function validarCampoUsu(campoId, valorOk, mensajeOk, mensajeErr, mostrarVacio) 
 }
 
 function correoValidoUsu(correo) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+    const partes = correo.split('@');
+    if (partes.length !== 2) return false;
+    const local = partes[0];
+    const dominio = partes[1];
+    return local.length <= 64
+        && !local.startsWith('.')
+        && !local.endsWith('.')
+        && !local.includes('..')
+        && /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(local)
+        && /^[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+$/i.test(dominio);
 }
 
 function requisitosPasswordUsu(password) {
@@ -312,29 +321,45 @@ function correoDuplicadoUsu(correo, idActual) {
 }
 
 // Valida todo el modal de alta y habilita el botón solo si todo está correcto.
-function validarAlta() {
+function validarAlta(mostrarErrores) {
     const campoUsuario = document.getElementById('crear_usuario');
     if (!campoUsuario) return false;
     const usuario = normalizarUsuarioCliente(campoUsuario.value);
     const correo = document.getElementById('crear_correo').value.trim();
     const password = document.getElementById('crear_password').value;
     const confirmar = document.getElementById('crear_password_confirm').value;
-
-    const usuarioOk = validarCampoUsu('crear_usuario',
-        usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario),
-        'Nombre de usuario válido.', 'Solo letras, números y guion bajo (4 a 20 caracteres).');
-    const correoOk = validarCampoUsu('crear_correo', correoValidoUsu(correo),
-        'Correo electrónico válido.', 'El correo no tiene un formato válido.');
+    const rol = document.getElementById('crear_rol');
+    const usuarioValido = usuario.length >= 4 && usuario.length <= 20 && /^[a-zA-Z0-9_]+$/.test(usuario);
+    const correoValido = correo.length <= 100 && correoValidoUsu(correo);
+    const usuarioDuplicado = usuarioValido && usuarioDuplicadoUsu(usuario, '');
+    const correoDuplicado = correoValido && correoDuplicadoUsu(correo, '');
+    const usuarioOk = validarCampoUsu('crear_usuario', usuarioValido && !usuarioDuplicado,
+        'Nombre de usuario válido.', usuarioDuplicado
+            ? 'Ese nombre de usuario ya está en uso.'
+            : 'Solo letras, números y guion bajo (4 a 20 caracteres).', mostrarErrores);
+    const correoOk = validarCampoUsu('crear_correo', correoValido && !correoDuplicado,
+        'Correo electrónico válido.', correoDuplicado
+            ? 'Ese correo ya está asociado a otro colaborador.'
+            : (correo.length > 100 ? 'El correo no puede superar 100 caracteres.' : 'Escribe un correo electrónico válido.'),
+        mostrarErrores);
+    const passwordRequisitos = requisitosPasswordUsu(password);
     const passwordOk = validarCampoUsu('crear_password', passwordSeguraUsu(password),
         'Contraseña segura.', /\s/u.test(password)
             ? 'No se permiten espacios en la contraseña.'
-            : 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.');
+            : (!passwordRequisitos.maximo
+                ? 'La contraseña no puede superar 18 caracteres.'
+                : 'Debe tener de 8 a 18 caracteres, una mayúscula, una minúscula, un número y un símbolo.'),
+        mostrarErrores);
     const confirmarOk = validarCampoUsu('crear_password_confirm', password !== '' && password === confirmar,
         'Las contraseñas coinciden.', /\s/u.test(confirmar)
             ? 'No se permiten espacios en la contraseña.'
-            : 'Las contraseñas no coinciden.');
-    const rolOk = validarCampoUsu('crear_rol', document.getElementById('crear_rol').value !== '',
-        '', 'Selecciona un rol para el colaborador.');
+            : 'Las contraseñas no coinciden.', mostrarErrores);
+    const rolPermitido = ['2', '3'].includes(rol.value)
+        && Array.from(rol.options).some(function (opcion) {
+            return opcion.value === rol.value && !opcion.disabled;
+        });
+    const rolOk = validarCampoUsu('crear_rol', rolPermitido,
+        'Rol válido.', 'Selecciona Operador de Carga o de Ventas.', mostrarErrores);
 
     const todoOk = usuarioOk && correoOk && passwordOk && confirmarOk && rolOk;
     const boton = document.getElementById('btnCrear');
@@ -619,6 +644,12 @@ if (formResetPassword) formResetPassword.addEventListener('submit', function (e)
 const formCrear = document.getElementById('formCrear');
 if (formCrear) formCrear.addEventListener('submit', function (e) {
     e.preventDefault();
+    if (!validarAlta(true)) {
+        const primerCampoInvalido = formCrear.querySelector('.is-invalid');
+        if (primerCampoInvalido) primerCampoInvalido.focus();
+        return;
+    }
+
     const inputUsuario = document.getElementById('crear_usuario');
     const inputCorreo = document.getElementById('crear_correo');
     const inputPassword = document.getElementById('crear_password');
@@ -629,43 +660,6 @@ if (formCrear) formCrear.addEventListener('submit', function (e) {
     const password = inputPassword.value;
     const passwordConfirm = inputConfirm.value;
     const rol = document.getElementById('crear_rol').value;
-
-    if (usuario.length < 4 || usuario.length > 20 || !/^[a-zA-Z0-9_]+$/.test(usuario)) {
-        inputUsuario.classList.add('input-error');
-        Swal.fire('DATOS INVÁLIDOS', 'El usuario debe tener 4 a 20 caracteres: letras, números y guion bajo.', 'error');
-        return;
-    }
-    inputUsuario.classList.remove('input-error');
-
-    if (correo.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
-        inputCorreo.classList.add('input-error');
-        Swal.fire('DATOS INVÁLIDOS', 'Escribe un correo electrónico válido (máx 100 caracteres).', 'error');
-        return;
-    }
-    inputCorreo.classList.remove('input-error');
-
-    if (!(Array.from(password).filter(function (caracter) { return !/\s/u.test(caracter); }).length >= 8
-        && !/\s/u.test(password) && /[a-z]/.test(password) && /[A-Z]/.test(password)
-        && /\d/.test(password) && (/[^\w\s]|_/.test(password)))) {
-        inputPassword.classList.add('input-error');
-        Swal.fire('CONTRASEÑA DÉBIL', /\s/u.test(password)
-            ? 'No se permiten espacios en la contraseña.'
-            : 'Debe tener mínimo 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.', 'error');
-        return;
-    }
-    inputPassword.classList.remove('input-error');
-
-    if (password !== passwordConfirm) {
-        inputConfirm.classList.add('input-error');
-        Swal.fire('DATOS INVÁLIDOS', 'Las contraseñas no coinciden.', 'error');
-        return;
-    }
-    inputConfirm.classList.remove('input-error');
-
-    if (!rol) {
-        Swal.fire('DATOS INVÁLIDOS', 'Selecciona un rol para el colaborador.', 'error');
-        return;
-    }
 
     Swal.fire({
         title: '¿CREAR COLABORADOR?',

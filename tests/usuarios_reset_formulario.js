@@ -19,6 +19,13 @@ assert.match(vista, /id="reset_password_confirm"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password_confirm"[^>]*maxlength="36"/);
 assert.match(vista, /id="crear_password_guia"[^>]*>[^<]*sin espacios/);
+assert.match(vista, /id="modalCrear"[\s\S]*class="modal-body modal-usuarios-body"/);
+['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol'].forEach((id) => {
+    assert.match(vista, new RegExp(`id="${id}"[^>]*required`));
+});
+assert.match(vista, /create-collab-intro/);
+assert.match(vista, /create-collab-section/);
+assert.match(vista, /create-collab-note/);
 
 const registro = fs.readFileSync(path.join(__dirname, '..', 'login', 'login.php'), 'utf8');
 assert.match(registro, /id="r-pass"[^>]*maxlength="36"/);
@@ -75,6 +82,67 @@ function crearElemento(id, value = '') {
             this.focused = true;
         }
     };
+}
+
+function ejecutarAlta(valores, filas = []) {
+    const ids = {
+        formCrear: crearElemento('formCrear'),
+        crear_usuario: crearElemento('crear_usuario', valores.usuario || ''),
+        crear_correo: crearElemento('crear_correo', valores.correo || ''),
+        crear_password: crearElemento('crear_password', valores.password || ''),
+        crear_password_confirm: crearElemento('crear_password_confirm', valores.confirmar || ''),
+        crear_rol: crearElemento('crear_rol', valores.rol || ''),
+        btnCrear: crearElemento('btnCrear')
+    };
+    ids.crear_password.type = 'password';
+    ids.crear_password_confirm.type = 'password';
+    ids.crear_rol.options = ['2', '3'].map((value) => ({ value, disabled: false }));
+    ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol'].forEach((id) => {
+        ids[`${id}_guia`] = crearElemento(`${id}_guia`);
+    });
+    ids.formCrear.querySelector = (selector) => selector === '.is-invalid'
+        ? Object.values(ids).find((campo) => campo.classList && campo.classList.contains('is-invalid')) || null
+        : null;
+
+    const document = {
+        body: {},
+        getElementById(id) {
+            if (!ids[id] && id.endsWith('_guia')) ids[id] = crearElemento(id);
+            return ids[id] || null;
+        },
+        querySelectorAll(selector) {
+            return selector === '#cuerpoUsuarios tr.usuario-fila' ? filas : [];
+        },
+        addEventListener() {}
+    };
+    let envio = null;
+    const contexto = {
+        document,
+        window: { JV_CONFIG: { csrfToken: 'csrf-piloto' } },
+        TextEncoder,
+        MutationObserver: class { observe() {} },
+        bootstrap: { Modal: { getOrCreateInstance() { return { show() {} }; } } },
+        Swal: {
+            fire() {
+                return { then(callback) { callback({ isConfirmed: true }); } };
+            }
+        },
+        jvPost(params, url) {
+            envio = { params, url };
+        }
+    };
+    const script = fs.readFileSync(
+        path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.js'),
+        'utf8'
+    );
+    vm.runInNewContext(script, contexto);
+    let prevenido = false;
+    ids.formCrear.listeners.submit({
+        preventDefault() {
+            prevenido = true;
+        }
+    });
+    return { envio, prevenido, ids };
 }
 
 function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
@@ -157,6 +225,97 @@ function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
 
     return { envio, prevenido, ids };
 }
+
+const altaValida = ejecutarAlta({
+    usuario: 'Nuevo_Operador',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '2'
+});
+assert.equal(altaValida.prevenido, true);
+assert.deepEqual(
+    JSON.parse(JSON.stringify(altaValida.envio)),
+    {
+        params: {
+            accion_usuario: 'crear',
+            usuario: 'Nuevo_Operador',
+            correo: 'nuevo@empresa.com',
+            password: 'Abc12345!',
+            password_confirm: 'Abc12345!',
+            id_rol: '2',
+            csrf_token: 'csrf-piloto'
+        },
+        url: 'index.php?url=usuarios'
+    }
+);
+
+const altaCorreoInvalido = ejecutarAlta({
+    usuario: 'Nuevo_Operador',
+    correo: 'nombre..apellido@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '2'
+});
+assert.equal(altaCorreoInvalido.envio, null);
+assert.equal(altaCorreoInvalido.ids.crear_correo.classList.contains('is-invalid'), true);
+
+const altaConfirmacionDistinta = ejecutarAlta({
+    usuario: 'Nuevo_Operador',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345?',
+    rol: '2'
+});
+assert.equal(altaConfirmacionDistinta.envio, null);
+assert.equal(altaConfirmacionDistinta.ids.crear_password_confirm.classList.contains('is-invalid'), true);
+
+const filaUsuarioDuplicado = {
+    dataset: { id: '7', usuario: 'Nuevo_Operador', correo: 'otro@empresa.com' }
+};
+const altaUsuarioDuplicado = ejecutarAlta({
+    usuario: 'Nuevo_Operador',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '2'
+}, [filaUsuarioDuplicado]);
+assert.equal(altaUsuarioDuplicado.envio, null);
+assert.equal(altaUsuarioDuplicado.ids.crear_usuario.classList.contains('is-invalid'), true);
+
+const filaCorreoDuplicado = {
+    dataset: { id: '8', usuario: 'Otro_Usuario', correo: 'NUEVO@EMPRESA.COM' }
+};
+const altaCorreoDuplicado = ejecutarAlta({
+    usuario: 'Nuevo_Operador',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '2'
+}, [filaCorreoDuplicado]);
+assert.equal(altaCorreoDuplicado.envio, null);
+assert.equal(altaCorreoDuplicado.ids.crear_correo.classList.contains('is-invalid'), true);
+
+const altaRolAdmin = ejecutarAlta({
+    usuario: 'Nuevo_Operador',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!',
+    confirmar: 'Abc12345!',
+    rol: '1'
+});
+assert.equal(altaRolAdmin.envio, null);
+assert.equal(altaRolAdmin.ids.crear_rol.classList.contains('is-invalid'), true);
+
+const altaPasswordLarga = ejecutarAlta({
+    usuario: 'Nuevo_Operador',
+    correo: 'nuevo@empresa.com',
+    password: 'Abc12345!1234567890',
+    confirmar: 'Abc12345!1234567890',
+    rol: '2'
+});
+assert.equal(altaPasswordLarga.envio, null);
+assert.equal(altaPasswordLarga.ids.crear_password.classList.contains('is-invalid'), true);
+assert.match(altaPasswordLarga.ids.crear_password_guia.textContent, /18 caracteres/);
 
 const envioValido = ejecutarEnvio('ClaveSegura1!');
 assert.equal(envioValido.prevenido, true);
@@ -283,4 +442,4 @@ const espaciosNoSonVacio = ejecutarEnvio('', '        ');
 assert.equal(espaciosNoSonVacio.ids.reset_password.classList.contains('is-invalid'), true);
 assert.equal(espaciosNoSonVacio.envio, null);
 
-console.log('OK envío y validación del formulario de restablecimiento');
+console.log('OK validación de alta y restablecimiento de colaborador');

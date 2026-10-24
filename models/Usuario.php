@@ -96,11 +96,24 @@ class Usuario extends Model
      */
     public function crear(array $datos): array
     {
-        $usuario = normalizarUsuario($datos['usuario'] ?? '');
-        $correo = strtolower(trim($datos['correo'] ?? ''));
-        $password = trim($datos['password'] ?? '');
-        $passwordConfirm = trim($datos['password_confirm'] ?? '');
-        $idRol = (int)($datos['id_rol'] ?? 0);
+        $usuarioIngresado = $datos['usuario'] ?? null;
+        $correoIngresado = $datos['correo'] ?? null;
+        $password = $datos['password'] ?? null;
+        $passwordConfirm = $datos['password_confirm'] ?? null;
+        $rolIngresado = $datos['id_rol'] ?? null;
+        if (
+            !is_string($usuarioIngresado)
+            || !is_string($correoIngresado)
+            || !is_string($password)
+            || !is_string($passwordConfirm)
+            || !(is_int($rolIngresado) || (is_string($rolIngresado) && ctype_digit($rolIngresado)))
+        ) {
+            return ['ok' => false, 'mensaje' => 'DATOS INVÁLIDOS PARA CREAR EL COLABORADOR.'];
+        }
+
+        $usuario = normalizarUsuario($usuarioIngresado);
+        $correo = strtolower(trim($correoIngresado));
+        $idRol = (int)$rolIngresado;
 
         if (!preg_match('/^[A-Za-z0-9_]{4,20}$/', $usuario)) {
             return ['ok' => false, 'mensaje' => 'NOMBRE DE USUARIO: 4-20 CARACTERES (LETRAS, NÚMEROS, GUION BAJO).'];

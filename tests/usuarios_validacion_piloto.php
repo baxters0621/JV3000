@@ -44,6 +44,12 @@ class Database
         return true;
     }
 
+    public function insert(string $tabla, array $datos): int
+    {
+        $this->escrituras[] = ['tabla' => $tabla, 'datos' => $datos];
+        return 1;
+    }
+
     public function begin(): void {}
     public function commit(): void {}
     public function rollback(): void {}
@@ -85,8 +91,91 @@ $resultado = $modelo->crear([
 $afirmar(!$resultado['ok'], 'El alta de colaboradores no debe aceptar el rol Administrador.');
 $afirmar($db->consultas === [] && $db->escrituras === [], 'El alta con rol Administrador debe rechazarse antes de consultar o escribir.');
 
+$datosAltaValidos = [
+    'usuario' => 'Operador_Nuevo',
+    'correo' => 'nuevo@jv3000.com',
+    'password' => 'Abc12345!',
+    'password_confirm' => 'Abc12345!',
+    'id_rol' => '2',
+];
+foreach (['usuario', 'correo', 'password', 'password_confirm', 'id_rol'] as $campo) {
+    $db->consultas = [];
+    $db->escrituras = [];
+    $datosInvalidos = $datosAltaValidos;
+    $datosInvalidos[$campo] = ['valor'];
+    $resultado = $modelo->crear($datosInvalidos);
+    $afirmar(!$resultado['ok'], "El campo $campo debe rechazar valores que no sean texto plano.");
+    $afirmar($db->consultas === [] && $db->escrituras === [], "El campo $campo mal formado no debe consultar ni escribir.");
+}
+
 $db->consultas = [];
 $db->escrituras = [];
+$datosConEspaciosPassword = $datosAltaValidos;
+$datosConEspaciosPassword['password'] = ' Abc12345! ';
+$datosConEspaciosPassword['password_confirm'] = ' Abc12345! ';
+$resultado = $modelo->crear($datosConEspaciosPassword);
+$afirmar(!$resultado['ok'], 'El alta no debe recortar espacios para convertir una contraseña inválida en válida.');
+$afirmar($db->consultas === [] && $db->escrituras === [], 'La contraseña con espacios exteriores debe rechazarse antes de consultar o escribir.');
+
+$casosAltaInvalidos = [
+    ['usuario', 'abc', 'El alta debe rechazar un usuario demasiado corto.'],
+    ['correo', 'correo-invalido', 'El alta debe rechazar un correo con formato inválido.'],
+    ['correo', str_repeat('a', 90) . '@empresa.com', 'El alta debe rechazar un correo de más de 100 caracteres.'],
+    ['id_rol', '1', 'El alta debe rechazar el rol Administrador.'],
+    ['id_rol', '99', 'El alta debe rechazar roles inexistentes.'],
+];
+foreach ($casosAltaInvalidos as [$campo, $valor, $mensaje]) {
+    $db->consultas = [];
+    $db->escrituras = [];
+    $db->usuarioDuplicado = null;
+    $db->correoDuplicado = null;
+    $datosInvalidos = $datosAltaValidos;
+    $datosInvalidos[$campo] = $valor;
+    $resultado = $modelo->crear($datosInvalidos);
+    $afirmar(!$resultado['ok'], $mensaje);
+    $afirmar($db->escrituras === [], "$campo inválido no debe crear una cuenta.");
+}
+
+$db->consultas = [];
+$db->escrituras = [];
+$datosConConfirmacionDistinta = $datosAltaValidos;
+$datosConConfirmacionDistinta['password_confirm'] = 'Abc12345?';
+$resultado = $modelo->crear($datosConConfirmacionDistinta);
+$afirmar(!$resultado['ok'], 'El alta debe exigir que la confirmación coincida exactamente.');
+$afirmar($db->consultas === [] && $db->escrituras === [], 'Una confirmación distinta debe rechazarse antes de consultar o escribir.');
+
+$db->consultas = [];
+$db->escrituras = [];
+$db->usuarioDuplicado = ['id_usuario' => 31];
+$resultado = $modelo->crear($datosAltaValidos);
+$afirmar(!$resultado['ok'], 'El alta debe rechazar usuario o correo ya registrados.');
+$afirmar(count($db->consultas) === 1 && $db->escrituras === [], 'Un colaborador duplicado debe bloquear la inserción.');
+
+$db->consultas = [];
+$db->escrituras = [];
+$db->usuarioDuplicado = null;
+$db->correoDuplicado = null;
+$resultado = $modelo->crear($datosAltaValidos);
+$afirmar($resultado['ok'], 'Una creación válida debe completar el alta.');
+$afirmar(
+    $db->escrituras[0]['tabla'] === 'usuarios'
+        && $db->escrituras[0]['datos']['password_check'] === generarPasswordCheck('Abc12345!'),
+    'El alta válida debe guardar el usuario y verificar la contraseña exacta.'
+);
+
+$db->consultas = [];
+$db->escrituras = [];
+$datosAltaVentas = $datosAltaValidos;
+$datosAltaVentas['usuario'] = 'Ventas_Nuevo';
+$datosAltaVentas['correo'] = 'ventas@jv3000.com';
+$datosAltaVentas['id_rol'] = '3';
+$resultado = $modelo->crear($datosAltaVentas);
+$afirmar($resultado['ok'], 'El alta válida debe aceptar también el rol Operador de Ventas.');
+$afirmar($db->escrituras[0]['datos']['id_rol'] === 3, 'El alta debe guardar el rol de ventas seleccionado.');
+
+$db->consultas = [];
+$db->escrituras = [];
+$db->usuarioDuplicado = null;
 $resultado = $modelo->aprobar(25, 1, 1);
 $afirmar(!$resultado['ok'], 'La aprobación de cuentas no debe aceptar el rol Administrador.');
 $afirmar($db->consultas === [] && $db->escrituras === [], 'La aprobación con rol Administrador debe rechazarse antes de consultar o escribir.');
@@ -249,4 +338,4 @@ $afirmar(
     'Una contraseña con espacios no debe actualizar la cuenta.'
 );
 
-echo "OK validación de edición y restablecimiento ({$afirmaciones} afirmaciones)\n";
+echo "OK validación de alta, edición y restablecimiento ({$afirmaciones} afirmaciones)\n";

@@ -314,66 +314,83 @@
 </div>
 
 <div class="modal fade" id="modalCrear" tabindex="-1" aria-labelledby="modalCrearLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-content-jv">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-usuarios-dialog">
+        <div class="modal-content modal-content-jv modal-usuarios">
             <form id="formCrear" novalidate>
                 <div class="modal-header modal-header-jv">
                     <h2 class="modal-title fw-bold fs-5" id="modalCrearLabel"><i class="bi bi-person-plus-fill me-2" aria-hidden="true"></i>NUEVO COLABORADOR</h2>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body p-4">
-                    <div class="section-bg">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="section-label" for="crear_usuario"><i class="bi bi-person-fill" aria-hidden="true"></i> NOMBRE DE USUARIO</label>
-                                <input type="text" class="input-jv w-100" id="crear_usuario" maxlength="20" autocomplete="off" placeholder="Ej: Juan_Perez" aria-describedby="crear_usuario_guia" required>
-                                <div class="form-text jv-form-text" id="crear_usuario_guia">Mín 4 - Máx 20 caracteres (letras, números, guion bajo).</div>
+                <div class="modal-body modal-usuarios-body">
+                    <div class="create-collab-intro">
+                        <span class="create-collab-intro-icon" aria-hidden="true"><i class="bi bi-person-vcard-fill"></i></span>
+                        <div>
+                            <strong>Prepara un acceso listo para trabajar</strong>
+                            <span>Completa los datos, define una contraseña segura y asigna el rol correcto.</span>
+                        </div>
+                    </div>
+                    <section class="create-collab-section" aria-labelledby="crearAccesoTitulo">
+                        <div class="create-collab-section-title" id="crearAccesoTitulo">
+                            <span class="create-collab-section-icon" aria-hidden="true"><i class="bi bi-person-lines-fill"></i></span>
+                            <div>
+                                <h3>Datos de acceso</h3>
+                                <p>El correo será necesario para recuperar la cuenta.</p>
                             </div>
-                            <div class="col-md-6">
-                                <label class="section-label" for="crear_correo"><i class="bi bi-envelope-fill" aria-hidden="true"></i> CORREO ELECTRÓNICO</label>
+                        </div>
+                        <div class="row g-4 modal-usuarios-fields">
+                            <div class="col-md-6 modal-usuarios-field">
+                                <label class="section-label" for="crear_usuario"><i class="bi bi-person-fill" aria-hidden="true"></i> Nombre de usuario</label>
+                                <input type="text" class="input-jv w-100" id="crear_usuario" maxlength="20" autocomplete="off" placeholder="Ej.: Juan_Perez" aria-describedby="crear_usuario_guia" required>
+                                <div class="form-text jv-form-text" id="crear_usuario_guia" aria-live="polite">De 4 a 20 caracteres: letras, números y guion bajo.</div>
+                            </div>
+                            <div class="col-md-6 modal-usuarios-field">
+                                <label class="section-label" for="crear_correo"><i class="bi bi-envelope-fill" aria-hidden="true"></i> Correo electrónico</label>
                                 <input type="email" class="input-jv w-100" id="crear_correo" maxlength="100" autocomplete="off" placeholder="usuario@empresa.com" aria-describedby="crear_correo_guia" required>
-                                <div class="form-text jv-form-text" id="crear_correo_guia">Formato válido de correo electrónico.</div>
+                                <div class="form-text jv-form-text" id="crear_correo_guia" aria-live="polite">Correo válido, único y accesible para el colaborador.</div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="section-label" for="crear_password"><i class="bi bi-key-fill" aria-hidden="true"></i> CONTRASEÑA TEMPORAL</label>
+                            <div class="col-md-6 modal-usuarios-field">
+                                <label class="section-label" for="crear_password"><i class="bi bi-key-fill" aria-hidden="true"></i> Contraseña inicial</label>
                                 <div class="password-field">
-                                    <input type="password" class="input-jv w-100" id="crear_password" maxlength="36" autocomplete="new-password" placeholder="Contraseña temporal" aria-describedby="crear_password_guia" required>
-                                    <button type="button" class="password-toggle" data-toggle-password data-password-label="la contraseña temporal" aria-label="Mostrar la contraseña temporal" aria-controls="crear_password" aria-pressed="false">
+                                    <input type="password" class="input-jv w-100" id="crear_password" maxlength="36" autocomplete="new-password" placeholder="Crea una contraseña" aria-describedby="crear_password_guia" required>
+                                    <button type="button" class="password-toggle" data-toggle-password data-password-label="la contraseña inicial" aria-label="Mostrar la contraseña inicial" aria-controls="crear_password" aria-pressed="false">
                                         <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
                                 </div>
-                                <div class="form-text jv-form-text" id="crear_password_guia">Mín. 8 caracteres, sin espacios, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo.</div>
+                                <div class="form-text jv-form-text" id="crear_password_guia">De 8 a 18 caracteres, sin espacios, con mayúscula, minúscula, número y símbolo.</div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="section-label" for="crear_password_confirm"><i class="bi bi-key-fill" aria-hidden="true"></i> CONFIRMAR CONTRASEÑA</label>
+                            <div class="col-md-6 modal-usuarios-field">
+                                <label class="section-label" for="crear_password_confirm"><i class="bi bi-key-fill" aria-hidden="true"></i> Confirmar contraseña</label>
                                 <div class="password-field">
                                     <input type="password" class="input-jv w-100" id="crear_password_confirm" maxlength="36" autocomplete="new-password" placeholder="Repite la contraseña" aria-describedby="crear_password_confirm_guia" required>
                                     <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación de la contraseña" aria-label="Mostrar la confirmación de la contraseña" aria-controls="crear_password_confirm" aria-pressed="false">
                                         <i class="bi bi-eye-slash" aria-hidden="true"></i>
                                     </button>
                                 </div>
-                                <div class="form-text jv-form-text" id="crear_password_confirm_guia">Debe coincidir con la contraseña anterior.</div>
+                                <div class="form-text jv-form-text" id="crear_password_confirm_guia" aria-live="polite">Repite la contraseña inicial.</div>
                             </div>
-                            <div class="col-12">
-                                <label class="section-label" for="crear_rol"><i class="bi bi-shield-fill-check" aria-hidden="true"></i> ROL DEL USUARIO</label>
+                            <div class="col-12 modal-usuarios-field">
+                                <label class="section-label" for="crear_rol"><i class="bi bi-shield-fill-check" aria-hidden="true"></i> Rol del usuario</label>
                                 <select class="input-jv w-100" id="crear_rol" aria-describedby="crear_rol_guia" required>
                                     <option value="">Seleccionar rol…</option>
                                     <?php foreach ($roles_lista as $role): if (in_array((int)$role['id_rol'], [2, 3], true)): ?>
                                         <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
                                     <?php endif; endforeach; ?>
                                 </select>
-                                <div class="form-text jv-form-text" id="crear_rol_guia">Solo se pueden crear Operadores de Carga y de Ventas.</div>
+                                <div class="form-text jv-form-text" id="crear_rol_guia" aria-live="polite">Elige Operador de Carga u Operador de Ventas.</div>
                             </div>
                         </div>
-                    </div>
-                    <div class="section-bg">
-                        <div class="section-label"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i> RECUPERACIÓN DE CUENTA</div>
-                        <div class="form-text jv-form-text alert-lectura">La cuenta se recupera con el <strong>código que llega al correo</strong> del colaborador o con el <strong>PIN de emergencia compartido</strong>, que el Administrador define una sola vez en esta misma pantalla y cada usuario consulta en <em>Mi Perfil</em>. Confirma que el correo sea real y que el colaborador pueda abrirlo.</div>
-                    </div>
+                    </section>
+                    <aside class="create-collab-note alert-lectura">
+                        <span class="create-collab-note-icon" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></span>
+                        <div>
+                            <strong>Recuperación de cuenta</strong>
+                            <p>El colaborador podrá recuperar el acceso con un código enviado a su correo o con el PIN de emergencia compartido. Confirma que pueda abrir este correo.</p>
+                        </div>
+                    </aside>
                 </div>
                 <div class="modal-footer modal-footer-jv">
-                    <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">CANCELAR</button>
-                    <button type="submit" class="btn-jv-primary" id="btnCrear"><i class="bi bi-person-check-fill me-1"></i>CREAR COLABORADOR</button>
+                    <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-jv-primary" id="btnCrear"><i class="bi bi-person-check-fill me-1"></i>Crear colaborador</button>
                 </div>
             </form>
         </div>

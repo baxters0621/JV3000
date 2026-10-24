@@ -37,8 +37,8 @@ Este manual explica, en orden, qué debe hacer un **Administrador**, un **Operad
 1. Abrir `login/login.php` y pulsar **REGISTRARSE**.
 2. Completar:
    - **Usuario:** de 4 a 20 caracteres (letras, números y guion bajo). Se guarda normalizado: `juan_perez` se muestra como `Juan_Perez`. No puede repetirse (ni con distintas mayúsculas).
-   - **Correo:** válido y único.
-   - **Contraseña:** mínimo 8 caracteres con mayúscula, minúscula, número y símbolo. No puede ser igual a la de otro usuario.
+   - **Correo:** válido, único y de máximo 100 caracteres.
+   - **Contraseña:** de 8 a 18 caracteres, sin espacios, con mayúscula, minúscula, número y símbolo.
 3. Enviar. La cuenta queda en estado **PENDIENTE** hasta que el administrador la apruebe.
 4. **Aviso al colaborador:** el correo que uses es el vehículo para recuperar acceso; asegúrate de que sea real. Además, el administrador define un **PIN de emergencia compartido** que permite recuperar la cuenta **sin internet**: podrás consultarlo en **Mi Perfil** y conviene anotarlo.
 
@@ -67,6 +67,7 @@ Acciones disponibles por fila (consejo de uso):
 - **Editar** abre una ventana con usuario, correo y rol. No cambies el rol de tu propia cuenta (está protegido).
 - **Suspender** deja al colaborador fuera del sistema sin borrar su historial.
 - Nunca borres cuentas: para quitar acceso usa **SUSPENDER**.
+- Para dar de alta a alguien directamente, pulsa **CREAR COLABORADOR** y completa usuario, correo, contraseña y confirmación; el correo debe ser válido y único. Solo están disponibles los roles **Operador de Carga** y **Operador de Ventas**; Administrador es un rol único.
 
 ---
 
