@@ -56,42 +56,56 @@
             </div>
         </div>
 
-        <div class="card-jv p-0 overflow-hidden mb-4">
-            <div class="header-card d-flex align-items-center gap-2">
-                <i class="bi bi-shield-exclamation" style="color:var(--jv-warning);" aria-hidden="true"></i>
-                <span class="fw-bold small text-secondary text-uppercase">PIN de Emergencia Compartido</span>
-                <span class="codigo-badge ms-auto"><?php echo $pin_global !== '' ? 'DEFINIDO' : 'SIN DEFINIR'; ?></span>
+        <?php
+        // El PIN se agrupa 3+3 (230 494) para que el administrador lo dicte
+        // en dos bloqueos y no pierda la posición de la cifra.
+        $pin_pill_estado = $pin_global !== '' ? 'DEFINIDO' : 'SIN DEFINIR';
+        $pin_grupado = $pin_global !== '' ? trim(chunk_split($pin_global, 3, ' ')) : '';
+        ?>
+        <div class="card-jv p-0 overflow-hidden mb-4 tarjeta-pin">
+            <div class="pin-card-head d-flex align-items-center gap-3 px-3 py-3">
+                <span class="pin-head-titulo">PIN de Emergencia Compartido</span>
+                <span class="pin-status <?php echo $pin_global !== '' ? 'pin-status-ok' : 'pin-status-pendiente'; ?>">
+                    <span class="pin-status-dot" aria-hidden="true"></span><?php echo $pin_pill_estado; ?>
+                </span>
+                <button type="button" class="pin-help ms-auto" data-bs-toggle="modal" data-bs-target="#modalAyudaPin" aria-label="Ayuda: qué es el PIN de emergencia compartido" aria-haspopup="dialog">
+                    ?
+                </button>
             </div>
-            <div class="p-3">
-                <p class="pin-info">PIN de 6 dígitos que comparten todas las cuentas (Operadores de Carga y Ventas, y también el Administrador) para recuperar su contraseña <strong>sin internet</strong>; cada usuario lo ve en <em>Mi Perfil</em>.</p>
+            <div class="pin-body text-center px-3 py-4">
                 <?php if ($pin_global !== ''): ?>
-                    <p class="mb-3">PIN vigente: <strong class="fs-5"><?php echo htmlspecialchars($pin_global); ?></strong></p>
+                    <div class="pin-vigente">
+                        <span class="pin-vigente-label">PIN vigente</span>
+                        <span class="pin-vigente-valor"><?php echo htmlspecialchars($pin_grupado); ?></span>
+                    </div>
                 <?php endif; ?>
-                <form method="POST" class="row g-3 align-items-end">
+                <form method="POST" class="pin-form mx-auto">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                     <input type="hidden" name="accion_usuario" value="pin_global">
-                    <div class="col-md-4">
-                        <label class="form-label-jv" for="pin_emergencia_global"><?php echo $pin_global !== '' ? 'NUEVO PIN' : 'PIN'; ?></label>
-                        <div class="password-field">
-                            <input type="password" class="input-jv w-100" id="pin_emergencia_global" name="pin_emergencia_global" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 dígitos" aria-describedby="pin_emergencia_global_guia" required oninput="validarPinGlobal()">
-                            <button type="button" class="password-toggle" data-toggle-password data-password-label="el PIN" aria-label="Mostrar el PIN" aria-controls="pin_emergencia_global" aria-pressed="false">
-                                <i class="bi bi-eye-slash" aria-hidden="true"></i>
-                            </button>
+                    <div class="row g-4 justify-content-center">
+                        <div class="col-md-6">
+                            <label class="form-label-jv" for="pin_emergencia_global"><?php echo $pin_global !== '' ? 'NUEVO PIN' : 'PIN'; ?></label>
+                            <div class="password-field">
+                                <input type="password" class="input-jv w-100" id="pin_emergencia_global" name="pin_emergencia_global" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="6 dígitos" aria-describedby="pin_emergencia_global_guia" required oninput="validarPinGlobal()">
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="el PIN" aria-label="Mostrar el PIN" aria-controls="pin_emergencia_global" aria-pressed="false">
+                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div class="form-text jv-form-text" id="pin_emergencia_global_guia" aria-live="polite">6 dígitos, sin letras.</div>
                         </div>
-                        <div class="form-text jv-form-text" id="pin_emergencia_global_guia">6 dígitos, sin letras.</div>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label-jv" for="pin_emergencia_global_confirm">CONFIRMAR PIN</label>
-                        <div class="password-field">
-                            <input type="password" class="input-jv w-100" id="pin_emergencia_global_confirm" name="pin_emergencia_global_confirm" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="Repite el PIN" aria-describedby="pin_emergencia_global_confirm_guia" required oninput="validarPinGlobal()">
-                            <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación del PIN" aria-label="Mostrar la confirmación del PIN" aria-controls="pin_emergencia_global_confirm" aria-pressed="false">
-                                <i class="bi bi-eye-slash" aria-hidden="true"></i>
-                            </button>
+                        <div class="col-md-6">
+                            <label class="form-label-jv" for="pin_emergencia_global_confirm">CONFIRMAR PIN</label>
+                            <div class="password-field">
+                                <input type="password" class="input-jv w-100" id="pin_emergencia_global_confirm" name="pin_emergencia_global_confirm" maxlength="6" inputmode="numeric" autocomplete="off" placeholder="Repite el PIN" aria-describedby="pin_emergencia_global_confirm_guia" required oninput="validarPinGlobal()">
+                                <button type="button" class="password-toggle" data-toggle-password data-password-label="la confirmación del PIN" aria-label="Mostrar la confirmación del PIN" aria-controls="pin_emergencia_global_confirm" aria-pressed="false">
+                                    <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <div class="form-text jv-form-text" id="pin_emergencia_global_confirm_guia" aria-live="polite">Repite el mismo PIN.</div>
                         </div>
-                        <div class="form-text jv-form-text" id="pin_emergencia_global_confirm_guia">Repite el mismo PIN.</div>
-                    </div>
-                    <div class="col-md-4">
-                        <button type="submit" class="btn btn-jv-primary w-100"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>GUARDAR PIN</button>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-jv-primary pin-submit"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>GUARDAR PIN</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -401,6 +415,24 @@
                     <button type="submit" class="btn-jv-primary" id="btnResetPassword"><i class="bi bi-key-fill me-1" aria-hidden="true"></i>RESTABLECER</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de ayuda del PIN compartido: abre el botón ( ? ) de la tarjeta -->
+<div class="modal fade" id="modalAyudaPin" tabindex="-1" aria-labelledby="modalAyudaPinLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <div class="modal-header modal-header-jv">
+                <h2 class="modal-title fw-bold fs-5" id="modalAyudaPinLabel"><i class="bi bi-shield-exclamation me-2" aria-hidden="true"></i>PIN DE EMERGENCIA</h2>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="pin-info mb-0">PIN de 6 dígitos que comparten todas las cuentas (Operadores de Carga y Ventas, y también el Administrador) para recuperar su contraseña <strong>sin internet</strong>; cada usuario lo ve en <em>Mi Perfil</em>.</p>
+            </div>
+            <div class="modal-footer modal-footer-jv">
+                <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">ENTENDIDO</button>
+            </div>
         </div>
     </div>
 </div>

@@ -12,6 +12,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Interfaz del PIN pulida: ojos tachados por defecto, `.alert-lectura` en modales, ayuda como línea fija y flash que se auto-cierra a los 4 s.
 - Colaboradores revisado con las guías de interfaz: accesibilidad completa (aria-label/aria-pressed/role=status/scope/aria-describedby), paginación con `.pagination-jv` y botones, y respeto a `prefers-reduced-motion`.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
+- Tarjeta del PIN compartido (Colaboradores) rediseñada: cabecera violeta con pastilla de estado, botón (?) de 52 px que abre el modal #modalAyudaPin (el texto .pin-info vive ahí, ya no en la tarjeta), PIN vigente en panel centrado agrupado 3+3 vía `chunk_split` y formulario .pin-form centrado (letter-spacing .45em + padding-left .45em). La normalización/validación viven en usuarios.js sin cambios.
 
 ## Decisiones (y por qué)
 
@@ -32,6 +33,8 @@ Sin datos sensibles (claves, tokens, PIN).
 - `ventas_stock_piloto`, `compras_recepcion_piloto` y `envio_correo_piloto` se niegan contra la BD real: no es un fallo.
 - La paginación del listado de Colaboradores no llevaba `class="pagination-jv"`: salía como enlaces sueltos sin estilo.
 - El ítem «Panel de Inicio» se oculta con `$en_panel_inicio` (`index.php` sin `?url=`): si se reutiliza esta condición en el sidebar, recordar que el chip del hero también contiene el texto, así que los `Contains()` de verificación deben apuntar a `nav-ram-panel`.
+- Al escribir la bitácora desde PHP, las cadenas con `\n` dentro de comillas simples no se expanden: quedan en una línea con `\n` literales. Usar concatenación con `PHP_EOL` (o comillas dobles).
+- El test `pin_global_piloto.php` fija el diseño de la tarjeta del PIN (botón (?) + #modalAyudaPin + pastilla + único .pin-info): si vuelve a cambiar el diseño, actualizar también esas aserciones.
 - Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines (`sess_jv*` puede llevarse ficheros ajenos).
 - Skills ya instaladas a nivel global (Starter Pack completo): `find-skills`, `grill-me`, `frontend-design`, `web-design-guidelines`, `systematic-debugging`.
 

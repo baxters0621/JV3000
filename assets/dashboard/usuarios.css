@@ -413,6 +413,133 @@
     .pagina-usuarios .pin-info strong,
     .pagina-usuarios .pin-info em { color:#334155; }
 
+    /* ── Tarjeta del PIN compartido ──
+       Cabecera violeta con el mismo gradiente que los modales, pastilla de
+       estado y un único botón de ayuda (52 px) arriba a la derecha. El
+       párrafo explicativo vive en el modal #modalAyudaPin: así los campos
+       son lo primero que se ve. */
+    .pagina-usuarios .pin-card-head {
+        background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+    }
+    .pagina-usuarios .pin-head-titulo {
+        font-size:.85rem;
+        font-weight:800;
+        letter-spacing:.6px;
+        text-transform:uppercase;
+        color:#fff;
+    }
+    .pagina-usuarios .pin-status {
+        display:inline-flex;
+        align-items:center;
+        gap:7px;
+        padding:5px 14px;
+        border-radius:999px;
+        font-size:.72rem;
+        font-weight:800;
+        letter-spacing:.8px;
+        text-transform:uppercase;
+    }
+    .pagina-usuarios .pin-status-ok {
+        background:rgba(74,222,128,.18);
+        border:1px solid rgba(74,222,128,.55);
+        color:#BBF7D0;
+    }
+    .pagina-usuarios .pin-status-pendiente {
+        background:rgba(251,191,36,.18);
+        border:1px solid rgba(251,191,36,.55);
+        color:#FDE68A;
+    }
+    .pagina-usuarios .pin-status-dot {
+        width:8px;
+        height:8px;
+        border-radius:50%;
+        background:currentColor;
+    }
+    .pagina-usuarios .pin-help {
+        flex:0 0 auto;
+        width:52px;
+        height:52px;
+        border-radius:14px;
+        border:2px solid rgba(255,255,255,.45);
+        background:rgba(255,255,255,.12);
+        color:#fff;
+        font-size:1.5rem;
+        font-weight:800;
+        line-height:1;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        transition:background .15s ease, transform .15s ease;
+    }
+    .pagina-usuarios .pin-help:hover {
+        background:rgba(255,255,255,.28);
+        color:#fff;
+        transform:translateY(-2px);
+    }
+    .pagina-usuarios .pin-help:focus-visible { outline:3px solid rgba(255,255,255,.6); outline-offset:2px; }
+
+    /* Cuerpo con un velo muy suave para que deje de parecer plano */
+    .pagina-usuarios .pin-body {
+        background:linear-gradient(180deg, rgba(124,58,237,.05) 0%, transparent 55%);
+    }
+
+    /* Panel "caja fuerte" del PIN vigente: centrado, cifra grande y
+       agrupada 3+3 (230 494) para dictarla sin perder la posición */
+    .pagina-usuarios .pin-vigente {
+        display:inline-flex;
+        flex-direction:column;
+        align-items:center;
+        gap:6px;
+        margin-bottom:26px;
+        padding:18px 44px;
+        border-radius:16px;
+        background:#F8FAFC;
+        border:2px dashed rgba(124,58,237,.4);
+    }
+    .pagina-usuarios .pin-vigente-label {
+        font-size:.72rem;
+        font-weight:800;
+        letter-spacing:1.2px;
+        text-transform:uppercase;
+        color:#7c3aed;
+    }
+    .pagina-usuarios .pin-vigente-valor {
+        font-size:2.2rem;
+        font-weight:800;
+        letter-spacing:.22em;
+        color:#1e293b;
+        font-variant-numeric:tabular-nums;
+        font-family:'Consolas','Courier New',monospace;
+        word-spacing:.6em;
+    }
+
+    /* Formulario del PIN: centrado, con aire, campos anchos y texto
+       espaciado 6 posiciones visibles */
+    .pagina-usuarios .pin-form { max-width:620px; }
+    .pagina-usuarios .pin-form .col-md-6 { text-align:center; }
+    .pagina-usuarios .pin-form .input-jv {
+        font-size:1.5rem;
+        letter-spacing:.45em;
+        text-align:center;
+        font-weight:700;
+        font-variant-numeric:tabular-nums;
+        /* El letter-spacing agrega espacio tras el último dígito: compensa
+           a la izquierda para que el texto quede visualmente centrado */
+        padding-left:.45em;
+    }
+    .pagina-usuarios .pin-submit {
+        min-width:220px;
+        padding:10px 22px;
+        font-size:.85rem;
+    }
+
+    @media (max-width: 575.98px) {
+        .pagina-usuarios .pin-card-head { flex-wrap:wrap; }
+        .pagina-usuarios .pin-help { width:44px; height:44px; }
+        .pagina-usuarios .pin-vigente { padding:14px 20px; }
+        .pagina-usuarios .pin-vigente-valor { letter-spacing:.14em; word-spacing:.4em; font-size:1.9rem; }
+    }
+
     /* ── Texto explicativo de los modales: tamaño y ritmo de lectura cómodos ──
        La base .alert-jv va en .85rem y .jv-form-text en .78rem: demasiado
        apretados para leer una instrucción entera. */

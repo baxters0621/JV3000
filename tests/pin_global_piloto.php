@@ -269,10 +269,21 @@ afirmar(
     'Los dos campos del PIN deben disparar la validación en vivo al teclear.'
 );
 
-// La ayuda de la tarjeta: texto fijo y visible, sin globos ni hover.
+// La ayuda del PIN abre desde el botón (?) de la cabecera en un modal
+// propio; los campos del formulario quedan como primer contenido de la tarjeta.
 afirmar(
-    strpos($vistaUsuarios, 'class="pin-info"') !== false,
-    'La ayuda del PIN debe ser una línea fija bajo el encabezado.'
+    strpos($vistaUsuarios, 'class="pin-help') !== false
+        && strpos($vistaUsuarios, 'data-bs-target="#modalAyudaPin"') !== false
+        && strpos($vistaUsuarios, 'id="modalAyudaPin"') !== false,
+    'La ayuda del PIN debe abrirse desde el botón (?) de la cabecera en el modal #modalAyudaPin.'
+);
+afirmar(
+    substr_count($vistaUsuarios, 'class="pin-info') === 1,
+    'El texto de ayuda del PIN debe existir una sola vez, dentro del modal.'
+);
+afirmar(
+    strpos($vistaUsuarios, 'class="pin-status') !== false,
+    'La cabecera del PIN debe mostrar la pastilla de estado (DEFINIDO / SIN DEFINIR).'
 );
 afirmar(
     strpos($vistaUsuarios, 'pin-ayuda') === false,
