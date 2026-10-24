@@ -1,103 +1,534 @@
+.pagina-historial {
+    --historial-compra: #087443;
+    --historial-compra-fondo: #e3f5ea;
+    --historial-venta: #c12738;
+    --historial-venta-fondo: #ffebed;
+    --historial-tinta: #172f4c;
+}
 
-    .aud-header-icon {
-        width:56px;height:56px;border-radius:14px;
-        background:linear-gradient(135deg,#7c3aed,#5b21b6);
-        display:flex;align-items:center;justify-content:center;
-        color:#fff;font-size:1.6rem;flex-shrink:0;
-        box-shadow:0 0 30px rgba(124,58,237,0.3);
-    }
-    .card-jv-table { border-top:4px solid #8b5cf6; border-radius:var(--jv-radius) !important;overflow:hidden; }
-    .pagina-aud .table-jv {
-        width: 100%;
-        table-layout: fixed;
-        min-width: 850px;
-    }
-    .pagina-aud .table-jv thead th {
-        background:linear-gradient(135deg,#5b21b6,#4c1d95);
-        color:#fff;
-        font-size:0.95rem;
-        font-weight:800;
-        letter-spacing:0.5px;
-        padding:14px 16px;
-        vertical-align:middle;
-        white-space:normal;
-    }
-    .pagina-aud .table-jv tbody td {
-        padding:12px 16px;
-        font-size:1rem;
-        border-bottom:1px solid rgba(139,92,246,0.08);
-        color:var(--jv-text-primary);
-    }
-    .pagina-aud .table-jv tbody td.text-muted { color:var(--jv-text-secondary); }
-    .pagina-aud .table-jv tbody tr:hover { background:rgba(139,92,246,0.04); }
-    .badge-accion {
-        display:inline-block;padding:5px 14px;border-radius:12px;
-        font-size:.9rem;font-weight:700;white-space:nowrap;
-    }
-    .b-crear { background:rgba(34,197,94,0.15);color:#16A34A; }
-    .b-editar { background:rgba(6,182,212,0.15);color:#0E7490; }
-    .b-eliminar { background:rgba(239,68,68,0.15);color:#DC2626; }
-    .b-toggle { background:rgba(245,158,11,0.15);color:#92400E; }
-    .b-login { background:rgba(99,102,241,0.15);color:#4F46E5; }
-    .b-logout { background:rgba(100,116,139,0.15);color:#475569; }
-    .b-default { background:rgba(148,163,184,0.15);color:#475569; }
-    .filtro-box {
-        background:rgba(139,92,246,0.04);
-        border:1px solid rgba(139,92,246,0.12);
-        border-radius:var(--jv-radius);
-        padding:14px 18px;margin-bottom:16px;
-    }
-    .pagination-jv {
-        display:flex;gap:6px;justify-content:center;padding:14px 0;
-    }
-    .pagination-jv a,.pagination-jv span {
-        display:inline-flex;align-items:center;justify-content:center;
-        min-width:40px;height:40px;border-radius:8px;
-        font-size:.9rem;font-weight:700;text-decoration:none;
-        border:1px solid var(--jv-border);color:var(--jv-text-primary);
-        background:var(--jv-bg-card);transition:.15s;
-    }
-    .pagination-jv a:hover { border-color:#8b5cf6;color:#8b5cf6; }
-    .pagination-jv .active { background:#8b5cf6;border-color:#8b5cf6;color:#fff; }
-    .pagination-jv .disabled { opacity:.4;pointer-events:none; }
+.historial-encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 26px;
+    margin-bottom: 18px;
+    border-left: 5px solid var(--jv-orange);
+    background: var(--jv-bg-card);
+    border-radius: var(--jv-radius);
+    box-shadow: var(--jv-shadow);
+}
 
-    /* ── Celda de detalle (ellipsis + tooltip) ── */
-    .pagina-aud .table-jv tbody td.td-detalle {
-        max-width:380px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        cursor:help;
-        color:var(--jv-text-secondary);
+.historial-encabezado-contenido {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.historial-marca {
+    display: grid;
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    place-items: center;
+    border-radius: 13px;
+    background: var(--jv-navy);
+    color: #fff;
+    font-size: 1.45rem;
+}
+
+.historial-encabezado h1 {
+    margin: 0;
+    color: var(--historial-tinta);
+    font-size: clamp(1.35rem, 2.5vw, 1.8rem);
+    font-weight: 800;
+    letter-spacing: -.035em;
+    text-wrap: balance;
+}
+
+.historial-encabezado p {
+    margin: 4px 0 0;
+    color: var(--jv-navy);
+    font-size: .96rem;
+}
+
+.historial-conteo {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    white-space: nowrap;
+    color: var(--jv-text-secondary);
+    padding: 9px 13px;
+    border-radius: 10px;
+    background: rgba(37, 99, 235, .08);
+}
+
+.historial-conteo strong {
+    color: var(--historial-tinta);
+    font-size: 1.75rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.historial-conteo span {
+    font-size: .9rem;
+    font-weight: 650;
+}
+
+.historial-filtros {
+    padding: 18px;
+    margin-bottom: 16px;
+    border: 1px solid var(--jv-border);
+    border-top: 3px solid var(--jv-navy);
+    border-radius: var(--jv-radius);
+    background: var(--jv-bg-card);
+}
+
+.historial-filtros label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--historial-tinta);
+    font-size: .88rem;
+    font-weight: 800;
+}
+
+.historial-filtro-busqueda {
+    margin-bottom: 14px;
+}
+
+.historial-busqueda-control {
+    position: relative;
+}
+
+.historial-busqueda-control > i {
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    z-index: 1;
+    color: var(--jv-navy);
+    transform: translateY(-50%);
+}
+
+.historial-busqueda-control:focus-within > i {
+    color: var(--jv-info);
+}
+
+.historial-busqueda-control .input-jv {
+    padding-left: 38px;
+}
+
+.historial-filtros-secundarios {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(150px, auto);
+    gap: 12px;
+    align-items: end;
+}
+
+.historial-filtros .input-jv {
+    min-height: 44px;
+    width: 100%;
+}
+
+.historial-filtros .input-jv:focus-visible,
+.historial-acciones-filtro .btn-jv-primary:focus-visible,
+.historial-limpiar:focus-visible,
+.historial-paginacion a:focus-visible {
+    outline: 3px solid rgba(27, 103, 151, .35);
+    outline-offset: 2px;
+}
+
+.historial-acciones-filtro {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+}
+
+.historial-acciones-filtro .btn-jv-primary {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 16px;
+    white-space: nowrap;
+}
+
+.historial-limpiar {
+    color: var(--jv-text-secondary);
+    font-size: .88rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.historial-limpiar:hover {
+    color: var(--jv-navy);
+}
+
+.historial-error-filtro {
+    margin: 12px 0 0;
+    color: var(--jv-danger);
+    font-size: .9rem;
+    font-weight: 650;
+}
+
+.historial-resultados {
+    overflow: hidden;
+    border: 1px solid var(--jv-border);
+    border-radius: var(--jv-radius);
+    background: var(--jv-bg-card);
+    box-shadow: var(--jv-shadow);
+}
+
+.historial-tabla-scroll {
+    overflow-x: auto;
+}
+
+.historial-tabla {
+    width: 100%;
+    min-width: 940px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.historial-tabla th {
+    padding: 13px 15px;
+    background: var(--jv-navy);
+    color: #fff;
+    font-size: .88rem;
+    font-weight: 800;
+    text-align: left;
+}
+
+.historial-tabla th:nth-child(1) { width: 17%; }
+.historial-tabla th:nth-child(2) { width: 17%; }
+.historial-tabla th:nth-child(3) { width: 22%; }
+.historial-tabla th:nth-child(4) { width: 16%; }
+.historial-tabla th:nth-child(5) { width: 17%; }
+.historial-tabla th:nth-child(6) { width: 11%; }
+.historial-tabla .historial-th-total { text-align: right; }
+
+.historial-fila td {
+    padding: 15px;
+    border-bottom: 1px solid var(--jv-border);
+    color: var(--historial-tinta);
+    vertical-align: middle;
+}
+
+.historial-fila:last-child td {
+    border-bottom: 0;
+}
+
+.historial-fila:hover {
+    background: #f8fafc;
+}
+
+.historial-fila.historial-tipo-compra td:first-child {
+    box-shadow: inset 4px 0 var(--historial-compra);
+}
+
+.historial-fila.historial-tipo-venta td:first-child {
+    box-shadow: inset 4px 0 var(--historial-venta);
+}
+
+.historial-tipo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+    font-size: .87rem;
+    font-weight: 800;
+}
+
+.historial-tipo-compra .historial-tipo { color: var(--historial-compra); }
+.historial-tipo-venta .historial-tipo { color: var(--historial-venta); }
+
+.historial-referencia,
+.historial-celda-principal,
+.historial-productos,
+.historial-fecha,
+.historial-unidades,
+.historial-estado-secundario {
+    display: block;
+}
+
+.historial-referencia,
+.historial-celda-principal {
+    overflow-wrap: anywhere;
+    font-size: .96rem;
+    font-weight: 800;
+}
+
+.historial-productos {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--jv-text-secondary);
+    font-size: .88rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.historial-unidades,
+.historial-fecha,
+.historial-estado-secundario {
+    margin-top: 4px;
+    color: #475569;
+    font-size: .84rem;
+}
+
+.historial-estado {
+    display: inline-flex;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 800;
+}
+
+.historial-estado-activa {
+    background: var(--historial-compra-fondo);
+    color: #075c34;
+}
+
+.historial-estado-anulada {
+    background: var(--historial-venta-fondo);
+    color: #a51d2d;
+}
+
+.historial-total {
+    color: var(--historial-tinta) !important;
+    font-size: .98rem;
+    font-weight: 850;
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.historial-vacio {
+    padding: 52px 20px !important;
+    color: var(--jv-text-secondary) !important;
+    text-align: center;
+}
+
+.historial-vacio i,
+.historial-vacio strong,
+.historial-vacio span {
+    display: block;
+}
+
+.historial-vacio i {
+    margin-bottom: 10px;
+    color: var(--jv-navy);
+    font-size: 1.8rem;
+}
+
+.historial-vacio strong {
+    color: var(--historial-tinta);
+    font-size: 1rem;
+}
+
+.historial-vacio span {
+    margin-top: 4px;
+    font-size: .88rem;
+}
+
+.historial-paginacion {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 16px 0;
+}
+
+.historial-paginacion a {
+    display: inline-flex;
+    min-width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--jv-border);
+    border-radius: 8px;
+    background: var(--jv-bg-card);
+    color: var(--historial-tinta);
+    font-weight: 750;
+    text-decoration: none;
+    transition:background-color .15s ease, border-color .15s ease, color .15s ease;
+    touch-action:manipulation;
+}
+
+.historial-paginacion a:hover,
+.historial-paginacion a.active {
+    border-color: var(--jv-navy);
+    background: var(--jv-navy);
+    color: #fff;
+}
+
+.historial-paginacion a.disabled {
+    opacity: .45;
+    pointer-events: none;
+}
+
+@media (max-width: 900px) {
+    .historial-filtros-secundarios {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .pagina-aud .table-jv tbody td.td-fecha {
-        color:var(--jv-text-primary);
-        font-weight:600;
-        font-size:.95rem;
-        white-space:nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .historial-paginacion a {
+        transition:none;
+    }
+}
+
+@media (max-width: 680px) {
+    .historial-encabezado {
+        align-items: flex-start;
+        padding: 17px;
     }
 
-    /* ── Tooltip grande (texto completo del detalle) ── */
-    .jv-tooltip {
-        position:fixed;
-        z-index:2000;
-        max-width:420px;
-        background:var(--jv-navy);
-        color:#fff;
-        font-size:.9rem;
-        font-weight:500;
-        line-height:1.5;
-        padding:10px 14px;
-        border-radius:10px;
-        box-shadow:0 8px 24px rgba(0,0,0,0.25);
-        pointer-events:none;
-        opacity:0;
-        transform:translateY(4px);
-        transition:opacity .15s ease, transform .15s ease;
-        white-space:normal;
+    .historial-encabezado-contenido {
+        align-items: flex-start;
+        gap: 11px;
     }
-    .jv-tooltip.jv-tooltip-visible {
-        opacity:1;
-        transform:translateY(0);
+
+    .historial-marca {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+        font-size: 1.2rem;
     }
-    
+
+    .historial-encabezado p {
+        max-width: 230px;
+        font-size: .88rem;
+    }
+
+    .historial-conteo {
+        display: block;
+        text-align: right;
+    }
+
+    .historial-conteo strong,
+    .historial-conteo span {
+        display: block;
+    }
+
+    .historial-conteo strong {
+        font-size: 1.35rem;
+    }
+
+    .historial-conteo span {
+        max-width: 78px;
+        font-size: .72rem;
+    }
+
+    .historial-filtros {
+        padding: 14px;
+    }
+
+    .historial-filtros-secundarios {
+        gap: 10px;
+    }
+
+    .historial-acciones-filtro {
+        grid-column: 1 / -1;
+        justify-content: space-between;
+    }
+
+    .historial-tabla {
+        display: block;
+        min-width: 0;
+    }
+
+    .historial-tabla thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        clip-path: inset(50%);
+    }
+
+    .historial-tabla tbody {
+        display: block;
+    }
+
+    .historial-fila {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(95px, auto);
+        gap: 12px 16px;
+        padding: 14px 15px;
+        border-bottom: 1px solid var(--jv-border);
+    }
+
+    .historial-fila:last-child {
+        border-bottom: 0;
+    }
+
+    .historial-fila td {
+        display: block;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        box-shadow: none !important;
+    }
+
+    .historial-fila td::before {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--jv-text-secondary);
+        content: attr(data-label);
+        font-size: .72rem;
+        font-weight: 750;
+    }
+
+    .historial-fila td:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .historial-fila td:first-child::before {
+        display: none;
+    }
+
+    .historial-fila td:nth-child(3) {
+        grid-column: 1 / -1;
+    }
+
+    .historial-fila td:nth-child(6) {
+        align-self: end;
+    }
+
+    .historial-total {
+        padding-top: 3px !important;
+        font-size: 1rem;
+    }
+
+    .historial-total::before {
+        text-align: right;
+    }
+
+    .historial-vacio {
+        padding: 40px 14px !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .historial-encabezado {
+        gap: 8px;
+        padding: 13px;
+    }
+
+    .historial-encabezado h1 {
+        font-size: 1.18rem;
+    }
+
+    .historial-filtros-secundarios {
+        grid-template-columns: 1fr;
+    }
+
+    .historial-acciones-filtro {
+        grid-column: auto;
+    }
+}

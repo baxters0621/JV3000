@@ -2,125 +2,175 @@
 
 /** @var array<string, string>|null $flash */
 /** @var int $total_registros */
-/** @var string $filtro_usuario */
-/** @var string[] $acciones_disponibles */
-/** @var string $filtro_accion */
+/** @var string $filtro_tipo */
+/** @var string $filtro_estado */
 /** @var string $filtro_desde */
 /** @var string $filtro_hasta */
-/** @var string $filtro_detalle */
-/** @var array<string, string> $accion_nombres */
+/** @var string $filtro_buscar */
+/** @var string $error_filtros */
+/** @var array<string, string> $tipos_disponibles */
 /** @var array<int, array<string, mixed>> $registros */
 /** @var int $total_paginas */
 /** @var string $query_string */
 /** @var int $page */
-
-// ==========================================
-// VISTA: Historial de Auditoría (index)
-// ==========================================
-// Solo muestra los datos. No hace consultas.
 ?>
-<!-- MENSAJES FLASH -->
 <?php if ($flash): ?>
     <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3">
-        <?php echo htmlspecialchars($flash['texto']); ?>
+        <?php echo htmlspecialchars($flash['texto'], ENT_QUOTES, 'UTF-8'); ?>
     </div>
 <?php endif; ?>
 
-<!-- ENCABEZADO -->
-<div class="card-jv d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3" style="padding:18px 24px;border-left:4px solid var(--jv-orange);">
-    <div class="d-flex align-items-center gap-3">
-        <div class="aud-header-icon"><i class="bi bi-shield-check"></i></div>
+<section class="historial-encabezado" aria-labelledby="tituloHistorial">
+    <div class="historial-encabezado-contenido">
+        <span class="historial-marca" aria-hidden="true"><i class="bi bi-arrow-left-right"></i></span>
         <div>
-            <h1 class="module-title">HISTORIAL</h1>
-            <p class="module-subtitle">Registro de Actividades del Sistema</p>
+            <h1 id="tituloHistorial">Historial de operaciones</h1>
+            <p>Compras y ventas registradas en el sistema.</p>
         </div>
     </div>
-    <span class="text-jv-muted fw-bold" style="font-size:.95rem;"><?php echo $total_registros; ?> registro(s)</span>
-</div>
+    <div class="historial-conteo" aria-live="polite">
+        <strong><?php echo number_format($total_registros); ?></strong>
+        <span><?php echo $total_registros === 1 ? 'operación' : 'operaciones'; ?></span>
+    </div>
+</section>
 
-<!-- FORMULARIO DE FILTROS -->
-<form class="filtro-box" method="GET">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-3">
-            <label class="small fw-bold text-secondary mb-1">USUARIO</label>
-            <input type="text" name="usuario" class="input-jv" placeholder="Buscar..." value="<?php echo htmlspecialchars($filtro_usuario); ?>">
+<form class="historial-filtros" method="GET" action="<?php echo APP_URL_BASE; ?>index.php">
+    <input type="hidden" name="url" value="historial">
+    <div class="historial-filtro-busqueda">
+        <label for="buscarOperaciones">Buscar operaciones</label>
+        <div class="historial-busqueda-control">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input
+                type="search"
+                id="buscarOperaciones"
+                name="buscar"
+                class="input-jv"
+                placeholder="Factura, proveedor, cliente, producto o usuario…"
+                value="<?php echo htmlspecialchars($filtro_buscar, ENT_QUOTES, 'UTF-8'); ?>"
+                maxlength="100"
+                autocomplete="off"
+            >
         </div>
-        <div class="col-md-2">
-            <label class="small fw-bold text-secondary mb-1">ACCIÓN</label>
-            <select name="accion" class="input-jv">
-                <option value="">Todas</option>
-                <?php foreach ($acciones_disponibles as $actionKey): ?>
-                    <option value="<?php echo htmlspecialchars($actionKey); ?>" <?php echo $filtro_accion === $actionKey ? 'selected' : ''; ?>><?php echo htmlspecialchars($accion_nombres[$actionKey] ?? $actionKey); ?></option>
+    </div>
+    <div class="historial-filtros-secundarios">
+        <div>
+            <label for="tipoOperacion">Tipo</label>
+            <select id="tipoOperacion" name="tipo" class="input-jv">
+                <option value="">Todas las operaciones</option>
+                <?php foreach ($tipos_disponibles as $tipo_key => $tipo_nombre): ?>
+                    <option value="<?php echo htmlspecialchars($tipo_key, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $filtro_tipo === $tipo_key ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($tipo_nombre, ENT_QUOTES, 'UTF-8'); ?>
+                    </option>
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-md-2">
-            <label class="small fw-bold text-secondary mb-1">DESDE</label>
-            <input type="date" name="desde" class="input-jv" value="<?php echo htmlspecialchars($filtro_desde); ?>">
+        <div>
+            <label for="estadoOperacion">Estado</label>
+            <select id="estadoOperacion" name="estado" class="input-jv">
+                <option value="">Todos</option>
+                <option value="Activa" <?php echo $filtro_estado === 'Activa' ? 'selected' : ''; ?>>Activas</option>
+                <option value="Anulada" <?php echo $filtro_estado === 'Anulada' ? 'selected' : ''; ?>>Anuladas</option>
+            </select>
         </div>
-        <div class="col-md-2">
-            <label class="small fw-bold text-secondary mb-1">HASTA</label>
-            <input type="date" name="hasta" class="input-jv" value="<?php echo htmlspecialchars($filtro_hasta); ?>">
+        <div>
+            <label for="desdeOperacion">Desde</label>
+            <input type="date" id="desdeOperacion" name="desde" class="input-jv" value="<?php echo htmlspecialchars($filtro_desde, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
-        <div class="col-md-2">
-            <label class="small fw-bold text-secondary mb-1">DETALLE</label>
-            <input type="text" name="detalle" class="input-jv" placeholder="Buscar en detalle..." value="<?php echo htmlspecialchars($filtro_detalle); ?>">
+        <div>
+            <label for="hastaOperacion">Hasta</label>
+            <input type="date" id="hastaOperacion" name="hasta" class="input-jv" value="<?php echo htmlspecialchars($filtro_hasta, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
-        <div class="col-md-1">
-            <button type="submit" class="btn-jv-primary w-100" style="padding:10px;font-size:.75rem;"><i class="bi bi-search"></i></button>
+        <div class="historial-acciones-filtro">
+            <button type="submit" class="btn-jv-primary"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrar</button>
+            <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial" class="historial-limpiar">Limpiar</a>
         </div>
     </div>
+    <?php if ($error_filtros !== ''): ?>
+        <p class="historial-error-filtro" role="alert"><?php echo htmlspecialchars($error_filtros, ENT_QUOTES, 'UTF-8'); ?></p>
+    <?php endif; ?>
 </form>
 
-<!-- TABLA PRINCIPAL -->
-<div class="card-jv card-jv-table p-0">
-    <div class="table-responsive">
-        <table class="table-jv mb-0">
+<section class="historial-resultados" aria-label="Operaciones encontradas">
+    <div class="historial-tabla-scroll">
+        <table class="historial-tabla">
             <thead>
                 <tr>
-                    <th style="width:70px;">N°</th>
-                    <th style="width:12%;">USUARIO</th>
-                    <th style="width:11%;">ACCIÓN</th>
-                    <th>DETALLE</th>
-                    <th style="width:13%;">FECHA / HORA</th>
+                    <th scope="col">Operación</th>
+                    <th scope="col">Proveedor o cliente</th>
+                    <th scope="col">Productos</th>
+                    <th scope="col">Registró</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col" class="historial-th-total">Total</th>
                 </tr>
             </thead>
             <tbody>
-                <?php if (!empty($registros)): ?>
-                    <?php foreach ($registros as $auditRecord):
-                        $badge_class = 'b-default';
-                        if ($auditRecord['accion'] === 'crear') $badge_class = 'b-crear';
-                        elseif ($auditRecord['accion'] === 'editar') $badge_class = 'b-editar';
-                        elseif ($auditRecord['accion'] === 'eliminar' || $auditRecord['accion'] === 'anular') $badge_class = 'b-eliminar';
-                        elseif (in_array($auditRecord['accion'], ['toggle_status', 'desactivar', 'activar'])) $badge_class = 'b-toggle';
-                        elseif ($auditRecord['accion'] === 'login') $badge_class = 'b-login';
-                        elseif ($auditRecord['accion'] === 'logout') $badge_class = 'b-logout';
+                <?php foreach ($registros as $operacion): ?>
+                    <?php
+                        $es_compra = $operacion['tipo'] === 'compra';
+                        $clase_tipo = $es_compra ? 'historial-tipo-compra' : 'historial-tipo-venta';
+                        $nombre_tipo = $es_compra ? 'Compra' : 'Venta';
+                        $fecha_operacion = strtotime((string)$operacion['fecha']);
                     ?>
-                        <tr>
-                            <td class="fw-bold text-jv-muted">#<?php echo $auditRecord['id_auditoria']; ?></td>
-                            <td class="fw-bold"><?php echo htmlspecialchars($auditRecord['usuario_nombre'] ?? '?'); ?></td>
-                            <td><span class="badge-accion <?php echo $badge_class; ?>"><?php echo htmlspecialchars($accion_nombres[$auditRecord['accion']] ?? $auditRecord['accion']); ?></span></td>
-                            <td class="td-detalle" data-tooltip="<?php echo htmlspecialchars($auditRecord['detalle'] ?? ''); ?>"><?php echo htmlspecialchars($auditRecord['detalle'] ?? ''); ?></td>
-                            <td class="td-fecha"><?php echo date('d/m/Y H:i', strtotime($auditRecord['fecha_hora'])); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
+                    <tr class="historial-fila <?php echo $clase_tipo; ?>">
+                        <td data-label="Operación">
+                            <span class="historial-tipo"><i class="bi <?php echo $es_compra ? 'bi-box-arrow-in-down' : 'bi-bag-check'; ?>" aria-hidden="true"></i><?php echo $nombre_tipo; ?></span>
+                            <strong class="historial-referencia">
+                                <?php echo $es_compra ? 'Factura ' : ''; ?><?php echo htmlspecialchars((string)$operacion['referencia'], ENT_QUOTES, 'UTF-8'); ?>
+                            </strong>
+                        </td>
+                        <td data-label="<?php echo $es_compra ? 'Proveedor' : 'Cliente'; ?>">
+                            <span class="historial-celda-principal"><?php echo htmlspecialchars((string)$operacion['contraparte'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        </td>
+                        <td data-label="Productos">
+                            <span class="historial-productos"><?php echo htmlspecialchars((string)($operacion['productos'] ?? 'Sin productos detallados'), ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span class="historial-unidades"><?php echo number_format((int)$operacion['cantidad_total']); ?> unidades</span>
+                        </td>
+                        <td data-label="Registró">
+                            <span class="historial-celda-principal"><?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            <time class="historial-fecha" datetime="<?php echo $fecha_operacion ? date('Y-m-d\TH:i:s', $fecha_operacion) : ''; ?>">
+                                <?php echo $fecha_operacion ? date('d/m/Y, H:i', $fecha_operacion) : 'Fecha no disponible'; ?>
+                            </time>
+                        </td>
+                        <td data-label="Estado">
+                            <span class="historial-estado <?php echo $operacion['estado'] === 'Anulada' ? 'historial-estado-anulada' : 'historial-estado-activa'; ?>">
+                                <?php echo htmlspecialchars((string)$operacion['estado'], ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
+                            <?php if ($es_compra): ?>
+                                <span class="historial-estado-secundario">
+                                    Pago: <?php echo htmlspecialchars((string)($operacion['estado_pago'] ?? 'Pendiente'), ENT_QUOTES, 'UTF-8'); ?>
+                                </span>
+                                <span class="historial-estado-secundario">
+                                    Recepción: <?php echo htmlspecialchars((string)($operacion['estado_recepcion'] ?? 'Pendiente'), ENT_QUOTES, 'UTF-8'); ?>
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                        <td data-label="Total" class="historial-total">
+                            $<?php echo number_format((float)$operacion['monto_total'], 2); ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if ($registros === []): ?>
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-jv-muted">No hay registros de auditoría</td>
+                        <td colspan="6" class="historial-vacio">
+                            <i class="bi bi-receipt" aria-hidden="true"></i>
+                            <strong>No hay operaciones para mostrar</strong>
+                            <span>Prueba con otro tipo, estado o rango de fechas.</span>
+                        </td>
                     </tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
-</div>
+</section>
 
-<!-- PAGINACIÓN -->
 <?php if ($total_paginas > 1): ?>
-    <div class="pagination-jv">
-        <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=1<?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $page <= 1 ? 'disabled' : ''; ?>">&laquo;</a>
-        <?php for ($pageNumber = max(1, $page - 3); $pageNumber <= min($total_paginas, $page + 3); $pageNumber++): ?>
-            <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=<?php echo $pageNumber; ?><?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $pageNumber === $page ? 'active' : ''; ?>"><?php echo $pageNumber; ?></a>
+    <nav class="historial-paginacion" aria-label="Paginación del historial">
+        <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=<?php echo max(1, $page - 1); ?><?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $page <= 1 ? 'disabled' : ''; ?>" aria-label="Página anterior">&lsaquo;</a>
+        <?php for ($numero_pagina = max(1, $page - 2); $numero_pagina <= min($total_paginas, $page + 2); $numero_pagina++): ?>
+            <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=<?php echo $numero_pagina; ?><?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $numero_pagina === $page ? 'active' : ''; ?>" <?php echo $numero_pagina === $page ? 'aria-current="page"' : ''; ?>>
+                <?php echo $numero_pagina; ?>
+            </a>
         <?php endfor; ?>
-        <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=<?php echo $total_paginas; ?><?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $page >= $total_paginas ? 'disabled' : ''; ?>">&raquo;</a>
-    </div>
+        <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial&page=<?php echo min($total_paginas, $page + 1); ?><?php echo $query_string !== '' ? '&' . $query_string : ''; ?>" class="<?php echo $page >= $total_paginas ? 'disabled' : ''; ?>" aria-label="Página siguiente">&rsaquo;</a>
+    </nav>
 <?php endif; ?>

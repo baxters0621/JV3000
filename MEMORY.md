@@ -7,24 +7,24 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Instalación automática en equipo nuevo verificada de punta a punta (`init.php` + `db/jv3000_portable_v6.sql`).
 - Validación global en verde: `tools/validar.ps1` (lint PHP/JS, rutas 403, integridad BD, ACL, comportamiento global).
-- 9 módulos a HTTP 200 con sesión; tests en verde: `pin_global_piloto` (58 aserciones), `flash_auto_cierre`, `salidas_captura_duplicados`.
 - PIN de emergencia global fijado por la interfaz y probado E2E (recuperación completa y bloqueo a los 3 intentos); el valor lo cambia el administrador desde Colaboradores.
 - Interfaz del PIN pulida: ojos tachados por defecto, `.alert-lectura` en modales, ayuda como línea fija y flash que se auto-cierra a los 4 s.
 - Contraseñas nuevas: entre 8 y 18 caracteres sin espacios, en creación, restablecimiento, recuperación y perfil. El cliente marca espacios en rojo, no los cuenta en el contador ni da por cumplidos requisitos; el servidor los rechaza. Se mantienen mínimo 8, mayúscula, minúscula, número y símbolo; bcrypt conserva su resguardo interno.
 - Colaboradores: edición valida usuario/correo/duplicados/rol también en servidor; Administrador no se ofrece ni asigna a otros colaboradores.
 - Usuarios: nombres de 4–20 caracteres Unicode, empiezan con letra y luego admiten letras de cualquier idioma, números, marcas diacríticas y guion bajo; no admiten símbolos como `*`. Cliente, registro, perfil y servidor comparten la regla.
-- Alta de Colaboradores: correo, contraseña/confirmación y rol se validan al escribir, enviar y en el servidor. La contraseña indica cuánto falta; el botón inicia desactivado y se activa solo con todos los campos correctos. El cuerpo del modal se desplaza y deja el pie de acciones visible.
-- Insignias de roles en Colaboradores: Administrador violeta, Operador de Carga verde y Operador de Ventas rojo.
+- Insignias de roles en Colaboradores: Administrador violeta, Operador de Carga verde y Operador de Ventas rojo; el alta valida correo, contraseña/confirmación y rol en cliente y servidor, con botón condicionado y pie visible.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
+- Historial muestra compras/ventas paginadas y filtrables, con alcance por rol y auditoría separada; Estadísticas aclara períodos sin movimiento, compara con el período previo y expone fallos de actualización con reintento. Ambos usan compras verdes, ventas rojas y paneles equilibrados.
 
 ## Decisiones (y por qué)
 
 - PIN único en `configuracion.pin_emergencia_global`, válido también para el Administrador: respaldo cuando no hay correo ni internet.
 - Ayuda del PIN como línea fija bajo el encabezado: los globos se recortaban por el `overflow-hidden` de la tarjeta y tapaban los campos.
 - Ojos tachados por defecto en todos los campos de contraseña/PIN: el icono indica el estado actual, no la acción.
-- CSS y JS por módulo, sin globalizar (decisión explícita del usuario).
+- CSS/JS por módulo, sin globalizar; en Estadísticas e Historial el color identifica el tipo de operación, con foco visible y movimiento reducido.
 - Edición de colaborador valida los datos también en el servidor; los avisos por campo del cliente mejoran la experiencia, pero nunca sustituyen validación y unicidad en la base.
 - El rol Administrador es único: solo la cuenta principal conserva ese rol; creación, aprobación y edición de colaboradores solo asignan Operador de Carga o de Ventas.
+- Acceso al Historial de operaciones por alcance: administración ve compras y ventas, carga ve compras y ventas ve ventas; el servidor aplica el mismo límite que el menú.
 - Pregunta/respuesta de seguridad retirada de los formularios; columnas por legado, no usar.
 - `MEMORY.md` guarda solo estado y decisiones; el historial lineal sigue siendo `docs/BITACORA.md`.
 

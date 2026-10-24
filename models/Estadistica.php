@@ -121,11 +121,31 @@ class Estadistica extends Model
         $f_desde = $desde . ' 00:00:00';
         $f_hasta = $hasta . ' 23:59:59';
 
-        $ventas = (float)$this->db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) AS total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.fecha_salida BETWEEN ? AND ? AND s.id_tipo_mov = 1 AND s.status = 'Activa'", [$f_desde, $f_hasta])['total'];
+        $ventas = (float)$this->db->fetchOne("
+            SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) AS total
+            FROM salidas s
+            JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov
+            JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
+            WHERE s.fecha_salida BETWEEN ? AND ?
+              AND tm.tipo_movimiento = 'Salida'
+              AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+              AND s.status = 'Activa'
+        ", [$f_desde, $f_hasta])['total'];
 
         $compras = (float)$this->db->fetchOne("SELECT COALESCE(SUM(dc.cantidad * dc.precio_costo), 0) AS total FROM compras c JOIN detalle_compras dc ON c.id_compra = dc.id_compra WHERE c.fecha_compra BETWEEN ? AND ? AND c.status = 'Activa'", [$f_desde, $f_hasta])['total'];
 
-        $ganancia = (float)$this->db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * (ds.precio_venta - COALESCE(l.precio_costo, p.precio_costo))), 0) AS total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto LEFT JOIN lotes l ON ds.id_lote = l.id_lote WHERE s.fecha_salida BETWEEN ? AND ? AND s.id_tipo_mov = 1 AND s.status = 'Activa'", [$f_desde, $f_hasta])['total'];
+        $ganancia = (float)$this->db->fetchOne("
+            SELECT COALESCE(SUM(ds.cantidad * (ds.precio_venta - COALESCE(l.precio_costo, p.precio_costo))), 0) AS total
+            FROM salidas s
+            JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov
+            JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
+            JOIN productos p ON ds.id_producto = p.id_producto
+            LEFT JOIN lotes l ON ds.id_lote = l.id_lote
+            WHERE s.fecha_salida BETWEEN ? AND ?
+              AND tm.tipo_movimiento = 'Salida'
+              AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+              AND s.status = 'Activa'
+        ", [$f_desde, $f_hasta])['total'];
 
         return ['ventas' => $ventas, 'compras' => $compras, 'ganancia' => $ganancia];
     }
@@ -256,13 +276,26 @@ class Estadistica extends Model
         $kpi_act = $this->kpis($ventana['desde'], $ventana['hasta']);
         $kpi_ant = $this->kpis($ventana['ant_desde'], $ventana['ant_hasta']);
 
-        $sql_ventas = "SELECT __BUCKET__ AS bucket, COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) AS total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.fecha_salida BETWEEN ? AND ? AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY __BUCKET__";
+        $sql_ventas = "SELECT __BUCKET__ AS bucket, COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) AS total FROM salidas s JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.fecha_salida BETWEEN ? AND ? AND tm.tipo_movimiento = 'Salida' AND UPPER(TRIM(tm.nombre)) = 'VENTA' AND s.status = 'Activa' GROUP BY __BUCKET__";
         $sql_compras = "SELECT __BUCKET__ AS bucket, COALESCE(SUM(dc.cantidad * dc.precio_costo), 0) AS total FROM compras c JOIN detalle_compras dc ON c.id_compra = dc.id_compra WHERE c.fecha_compra BETWEEN ? AND ? AND c.status = 'Activa' GROUP BY __BUCKET__";
 
         $serie_ventas = $this->serie($ventana['desde'], $ventana['hasta'], $sql_ventas, 's.fecha_salida');
         $serie_compras = $this->serie($ventana['desde'], $ventana['hasta'], $sql_compras, 'c.fecha_compra');
 
-        $top_rows = $this->db->fetchAll("SELECT p.nombre_producto, COALESCE(SUM(ds.cantidad), 0) AS total FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida JOIN productos p ON ds.id_producto = p.id_producto WHERE s.fecha_salida BETWEEN ? AND ? AND s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY ds.id_producto ORDER BY total DESC LIMIT 5", [$ventana['desde'] . ' 00:00:00', $ventana['hasta'] . ' 23:59:59']);
+        $top_rows = $this->db->fetchAll("
+            SELECT p.nombre_producto, COALESCE(SUM(ds.cantidad), 0) AS total
+            FROM salidas s
+            JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov
+            JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
+            JOIN productos p ON ds.id_producto = p.id_producto
+            WHERE s.fecha_salida BETWEEN ? AND ?
+              AND tm.tipo_movimiento = 'Salida'
+              AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+              AND s.status = 'Activa'
+            GROUP BY ds.id_producto
+            ORDER BY total DESC
+            LIMIT 5
+        ", [$ventana['desde'] . ' 00:00:00', $ventana['hasta'] . ' 23:59:59']);
 
         $top_labels = [];
         $top_cant = [];

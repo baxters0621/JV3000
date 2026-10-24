@@ -3,6 +3,9 @@
     Chart.defaults.borderColor = 'rgba(222,226,230,0.5)';
 
     const cfg = window.JV_CONFIG || {};
+    const animacionGrafico = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? false
+        : { duration: 350 };
 
     // ---------- HELPERS DE ESTADO ----------
     // Indica si una serie numérica tiene al menos un valor distinto de cero
@@ -20,17 +23,27 @@
         empty.classList.toggle('d-none', hasData);
     }
 
-    // Muestra u oculta el aviso global de "periodo sin movimientos".
-    function toggleAvisoSinDatos(hasMovement) {
+    // Explica el periodo sin operaciones sin confundirlo con falta de datos guardados.
+    function toggleAvisoSinDatos(statisticsResponse) {
         const aviso = document.getElementById('aviso-sin-datos');
         if (!aviso) return;
-        if (hasMovement) {
-            aviso.classList.add('d-none');
-        } else {
-            aviso.innerHTML = '<i class="bi bi-info-circle me-2"></i>Sin movimientos en este periodo. Registra ventas o compras para que las estadísticas se reflejen aquí en tiempo real.';
-            aviso.classList.remove('d-none');
+        const hayMovimiento = Number(statisticsResponse.ventas) !== 0 || Number(statisticsResponse.compras) !== 0;
+        aviso.classList.toggle('d-none', hayMovimiento);
+        if (hayMovimiento) return;
+
+        const titulo = document.getElementById('aviso-sin-datos-titulo');
+        const detalle = document.getElementById('aviso-sin-datos-detalle');
+        const ventasAnteriores = Number(statisticsResponse.ventas_ant) || 0;
+        const comprasAnteriores = Number(statisticsResponse.compras_ant) || 0;
+        if (titulo) titulo.textContent = 'No hay movimientos en ' + (statisticsResponse.etiqueta || 'este período');
+        if (detalle) {
+            detalle.textContent = ventasAnteriores !== 0 || comprasAnteriores !== 0
+                ? 'El período anterior registró ventas de ' + formatCurrency(ventasAnteriores) + ' y compras de ' + formatCurrency(comprasAnteriores) + '.'
+                : 'Revisa un período más amplio para consultar las operaciones registradas.';
         }
     }
+
+    const formatCurrency = amount => '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     // ---------- GRÁFICO DE LÍNEAS: VENTAS VS COMPRAS ----------
     let chartFlujo = null;
@@ -42,13 +55,14 @@
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Ventas ($)', data: ventas, borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,0.12)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#16A34A' },
-                    { label: 'Compras ($)', data: compras, borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.12)', fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#2563EB' }
+                    { label: 'Ventas ($)', data: ventas, borderColor: '#DC2626', backgroundColor: 'rgba(220,38,38,0.10)', fill: true, tension: 0.32, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#DC2626' },
+                    { label: 'Compras ($)', data: compras, borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,0.10)', fill: true, tension: 0.32, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#16A34A' }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: animacionGrafico,
                 plugins: {
                     legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' }, usePointStyle: true, padding: 16 } }
                 },
@@ -74,7 +88,7 @@
                 datasets: [{
                     label: 'Unidades',
                     data: chartData,
-                    backgroundColor: ['#EA580C', '#2563EB', '#6F42C1', '#16A34A', '#D97706'],
+                    backgroundColor: ['#c12738', '#d65361', '#df7c87', '#e9a7ae', '#f3d2d5'],
                     borderRadius: 8,
                     barThickness: 22
                 }]
@@ -83,6 +97,7 @@
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: animacionGrafico,
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -94,7 +109,16 @@
                 },
                 scales: {
                     x: { beginAtZero: true, grid: { color: 'rgba(222,226,230,0.35)' }, ticks: { precision: 0, font: { size: 12 } } },
-                    y: { grid: { display: false }, ticks: { font: { size: 13, weight: 'bold' } } }
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 13, weight: 'bold' },
+                            callback: function(value) {
+                                const label = String(this.getLabelForValue(value));
+                                return label.length > 24 ? label.slice(0, 23) + '…' : label;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -104,8 +128,6 @@
     // Actualiza los KPI, sellos de comparación y gráficos con los datos obtenidos del servidor.
     function actualizarUI(statisticsResponse) {
         if (!statisticsResponse || !statisticsResponse.success) return;
-
-        const formatCurrency = amount => '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         const updateText = (elementId, value) => { const element = document.getElementById(elementId); if (element) element.textContent = value; };
         updateText('kpi-ventas', formatCurrency(statisticsResponse.ventas));
@@ -138,7 +160,7 @@
         toggleEmptyCanvas('chartFlujo', 'empty-flujo', (hayVentas || hayCompras));
         crearChartTop(statisticsResponse.topLabels, statisticsResponse.topCant);
         toggleEmptyCanvas('chartTop', 'empty-top', hayTop);
-        toggleAvisoSinDatos(hayVentas || hayCompras || Number(statisticsResponse.ventas) !== 0);
+        toggleAvisoSinDatos(statisticsResponse);
     }
 
     // ---------- FILTROS: BOTONES DE PERIODO ----------
@@ -191,11 +213,35 @@
 
     // Consulta los datos de estadísticas del periodo activo y actualiza la interfaz sin recargar la página.
     function refreshEstadisticas() {
+        if (refreshEnCurso) return;
+        refreshEnCurso = true;
         document.body.classList.add('stats-refrescando');
-        fetch((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.json())
-            .then(statisticsResponse => { try { actualizarUI(statisticsResponse); } catch (error) { console.error('Stats refresh error:', error); } })
-            .catch(() => {})
-            .finally(() => document.body.classList.remove('stats-refrescando'));
+        fetch((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('El servidor respondió con HTTP ' + response.status + '.');
+                return response.json();
+            })
+            .then(statisticsResponse => {
+                if (!statisticsResponse || !statisticsResponse.success) {
+                    throw new Error('El servidor no pudo calcular las estadísticas.');
+                }
+                actualizarUI(statisticsResponse);
+                const error = document.getElementById('error-estadisticas');
+                if (error) error.classList.add('d-none');
+            })
+            .catch(error => {
+                console.error('No se pudieron actualizar las estadísticas:', error);
+                const alert = document.getElementById('error-estadisticas');
+                if (alert) alert.classList.remove('d-none');
+            })
+            .finally(() => {
+                refreshEnCurso = false;
+                document.body.classList.remove('stats-refrescando');
+            });
     }
+    let refreshEnCurso = false;
+    const retryButton = document.getElementById('reintentar-estadisticas');
+    if (retryButton) retryButton.addEventListener('click', refreshEstadisticas);
     setInterval(refreshEstadisticas, 60000);

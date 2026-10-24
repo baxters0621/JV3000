@@ -36,39 +36,20 @@ class EstadisticasController extends Controller
 
         $modelo = new Estadistica();
 
-        $periodo = preg_match('/^(dia|semana|quincena|mes|trimestre|semestre|rango)$/', $_GET['periodo'] ?? '') ? $_GET['periodo'] : 'semana';
-        $desde   = trim((string)($_GET['desde'] ?? ''));
-        $hasta   = trim((string)($_GET['hasta'] ?? ''));
-        if ($periodo === 'rango' && ($desde === '' || $hasta === '')) {
-            $periodo = 'semana';
-        }
+        $filtros_periodo = $this->filtrosPeriodo();
+        $periodo = $filtros_periodo['periodo'];
+        $desde = $filtros_periodo['desde'];
+        $hasta = $filtros_periodo['hasta'];
 
         $datos   = $modelo->obtenerDatos($periodo, $desde, $hasta);
         $periodos = $modelo->periodos();
 
         // Validar que $datos tenga las keys esperadas; si no, usar valores por defecto
-        $expectedKeys = ['periodo', 'etiqueta', 'mensaje', 'desde', 'hasta', 'ventas', 'compras', 'ganancia', 'pct_ventas', 'pct_compras', 'pct_ganancia', 'labels_ventas', 'data_ventas', 'labels_compras', 'data_compras', 'top_labels', 'top_cant'];
+        $expectedKeys = ['periodo', 'etiqueta', 'mensaje', 'desde', 'hasta', 'ventas', 'compras', 'ganancia', 'ventas_ant', 'compras_ant', 'pct_ventas', 'pct_compras', 'pct_ganancia', 'labels_ventas', 'data_ventas', 'labels_compras', 'data_compras', 'top_labels', 'top_cant'];
         $hasAllKeys = count(array_intersect($expectedKeys, array_keys($datos))) === count($expectedKeys);
         if (!$hasAllKeys) {
-            $datos = [
-                'periodo'   => $periodo,
-                'etiqueta'  => $periodos[$periodo]['label'] ?? 'Semanal · ' . date('d/m/Y', strtotime('-6 days')) . ' al ' . date('d/m/Y'),
-                'mensaje'   => 'Comparado con la semana anterior',
-                'desde'     => date('Y-m-d', strtotime('-6 days')),
-                'hasta'     => date('Y-m-d'),
-                'ventas'    => 0,
-                'compras'   => 0,
-                'ganancia'  => 0,
-                'pct_ventas'   => null,
-                'pct_compras'  => null,
-                'pct_ganancia' => null,
-                'labels_ventas'  => [],
-                'data_ventas'    => [],
-                'labels_compras' => [],
-                'data_compras'   => [],
-                'top_labels' => [],
-                'top_cant'   => [],
-            ];
+            error_log('Los datos calculados para Estadísticas no contienen todas las columnas esperadas.');
+            throw new UnexpectedValueException('No fue posible calcular todos los datos de estadísticas.');
         }
 
         $flash = $_SESSION['flash_msg'] ?? null;
@@ -83,6 +64,7 @@ class EstadisticasController extends Controller
             'flash'         => $flash,
             'periodos'      => $periodos,
             'datos'         => $datos,
+            'error_fechas'  => $filtros_periodo['error'],
             'js_config'     => [
                 'periodo'   => $datos['periodo'],
                 'labels'    => $datos['labels_ventas'],
@@ -112,23 +94,33 @@ class EstadisticasController extends Controller
             $this->json(['success' => false, 'error' => 'acceso_denegado']);
         }
 
-        $periodo = preg_match('/^(dia|semana|quincena|mes|trimestre|semestre|rango)$/', $_GET['periodo'] ?? '') ? $_GET['periodo'] : 'semana';
-        $desde = trim((string)($_GET['desde'] ?? ''));
-        $hasta = trim((string)($_GET['hasta'] ?? ''));
-        if ($periodo === 'rango' && ($desde === '' || $hasta === '')) {
-            $periodo = 'semana';
+        $filtros_periodo = $this->filtrosPeriodo();
+        if ($filtros_periodo['error'] !== '') {
+            $this->json([
+                'success' => false,
+                'error' => 'rango_invalido',
+                'mensaje' => $filtros_periodo['error'],
+            ], 422);
         }
 
-        $statisticsData = (new Estadistica())->obtenerDatos($periodo, $desde, $hasta);
+        $statisticsData = (new Estadistica())->obtenerDatos(
+            $filtros_periodo['periodo'],
+            $filtros_periodo['desde'],
+            $filtros_periodo['hasta']
+        );
 
         $this->json([
             'success'      => true,
             'periodo'      => $statisticsData['periodo'],
             'etiqueta'     => $statisticsData['etiqueta'],
             'mensaje'      => $statisticsData['mensaje'],
+            'desde'        => $statisticsData['desde'],
+            'hasta'        => $statisticsData['hasta'],
             'ventas'       => (float)$statisticsData['ventas'],
             'compras'      => (float)$statisticsData['compras'],
             'ganancia'     => (float)$statisticsData['ganancia'],
+            'ventas_ant'   => (float)$statisticsData['ventas_ant'],
+            'compras_ant'  => (float)$statisticsData['compras_ant'],
             'pct_ventas'   => $statisticsData['pct_ventas'],
             'pct_compras'  => $statisticsData['pct_compras'],
             'pct_ganancia' => $statisticsData['pct_ganancia'],
@@ -138,5 +130,77 @@ class EstadisticasController extends Controller
             'topLabels'    => $statisticsData['top_labels'],
             'topCant'      => $statisticsData['top_cant'],
         ]);
+    }
+
+    /**
+     * Valida los filtros de período compartidos por la página y el refresco AJAX.
+     *
+     * @return array{periodo: string, desde: string, hasta: string, error: string}
+     */
+    private function filtrosPeriodo(): array
+    {
+        $periodo_recibido = $this->parametroGet('periodo');
+        $periodo = preg_match('/^(dia|semana|quincena|mes|trimestre|semestre|rango)$/', $periodo_recibido)
+            ? $periodo_recibido
+            : 'semana';
+        $desde = $this->parametroGet('desde');
+        $hasta = $this->parametroGet('hasta');
+        $error = '';
+
+        if ($periodo === 'rango') {
+            $fecha_desde = $this->fechaValida($desde);
+            $fecha_hasta = $this->fechaValida($hasta);
+            $hoy = new DateTimeImmutable('today');
+            if ($fecha_desde === null || $fecha_hasta === null) {
+                $error = 'Selecciona una fecha inicial y final válidas.';
+            } elseif ($fecha_desde > $fecha_hasta) {
+                $error = 'La fecha final no puede ser anterior a la fecha inicial.';
+            } elseif ($fecha_hasta > $hoy) {
+                $error = 'Las estadísticas no pueden consultar fechas futuras.';
+            }
+            if ($error !== '') {
+                return ['periodo' => 'semana', 'desde' => '', 'hasta' => '', 'error' => $error];
+            }
+        } else {
+            $desde = '';
+            $hasta = '';
+        }
+
+        return ['periodo' => $periodo, 'desde' => $desde, 'hasta' => $hasta, 'error' => ''];
+    }
+
+    /**
+     * Lee un parámetro GET de texto y rechaza arreglos u otros tipos.
+     *
+     * @param string $nombre Nombre del parámetro.
+     * @return string Valor textual saneado.
+     */
+    private function parametroGet(string $nombre): string
+    {
+        $valor = $_GET[$nombre] ?? '';
+        return is_string($valor) ? trim($valor) : '';
+    }
+
+    /**
+     * Valida una fecha ISO sin normalizar días inexistentes.
+     *
+     * @param string $fecha Fecha en formato YYYY-MM-DD.
+     * @return DateTimeImmutable|null Fecha válida o null.
+     */
+    private function fechaValida(string $fecha): ?DateTimeImmutable
+    {
+        if ($fecha === '') {
+            return null;
+        }
+        $fecha_objeto = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha);
+        $errores = DateTimeImmutable::getLastErrors();
+        if (
+            !$fecha_objeto
+            || ($errores !== false && ($errores['warning_count'] > 0 || $errores['error_count'] > 0))
+            || $fecha_objeto->format('Y-m-d') !== $fecha
+        ) {
+            return null;
+        }
+        return $fecha_objeto;
     }
 }
