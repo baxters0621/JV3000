@@ -142,7 +142,7 @@ class EstadisticasController extends Controller
         $periodo_recibido = $this->parametroGet('periodo');
         $periodo = preg_match('/^(dia|semana|quincena|mes|trimestre|semestre|rango)$/', $periodo_recibido)
             ? $periodo_recibido
-            : 'semana';
+            : 'trimestre';
         $desde = $this->parametroGet('desde');
         $hasta = $this->parametroGet('hasta');
         $error = '';
@@ -159,7 +159,7 @@ class EstadisticasController extends Controller
                 $error = 'Las estadísticas no pueden consultar fechas futuras.';
             }
             if ($error !== '') {
-                return ['periodo' => 'semana', 'desde' => '', 'hasta' => '', 'error' => $error];
+                return ['periodo' => 'trimestre', 'desde' => '', 'hasta' => '', 'error' => $error];
             }
         } else {
             $desde = '';

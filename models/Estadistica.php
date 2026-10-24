@@ -49,7 +49,7 @@ class Estadistica extends Model
      * @param string $hasta   Fecha final (solo para rango).
      * @return array Detalle de la ventana (periodo, fechas, mensaje, etc.).
      */
-    private function ventana(string $periodo = 'semana', string $desde = '', string $hasta = ''): array
+    private function ventana(string $periodo = 'trimestre', string $desde = '', string $hasta = ''): array
     {
         $periodos = $this->periodos();
 
@@ -74,7 +74,7 @@ class Estadistica extends Model
             }
         }
 
-        $clave = isset($periodos[$periodo]) ? $periodo : 'semana';
+        $clave = isset($periodos[$periodo]) ? $periodo : 'trimestre';
         $dias = (int)$periodos[$clave]['dias'];
 
         $desde = date('Y-m-d', strtotime("-" . ($dias - 1) . " days"));
@@ -264,12 +264,12 @@ class Estadistica extends Model
      * variación, las series de ventas/compras y el top 5 de productos más
      * vendidos. Devuelve un arreglo completo listo para la vista o el JSON.
      *
-     * @param string $periodo Clave del periodo ('semana' por defecto).
+     * @param string $periodo Clave del periodo ('trimestre' por defecto).
      * @param string $desde   Fecha inicial (solo para rango).
      * @param string $hasta   Fecha final (solo para rango).
      * @return array Datos completos de estadísticas para la vista/AJAX.
      */
-    public function obtenerDatos(string $periodo = 'semana', string $desde = '', string $hasta = ''): array
+    public function obtenerDatos(string $periodo = 'trimestre', string $desde = '', string $hasta = ''): array
     {
         $ventana = $this->ventana($periodo, $desde, $hasta);
 

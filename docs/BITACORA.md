@@ -9,6 +9,7 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 ```
 
 ---
+[2026-10-24 08:26] ? M?dulo: Estad?sticas ? Cambio: El panel ahora abre en el per?odo trimestral (?ltimos 90 d?as), de modo que muestre las compras y ventas recientes guardadas en vez de empezar en una semana sin operaciones; se conservan los filtros elegibles. ? Archivos: controllers/EstadisticasController.php, models/Estadistica.php, assets/modules/estadisticas/estadisticas.js, MEMORY.md, docs/BITACORA.md ? Prueba: antes fallaba la regresi?n del per?odo inicial (semana, series $0); despu?s devuelve trimestre 27/07?24/10 con ventas $1.069 y compras $2.498. Lint y tools/validar.ps1 completados.
 
 [2026-10-24 08:20] · Modulo: Estadisticas / Historial · Cambio: Se corrige la identificacion de ventas por tipo de movimiento y se validan periodos/fechas; Estadisticas diferencia periodos sin actividad, informa fallos AJAX con reintento y compara rangos. Se equilibran los graficos 50/50 y se refuerza contraste, accesibilidad, foco y movimiento reducido en ambos modulos. · Archivos: controllers/EstadisticasController.php, models/Estadistica.php, views/estadisticas/index.php, assets/modules/estadisticas/estadisticas.css/js, views/historial/index.php, assets/modules/historial/historial.css, MEMORY.md, docs/BITACORA.md · Prueba: tools/validar.ps1 completa; sintaxis PHP/JS; assets versionados HTTP 200; ruta de estadisticas redirige a login sin sesion. Sin inspeccion visual porque Chrome no esta instalado.
 

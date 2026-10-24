@@ -206,7 +206,7 @@
 
     // ---------- AUTO-REFRESH CADA 60 S ----------
     const urlParams = new URLSearchParams(window.location.search);
-    const periodoActivo = cfg.periodo || 'semana';
+    const periodoActivo = cfg.periodo || 'trimestre';
     const qs = periodoActivo === 'rango'
         ? '&periodo=rango&desde=' + (urlParams.get('desde') || '') + '&hasta=' + (urlParams.get('hasta') || '')
         : '&periodo=' + periodoActivo;

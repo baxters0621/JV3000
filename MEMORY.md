@@ -14,7 +14,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Usuarios: nombres de 4–20 caracteres Unicode, empiezan con letra y luego admiten letras de cualquier idioma, números, marcas diacríticas y guion bajo; no admiten símbolos como `*`. Cliente, registro, perfil y servidor comparten la regla.
 - Insignias de roles en Colaboradores: Administrador violeta, Operador de Carga verde y Operador de Ventas rojo; el alta valida correo, contraseña/confirmación y rol en cliente y servidor, con botón condicionado y pie visible.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
-- Historial muestra compras/ventas paginadas y filtrables, con alcance por rol y auditoría separada; Estadísticas aclara períodos sin movimiento, compara con el período previo y expone fallos de actualización con reintento. Ambos usan compras verdes, ventas rojas y paneles equilibrados.
+- Historial muestra compras/ventas paginadas y filtrables, con alcance por rol y auditoría separada; Estadísticas abre por defecto los últimos 90 días para evitar un panel vacío cuando hay operaciones recientes, compara con el período previo y expone fallos de actualización con reintento. Ambos usan compras verdes y ventas rojas.
 
 ## Decisiones (y por qué)
 
