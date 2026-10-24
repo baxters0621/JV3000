@@ -7,10 +7,12 @@ const vista = fs.readFileSync(
     path.join(__dirname, '..', 'views', 'usuarios', 'index.php'),
     'utf8'
 );
-['longitud', 'minuscula', 'mayuscula', 'numero', 'simbolo', 'sin_saltos'].forEach((regla) => {
+['longitud', 'minuscula', 'mayuscula', 'numero', 'simbolo', 'sin_saltos', 'maximo'].forEach((regla) => {
     assert.match(vista, new RegExp(`id="reset_password_regla_${regla}"`));
 });
-assert.match(vista, /aria-describedby="reset_password_guia reset_password_estado"/);
+assert.match(vista, /aria-describedby="reset_password_guia reset_password_estado reset_password_contador"/);
+assert.match(vista, /id="reset_password"[^>]*maxlength="72"/);
+assert.match(vista, /id="reset_password_confirm"[^>]*maxlength="72"/);
 
 function crearElemento(id, value = '') {
     const clases = new Set();
@@ -40,6 +42,10 @@ function crearElemento(id, value = '') {
         removeAttribute(nombre) {
             delete this.attributes[nombre];
         },
+        setSelectionRange(inicio, fin) {
+            this.selectionStart = inicio;
+            this.selectionEnd = fin;
+        },
         focus() {
             this.focused = true;
         }
@@ -56,13 +62,15 @@ function ejecutarEnvio(confirmacion, password = 'ClaveSegura1!') {
         btnResetPassword: crearElemento('btnResetPassword'),
         reset_password_estado: crearElemento('reset_password_estado')
     };
+        ids.reset_password_contador = crearElemento('reset_password_contador');
     const textosReglas = {
         longitud: '8 caracteres como mínimo',
         minuscula: 'Una letra minúscula',
         mayuscula: 'Una letra mayúscula',
         numero: 'Un número',
         simbolo: 'Un símbolo',
-        sin_saltos: 'Sin saltos de línea'
+        sin_saltos: 'Sin saltos de línea',
+        maximo: 'Máximo 72 bytes'
     };
     Object.entries(textosReglas).forEach(([regla, texto]) => {
         ids[`reset_password_regla_${regla}`] = crearElemento(`reset_password_regla_${regla}`);
@@ -148,6 +156,34 @@ assert.equal(envioConEspacios.envio.params.password_confirm, ' ClaveSegura1! ');
 const envioConSalto = ejecutarEnvio('', 'ClaveSegura1!\n');
 assert.equal(envioConSalto.envio, null);
 assert.equal(envioConSalto.ids.reset_password.value, 'ClaveSegura1!\n');
+
+const entradaMuyLarga = ejecutarEnvio('', 'aA1!' + 'b'.repeat(80));
+entradaMuyLarga.ids.reset_password.listeners.input({ type: 'input' });
+assert.equal(
+    new TextEncoder().encode(entradaMuyLarga.ids.reset_password.value).length,
+    72,
+    'La nueva contraseña debe limitarse a 72 bytes al escribir o pegar.'
+);
+assert.equal(entradaMuyLarga.ids.reset_password.value.length, 72);
+assert.equal(entradaMuyLarga.ids.reset_password_contador.textContent, '72 / 72 bytes');
+
+const entradaUnicodeLarga = ejecutarEnvio('', 'aA1!' + 'ñ'.repeat(40));
+entradaUnicodeLarga.ids.reset_password.listeners.input({ type: 'input' });
+assert.ok(
+    new TextEncoder().encode(entradaUnicodeLarga.ids.reset_password.value).length <= 72,
+    'El límite debe contar bytes UTF-8 también para caracteres multibyte.'
+);
+assert.equal(
+    Array.from(entradaUnicodeLarga.ids.reset_password.value).join(''),
+    entradaUnicodeLarga.ids.reset_password.value,
+    'El límite no debe dejar un par sustituto Unicode incompleto.'
+);
+entradaUnicodeLarga.ids.reset_password_confirm.value = 'aA1!' + 'ñ'.repeat(40);
+entradaUnicodeLarga.ids.reset_password_confirm.listeners.input({ type: 'input' });
+assert.ok(
+    new TextEncoder().encode(entradaUnicodeLarga.ids.reset_password_confirm.value).length <= 72,
+    'La confirmación también debe limitarse a 72 bytes.'
+);
 
 const envioInvalido = ejecutarEnvio('ClaveDistinta1!');
 assert.equal(envioInvalido.prevenido, true);

@@ -198,6 +198,28 @@ $afirmar(
 );
 $afirmar($db->escrituras === [], 'Una contraseña con salto de línea no debe actualizar la cuenta.');
 
+$passwordMuyLargo = str_repeat('aA1!', 18) . 'a';
+$passwordMaximo = str_repeat('aA1!', 18);
+$passwordUnicodeMaximo = str_repeat('aA1!', 17) . 'ññ';
+$passwordUnicodeExcedido = str_repeat('aA1!', 17) . 'ñññ';
+$afirmar(strlen($passwordMaximo) === 72 && validarPasswordFuerte($passwordMaximo), 'El límite de 72 bytes debe aceptarse.');
+$afirmar(
+    strlen($passwordUnicodeMaximo) === 72 && validarPasswordFuerte($passwordUnicodeMaximo),
+    'Los caracteres UTF-8 deben contarse por bytes hasta el máximo permitido.'
+);
+$afirmar(
+    strlen($passwordUnicodeExcedido) > 72 && !validarPasswordFuerte($passwordUnicodeExcedido),
+    'Los caracteres multibyte que excedan 72 bytes deben rechazarse.'
+);
+$db->escrituras = [];
+$resultado = $modelo->resetearPassword(25, $passwordMuyLargo, $passwordMuyLargo);
+$afirmar(!$resultado['ok'], 'El restablecimiento debe rechazar contraseñas de más de 72 bytes.');
+$afirmar(
+    strpos($resultado['mensaje'], '72 bytes') !== false,
+    'El error debe informar el límite máximo de 72 bytes.'
+);
+$afirmar($db->escrituras === [], 'Una contraseña sobre el límite no debe actualizar la cuenta.');
+
 $passwordExacto = ' ClaveValida1! ';
 $db->escrituras = [];
 $resultado = $modelo->resetearPassword(25, $passwordExacto, $passwordExacto);

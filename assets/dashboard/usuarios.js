@@ -226,6 +226,8 @@ const TEXTO_GUIA_USU = {
     pin_emergencia_global_confirm: 'Repite el mismo PIN.'
 };
 
+const MAX_PASSWORD_BYTES = 72;
+
 // Marca un campo como válido ('ok'), inválido ('err') o neutro (vacío).
 // El mensaje se pinta en la guía que está debajo del campo.
 function marcarCampoUsu(campoId, estado, mensaje) {
@@ -264,18 +266,36 @@ function correoValidoUsu(correo) {
 }
 
 function requisitosPasswordUsu(password) {
+    const bytes = new TextEncoder().encode(password).length;
     return {
-        longitud: new TextEncoder().encode(password).length >= 8,
+        longitud: bytes >= 8,
         minuscula: /[a-z]/.test(password),
         mayuscula: /[A-Z]/.test(password),
         numero: /\d/.test(password),
         simbolo: /[\W_]/.test(password),
-        sin_saltos: !/[\r\n]/.test(password)
+        sin_saltos: !/[\r\n]/.test(password),
+        maximo: bytes <= MAX_PASSWORD_BYTES
     };
 }
 
 function passwordSeguraUsu(password) {
     return Object.values(requisitosPasswordUsu(password)).every(Boolean);
+}
+
+function limitarPasswordBytes(campo) {
+    let bytes = 0;
+    let limitado = '';
+    for (const caracter of campo.value) {
+        const bytesCaracter = new TextEncoder().encode(caracter).length;
+        if (bytes + bytesCaracter > MAX_PASSWORD_BYTES) break;
+        limitado += caracter;
+        bytes += bytesCaracter;
+    }
+    if (limitado !== campo.value) {
+        campo.value = limitado;
+        campo.setSelectionRange(limitado.length, limitado.length);
+    }
+    return bytes;
 }
 
 // Compara con los nombres ya visibles en la tabla, excluyendo la cuenta editada.
@@ -382,6 +402,8 @@ function validarReset(mostrarErrores) {
                     return document.getElementById('reset_password_regla_' + regla).textContent;
                 }).join(', ') + '.');
     }
+    const contador = document.getElementById('reset_password_contador');
+    if (contador) contador.textContent = new TextEncoder().encode(password).length + ' / ' + MAX_PASSWORD_BYTES + ' bytes';
 
     const passwordOk = validarCampoUsu('reset_password', reglasPendientes.length === 0,
         'Contraseña segura.', 'Completa los requisitos pendientes.', mostrarErrores);
@@ -454,7 +476,10 @@ function validarPinGlobal() {
 });
 ['reset_password', 'reset_password_confirm'].forEach(function (id) {
     const campo = document.getElementById(id);
-    if (campo) campo.addEventListener('input', function () { validarReset(false); });
+    if (campo) campo.addEventListener('input', function () {
+        limitarPasswordBytes(campo);
+        validarReset(false);
+    });
 });
 
 // Abre el modal de alta con el formulario limpio.

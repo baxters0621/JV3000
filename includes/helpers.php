@@ -477,6 +477,10 @@ if (!function_exists('generarFacturaNumero')) {
     }
 }
 
+if (!defined('MAX_PASSWORD_BYTES')) {
+    define('MAX_PASSWORD_BYTES', 72);
+}
+
 if (!function_exists('validarPasswordFuerte')) {
     /**
      * Valida que una contraseña sea fuerte.
@@ -489,7 +493,8 @@ if (!function_exists('validarPasswordFuerte')) {
      */
     function validarPasswordFuerte(string $password): bool
     {
-        return !preg_match('/[\r\n]/', $password)
+        return strlen($password) <= MAX_PASSWORD_BYTES
+            && !preg_match('/[\r\n]/', $password)
             && preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}\z/', $password) === 1;
     }
 
@@ -541,6 +546,7 @@ if (!function_exists('validarPasswordFuerte')) {
         if (!preg_match('/\d/', $password))    $faltan[] = '1 número';
         if (!preg_match('/[\W_]/', $password)) $faltan[] = '1 símbolo';
         if (preg_match('/[\r\n]/', $password)) $faltan[] = 'sin saltos de línea';
+        if (strlen($password) > MAX_PASSWORD_BYTES) $faltan[] = 'máximo 72 bytes';
         return $faltan ? implode(', ', $faltan) : '';
     }
 }
