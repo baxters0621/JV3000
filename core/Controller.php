@@ -151,14 +151,17 @@ abstract class Controller
      *
      * Guarda un mensaje de una sola vez (tipo: success/danger) que la siguiente
      * petición lee y limpia, usado para notificar el resultado de operaciones.
+     * El origen opcional (p. ej. 'crear', 'editar', 'reset') permite que el JS
+     * del módulo sepa qué formulario falló y reabra el modal correcto.
      *
-     * @param string $tipo  Tipo del mensaje ('success' o 'danger').
-     * @param string $texto Contenido del mensaje a mostrar.
+     * @param string      $tipo   Tipo del mensaje ('success' o 'danger').
+     * @param string      $texto  Contenido del mensaje a mostrar.
+     * @param string|null $origen Acción que generó el mensaje (opcional).
      * @return void
      */
-    protected function flash(string $tipo, string $texto): void
+    protected function flash(string $tipo, string $texto, ?string $origen = null): void
     {
-        $_SESSION['flash_msg'] = ['tipo' => $tipo, 'texto' => $texto];
+        $_SESSION['flash_msg'] = ['tipo' => $tipo, 'texto' => $texto, 'origen' => $origen];
     }
 
     /**
@@ -167,7 +170,7 @@ abstract class Controller
      * Obtiene el mensaje guardado por operaciones previas y lo elimina de la
      * sesión para que solo se muestre una vez. Devuelve null si no hay mensaje.
      *
-     * @return array|null Arreglo ['tipo'=>.., 'texto'=>..] o null si no hay.
+     * @return array|null Arreglo ['tipo'=>.., 'texto'=>.., 'origen'=>..] o null si no hay.
      */
     protected function consumeFlash(): ?array
     {

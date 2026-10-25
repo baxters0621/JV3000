@@ -292,6 +292,33 @@ $resultado = $modelo->actualizarPerfil([
 $afirmar(!$resultado['ok'], 'El perfil debe rechazar un usuario que no sea texto plano.');
 $afirmar($db->escrituras === [], 'Un usuario mal formado no debe actualizar el perfil.');
 
+// La edición y el perfil deben normalizar al estilo del alta (Title_Case),
+// no pasar el nombre a mayúsculas totales.
+$db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo'];
+$db->usuarioDuplicado = null;
+$db->correoDuplicado = null;
+$db->escrituras = [];
+$resultado = $modelo->editar(array_merge($datosBase, ['usuario' => 'josé_pérez']), 1);
+$afirmar($resultado['ok'], 'La edición debe aceptar nombres internacionales.');
+$afirmar(
+    $db->escrituras[0]['params'][0] === 'José_Pérez',
+    'La edición debe guardar el nombre en Title_Case, no en mayúsculas totales.'
+);
+
+$db->usuarioActual = ['id_rol' => 2, 'status' => 'Activo', 'password' => 'hash', 'password_check' => 'check'];
+$db->usuarioDuplicado = null;
+$db->correoDuplicado = null;
+$db->escrituras = [];
+$resultado = $modelo->actualizarPerfil([
+    'usuario' => 'josé_pérez',
+    'correo' => 'operador@jv3000.com',
+]);
+$afirmar($resultado['ok'], 'El perfil debe aceptar nombres internacionales.');
+$afirmar(
+    $db->escrituras[0]['params'][0] === 'José_Pérez',
+    'El perfil debe guardar el nombre en Title_Case, no en mayúsculas totales.'
+);
+
 $registroFuente = file_get_contents($root . '/login/login.php');
 $afirmar(
     strpos($registroFuente, 'validarNombreUsuario($new_user)') !== false,

@@ -194,6 +194,11 @@ function abrirEdicion(btn) {
     document.getElementById('edit_correo').value = tr.dataset.correo;
     document.getElementById('edit_rol').value = tr.dataset.rol;
     document.getElementById('edit_status').value = tr.dataset.status;
+    valoresOriginalesEdicion = {
+        usuario: normalizarUsuarioCliente(tr.dataset.usuario),
+        correo: tr.dataset.correo.trim(),
+        rol: tr.dataset.rol
+    };
     ['edit_usuario', 'edit_correo', 'edit_rol'].forEach(function (id) {
         document.getElementById(id).classList.remove('input-error');
         marcarCampoUsu(id, '', '');
@@ -218,9 +223,9 @@ const TEXTO_GUIA_USU = {
     crear_password: 'De 8 a 18 caracteres, sin espacios, con mayúscula, minúscula, número y símbolo.',
     crear_password_confirm: 'Debe coincidir con la contraseña anterior.',
     crear_rol: 'Solo se pueden crear Operadores de Carga y de Ventas.',
-    edit_usuario: 'Debe comenzar con una letra; luego admite letras de cualquier idioma, números y guion bajo (4 a 20 caracteres, sin otros símbolos).',
+    edit_usuario: '4-20 caracteres: letras (con tildes y ñ), números y guion bajo.',
     edit_correo: 'Correo válido y no asociado a otra cuenta.',
-    edit_rol: 'Solo se puede asignar Operador de Carga o de Ventas. Administrador es un rol único.',
+    edit_rol: 'Solo Operador de Carga o de Ventas.',
     reset_password_confirm: 'Repite la nueva contraseña.',
     pin_emergencia_global: '6 dígitos, sin letras.',
     pin_emergencia_global_confirm: 'Repite el mismo PIN.'
@@ -375,6 +380,20 @@ function validarAlta(mostrarErrores) {
     return todoOk;
 }
 
+// Valores con los que se abrió el modal de edición: permiten detectar si el
+// administrador realmente cambió algo antes de habilitar el guardado.
+let valoresOriginalesEdicion = null;
+
+function hayCambiosEdicionUsu() {
+    if (!valoresOriginalesEdicion) return true;
+    const usuario = normalizarUsuarioCliente(document.getElementById('edit_usuario').value);
+    const correo = document.getElementById('edit_correo').value.trim();
+    const rol = document.getElementById('edit_rol').value;
+    return usuario !== valoresOriginalesEdicion.usuario
+        || correo !== valoresOriginalesEdicion.correo
+        || rol !== valoresOriginalesEdicion.rol;
+}
+
 // Valida el modal de edición. Cada modal solo tiene sus propios campos, así que
 // se valida el que realmente existe: la misma función sirve para la vista MVC y
 // para cualquier variante sin dependencias cruzadas.
@@ -408,7 +427,9 @@ function validarEdicion(mostrarErrores) {
 
     const todoOk = usuarioOk && correoOk && rolOk;
     const boton = document.getElementById('btnEditar');
-    if (boton) boton.disabled = !todoOk;
+    // Solo se habilita si los datos además son válidos y algo cambió respecto
+    // a lo que traía la fila al abrir el modal.
+    if (boton) boton.disabled = !todoOk || !hayCambiosEdicionUsu();
     return todoOk;
 }
 
@@ -577,6 +598,7 @@ if (formEditar) formEditar.addEventListener('submit', function (e) {
         if (primerCampoInvalido) primerCampoInvalido.focus();
         return;
     }
+    if (!hayCambiosEdicionUsu()) return; // nada cambió: nada que guardar
 
     const inputUsuario = document.getElementById('edit_usuario');
     const idUsuario = document.getElementById('edit_id_usuario').value;
@@ -701,9 +723,31 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!flash || !flash.classList.contains('alert-jv-danger')) return;
 
     const mensaje = (flash.dataset.texto || '').toUpperCase();
+    const textoError = flash.textContent.trim();
+    const origen = flash.dataset.origen || '';
     let campoId = '';
     let modalId = '';
-    if (mensaje.startsWith('LA CONTRASEÑA') || mensaje.startsWith('LAS CONTRASEÑAS')) {
+
+    // El controlador fija el origen al guardar el flash: es la forma fiable de
+    // saber qué formulario falló. El texto queda como respaldo para flashes
+    // generados sin origen.
+    if (origen === 'crear') {
+        modalId = 'modalCrear';
+        if (mensaje.includes('CONTRASEÑAS NO COINCIDEN')) campoId = 'crear_password_confirm';
+        else if (mensaje.includes('CONTRASEÑA')) campoId = 'crear_password';
+        else if (mensaje.includes('CORREO') && mensaje.includes('USUARIO')) campoId = 'crear_usuario'; // «EL USUARIO O CORREO YA ESTÁ EN USO»: no distingue cuál duplicó
+        else if (mensaje.includes('CORREO')) campoId = 'crear_correo';
+        else if (mensaje.includes('NOMBRE DE USUARIO')) campoId = 'crear_usuario';
+        else if (mensaje.includes('ROL')) campoId = 'crear_rol';
+    } else if (origen === 'editar') {
+        modalId = 'modalEditar';
+        if (mensaje.includes('CORREO')) campoId = 'edit_correo';
+        else if (mensaje.includes('NOMBRE')) campoId = 'edit_usuario';
+        else if (mensaje.includes('ROL')) campoId = 'edit_rol';
+    } else if (origen === 'reset') {
+        modalId = 'modalResetPassword';
+        campoId = mensaje.includes('NO COINCIDEN') ? 'reset_password_confirm' : 'reset_password';
+    } else if (mensaje.startsWith('LA CONTRASEÑA') || mensaje.startsWith('LAS CONTRASEÑAS')) {
         modalId = 'modalResetPassword';
         campoId = mensaje.includes('NO COINCIDEN') ? 'reset_password_confirm' : 'reset_password';
     } else if (mensaje.includes('CORREO')) {
@@ -718,7 +762,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (campoId && modalId) {
-        marcarCampoUsu(campoId, 'err', flash.textContent.trim());
+        if (origen === 'crear' && mensaje.includes('YA ESTÁ EN USO')) {
+            // Duplicado en el alta: el mensaje no dice cuál campo, se marcan los dos.
+            marcarCampoUsu('crear_correo', 'err', textoError);
+        }
+        marcarCampoUsu(campoId, 'err', textoError);
         const modal = document.getElementById(modalId);
         modal.addEventListener('shown.bs.modal', function () {
             document.getElementById(campoId).focus();

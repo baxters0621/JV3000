@@ -12,12 +12,15 @@ Sin datos sensibles (claves, tokens, PIN).
 - Contraseñas nuevas: entre 8 y 18 caracteres sin espacios, en creación, restablecimiento, recuperación y perfil. El cliente marca espacios en rojo, no los cuenta en el contador ni da por cumplidos requisitos; el servidor los rechaza. Se mantienen mínimo 8, mayúscula, minúscula, número y símbolo; bcrypt conserva su resguardo interno.
 - Colaboradores: edición valida usuario/correo/duplicados/rol también en servidor; Administrador no se ofrece ni asigna a otros colaboradores.
 - Usuarios: nombres de 4–20 caracteres Unicode, empiezan con letra y luego admiten letras de cualquier idioma, números, marcas diacríticas y guion bajo; no admiten símbolos como `*`. Cliente, registro, perfil y servidor comparten la regla.
-- Insignias de roles en Colaboradores: Administrador violeta, Operador de Carga verde y Operador de Ventas rojo; el alta valida correo, contraseña/confirmación y rol en cliente y servidor, con botón condicionado y pie visible.
+- Insignias de roles en Colaboradores (admin violeta, carga verde, ventas roja); el alta valida en cliente y servidor con botón condicionado y pie visible.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
 - Historial muestra compras/ventas paginadas y filtrables, con alcance por rol y auditoría separada; Estadísticas abre por defecto los últimos 90 días para evitar un panel vacío cuando hay operaciones recientes, compara con el período previo y expone fallos de actualización con reintento. Ambos usan compras verdes y ventas rojas.
 
 ## Decisiones (y por qué)
 
+- Normalización Title_Case unificada en alta, edición y perfil con `normalizarUsuario()` (José_Pérez); nunca `mb_strtoupper()`, que convertía el nombre a mayúsculas al editarlo.
+- Los flashes de Colaboradores llevan origen (`Controller::flash(..., $origen)` + `data-origen` en la vista): el JS reabre el modal correcto y marca el campo responsable; el heurístico por texto queda solo de respaldo.
+- «Guardar cambios» en edición solo se habilita con cambios reales frente a la fila abierta (estado sucio): evita POST y auditoría sin motivo.
 - PIN único en `configuracion.pin_emergencia_global`, válido también para el Administrador: respaldo cuando no hay correo ni internet.
 - Ayuda del PIN como línea fija bajo el encabezado: los globos se recortaban por el `overflow-hidden` de la tarjeta y tapaban los campos.
 - Ojos tachados por defecto en todos los campos de contraseña/PIN: el icono indica el estado actual, no la acción.
@@ -26,7 +29,6 @@ Sin datos sensibles (claves, tokens, PIN).
 - El rol Administrador es único: solo la cuenta principal conserva ese rol; creación, aprobación y edición de colaboradores solo asignan Operador de Carga o de Ventas.
 - Acceso al Historial de operaciones por alcance: administración ve compras y ventas, carga ve compras y ventas ve ventas; el servidor aplica el mismo límite que el menú.
 - Pregunta/respuesta de seguridad retirada de los formularios; columnas por legado, no usar.
-- `MEMORY.md` guarda solo estado y decisiones; el historial lineal sigue siendo `docs/BITACORA.md`.
 
 ## Aprendizajes y errores a evitar
 
@@ -45,8 +47,3 @@ Sin datos sensibles (claves, tokens, PIN).
 - Los formularios personalizados con `novalidate` y envío vía `jvPost` necesitan un listener submit explícito y deben mandar las claves que procesa el controlador; el modal de restablecimiento no lo tenía.
 - **Las cuentas de Colaboradores NO se eliminan: solo se suspenden** (decisión del usuario, 2026-10-23). No volver a crear `Usuario::eliminar()`, `eliminar_usuario`, `confirmarEliminacion()` ni el botón de papelera; el borrado físico está en el historial de git si algún día se necesita.
 - Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines (`sess_jv*` puede llevarse ficheros ajenos).
-- Skills ya instaladas a nivel global (Starter Pack completo): `find-skills`, `grill-me`, `frontend-design`, `web-design-guidelines`, `systematic-debugging`.
-
-## Próximos pasos
-
-- Guía de Uso retirada de la app (menú/ruta/vista/assets) y manual externo eliminado por decisión del usuario (2026-10-24).

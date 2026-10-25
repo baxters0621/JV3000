@@ -186,7 +186,8 @@ class Usuario extends Model
         }
 
         $id = $idEntrada;
-        $usuario = mb_strtoupper(trim($datos['usuario']));
+        // Mismo criterio que el alta: Title_Case (José_Pérez), no mayúsculas.
+        $usuario = normalizarUsuario($datos['usuario']);
         $correo = strtolower(trim($datos['correo']));
         $password = trim($datos['password'] ?? '');
         $idRolEntrada = filter_var($datos['id_rol'] ?? null, FILTER_VALIDATE_INT);
@@ -378,7 +379,8 @@ class Usuario extends Model
         }
 
         $passwordActual = trim($datos['password_actual'] ?? '');
-        $usuario = mb_strtoupper(trim($datos['usuario'] ?? ''));
+        // Mismo criterio que el alta y la edición: Title_Case, no mayúsculas.
+        $usuario = normalizarUsuario($datos['usuario'] ?? '');
         $correo = strtolower(trim($datos['correo'] ?? ''));
         $passwordNueva = (string)($datos['password_nueva'] ?? '');
         $passwordConfirm = (string)($datos['password_confirm'] ?? '');

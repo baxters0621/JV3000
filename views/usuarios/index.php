@@ -15,7 +15,8 @@
         </div>
 
         <?php if (!empty($flash)): ?>
-            <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>" role="status" aria-live="polite">
+            <?php $flash_origen = (string)($flash['origen'] ?? ''); ?>
+            <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>"<?php echo $flash_origen !== '' ? ' data-origen="' . htmlspecialchars($flash_origen) . '"' : ''; ?> role="status" aria-live="polite">
                 <i class="bi bi-shield-check me-2" aria-hidden="true"></i><?php echo htmlspecialchars($flash['texto']); ?>
             </div>
         <?php endif; ?>
@@ -285,7 +286,7 @@
                         <div class="col-md-6 modal-usuarios-field">
                             <label class="section-label" for="edit_usuario"><i class="bi bi-person-fill" aria-hidden="true"></i> Nombre de usuario</label>
                             <input type="text" class="input-jv w-100" id="edit_usuario" maxlength="40" autocomplete="username" placeholder="Ej.: José_Pérez" aria-describedby="edit_usuario_guia" required>
-                            <div class="form-text jv-form-text" id="edit_usuario_guia" aria-live="polite">Debe comenzar con una letra; luego admite letras de cualquier idioma, números y guion bajo (4 a 20 caracteres, sin otros símbolos).</div>
+                            <div class="form-text jv-form-text" id="edit_usuario_guia" aria-live="polite">4-20 caracteres: letras (con tildes y ñ), números y guion bajo.</div>
                         </div>
                         <div class="col-md-6 modal-usuarios-field">
                             <label class="section-label" for="edit_correo"><i class="bi bi-envelope-fill" aria-hidden="true"></i> Correo electrónico</label>
@@ -300,13 +301,13 @@
                                     <option value="<?php echo (int)$role['id_rol']; ?>"><?php echo htmlspecialchars($role['nombre_rol']); ?></option>
                                 <?php endif; endforeach; ?>
                             </select>
-                            <div class="form-text jv-form-text" id="edit_rol_guia" aria-live="polite">Solo se puede asignar Operador de Carga o de Ventas. Administrador es un rol único.</div>
+                            <div class="form-text jv-form-text" id="edit_rol_guia" aria-live="polite">Solo Operador de Carga o de Ventas.</div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-jv">
                     <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn-jv-primary" id="btnEditar"><i class="bi bi-check-lg me-1"></i>Guardar cambios</button>
+                    <button type="submit" class="btn-jv-primary" id="btnEditar" disabled><i class="bi bi-check-lg me-1"></i>Guardar cambios</button>
                 </div>
             </form>
         </div>

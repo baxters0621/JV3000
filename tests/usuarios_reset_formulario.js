@@ -25,6 +25,12 @@ assert.match(vista, /id="crear_usuario"[^>]*placeholder="Ej\.: José_2026"/);
 assert.match(vista, /id="crear_usuario_guia"[^>]*>[^<]*letras de cualquier idioma/);
 assert.match(vista, /id="modalCrear"[\s\S]*modal-dialog-scrollable/);
 assert.match(vista, /id="btnCrear"[^>]*disabled/);
+// El guardado de edición solo se habilita con cambios reales: botón nace
+// deshabilitado y el flash lleva data-origen para reabrir el modal correcto.
+assert.match(vista, /id="btnEditar"[^>]*disabled/);
+assert.match(vista, /id="flashMsg"[\s\S]*?data-origen/);
+assert.match(vista, /id="edit_usuario_guia"[^>]*>4-20 caracteres/);
+assert.match(vista, /id="edit_rol_guia"[^>]*>Solo Operador de Carga o de Ventas\./);
 assert.doesNotMatch(vista, /Nuevo correo electrónico alternativo|Crea un correo electrónico aleatorio que se reenvía/);
 ['crear_usuario', 'crear_correo', 'crear_password', 'crear_password_confirm', 'crear_rol'].forEach((id) => {
     assert.match(vista, new RegExp(`id="${id}"[^>]*required`));
@@ -71,6 +77,11 @@ assert.match(
     fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.js'), 'utf8'),
     /const MAX_PASSWORD_CHARACTERS = 18;/
 );
+const jsUsuarios = fs.readFileSync(path.join(__dirname, '..', 'assets', 'dashboard', 'usuarios.js'), 'utf8');
+// El error del servidor reabre el modal según el origen del flash, no por el texto.
+assert.match(jsUsuarios, /flash\.dataset\.origen/);
+assert.match(jsUsuarios, /function hayCambiosEdicionUsu\(\)/);
+assert.match(jsUsuarios, /edit_usuario: '4-20 caracteres: letras \(con tildes y ñ\), números y guion bajo\.'/);
 
 function crearElemento(id, value = '') {
     const clases = new Set();
