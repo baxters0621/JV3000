@@ -233,6 +233,8 @@ class Salida extends Model
             $this->db->execute("UPDATE movimientos SET status = 'Anulado' WHERE id_referencia = ? AND tipo_referencia = 'venta'", [$id_salida]);
             registrarAuditoria('anular', "Salida #$id_salida anulada, " . count($detalles) . " producto(s)");
             $this->db->commit();
+            // El stock vuelve al inventario: recalcular el estado automático de las categorías.
+            (new Categoria())->sincronizarPorStock();
             return ['ok' => true];
         } catch (Throwable $e) {
             $this->db->rollback();
@@ -449,6 +451,8 @@ class Salida extends Model
                     : "Venta editada, " . count($productos_raw) . " producto(s)";
                 registrarAuditoria('editar', $det_auditoria);
                 $this->db->commit();
+                // El stock cambió: recalcular el estado automático de las categorías.
+                (new Categoria())->sincronizarPorStock();
                 return ['ok' => true, 'id_salida' => $salida_id, 'edicion' => true];
             }
 
@@ -457,6 +461,8 @@ class Salida extends Model
                 : "Venta registrada, " . count($productos_raw) . " producto(s)";
             registrarAuditoria('crear', $det_auditoria);
             $this->db->commit();
+            // El stock cambió: recalcular el estado automático de las categorías.
+            (new Categoria())->sincronizarPorStock();
             return ['ok' => true, 'id_salida' => $salida_id, 'edicion' => false];
         } catch (Throwable $e) {
             $this->db->rollback();

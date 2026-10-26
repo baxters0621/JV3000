@@ -62,6 +62,9 @@ class Producto extends Model
             [$idProducto]
         );
         registrarAuditoria('baja_vencido', 'Producto dado de baja por vencimiento');
+        // El stock pudo llegar a cero: el estado de las categorías afectadas
+        // se recalcula de inmediato.
+        (new Categoria())->sincronizarPorStock();
     }
 
     /**
@@ -120,19 +123,23 @@ class Producto extends Model
     /**
      * Listado paginado con categoría, capacidad y proveedores del catálogo.
      *
-     * Devuelve los productos ordenados (activos primero) con el nombre de la
-     * categoría, la capacidad efectiva (propia, de categoría o 100) y la
-     * lista de proveedores que lo suministran según el catálogo de costos.
+     * Devuelve los productos ordenados (activos primero) con el nombre y la
+     * ruta de la categoría, la capacidad efectiva (propia, de categoría o
+     * 100) y la lista de proveedores que lo suministran según el catálogo
+     * de costos. Con $idCategoria > 0 filtra por esa categoría y su rama
+     * completa (productos directos y de sus subcategorías, vía ruta).
      * Paginado con LIMIT/OFFSET.
      *
-     * @param int $limit  Registros por página.
-     * @param int $offset Desplazamiento para la paginación.
+     * @param int $limit       Registros por página.
+     * @param int $offset      Desplazamiento para la paginación.
+     * @param int $idCategoria Categoría seleccionada (0 = todas).
      * @return array Productos de la página solicitada.
      */
-    public function listar(int $limit, int $offset): array
+    public function listar(int $limit, int $offset, int $idCategoria = 0): array
     {
+        [$filtro_sql, $filtro_params] = $this->filtroCategoria($idCategoria);
         return $this->db->fetchAll(
-            "SELECT p.*, c.nombre as nombre_cat, COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
+            "SELECT p.*, c.nombre as nombre_cat, c.ruta as cat_ruta, COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
                 -- Vencimiento real del producto = el lote con stock que vence primero (FEFO);
                 -- si no tiene lotes activos se usa la fecha legacy del producto
                 COALESCE((
@@ -144,18 +151,47 @@ class Producto extends Model
                     FROM catalogo_costos cc JOIN proveedores pr ON cc.id_proveedor = pr.id_proveedor
                     WHERE cc.id_producto = p.id_producto AND pr.status = 'Activo'
                 ) as proveedores
-            FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria ORDER BY p.status DESC, p.nombre_producto ASC LIMIT ? OFFSET ?",
-            [$limit, $offset]
+            FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria"
+            . $filtro_sql .
+            " ORDER BY p.status DESC, p.nombre_producto ASC LIMIT ? OFFSET ?",
+            array_merge($filtro_params, [$limit, $offset])
         );
     }
 
     /**
-     * Total de productos (para la paginación).
+     * Total de productos (para la paginación), con filtro de categoría.
      *
-     * @return int Cantidad total de productos en la tabla.
+     * @param int $idCategoria Categoría seleccionada (0 = todas).
+     * @return int Cantidad total de productos que cumplen el filtro.
      */
-    public function totalRegistros(): int
+    public function totalRegistros(int $idCategoria = 0): int
     {
-        return (int)($this->db->fetchOne("SELECT COUNT(*) as total FROM productos")['total'] ?? 0);
+        [$filtro_sql, $filtro_params] = $this->filtroCategoria($idCategoria);
+        return (int)($this->db->fetchOne(
+            "SELECT COUNT(*) as total FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria" . $filtro_sql,
+            $filtro_params
+        )['total'] ?? 0);
+    }
+
+    /**
+     * Arma el WHERE del filtro por categoría seleccionada.
+     *
+     * Si la categoría tiene ruta (árbol), el filtro incluye su rama
+     * completa: la categoría y sus subcategorías (c.ruta = X OR c.ruta
+     * LIKE X/%). Si no tiene ruta, filtra por id directo. Con 0 devuelve
+     * WHERE vacío.
+     *
+     * @param int $idCategoria Categoría seleccionada (0 = todas).
+     * @return array{0:string, 1:array} SQL del WHERE (vacío o con WHERE inicial) y parámetros.
+     */
+    private function filtroCategoria(int $idCategoria): array
+    {
+        if ($idCategoria <= 0) return ['', []];
+        $categoria = $this->db->fetchOne("SELECT ruta FROM categorias WHERE id_categoria = ?", [$idCategoria]);
+        $ruta = (string)($categoria['ruta'] ?? '');
+        if ($ruta !== '') {
+            return [" WHERE (c.ruta = ? OR c.ruta LIKE ?)", [$ruta, $ruta . '/%']];
+        }
+        return [" WHERE p.id_categoria = ?", [$idCategoria]];
     }
 }

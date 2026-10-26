@@ -328,6 +328,8 @@ class Recepcion extends Model
             $this->db->execute("UPDATE compras SET estado_recepcion = ? WHERE id_compra = ?", [$faltante ? 'Parcial' : 'Completa', $id_compra]);
             registrarAuditoria('crear', "Recepción de mercancía (factura {$compra['nro_factura']}, $total_productos producto(s), $total_unidades und(s))");
             $this->db->commit();
+            // Entró mercancía: recalcular el estado automático de las categorías.
+            (new Categoria())->sincronizarPorStock();
 
             $msg = "RECEPCIÓN REGISTRADA: factura {$compra['nro_factura']}, $total_productos producto(s), $total_unidades und(s). ";
             $msg .= $faltante ? 'RECEPCIÓN PARCIAL.' : 'MERCADERÍA RECIBIDA POR COMPLETO.';

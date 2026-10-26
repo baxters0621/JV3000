@@ -9,14 +9,27 @@
 /** @var int $total_registros */
 /** @var int $pagina_actual */
 /** @var string $csrf */
-/** @var array<int, array<string, mixed>> $categorias_gestion Vacío si el rol no administra categorías */
-/** @var bool $puede_categorias */
+/** @var array<int, array<string, mixed>> $categorias Árbol de categorías (raíces con 'hijos') */
+/** @var int $id_categoria_filtro Categoría seleccionada en el árbol (0 = todas) */
+/** @var array<string, mixed>|null $categoria_filtro Fila de la categoría del filtro */
 
 // ==========================================
 // VISTA: Inventario / Productos (index)
 // ==========================================
 // Solo muestra los datos. No hace consultas.
-$puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['id_rol'] === 2;
+// Diseño: árbol de categorías a la izquierda (consulta para los tres roles)
+// y productos filtrados a la derecha. La escritura de categorías queda en
+// manos del Administrador u Operador de Carga.
+$puede_categorias = $esAdmin || (int)$_SESSION['id_rol'] === 2;
+
+// Aplana el árbol (raíces + subcategorías) para el JS del formulario.
+$categorias_plano = [];
+foreach ($categorias as $raiz) {
+    $categorias_plano[] = $raiz;
+    foreach (($raiz['hijos'] ?? []) as $hija) {
+        $categorias_plano[] = $hija;
+    }
+}
 ?>
 <!-- Encabezado -->
 <div class="card-jv d-flex align-items-center gap-3 mb-3 flex-wrap" style="padding: 18px 24px; border-left: 4px solid var(--jv-orange);">
@@ -27,21 +40,149 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
         <h1 class="module-title">INVENTARIO</h1>
         <p class="module-subtitle">Control Maestro de Existencias</p>
     </div>
-    <?php if ($puede_categorias): ?>
-        <button type="button" class="btn btn-jv-primary module-action-btn ms-auto" onclick="abrirGestorCat()" data-tooltip="Registrar, modificar o desactivar categorías">
-            <i class="bi bi-folder2-open me-1"></i>CATEGOR&Iacute;AS
-        </button>
-    <?php endif; ?>
 </div>
 
-<!-- Mensajes flash (id/data-texto permiten al JS de categorías marcar el campo con error) -->
+<!-- Mensajes flash (el origen le indica al JS qué formulario reabrir) -->
 <?php if ($flash): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
+    <?php $flash_origen = (string)($flash['origen'] ?? ''); ?>
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>"<?php echo $flash_origen !== '' ? ' data-origen="' . htmlspecialchars($flash_origen) . '"' : ''; ?> role="status" aria-live="polite">
         <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?>"></i>
         <?php echo htmlspecialchars($flash['texto']); ?>
     </div>
 <?php endif; ?>
 
+<!-- Aviso de filtro por categoría activo (?cat=N) -->
+<?php if ($categoria_filtro): ?>
+<div class="alert-jv alert-jv-info mb-3" id="bannerFiltroCat" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <i class="bi bi-funnel-fill"></i>
+    <span class="small">
+        Mostrando la rama <strong class="text-uppercase"><?php echo htmlspecialchars($categoria_filtro['nombre']); ?></strong>
+        &middot; <?php echo (int)$total_registros; ?> producto(s)
+    </span>
+    <a class="btn btn-sm btn-jv-ghost ms-auto" href="<?php echo APP_URL_BASE; ?>index.php?url=productos">
+        <i class="bi bi-x-lg me-1"></i>VER TODO
+    </a>
+</div>
+<?php endif; ?>
+
+<!-- Layout: árbol de categorías (izquierda) + productos filtrados (derecha) -->
+<div class="row g-3 mb-3">
+    <!-- Panel del árbol de categorías (consulta para los tres roles) -->
+    <div class="col-lg-4">
+        <div class="card-jv cat-panel p-0 h-100">
+            <div class="cat-panel-head">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="cat-panel-icono"><i class="bi bi-diagram-3-fill"></i></span>
+                    <div>
+                        <h2 class="cat-panel-titulo">CATEGOR&Iacute;AS</h2>
+                        <small class="cat-panel-sub">Haz clic en una categor&iacute;a para filtrar</small>
+                    </div>
+                </div>
+                <?php if ($puede_categorias): ?>
+                    <button type="button" class="btn btn-jv-primary btn-sm" onclick="catAbrirForm('registrar', 0, 0)" data-tooltip="Nueva categor&iacute;a ra&iacute;z">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                <?php endif; ?>
+            </div>
+            <div class="cat-panel-buscar">
+                <i class="bi bi-search"></i>
+                <input type="text" id="buscarCat" placeholder="Buscar categor&iacute;a..." oninput="catFiltrar()" aria-label="Buscar categor&iacute;a">
+            </div>
+            <div class="cat-arbol-cont">
+                <?php if (!empty($categorias)): ?>
+                    <ul class="cat-arbol" id="arbolCategorias">
+                        <?php foreach ($categorias as $raiz): ?>
+                            <?php
+                            // Cada raíz se pinta con su rama: expansor, enlace de
+                            // filtrado, conteo con stock/total y (según rol) acciones.
+                            $raiz_id = (int)$raiz['id_categoria'];
+                            $raiz_inactiva = $raiz['status'] === 'Inactivo';
+                            $raiz_total = (int)($raiz['productos_total'] ?? 0);
+                            $raiz_con_stock = (int)($raiz['productos_con_stock'] ?? 0);
+                            $raiz_sel = $raiz_id === $id_categoria_filtro;
+                            ?>
+                            <li class="cat-nodo cat-raiz cat-abierta<?php echo $raiz_inactiva ? ' cat-inactiva' : ''; ?><?php echo $raiz_sel ? ' cat-seleccionada' : ''; ?>"
+                                data-id="<?php echo $raiz_id; ?>" data-status="<?php echo $raiz['status']; ?>"
+                                data-texto="<?php echo strtolower(htmlspecialchars($raiz['nombre'] . ' ' . ($raiz['codigo'] ?? ''))); ?>">
+                                <div class="cat-fila">
+                                    <button type="button" class="cat-expander" onclick="catAlternarRama(this)" aria-label="Expandir o contraer"><i class="bi bi-chevron-down"></i></button>
+                                    <a class="cat-enlace" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&cat=<?php echo $raiz_id; ?>" title="Filtrar por esta categor&iacute;a">
+                                        <i class="bi bi-folder2<?php echo $raiz_inactiva ? '' : '-open'; ?> cat-icono"></i>
+                                        <span class="cat-nombre"><?php echo htmlspecialchars($raiz['nombre']); ?></span>
+                                        <?php if (!empty($raiz['codigo'])): ?><span class="codigo-badge-cat cat-codigo"><?php echo htmlspecialchars($raiz['codigo']); ?></span><?php endif; ?>
+                                        <span class="cat-conteo" data-tooltip="<?php echo $raiz_con_stock; ?> con stock de <?php echo $raiz_total; ?> en la rama"><?php echo $raiz_total > 0 ? $raiz_con_stock . '/' . $raiz_total : '0'; ?></span>
+                                    </a>
+                                    <?php if ($raiz_inactiva): ?>
+                                        <span class="cat-chip cat-chip-<?php echo $raiz_total > 0 ? 'sinstock' : 'oculta'; ?>"><?php echo $raiz_total > 0 ? 'SIN STOCK' : 'OCULTA'; ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($puede_categorias): ?>
+                                        <div class="cat-acciones">
+                                            <?php if (!$raiz_inactiva): ?>
+                                                <button type="button" class="btn-action" onclick="catAbrirForm('registrar', 0, <?php echo $raiz_id; ?>)" data-tooltip="Agregar subcategor&iacute;a"><i class="bi bi-plus"></i></button>
+                                            <?php endif; ?>
+                                            <button type="button" class="btn-action" onclick="catAbrirForm('editar', <?php echo $raiz_id; ?>)" data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
+                                            <?php if ($raiz_total === 0): ?>
+                                                <button type="button" class="btn-action" onclick="catToggleStatus(<?php echo $raiz_id; ?>, <?php echo htmlspecialchars(json_encode($raiz['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $raiz['status']; ?>')" data-tooltip="<?php echo $raiz_inactiva ? 'Mostrar de nuevo' : 'Ocultar (sin productos)'; ?>">
+                                                    <i class="bi <?php echo $raiz_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>"></i>
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if (!empty($raiz['hijos'])): ?>
+                                    <ul class="cat-hijos">
+                                        <?php foreach ($raiz['hijos'] as $hija): ?>
+                                            <?php
+                                            // Subcategoría: igual que la raíz, sin expansor
+                                            // ni botón de agregar (el árbol llega a 2 niveles).
+                                            $hija_id = (int)$hija['id_categoria'];
+                                            $hija_inactiva = $hija['status'] === 'Inactivo';
+                                            $hija_total = (int)($hija['productos_total'] ?? 0);
+                                            $hija_con_stock = (int)($hija['productos_con_stock'] ?? 0);
+                                            $hija_sel = $hija_id === $id_categoria_filtro;
+                                            ?>
+                                            <li class="cat-nodo cat-hija<?php echo $hija_inactiva ? ' cat-inactiva' : ''; ?><?php echo $hija_sel ? ' cat-seleccionada' : ''; ?>"
+                                                data-id="<?php echo $hija_id; ?>" data-status="<?php echo $hija['status']; ?>"
+                                                data-texto="<?php echo strtolower(htmlspecialchars($hija['nombre'] . ' ' . ($hija['codigo'] ?? ''))); ?>">
+                                                <div class="cat-fila">
+                                                    <span class="cat-expander cat-expander-hueco"></span>
+                                                    <a class="cat-enlace" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&cat=<?php echo $hija_id; ?>" title="Filtrar por esta categor&iacute;a">
+                                                        <i class="bi bi-folder2 cat-icono"></i>
+                                                        <span class="cat-nombre"><?php echo htmlspecialchars($hija['nombre']); ?></span>
+                                                        <?php if (!empty($hija['codigo'])): ?><span class="codigo-badge-cat cat-codigo"><?php echo htmlspecialchars($hija['codigo']); ?></span><?php endif; ?>
+                                                        <span class="cat-conteo" data-tooltip="<?php echo $hija_con_stock; ?> con stock de <?php echo $hija_total; ?> en la rama"><?php echo $hija_total > 0 ? $hija_con_stock . '/' . $hija_total : '0'; ?></span>
+                                                    </a>
+                                                    <?php if ($hija_inactiva): ?>
+                                                        <span class="cat-chip cat-chip-<?php echo $hija_total > 0 ? 'sinstock' : 'oculta'; ?>"><?php echo $hija_total > 0 ? 'SIN STOCK' : 'OCULTA'; ?></span>
+                                                    <?php endif; ?>
+                                                    <?php if ($puede_categorias): ?>
+                                                        <div class="cat-acciones">
+                                                            <button type="button" class="btn-action" onclick="catAbrirForm('editar', <?php echo $hija_id; ?>)" data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
+                                                            <?php if ($hija_total === 0): ?>
+                                                                <button type="button" class="btn-action" onclick="catToggleStatus(<?php echo $hija_id; ?>, <?php echo htmlspecialchars(json_encode($hija['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $hija['status']; ?>')" data-tooltip="<?php echo $hija_inactiva ? 'Mostrar de nuevo' : 'Ocultar (sin productos)'; ?>">
+                                                                    <i class="bi <?php echo $hija_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>"></i>
+                                                                </button>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+                <div class="cat-arbol-vacio" id="catSinResultados"<?php echo empty($categorias) ? '' : ' style="display:none;"'; ?>>
+                    <i class="bi bi-inbox"></i>
+                    <span><?php echo empty($categorias) ? 'Todav&iacute;a no hay categor&iacute;as' : 'Sin coincidencias'; ?></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Columna de productos -->
+    <div class="col-lg-8">
 <!-- Tabla de productos -->
 <div class="card-jv card-jv-table p-0">
     <div class="buscador-wrapper px-3 py-2">
@@ -226,7 +367,7 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
             <nav>
                 <ul class="pagination pagination-sm m-0">
                     <li class="page-item <?php echo ($pagina_actual <= 1) ? 'disabled' : ''; ?>">
-                        <a class="page-link" style="background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pagina_actual - 1; ?>">Anterior</a>
+                        <a class="page-link" style="background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pagina_actual - 1; ?><?php echo $id_categoria_filtro > 0 ? '&cat=' . $id_categoria_filtro : ''; ?>">Anterior</a>
                     </li>
                     <?php
                     $inicio_p = max(1, $pagina_actual - 2);
@@ -234,11 +375,11 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                     for ($pageNumber = $inicio_p; $pageNumber <= $fin_p; $pageNumber++):
                     ?>
                         <li class="page-item <?php echo ($pageNumber == $pagina_actual) ? 'active' : ''; ?>">
-                            <a class="page-link" style="<?php echo ($pageNumber == $pagina_actual) ? 'background:var(--jv-orange); border-color:var(--jv-orange); color:#fff;' : 'background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);'; ?>" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pageNumber; ?>"><?php echo $pageNumber; ?></a>
+                            <a class="page-link" style="<?php echo ($pageNumber == $pagina_actual) ? 'background:var(--jv-orange); border-color:var(--jv-orange); color:#fff;' : 'background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);'; ?>" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pageNumber; ?><?php echo $id_categoria_filtro > 0 ? '&cat=' . $id_categoria_filtro : ''; ?>"><?php echo $pageNumber; ?></a>
                         </li>
                     <?php endfor; ?>
                     <li class="page-item <?php echo ($pagina_actual >= $total_paginas) ? 'disabled' : ''; ?>">
-                        <a class="page-link" style="background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pagina_actual + 1; ?>">Siguiente</a>
+                        <a class="page-link" style="background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pagina_actual + 1; ?><?php echo $id_categoria_filtro > 0 ? '&cat=' . $id_categoria_filtro : ''; ?>">Siguiente</a>
                     </li>
                 </ul>
             </nav>
@@ -246,120 +387,16 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
     <?php endif; ?>
 </div>
 
+    </div><!-- /columna de productos -->
+</div><!-- /layout árbol + productos -->
+
 <?php if ($puede_categorias): ?>
-<!-- ============================================================
-     GESTIÓN INTEGRADA DE CATEGORÍAS (pop-ups)
-     Listado + formulario, colocados FUERA de la tabla de productos.
-     ============================================================ -->
+<!-- Datos para el JS del formulario (raíces activas y datos de edición) -->
 <script>
-    window.JV_CATS = <?php echo json_encode(array_values($categorias_gestion), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    window.JV_CATS = <?php echo json_encode(array_values($categorias_plano), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 </script>
 
-<!-- POP-UP 1: Listado de categorías -->
-<div class="modal fade" id="modalCategorias" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content modal-content-jv">
-            <div class="jv-modal-header">
-                <div>
-                    <h5 class="font-brand"><i class="bi bi-folder2-open me-2"></i>CATEGOR&Iacute;AS</h5>
-                    <small>Organiza tu cat&aacute;logo para agrupar productos similares</small>
-                </div>
-                <button type="button" class="jv-modal-close" data-bs-dismiss="modal" aria-label="Cerrar">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <div class="modal-body p-3">
-                <div class="cat-toolbar mb-3">
-                    <div class="cat-search">
-                        <i class="bi bi-search"></i>
-                        <input type="text" class="input-jv" id="buscarCat" placeholder="Buscar por nombre o c&oacute;digo..." oninput="catFiltrar()" aria-label="Buscar categor&iacute;a">
-                    </div>
-                    <div class="cat-filter-group" role="group" aria-label="Filtrar por estado">
-                        <button type="button" class="btn-filter active" data-status="todos" onclick="catFiltrarEstado(this)">Todas</button>
-                        <button type="button" class="btn-filter" data-status="Activo" onclick="catFiltrarEstado(this)">Activas</button>
-                        <button type="button" class="btn-filter" data-status="Inactivo" onclick="catFiltrarEstado(this)">Inactivas</button>
-                    </div>
-                    <button type="button" class="btn btn-jv-primary module-action-btn" onclick="nuevaCat()">
-                        <i class="bi bi-plus-lg me-1"></i>NUEVA CATEGOR&Iacute;A
-                    </button>
-                </div>
-                <?php if (!empty($categorias_gestion)): ?>
-                    <div class="small fw-bold text-muted mb-2 cat-contador" id="catContador">
-                        <?php echo count($categorias_gestion); ?> categor&iacute;a(s) &middot; Estado: Todas
-                    </div>
-                <?php endif; ?>
-                <?php if (!empty($categorias_gestion)): ?>
-                    <div class="cat-tabla-cont">
-                        <table class="table-jv mb-0">
-                            <thead>
-                                <tr>
-                                    <th style="width:28%;">Nombre</th>
-                                    <th style="width:15%;">C&oacute;digo</th>
-                                    <th class="text-center" style="width:9%;">ABC</th>
-                                    <th class="text-center" style="width:19%;">Manejo</th>
-                                    <th class="text-center" style="width:12%;">Estado</th>
-                                    <th class="text-center" style="width:17%;">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaCategoriasPop">
-                                <?php foreach ($categorias_gestion as $gestion_cat): ?>
-                                    <?php $cat_json = htmlspecialchars(json_encode($gestion_cat, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>
-                                    <tr class="cat-fila" data-status="<?php echo $gestion_cat['status']; ?>" data-texto="<?php echo strtolower(htmlspecialchars($gestion_cat['nombre'] . ' ' . ($gestion_cat['codigo'] ?? ''))); ?>">
-                                        <td>
-                                            <i class="bi bi-folder2-open me-2 cat-icono-archivo"></i>
-                                            <span class="fw-bold text-uppercase" data-tooltip="<?php echo htmlspecialchars($gestion_cat['nombre']); ?>"><?php echo htmlspecialchars($gestion_cat['nombre']); ?></span>
-                                        </td>
-                                        <td><span class="codigo-badge-cat"><?php echo htmlspecialchars($gestion_cat['codigo'] ?? '&mdash;'); ?></span></td>
-                                        <td class="text-center">
-                                            <?php if (!empty($gestion_cat['clasificacion_abc'])): ?>
-                                                <span class="abc-badge abc-<?php echo strtolower($gestion_cat['clasificacion_abc']); ?>" data-tooltip="<?php echo 'A' === $gestion_cat['clasificacion_abc'] ? 'Alto valor / rotaci&oacute;n' : ('B' === $gestion_cat['clasificacion_abc'] ? 'Valor medio' : 'Valor bajo'); ?>"><?php echo $gestion_cat['clasificacion_abc']; ?></span>
-                                            <?php else: ?>
-                                                <span class="text-muted">&mdash;</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="manejo-badge manejo-<?php echo htmlspecialchars($gestion_cat['tipo_manejo'] ?? 'normal'); ?>"><?php echo htmlspecialchars(ucfirst($gestion_cat['tipo_manejo'] ?? 'Normal')); ?></span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge-jv <?php echo ($gestion_cat['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>"><?php echo strtoupper($gestion_cat['status']); ?></span>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="d-flex justify-content-center gap-1">
-                                                <button type="button" class="btn-action" onclick='editarCat(<?php echo $cat_json; ?>)' data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
-                                                <button type="button" class="btn-action" onclick="catToggleStatus(<?php echo (int)$gestion_cat['id_categoria']; ?>, '<?php echo htmlspecialchars(addslashes($gestion_cat['nombre'])); ?>', '<?php echo $gestion_cat['status']; ?>')" data-tooltip="<?php echo $gestion_cat['status'] == 'Activo' ? 'Desactivar' : 'Activar'; ?>">
-                                                    <i class="bi <?php echo $gestion_cat['status'] == 'Activo' ? 'bi-eye-slash-fill' : 'bi-eye-fill'; ?>"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                                <tr class="cat-fila-vacia" id="catSinResultados" style="display:none;">
-                                    <td colspan="6">
-                                        <div class="estado-vacio">
-                                            <i class="bi bi-search"></i>
-                                            <span>Sin resultados</span>
-                                            <p class="mt-2 mb-0 cat-estado-guiador">Prueba con otro nombre o cambia el filtro de estado.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php else: ?>
-                    <div class="cat-sin-datos">
-                        <div class="cat-sin-datos-icono"><i class="bi bi-folder2-open"></i></div>
-                        <div class="cat-sin-datos-titulo">Todav&iacute;a no hay categor&iacute;as</div>
-                        <div class="cat-sin-datos-sub">Crea la primera para agrupar tus productos y mantener el inventario ordenado. Te tomar&aacute; menos de un minuto.</div>
-                        <button type="button" class="btn btn-jv-primary module-action-btn" onclick="nuevaCat()">
-                            <i class="bi bi-plus-lg me-1"></i>NUEVA CATEGOR&Iacute;A
-                        </button>
-                    </div>
-                <?php endif; ?>
-            </div>
-    </div>
-</div>
-</div>
-
+<!-- Formulario de categoría (crear / editar) -->
 <!-- POP-UP 2: Formulario de categoría (crear / editar) -->
 <div class="modal fade" id="modalCat" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -377,7 +414,6 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_categoria" id="cat_accion" value="registrar">
                 <input type="hidden" name="id_categoria" id="cat_id_edit">
-                <input type="hidden" name="status" id="cat_status" value="Activo">
                 <div class="modal-body p-4">
                     <div class="jv-modal-section" style="border-left:4px solid #2563EB;">
                         <div class="jv-modal-section-head">
@@ -388,9 +424,16 @@ $puede_categorias = !empty($categorias_gestion) || $esAdmin || (int)$_SESSION['i
                             </div>
                         </div>
                         <div class="mb-3">
+                            <label for="cat_padre" class="jv-modal-label">CATEGOR&Iacute;A PADRE</label>
+                            <select name="id_padre" id="cat_padre" class="input-jv">
+                                <option value="0">&mdash; Categor&iacute;a ra&iacute;z (nivel 1)</option>
+                            </select>
+                            <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Elige una ra&iacute;z activa para crear una subcategor&iacute;a. M&aacute;ximo 2 niveles.</div>
+                        </div>
+                        <div class="mb-3">
                             <label for="cat_nombre" class="jv-modal-label">NOMBRE DE LA CATEGOR&Iacute;A <span class="text-danger">*</span></label>
                             <input type="text" name="nombre" id="cat_nombre" class="input-jv" required maxlength="100" placeholder="Ej: Aceites y Lubricantes" oninput="this.value = this.value.toUpperCase()">
-                            <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Se guarda en MAY&Uacute;SCULAS autom&aacute;ticamente. No puede repetirse.</div>
+                            <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Se guarda en MAY&Uacute;SCULAS autom&aacute;ticamente. No puede repetirse en su nivel.</div>
                         </div>
                         <div class="mb-0">
                             <label for="cat_desc" class="jv-modal-label">DESCRIPCI&Oacute;N <span class="text-secondary fw-normal">(OPCIONAL)</span></label>

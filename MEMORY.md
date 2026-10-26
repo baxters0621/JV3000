@@ -15,6 +15,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Insignias de roles en Colaboradores (admin violeta, carga verde, ventas roja); el alta valida en cliente y servidor con botón condicionado y pie visible.
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
 - Historial muestra compras/ventas paginadas y filtrables, con alcance por rol y auditoría separada; Estadísticas abre por defecto los últimos 90 días para evitar un panel vacío cuando hay operaciones recientes, compara con el período previo y expone fallos de actualización con reintento. Ambos usan compras verdes y ventas rojas.
+- Categorías de Inventario: una categoría con productos queda Inactiva solo cuando todos están en cero; la raíz considera sus subcategorías, cuentan también productos Inactivos y el stock recibido la reactiva automáticamente. Categorías vacías conservan su estado manual y las agotadas siguen visibles como SIN STOCK.
 
 ## Decisiones (y por qué)
 

@@ -80,8 +80,8 @@ $es_op_ventas = $id_rol === 3;
             <div class="nav-group-items">
                 <div class="nav-item <?php echo $mvc_activa('productos') ? 'active' : ''; ?>">
                     <a href="<?php echo $prefijo; ?>index.php?url=productos" class="nav-link">
-                        <i class="bi bi-boxes"></i>
-                        <span>Productos · Categorías</span>
+                        <i class="bi bi-diagram-3"></i>
+                        <span>Categorías</span>
                     </a>
                 </div>
             </div>

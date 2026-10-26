@@ -972,3 +972,12 @@ select.input-jv { appearance: auto; cursor: pointer; }
     border-color: #fff;
     transform: scale(1.1);
 }
+
+/* Mensaje de error bajo un campo de formulario. */
+.jv-error-msg {
+    color: #DC2626;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+    margin-top: 4px;
+}

@@ -342,131 +342,115 @@
             iniciarDesdeURL();
         });
 
+                // ==========================================
+        // ÁRBOL DE CATEGORÍAS (panel izquierdo) + FORMULARIO
+        // Consulta para todos los roles; escritura según rol.
         // ==========================================
-        // GESTIÓN INTEGRADA DE CATEGORÍAS (pop-ups)
-        // Registrar / modificar / desactivar categorías
-        // sin salir de Inventario.
-        // ==========================================
 
-        let catEstadoFiltro = 'todos';
-        let catDesdeLista = false;
-
-        // Abre el pop-up del gestor reiniciando búsqueda y filtro.
-        function abrirGestorCat() {
-            const buscadorCategorias = document.getElementById('buscarCat');
-            if (buscadorCategorias) buscadorCategorias.value = '';
-            catEstadoFiltro = 'todos';
-            document.querySelectorAll('.btn-filter').forEach(function(b) { b.classList.remove('active'); });
-            const btnTodasCategorias = document.querySelector('.btn-filter[data-status="todos"]');
-            if (btnTodasCategorias) btnTodasCategorias.classList.add('active');
-            catFiltrar();
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias')).show();
+        // Expande o contrae la rama de una categoría raíz.
+        function catAlternarRama(boton) {
+            const nodo = boton.closest('.cat-nodo');
+            if (nodo) nodo.classList.toggle('cat-abierta');
         }
 
-        // Marca el botón de filtro por estado activo y vuelve a filtrar.
-        function catFiltrarEstado(btn) {
-            document.querySelectorAll('.btn-filter').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            catEstadoFiltro = btn.dataset.status;
-            catFiltrar();
-        }
-
-        // Actualiza el contador de resultados y muestra la fila de "sin
-        // resultados" cuando la búsqueda/filtro no encuentra nada.
-        function catContar() {
-            const filasCategorias = document.querySelectorAll('#tablaCategoriasPop tr.cat-fila');
-            let visibles = 0;
-            filasCategorias.forEach(function(fila) {
-                if (fila.style.display !== 'none') visibles++;
-            });
-            const totalCategorias = filasCategorias.length;
-            const botonEstado = document.querySelector('.btn-filter.active');
-            const estadoActivo = botonEstado ? botonEstado.textContent : 'Todas';
-            const contador = document.getElementById('catContador');
-            if (contador) {
-                contador.innerHTML = totalCategorias === 0
-                    ? 'No hay categor&iacute;as registradas.'
-                    : 'Mostrando <strong>' + visibles + '</strong> de <strong>' + totalCategorias + '</strong> categor&iacute;as &middot; Estado: ' + estadoActivo;
-            }
-            const filaSinResultados = document.getElementById('catSinResultados');
-            if (filaSinResultados) {
-                filaSinResultados.style.display = (totalCategorias > 0 && visibles === 0) ? '' : 'none';
-            }
-        }
-
-        // Filtra las filas por texto (nombre/código) y estado seleccionado.
+        // Busca por nombre/código: oculta lo que no coincide, mantiene visible
+        // la raíz cuando algún hijo coincide, expande las ramas con resultados
+        // y muestra el aviso de "sin resultados" si no aparece nada.
         function catFiltrar() {
-            const textoBusqueda = ((document.getElementById('buscarCat') || {}).value || '').toLowerCase().trim();
-            document.querySelectorAll('#tablaCategoriasPop .cat-fila').forEach(function(fila) {
-                const visible = (catEstadoFiltro === 'todos' || fila.dataset.status === catEstadoFiltro)
-                    && (!textoBusqueda || (fila.dataset.texto || '').indexOf(textoBusqueda) !== -1);
-                fila.style.display = visible ? '' : 'none';
+            const texto = ((document.getElementById('buscarCat') || {}).value || '').toLowerCase().trim();
+            let visibles = 0;
+            document.querySelectorAll('#arbolCategorias > .cat-nodo').forEach(function(raiz) {
+                const coincideRaiz = !texto || (raiz.dataset.texto || '').indexOf(texto) !== -1;
+                let coincideHijos = false;
+                raiz.querySelectorAll('.cat-hijos > .cat-nodo').forEach(function(hijo) {
+                    const coincide = !texto || (hijo.dataset.texto || '').indexOf(texto) !== -1;
+                    hijo.style.display = coincide ? '' : 'none';
+                    if (coincide) { coincideHijos = true; visibles++; }
+                });
+                const visible = coincideRaiz || coincideHijos;
+                raiz.style.display = visible ? '' : 'none';
+                if (texto && visible) raiz.classList.add('cat-abierta');
+                if (coincideRaiz) visibles++;
             });
-            catContar();
+            const vacio = document.getElementById('catSinResultados');
+            if (vacio) vacio.style.display = visibles === 0 ? '' : 'none';
         }
 
-        // Prepara y abre el formulario de categoría (null = modo registro).
-        function catAbrirForm(categoriaData) {
-            const esEdicion = !!categoriaData;
-            document.getElementById('cat_accion').value = esEdicion ? 'editar' : 'registrar';
-            document.getElementById('cat_id_edit').value = esEdicion ? categoriaData.id_categoria : '';
-            document.getElementById('cat_status').value = esEdicion ? (categoriaData.status || 'Activo') : 'Activo';
-            document.getElementById('modalTitleCat').innerHTML = esEdicion ? '<i class="bi bi-folder-plus-fill me-2"></i>EDITAR CATEGOR\u00cdA' : '<i class="bi bi-folder-plus-fill me-2"></i>NUEVA CATEGOR\u00cdA';
-            document.getElementById('cat_nombre').value = esEdicion ? categoriaData.nombre : '';
-            document.getElementById('cat_desc').value = esEdicion ? (categoriaData.descripcion || '') : '';
-            document.getElementById('cat_abc').value = esEdicion ? (categoriaData.clasificacion_abc || '') : '';
-            document.getElementById('cat_manejo').value = esEdicion ? (categoriaData.tipo_manejo || 'normal') : 'normal';
+        // Llena el selector de categoría padre con las raíces activas.
+        // En edición se mantiene elegible el padre actual aunque esté inactivo.
+        function llenarPadresCat(datos) {
+            const selectPadre = document.getElementById('cat_padre');
+            const propia = datos ? Number(datos.id_categoria) : 0;
+            const padreActual = datos ? Number(datos.parent_id || 0) : 0;
+            let opciones = '<option value="0">\u2014 Categor\u00eda ra\u00edz (nivel 1)</option>';
+            (window.JV_CATS || []).forEach(function(cat) {
+                if (Number(cat.parent_id || 0) > 0) return;           // solo raíces
+                if (Number(cat.id_categoria) === propia) return;      // la propia no es su padre
+                const esActual = Number(cat.id_categoria) === padreActual;
+                if (cat.status !== 'Activo' && !esActual) return;     // el padre debe estar activo
+                opciones += '<option value="' + Number(cat.id_categoria) + '">' + escapeHtml(cat.nombre) + (esActual ? ' (ACTUAL)' : '') + '</option>';
+            });
+            selectPadre.innerHTML = opciones;
+            selectPadre.value = String(padreActual > 0 ? padreActual : 0);
+        }
 
+        // Abre el formulario de categoría:
+        //   catAbrirForm('registrar', 0, idRaiz)  → nueva (sub)categoría
+        //   catAbrirForm('editar', idCategoria)   → edición rellenada desde JV_CATS
+        function catAbrirForm(modo, idCategoria, idPadre) {
+            const esEdicion = modo === 'editar';
+            let datos = null;
+            if (esEdicion) {
+                datos = (window.JV_CATS || []).find(function(c) { return Number(c.id_categoria) === Number(idCategoria); }) || null;
+                if (!datos) return;
+            }
+            document.getElementById('cat_accion').value = esEdicion ? 'editar' : 'registrar';
+            document.getElementById('cat_id_edit').value = esEdicion ? datos.id_categoria : '';
+            document.getElementById('cat_nombre').value = esEdicion ? datos.nombre : '';
+            document.getElementById('cat_desc').value = esEdicion ? (datos.descripcion || '') : '';
+            document.getElementById('cat_abc').value = esEdicion ? (datos.clasificacion_abc || '') : '';
+            document.getElementById('cat_manejo').value = esEdicion ? (datos.tipo_manejo || 'normal') : 'normal';
+            llenarPadresCat(datos);
+            if (!esEdicion && Number(idPadre || 0) > 0) document.getElementById('cat_padre').value = String(Number(idPadre));
+            document.getElementById('modalTitleCat').innerHTML = esEdicion
+                ? '<i class="bi bi-folder-plus-fill me-2"></i>EDITAR CATEGOR\u00cdA'
+                : '<i class="bi bi-folder-plus-fill me-2"></i>NUEVA CATEGOR\u00cdA';
+            limpiarErrores();
             const btnGuardarCat = document.getElementById('btn-cat-guardar');
             btnGuardarCat.disabled = false;
             btnGuardarCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR CATEGOR\u00cdA';
-
-            catDesdeLista = true;
-            const modalCategoriasEl = document.getElementById('modalCategorias');
-            const modalCategorias = bootstrap.Modal.getOrCreateInstance(modalCategoriasEl);
-            const modalCat = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat'));
-
-            // Verificar si modalCategorias está visible (tiene clase 'show')
-            const estaVisible = modalCategoriasEl.classList.contains('show');
-
-            if (estaVisible) {
-                // Si está visible, usar evento hidden.bs.modal para abrir el formulario
-                // después de que se complete la animación de cierre.
-                const onHidden = function() {
-                    modalCategoriasEl.removeEventListener('hidden.bs.modal', onHidden);
-                    modalCat.show();
-                    document.getElementById('cat_nombre').focus();
-                };
-                modalCategoriasEl.addEventListener('hidden.bs.modal', onHidden);
-                modalCategorias.hide();
-            } else {
-                // Si ya está oculto, mostrar el formulario directamente
-                modalCat.show();
-                document.getElementById('cat_nombre').focus();
-            }
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat')).show();
         }
 
-        // Modo registro (botón NUEVA del listado).
-        function nuevaCat() {
-            catAbrirForm(null);
+        // Detecta si el nombre ya existe entre hermanas del nivel elegido
+        // (mismo padre). Devuelve el mensaje de error o '' si está libre.
+        function catErrorNombreDuplicado() {
+            const nombre = document.getElementById('cat_nombre').value.trim().toLowerCase();
+            if (!nombre) return '';
+            const nivel = Number(document.getElementById('cat_padre').value || 0);
+            const propia = Number(document.getElementById('cat_id_edit').value || 0);
+            const duplicada = (window.JV_CATS || []).find(function(c) {
+                return Number(c.id_categoria) !== propia
+                    && Number(c.parent_id || 0) === nivel
+                    && String(c.nombre || '').trim().toLowerCase() === nombre;
+            });
+            return duplicada ? 'YA EXISTE UNA CATEGOR\u00cdA CON ESE NOMBRE EN ESTE NIVEL.' : '';
         }
 
-        // Modo edición: recibe la categoría como objeto (desde onclick con JSON).
-        function editarCat(categoriaData) {
-            catAbrirForm(categoriaData);
-        }
-
-        // Confirma activar/desactivar una categoría y envía la acción al servidor.
+        // Confirma ocultar/mostrar una categoría SIN productos (el estado de las
+        // categorías con productos lo maneja el stock de forma automática).
         function catToggleStatus(idCategoria, nombre, statusActual) {
             const activa = statusActual === 'Activo';
             Swal.fire({
-                title: activa ? '\u00bfDESACTIVAR CATEGOR\u00cdA?' : '\u00bfREACTIVAR CATEGOR\u00cdA?',
-                text: activa ? 'Se desactivar\u00e1 \'' + nombre + '\'' : 'Se reactivar\u00e1 \'' + nombre + '\'',
+                title: activa ? '\u00bfOCULTAR CATEGOR\u00cdA?' : '\u00bfMOSTRAR DE NUEVO?',
+                html: activa
+                    ? '<strong>' + escapeHtml(nombre) + '</strong> no tiene productos: quedar\u00e1 oculta del \u00e1rbol.'
+                    : '<strong>' + escapeHtml(nombre) + '</strong> volver\u00e1 a verse en el \u00e1rbol.',
                 icon: activa ? 'warning' : 'info',
                 showCancelButton: true,
                 confirmButtonColor: activa ? '#DC2626' : '#16A34A',
                 cancelButtonColor: '#CED4DA',
-                confirmButtonText: activa ? 'S\u00cd, DESACTIVAR' : 'S\u00cd, ACTIVAR',
+                confirmButtonText: activa ? 'S\u00cd, OCULTAR' : 'S\u00cd, MOSTRAR',
                 cancelButtonText: 'CANCELAR',
                 background: '#fff',
                 color: '#212529'
@@ -477,7 +461,7 @@
             });
         }
 
-        // Inicialización exclusiva del gestor de categorías.
+        // Inicialización: validaciones del formulario y flash con origen.
         document.addEventListener('DOMContentLoaded', function() {
             const formCategorias = document.getElementById('formCat');
 
@@ -486,10 +470,17 @@
                 formCategorias.addEventListener('submit', function(e) {
                     limpiarErrores();
                     const nombreCategoria = document.getElementById('cat_nombre');
+                    let primerError = null;
                     if (!nombreCategoria.value.trim()) {
                         marcarError(nombreCategoria, 'NOMBRE REQUERIDO');
+                        primerError = nombreCategoria;
+                    } else {
+                        const duplicado = catErrorNombreDuplicado();
+                        if (duplicado) { marcarError(nombreCategoria, duplicado); primerError = nombreCategoria; }
+                    }
+                    if (primerError) {
                         e.preventDefault();
-                        nombreCategoria.focus();
+                        primerError.focus();
                         return;
                     }
                     const btnGuardarCat = document.getElementById('btn-cat-guardar');
@@ -497,33 +488,47 @@
                     btnGuardarCat.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
                 });
 
-                // Limpia marcas de error al escribir o cambiar cualquier campo
+                // Validación en vivo del nombre: marca el duplicado mientras se
+                // escribe y limpia el error al corregirlo.
+                const nombreCat = document.getElementById('cat_nombre');
+                nombreCat.addEventListener('input', function() {
+                    const duplicado = catErrorNombreDuplicado();
+                    if (duplicado) {
+                        marcarError(nombreCat, duplicado);
+                    } else {
+                        nombreCat.classList.remove('input-error');
+                        const aviso = document.getElementById('cat_nombre_err');
+                        if (aviso) aviso.remove();
+                    }
+                });
+
+                // Limpia marcas de error al escribir o cambiar cualquier otro campo
                 formCategorias.querySelectorAll('input, select, textarea').forEach(function(el) {
+                    if (el === nombreCat) return;
                     el.addEventListener('input', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id + '_err'); if (e) e.remove(); });
                     el.addEventListener('change', function() { this.classList.remove('input-error'); var e = document.getElementById(this.id + '_err'); if (e) e.remove(); });
                 });
-
-                // Si el usuario cierra el formulario sin guardar, vuelve al listado
-                document.getElementById('modalCat').addEventListener('hidden.bs.modal', function() {
-                    if (catDesdeLista) {
-                        catDesdeLista = false;
-                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCategorias')).show();
-                    }
-                });
             }
 
-            // Si el servidor rechazó el guardado (nombre duplicado), reabre el
-            // formulario marcando el campo exacto que lo causó.
-            const flashCat = document.getElementById('flashMsg');
-            if (flashCat && flashCat.classList.contains('alert-jv-danger')) {
-                const textoFlashCat = (flashCat.dataset.texto || '').toUpperCase();
-                if (textoFlashCat.indexOf('NOMBRE') !== -1 || textoFlashCat.indexOf('CATEGOR\u00cdA') !== -1) {
-                    const campoNombre = document.getElementById('cat_nombre');
-                    if (campoNombre) {
-                        marcarError(campoNombre, textoFlashCat);
-                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat')).show();
-                    }
-                }
+            // Si el servidor rechazó el guardado, reabre el formulario marcando
+            // el campo exacto que lo causó (origen fijo del controlador).
+            const flash = document.getElementById('flashMsg');
+            if (!flash || !flash.classList.contains('alert-jv-danger')) return;
+            const textoError = flash.textContent.trim();
+            const mensaje = (flash.dataset.texto || '').toUpperCase();
+            const origen = flash.dataset.origen || '';
+            if (origen === 'cat_crear') {
+                catAbrirForm('registrar', 0, 0);
+                marcarError(document.getElementById('cat_nombre'), textoError);
+                document.getElementById('cat_nombre').focus();
+            } else if (origen.indexOf('cat_editar:') === 0) {
+                catAbrirForm('editar', Number(origen.split(':')[1]) || 0);
+                marcarError(
+                    mensaje.indexOf('PADRE') !== -1 ? document.getElementById('cat_padre') : document.getElementById('cat_nombre'),
+                    textoError
+                );
+            } else if (origen.indexOf('prod_editar:') === 0) {
+                editarProducto(Number(origen.split(':')[1]) || 0);
             }
         });
 

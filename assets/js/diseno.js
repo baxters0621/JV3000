@@ -32,6 +32,54 @@ function escapeHtml(value) {
 }
 
 // ==========================================
+// ERRORES DE FORMULARIO — marcar y limpiar campos
+// ==========================================
+// Contrato usado por productos, compras y salidas: marcarError colorea el
+// campo (clase .input-error, ya definida en el CSS de cada módulo) y coloca
+// el mensaje justo debajo con id "<id>_err"; al teclear, cada módulo retira
+// la clase y borra ese mensaje por su id. limpiarErrores deja el formulario
+// limpio. Vivían sin definir (bug latente: "Guardar Compra" y "Guardar
+// Cambios" lanzaban ReferenceError); desde aquí son globales en todo el panel.
+/**
+ * Marca un campo con error: borde rojo y mensaje bajo el campo.
+ *
+ * @param {HTMLElement} input   Campo a marcar (si no existe, no hace nada).
+ * @param {string}      [mensaje] Texto del aviso bajo el campo (opcional).
+ * @returns {void}
+ */
+function marcarError(input, mensaje) {
+    if (!input) return;
+    input.classList.add('input-error');
+    input.setAttribute('aria-invalid', 'true');
+    if (mensaje) {
+        // El aviso vive justo después del campo y comparte id "_err"
+        // para que el listener de tecleo pueda retirarlo.
+        var aviso = document.getElementById((input.id || '') + '_err');
+        if (!aviso || !aviso.classList.contains('jv-error-msg')) {
+            if (aviso) aviso.remove();
+            aviso = document.createElement('div');
+            aviso.className = 'jv-error-msg';
+            aviso.id = (input.id || '') + '_err';
+            input.insertAdjacentElement('afterend', aviso);
+        }
+        aviso.textContent = mensaje;
+    }
+}
+
+/**
+ * Limpia todas las marcas de error de la página (clases y mensajes).
+ *
+ * @returns {void}
+ */
+function limpiarErrores() {
+    document.querySelectorAll('.input-error').forEach(function(campo) {
+        campo.classList.remove('input-error');
+        campo.removeAttribute('aria-invalid');
+    });
+    document.querySelectorAll('.jv-error-msg').forEach(function(aviso) { aviso.remove(); });
+}
+
+// ==========================================
 // MENSAJES FLASH — se cierran solos tras su cuenta atrás
 // ==========================================
 // El CSS ya dibuja la barra de tiempo (4 s) y la animación de salida

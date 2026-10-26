@@ -112,7 +112,7 @@ El menú lateral sigue las fases reales de trabajo. Este es el procedimiento est
 
 ### Fase 2 — Ciclo diario de abastecimiento (Operador de Carga)
 4. **Compras** → en el módulo de Compras viven también las **Solicitudes de Reposición** que nacen desde Ventas (columna superior "Solicitudes Pendientes", con ATENDER/CANCELAR) y la **Recepción de Mercancía** (tarjetas "Compras Pendientes de Recepción" con RECIBIR y "Últimas Recepciones"). Registrar la compra al proveedor deja la solicitud Atendida; recibir la mercancía crea lotes, sube el stock y genera el movimiento Entrada. Toda fecha de vencimiento es obligatoria.
-5. **Inventario** → verificar el resultado
+5. **Inventario** → verificar el resultado. Las categorías y subcategorías se inactivan cuando todos sus productos están sin existencias; una categoría raíz considera también sus subcategorías. La llegada de stock reactiva automáticamente las categorías afectadas. La categoría sigue visible en el árbol con la indicación **SIN STOCK**, y sus conteos incluyen productos activos e inactivos.
 
 ### Fase 3 — Ventas (Operador de Ventas)
 6. **Ventas / Salidas** → validar y confirmar: descuenta por FEFO, genera NDE y movimiento Salida
