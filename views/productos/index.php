@@ -79,18 +79,20 @@ foreach ($categorias as $raiz) {
                 <div class="d-flex align-items-center gap-2">
                     <span class="cat-panel-icono"><i class="bi bi-diagram-3-fill"></i></span>
                     <div>
-                        <h2 class="cat-panel-titulo" id="tituloModalCategorias">CATEGOR&Iacute;AS</h2>
-                        <small class="cat-panel-sub">Busca, filtra y administra el cat&aacute;logo</small>
+                        <h2 class="cat-panel-titulo" id="tituloModalCategorias">Categor&iacute;as</h2>
+                        <small class="cat-panel-sub">Organiza tus productos y consulta su disponibilidad</small>
                     </div>
                 </div>
-                <?php if ($puede_categorias): ?>
-                    <button type="button" class="btn btn-jv-primary btn-sm" onclick="catAbrirForm('registrar', 0, 0)" data-tooltip="Nueva categor&iacute;a ra&iacute;z">
-                        <i class="bi bi-plus-lg"></i>
+                <div class="cat-panel-tools">
+                    <?php if ($puede_categorias): ?>
+                        <button type="button" class="btn btn-jv-primary cat-btn-nueva" onclick="catAbrirForm('registrar', 0, 0)">
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i><span>Nueva categor&iacute;a</span>
+                        </button>
+                    <?php endif; ?>
+                    <button type="button" class="cat-cerrar" data-bs-dismiss="modal" aria-label="Cerrar categor&iacute;as">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
                     </button>
-                <?php endif; ?>
-                <button type="button" class="jv-modal-close" data-bs-dismiss="modal" aria-label="Cerrar">
-                    <i class="bi bi-x-lg"></i>
-                </button>
+                </div>
             </div>
             <div class="cat-panel-buscar">
                 <i class="bi bi-search"></i>

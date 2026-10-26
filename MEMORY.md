@@ -17,6 +17,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Historial muestra compras/ventas paginadas y filtrables, con alcance por rol y auditoría separada; Estadísticas abre por defecto los últimos 90 días para evitar un panel vacío cuando hay operaciones recientes, compara con el período previo y expone fallos de actualización con reintento. Ambos usan compras verdes y ventas rojas.
 - Categorías de Inventario: una categoría con productos queda Inactiva solo cuando todos están en cero; la raíz considera sus subcategorías, cuentan también productos Inactivos y el stock recibido la reactiva automáticamente. Categorías vacías conservan su estado manual y las agotadas siguen visibles como SIN STOCK.
 - Interfaz de Categorías en Inventario: el listado de productos ocupa todo el ancho; el botón superior abre un modal centrado para buscar y filtrar, y desde allí crear/editar. Al cerrar el formulario de categoría se regresa al gestor.
+- El gestor de Categorías usa filas azul/teal para distinguir raíces y subcategorías, botones de acción visibles y tipografía ampliada. «Nueva categoría» va agrupada con cerrar en la esquina superior derecha del encabezado.
 
 ## Decisiones (y por qué)
 

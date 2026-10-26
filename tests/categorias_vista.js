@@ -31,11 +31,15 @@ assert.match(jsProductos, /marcarError\(/, 'productos.js debe usar marcarError.'
 assert.match(vista, /onclick="catAbrirGestor\(\)"/, 'Debe existir el botón superior para abrir Categorías.');
 assert.match(vista, /id="modalCategorias"/, 'El gestor de categorías debe mostrarse en un modal.');
 assert.match(vista, /modal-dialog[^"]*cat-manager-dialog/, 'El gestor debe abrir centrado con ancho dedicado.');
+assert.match(vista, /class="btn btn-jv-primary cat-btn-nueva"[\s\S]*?Nueva categor&iacute;a/, 'El botón de alta debe tener texto y estar en las herramientas del encabezado.');
 assert.match(vista, /class="card-jv card-jv-table p-0"/, 'El listado de productos debe conservar su contenedor completo.');
 assert.ok(!/col-lg-4|col-lg-8/.test(vista), 'La vista no debe repartir el ancho entre el árbol y los productos.');
 assert.match(jsProductos, /function catAbrirGestor\(/, 'productos.js debe definir la apertura del gestor.');
 assert.match(jsProductos, /catVolverAlGestor/, 'Cerrar el formulario debe devolver al gestor.');
 assert.match(cssProductos, /\.cat-manager-dialog/, 'El CSS debe ajustar el modal de categorías.');
+assert.match(cssProductos, /cat-panel-titulo\s*\{[^}]*font-size:\s*1\.35rem/s, 'El título del gestor debe tener un tamaño más legible.');
+assert.match(cssProductos, /cat-hija > \.cat-fila\s*\{[^}]*--cat-teal/s, 'Las subcategorías deben diferenciarse con el color turquesa.');
+assert.match(cssProductos, /prefers-reduced-motion:\s*reduce/, 'El modal debe respetar la preferencia de movimiento reducido.');
 assert.match(vista, /id="arbolCategorias"/, 'La vista debe renderizar el árbol #arbolCategorias.');
 assert.match(vista, /class="cat-panel/, 'La vista debe usar el panel del árbol.');
 assert.match(cssProductos, /\.cat-panel \{/, 'El CSS debe estilar el panel del árbol.');
