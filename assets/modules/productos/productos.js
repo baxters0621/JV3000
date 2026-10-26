@@ -343,15 +343,9 @@
         });
 
                 // ==========================================
-        // ÁRBOL DE CATEGORÍAS (panel izquierdo) + FORMULARIO
-        // Consulta para todos los roles; escritura según rol.
-        // ==========================================
-
-        // Expande o contrae la rama de una categoría raíz.
-        function catAlternarRama(boton) {
-            const nodo = boton.closest('.cat-nodo');
-            if (nodo) nodo.classList.toggle('cat-abierta');
-        }
+                // GESTOR DE CATEGORÍAS + FORMULARIO
+                // Consulta para todos los roles; escritura según rol.
+                // ==========================================
 
         var catVolverAlGestor = false;
 
@@ -377,7 +371,6 @@
                 });
                 const visible = coincideRaiz || coincideHijos;
                 raiz.style.display = visible ? '' : 'none';
-                if (texto && visible) raiz.classList.add('cat-abierta');
                 if (coincideRaiz) visibles++;
             });
             const vacio = document.getElementById('catSinResultados');

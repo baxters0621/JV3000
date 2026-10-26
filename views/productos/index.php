@@ -80,7 +80,7 @@ foreach ($categorias as $raiz) {
                     <span class="cat-panel-icono"><i class="bi bi-diagram-3-fill"></i></span>
                     <div>
                         <h2 class="cat-panel-titulo" id="tituloModalCategorias">Categor&iacute;as</h2>
-                        <small class="cat-panel-sub">Organiza tus productos y consulta su disponibilidad</small>
+                        <small class="cat-panel-sub">Selecciona una categor&iacute;a para ver sus productos. Las subcategor&iacute;as aparecen debajo.</small>
                     </div>
                 </div>
                 <div class="cat-panel-tools">
@@ -103,21 +103,21 @@ foreach ($categorias as $raiz) {
                     <ul class="cat-arbol" id="arbolCategorias">
                         <?php foreach ($categorias as $raiz): ?>
                             <?php
-                            // Cada raíz se pinta con su rama: expansor, enlace de
-                            // filtrado, conteo con stock/total y (según rol) acciones.
+                            // Cada categoría principal y sus subcategorías se muestran
+                            // juntas para que la jerarquía se entienda sin controles ocultos.
                             $raiz_id = (int)$raiz['id_categoria'];
                             $raiz_inactiva = $raiz['status'] === 'Inactivo';
                             $raiz_total = (int)($raiz['productos_total'] ?? 0);
                             $raiz_con_stock = (int)($raiz['productos_con_stock'] ?? 0);
                             $raiz_sel = $raiz_id === $id_categoria_filtro;
                             ?>
-                            <li class="cat-nodo cat-raiz cat-abierta<?php echo $raiz_inactiva ? ' cat-inactiva' : ''; ?><?php echo $raiz_sel ? ' cat-seleccionada' : ''; ?>"
+                            <li class="cat-nodo cat-raiz<?php echo $raiz_inactiva ? ' cat-inactiva' : ''; ?><?php echo $raiz_sel ? ' cat-seleccionada' : ''; ?>"
                                 data-id="<?php echo $raiz_id; ?>" data-status="<?php echo $raiz['status']; ?>"
                                 data-texto="<?php echo strtolower(htmlspecialchars($raiz['nombre'] . ' ' . ($raiz['codigo'] ?? ''))); ?>">
                                 <div class="cat-fila">
-                                    <button type="button" class="cat-expander" onclick="catAlternarRama(this)" aria-label="Expandir o contraer"><i class="bi bi-chevron-down"></i></button>
                                     <a class="cat-enlace" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&cat=<?php echo $raiz_id; ?>" title="Filtrar por esta categor&iacute;a">
-                                        <i class="bi bi-folder2<?php echo $raiz_inactiva ? '' : '-open'; ?> cat-icono"></i>
+                                        <i class="bi bi-folder-fill cat-icono" aria-hidden="true"></i>
+                                        <span class="cat-nivel cat-nivel-raiz">Categor&iacute;a principal</span>
                                         <span class="cat-nombre"><?php echo htmlspecialchars($raiz['nombre']); ?></span>
                                         <?php if (!empty($raiz['codigo'])): ?><span class="codigo-badge-cat cat-codigo"><?php echo htmlspecialchars($raiz['codigo']); ?></span><?php endif; ?>
                                         <span class="cat-conteo" data-tooltip="<?php echo $raiz_con_stock; ?> con stock de <?php echo $raiz_total; ?> en la rama"><?php echo $raiz_total > 0 ? $raiz_con_stock . '/' . $raiz_total : '0'; ?></span>
@@ -128,12 +128,17 @@ foreach ($categorias as $raiz) {
                                     <?php if ($puede_categorias): ?>
                                         <div class="cat-acciones">
                                             <?php if (!$raiz_inactiva): ?>
-                                                <button type="button" class="btn-action" onclick="catAbrirForm('registrar', 0, <?php echo $raiz_id; ?>)" data-tooltip="Agregar subcategor&iacute;a"><i class="bi bi-plus"></i></button>
+                                                <button type="button" class="btn-action btn-action-label btn-action-add" onclick="catAbrirForm('registrar', 0, <?php echo $raiz_id; ?>)">
+                                                    <i class="bi bi-plus-lg" aria-hidden="true"></i><span>Agregar subcategor&iacute;a</span>
+                                                </button>
                                             <?php endif; ?>
-                                            <button type="button" class="btn-action" onclick="catAbrirForm('editar', <?php echo $raiz_id; ?>)" data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
+                                            <button type="button" class="btn-action btn-action-label" onclick="catAbrirForm('editar', <?php echo $raiz_id; ?>)">
+                                                <i class="bi bi-pencil-square" aria-hidden="true"></i><span>Editar</span>
+                                            </button>
                                             <?php if ($raiz_total === 0): ?>
-                                                <button type="button" class="btn-action" onclick="catToggleStatus(<?php echo $raiz_id; ?>, <?php echo htmlspecialchars(json_encode($raiz['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $raiz['status']; ?>')" data-tooltip="<?php echo $raiz_inactiva ? 'Mostrar de nuevo' : 'Ocultar (sin productos)'; ?>">
-                                                    <i class="bi <?php echo $raiz_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>"></i>
+                                                <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $raiz_id; ?>, <?php echo htmlspecialchars(json_encode($raiz['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $raiz['status']; ?>')">
+                                                    <i class="bi <?php echo $raiz_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>" aria-hidden="true"></i>
+                                                    <span><?php echo $raiz_inactiva ? 'Mostrar' : 'Ocultar'; ?></span>
                                                 </button>
                                             <?php endif; ?>
                                         </div>
@@ -155,9 +160,9 @@ foreach ($categorias as $raiz) {
                                                 data-id="<?php echo $hija_id; ?>" data-status="<?php echo $hija['status']; ?>"
                                                 data-texto="<?php echo strtolower(htmlspecialchars($hija['nombre'] . ' ' . ($hija['codigo'] ?? ''))); ?>">
                                                 <div class="cat-fila">
-                                                    <span class="cat-expander cat-expander-hueco"></span>
                                                     <a class="cat-enlace" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&cat=<?php echo $hija_id; ?>" title="Filtrar por esta categor&iacute;a">
-                                                        <i class="bi bi-folder2 cat-icono"></i>
+                                                        <i class="bi bi-folder-fill cat-icono" aria-hidden="true"></i>
+                                                        <span class="cat-nivel cat-nivel-hija">Subcategor&iacute;a</span>
                                                         <span class="cat-nombre"><?php echo htmlspecialchars($hija['nombre']); ?></span>
                                                         <?php if (!empty($hija['codigo'])): ?><span class="codigo-badge-cat cat-codigo"><?php echo htmlspecialchars($hija['codigo']); ?></span><?php endif; ?>
                                                         <span class="cat-conteo" data-tooltip="<?php echo $hija_con_stock; ?> con stock de <?php echo $hija_total; ?> en la rama"><?php echo $hija_total > 0 ? $hija_con_stock . '/' . $hija_total : '0'; ?></span>
@@ -167,10 +172,13 @@ foreach ($categorias as $raiz) {
                                                     <?php endif; ?>
                                                     <?php if ($puede_categorias): ?>
                                                         <div class="cat-acciones">
-                                                            <button type="button" class="btn-action" onclick="catAbrirForm('editar', <?php echo $hija_id; ?>)" data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
+                                                            <button type="button" class="btn-action btn-action-label" onclick="catAbrirForm('editar', <?php echo $hija_id; ?>)">
+                                                                <i class="bi bi-pencil-square" aria-hidden="true"></i><span>Editar</span>
+                                                            </button>
                                                             <?php if ($hija_total === 0): ?>
-                                                                <button type="button" class="btn-action" onclick="catToggleStatus(<?php echo $hija_id; ?>, <?php echo htmlspecialchars(json_encode($hija['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $hija['status']; ?>')" data-tooltip="<?php echo $hija_inactiva ? 'Mostrar de nuevo' : 'Ocultar (sin productos)'; ?>">
-                                                                    <i class="bi <?php echo $hija_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>"></i>
+                                                                <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $hija_id; ?>, <?php echo htmlspecialchars(json_encode($hija['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $hija['status']; ?>')">
+                                                                    <i class="bi <?php echo $hija_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>" aria-hidden="true"></i>
+                                                                    <span><?php echo $hija_inactiva ? 'Mostrar' : 'Ocultar'; ?></span>
                                                                 </button>
                                                             <?php endif; ?>
                                                         </div>

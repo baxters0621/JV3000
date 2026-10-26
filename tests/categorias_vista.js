@@ -47,11 +47,14 @@ assert.match(cssProductos, /\.cat-chip-sinstock/, 'El CSS debe estilar la etique
 assert.match(cssProductos, /\.cat-seleccionada/, 'El CSS debe resaltar la categoría seleccionada.');
 assert.match(vista, /'sinstock' : 'oculta'/, 'La vista debe etiquetar con SIN STOCK u OCULTA las categorías inactivas.');
 assert.match(vista, /'SIN STOCK' : 'OCULTA'/, 'La vista debe mostrar el motivo de la inactividad.');
+assert.match(vista, /Categor&iacute;a principal/, 'La jerarquía debe identificar explícitamente las categorías principales.');
+assert.match(vista, /Subcategor&iacute;a/, 'La jerarquía debe identificar explícitamente las subcategorías.');
 assert.match(vista, /catAbrirForm\('registrar', 0, 0\)/, 'El botón nueva categoría raíz debe existir.');
-assert.match(vista, /catAbrirForm\('registrar', 0, /, 'Las raíces deben permitir agregar subcategorías.');
-assert.match(vista, /catAbrirForm\('editar', /, 'El árbol debe permitir editar categorías.');
+assert.match(vista, /Agregar subcategor&iacute;a/, 'La acción para crear una subcategoría debe llevar texto claro.');
+assert.match(vista, /catAbrirForm\('editar', /, 'El gestor debe permitir editar categorías.');
+assert.match(vista, /\? 'Mostrar' : 'Ocultar'/, 'El cambio de visibilidad debe estar explicado con texto.');
 assert.match(vista, /catToggleStatus\(/, 'El árbol debe permitir el cambio a mano.');
-assert.match(vista, /catAlternarRama\(this\)/, 'El expansor de ramas debe estar cableado.');
+assert.ok(!/cat-expander|catAlternarRama|bi-chevron-down/.test(vista + jsProductos), 'La jerarquía no debe depender de una flecha sin explicación.');
 assert.match(jsProductos, /function catAbrirForm\(/, 'productos.js debe definir catAbrirForm.');
 assert.match(jsProductos, /function catFiltrar\(/, 'productos.js debe definir catFiltrar.');
 assert.match(jsProductos, /function catErrorNombreDuplicado\(/, 'productos.js debe validar duplicados entre hermanas.');
