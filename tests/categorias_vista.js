@@ -2,7 +2,7 @@
 // PRUEBA: árbol de categorías en Inventario (vista + JS + CSS + sidebar)
 // ==========================================
 // Ejecutar desde la raíz: node tests/categorias_vista.js
-// Chequeo estático del rediseño: el árbol sustituye al pop-up, el formulario
+// Chequeo estático del rediseño: el árbol se abre en un modal, el formulario
 // gana el selector de padre, los flashes viajan con origen y los errores de
 // formulario son globales (marcarError/limpiarErrores en diseno.js).
 const assert = require('node:assert/strict');
@@ -27,9 +27,15 @@ assert.match(jsDiseno, /function limpiarErrores\(/, 'diseno.js debe definir limp
 assert.match(cssDiseno, /\.jv-error-msg/, 'diseno.css debe estilar el mensaje .jv-error-msg.');
 assert.match(jsProductos, /marcarError\(/, 'productos.js debe usar marcarError.');
 
-// 3. El pop-up viejo desapareció y el árbol ocupa su lugar.
-assert.ok(!/modalCategorias/.test(vista), 'La vista no debe contener el pop-up #modalCategorias.');
-assert.ok(!/modalCategorias|cat-toolbar|cat-filter-group|cat-tabla|cat-sin-datos/.test(cssProductos), 'El CSS no debe conservar estilos del pop-up.');
+// 3. El inventario conserva todo el ancho y el árbol se abre desde el botón superior.
+assert.match(vista, /onclick="catAbrirGestor\(\)"/, 'Debe existir el botón superior para abrir Categorías.');
+assert.match(vista, /id="modalCategorias"/, 'El gestor de categorías debe mostrarse en un modal.');
+assert.match(vista, /modal-dialog[^"]*cat-manager-dialog/, 'El gestor debe abrir centrado con ancho dedicado.');
+assert.match(vista, /class="card-jv card-jv-table p-0"/, 'El listado de productos debe conservar su contenedor completo.');
+assert.ok(!/col-lg-4|col-lg-8/.test(vista), 'La vista no debe repartir el ancho entre el árbol y los productos.');
+assert.match(jsProductos, /function catAbrirGestor\(/, 'productos.js debe definir la apertura del gestor.');
+assert.match(jsProductos, /catVolverAlGestor/, 'Cerrar el formulario debe devolver al gestor.');
+assert.match(cssProductos, /\.cat-manager-dialog/, 'El CSS debe ajustar el modal de categorías.');
 assert.match(vista, /id="arbolCategorias"/, 'La vista debe renderizar el árbol #arbolCategorias.');
 assert.match(vista, /class="cat-panel/, 'La vista debe usar el panel del árbol.');
 assert.match(cssProductos, /\.cat-panel \{/, 'El CSS debe estilar el panel del árbol.');
@@ -71,4 +77,4 @@ assert.match(jsProductos, /catToggleStatus|toggle_categoria: idCategoria/, 'El t
 assert.match(sidebar, /<span>Categor&iacute;as<\/span>|<span>Categorías<\/span>/, 'El sidebar debe llamarse «Categorías».');
 assert.ok(!/Productos · Categorías/.test(sidebar), 'El sidebar no debe conservar «Productos · Categorías».');
 
-console.log('OK categorias_vista: árbol en lugar del pop-up, formulario con padre, orígenes de flash y sidebar renombrado.');
+console.log('OK categorias_vista: gestor modal, formulario con padre, orígenes de flash y sidebar renombrado.');

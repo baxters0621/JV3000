@@ -16,6 +16,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Encabezado del dashboard reorganizado en dos bandas: identidad arriba y, abajo, chip de ubicación en naranja a la izquierda + fecha/hora/campana/usuario a la derecha. El ítem «Panel de Inicio» del sidebar desaparece solo en el panel y reaparece en el resto de páginas.
 - Historial muestra compras/ventas paginadas y filtrables, con alcance por rol y auditoría separada; Estadísticas abre por defecto los últimos 90 días para evitar un panel vacío cuando hay operaciones recientes, compara con el período previo y expone fallos de actualización con reintento. Ambos usan compras verdes y ventas rojas.
 - Categorías de Inventario: una categoría con productos queda Inactiva solo cuando todos están en cero; la raíz considera sus subcategorías, cuentan también productos Inactivos y el stock recibido la reactiva automáticamente. Categorías vacías conservan su estado manual y las agotadas siguen visibles como SIN STOCK.
+- Interfaz de Categorías en Inventario: el listado de productos ocupa todo el ancho; el botón superior abre un modal centrado para buscar y filtrar, y desde allí crear/editar. Al cerrar el formulario de categoría se regresa al gestor.
 
 ## Decisiones (y por qué)
 
@@ -26,6 +27,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Ayuda del PIN como línea fija bajo el encabezado: los globos se recortaban por el `overflow-hidden` de la tarjeta y tapaban los campos.
 - Ojos tachados por defecto en todos los campos de contraseña/PIN: el icono indica el estado actual, no la acción.
 - CSS/JS por módulo, sin globalizar; en Estadísticas e Historial el color identifica el tipo de operación, con foco visible y movimiento reducido.
+- El árbol de categorías es una herramienta de gestión bajo demanda, no un panel permanente que reduzca el espacio de la tabla; el filtro activo sigue visible fuera del modal.
 - Edición de colaborador valida los datos también en el servidor; los avisos por campo del cliente mejoran la experiencia, pero nunca sustituyen validación y unicidad en la base.
 - El rol Administrador es único: solo la cuenta principal conserva ese rol; creación, aprobación y edición de colaboradores solo asignan Operador de Carga o de Ventas.
 - Acceso al Historial de operaciones por alcance: administración ve compras y ventas, carga ve compras y ventas ve ventas; el servidor aplica el mismo límite que el menú.

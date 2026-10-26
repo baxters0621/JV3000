@@ -17,9 +17,8 @@
 // VISTA: Inventario / Productos (index)
 // ==========================================
 // Solo muestra los datos. No hace consultas.
-// Diseño: árbol de categorías a la izquierda (consulta para los tres roles)
-// y productos filtrados a la derecha. La escritura de categorías queda en
-// manos del Administrador u Operador de Carga.
+// Diseño: el inventario ocupa todo el ancho y el árbol se abre en un modal.
+// La escritura de categorías queda en manos del Administrador u Operador de Carga.
 $puede_categorias = $esAdmin || (int)$_SESSION['id_rol'] === 2;
 
 // Aplana el árbol (raíces + subcategorías) para el JS del formulario.
@@ -65,17 +64,23 @@ foreach ($categorias as $raiz) {
 </div>
 <?php endif; ?>
 
-<!-- Layout: árbol de categorías (izquierda) + productos filtrados (derecha) -->
-<div class="row g-3 mb-3">
-    <!-- Panel del árbol de categorías (consulta para los tres roles) -->
-    <div class="col-lg-4">
-        <div class="card-jv cat-panel p-0 h-100">
+<!-- Acceso al gestor de categorías -->
+<div class="d-flex align-items-center mb-3">
+    <button type="button" class="btn btn-jv-primary" onclick="catAbrirGestor()" aria-controls="modalCategorias">
+        <i class="bi bi-diagram-3-fill me-2"></i>CATEGOR&Iacute;AS
+    </button>
+</div>
+
+<!-- Gestor de categorías (consulta para todos los roles; edición según permisos) -->
+<div class="modal fade" id="modalCategorias" tabindex="-1" aria-labelledby="tituloModalCategorias" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable cat-manager-dialog">
+        <div class="modal-content modal-content-jv cat-panel p-0">
             <div class="cat-panel-head">
                 <div class="d-flex align-items-center gap-2">
                     <span class="cat-panel-icono"><i class="bi bi-diagram-3-fill"></i></span>
                     <div>
-                        <h2 class="cat-panel-titulo">CATEGOR&Iacute;AS</h2>
-                        <small class="cat-panel-sub">Haz clic en una categor&iacute;a para filtrar</small>
+                        <h2 class="cat-panel-titulo" id="tituloModalCategorias">CATEGOR&Iacute;AS</h2>
+                        <small class="cat-panel-sub">Busca, filtra y administra el cat&aacute;logo</small>
                     </div>
                 </div>
                 <?php if ($puede_categorias): ?>
@@ -83,6 +88,9 @@ foreach ($categorias as $raiz) {
                         <i class="bi bi-plus-lg"></i>
                     </button>
                 <?php endif; ?>
+                <button type="button" class="jv-modal-close" data-bs-dismiss="modal" aria-label="Cerrar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
             <div class="cat-panel-buscar">
                 <i class="bi bi-search"></i>
@@ -181,8 +189,8 @@ foreach ($categorias as $raiz) {
             </div>
         </div>
     </div>
-    <!-- Columna de productos -->
-    <div class="col-lg-8">
+</div>
+
 <!-- Tabla de productos -->
 <div class="card-jv card-jv-table p-0">
     <div class="buscador-wrapper px-3 py-2">
@@ -387,8 +395,7 @@ foreach ($categorias as $raiz) {
     <?php endif; ?>
 </div>
 
-    </div><!-- /columna de productos -->
-</div><!-- /layout árbol + productos -->
+</div>
 
 <?php if ($puede_categorias): ?>
 <!-- Datos para el JS del formulario (raíces activas y datos de edición) -->

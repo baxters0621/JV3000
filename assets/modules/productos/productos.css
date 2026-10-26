@@ -663,11 +663,21 @@
             --jv-modal-gradient-border: #60A5FA;
         }
 
-                /* ── Panel del árbol (columna izquierda) ── */
+                /* ── Gestor de categorías ── */
         .pagina-productos .cat-panel {
             display: flex; flex-direction: column;
             overflow: hidden;
         }
+                .pagina-productos .cat-manager-dialog {
+                    --bs-modal-width: 820px;
+                }
+                .pagina-productos #modalCategorias .cat-arbol-cont {
+                    max-height: min(62vh, 560px);
+                    min-height: 150px;
+                }
+                .pagina-productos #modalCategorias .cat-acciones {
+                    opacity: 1;
+                }
         .pagina-productos .cat-panel-head {
             display: flex; align-items: center; justify-content: space-between; gap: 10px;
             padding: 14px 16px;

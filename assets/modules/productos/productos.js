@@ -353,6 +353,14 @@
             if (nodo) nodo.classList.toggle('cat-abierta');
         }
 
+        var catVolverAlGestor = false;
+
+        // Abre el gestor sin quitar espacio al listado de productos.
+        function catAbrirGestor() {
+            const modalCategorias = document.getElementById('modalCategorias');
+            if (modalCategorias) bootstrap.Modal.getOrCreateInstance(modalCategorias).show();
+        }
+
         // Busca por nombre/código: oculta lo que no coincide, mantiene visible
         // la raíz cuando algún hijo coincide, expande las ramas con resultados
         // y muestra el aviso de "sin resultados" si no aparece nada.
@@ -419,7 +427,20 @@
             const btnGuardarCat = document.getElementById('btn-cat-guardar');
             btnGuardarCat.disabled = false;
             btnGuardarCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR CATEGOR\u00cdA';
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCat')).show();
+            const modalCategorias = document.getElementById('modalCategorias');
+            const modalFormulario = document.getElementById('modalCat');
+            const formularioCategoria = bootstrap.Modal.getOrCreateInstance(modalFormulario);
+            if (modalCategorias && modalCategorias.classList.contains('show')) {
+                catVolverAlGestor = true;
+                modalCategorias.addEventListener('hidden.bs.modal', function mostrarFormulario() {
+                    modalCategorias.removeEventListener('hidden.bs.modal', mostrarFormulario);
+                    formularioCategoria.show();
+                    document.getElementById('cat_nombre').focus();
+                });
+                bootstrap.Modal.getOrCreateInstance(modalCategorias).hide();
+            } else {
+                formularioCategoria.show();
+            }
         }
 
         // Detecta si el nombre ya existe entre hermanas del nivel elegido
@@ -464,6 +485,23 @@
         // Inicialización: validaciones del formulario y flash con origen.
         document.addEventListener('DOMContentLoaded', function() {
             const formCategorias = document.getElementById('formCat');
+            const modalCategorias = document.getElementById('modalCategorias');
+            const modalFormulario = document.getElementById('modalCat');
+
+            if (modalCategorias) {
+                modalCategorias.addEventListener('shown.bs.modal', function() {
+                    const buscarCategoria = document.getElementById('buscarCat');
+                    if (buscarCategoria) buscarCategoria.focus();
+                });
+            }
+
+            if (modalFormulario) {
+                modalFormulario.addEventListener('hidden.bs.modal', function() {
+                    if (!catVolverAlGestor) return;
+                    catVolverAlGestor = false;
+                    catAbrirGestor();
+                });
+            }
 
             if (formCategorias) {
                 // Validación antes de enviar (anti-doble-click incluido)
