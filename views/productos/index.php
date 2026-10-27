@@ -407,12 +407,12 @@ foreach ($categorias as $raiz) {
 
 </div>
 
-<?php if ($puede_categorias): ?>
 <!-- Datos para el JS del formulario (raíces activas y datos de edición) -->
 <script>
     window.JV_CATS = <?php echo json_encode(array_values($categorias_plano), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 </script>
 
+<?php if ($puede_categorias): ?>
 <!-- Formulario de categoría (crear / editar) -->
 <!-- POP-UP 2: Formulario de categoría (crear / editar) -->
 <div class="modal fade" id="modalCat" tabindex="-1">

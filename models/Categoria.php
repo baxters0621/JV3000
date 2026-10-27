@@ -37,7 +37,7 @@ class Categoria extends Model
     public function procesar(array $datos): array
     {
         // 1. Normalizar cada campo del formulario
-        $nombre = mb_strtoupper(trim((string)($datos['nombre'] ?? '')));
+        $nombre = normalizarUsuario((string)($datos['nombre'] ?? ''));
         $descripcion = trim((string)($datos['descripcion'] ?? ''));
         $clasificacion_abc = strtoupper(trim((string)($datos['clasificacion_abc'] ?? '')));
         if (!in_array($clasificacion_abc, ['A', 'B', 'C', ''], true)) $clasificacion_abc = '';
