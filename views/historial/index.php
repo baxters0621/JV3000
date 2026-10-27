@@ -20,17 +20,21 @@
     </div>
 <?php endif; ?>
 
-<section class="historial-encabezado" aria-labelledby="tituloHistorial">
-    <div class="historial-encabezado-contenido">
-        <span class="historial-marca" aria-hidden="true"><i class="bi bi-arrow-left-right"></i></span>
-        <div>
-            <h1 id="tituloHistorial">Historial de operaciones</h1>
-            <p>Compras y ventas registradas en el sistema.</p>
+<section class="historial-header" aria-labelledby="historial-header-title">
+    <div class="historial-header-wrapper">
+        <div class="historial-header-brand">
+            <i class="bi bi-clock-historial"></i>
+        </div>
+        <div class="historial-header-info">
+            <h1 id="historial-header-title">Historial de Operaciones</h1>
+            <p class="historial-header-subtitle">Compras y ventas registradas</p>
         </div>
     </div>
-    <div class="historial-conteo" aria-live="polite">
-        <strong class="historial-conteo-numero"><?php echo number_format($total_registros); ?></strong>
-        <span class="historial-conteo-label"><?php echo $total_registros === 1 ? 'operación' : 'operaciones'; ?></span>
+    <div class="historial-header-stats">
+        <div class="historial-stat-item">
+            <div class="historial-stat-number"><?php echo number_format($total_registros); ?></div>
+            <div class="historial-stat-label">Operaciones</div>
+        </div>
     </div>
 </section>
 
