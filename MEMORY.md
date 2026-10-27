@@ -29,7 +29,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Ojos tachados por defecto en todos los campos de contraseña/PIN: el icono indica el estado actual, no la acción.
 - CSS/JS por módulo, sin globalizar; en Estadísticas e Historial el color identifica el tipo de operación, con foco visible y movimiento reducido.
 - El árbol de categorías es una herramienta de gestión bajo demanda, no un panel permanente que reduzca el espacio de la tabla; el filtro activo sigue visible fuera del modal.
-- Categorías / Inventario: revisado y verificado (alta con CAT-XXX, edición, toggle, árbol, sincronización por stock). Funciona correctamente con CSRF y permisos. Cambios commiteados en 0f9d1f6.
+- Categorías / Inventario: revisado y verificado (alta con CAT-XXX, edición, toggle, árbol, sincronización por stock). Funciona correctamente con CSRF y permisos. Cambios commiteados en 0f9d1f6 y 43c5702 (Title_Case + JV_CATS siempre inyectado).
 - Edición de colaborador valida los datos también en el servidor; los avisos por campo del cliente mejoran la experiencia, pero nunca sustituyen validación y unicidad en la base.
 - El rol Administrador es único: solo la cuenta principal conserva ese rol; creación, aprobación y edición de colaboradores solo asignan Operador de Carga o de Ventas.
 - Acceso al Historial de operaciones por alcance: administración ve compras y ventas, carga ve compras y ventas ve ventas; el servidor aplica el mismo límite que el menú.
