@@ -29,8 +29,8 @@
         </div>
     </div>
     <div class="historial-conteo" aria-live="polite">
-        <strong><?php echo number_format($total_registros); ?></strong>
-        <span><?php echo $total_registros === 1 ? 'operación' : 'operaciones'; ?></span>
+        <strong class="historial-conteo-numero"><?php echo number_format($total_registros); ?></strong>
+        <span class="historial-conteo-label"><?php echo $total_registros === 1 ? 'operación' : 'operaciones'; ?></span>
     </div>
 </section>
 
@@ -55,7 +55,7 @@
     <div class="historial-filtros-secundarios">
         <div>
             <label for="tipoOperacion">Tipo</label>
-            <select id="tipoOperacion" name="tipo" class="input-jv">
+            <select id="tipoOperacion" name="tipo" class="input-jv historial-select">
                 <option value="">Todas las operaciones</option>
                 <?php foreach ($tipos_disponibles as $tipo_key => $tipo_nombre): ?>
                     <option value="<?php echo htmlspecialchars($tipo_key, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $filtro_tipo === $tipo_key ? 'selected' : ''; ?>>
@@ -66,7 +66,7 @@
         </div>
         <div>
             <label for="estadoOperacion">Estado</label>
-            <select id="estadoOperacion" name="estado" class="input-jv">
+            <select id="estadoOperacion" name="estado" class="input-jv historial-select">
                 <option value="">Todos</option>
                 <option value="Activa" <?php echo $filtro_estado === 'Activa' ? 'selected' : ''; ?>>Activas</option>
                 <option value="Anulada" <?php echo $filtro_estado === 'Anulada' ? 'selected' : ''; ?>>Anuladas</option>
@@ -74,11 +74,11 @@
         </div>
         <div>
             <label for="desdeOperacion">Desde</label>
-            <input type="date" id="desdeOperacion" name="desde" class="input-jv" value="<?php echo htmlspecialchars($filtro_desde, ENT_QUOTES, 'UTF-8'); ?>">
+            <input type="date" id="desdeOperacion" name="desde" class="input-jv historial-fecha" value="<?php echo htmlspecialchars($filtro_desde, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
         <div>
             <label for="hastaOperacion">Hasta</label>
-            <input type="date" id="hastaOperacion" name="hasta" class="input-jv" value="<?php echo htmlspecialchars($filtro_hasta, ENT_QUOTES, 'UTF-8'); ?>">
+            <input type="date" id="hastaOperacion" name="hasta" class="input-jv historial-fecha" value="<?php echo htmlspecialchars($filtro_hasta, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
         <div class="historial-acciones-filtro">
             <button type="submit" class="btn-jv-primary"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrar</button>

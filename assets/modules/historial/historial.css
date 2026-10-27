@@ -1,78 +1,83 @@
 .pagina-historial {
-    --historial-compra: #087443;
+    --historial-compra: #15803d;
     --historial-compra-fondo: #e3f5ea;
-    --historial-venta: #c12738;
+    --historial-venta: #dc2626;
     --historial-venta-fondo: #ffebed;
-    --historial-tinta: #172f4c;
+    --historial-tinta: #0f172a;
 }
 
 .historial-encabezado {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    padding: 22px 26px;
-    margin-bottom: 18px;
-    border-left: 5px solid var(--jv-orange);
-    background: var(--jv-bg-card);
-    border-radius: var(--jv-radius);
-    box-shadow: var(--jv-shadow);
+    gap: 24px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--jv-orange);
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .06);
 }
 
 .historial-encabezado-contenido {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
+    flex: 1;
 }
 
 .historial-marca {
     display: grid;
-    width: 52px;
-    height: 52px;
-    flex: 0 0 52px;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
     place-items: center;
-    border-radius: 13px;
+    border-radius: 12px;
     background: var(--jv-navy);
     color: #fff;
-    font-size: 1.45rem;
+    font-size: 1.35rem;
 }
 
 .historial-encabezado h1 {
     margin: 0;
     color: var(--historial-tinta);
-    font-size: clamp(1.35rem, 2.5vw, 1.8rem);
+    font-size: clamp(1.5rem, 3vw, 2rem);
     font-weight: 800;
-    letter-spacing: -.035em;
+    letter-spacing: -.03em;
     text-wrap: balance;
 }
 
 .historial-encabezado p {
-    margin: 4px 0 0;
-    color: var(--jv-navy);
-    font-size: .96rem;
+    margin: 5px 0 0;
+    color: #475569;
+    font-size: 1rem;
+    font-weight: 500;
 }
 
 .historial-conteo {
-    display: flex;
-    align-items: baseline;
-    gap: 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     white-space: nowrap;
-    color: var(--jv-text-secondary);
-    padding: 9px 13px;
-    border-radius: 10px;
-    background: rgba(37, 99, 235, .08);
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
 }
 
-.historial-conteo strong {
+.historial-conteo-numero {
     color: var(--historial-tinta);
-    font-size: 1.75rem;
+    font-size: 1.35rem;
     font-variant-numeric: tabular-nums;
+    font-weight: 800;
     line-height: 1;
 }
 
-.historial-conteo span {
-    font-size: .9rem;
-    font-weight: 650;
+.historial-conteo-label {
+    color: #64748b;
+    font-size: .95rem;
+    font-weight: 600;
 }
 
 .historial-filtros {
@@ -87,83 +92,137 @@
 .historial-filtros label {
     display: block;
     margin-bottom: 6px;
-    color: var(--historial-tinta);
-    font-size: .88rem;
-    font-weight: 800;
+    color: #475569;
+    font-size: .9rem;
+    font-weight: 600;
 }
 
 .historial-filtro-busqueda {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .historial-busqueda-control {
     position: relative;
+    max-width: 100%;
 }
 
 .historial-busqueda-control > i {
     position: absolute;
     top: 50%;
-    left: 13px;
-    z-index: 1;
-    color: var(--jv-navy);
+    left: 16px;
+    z-index: 2;
+    color: #94a3b8;
     transform: translateY(-50%);
+    font-size: 1.1rem;
 }
 
 .historial-busqueda-control:focus-within > i {
-    color: var(--jv-info);
+    color: var(--jv-orange);
 }
 
 .historial-busqueda-control .input-jv {
-    padding-left: 38px;
+    padding-left: 44px;
+    min-height: 52px;
+    font-size: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--historial-tinta);
+}
+
+.historial-busqueda-control .input-jv:focus {
+    border-color: var(--jv-orange);
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+    outline: none;
 }
 
 .historial-filtros-secundarios {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(150px, auto);
-    gap: 12px;
-    align-items: end;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
-.historial-filtros .input-jv {
-    min-height: 44px;
+.historial-filtros-secundarios > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 140px;
+    flex: 1;
+}
+
+.historial-filtros-secundarios .historial-select,
+.historial-filtros-secundarios .historial-fecha {
+    min-height: 52px;
+    font-size: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--historial-tinta);
+    padding: 0 14px;
     width: 100%;
+}
+
+.historial-filtros-secundarios .historial-select:focus,
+.historial-filtros-secundarios .historial-fecha:focus {
+    border-color: var(--jv-orange);
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+    outline: none;
 }
 
 .historial-filtros .input-jv:focus-visible,
 .historial-acciones-filtro .btn-jv-primary:focus-visible,
 .historial-limpiar:focus-visible,
 .historial-paginacion a:focus-visible {
-    outline: 3px solid rgba(27, 103, 151, .35);
+    outline: 3px solid rgba(234, 88, 12, 0.35);
     outline-offset: 2px;
 }
 
 .historial-acciones-filtro {
     display: flex;
     align-items: center;
-    gap: 12px;
-    min-height: 44px;
+    gap: 10px;
+    min-height: 52px;
+    margin-left: auto;
 }
 
 .historial-acciones-filtro .btn-jv-primary {
     display: inline-flex;
-    min-height: 44px;
+    min-height: 52px;
     align-items: center;
     justify-content: center;
     gap: 7px;
-    padding: 0 16px;
+    padding: 0 20px;
     white-space: nowrap;
+    background: var(--jv-orange);
+    border: none;
+    color: #ffffff;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.historial-acciones-filtro .btn-jv-primary:hover {
+    background: #e86e1c;
 }
 
 .historial-limpiar {
-    color: var(--jv-text-secondary);
-    font-size: .88rem;
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    color: #64748b;
+    font-size: .95rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0 12px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
 }
 
 .historial-limpiar:hover {
     color: var(--jv-navy);
+    border-color: #cbd5e1;
+    background: #f8fafc;
 }
 
 .historial-error-filtro {
@@ -193,10 +252,10 @@
 }
 
 .historial-tabla th {
-    padding: 13px 15px;
+    padding: 14px 15px;
     background: var(--jv-navy);
     color: #fff;
-    font-size: .88rem;
+    font-size: .9rem;
     font-weight: 800;
     text-align: left;
 }
@@ -210,7 +269,7 @@
 .historial-tabla .historial-th-total { text-align: right; }
 
 .historial-fila td {
-    padding: 15px;
+    padding: 18px;
     border-bottom: 1px solid var(--jv-border);
     color: var(--historial-tinta);
     vertical-align: middle;
@@ -236,8 +295,8 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 5px;
-    font-size: .87rem;
+    margin-bottom: 6px;
+    font-size: .95rem;
     font-weight: 800;
 }
 
@@ -256,7 +315,7 @@
 .historial-referencia,
 .historial-celda-principal {
     overflow-wrap: anywhere;
-    font-size: .96rem;
+    font-size: 1rem;
     font-weight: 800;
 }
 
@@ -269,6 +328,7 @@
     overflow-wrap: anywhere;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
 }
 
 .historial-unidades,
@@ -276,25 +336,27 @@
 .historial-estado-secundario {
     margin-top: 4px;
     color: #475569;
-    font-size: .84rem;
+    font-size: .9rem;
 }
 
 .historial-estado {
     display: inline-flex;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 999px;
-    font-size: .8rem;
+    font-size: .85rem;
     font-weight: 800;
 }
 
 .historial-estado-activa {
-    background: var(--historial-compra-fondo);
+    background: #e3f5ea;
     color: #075c34;
+    border: 1px solid #bae2cb;
 }
 
 .historial-estado-anulada {
-    background: var(--historial-venta-fondo);
+    background: #ffebed;
     color: #a51d2d;
+    border: 1px solid #ffc8ce;
 }
 
 .historial-total {
