@@ -20,23 +20,19 @@
     </div>
 <?php endif; ?>
 
-<section class="historial-header" aria-labelledby="historial-header-title">
-    <div class="historial-header-wrapper">
-        <div class="historial-header-brand">
-            <i class="bi bi-clock-historial"></i>
-        </div>
-        <div class="historial-header-info">
-            <h1 id="historial-header-title">Historial de Operaciones</h1>
-            <p class="historial-header-subtitle">Compras y ventas registradas</p>
-        </div>
+<div class="module-header historial-cabecera">
+    <div class="module-header-icon historial-header-icono" aria-hidden="true">
+        <i class="bi bi-clock-history"></i>
     </div>
-    <div class="historial-header-stats">
-        <div class="historial-stat-item">
-            <div class="historial-stat-number"><?php echo number_format($total_registros); ?></div>
-            <div class="historial-stat-label">Operaciones</div>
-        </div>
+    <div>
+        <h1 id="historial-header-title" class="module-title">Historial de Operaciones</h1>
+        <p class="module-subtitle">Compras y ventas registradas</p>
     </div>
-</section>
+    <div class="historial-conteo">
+        <span class="historial-conteo-numero"><?php echo number_format($total_registros); ?></span>
+        <span class="historial-conteo-label">operaciones</span>
+    </div>
+</div>
 
 <form class="historial-filtros" method="GET" action="<?php echo APP_URL_BASE; ?>index.php">
     <input type="hidden" name="url" value="historial">
@@ -105,6 +101,7 @@
                     <th scope="col">Registró</th>
                     <th scope="col">Estado</th>
                     <th scope="col" class="historial-th-total">Total</th>
+                    <th class="historial-accion" scope="col">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -151,11 +148,16 @@
                         <td data-label="Total" class="historial-total">
                             $<?php echo number_format((float)$operacion['monto_total'], 2); ?>
                         </td>
+                        <td data-label="Acciones" class="historial-accion-cell">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalDetalleOperacion" data-operacion="<?php echo htmlspecialchars((string)$operacion['id_operacion'], ENT_QUOTES, 'UTF-8'); ?>" aria-label="Ver detalle de <?php echo htmlspecialchars((string)$operacion['referencia'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if ($registros === []): ?>
                     <tr>
-                        <td colspan="6" class="historial-vacio">
+                        <td colspan="7" class="historial-vacio">
                             <i class="bi bi-receipt" aria-hidden="true"></i>
                             <strong>No hay operaciones para mostrar</strong>
                             <span>Prueba con otro tipo, estado o rango de fechas.</span>
