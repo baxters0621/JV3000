@@ -53,9 +53,11 @@ class TasasController extends Controller
             }
         }
 
-        // Consultar API externa
-        $usd = $this->consultarApi('/dolares/oficial');
-        $eur = $this->consultarApi('/euros/oficial');
+        // Consultar API externa: USD y EUR en paralelo con tope de 6 s por
+        // petición, para que el peor caso cueste ~6 s en vez de ~20 s.
+        $tasas = $this->consultarApiParalela();
+        $usd = $tasas[0];
+        $eur = $tasas[1];
 
         if ($usd === null && $eur === null) {
             // Si hay cache viejo, devolverlo como fallback
@@ -104,44 +106,72 @@ class TasasController extends Controller
     }
 
     /**
-     * Consulta un endpoint de la API ve.dolarapi.com.
+     * Consulta en paralelo los endpoints de USD y EUR de ve.dolarapi.com.
      *
-     * @param string $endpoint Ruta relativa (ej: '/dolares/oficial').
-     * @return float|null Promedio de la tasa o null si falla.
+     * Usa curl_multi para que las dos peticiones corran a la vez, con tope
+     * de 6 s por petición: la espera total ya no se acumula en serie.
+     *
+     * @return array{0:?float,1:?float} Promedio USD y EUR, o null si falla.
      */
-    private function consultarApi(string $endpoint): ?float
+    private function consultarApiParalela(): array
     {
-        $url = self::API_BASE . $endpoint;
-
-        $ctx = stream_context_create([
-            'http' => [
-                'method'        => 'GET',
-                'timeout'       => 10,
-                'ignore_errors' => true,
-                'header'        => "User-Agent: JV3000/1.0\r\nAccept: application/json\r\n",
-            ],
-        ]);
-
-        $response = @file_get_contents($url, false, $ctx);
-        if ($response === false) {
-            return null;
+        $manejador_multiple = curl_multi_init();
+        $peticiones = [];
+        foreach (['/dolares/oficial', '/euros/oficial'] as $i => $endpoint) {
+            $canal = curl_init(self::API_BASE . $endpoint);
+            curl_setopt_array($canal, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 6,
+                CURLOPT_CONNECTTIMEOUT => 4,
+                CURLOPT_USERAGENT      => 'JV3000/1.0',
+                CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+            ]);
+            curl_multi_add_handle($manejador_multiple, $canal);
+            $peticiones[$i] = $canal;
         }
 
-        $data = json_decode($response, true);
+        // Ejecutar hasta que ambas terminen (éxito, error o tope de tiempo).
+        do {
+            $estado = curl_multi_exec($manejador_multiple, $activo);
+            if ($activo) {
+                curl_multi_select($manejador_multiple, 0.2);
+            }
+        } while ($activo && $estado === CURLM_OK);
+
+        $tasas = [];
+        foreach ($peticiones as $canal) {
+            $tasas[] = $this->extraerPromedio(curl_multi_getcontent($canal));
+            curl_multi_remove_handle($manejador_multiple, $canal);
+            curl_close($canal);
+        }
+        curl_multi_close($manejador_multiple);
+        return $tasas;
+    }
+
+    /**
+     * Extrae el promedio de la respuesta JSON de la API de tasas.
+     *
+     * La API devuelve un objeto { promedio, ... } o un array de monedas del
+     * cual se toma la primera entrada (la oficial).
+     *
+     * @param string|false|null $respuesta Cuerpo crudo de la respuesta.
+     * @return float|null Promedio redondeado a 4 decimales, o null.
+     */
+    private function extraerPromedio($respuesta): ?float
+    {
+        if (!is_string($respuesta) || trim($respuesta) === '') {
+            return null;
+        }
+        $data = json_decode($respuesta, true);
         if (!is_array($data)) {
             return null;
         }
-
-        // La API devuelve { promedio, ... } o un array de monedas
         if (isset($data['promedio'])) {
             return round((float)$data['promedio'], 4);
         }
-
-        // Si es array de monedas, tomar la primera (oficial)
         if (isset($data[0]['promedio'])) {
             return round((float)$data[0]['promedio'], 4);
         }
-
         return null;
     }
 }

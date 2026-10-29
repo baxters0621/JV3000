@@ -44,6 +44,9 @@
 
         // Consulta la tasa BCV oficial al backend (proxy de ve.dolarapi.com)
         // Rellena el campo #tasaCambio y muestra info de la fuente.
+        // La consulta tiene tope de espera (jvFetchConTope): mientras corre se
+        // muestra un skeleton en la línea de estado y, si vence, la tasa pasa
+        // a edición manual con un aviso claro — nunca queda colgada.
         function obtenerTasaCambio(tipo) {
             var tasaEl = document.getElementById('tasaCambio');
             var infoEl = document.getElementById('tasaInfo');
@@ -57,18 +60,18 @@
                 btn.innerHTML = '<i class="bi bi-pencil"></i>';
                 btn.setAttribute('data-tooltip', 'Clic para editar manualmente');
             }
-            if (infoEl) infoEl.innerHTML = '<i class="bi bi-hourglass-split"></i> Consultando tasa BCV...';
+            if (infoEl) infoEl.innerHTML = jvSkeletonHtml('linea');
 
-            fetch('index.php?url=tasas/obtener', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            jvFetchConTope('index.php?url=tasas/obtener', { ms: 12000 })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (!data.ok) {
-                        if (infoEl) infoEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Error al obtener tasa. Edita manualmente.';
+                        activarEdicionManualTasa('Error al obtener tasa. Edita manualmente.');
                         return;
                     }
                     var tasa = tipo === 'Dolar' ? data.usd_oficial : data.eur_oficial;
                     if (!tasa || tasa <= 0) {
-                        if (infoEl) infoEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Tasa no disponible. Edita manualmente.';
+                        activarEdicionManualTasa('Tasa no disponible. Edita manualmente.');
                         return;
                     }
                     tasaEl.value = Number(tasa).toFixed(4);
@@ -76,9 +79,31 @@
                     if (infoEl) infoEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> BCV ' + data.fecha + ' &mdash; 1 ' + moneda + ' = ' + Number(tasa).toFixed(2) + ' VES';
                     calcularEquivalenteVES();
                 })
-                .catch(function() {
-                    if (infoEl) infoEl.innerHTML = '<i class="bi bi-wifi-off"></i> Sin conexión. Edita la tasa manualmente.';
+                .catch(function(e) {
+                    if (e && e.jvTope) {
+                        activarEdicionManualTasa('BCV no responde ahora. Digita la tasa manualmente.');
+                        return;
+                    }
+                    activarEdicionManualTasa('Sin conexión. Edita la tasa manualmente.');
                 });
+        }
+
+        // Habilita la edición manual de la tasa (mismo efecto del botón lápiz)
+        // y muestra el motivo en la línea de estado.
+        function activarEdicionManualTasa(mensaje) {
+            var tasaEl = document.getElementById('tasaCambio');
+            var infoEl = document.getElementById('tasaInfo');
+            var btn = document.getElementById('btnEditarTasa');
+            if (tasaEl) {
+                tasaEl.readOnly = false;
+                tasaEl.classList.remove('comp-tasa-auto');
+                tasaEl.classList.add('comp-tasa-editable');
+            }
+            if (btn) {
+                btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+                btn.setAttribute('data-tooltip', 'Confirmar tasa manual');
+            }
+            if (infoEl) infoEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ' + mensaje;
         }
 
         // Calcula el equivalente en VES del monto original en divisa extranjera

@@ -211,14 +211,28 @@
         ? '&periodo=rango&desde=' + (urlParams.get('desde') || '') + '&hasta=' + (urlParams.get('hasta') || '')
         : '&periodo=' + periodoActivo;
 
-    // Consulta los datos de estadísticas del periodo activo y actualiza la interfaz sin recargar la página.
+    // Consulta los datos de estadísticas del periodo activo y actualiza la
+    // interfaz sin recargar la página. Si la espera supera 700 ms se muestran
+    // skeletons sobre KPI y gráficos (las respuestas rápidas no parpadean) y,
+    // si la petición vence su tope de 12 s, el aviso existente cambia a
+    // "está tardando" — la espera nunca queda sin rostro ni sin salida.
     function refreshEstadisticas() {
         if (refreshEnCurso) return;
         refreshEnCurso = true;
         document.body.classList.add('stats-refrescando');
-        fetch((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
+
+        const cargas = [];
+        ['kpi-ventas', 'kpi-compras', 'kpi-ganancia'].forEach(id => {
+            cargas.push(jvCargaIniciar(document.getElementById(id), { variante: 'kpi' }));
+        });
+        ['chartFlujo', 'chartTop'].forEach(id => {
+            const lienzo = document.getElementById(id);
+            if (lienzo && lienzo.parentElement) {
+                cargas.push(jvCargaIniciar(lienzo.parentElement, { variante: 'grafico' }));
+            }
+        });
+
+        jvFetchConTope((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, { ms: 12000 })
             .then(response => {
                 if (!response.ok) throw new Error('El servidor respondió con HTTP ' + response.status + '.');
                 return response.json();
@@ -233,10 +247,17 @@
             })
             .catch(error => {
                 console.error('No se pudieron actualizar las estadísticas:', error);
+                const texto = document.getElementById('error-estadisticas-texto');
+                if (texto) {
+                    texto.textContent = error && error.jvTope
+                        ? 'Esto está tardando más de lo normal. Reintenta en un momento.'
+                        : 'No se pudieron actualizar las estadísticas.';
+                }
                 const alert = document.getElementById('error-estadisticas');
                 if (alert) alert.classList.remove('d-none');
             })
             .finally(() => {
+                cargas.forEach(carga => carga.fin());
                 refreshEnCurso = false;
                 document.body.classList.remove('stats-refrescando');
             });

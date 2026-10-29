@@ -137,3 +137,160 @@ window.addEventListener('unhandledrejection', function(evento) {
     console.error('[JV3000] Promesa sin manejar:', evento.reason);
     jvAvisoErrorNavegador();
 });
+
+// ==========================================
+// CARGA VISIBLE — skeletons con tope de espera
+// ==========================================
+// Compañero del límite de errores: ninguna espera del panel queda sin rostro.
+// jvCargaIniciar coloca un skeleton con la forma del contenido (solo si la
+// espera supera unos milisegundos, para no hacer parpadear respuestas
+// rápidas); jvCargaFin lo retira; jvCargaTarde convierte el skeleton en el
+// aviso "está tardando" con botón Reintentar; y jvFetchConTope corta las
+// peticiones que superan su tiempo límite. document/fetch se consultan al
+// invocar para poder simularlos en el piloto de tests.
+
+/** Elementos con token de carga activo (uno por contenedor). */
+var jvOverlaysCarga = new Map();
+
+/**
+ * Devuelve el HTML de un skeleton según la variante pedida.
+ * Se usa cuando el contenedor no tiene contenido previo que conservar
+ * (por ejemplo, la línea de estado de la tasa BCV).
+ *
+ * @param {string} variante 'linea' | 'kpi' | 'fila' | 'grafico'.
+ * @returns {string} HTML listo para inyectar.
+ */
+function jvSkeletonHtml(variante) {
+    var clase = { linea: 'jv-skel-linea', kpi: 'jv-skel-kpi', fila: 'jv-skel-fila', grafico: 'jv-skel-grafico' }[variante] || 'jv-skel-linea';
+    return '<span class="jv-skel ' + clase + '" aria-hidden="true"></span>';
+}
+
+/**
+ * Crea y muestra el overlay de skeleton dentro de un contenedor.
+ * Uso interno de jvCargaIniciar y jvCargaTarde.
+ *
+ * @param {HTMLElement} contenedor Elemento a cubrir.
+ * @param {object} opciones variante ('kpi'|'filas'|'grafico').
+ * @returns {{overlay: HTMLElement, piezas: HTMLElement[]}} El overlay y sus
+ *   piezas, para que jvCargaTarde pueda retirarlas después.
+ */
+function jvCrearOverlay(contenedor, opciones) {
+    var overlay = document.createElement('div');
+    overlay.className = 'jv-skel-overlay';
+    var recetas = {
+        kpi:     ['jv-skel-kpi'],
+        filas:   ['jv-skel-fila', 'jv-skel-fila', 'jv-skel-fila'],
+        grafico: ['jv-skel-grafico']
+    };
+    var piezas = [];
+    (recetas[opciones.variante] || recetas.filas).forEach(function(clase) {
+        var pieza = document.createElement('span');
+        pieza.className = 'jv-skel ' + clase;
+        overlay.appendChild(pieza);
+        piezas.push(pieza);
+    });
+    contenedor.classList.add('jv-cargando');
+    contenedor.setAttribute('aria-busy', 'true');
+    contenedor.appendChild(overlay);
+    return { overlay: overlay, piezas: piezas };
+}
+
+/**
+ * Muestra el overlay de carga dentro de un contenedor ya pintado.
+ *
+ * El skeleton solo aparece si la espera supera `trasMs` (las respuestas
+ * rápidas no parpadean; con trasMs 0 aparece de inmediato). Devuelve un
+ * token: llama token.fin() al terminar, aunque el skeleton no se haya
+ * dibujado todavía.
+ *
+ * @param {HTMLElement|null} contenedor Elemento a cubrir.
+ * @param {object} [opciones] variante, trasMs (700 por defecto) y otros.
+ * @returns {{fin: Function}} Token de limpieza.
+ */
+function jvCargaIniciar(contenedor, opciones) {
+    opciones = opciones || {};
+    if (!contenedor || jvOverlaysCarga.has(contenedor)) return { fin: function() {} };
+
+    var token = { temporizador: null, overlay: null, piezas: [] };
+    token.fin = function() {
+        if (token.temporizador) { clearTimeout(token.temporizador); token.temporizador = null; }
+        if (token.overlay) { token.overlay.remove(); token.overlay = null; }
+        jvOverlaysCarga.delete(contenedor);
+        contenedor.classList.remove('jv-cargando');
+        contenedor.removeAttribute('aria-busy');
+    };
+
+    var aparecer = function() {
+        token.temporizador = null;
+        var creado = jvCrearOverlay(contenedor, opciones);
+        token.overlay = creado.overlay;
+        token.piezas = creado.piezas;
+    };
+    if (opciones.trasMs === 0) aparecer();
+    else token.temporizador = setTimeout(aparecer, opciones.trasMs || 700);
+
+    jvOverlaysCarga.set(contenedor, token);
+    return token;
+}
+
+/**
+ * Cambia el overlay de un contenedor al estado "está tardando": un mensaje
+ * claro y un botón Reintentar. Si el skeleton aún no se dibujó, lo dibuja.
+ *
+ * @param {HTMLElement|null} contenedor Contenedor con carga iniciada.
+ * @param {string} mensaje Texto amable para la persona usuaria.
+ * @param {Function} reintentar Acción a ejecutar al pulsar el botón.
+ * @returns {void}
+ */
+function jvCargaTarde(contenedor, mensaje, reintentar) {
+    if (!contenedor) return;
+    var token = jvOverlaysCarga.get(contenedor);
+    if (!token) token = jvCargaIniciar(contenedor, { trasMs: 0 });
+    if (!token || !token.overlay) return;
+
+    var overlay = token.overlay;
+    overlay.classList.add('jv-skel-tarde');
+    token.piezas.forEach(function(pieza) { pieza.remove(); });
+    token.piezas = [];
+
+    var texto = document.createElement('div');
+    texto.className = 'jv-skel-tarde-msg';
+    texto.textContent = mensaje;
+    overlay.appendChild(texto);
+
+    var boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'jv-skel-reintentar';
+    boton.textContent = 'Reintentar';
+    boton.addEventListener('click', function() { if (typeof reintentar === 'function') reintentar(); });
+    overlay.appendChild(boton);
+}
+
+/**
+ * fetch con tope de espera: si la respuesta no llega en `ms` milisegundos,
+ * la petición se aborta y la promesa rechaza con error.jvTope = true, para
+ * que el módulo decida mostrar el aviso de "tardando" o el de fallo.
+ *
+ * @param {string} url URL a consultar.
+ * @param {object} [opciones] ms (12000 por defecto), init (opciones de fetch)
+ *   y fetchImpl (inyectable para pruebas).
+ * @returns {Promise<Response>} La respuesta o el rechazo marcado.
+ */
+function jvFetchConTope(url, opciones) {
+    opciones = opciones || {};
+    var ms = opciones.ms || 12000;
+    var doFetch = opciones.fetchImpl || window.fetch;
+    var init = Object.assign({}, opciones.init || {});
+    init.headers = Object.assign({ 'X-Requested-With': 'XMLHttpRequest' }, init.headers || {});
+
+    var controlador = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    if (controlador) init.signal = controlador.signal;
+    var reloj = controlador ? setTimeout(function() { controlador.abort(); }, ms) : null;
+
+    return doFetch(url, init).finally(function() {
+        if (reloj) clearTimeout(reloj);
+    }).catch(function(error) {
+        if (error && error.name === 'AbortError') error.jvTope = true;
+        throw error;
+    });
+}

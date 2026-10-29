@@ -543,6 +543,82 @@ select.input-jv { appearance: auto; cursor: pointer; }
 @keyframes spin-jv { to { transform: rotate(360deg); } }
 
 /* ==========================================
+   SKELETON — espera con la forma del contenido
+   ========================================== */
+/* En vez de una pantalla vacía o un círculo dando vueltas, el usuario ve
+   cajitas grises con la MISMA forma de lo que va a aparecer. El brillo que
+   desliza (shimmer) comunica "estoy trabajando"; como el contenedor conserva
+   su tamaño, nada salta cuando llegan los datos reales. Con
+   prefers-reduced-motion el deslizamiento se apaga y queda un tono estático. */
+
+.jv-skel {
+    display: block;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #e9ecef 25%, #f8f9fa 50%, #e9ecef 75%);
+    background-size: 200% 100%;
+    animation: jv-skel-brillo 1.4s ease-in-out infinite;
+}
+
+/* Línea de texto, valor de un KPI, fila de tabla y bloque de gráfico. */
+.jv-skel-linea   { height: 0.9em; width: 100%; }
+.jv-skel-kpi     { height: 1.9em; width: 70%; }
+.jv-skel-fila    { height: 2.2em; width: 100%; }
+.jv-skel-grafico { height: 100%; min-height: 10em; width: 100%; flex: 1; }
+
+@keyframes jv-skel-brillo {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .jv-skel { animation: none; }
+}
+
+/* Capa que cubre un contenedor ya pintado (KPI, gráfico) mientras se
+   refresca: el contenido anterior se ve suavemente detrás y el skeleton
+   encima. Sin clase .jv-cargando en el contenedor no hay overlay. */
+.jv-cargando { position: relative; }
+
+.jv-skel-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5em;
+    padding: 0.75em;
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: inherit;
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* Estado "está tardando": el overlay deja de ser decorativo y ofrece acción. */
+.jv-skel-overlay.jv-skel-tarde {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.92);
+}
+
+.jv-skel-tarde-msg {
+    font-size: 0.92rem;
+    color: #475569;
+    text-align: center;
+}
+
+.jv-skel-reintentar {
+    margin: 0 auto;
+    padding: 0.35rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #334155;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.jv-skel-reintentar:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+/* ==========================================
    LOGIN
    ========================================== */
 
