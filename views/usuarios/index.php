@@ -274,7 +274,7 @@
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-usuarios-dialog">
         <div class="modal-content modal-content-jv modal-usuarios">
-            <form id="formEditar" novalidate>
+            <form id="formEditar" novalidate data-borrador="usuarios_editar">
                 <div class="modal-header modal-header-jv">
                     <h2 class="modal-title fw-bold" id="modalEditarLabel"><i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Editar colaborador</h2>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -317,7 +317,7 @@
 <div class="modal fade" id="modalCrear" tabindex="-1" aria-labelledby="modalCrearLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-usuarios-dialog">
         <div class="modal-content modal-content-jv modal-usuarios">
-            <form id="formCrear" novalidate>
+            <form id="formCrear" novalidate data-borrador="usuarios_crear">
                 <div class="modal-header modal-header-jv">
                     <h2 class="modal-title fw-bold fs-5" id="modalCrearLabel"><i class="bi bi-person-plus-fill me-2" aria-hidden="true"></i>NUEVO COLABORADOR</h2>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>

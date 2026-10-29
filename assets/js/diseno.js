@@ -345,3 +345,436 @@ function jvFetchConTope(url, opciones) {
         throw error;
     });
 }
+
+// ==========================================
+// BORRADORES DE FORMULARIOS — lo tecleado sobrevive a recargas y fallos
+// ==========================================
+// Los formularios marcados con data-borrador="<clave>" guardan su contenido
+// en el localStorage del navegador (nunca en el servidor). Si la página falla,
+// se recarga o la sesión caduca a mitad del llenado, el texto se recupera.
+//
+// Reglas de seguridad (innegociables):
+//  - NUNCA se guardan contraseñas, PINs, códigos ni tokens (jvBorradorExcluido).
+//  - NUNCA se guarda el JSON de la grilla de productos (productos_data):
+//    la tabla y el borrador podrían desincronizarse.
+//  - El borrador queda atado al id de usuario: otra cuenta no lo ve.
+//  - Caduca a las 24 horas.
+//
+// Cuándo se decide qué hacer con un borrador guardado (jvBorradorDecidir):
+//  - enviado hace menos de 120 s + mensaje de éxito → se completó: se purga.
+//  - enviado hace menos de 120 s sin éxito → el POST nativo falló (validación
+//    de servidor, sesión vencida): se restaura solo y se avisa con un toast.
+//  - más antiguos o sin marca de envío → se pregunta con Swal
+//    (Restaurar / Descartar; Esc conserva el borrador para más tarde).
+//  - sin Swal (páginas de acceso) → restauración silenciosa.
+//
+// Límite conocido: los envíos programados con form.submit() (grilla de
+// compras y recepción) no disparan el evento submit, así que quedan sin la
+// marca "enviado" y usan la vía de la pregunta en vez del aviso automático.
+
+/** Disponibilidad de localStorage, calculada una sola vez (false = no hay). */
+var jvBorradorAlmacenEstado = null;
+
+/** Temporizadores del guardado con retardo, uno por formulario. */
+var jvBorradorTemporizadores = new Map();
+
+/** Cola que hace que las preguntas de restauración aparezcan de una en una. */
+var jvBorradorCola = Promise.resolve();
+
+/** Clave común de todas las entradas de borrador en localStorage. */
+var jvBorradorPrefijoLlave = 'jv_borrador_v1_';
+
+/** Vida útil máxima de un borrador, en milisegundos (24 h). */
+var jvBorradorVida = 24 * 60 * 60 * 1000;
+
+/** Ventana en la que un "enviado" reciente cuenta como intento en curso. */
+var jvBorradorVentanaEnvio = 120000;
+
+/**
+ * Comprueba (y recuerda) si localStorage está disponible y escribible.
+ *
+ * @returns {object|false} el objeto localStorage o false si no se puede usar.
+ */
+function jvBorradorAlmacen() {
+    if (jvBorradorAlmacenEstado !== null) return jvBorradorAlmacenEstado;
+    var disponible = false;
+    try {
+        var almacen = window.localStorage;
+        disponible = !!(almacen && typeof almacen.getItem === 'function' && typeof almacen.setItem === 'function');
+        if (disponible) {
+            almacen.setItem('jv_borrador_prueba', '1');
+            almacen.removeItem('jv_borrador_prueba');
+        }
+    } catch (error) { disponible = false; }
+    jvBorradorAlmacenEstado = disponible ? window.localStorage : false;
+    return jvBorradorAlmacenEstado;
+}
+
+/**
+ * Arma la llave completa de un borrador en localStorage.
+ *
+ * @param {string} clave la clave corta del atributo data-borrador.
+ * @returns {string} llave completa, p. ej. jv_borrador_v1_compras_alta.
+ */
+function jvBorradorLlave(clave) {
+    return jvBorradorPrefijoLlave + String(clave);
+}
+
+/**
+ * Id de la cuenta activa, para que un borrador nunca cruce entre usuarios.
+ *
+ * @returns {number} id de usuario o 0 en páginas sin sesión.
+ */
+function jvBorradorUsuario() {
+    return (window.JV_CONFIG || {}).userId || 0;
+}
+
+/**
+ * Decide si un campo queda FUERA del borrador por ser sensible.
+ *
+ * @param {string} nombre atributo name del campo.
+ * @returns {boolean} true si no debe guardarse jamás.
+ */
+function jvBorradorExcluido(nombre) {
+    var nombreLimpio = String(nombre || '');
+    if (/^(csrf_token|productos_data)$/i.test(nombreLimpio)) return true;
+    return /pass|pin|codigo|token|clave/i.test(nombreLimpio);
+}
+
+/**
+ * Toma una foto de los campos guardables del formulario.
+ *
+ * @param {HTMLFormElement} form formulario marcado con data-borrador.
+ * @returns {object} mapa nombre → valor; radios y checkboxes solo si marcados.
+ */
+function jvBorradorSerializar(form) {
+    var datos = {};
+    var elementos = form.elements || [];
+    for (var i = 0; i < elementos.length; i++) {
+        var campo = elementos[i];
+        var nombre = campo.name;
+        if (!nombre || jvBorradorExcluido(nombre)) continue;
+        var tipo = String(campo.type || '').toLowerCase();
+        if (tipo === 'file' || tipo === 'submit' || tipo === 'button' || tipo === 'reset' || tipo === 'image') continue;
+        if (campo.disabled) continue;
+        if (tipo === 'radio') {
+            if (campo.checked) datos[nombre] = campo.value;
+            continue;
+        }
+        if (tipo === 'checkbox') {
+            if (campo.checked) {
+                if (!datos[nombre]) datos[nombre] = [];
+                datos[nombre].push(campo.value);
+            }
+            continue;
+        }
+        datos[nombre] = campo.value;
+    }
+    return datos;
+}
+
+/**
+ * Vuelve a dejar en el formulario los valores de un borrador guardado.
+ *
+ * Solo toca campos que aún existen; los selects restauran únicamente si la
+ * opción sigue disponible. Devuelve cuántos campos pudo recuperar.
+ *
+ * @param {HTMLFormElement} form formulario destino.
+ * @param {object} datos mapa nombre → valor del borrador.
+ * @returns {number} cantidad de campos restaurados.
+ */
+function jvBorradorRestaurar(form, datos) {
+    var restaurados = 0;
+    if (!datos || !form.elements) return restaurados;
+    Object.keys(datos).forEach(function(nombre) {
+        var valor = datos[nombre];
+        if (valor === null || valor === undefined) return;
+        var campo = form.elements[nombre];
+        if (!campo) return;
+        // Colección de campos con el mismo nombre (grupo de radios o checks):
+        // length está definido y no es un <select> (ese tiene .options).
+        if (campo.length !== undefined && !campo.options) {
+            var esArray = Array.isArray(valor);
+            for (var i = 0; i < campo.length; i++) {
+                var pieza = campo[i];
+                if (!pieza) continue;
+                var tipo = String(pieza.type || '').toLowerCase();
+                if (tipo === 'radio' && String(pieza.value) === String(valor)) { pieza.checked = true; restaurados++; }
+                else if (tipo === 'checkbox' && esArray) {
+                    var marcado = valor.indexOf(String(pieza.value)) !== -1;
+                    pieza.checked = marcado;
+                    if (marcado) restaurados++;
+                }
+            }
+            return;
+        }
+        campo.value = valor;
+        // En un <select>, asignar un valor inexistente no cambia nada: se
+        // cuenta como restaurado solo si de verdad quedó seleccionado.
+        if (campo.options && String(campo.value) !== String(valor)) return;
+        restaurados++;
+    });
+    return restaurados;
+}
+
+/**
+ * Lee un borrador válido: versión correcta, de la misma cuenta y vigente.
+ *
+ * @param {string} clave la clave corta del formulario.
+ * @returns {object|null} el registro guardado o null si no sirve.
+ */
+function jvBorradorLeer(clave) {
+    var almacen = jvBorradorAlmacen();
+    if (!almacen) return null;
+    var crudo = null;
+    try { crudo = almacen.getItem(jvBorradorLlave(clave)); } catch (error) { return null; }
+    if (!crudo) return null;
+    try {
+        var registro = JSON.parse(crudo);
+        if (!registro || registro.v !== 1) return null;
+        if (registro.usuario !== jvBorradorUsuario()) return null;
+        if (jvBorradorHaceTiempo(registro.actualizado) > jvBorradorVida) {
+            jvBorradorLimpiar(clave);
+            return null;
+        }
+        return registro;
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * Guarda (o actualiza) el borrador de un formulario.
+ *
+ * La marca de envío se preserva: guardar por tecleo nunca borra un "enviado"
+ * previo, y marcar como enviado solo estampa la hora la primera vez.
+ *
+ * @param {HTMLFormElement} form formulario marcado con data-borrador.
+ * @param {boolean} enviado true si se está marcando un envío nativo en curso.
+ * @returns {boolean} true si se escribió en localStorage.
+ */
+function jvBorradorGuardar(form, enviado) {
+    var clave = form.getAttribute('data-borrador');
+    if (!clave) return false;
+    var almacen = jvBorradorAlmacen();
+    if (!almacen) return false;
+    var datos = jvBorradorSerializar(form);
+    // Un borrador sin un solo campo no dice nada: no pisar lo que ya había.
+    if (!Object.keys(datos).length) return false;
+    var previo = jvBorradorLeer(clave);
+    var registro = {
+        v: 1,
+        clave: String(clave),
+        usuario: jvBorradorUsuario(),
+        datos: datos,
+        enviado: null,
+        actualizado: Date.now()
+    };
+    if (enviado) registro.enviado = (previo && previo.enviado) ? previo.enviado : Date.now();
+    else if (previo) registro.enviado = previo.enviado || null;
+    try {
+        almacen.setItem(jvBorradorLlave(clave), JSON.stringify(registro));
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+/**
+ * Borra definitivamente el borrador de una clave (uso interno y de la fase 2).
+ *
+ * @param {string} clave la clave corta del formulario.
+ * @returns {void}
+ */
+function jvBorradorLimpiar(clave) {
+    var almacen = jvBorradorAlmacen();
+    if (!almacen) return;
+    try { almacen.removeItem(jvBorradorLlave(clave)); } catch (error) { /* nada que borrar. */ }
+}
+
+/**
+ * Milisegundos transcurridos desde un momento dado (nunca negativos).
+ *
+ * @param {number} momento marca de tiempo Date.now() anterior.
+ * @returns {number} tiempo transcurrido en ms.
+ */
+function jvBorradorHaceTiempo(momento) {
+    return Math.max(0, Date.now() - (Number(momento) || 0));
+}
+
+/**
+ * Texto humano de "hace cuánto" para los mensajes de restauración.
+ *
+ * @param {number} momento marca de tiempo a describir.
+ * @returns {string} p. ej. "unos segundos", "5 minutos", "2 horas".
+ */
+function jvBorradorHaceTexto(momento) {
+    var minutos = Math.floor(jvBorradorHaceTiempo(momento) / 60000);
+    if (minutos < 1) return 'unos segundos';
+    if (minutos < 60) return minutos + (minutos === 1 ? ' minuto' : ' minutos');
+    var horas = Math.floor(minutos / 60);
+    if (horas < 24) return horas + (horas === 1 ? ' hora' : ' horas');
+    return 'más de un día';
+}
+
+/**
+ * Pregunta con Swal qué hacer con un borrador (o restaura en silencio en las
+ * páginas de acceso, que no cargan Swal). Descartar purga; Esc y el clic en
+ * el fondo conservan el borrador para más tarde.
+ *
+ * @param {object} registro borrador leído de localStorage.
+ * @param {HTMLFormElement} form formulario destino de la restauración.
+ * @returns {Promise<boolean>} true si se restauró.
+ */
+function jvBorradorPreguntar(registro, form) {
+    if (typeof Swal === 'undefined') {
+        jvBorradorRestaurar(form, registro.datos);
+        return Promise.resolve(true);
+    }
+    return Swal.fire({
+        title: '¿Retomar el borrador?',
+        html: 'Guardamos lo que escribiste hace ' + jvBorradorHaceTexto(registro.actualizado) + '.',
+        icon: 'question',
+        confirmButtonText: 'Restaurar',
+        showCancelButton: true,
+        cancelButtonText: 'Descartar',
+        reverseButtons: true
+    }).then(function(resultado) {
+        if (resultado && resultado.isConfirmed) {
+            jvBorradorRestaurar(form, registro.datos);
+            return true;
+        }
+        // Descartar explícito purga; Esc o clic en el fondo lo conservan.
+        if (resultado && resultado.isDismissed && resultado.dismiss === 'cancel') {
+            jvBorradorLimpiar(registro.clave);
+        }
+        return false;
+    });
+}
+
+/**
+ * Encola una decisión para que, si varias llegan juntas, se pregunten de a
+ * una y en orden (Swal no soporta dos diálogos simultáneos).
+ *
+ * @param {object} registro borrador leído de localStorage.
+ * @param {HTMLFormElement} form formulario destino.
+ * @returns {Promise<boolean>} resuelve cuando la decisión se tomó.
+ */
+function jvBorradorDecidir(registro, form) {
+    jvBorradorCola = jvBorradorCola.then(function() {
+        return jvBorradorPreguntar(registro, form);
+    });
+    return jvBorradorCola;
+}
+
+/**
+ * Decide qué hacer con un borrador ya leído: purgar, restaurar con aviso o
+ * preguntar (ver las reglas en la cabecera del módulo).
+ *
+ * @param {object} registro borrador leído de localStorage.
+ * @param {HTMLFormElement} form formulario destino.
+ * @returns {void}
+ */
+function jvBorradorDecidirSobre(registro, form) {
+    var clave = registro.clave;
+    var envioReciente = registro.enviado && jvBorradorHaceTiempo(registro.enviado) < jvBorradorVentanaEnvio;
+    if (envioReciente) {
+        var exito = document.querySelector ? document.querySelector('.alert-jv-success') : null;
+        if (exito) {
+            // El POST terminó bien: el borrador ya cumplió su trabajo.
+            jvBorradorLimpiar(clave);
+            return;
+        }
+        // El POST nativo rebotó (validación de servidor, sesión vencida):
+        // devolver el texto y avisar sin exigir ningún clic.
+        jvBorradorRestaurar(form, registro.datos);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: 'Recuperamos lo que habías escrito',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        }
+        return;
+    }
+    jvBorradorDecidir(registro, form);
+}
+
+/**
+ * Escucha un formulario: guardado con retardo al escribir y marca de envío.
+ *
+ * El listener de submit se registra en fase burbuja a propósito: los módulos
+ * (compras, salidas, usuarios…) registran los suyos antes y pueden hacer
+ * preventDefault; si el evento llega sin prevenir es un POST nativo real y
+ * se marca "enviado" antes de que el navegador navegue.
+ *
+ * @param {HTMLFormElement} form formulario marcado con data-borrador.
+ * @returns {void}
+ */
+function jvBorradorEscuchar(form) {
+    var retardar = function() {
+        var previo = jvBorradorTemporizadores.get(form);
+        if (previo) clearTimeout(previo);
+        jvBorradorTemporizadores.set(form, setTimeout(function() {
+            jvBorradorTemporizadores.delete(form);
+            jvBorradorGuardar(form, false);
+        }, 400));
+    };
+    form.addEventListener('input', retardar);
+    form.addEventListener('change', retardar);
+
+    form.addEventListener('submit', function(evento) {
+        // Un envío prevenido (validación de módulo o fetch) solo re-guarda.
+        jvBorradorGuardar(form, !evento.defaultPrevented);
+    });
+}
+
+/**
+ * Prepara un formulario marcado: decide qué hacer con su borrador guardado y
+ * activa los listeners. Si el formulario vive en un modal oculto
+ * (offsetParent null), la decisión espera a que Bootstrap lo muestre
+ * (evento delegado shown.bs.modal).
+ *
+ * @param {HTMLFormElement} form formulario con atributo data-borrador.
+ * @returns {void}
+ */
+function jvBorradorPreparar(form) {
+    var clave = form.getAttribute('data-borrador');
+    if (!clave) return;
+    var registro = jvBorradorLeer(clave);
+    var oculto = registro && form.offsetParent === null;
+
+    if (registro && !oculto) jvBorradorDecidirSobre(registro, form);
+
+    if (oculto) {
+        document.addEventListener('shown.bs.modal', function(evento) {
+            if (!registro || !evento.target || !evento.target.contains(form)) return; // es otro modal
+            var pendiente = registro;
+            registro = null;
+            jvBorradorDecidirSobre(pendiente, form);
+        });
+    }
+
+    jvBorradorEscuchar(form);
+}
+
+/**
+ * Activa los borradores en todos los formularios marcados de la página.
+ *
+ * @returns {void}
+ */
+function jvBorradorActivar() {
+    if (!document.querySelectorAll) return;
+    var formularios = document.querySelectorAll('form[data-borrador]');
+    for (var i = 0; i < formularios.length; i++) jvBorradorPreparar(formularios[i]);
+}
+
+// Este fichero se carga en el <head>: los borradores se activan al estar el
+// DOM listo, después de los listeners de los módulos (fase burbuja).
+document.addEventListener('DOMContentLoaded', function() {
+    jvBorradorActivar();
+});

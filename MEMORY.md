@@ -15,6 +15,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - El árbol vive dentro del gestor modal de Categorías (botón superior); la tabla de productos queda a ancho completo. Nombres en Title_Case.
 - `marcarError`/`limpiarErrores` son globales en diseno.js (productos, compras y salidas los usaban sin definir) y diseno.css se versiona por mtime (antes ?v=11 fijo).
 - Observabilidad activa: tabla `errores` + panel Diagnóstico (solo admin, Control) + reporte del navegador; correo al admin solo si JV_MAIL_ADMIN tiene dirección (destinatario fijado en .env; sin red o sin SMTP el aviso cae en silencio y queda en el panel).
+- Borradores de formulario (fase 1 lista): data-borrador en 14 formularios clave y módulo jvBorrador en diseno.js que guarda en localStorage (excluye csrf_token/productos_data/pass/pin/codigo/token/clave, atado a JV_CONFIG.userId, caduca 24 h). Enviado <120 s con flash de éxito purga; sin éxito autorestaura con toast; resto pregunta con Swal (Restaurar/Descartar/Esc); modales deciden al mostrarse (shown.bs.modal); la marca enviado solo la estampa un submit nativo. Fase 2 (grillas dinámicas) pendiente.
 
 ## Decisiones (y por qué)
 
@@ -44,6 +45,6 @@ Sin datos sensibles (claves, tokens, PIN).
 - Los modales de Colaboradores se renderizan fuera de `.pagina-usuarios`: no escribir reglas de modal bajo ese ancestro.
 - El ítem «Panel de Inicio» se oculta con `$en_panel_inicio`; los `Contains()` de verificación deben apuntar a `nav-ram-panel` (el chip del hero repite el texto).
 - Formularios con `novalidate` y envío vía `jvPost` necesitan listener submit explícito y mandar las claves que procesa el controlador.
-- Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines.
+- Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines; para barridos HTTP con sesión, Invoke-WebRequest descarta el encabezado Cookie de -Headers: usar `curl.exe -H "Cookie: PHPSESSID=sid"`.
 - Las cadenas con `\n` en comillas simples no se expanden: usar comillas dobles o concatenar con PHP_EOL en los guiones PHP.
 - `NULL ?? 'x'` es 'x': isset() niega los NULL reales; en asserts y comparaciones usar `=== null` sin coalescing.

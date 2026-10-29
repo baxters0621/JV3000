@@ -150,7 +150,7 @@
         <div class="buttons">
             <button class="btn btn-outline" onclick="window.close()">← VOLVER</button>
             <?php if ($preview_token !== ''): ?>
-                <form action="<?php echo BASE_PATH; ?>index.php?url=salidas/confirm&token=<?php echo urlencode($preview_token); ?>" method="POST" onsubmit="return confirmarRegistro(event)">
+                <form action="<?php echo BASE_PATH; ?>index.php?url=salidas/confirm&token=<?php echo urlencode($preview_token); ?>" method="POST" onsubmit="return confirmarRegistro(event)" data-borrador="nota_entrega">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                     <button type="submit" class="btn btn-primary" id="btnConfirmar">✓ CONFIRMAR Y REGISTRAR</button>
                 </form>

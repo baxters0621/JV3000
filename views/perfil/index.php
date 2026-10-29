@@ -31,7 +31,7 @@
                 <i class="bi bi-person-gear" style="color:var(--jv-navy);"></i>
                 <span class="fw-bold small text-secondary text-uppercase">Editar Datos de la Cuenta</span>
             </div>
-            <form method="POST" class="row g-3" id="formPerfil">
+            <form method="POST" class="row g-3" id="formPerfil" data-borrador="perfil">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion" value="actualizar_perfil">
 

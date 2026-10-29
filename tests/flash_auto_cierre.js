@@ -52,7 +52,7 @@ const sandbox = {
 
 vm.runInNewContext(source, sandbox);
 
-assert.equal(listeners.length, 1, 'Debe esperar a DOMContentLoaded: el fichero se carga en el <head>.');
+assert.equal(listeners.length, 2, 'Debe esperar a DOMContentLoaded: el fichero se carga en el <head> (flashes y borradores).');
 assert.equal(
     listenersVentana.map((l) => l.evento).sort().join(','),
     'error,unhandledrejection',

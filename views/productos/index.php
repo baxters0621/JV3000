@@ -418,7 +418,7 @@ foreach ($categorias as $raiz) {
 <div class="modal fade" id="modalCat" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-content-jv">
-            <form method="POST" id="formCat" autocomplete="off">
+            <form method="POST" id="formCat" autocomplete="off" data-borrador="productos_categoria">
                 <div class="jv-modal-header">
                     <div>
                         <h5 class="font-brand" id="modalTitleCat"><i class="bi bi-folder-plus-fill me-2"></i>NUEVA CATEGOR&Iacute;A</h5>
@@ -512,7 +512,7 @@ foreach ($categorias as $raiz) {
     <div class="modal fade" id="modalEditar" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content modal-content-jv modal-producto-edit">
-                <form method="POST" id="formEditar">
+                <form method="POST" id="formEditar" data-borrador="productos_editar">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                     <input type="hidden" name="accion" value="editar_producto">
                     <input type="hidden" name="id_producto" id="edit_id">

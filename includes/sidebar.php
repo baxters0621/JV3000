@@ -230,5 +230,7 @@ $es_op_ventas = $id_rol === 3;
     window.JV_BASE = <?php echo json_encode($prefijo); ?>;
     window.JV_CONFIG = window.JV_CONFIG || {};
     window.JV_CONFIG.prefijo = <?php echo json_encode($prefijo); ?>;
+    // Id de la cuenta activa: los borradores de formulario quedan atados a él.
+    window.JV_CONFIG.userId = <?php echo (int)($_SESSION['id_usuario'] ?? 0); ?>;
 </script>
 <script src="<?php echo $base_assets; ?>js/sidebar.js?v=5"></script>

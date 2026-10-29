@@ -295,7 +295,7 @@ if ($step == 4) {
         // ========================================== 
         ?>
         <div class="rec-step <?php echo $show_buscar ? 'active' : ''; ?>">
-            <form method="POST">
+            <form method="POST" data-borrador="recuperar_buscar">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="rec_action" value="buscar">
                 <label class="rec-label"><i class="bi bi-envelope me-1"></i>Correo Electrónico <span class="rec-label-or">o</span> <i class="bi bi-person me-1"></i>Usuario</label>
@@ -505,6 +505,7 @@ if ($step == 4) {
 
     <script src="../assets/login/recuperar.js<?php echo jv_asset_version('login/recuperar.js'); ?>"></script>
     <script src="../assets/js/bootstrap.bundle.min.js?v=2"></script>
+    <script src="../assets/js/diseno.js<?php echo jv_asset_version('js/diseno.js'); ?>"></script>
 </body>
 
 </html>

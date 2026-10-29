@@ -272,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
                     </div>
                 <?php endif; ?>
 
-                <form action="" method="POST">
+                <form action="" method="POST" data-borrador="login">
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
 
                     <div class="field-group">
@@ -400,6 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     // ========================================== 
     ?>
     <script src="<?php echo $base_assets; ?>js/bootstrap.bundle.min.js?v=2"></script>
+    <script src="../assets/js/diseno.js<?php echo $jv_cache_bust(__DIR__ . '/../assets/js/diseno.js'); ?>"></script>
     <script>
         window.JV_CONFIG = {
             remainingLockoutSeconds: <?php echo $segundos_restantes; ?>

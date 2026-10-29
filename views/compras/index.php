@@ -351,7 +351,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalCompra" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-content-jv">
-            <form method="POST" id="formCompra">
+            <form method="POST" id="formCompra" data-borrador="compras_alta">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_compra" value="registrar">
                 <input type="hidden" name="productos_data" id="productosData">
@@ -524,7 +524,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form method="POST" action="<?php echo $purchaseListUrl; ?>">
+            <form method="POST" action="<?php echo $purchaseListUrl; ?>" data-borrador="compras_pago">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
                 <input type="hidden" name="accion_pago" value="1">
                 <input type="hidden" name="id_compra" id="pago_id_compra">
@@ -943,7 +943,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
             <div class="modal-body p-4">
-            <form action="" method="POST" id="formProveedor">
+            <form action="" method="POST" id="formProveedor" data-borrador="compras_proveedor">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_proveedor" id="p_accion" value="registrar">
                 <input type="hidden" name="id_proveedor" id="p_id_edit">
@@ -1060,7 +1060,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalCatalogo" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-content-jv">
-            <form action="" method="POST" id="formCatalogo">
+            <form action="" method="POST" id="formCatalogo" data-borrador="compras_catalogo">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_catalogo" id="cat_accion" value="registrar">
                 <input type="hidden" name="id_catalogo" id="cat_id_edit">
@@ -1131,7 +1131,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalRecepcion" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-content-jv">
-            <form method="POST" id="formRecepcion">
+            <form method="POST" id="formRecepcion" data-borrador="compras_recepcion">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_recepcion" value="recibir">
                 <input type="hidden" name="id_compra" id="recIdCompra">

@@ -193,7 +193,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 <div class="modal fade" id="modalSalida" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
-            <form action="" method="POST" id="formSalida" onsubmit="return false;">
+            <form action="" method="POST" id="formSalida" onsubmit="return false;" data-borrador="salidas">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_salida" id="s_accion" value="registrar">
                 <input type="hidden" name="id_salida" id="s_id_edit">
