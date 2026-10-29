@@ -14,7 +14,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Categorías: sidebar «Categorías» (icono de jerarquía); árbol de dos niveles con conteo con-stock/total por rama y etiquetas SIN STOCK/OCULTA; el estado de las categorías con productos lo maneja el stock (todo en cero → Inactiva, entra mercancía → Activa; sincronizado tras recepción, salidas y baja por vencimiento, y como red de seguridad al abrir la página); cambio a mano solo en categorías vacías; productos filtrados por rama con ?cat=N (banner + paginación que conserva el filtro); alta/edición con categoría padre (solo raíces activas, máximo 2 niveles, nombre único entre hermanas) y flashes con origen (cat_crear, cat_editar:ID, cat_toggle, prod_toggle, prod_baja, prod_editar:ID).
 - El árbol vive dentro del gestor modal de Categorías (botón superior); la tabla de productos queda a ancho completo. Nombres en Title_Case.
 - `marcarError`/`limpiarErrores` son globales en diseno.js (productos, compras y salidas los usaban sin definir) y diseno.css se versiona por mtime (antes ?v=11 fijo).
-- Observabilidad activa: tabla `errores` + panel Diagnóstico (solo admin, Control) + reporte del navegador; correo al admin solo si JV_MAIL_ADMIN tiene dirección (hoy vacía: sin correos, todo queda en el panel).
+- Observabilidad activa: tabla `errores` + panel Diagnóstico (solo admin, Control) + reporte del navegador; correo al admin solo si JV_MAIL_ADMIN tiene dirección (destinatario fijado en .env; sin red o sin SMTP el aviso cae en silencio y queda en el panel).
 
 ## Decisiones (y por qué)
 
