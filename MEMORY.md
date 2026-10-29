@@ -19,6 +19,7 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.
 - Los flashes llevan origen (`Controller::flash(..., $origen)` + `data-origen`): el JS reabre el modal correcto y marca el campo responsable; el heurístico por texto queda de respaldo.
+- Límites de error: Router captura el Throwable de cada acción y delega en Controller::responderError (JSON en AJAX — todo fetch lleva X-Requested-With —, flash y redirección en web); el navegador muestra UN aviso amable por página desde diseno.js. Un módulo roto no bota al usuario ni muere en silencio.
 - PIN único en `configuracion.pin_emergencia_global`, válido también para el Administrador.
 - Ayuda del PIN como línea fija bajo el encabezado: los globos se recortaban por el `overflow-hidden` de la tarjeta.
 - Ojos tachados por defecto en contraseñas/PIN: el icono indica el estado actual, no la acción.
@@ -36,6 +37,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - `diseno.js` se carga en el `<head>`: su código de DOM debe esperar a DOMContentLoaded.
 - El login ignora el POST si falta `btn_login` (vuelve a pintar la pantalla, sin error).
 - PowerShell 5.1 corrompe UTF-8 (dejó bytes NUL en MEMORY.md y una entrada en UTF-16/latin-1 en la bitácora): bitácora y memoria SOLO se escriben con PHP y se verifican después (BOM, sin NUL, sin dobles codificaciones).
+- Un piloto puede quedar obsoleto cuando el modelo evoluciona (categorias_jerarquia esperaba rutas en mayúsculas tras el paso a Title_Case): al tocar un modelo, correr su piloto y alinear sus aserciones.
 - Un CSS de módulo puede arrastrar dos diseños superpuestos cuando varias sesiones lo tocan en paralelo: antes de retocar, leer el fichero completo y su vista (pasó en historial.css).
 - Assets versionados por mtime: basta recargar y el asset servido debe traer `?v` nuevo (diseno.css incluido).
 - `ventas_stock_piloto`, `compras_recepcion_piloto` y `envio_correo_piloto` se niegan contra la BD real: no es un fallo.

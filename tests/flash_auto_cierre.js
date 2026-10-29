@@ -16,6 +16,7 @@ const source = fs.readFileSync('assets/js/diseno.js', 'utf8');
 assert.match(source, /\.flash-auto/, 'diseno.js debe encargarse de los mensajes .flash-auto del panel.');
 
 const listeners = [];
+const listenersVentana = [];
 const temporizadores = [];
 
 // Mensaje simulado: solo lo que el código real toca (classList y remove).
@@ -41,7 +42,10 @@ const sandbox = {
     window: {
         setTimeout: (cb, ms) => { temporizadores.push({ cb, ms }); return temporizadores.length; },
         clearTimeout: () => {},
-        location: { href: '' }
+        location: { href: '' },
+        addEventListener: (evento, cb) => {
+            if (evento === 'error' || evento === 'unhandledrejection') listenersVentana.push({ evento, cb });
+        }
     },
     console
 };
@@ -49,6 +53,11 @@ const sandbox = {
 vm.runInNewContext(source, sandbox);
 
 assert.equal(listeners.length, 1, 'Debe esperar a DOMContentLoaded: el fichero se carga en el <head>.');
+assert.equal(
+    listenersVentana.map((l) => l.evento).sort().join(','),
+    'error,unhandledrejection',
+    'El límite de errores del navegador debe registrar sus dos escuchas (error y unhandledrejection).'
+);
 listeners[0]();
 
 assert.equal(temporizadores.length, mensajes.length, 'Cada mensaje debe programar su propia salida.');

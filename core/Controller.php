@@ -178,4 +178,50 @@ abstract class Controller
         unset($_SESSION['flash_msg']);
         return $flash;
     }
+
+    /**
+     * Límite de errores por acción: responde dentro del contexto del módulo.
+     *
+     * Equivalente del "Error Boundary" de React para este stack: una acción
+     * que lanza Throwable no derriba la aplicación. Deshace la transacción
+     * activa, registra el detalle en el log y responde según el tipo de
+     * petición: JSON para AJAX (header X-Requested-With) y flash con
+     * redirección validada para la navegación normal. El manejador global
+     * de init.php queda como última red para errores fuera del Router.
+     *
+     * @param Throwable $e Error capturado durante la acción.
+     * @return never
+     */
+    public function responderError(Throwable $e): never
+    {
+        $db = Database::getInstance();
+        if ($db->inTransaction()) {
+            $db->rollback();
+        }
+        error_log('[JV3000] ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
+
+        $es_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        if ($es_ajax) {
+            // Claves "ok" y "success" juntas: los módulos revisan una u otra.
+            $this->json([
+                'ok' => false,
+                'success' => false,
+                'error' => 'No se completó la operación. Intenta de nuevo.',
+            ], 500);
+        }
+
+        $this->flash('danger', 'No se completó la operación. Intenta de nuevo; si vuelve a fallar, avisa al administrador.');
+
+        // Volver al referer solo si es del mismo host, si no al panel.
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        if ($referer !== '') {
+            $partes = parse_url($referer);
+            if (($partes['host'] ?? '') !== ($_SERVER['HTTP_HOST'] ?? '')) {
+                $referer = '';
+            }
+        }
+        header('Location: ' . ($referer !== '' ? $referer : APP_URL_BASE . 'dashboard/index.php'));
+        exit;
+    }
 }

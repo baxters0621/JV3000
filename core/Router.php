@@ -67,7 +67,14 @@ class Router
             self::notFound("Acción no encontrada: {$action}");
         }
 
-        call_user_func_array([$controller, $action], $params);
+        try {
+            call_user_func_array([$controller, $action], $params);
+        } catch (Throwable $e) {
+            // Límite de errores por acción: el módulo responde dentro de su
+            // propio contexto (JSON en AJAX, flash y redirección en web) en
+            // lugar de derribar toda la aplicación.
+            $controller->responderError($e);
+        }
     }
 
     /**

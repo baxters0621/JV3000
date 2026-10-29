@@ -194,7 +194,7 @@ $afirmar($resultado['ok'], 'El alta de una raíz debe aceptarse.');
 $insercion = $buscarInsercion();
 $afirmar($insercion !== [], 'El alta debe insertar en categorias.');
 $afirmar(($insercion['datos']['nivel'] ?? -1) === 0, 'Una raíz se registra en el nivel 0.');
-$afirmar(($insercion['datos']['ruta'] ?? '') === 'CAUCHOS', 'La ruta de una raíz es su nombre en mayúsculas.');
+$afirmar(($insercion['datos']['ruta'] ?? '') === 'Cauchos', 'La ruta de una raíz es su propio nombre (tal cual se normaliza).');
 $afirmar(($insercion['datos']['status'] ?? '') === 'Activo', 'Toda categoría nueva nace Activa.');
 $afirmar(($insercion['datos']['codigo'] ?? '') === 'CAT-043', 'El código sale del contador (42 + 1 = CAT-043).');
 $afirmar(array_key_exists('parent_id', $insercion['datos']) && $insercion['datos']['parent_id'] === null, 'Una raíz no lleva parent_id.');
@@ -208,7 +208,7 @@ $insercion = $buscarInsercion();
 $afirmar($insercion !== [], 'La subcategoría debe insertarse en categorias.');
 $afirmar(($insercion['datos']['parent_id'] ?? 0) === 9, 'La subcategoría apunta a su raíz.');
 $afirmar(($insercion['datos']['nivel'] ?? -1) === 1, 'La subcategoría se registra en el nivel 1.');
-$afirmar(($insercion['datos']['ruta'] ?? '') === 'REPUESTOS PARA MOTOS/RIN 15', 'La ruta hereda el tramo del padre.');
+$afirmar(($insercion['datos']['ruta'] ?? '') === 'REPUESTOS PARA MOTOS/Rin 15', 'La ruta hereda el tramo del padre tal cual está almacenado.');
 
 // 3. Padre inexistente: rechazado sin escribir nada.
 $limpiar();
@@ -248,10 +248,10 @@ $db->hijosDeRuta = [['id_categoria' => 13, 'ruta' => 'REPUESTOS PARA MOTOS/RIN 1
 $resultado = $modelo->procesar(['accion' => 'editar', 'nombre' => 'repuestos de motos', 'id_padre' => 0, 'id_categoria' => 9]);
 $afirmar($resultado['ok'], 'La edición de la raíz debe aceptarse.');
 $actualizacion = $db->escrituras[0] ?? [];
-$afirmar(($actualizacion['tipo'] ?? '') === 'update' && ($actualizacion['datos']['ruta'] ?? '') === 'REPUESTOS DE MOTOS', 'El renombre actualiza la ruta propia.');
+$afirmar(($actualizacion['tipo'] ?? '') === 'update' && ($actualizacion['datos']['ruta'] ?? '') === 'Repuestos de motos', 'El renombre actualiza la ruta propia (nombre normalizado).');
 $afirmar(!array_key_exists('codigo', $actualizacion['datos']), 'El código no cambia al editar (no va en la actualización).');
 $arrastrado = $db->escrituras[1] ?? [];
-$afirmar(strpos($arrastrado['params'][0] ?? '', 'REPUESTOS DE MOTOS/RIN 13') !== false, 'La ruta de la subcategoría se arrastra al renombrar el padre.');
+$afirmar(strpos($arrastrado['params'][0] ?? '', 'Repuestos de motos/RIN 13') !== false, 'La ruta de la subcategoría se arrastra al renombrar el padre (conserva su cola).');
 
 // 8. Una raíz con subcategorías no puede volverse subcategoría.
 $limpiar();

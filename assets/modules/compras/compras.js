@@ -59,7 +59,7 @@
             }
             if (infoEl) infoEl.innerHTML = '<i class="bi bi-hourglass-split"></i> Consultando tasa BCV...';
 
-            fetch('index.php?url=tasas/obtener')
+            fetch('index.php?url=tasas/obtener', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     if (!data.ok) {

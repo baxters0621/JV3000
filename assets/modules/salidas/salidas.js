@@ -415,7 +415,7 @@
             const fd = new FormData();
             fd.append('csrf_token', window.JV_CONFIG.csrfToken);
             fd.append('items', JSON.stringify(items));
-            fetch((window.JV_BASE || '') + 'index.php?url=solicitudes/crear', { method: 'POST', body: fd })
+            fetch((window.JV_BASE || '') + 'index.php?url=solicitudes/crear', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd })
                 .then(r => r.json())
                 .then(d => {
                     if (btn) { btn.disabled = false; btn.innerHTML = '🚚 ENVIAR SOLICITUD A COMPRAS'; }

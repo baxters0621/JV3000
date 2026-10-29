@@ -96,3 +96,44 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 4000);
     });
 });
+
+// ==========================================
+// LÍMITE DE ERRORES DEL NAVEGADOR — un aviso amable, nunca un clic mudo
+// ==========================================
+// Equivalente del "Error Boundary" de React para este stack (JS nativo):
+// si cualquier script del panel falla en tiempo de ejecución (error o promesa
+// sin manejar), la página NO se recarga ni el clic muere en silencio: se
+// muestra UN solo aviso por carga de página con lenguaje claro, y el detalle
+// técnico queda en la consola para diagnóstico. Los formularios siguen en
+// pantalla: lo que la persona escribió no se pierde.
+var jv_aviso_error_mostrado = false;
+
+/**
+ * Muestra una única vez el aviso amable de error inesperado del panel.
+ *
+ * @returns {void}
+ */
+function jvAvisoErrorNavegador() {
+    if (jv_aviso_error_mostrado || typeof Swal === 'undefined') return;
+    jv_aviso_error_mostrado = true;
+    Swal.fire({
+        icon: 'warning',
+        title: 'No se completó la acción',
+        html: 'Algo falló al procesar lo último que intentaste. Lo que ya escribiste sigue ahí, no se perdió nada. Puedes intentarlo de nuevo; si vuelve a fallar, avisa al administrador.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#EA580C'
+    });
+}
+
+// Errores de ejecución de los scripts del panel (los fallos de carga de
+// recursos como imágenes no burbujean: no llegan aquí ni molestan).
+window.addEventListener('error', function(evento) {
+    console.error('[JV3000] Error no manejado:', evento.error || evento.message);
+    jvAvisoErrorNavegador();
+});
+
+// Promesas sin catch (por ejemplo, un fetch que falló por red) caen aquí.
+window.addEventListener('unhandledrejection', function(evento) {
+    console.error('[JV3000] Promesa sin manejar:', evento.reason);
+    jvAvisoErrorNavegador();
+});
