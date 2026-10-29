@@ -625,15 +625,24 @@ set_exception_handler(function (Throwable $e) {
 
     error_log("[JV3000] " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
 
+    // Observabilidad: última red del sistema. Todo error que no pasó por el
+    // Router queda en el diario (tabla errores) como los del boundary.
+    try {
+        require_once __DIR__ . '/models/ErrorLog.php';
+        (new ErrorLog())->registrar($e);
+    } catch (Throwable) {
+        // El diagnóstico nunca interrumpe la respuesta al usuario.
+    }
+
     $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
     if ($isAjax) {
         header('Content-Type: application/json');
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error interno del servidor.']);
+        echo json_encode(['ok' => false, 'success' => false, 'error' => 'No se completó la operación. Intenta de nuevo.']);
         exit;
     }
 
-    $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'Error interno del servidor.'];
+    $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'No se completó la operación. Intenta de nuevo; si vuelve a fallar, avisa al administrador.'];
     $ref = $_SERVER['HTTP_REFERER'] ?? '';
     if ($ref !== '') {
         $rp = parse_url($ref);

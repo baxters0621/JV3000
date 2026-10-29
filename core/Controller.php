@@ -200,6 +200,15 @@ abstract class Controller
         }
         error_log('[JV3000] ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
 
+        // Observabilidad: el error queda en el diario (tabla errores) para
+        // que el administrador lo descubra antes que la persona usuaria.
+        try {
+            require_once APP_MODELS . '/ErrorLog.php';
+            (new ErrorLog())->registrar($e);
+        } catch (Throwable) {
+            // El diagnóstico nunca interrumpe la respuesta al usuario.
+        }
+
         $es_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
             && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         if ($es_ajax) {

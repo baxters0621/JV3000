@@ -60,13 +60,14 @@ $es_op_ventas = $id_rol === 3;
         $ver_estadisticas = $es_admin || $es_op_ventas;
         $ver_usuarios   = $es_admin;
         $ver_historial  = $es_admin || $es_op_carga || $es_op_ventas;
+        $ver_diagnostico = $es_admin;
 
         // Detecta rama activa para auto-expandir
         $rama_inventario_activa = $mvc_activa('productos');
         $rama_compras_activa = $mvc_activa('compras');
         $rama_salidas_activa = $mvc_activa('salidas');
         $rama_analisis_activo = $mvc_activa('estadisticas') || $mvc_activa('reporte_inventario');
-        $rama_admin_activo = $mvc_activa('historial') || $mvc_activa('usuarios');
+        $rama_admin_activo = $mvc_activa('historial') || $mvc_activa('usuarios') || $mvc_activa('diagnostico');
         ?>
 
         <!-- ═══ INVENTARIO (consulta: los tres roles) ═══ -->
@@ -173,6 +174,14 @@ $es_op_ventas = $id_rol === 3;
                     <a href="<?php echo $prefijo; ?>index.php?url=usuarios" class="nav-link">
                         <i class="bi bi-people"></i>
                         <span>Usuarios</span>
+                    </a>
+                </div>
+                <?php endif; ?>
+                <?php if ($ver_diagnostico): ?>
+                <div class="nav-item <?php echo $mvc_activa('diagnostico') ? 'active' : ''; ?>">
+                    <a href="<?php echo $prefijo; ?>index.php?url=diagnostico" class="nav-link">
+                        <i class="bi bi-activity"></i>
+                        <span>Diagnóstico</span>
                     </a>
                 </div>
                 <?php endif; ?>

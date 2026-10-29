@@ -28,6 +28,33 @@ CREATE TABLE `auditoria` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `errores` (
+  `id_error` int(11) NOT NULL AUTO_INCREMENT,
+  `huella` char(32) NOT NULL,
+  `origen` varchar(10) NOT NULL DEFAULT 'servidor',
+  `clase` varchar(150) DEFAULT NULL,
+  `mensaje` text NOT NULL,
+  `archivo` varchar(255) DEFAULT NULL,
+  `linea` int(11) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
+  `metodo` varchar(10) DEFAULT NULL,
+  `es_ajax` tinyint(1) NOT NULL DEFAULT 0,
+  `id_usuario` int(11) DEFAULT NULL,
+  `rol` tinyint(4) DEFAULT NULL,
+  `agente` varchar(255) DEFAULT NULL,
+  `stack` text DEFAULT NULL,
+  `ocurrencias` int(11) NOT NULL DEFAULT 1,
+  `primera_vez` timestamp NOT NULL DEFAULT current_timestamp(),
+  `ultima_vez` timestamp NOT NULL DEFAULT current_timestamp(),
+  `resuelto` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id_error`),
+  UNIQUE KEY `uq_huella` (`huella`),
+  KEY `idx_ultima_vez` (`ultima_vez`),
+  KEY `idx_resuelto` (`resuelto`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `catalogo_costos` (
   `id_catalogo` int(11) NOT NULL AUTO_INCREMENT,
   `id_proveedor` int(11) NOT NULL,

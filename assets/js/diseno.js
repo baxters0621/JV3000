@@ -109,13 +109,52 @@ document.addEventListener('DOMContentLoaded', function() {
 var jv_aviso_error_mostrado = false;
 
 /**
- * Muestra una única vez el aviso amable de error inesperado del panel.
+ * Envía el detalle del error al diario del servidor (tabla errores).
  *
+ * Es fire-and-forget: el POST viaja con keepalive (sobrevive si la página
+ * se descarga al instante) y nadie espera su respuesta. Solo participa si
+ * hay sesión (existe csrfToken) — las páginas públicas no reportan. Cualquier
+ * fallo del envío se descarta: el reporte es cortesía, nunca interrumpe.
+ *
+ * @param {object|null} detalle mensaje, archivo, linea y stack del error.
  * @returns {void}
  */
-function jvAvisoErrorNavegador() {
-    if (jv_aviso_error_mostrado || typeof Swal === 'undefined') return;
+function jvReportarErrorNavegador(detalle) {
+    try {
+        var csrf = (window.JV_CONFIG || {}).csrfToken;
+        var mensaje = detalle && detalle.mensaje ? String(detalle.mensaje) : '';
+        // Sin sesión (csrf), sin FormData o sin fetch (entornos raros): nada que enviar.
+        if (!mensaje || !csrf || typeof FormData === 'undefined' || typeof window.fetch !== 'function') return;
+
+        var datos = new FormData();
+        datos.append('csrf_token', String(csrf));
+        datos.append('mensaje', mensaje.slice(0, 800));
+        datos.append('archivo', String((detalle && detalle.archivo) || '').slice(0, 255));
+        datos.append('linea', String((detalle && detalle.linea) || ''));
+        datos.append('stack', String((detalle && detalle.stack) || '').slice(0, 4000));
+        window.fetch((window.JV_BASE || '') + 'index.php?url=diagnostico/cliente', {
+            method: 'POST',
+            body: datos,
+            keepalive: true,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).catch(function() { /* El reporte no tiene cliente que avise. */ });
+    } catch (fallo) {
+        // El reporte es cortesía: jamás interrumpe al aviso del usuario.
+    }
+}
+
+/**
+ * Muestra una única vez el aviso amable de error inesperado del panel y
+ * deja el detalle en el diario del servidor para el panel Diagnóstico.
+ *
+ * @param {object|null} detalle mensaje, archivo, linea y stack (del evento).
+ * @returns {void}
+ */
+function jvAvisoErrorNavegador(detalle) {
+    if (jv_aviso_error_mostrado) return;
     jv_aviso_error_mostrado = true;
+    jvReportarErrorNavegador(detalle);
+    if (typeof Swal === 'undefined') return;
     Swal.fire({
         icon: 'warning',
         title: 'No se completó la acción',
@@ -129,13 +168,25 @@ function jvAvisoErrorNavegador() {
 // recursos como imágenes no burbujean: no llegan aquí ni molestan).
 window.addEventListener('error', function(evento) {
     console.error('[JV3000] Error no manejado:', evento.error || evento.message);
-    jvAvisoErrorNavegador();
+    jvAvisoErrorNavegador({
+        mensaje: evento.message || (evento.error && evento.error.message) || '',
+        archivo: evento.filename || '',
+        linea: evento.lineno || 0,
+        stack: (evento.error && evento.error.stack) || ''
+    });
 });
 
 // Promesas sin catch (por ejemplo, un fetch que falló por red) caen aquí.
 window.addEventListener('unhandledrejection', function(evento) {
     console.error('[JV3000] Promesa sin manejar:', evento.reason);
-    jvAvisoErrorNavegador();
+    var razon = evento.reason;
+    var es_error = razon instanceof Error;
+    jvAvisoErrorNavegador({
+        mensaje: (es_error ? razon.message : String(razon)) || 'Promesa sin manejar',
+        archivo: '',
+        linea: 0,
+        stack: (es_error && razon.stack) || ''
+    });
 });
 
 // ==========================================

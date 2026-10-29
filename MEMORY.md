@@ -14,6 +14,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Categorías: sidebar «Categorías» (icono de jerarquía); árbol de dos niveles con conteo con-stock/total por rama y etiquetas SIN STOCK/OCULTA; el estado de las categorías con productos lo maneja el stock (todo en cero → Inactiva, entra mercancía → Activa; sincronizado tras recepción, salidas y baja por vencimiento, y como red de seguridad al abrir la página); cambio a mano solo en categorías vacías; productos filtrados por rama con ?cat=N (banner + paginación que conserva el filtro); alta/edición con categoría padre (solo raíces activas, máximo 2 niveles, nombre único entre hermanas) y flashes con origen (cat_crear, cat_editar:ID, cat_toggle, prod_toggle, prod_baja, prod_editar:ID).
 - El árbol vive dentro del gestor modal de Categorías (botón superior); la tabla de productos queda a ancho completo. Nombres en Title_Case.
 - `marcarError`/`limpiarErrores` son globales en diseno.js (productos, compras y salidas los usaban sin definir) y diseno.css se versiona por mtime (antes ?v=11 fijo).
+- Observabilidad activa: tabla `errores` + panel Diagnóstico (solo admin, Control) + reporte del navegador; correo al admin solo si JV_MAIL_ADMIN tiene dirección (hoy vacía: sin correos, todo queda en el panel).
 
 ## Decisiones (y por qué)
 
@@ -28,6 +29,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - El rol Administrador es único: los colaboradores solo son Carga o Ventas.
 - Acceso al Historial por alcance: administración ve compras y ventas, carga compras, ventas ventas; el servidor aplica el mismo límite que el menú.
 - Pregunta/respuesta de seguridad retirada; columnas por legado, no usar.
+- La huella de error agrupa por archivo:línea (o inicio del mensaje sin archivo) y el INSERT suma ocurrencias: un error repetido nunca duplica filas ni dispara un segundo correo antes de 1 hora.
 
 ## Aprendizajes y errores a evitar
 
@@ -39,11 +41,9 @@ Sin datos sensibles (claves, tokens, PIN).
 - Un piloto puede quedar obsoleto cuando el modelo evoluciona (categorias_jerarquia esperaba rutas en mayúsculas tras el paso a Title_Case): al tocar un modelo, correr su piloto y alinear sus aserciones.
 - Un fetch simulado debe honrar la señal de aborto: si no rechaza al abortar, la promesa queda colgada y Node sale en silencio con código 0 (pasó en skeleton_carga).
 - Un CSS de módulo puede arrastrar dos diseños superpuestos cuando varias sesiones lo tocan en paralelo: antes de retocar, leer el fichero completo y su vista (pasó en historial.css).
-- Assets versionados por mtime: basta recargar y el asset servido debe traer `?v` nuevo (diseno.css incluido).
-- `ventas_stock_piloto`, `compras_recepcion_piloto` y `envio_correo_piloto` se niegan contra la BD real: no es un fallo.
 - Los modales de Colaboradores se renderizan fuera de `.pagina-usuarios`: no escribir reglas de modal bajo ese ancestro.
 - El ítem «Panel de Inicio» se oculta con `$en_panel_inicio`; los `Contains()` de verificación deben apuntar a `nav-ram-panel` (el chip del hero repite el texto).
 - Formularios con `novalidate` y envío vía `jvPost` necesitan listener submit explícito y mandar las claves que procesa el controlador.
 - Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines.
 - Las cadenas con `\n` en comillas simples no se expanden: usar comillas dobles o concatenar con PHP_EOL en los guiones PHP.
-- `pin_global_piloto.php` fija el diseño de la tarjeta del PIN: si cambia, actualizar sus aserciones.
+- `NULL ?? 'x'` es 'x': isset() niega los NULL reales; en asserts y comparaciones usar `=== null` sin coalescing.

@@ -94,6 +94,9 @@ define('SMTP_USER', $jv_config_value('JV_SMTP_USER', ''));
 define('SMTP_PASS', $jv_config_value('JV_SMTP_PASS', ''));
 define('SMTP_FROM', $jv_config_value('JV_SMTP_FROM', ''));
 define('SMTP_FROM_NOMBRE', $jv_config_value('JV_SMTP_FROM_NAME', 'JV3000 C.A.'));
+// Destinatario del aviso proactivo de errores del diario (observabilidad).
+// Vacío = sin correos automáticos; los errores quedan solo en el panel.
+define('JV_MAIL_ADMIN', $jv_config_value('JV_MAIL_ADMIN', ''));
 
 // Ruta base relativa desde el script actual hasta la raíz de la app
 // ('', '../', '../../' según la profundidad: raíz, login/dashboard/modules, ...)
