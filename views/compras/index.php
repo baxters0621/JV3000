@@ -347,7 +347,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <?php endif; ?>
 
 <!-- Modal: Registrar compra -->
-<script>window.JV_CATALOGO = <?php echo $catalogo_costos; ?>;</script>
+<script>window.JV_CATALOGO = <?php echo $catalogo_costos ?? '[]'; ?>;</script>
 <div class="modal fade" id="modalCompra" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-content-jv">
