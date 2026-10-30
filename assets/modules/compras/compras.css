@@ -1156,21 +1156,55 @@
         }
 
         /* ── Modal Proveedor: Formulario unificado y limpio ── */
+        .pagina-compras #modalProveedor .modal-dialog {
+            max-height: calc(100vh - 3.5rem);
+        }
         .pagina-compras #modalProveedor .modal-content-jv {
             background: #ffffff;
             border-radius: var(--jv-radius-xl, 18px);
             overflow: hidden;
             border: 1px solid var(--jv-border);
             box-shadow: 0 20px 45px rgba(0, 0, 0, 0.16);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 3.5rem);
+        }
+        .pagina-compras #modalProveedor form#formProveedor {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: 100%;
+            min-height: 0;
+            overflow: hidden;
+            flex: 1 1 auto;
         }
         .pagina-compras #modalProveedor .modal-header-jv {
             border-radius: 0;
             margin: 0;
             padding: 22px 28px;
+            flex-shrink: 0;
         }
         .pagina-compras #modalProveedor .modal-body {
             background: #ffffff;
             padding: 24px 28px;
+            overflow-y: auto;
+            flex: 1 1 auto;
+            min-height: 0;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        .pagina-compras #modalProveedor .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .pagina-compras #modalProveedor .modal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .pagina-compras #modalProveedor .modal-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 6px;
+        }
+        .pagina-compras #modalProveedor .modal-body::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
         .pagina-compras #modalProveedor .prov-form-section {
             margin-bottom: 0.25rem;
@@ -1274,6 +1308,7 @@
             padding: 16px 28px;
             background: #f8fafc;
             border-top: 1px solid #e2e8f0;
+            flex-shrink: 0;
         }
 
         /* ── Toolbar: búsqueda + filtros + NUEVO ── */
