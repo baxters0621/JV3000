@@ -15,12 +15,12 @@
    ========================================== */
 
 .dash-hero {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    gap: 14px 28px;
     margin-bottom: 30px;
-    padding: 22px 26px;
+    padding: 26px 32px;
     background: linear-gradient(135deg, #0F1A2E 0%, #1C2E4D 48%, #2C4A78 100%);
     border-radius: var(--jv-radius-xl);
     box-shadow: 0 12px 32px rgba(15, 26, 46, 0.28);
@@ -39,39 +39,45 @@
     pointer-events: none;
 }
 
-/* Marca centrada: logo y nombre en fila, el bloque completo al centro.
-   El estado (esquina) y el chip de ubicación se posicionan aparte. */
+/* Marca grande a la izquierda ocupando toda la altura del hero (filas 1-2).
+   La columna 1 puede encoger: si el ancho no alcanza, el eslogan parte en
+   dos líneas y el título (nowrap) nunca se encima con los chips. */
 .dash-brand {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    justify-self: start;
+    align-self: center;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 20px;
     position: relative;
     z-index: 1;
 }
 
 .dash-logo-badge {
-    width: 90px;
-    height: 90px;
+    width: 130px;
+    height: 130px;
     flex-shrink: 0;
-    filter: drop-shadow(0 8px 22px rgba(234, 88, 12, 0.45));
+    filter: drop-shadow(0 12px 30px rgba(234, 88, 12, 0.5));
 }
 
 .dash-brand-meta {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    min-width: 0;
 }
 
 .dash-brand-title {
     font-family: var(--jv-font-brand);
-    font-size: 2.2rem;
+    font-size: 2.8rem;
     font-weight: 800;
     color: #fff;
     line-height: 1;
     letter-spacing: -1px;
     margin: 0;
+    white-space: nowrap;
 }
 
 .dash-brand-title .num {
@@ -80,58 +86,62 @@
 }
 
 .dash-brand-ca {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: #FDE9D9;
     text-transform: uppercase;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     margin-top: 8px;
 }
 
 .dash-brand-tag {
-    margin: 8px 0 0;
+    margin: 12px 0 0;
     color: #DCE5F0;
-    font-size: 1.02rem;
+    font-size: 1.2rem;
     font-weight: 700;
     letter-spacing: 0.5px;
     line-height: 1.25;
-    text-align: center;
 }
 
-/* Grupo de estado: fecha, alertas y persona, reducidos y pegados a la
-   derecha en fila propia. En flujo y no absolute: la marca centrada en su
-   propia fila jamás choca con los chips a ningún ancho de ventana (la
-   primera versión con position absolute encimaba el título desde ~1760px). */
+/* Grupo de estado: fecha, alertas y persona, reducidos arriba a la
+   derecha (fila 1 de la columna derecha de la grilla del hero). */
 .dash-hero-status {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    align-self: center;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     gap: 10px;
 }
 
-/* Chip de ubicación: centrado bajo la marca y en azul cielo, un color
-   que no repite ningún acento naranja para que la página actual se note. */
+/* Chip de ubicación: abajo a la derecha, GRANDE y estirado por todo el ancho
+   de la columna derecha (justify-self stretch de la grilla) — en azul cielo,
+   un color que no repite ningún acento naranja para que la página actual
+   se note de un vistazo. */
 .dash-here {
+    grid-column: 2;
+    grid-row: 2;
     display: inline-flex;
     align-items: center;
-    align-self: center;
-    gap: 8px;
-    padding: 9px 22px;
-    border-radius: 999px;
+    justify-content: center;
+    gap: 10px;
+    padding: 13px 26px;
+    border-radius: 14px;
     background: rgba(56, 189, 248, 0.14);
     border: 1px solid rgba(56, 189, 248, 0.55);
     box-shadow: 0 0 18px rgba(56, 189, 248, 0.18);
     color: #BAE6FD;
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     font-weight: 800;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     white-space: nowrap;
 }
 
 .dash-here i {
     color: #7DD3FC;
-    font-size: 1rem;
+    font-size: 1.15rem;
 }
 
 .dash-user {
@@ -766,6 +776,17 @@
     .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 }
 
+@media (max-width: 1280px) {
+    /* Debajo de este ancho la marca y los chips no comparten fila:
+       se apilan centrados y el chip de ubicación queda abajo a la derecha. */
+    .dash-hero { grid-template-columns: 1fr; }
+    .dash-brand { grid-column: 1; grid-row: 1; justify-self: center; }
+    .dash-brand-meta { align-items: center; }
+    .dash-brand-tag { text-align: center; }
+    .dash-hero-status { grid-column: 1; grid-row: 2; justify-self: center; }
+    .dash-here { grid-column: 1; grid-row: 3; justify-self: end; }
+}
+
 @media (max-width: 768px) {
     .tables-grid { grid-template-columns: 1fr; }
     .tables-grid .table-card:nth-child(3) { grid-column: auto; }
@@ -777,8 +798,9 @@
     .dash-brand-ca { font-size: 0.8rem; }
     .dash-user-name { font-size: 0.9rem; }
     .dash-date { font-size: 0.75rem; }
-    /* En móvil el estado se centra sobre la marca */
+    /* En móvil el estado se centra y el chip azul ocupa el ancho */
     .dash-hero-status { justify-content: center; }
+    .dash-here { justify-self: stretch; }
     .kpi-value { font-size: 2.2rem; }
     .quick-grid { grid-template-columns: 1fr; }
 }
