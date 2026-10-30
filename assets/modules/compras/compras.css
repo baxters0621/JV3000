@@ -1109,7 +1109,7 @@
             transform: scale(1.1);
         }
 
-        /* ── Secciones del formulario de proveedor ── */
+        /* ── Secciones base para modales de compras ── */
         .pagina-compras .comp-section {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -1153,6 +1153,127 @@
             font-size: .75rem;
             color: #64748b;
             font-weight: 400;
+        }
+
+        /* ── Modal Proveedor: Formulario unificado y limpio ── */
+        .pagina-compras #modalProveedor .modal-content-jv {
+            background: #ffffff;
+            border-radius: var(--jv-radius-xl, 18px);
+            overflow: hidden;
+            border: 1px solid var(--jv-border);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.16);
+        }
+        .pagina-compras #modalProveedor .modal-header-jv {
+            border-radius: 0;
+            margin: 0;
+            padding: 22px 28px;
+        }
+        .pagina-compras #modalProveedor .modal-body {
+            background: #ffffff;
+            padding: 24px 28px;
+        }
+        .pagina-compras #modalProveedor .prov-form-section {
+            margin-bottom: 0.25rem;
+        }
+        .pagina-compras #modalProveedor .prov-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .pagina-compras #modalProveedor .prov-section-chip {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(5, 150, 105, 0.12);
+            color: #047857;
+            font-size: 1.05rem;
+            border: 1px solid rgba(5, 150, 105, 0.22);
+        }
+        .pagina-compras #modalProveedor .prov-section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.25;
+            letter-spacing: -0.15px;
+        }
+        .pagina-compras #modalProveedor .prov-section-sub {
+            font-size: 0.775rem;
+            color: #64748b;
+            font-weight: 400;
+            margin-top: 1px;
+        }
+        .pagina-compras #modalProveedor .prov-divider {
+            border: 0;
+            border-top: 1px solid #e2e8f0;
+            margin: 20px 0;
+            opacity: 1;
+        }
+        .pagina-compras #modalProveedor .prov-label {
+            display: inline-block;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+            letter-spacing: 0.01em;
+        }
+        .pagina-compras #modalProveedor .prov-hint {
+            display: block;
+            font-size: 0.725rem;
+            color: #64748b;
+            margin-top: 4px;
+            line-height: 1.35;
+            font-weight: 500;
+        }
+        .pagina-compras #modalProveedor .input-jv,
+        .pagina-compras #modalProveedor .comp-input {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.875rem;
+            color: #0f172a;
+            background: #ffffff;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .pagina-compras #modalProveedor .input-jv:focus,
+        .pagina-compras #modalProveedor .comp-input:focus {
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+            outline: none;
+        }
+        .pagina-compras #modalProveedor select.comp-rif-tipo {
+            max-width: 76px;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+            background-color: #f8fafc;
+            font-weight: 700;
+            color: #047857;
+            text-align: center;
+        }
+        .pagina-compras #modalProveedor #p_rif_numero {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .pagina-compras #modalProveedor .iti {
+            width: 100%;
+        }
+        .pagina-compras #modalProveedor textarea.comp-input {
+            resize: vertical;
+            min-height: 58px;
+        }
+        .pagina-compras #modalProveedor .prov-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 28px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
         }
 
         /* ── Toolbar: búsqueda + filtros + NUEVO ── */

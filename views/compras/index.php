@@ -954,17 +954,18 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <button type="button" class="prov-close-btn" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                     </div>
 
-                    <div class="comp-section sec-fiscal">
-                        <div class="comp-section-header">
-                            <span class="comp-section-chip chip-fiscal"><i class="bi bi-file-earmark-text"></i></span>
+                <div class="modal-body p-4 pt-3">
+                    <div class="prov-form-section">
+                        <div class="prov-section-header">
+                            <span class="prov-section-chip"><i class="bi bi-file-earmark-text"></i></span>
                             <div>
-                                <div class="comp-section-title">Informaci&oacute;n Fiscal</div>
-                                <div class="comp-section-sub">Datos legales de la empresa</div>
+                                <div class="prov-section-title">Informaci&oacute;n Fiscal</div>
+                                <div class="prov-section-sub">Datos legales y tributarios de la empresa</div>
                             </div>
                         </div>
-                        <div class="row g-3 mb-0">
-                            <div class="col-md-3">
-                                <label class="comp-label">RIF / C&eacute;dula <span class="text-danger">*</span></label>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="prov-label" for="p_rif_numero">RIF / C&eacute;dula <span class="text-danger">*</span></label>
                                 <input type="hidden" name="rif" id="p_rif">
                                 <div class="input-group">
                                     <select id="p_rif_tipo" class="input-jv comp-input comp-rif-tipo" required>
@@ -977,60 +978,65 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     </select>
                                     <input type="text" id="p_rif_numero" class="input-jv comp-input" required placeholder="12345678-0" maxlength="10" inputmode="numeric">
                                 </div>
-                                <small class="comp-hint">V/E: 8 dígitos · J/G/P/C: 8 dígitos + 1 verificador</small>
+                                <small class="prov-hint">V/E: 8 d&iacute;gitos &middot; J/G/P/C: 8 d&iacute;gitos + 1 verificador</small>
                             </div>
-                            <div class="col-md-9">
-                                <label class="comp-label">Nombre de la Empresa <span class="text-danger">*</span></label>
+                            <div class="col-md-8">
+                                <label class="prov-label" for="p_empresa">Nombre de la empresa <span class="text-danger">*</span></label>
                                 <input type="text" name="nombre_empresa" id="p_empresa" class="input-jv comp-input text-uppercase" required placeholder="NOMBRE LEGAL DE LA EMPRESA" maxlength="100" oninput="this.value = this.value.toUpperCase()">
                             </div>
-                        </div>
-                        <div class="mt-3 mb-0">
-                            <label class="comp-label">Direcci&oacute;n Fiscal</label>
-                            <textarea name="direccion" id="p_direccion" class="input-jv comp-input" rows="2" placeholder="Direcci&oacute;n fiscal completa"></textarea>
-                        </div>
-                    </div>
-                    </div>
-
-                    <div class="comp-section sec-contacto">
-                        <div class="comp-section-header">
-                            <span class="comp-section-chip chip-contacto"><i class="bi bi-person-lines-fill"></i></span>
-                            <div>
-                                <div class="comp-section-title">Contacto</div>
-                                <div class="comp-section-sub">&iquest;Con qui&eacute;n hablamos?</div>
+                            <div class="col-12">
+                                <label class="prov-label" for="p_direccion">Direcci&oacute;n fiscal</label>
+                                <textarea name="direccion" id="p_direccion" class="input-jv comp-input" rows="2" placeholder="Direcci&oacute;n fiscal completa"></textarea>
                             </div>
                         </div>
-                        <div class="row g-3 mb-0">
+                    </div>
+
+                    <hr class="prov-divider">
+
+                    <!-- Sección 2: Contacto -->
+                    <div class="prov-form-section">
+                        <div class="prov-section-header">
+                            <span class="prov-section-chip"><i class="bi bi-person-lines-fill"></i></span>
+                            <div>
+                                <div class="prov-section-title">Contacto</div>
+                                <div class="prov-section-sub">Canales directos de comunicaci&oacute;n</div>
+                            </div>
+                        </div>
+                        <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="comp-label">Tel&eacute;fono <span class="text-danger">*</span></label>
+                                <label class="prov-label" for="p_tel">Tel&eacute;fono <span class="text-danger">*</span></label>
                                 <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input" required maxlength="20" inputmode="tel" placeholder="0412-1234567">
                                 <input type="hidden" name="telefono_completo" id="p_tel_full">
                             </div>
                             <div class="col-md-4">
-                                <label class="comp-label">Persona de Contacto</label>
+                                <label class="prov-label" for="p_contacto_nombre">Persona de contacto</label>
                                 <input type="text" name="contacto_nombre" id="p_contacto_nombre" class="input-jv comp-input" placeholder="Nombre del contacto">
                             </div>
                             <div class="col-md-4">
-                                <label class="comp-label">Correo Electr&oacute;nico</label>
+                                <label class="prov-label" for="p_email">Correo electr&oacute;nico</label>
                                 <input type="email" name="email" id="p_email" class="input-jv comp-input" placeholder="correo@ejemplo.com">
                             </div>
                         </div>
                     </div>
 
-                    <div class="comp-section sec-comercial">
-                        <div class="comp-section-header">
-                            <span class="comp-section-chip chip-comercial"><i class="bi bi-gear"></i></span>
+                    <hr class="prov-divider">
+
+                    <!-- Sección 3: Condiciones Comerciales -->
+                    <div class="prov-form-section">
+                        <div class="prov-section-header">
+                            <span class="prov-section-chip"><i class="bi bi-briefcase"></i></span>
                             <div>
-                                <div class="comp-section-title">Condiciones Comerciales</div>
-                                <div class="comp-section-sub">Entregas y moneda de trabajo</div>
+                                <div class="prov-section-title">Condiciones Comerciales</div>
+                                <div class="prov-section-sub">Par&aacute;metros operativos y moneda de negociaci&oacute;n</div>
                             </div>
                         </div>
-                        <div class="row g-3 mb-0">
+                        <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="comp-label">Plazo de Entrega (D&iacute;as)</label>
+                                <label class="prov-label" for="p_lead_time">Plazo de entrega (d&iacute;as)</label>
                                 <input type="number" name="lead_time" id="p_lead_time" class="input-jv comp-input" placeholder="Ej: 7" min="0" max="365" maxlength="3" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3)">
                             </div>
                             <div class="col-md-4">
-                                <label class="comp-label">Moneda</label>
+                                <label class="prov-label" for="p_moneda">Moneda preferente</label>
                                 <select name="moneda" id="p_moneda" class="input-jv comp-input">
                                     <option value="USD">USD - D&oacute;lar</option>
                                     <option value="EUR">EUR - Euro</option>
@@ -1038,7 +1044,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="comp-label">Estado</label>
+                                <label class="prov-label" for="p_status">Estado operativo</label>
                                 <select name="status" id="p_status" class="input-jv comp-input">
                                     <option value="Activo">Activo</option>
                                     <option value="Inactivo">Inactivo</option>
@@ -1046,12 +1052,17 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase mt-3">
+                <div class="modal-footer prov-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary px-4 py-2 fw-bold text-uppercase">
                         <i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR
                     </button>
-            </form>
                 </div>
+            </form>
         </div>
     </div>
 </div>
