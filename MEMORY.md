@@ -16,7 +16,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Observabilidad activa: tabla `errores` + panel Diagnóstico (solo admin, Control) + reporte del navegador; correo al admin solo si JV_MAIL_ADMIN tiene dirección (destinatario fijado en .env; sin red o sin SMTP el aviso cae en silencio y queda en el panel).
 - Borradores de formulario (fase 1): jvBorrador en diseno.js guarda data-borrador de 14 formularios en localStorage (excluye secretos, atado a userId, caduca 24 h); éxito <120 s purga, sin éxito autorestaura con toast, resto pregunta con Swal. Fase 2 (grillas dinámicas) pendiente.
 - Reglas de acceso cerradas en `includes/ajax`: `exportar_csv.php` exporta solo según el mapa de roles (historial solo admin), `clientes_buscar.php` exige ventas y `productos_buscar.php` es lectura común; eran endpoints huérfanos con datos abiertos a cualquier rol.
-- Proveedores: validación de RIF/cédula sincronizada cliente-servidor (cédula V/E sin verificador, RIF J/G/P/C con verificador vía validarDocumentoFiscal()); modal rediseñado (Opción B): ancho contenido, filas tipo+número+empresa, teléfono+contacto+correo, dirección fiscal, condiciones comerciales.
+- Proveedores: validación de RIF/cédula sincronizada cliente-servidor (cédula V/E sin verificador, RIF J/G/P/C con verificador vía validarDocumentoFiscal()); diseño del modal revertido al original (RIF/Cédula tipo+número juntos, Nombre de la Empresa al lado, ancho modal-lg).
 
 ## Decisiones (y por qué)
 
