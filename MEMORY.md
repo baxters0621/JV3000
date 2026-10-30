@@ -16,6 +16,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - `marcarError`/`limpiarErrores` son globales en diseno.js (productos, compras y salidas los usaban sin definir) y diseno.css se versiona por mtime (antes ?v=11 fijo).
 - Observabilidad activa: tabla `errores` + panel Diagnóstico (solo admin, Control) + reporte del navegador; correo al admin solo si JV_MAIL_ADMIN tiene dirección (destinatario fijado en .env; sin red o sin SMTP el aviso cae en silencio y queda en el panel).
 - Borradores de formulario (fase 1 lista): data-borrador en 14 formularios clave y módulo jvBorrador en diseno.js que guarda en localStorage (excluye csrf_token/productos_data/pass/pin/codigo/token/clave, atado a JV_CONFIG.userId, caduca 24 h). Enviado <120 s con flash de éxito purga; sin éxito autorestaura con toast; resto pregunta con Swal (Restaurar/Descartar/Esc); modales deciden al mostrarse (shown.bs.modal); la marca enviado solo la estampa un submit nativo. Fase 2 (grillas dinámicas) pendiente.
+- Reglas de acceso cerradas en `includes/ajax`: `exportar_csv.php` exporta solo según el mapa de roles (historial solo admin), `clientes_buscar.php` exige ventas y `productos_buscar.php` es lectura común; eran endpoints huérfanos con datos abiertos a cualquier rol.
 
 ## Decisiones (y por qué)
 
@@ -48,3 +49,4 @@ Sin datos sensibles (claves, tokens, PIN).
 - Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines; para barridos HTTP con sesión, Invoke-WebRequest descarta el encabezado Cookie de -Headers: usar `curl.exe -H "Cookie: PHPSESSID=sid"`.
 - Las cadenas con `\n` en comillas simples no se expanden: usar comillas dobles o concatenar con PHP_EOL en los guiones PHP.
 - `NULL ?? 'x'` es 'x': isset() niega los NULL reales; en asserts y comparaciones usar `=== null` sin coalescing.
+- Los ficheros de `includes/ajax/` pasan por init.php: la sesión ya viene validada; la puerta por rol va tras el chequeo XHR y responde 403 JSON (no redirigir). Sesiones artesanales por cookie no valen para pruebas HTTP: use_strict_mode borra el fichero de sesión.

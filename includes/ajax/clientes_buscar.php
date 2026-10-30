@@ -17,6 +17,14 @@ if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'
 
 header('Content-Type: application/json');
 
+// Regla de acceso: el buscador de clientes lo usa el toolbox de Ventas
+// (administrador y operador de ventas).
+if (!Security::puedeVender()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'SIN PERMISOS.']);
+    exit;
+}
+
 $db = Database::getInstance();
 
 $q = trim((string)($_GET['q'] ?? ''));

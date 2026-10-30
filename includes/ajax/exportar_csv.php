@@ -18,6 +18,25 @@ if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'
 $db = Database::getInstance();
 $tabla = strtolower(trim($_GET['tabla'] ?? ''));
 
+// Reglas de acceso por tabla (mapa de roles del sistema):
+// productos es lectura común (Inventario lo consulta cualquier rol),
+// compras/proveedores pertenecen al módulo de Carga (admin + operador de carga),
+// salidas/clientes al módulo de Ventas (admin + operador de ventas) y el
+// historial mezcla la auditoría de todos los módulos (solo administrador).
+$permitido = match ($tabla) {
+    'productos' => true,
+    'compras', 'proveedores' => Security::puedeCargar(),
+    'salidas', 'clientes' => Security::puedeVender(),
+    'historial' => Security::esAdmin(),
+    default => false,
+};
+if (!$permitido) {
+    header('Content-Type: application/json');
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'SIN PERMISOS PARA EXPORTAR ESTA TABLA.']);
+    exit;
+}
+
 $queries = [
     'productos' => "
         SELECT p.sku, p.nombre_producto, c.nombre as categoria,
