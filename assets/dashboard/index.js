@@ -252,8 +252,10 @@
         iniciarAlertas();
         iniciarReloj();
 
-        // Reloj en tiempo real: hora local de Venezuela (Caracas) en formato 12h.
-        // Se actualiza cada segundo y usa cifras tabulares para no "saltar".
+        // Reloj compacto: hora local de Venezuela (Caracas) en 12h SIN segundos
+        // y con el periodo abreviado («pm»/«am»); cifras tabulares para que no
+        // "salte". Se refresca cada 10 s: al mostrar solo minutos sobra el
+        // ritmo de 1 s.
         function iniciarReloj() {
             var reloj = $id('dash-clock');
             if (!reloj) return;
@@ -261,12 +263,18 @@
                 timeZone: 'America/Caracas',
                 hour: 'numeric',
                 minute: '2-digit',
-                second: '2-digit',
                 hour12: true
             });
             function pintar() {
-                reloj.textContent = formateador.format(new Date());
+                var hora = '', minuto = '', periodo = '';
+                formateador.formatToParts(new Date()).forEach(function (parte) {
+                    if (parte.type === 'hour') hora = parte.value;
+                    if (parte.type === 'minute') minuto = parte.value;
+                    if (parte.type === 'dayPeriod') periodo = parte.value;
+                });
+                // «p. m.» → «pm»: sin puntos ni espacios queda más compacto.
+                reloj.textContent = hora + ':' + minuto + ' ' + periodo.toLowerCase().replace(/[\s.]/g, '');
             }
             pintar();
-            setInterval(pintar, 1000);
+            setInterval(pintar, 10000);
         }

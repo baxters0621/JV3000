@@ -200,7 +200,7 @@
     align-items: center;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.16);
-    padding: 7px 13px;
+    padding: 6px 11px;
     border-radius: 11px;
     color: #fff;
     font-weight: 700;
@@ -222,19 +222,26 @@
 
 #dash-clock::first-letter { text-transform: lowercase; }
 
-.dash-bell-wrap { position: relative; }
+/* Orden visual dentro del grupo: campana primero, luego fecha/hora y al
+   final el usuario. El marcado conserva su orden original; flex order
+   reacomoda sin mover el bloque PHP (la campana es lo único enfocable del
+   grupo, así el orden de tabulado no cambia). */
+.dash-bell-wrap {
+    position: relative;
+    order: -1;
+}
 
 .dash-bell {
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     border: 1.5px solid rgba(255, 255, 255, 0.3);
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
@@ -248,15 +255,15 @@
 
 .dash-bell-badge {
     position: absolute;
-    top: -5px;
-    right: -5px;
-    min-width: 18px;
-    height: 18px;
+    top: -6px;
+    right: -6px;
+    min-width: 19px;
+    height: 19px;
     padding: 0 4px;
     border-radius: 20px;
     background: #DC2626;
     color: #fff;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 800;
     display: inline-flex;
     align-items: center;
