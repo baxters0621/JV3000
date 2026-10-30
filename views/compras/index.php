@@ -942,12 +942,11 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalProveedor" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
-            <div class="modal-body p-4">
             <form action="" method="POST" id="formProveedor" data-borrador="compras_proveedor">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_proveedor" id="p_accion" value="registrar">
                 <input type="hidden" name="id_proveedor" id="p_id_edit">
-                    <div class="modal-header-jv">
+                <div class="modal-header-jv">
                         <div>
                             <h5 class="font-brand" id="modalTitle" style="font-size:1.1rem;"><i class="bi bi-building me-2"></i>Registrar Nuevo Proveedor</h5>
                             <small>Completa los datos del proveedor para asociarlo a tus compras</small>
