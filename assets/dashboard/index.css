@@ -98,16 +98,15 @@
     text-align: center;
 }
 
-/* Grupo de estado: fecha, alertas y persona anclados a la esquina
-   superior derecha, reducidos para no disputar el centro con la marca. */
+/* Grupo de estado: fecha, alertas y persona, reducidos y pegados a la
+   derecha en fila propia. En flujo y no absolute: la marca centrada en su
+   propia fila jamás choca con los chips a ningún ancho de ventana (la
+   primera versión con position absolute encimaba el título desde ~1760px). */
 .dash-hero-status {
-    position: absolute;
-    top: 16px;
-    right: 20px;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 10px;
-    z-index: 2;
 }
 
 /* Chip de ubicación: centrado bajo la marca y en azul cielo, un color
@@ -767,12 +766,6 @@
     .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 }
 
-@media (max-width: 1080px) {
-    /* La esquina ya no cabe junto a la marca centrada: el estado pasa a fila
-       propia encima de la marca (primero en el orden del marcado). */
-    .dash-hero-status { position: static; justify-content: center; flex-wrap: wrap; }
-}
-
 @media (max-width: 768px) {
     .tables-grid { grid-template-columns: 1fr; }
     .tables-grid .table-card:nth-child(3) { grid-column: auto; }
@@ -784,6 +777,8 @@
     .dash-brand-ca { font-size: 0.8rem; }
     .dash-user-name { font-size: 0.9rem; }
     .dash-date { font-size: 0.75rem; }
+    /* En móvil el estado se centra sobre la marca */
+    .dash-hero-status { justify-content: center; }
     .kpi-value { font-size: 2.2rem; }
     .quick-grid { grid-template-columns: 1fr; }
 }
