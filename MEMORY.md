@@ -6,8 +6,7 @@ Sin datos sensibles (claves, tokens, PIN).
 ## Estado actual
 
 - Instalación automática en equipo nuevo verificada de punta a punta (`init.php` + `db/jv3000_portable_v6.sql`); validación global en verde (`tools/validar.ps1`).
-- PIN de emergencia global fijado por la interfaz y probado E2E (recuperación completa y bloqueo a los 3 intentos); interfaz pulida (ojos tachados, ayuda fija, flash que se auto-cierra a los 4 s).
-- Contraseñas nuevas: 8-18 caracteres sin espacios en creación, restablecimiento, recuperación y perfil; el cliente marca espacios en rojo y el servidor los rechaza sin recortar.
+- PIN de emergencia global fijado y probado E2E (bloqueo a los 3 intentos, interfaz pulida con ojos tachados y flash de 4 s); contraseñas de 8-18 sin espacios en alta, restablecimiento, recuperación y perfil, marcadas en rojo y rechazadas sin recortar.
 - Colaboradores: alta/edición con validación en cliente y servidor, nombres Unicode de 4-20 con `normalizarUsuario()` (Title_Case), insignias por rol y «Guardar cambios» solo con cambios reales. Las cuentas NO se eliminan: solo se suspenden (decisión del usuario, 2026-10-23).
 - Encabezado del dashboard en dos bandas (identidad arriba; ubicación + fecha/hora/campana/usuario abajo); «Panel de Inicio» se oculta solo en el panel.
 - Historial de operaciones paginado y filtrable por rol (compras/ventas) con auditoría separada; Estadísticas abre los últimos 90 días y compara con el período previo. Historial rediseñado en dos pasadas (26 y 28/10): la segunda unifica el encabezado con el patrón global module-header (icono navy, contador en pill) y reescribe el CSS en limpio — el fichero tenía dos diseños superpuestos, ~230 líneas muertas y 3 variables usadas sin definirse; color por operación compra verde / venta rojo reutilizado de Estadísticas.
@@ -50,3 +49,4 @@ Sin datos sensibles (claves, tokens, PIN).
 - Las cadenas con `\n` en comillas simples no se expanden: usar comillas dobles o concatenar con PHP_EOL en los guiones PHP.
 - `NULL ?? 'x'` es 'x': isset() niega los NULL reales; en asserts y comparaciones usar `=== null` sin coalescing.
 - Los ficheros de `includes/ajax/` pasan por init.php: la sesión ya viene validada; la puerta por rol va tras el chequeo XHR y responde 403 JSON (no redirigir). Sesiones artesanales por cookie no valen para pruebas HTTP: use_strict_mode borra el fichero de sesión.
+- Restos de herramientas de agentes en el repo (refs/agents, refs/cline, ramas agents/* y copilot/*): los checkpoints se borraron el 29/10; las ramas agents/* guardan commits sin fusionar en main — no borrarlas ni fusionarlas sin revisar su contenido.
