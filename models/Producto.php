@@ -70,16 +70,19 @@ class Producto extends Model
     /**
      * Edición de un producto (solo admin).
      *
-     * Valida producto, stock mínimo/máximo, precios y estado; luego
-     * actualiza el registro y registra la auditoría. El costo se recalcula
-     * solo en la recepción de mercancía (promedio ponderado), no aquí.
+     * Valida producto, categoría, stock mínimo/máximo, precios y estado;
+     * luego actualiza el registro y registra la auditoría. El costo se
+     * recalcula solo en la recepción de mercancía (promedio ponderado), no
+     * aquí. Cambiar de categoría puede mover el producto de rama en el
+     * árbol: la sincronización por stock recalcula los estados afectados.
      *
-     * @param array $datosProducto Datos del formulario (id_producto, stocks, precios...).
+     * @param array $datosProducto Datos del formulario (id_producto, id_categoria, stocks, precios...).
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
     public function editar(array $datosProducto): array
     {
         $idProducto = (int)$datosProducto['id_producto'];
+        $idCategoria = (int)($datosProducto['id_categoria'] ?? 0);
         $stockMinimo = (int)$datosProducto['stock_minimo'];
         $stockMaximo = (int)$datosProducto['stock_maximo'];
         $precioVentaRaw = trim((string)$datosProducto['precio_venta']);
@@ -88,6 +91,17 @@ class Producto extends Model
         $fechaVencimiento = trim((string)($datosProducto['fecha_vencimiento'] ?? ''));
 
         if ($idProducto <= 0) return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO.'];
+        // Categoría: 0 (sin categoría) o una categoría existente y activa.
+        $categoriaNueva = null;
+        if ($idCategoria > 0) {
+            $categoriaNueva = $this->db->fetchOne(
+                "SELECT nombre FROM categorias WHERE id_categoria = ? AND status = 'Activo'",
+                [$idCategoria]
+            );
+            if (!$categoriaNueva) {
+                return ['ok' => false, 'mensaje' => 'LA CATEGORÍA SELECCIONADA NO EXISTE O ESTÁ INACTIVA.'];
+            }
+        }
         if ($fechaVencimiento === '') {
             return ['ok' => false, 'mensaje' => 'LA FECHA DE VENCIMIENTO ES OBLIGATORIA.'];
         }
@@ -108,15 +122,28 @@ class Producto extends Model
         if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
 
         // Optimistic locking: verificar updated_at antes de actualizar
-        $current = $this->db->fetchOne("SELECT updated_at FROM productos WHERE id_producto = ?", [$idProducto]);
+        $current = $this->db->fetchOne("SELECT updated_at, id_categoria FROM productos WHERE id_producto = ?", [$idProducto]);
         $this->db->execute(
-            "UPDATE productos SET stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=? WHERE id_producto=? AND updated_at=?",
-            [$stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $idProducto, $current['updated_at'] ?? '']
+            "UPDATE productos SET id_categoria=?, stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=? WHERE id_producto=? AND updated_at=?",
+            [$idCategoria, $stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $idProducto, $current['updated_at'] ?? '']
         );
         if ($this->db->affectedRows() === 0) {
             return ['ok' => false, 'mensaje' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL PRODUCTO. RECARGUE LA PÁGINA.'];
         }
-        registrarAuditoria('editar', 'Producto modificado');
+        // Si cambió la categoría: el producto se movió de rama y los estados
+        // de las categorías afectadas se recalculan como red de seguridad.
+        $categoriaAnterior = (int)($current['id_categoria'] ?? 0);
+        if ($categoriaAnterior !== $idCategoria) {
+            $anterior = $categoriaAnterior > 0
+                ? $this->db->fetchOne("SELECT nombre FROM categorias WHERE id_categoria = ?", [$categoriaAnterior])
+                : null;
+            $de = $anterior['nombre'] ?? 'sin categoría';
+            $a = $categoriaNueva['nombre'] ?? 'sin categoría';
+            (new Categoria())->sincronizarPorStock();
+            registrarAuditoria('editar', "Producto modificado (categoría: $de → $a)");
+        } else {
+            registrarAuditoria('editar', 'Producto modificado');
+        }
         return ['ok' => true, 'mensaje' => 'PRODUCTO ACTUALIZADO EN EL INVENTARIO.'];
     }
 

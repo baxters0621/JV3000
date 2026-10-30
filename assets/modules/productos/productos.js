@@ -252,6 +252,22 @@
             formatearPrecioEdicion(document.getElementById('edit_costo'));
             document.getElementById('edit_status').value = row.getAttribute('data-status');
             document.getElementById('edit_vencimiento').value = row.getAttribute('data-venc');
+            // Categoría actual del producto. Si está inactiva no figura entre
+            // las opciones del select (que solo lista activas): se agrega
+            // marcada como temporal para que no salte de rama en silencio.
+            var catId = parseInt(row.getAttribute('data-cat'), 10) || 0;
+            var catNombre = row.getAttribute('data-cat-nombre') || '';
+            var selectCategoria = document.getElementById('edit_categoria');
+            var opcionTemporal = document.getElementById('edit_categoria_temp');
+            if (opcionTemporal) opcionTemporal.remove();
+            if (catId > 0 && !selectCategoria.querySelector('option[value="' + catId + '"]')) {
+                var opcionActual = document.createElement('option');
+                opcionActual.id = 'edit_categoria_temp';
+                opcionActual.value = String(catId);
+                opcionActual.textContent = catNombre + ' (inactiva)';
+                selectCategoria.appendChild(opcionActual);
+            }
+            selectCategoria.value = String(catId);
             if (modalEditar) modalEditar.show();
         }
 

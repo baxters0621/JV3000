@@ -300,7 +300,7 @@ foreach ($categorias as $raiz) {
                             }
                         }
                         ?>
-                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
+                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-cat="<?php echo (int)($productRecord['id_categoria'] ?? 0); ?>" data-cat-nombre="<?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
                             <td class="td-prod-sku">
                                 <span class="codigo-badge" data-tooltip="<?php echo htmlspecialchars($productRecord['sku'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
                             </td>
@@ -556,6 +556,24 @@ foreach ($categorias as $raiz) {
                             <div class="col-6">
                                 <label class="small fw-bold text-secondary mb-1">COSTO PROMEDIO ($)</label>
                                 <input type="text" class="input-jv" id="edit_costo" readonly disabled style="color:var(--jv-text-muted);background:rgba(15,26,46,0.04);" data-tooltip="Se calcula automáticamente al recibir mercancía (costo promedio ponderado)">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-12">
+                                <label class="small fw-bold text-secondary mb-1">CATEGOR&Iacute;A</label>
+                                <select class="input-jv" id="edit_categoria" name="id_categoria">
+                                    <option value="0">&mdash; Sin categor&iacute;a &mdash;</option>
+                                    <?php foreach ($categorias as $cat_raiz): ?>
+                                        <?php if (($cat_raiz['status'] ?? '') === 'Activo'): ?>
+                                            <option value="<?php echo (int)$cat_raiz['id_categoria']; ?>"><?php echo htmlspecialchars($cat_raiz['nombre']); ?></option>
+                                        <?php endif; ?>
+                                        <?php foreach (($cat_raiz['hijos'] ?? []) as $cat_hija): ?>
+                                            <?php if (($cat_hija['status'] ?? '') === 'Activo'): ?>
+                                                <option value="<?php echo (int)$cat_hija['id_categoria']; ?>">— <?php echo htmlspecialchars($cat_hija['nombre']); ?></option>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
                         <div class="row g-2 mb-2">

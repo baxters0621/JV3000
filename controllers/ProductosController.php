@@ -76,6 +76,8 @@ class ProductosController extends Controller
             };
             $resultado = $modelo->editar([
                 'id_producto'     => (int)($_POST['id_producto'] ?? 0),
+                // Categoría: 0 = sin categoría; el modelo valida que exista y esté activa
+                'id_categoria'    => (int)($_POST['id_categoria'] ?? 0),
                 // Stocks crudos: el modelo valida que sean enteros puros en rango
                 'stock_minimo'    => trim((string)($_POST['stock_minimo'] ?? '')),
                 'stock_maximo'    => trim((string)($_POST['stock_maximo'] ?? '')),
