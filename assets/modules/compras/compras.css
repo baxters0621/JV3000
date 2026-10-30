@@ -1156,6 +1156,9 @@
         }
 
         /* ── Modal Proveedor: Formulario unificado y limpio ── */
+        .pagina-compras #modalProveedor {
+            font-family: var(--jv-font-main, 'Plus Jakarta Sans', sans-serif);
+        }
         .pagina-compras #modalProveedor .modal-dialog {
             max-height: calc(100vh - 3.5rem);
         }
@@ -1168,6 +1171,7 @@
             display: flex;
             flex-direction: column;
             max-height: calc(100vh - 3.5rem);
+            font-family: inherit;
         }
         .pagina-compras #modalProveedor form#formProveedor {
             display: flex;
@@ -1181,12 +1185,23 @@
         .pagina-compras #modalProveedor .modal-header-jv {
             border-radius: 0;
             margin: 0;
-            padding: 22px 28px;
+            padding: 24px 30px;
             flex-shrink: 0;
+        }
+        .pagina-compras #modalProveedor .modal-header-jv h5 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+        }
+        .pagina-compras #modalProveedor .modal-header-jv small {
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.95;
+            margin-top: 4px;
         }
         .pagina-compras #modalProveedor .modal-body {
             background: #ffffff;
-            padding: 24px 28px;
+            padding: 26px 30px;
             overflow-y: auto;
             flex: 1 1 auto;
             min-height: 0;
@@ -1194,7 +1209,7 @@
             scrollbar-color: #cbd5e1 transparent;
         }
         .pagina-compras #modalProveedor .modal-body::-webkit-scrollbar {
-            width: 6px;
+            width: 7px;
         }
         .pagina-compras #modalProveedor .modal-body::-webkit-scrollbar-track {
             background: transparent;
@@ -1207,17 +1222,17 @@
             background: #94a3b8;
         }
         .pagina-compras #modalProveedor .prov-form-section {
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
         }
         .pagina-compras #modalProveedor .prov-section-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 14px;
+            margin-bottom: 18px;
         }
         .pagina-compras #modalProveedor .prov-section-chip {
-            width: 34px;
-            height: 34px;
+            width: 40px;
+            height: 40px;
             border-radius: 10px;
             flex-shrink: 0;
             display: inline-flex;
@@ -1225,90 +1240,117 @@
             justify-content: center;
             background: rgba(5, 150, 105, 0.12);
             color: #047857;
-            font-size: 1.05rem;
+            font-size: 1.15rem;
             border: 1px solid rgba(5, 150, 105, 0.22);
         }
         .pagina-compras #modalProveedor .prov-section-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #0f172a;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #065f46;
             line-height: 1.25;
-            letter-spacing: -0.15px;
+            letter-spacing: -0.2px;
         }
         .pagina-compras #modalProveedor .prov-section-sub {
-            font-size: 0.775rem;
-            color: #64748b;
-            font-weight: 400;
-            margin-top: 1px;
+            font-size: 0.85rem;
+            color: #475569;
+            font-weight: 500;
+            margin-top: 2px;
         }
         .pagina-compras #modalProveedor .prov-divider {
             border: 0;
             border-top: 1px solid #e2e8f0;
-            margin: 20px 0;
+            margin: 22px 0;
             opacity: 1;
         }
         .pagina-compras #modalProveedor .prov-label {
             display: inline-block;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 6px;
-            letter-spacing: 0.01em;
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+            letter-spacing: -0.1px;
         }
         .pagina-compras #modalProveedor .prov-hint {
-            display: block;
-            font-size: 0.725rem;
-            color: #64748b;
-            margin-top: 4px;
+            display: inline-block;
+            font-size: 0.8125rem;
+            color: #047857;
+            background: rgba(5, 150, 105, 0.08);
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-top: 6px;
             line-height: 1.35;
-            font-weight: 500;
+            font-weight: 600;
         }
         .pagina-compras #modalProveedor .input-jv,
         .pagina-compras #modalProveedor .comp-input {
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 0.875rem;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
             color: #0f172a;
             background: #ffffff;
+            min-height: 44px;
             transition: border-color .15s ease, box-shadow .15s ease;
+            font-family: inherit;
+        }
+        .pagina-compras #modalProveedor .input-jv::placeholder,
+        .pagina-compras #modalProveedor .comp-input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+            font-size: 0.9rem;
         }
         .pagina-compras #modalProveedor .input-jv:focus,
         .pagina-compras #modalProveedor .comp-input:focus {
             border-color: #059669;
-            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18);
             outline: none;
         }
         .pagina-compras #modalProveedor select.comp-rif-tipo {
-            max-width: 76px;
+            max-width: 82px;
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
             border-right: none;
             background-color: #f8fafc;
-            font-weight: 700;
+            font-weight: 800;
+            font-size: 1rem;
             color: #047857;
             text-align: center;
         }
         .pagina-compras #modalProveedor #p_rif_numero {
             border-top-left-radius: 0;
             border-bottom-left-radius: 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
         .pagina-compras #modalProveedor .iti {
             width: 100%;
         }
         .pagina-compras #modalProveedor textarea.comp-input {
             resize: vertical;
-            min-height: 58px;
+            min-height: 68px;
+            line-height: 1.5;
         }
         .pagina-compras #modalProveedor .prov-modal-footer {
             display: flex;
             justify-content: flex-end;
             align-items: center;
             gap: 12px;
-            padding: 16px 28px;
+            padding: 18px 30px;
             background: #f8fafc;
             border-top: 1px solid #e2e8f0;
             flex-shrink: 0;
+        }
+        .pagina-compras #modalProveedor .prov-modal-footer .btn {
+            font-size: 0.95rem;
+            border-radius: 10px;
+            padding: 10px 22px;
+        }
+        .pagina-compras #modalProveedor #btn-prov-submit {
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 11px 26px;
         }
 
         /* ── Toolbar: búsqueda + filtros + NUEVO ── */
