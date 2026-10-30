@@ -138,21 +138,10 @@ $tabla_compras = $datos['tabla_compras'];
     <div class="main-wrapper" id="mainWrapper">
         <div class="container-fluid px-4 py-4">
 
-            <!-- ENCABEZADO DE MARCA -->
+            <!-- ENCABEZADO: jerarquía en una banda — estado en la esquina
+                 superior derecha, marca centrada y chip de ubicación centrado -->
             <header class="dash-hero">
-                <div class="dash-brand">
-                    <img class="dash-logo-badge" src="../assets/img/logo-mark.svg?v=1" alt="JV3000">
-                    <div class="dash-brand-meta">
-                        <div class="dash-brand-title">JV<span class="num">3000</span> <span class="dash-brand-ca">C.A.</span></div>
-                        <p class="dash-brand-tag">Centro de Gestión de Inventario, Compras y Ventas</p>
-                    </div>
-                </div>
-                <div class="dash-hero-info">
-                    <div class="dash-here" aria-current="page">
-                        <i class="bi bi-house-door-fill" aria-hidden="true"></i>
-                        <span>Panel de Inicio</span>
-                    </div>
-                    <div class="dash-hero-status">
+                <div class="dash-hero-status">
                         <div class="dash-date">
                             <i class="bi bi-calendar3 me-2" aria-hidden="true"></i><?php echo $fecha_hoy; ?>
                             <span class="dash-date-sep" aria-hidden="true">&middot;</span>
@@ -213,7 +202,17 @@ $tabla_compras = $datos['tabla_compras'];
                                 <div class="dash-user-role"><?php echo strtoupper($rol_user); ?></div>
                             </div>
                         </div>
+                </div>
+                <div class="dash-brand">
+                    <img class="dash-logo-badge" src="../assets/img/logo-mark.svg?v=1" alt="JV3000">
+                    <div class="dash-brand-meta">
+                        <div class="dash-brand-title">JV<span class="num">3000</span> <span class="dash-brand-ca">C.A.</span></div>
+                        <p class="dash-brand-tag">Centro de Gestión de Inventario, Compras y Ventas</p>
                     </div>
+                </div>
+                <div class="dash-here" aria-current="page">
+                    <i class="bi bi-house-door-fill" aria-hidden="true"></i>
+                    <span>Panel de Inicio</span>
                 </div>
             </header>
 

@@ -18,9 +18,9 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 20px;
+    gap: 16px;
     margin-bottom: 30px;
-    padding: 30px 34px;
+    padding: 22px 26px;
     background: linear-gradient(135deg, #0F1A2E 0%, #1C2E4D 48%, #2C4A78 100%);
     border-radius: var(--jv-radius-xl);
     box-shadow: 0 12px 32px rgba(15, 26, 46, 0.28);
@@ -39,30 +39,34 @@
     pointer-events: none;
 }
 
+/* Marca centrada: logo y nombre en fila, el bloque completo al centro.
+   El estado (esquina) y el chip de ubicación se posicionan aparte. */
 .dash-brand {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 20px;
     position: relative;
     z-index: 1;
 }
 
 .dash-logo-badge {
-    width: 130px;
-    height: 130px;
+    width: 90px;
+    height: 90px;
     flex-shrink: 0;
-    filter: drop-shadow(0 12px 30px rgba(234, 88, 12, 0.5));
+    filter: drop-shadow(0 8px 22px rgba(234, 88, 12, 0.45));
 }
 
 .dash-brand-meta {
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
 }
 
 .dash-brand-title {
     font-family: var(--jv-font-brand);
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     font-weight: 800;
     color: #fff;
     line-height: 1;
@@ -76,96 +80,91 @@
 }
 
 .dash-brand-ca {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: #FDE9D9;
     text-transform: uppercase;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
     margin-top: 8px;
 }
 
 .dash-brand-tag {
-    margin: 12px 0 0;
+    margin: 8px 0 0;
     color: #DCE5F0;
-    font-size: 1.2rem;
+    font-size: 1.02rem;
     font-weight: 700;
     letter-spacing: 0.5px;
     line-height: 1.25;
+    text-align: center;
 }
 
-.dash-hero-info {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
-    flex-wrap: wrap;
-    position: relative;
-    z-index: 1;
-}
-
-/* Grupo de estado: tiempo, alertas y persona, pegado a la derecha */
+/* Grupo de estado: fecha, alertas y persona anclados a la esquina
+   superior derecha, reducidos para no disputar el centro con la marca. */
 .dash-hero-status {
+    position: absolute;
+    top: 16px;
+    right: 20px;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 18px;
-    flex-wrap: wrap;
-    margin-left: auto;
+    gap: 10px;
+    z-index: 2;
 }
 
-/* Chip de ubicación: el único elemento en naranja saturado del hero,
-   para que la página actual se distinga de un vistazo. */
+/* Chip de ubicación: centrado bajo la marca y en azul cielo, un color
+   que no repite ningún acento naranja para que la página actual se note. */
 .dash-here {
     display: inline-flex;
     align-items: center;
+    align-self: center;
     gap: 8px;
-    padding: 10px 18px;
-    border-radius: 12px;
-    background: rgba(234, 88, 12, 0.16);
-    border: 1px solid rgba(234, 88, 12, 0.55);
-    color: #FFD7B5;
-    font-size: 0.8rem;
+    padding: 9px 22px;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.14);
+    border: 1px solid rgba(56, 189, 248, 0.55);
+    box-shadow: 0 0 18px rgba(56, 189, 248, 0.18);
+    color: #BAE6FD;
+    font-size: 0.82rem;
     font-weight: 800;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     white-space: nowrap;
 }
 
 .dash-here i {
-    color: var(--jv-orange-light);
+    color: #7DD3FC;
     font-size: 1rem;
 }
 
 .dash-user {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 9px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.16);
-    padding: 10px 18px 10px 10px;
-    border-radius: 16px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 14px;
 }
 
 .dash-user-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     background: linear-gradient(135deg, var(--jv-orange), var(--jv-orange-dark));
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
     font-family: var(--jv-font-brand);
-    font-size: 1.15rem;
+    font-size: 0.85rem;
     font-weight: 800;
     letter-spacing: 1px;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35);
+    box-shadow: 0 3px 8px rgba(234, 88, 12, 0.3);
 }
 
 .dash-user-greeting {
     color: #FFD7B5;
-    font-size: 0.74rem;
+    font-size: 0.62rem;
     font-weight: 600;
     letter-spacing: 0.4px;
     line-height: 1;
@@ -175,16 +174,16 @@
 .dash-user-name {
     color: #fff;
     font-weight: 800;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
     line-height: 1.2;
 }
 
 .dash-user-role {
     color: #FDE9D9;
-    font-size: 0.82rem;
+    font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
+    letter-spacing: 1px;
 }
 
 .dash-date {
@@ -192,17 +191,17 @@
     align-items: center;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.16);
-    padding: 14px 22px;
-    border-radius: 14px;
+    padding: 7px 13px;
+    border-radius: 11px;
     color: #fff;
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: 0.8rem;
 }
 
 /* Hora en tiempo real: separador y cifras fijas para que no "baile" »
    el reloj al cambiar los dígitos */
 .dash-date-sep {
-    margin-left: 10px;
+    margin-left: 7px;
     opacity: 0.45;
     font-weight: 400;
 }
@@ -217,16 +216,16 @@
 .dash-bell-wrap { position: relative; }
 
 .dash-bell {
-    width: 50px;
-    height: 50px;
-    border-radius: 14px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
     border: 1.5px solid rgba(255, 255, 255, 0.3);
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
+    font-size: 1.05rem;
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
@@ -240,15 +239,15 @@
 
 .dash-bell-badge {
     position: absolute;
-    top: -7px;
-    right: -7px;
-    min-width: 21px;
-    height: 21px;
-    padding: 0 5px;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
     border-radius: 20px;
     background: #DC2626;
     color: #fff;
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     font-weight: 800;
     display: inline-flex;
     align-items: center;
@@ -765,27 +764,26 @@
 }
 
 @media (max-width: 1240px) {
-    /* Dos bandas también en tablet: identidad arriba, estado abajo a la derecha.
-       La marca deja de centrarse: la banda inferior ya equilibra el conjunto. */
-    .dash-hero-info { width: 100%; justify-content: space-between; }
-    .dash-hero-status { justify-content: flex-end; }
     .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+}
+
+@media (max-width: 1080px) {
+    /* La esquina ya no cabe junto a la marca centrada: el estado pasa a fila
+       propia encima de la marca (primero en el orden del marcado). */
+    .dash-hero-status { position: static; justify-content: center; flex-wrap: wrap; }
 }
 
 @media (max-width: 768px) {
     .tables-grid { grid-template-columns: 1fr; }
     .tables-grid .table-card:nth-child(3) { grid-column: auto; }
     .main-wrapper .container-fluid { padding: 18px 16px; }
-    .dash-hero { padding: 24px 20px; }
-    .dash-brand-tag { font-size: 1.05rem; }
-    .dash-logo-badge { width: 104px; height: 104px; }
-    .dash-brand-title { font-size: 2.2rem; }
-    .dash-brand-ca { font-size: 0.9rem; }
-    .dash-user-name { font-size: 1.05rem; }
-    /* Apilado: el chip ocupa todo el ancho y el estado se envuelve debajo */
-    .dash-hero-info { flex-direction: column; align-items: stretch; }
-    .dash-here { justify-content: center; }
-    .dash-hero-status { justify-content: center; }
+    .dash-hero { padding: 18px 16px; }
+    .dash-brand-tag { font-size: 0.95rem; }
+    .dash-logo-badge { width: 72px; height: 72px; }
+    .dash-brand-title { font-size: 1.9rem; }
+    .dash-brand-ca { font-size: 0.8rem; }
+    .dash-user-name { font-size: 0.9rem; }
+    .dash-date { font-size: 0.75rem; }
     .kpi-value { font-size: 2.2rem; }
     .quick-grid { grid-template-columns: 1fr; }
 }
