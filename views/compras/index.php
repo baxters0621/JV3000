@@ -940,7 +940,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
 <!-- POP-UP 2: Formulario de proveedor (registrar / editar) -->
 <div class="modal fade" id="modalProveedor" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
             <div class="modal-body p-4">
             <form action="" method="POST" id="formProveedor" data-borrador="compras_proveedor">
@@ -964,23 +964,23 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
                         </div>
                         <div class="row g-3 mb-0">
-                            <div class="col-md-3">
-                                <label class="comp-label">RIF / C&eacute;dula <span class="text-danger">*</span></label>
-                                <input type="hidden" name="rif" id="p_rif">
-                                <div class="input-group">
-                                    <select id="p_rif_tipo" class="input-jv comp-input comp-rif-tipo" required>
-                                        <option value="V">V</option>
-                                        <option value="E">E</option>
-                                        <option value="J" selected>J</option>
-                                        <option value="G">G</option>
-                                        <option value="P">P</option>
-                                        <option value="C">C</option>
-                                    </select>
-                                    <input type="text" id="p_rif_numero" class="input-jv comp-input" required placeholder="12345678-0" maxlength="10" inputmode="numeric">
-                                </div>
-                                <small class="comp-hint">V/E: 8 dígitos · J/G/P/C: 8 dígitos + 1 verificador</small>
+                            <div class="col-md-2">
+                                <label class="comp-label">Tipo <span class="text-danger">*</span></label>
+                                <select id="p_rif_tipo" class="input-jv comp-input comp-rif-tipo" required>
+                                    <option value="V">V</option>
+                                    <option value="E">E</option>
+                                    <option value="J" selected>J</option>
+                                    <option value="G">G</option>
+                                    <option value="P">P</option>
+                                    <option value="C">C</option>
+                                </select>
                             </div>
-                            <div class="col-md-9">
+                            <div class="col-md-4">
+                                <label class="comp-label">Número <span class="text-danger">*</span></label>
+                                <input type="hidden" name="rif" id="p_rif">
+                                <input type="text" id="p_rif_numero" class="input-jv comp-input" required placeholder="12345678-0" maxlength="10" inputmode="numeric">
+                            </div>
+                            <div class="col-md-6">
                                 <label class="comp-label">Nombre de la Empresa <span class="text-danger">*</span></label>
                                 <input type="text" name="nombre_empresa" id="p_empresa" class="input-jv comp-input text-uppercase" required placeholder="NOMBRE LEGAL DE LA EMPRESA" maxlength="100" oninput="this.value = this.value.toUpperCase()">
                             </div>
@@ -989,6 +989,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <label class="comp-label">Direcci&oacute;n Fiscal</label>
                             <textarea name="direccion" id="p_direccion" class="input-jv comp-input" rows="2" placeholder="Direcci&oacute;n fiscal completa"></textarea>
                         </div>
+                        <small class="comp-hint d-block mt-2">V/E: 8 dígitos · J/G/P/C: 8 dígitos + 1 verificador</small>
+                    </div>
                     </div>
 
                     <div class="comp-section sec-contacto">

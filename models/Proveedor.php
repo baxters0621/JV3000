@@ -69,8 +69,8 @@ class Proveedor extends Model
         if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['ok' => false, 'mensaje' => 'FORMATO DE CORREO ELECTRÓNICO INVÁLIDO.'];
         }
-        if (!validarRIF($rif)) {
-            return ['ok' => false, 'mensaje' => 'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0'];
+        if (!validarDocumentoFiscal($rif)) {
+            return ['ok' => false, 'mensaje' => 'FORMATO DE DOCUMENTO FISCAL INVÁLIDO. USE: V-12345678 o J-12345678-0'];
         }
         if (empty($telefono) || strlen(preg_replace('/[^0-9+]/', '', $telefono)) < 7) {
             return ['ok' => false, 'mensaje' => 'TELÉFONO INVÁLIDO. INGRESE UN NÚMERO VÁLIDO.'];

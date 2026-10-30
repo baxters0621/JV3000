@@ -1,4 +1,4 @@
-
+﻿
         // ==========================================
         // COMPRAS — Registro de factura del proveedor + comprobante de pago
         // (No mueve stock: la recepción se hace desde Inventario)
@@ -775,7 +775,7 @@
 
             function sincronizarRif() {
                 var tipo = rifTipo ? rifTipo.value : 'J';
-                var numero = rifNumero ? rifNumero.value.replace(/[^0-9-]/g, '') : '';
+                var numero = rifNumero ? rifNumero.value.replace(/[^0-9]/g, '') : '';
                 rifHidden.value = tipo + '-' + numero;
             }
 
@@ -790,9 +790,12 @@
                         const esJuridico = rifTipo && ['J','G','P','C'].includes(rifTipo.value);
                         const maxCuerpo = esJuridico ? 9 : 8;
                         const cuerpo = valor.substring(0, maxCuerpo);
-                        formateado = cuerpo;
-                        if (esJuridico && valor.length > 8) {
-                            formateado = cuerpo.substring(0, 8) + '-' + cuerpo.substring(8);
+                        if (esJuridico) {
+                            // RIF J/G/P/C: 8 dígitos + 1 verificador → 12345678-0
+                            formateado = cuerpo.length > 8 ? cuerpo.substring(0, 8) + '-' + cuerpo.substring(8, 9) : cuerpo;
+                        } else {
+                            // Cédula V/E: solo dígitos, sin verificador
+                            formateado = cuerpo;
                         }
                     }
                     e.target.value = formateado;
@@ -821,8 +824,9 @@
                     // Sincronizar RIF antes de validar
                     sincronizarRif();
                     const rifValidar = document.getElementById('p_rif');
-                    if (!/^[VEJGPC]-\d{8}(-\d)?$/.test(rifValidar.value)) {
-                        marcarError(document.getElementById('p_rif_numero'), 'RIF INV\u00c1LIDO (use: V-12345678 o J-12345678-9)');
+                    const rifRegex = /^([VE]-\d{6,9}|[VEJGPC]-\d{8}-\d)$/;
+                    if (!rifRegex.test(rifValidar.value)) {
+                        marcarError(document.getElementById('p_rif_numero'), 'DOCUMENTO FISCAL INVÁLIDO (use: V-12345678 o J-12345678-0)');
                         e.preventDefault();
                         if (!primerError) primerError = rifValidar;
                     }
@@ -1355,3 +1359,7 @@
                 metodoSelect.addEventListener('change', togglePagoDetalle);
             }
         });
+
+
+
+
