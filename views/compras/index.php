@@ -228,12 +228,12 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <td class="td-fecha" data-label="Fecha"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
                             <td class="text-center" data-label="Acciones">
                                 <div class="compra-actions">
-                                <?php if ($status_pago !== 'Pagada' && (float)($compra['saldo_pendiente'] ?? 0) > 0): ?>
-                                    <button type="button" class="btn-action" style="color:var(--jv-green);border-color:var(--jv-green);" onclick="abrirModalPago(<?php echo (int)$compra['id_compra']; ?>, '<?php echo htmlspecialchars(addslashes($compra['nro_factura'] ?? ''), ENT_QUOTES); ?>', <?php echo (float)$compra['total']; ?>, <?php echo (float)($compra['saldo_pendiente'] ?? 0); ?>)" data-tooltip="Registrar pago" aria-label="Registrar pago"><i class="bi bi-cash-coin"></i></button>
-                                <?php endif; ?>
-                                <?php if ($es_admin): ?>
-                                    <button type="button" class="btn-action btn-anular-compra" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="Anular compra" aria-label="Anular compra"><i class="bi bi-slash-circle"></i></button>
-                                <?php endif; ?>
+                                    <?php if ($status_pago !== 'Pagada' && (float)($compra['saldo_pendiente'] ?? 0) > 0): ?>
+                                        <button type="button" class="btn-action" style="color:var(--jv-green);border-color:var(--jv-green);" onclick="abrirModalPago(<?php echo (int)$compra['id_compra']; ?>, '<?php echo htmlspecialchars(addslashes($compra['nro_factura'] ?? ''), ENT_QUOTES); ?>', <?php echo (float)$compra['total']; ?>, <?php echo (float)($compra['saldo_pendiente'] ?? 0); ?>)" data-tooltip="Registrar pago" aria-label="Registrar pago"><i class="bi bi-cash-coin"></i></button>
+                                    <?php endif; ?>
+                                    <?php if ($es_admin): ?>
+                                        <button type="button" class="btn-action btn-anular-compra" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="Anular compra" aria-label="Anular compra"><i class="bi bi-slash-circle"></i></button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>
@@ -347,7 +347,9 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <?php endif; ?>
 
 <!-- Modal: Registrar compra -->
-<script>window.JV_CATALOGO = <?php echo $catalogo_costos ?? '[]'; ?>;</script>
+<script>
+    window.JV_CATALOGO = <?php echo $catalogo_costos; ?>;
+</script>
 <div class="modal fade" id="modalCompra" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-content-jv">
@@ -509,118 +511,118 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                                 <span class="comp-equivalente-valor" id="equivalenteVES">Bs. 0.00</span>
                                             </div>
                                             <input type="hidden" name="equivalente_ves" id="equivalenteVESInput" value="0">
-        </div>
-    </div>
-</div>
+                                        </div>
+                                    </div>
+                                </div>
 
-<!-- Modal: Registrar Pago -->
-<div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable" style="max-width:520px;">
-        <div class="modal-content jv-modal-content">
-            <div class="jv-modal-header" style="background:linear-gradient(135deg,#059669,#10b981);">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-cash-coin" style="font-size:1.3rem;"></i>
-                    <h5 class="jv-modal-title" id="modalPagoLabel">REGISTRAR PAGO</h5>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <form method="POST" action="<?php echo $purchaseListUrl; ?>" data-borrador="compras_pago">
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
-                <input type="hidden" name="accion_pago" value="1">
-                <input type="hidden" name="id_compra" id="pago_id_compra">
+                                <!-- Modal: Registrar Pago -->
+                                <div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-scrollable" style="max-width:520px;">
+                                        <div class="modal-content jv-modal-content">
+                                            <div class="jv-modal-header" style="background:linear-gradient(135deg,#059669,#10b981);">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <i class="bi bi-cash-coin" style="font-size:1.3rem;"></i>
+                                                    <h5 class="jv-modal-title" id="modalPagoLabel">REGISTRAR PAGO</h5>
+                                                </div>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                            </div>
+                                            <form method="POST" action="<?php echo $purchaseListUrl; ?>" data-borrador="compras_pago">
+                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
+                                                <input type="hidden" name="accion_pago" value="1">
+                                                <input type="hidden" name="id_compra" id="pago_id_compra">
 
-                <div class="jv-modal-body" style="padding:20px;">
-                    <div class="jv-modal-section-sub mb-3">
-                        <span style="font-size:.85rem;color:var(--jv-text-muted);">Factura:</span>
-                        <span id="pago_factura_num" style="font-weight:700;margin-left:4px;"></span>
-                    </div>
+                                                <div class="jv-modal-body" style="padding:20px;">
+                                                    <div class="jv-modal-section-sub mb-3">
+                                                        <span style="font-size:.85rem;color:var(--jv-text-muted);">Factura:</span>
+                                                        <span id="pago_factura_num" style="font-weight:700;margin-left:4px;"></span>
+                                                    </div>
 
-                    <div class="row g-3 mb-3">
-                        <div class="col-6">
-                            <label class="jv-modal-label">TOTAL</label>
-                            <div class="input-group">
-                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
-                                <input type="text" class="form-control" id="pago_total" readonly style="background:var(--jv-bg);font-weight:700;">
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <label class="jv-modal-label">SALDO PENDIENTE</label>
-                            <div class="input-group">
-                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
-                                <input type="text" class="form-control" id="pago_saldo" readonly style="background:var(--jv-bg);font-weight:700;color:var(--jv-red);">
-                            </div>
-                        </div>
-                    </div>
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-6">
+                                                            <label class="jv-modal-label">TOTAL</label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
+                                                                <input type="text" class="form-control" id="pago_total" readonly style="background:var(--jv-bg);font-weight:700;">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="jv-modal-label">SALDO PENDIENTE</label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
+                                                                <input type="text" class="form-control" id="pago_saldo" readonly style="background:var(--jv-bg);font-weight:700;color:var(--jv-red);">
+                                                            </div>
+                                                        </div>
+                                                    </div>
 
-                    <div class="mb-3">
-                        <label class="jv-modal-label">MONTO A PAGAR <span style="color:var(--jv-red);">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text" style="font-size:.85rem;">$</span>
-                            <input type="number" step="0.01" min="0.01" class="form-control input-jv" name="monto_pago" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
-                        </div>
-                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="jv-modal-label">MONTO A PAGAR <span style="color:var(--jv-red);">*</span></label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text" style="font-size:.85rem;">$</span>
+                                                            <input type="number" step="0.01" min="0.01" class="form-control input-jv" name="monto_pago" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
+                                                        </div>
+                                                    </div>
 
-                    <div class="mb-3">
-                        <label class="jv-modal-label">MÉTODO DE PAGO <span style="color:var(--jv-red);">*</span></label>
-                        <select name="metodo_pago" class="form-select input-jv" id="pago_metodo" required>
-                            <option value="Efectivo">Efectivo</option>
-                            <option value="Transferencia">Transferencia</option>
-                            <option value="Cheque">Cheque</option>
-                            <option value="Otro">Otro</option>
-                        </select>
-                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="jv-modal-label">MÉTODO DE PAGO <span style="color:var(--jv-red);">*</span></label>
+                                                        <select name="metodo_pago" class="form-select input-jv" id="pago_metodo" required>
+                                                            <option value="Efectivo">Efectivo</option>
+                                                            <option value="Transferencia">Transferencia</option>
+                                                            <option value="Cheque">Cheque</option>
+                                                            <option value="Otro">Otro</option>
+                                                        </select>
+                                                    </div>
 
-                    <!-- Detalle según método -->
-                    <div id="pago_detalle_transferencia" style="display:none;">
-                        <div class="row g-3 mb-3">
-                            <div class="col-6">
-                                <label class="jv-modal-label">Teléfono (Pago Móvil)</label>
-                                <input type="text" class="form-control input-jv" name="pago_telefono" placeholder="0412-1234567">
-                            </div>
-                            <div class="col-6">
-                                <label class="jv-modal-label">Banco</label>
-                                <input type="text" class="form-control input-jv" name="pago_banco" placeholder="Banco">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="jv-modal-label">Referencia</label>
-                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. referencia">
-                        </div>
-                    </div>
+                                                    <!-- Detalle según método -->
+                                                    <div id="pago_detalle_transferencia" style="display:none;">
+                                                        <div class="row g-3 mb-3">
+                                                            <div class="col-6">
+                                                                <label class="jv-modal-label">Teléfono (Pago Móvil)</label>
+                                                                <input type="text" class="form-control input-jv" name="pago_telefono" placeholder="0412-1234567">
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="jv-modal-label">Banco</label>
+                                                                <input type="text" class="form-control input-jv" name="pago_banco" placeholder="Banco">
+                                                            </div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="jv-modal-label">Referencia</label>
+                                                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. referencia">
+                                                        </div>
+                                                    </div>
 
-                    <div id="pago_detalle_cheque" style="display:none;">
-                        <div class="mb-3">
-                            <label class="jv-modal-label">Nro. de Cheque</label>
-                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. cheque">
-                        </div>
-                    </div>
+                                                    <div id="pago_detalle_cheque" style="display:none;">
+                                                        <div class="mb-3">
+                                                            <label class="jv-modal-label">Nro. de Cheque</label>
+                                                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. cheque">
+                                                        </div>
+                                                    </div>
 
-                    <div id="pago_detalle_otro" style="display:none;">
-                        <div class="mb-3">
-                            <label class="jv-modal-label">Descripción</label>
-                            <input type="text" class="form-control input-jv" name="pago_descripcion" placeholder="Detalle del pago">
-                        </div>
-                    </div>
+                                                    <div id="pago_detalle_otro" style="display:none;">
+                                                        <div class="mb-3">
+                                                            <label class="jv-modal-label">Descripción</label>
+                                                            <input type="text" class="form-control input-jv" name="pago_descripcion" placeholder="Detalle del pago">
+                                                        </div>
+                                                    </div>
 
-                    <div class="mb-3">
-                        <label class="jv-modal-label">Pago rápido</label>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(25)">25%</button>
-                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(50)">50%</button>
-                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(75)">75%</button>
-                            <button type="button" class="btn btn-sm btn-jv-success" onclick="setPagoMonto(100)">100%</button>
-                        </div>
-                    </div>
-                </div>
+                                                    <div class="mb-3">
+                                                        <label class="jv-modal-label">Pago rápido</label>
+                                                        <div class="d-flex gap-2">
+                                                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(25)">25%</button>
+                                                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(50)">50%</button>
+                                                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(75)">75%</button>
+                                                            <button type="button" class="btn btn-sm btn-jv-success" onclick="setPagoMonto(100)">100%</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
-                    <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                    <button type="submit" class="btn btn-jv-success module-action-btn"><i class="bi bi-check-lg me-1"></i>Registrar Pago</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+                                                <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
+                                                    <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
+                                                    <button type="submit" class="btn btn-jv-success module-action-btn"><i class="bi bi-check-lg me-1"></i>Registrar Pago</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Sub-detalle: Transferencia / Pago Móvil -->
@@ -807,7 +809,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <!-- Footer -->
                 <div class="comp-modal-footer">
                     <button type="button" class="btn btn-jv-danger comp-btn-footer" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                    <button type="submit" class="btn btn-jv-success comp-btn-footer comp-btn-save" id="btnGuardar" disabled onclick="return validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar Compra</button>
+                    <button type="button" class="btn btn-jv-success comp-btn-footer comp-btn-save" id="btnGuardar" disabled onclick="validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar Compra</button>
                 </div>
             </form>
         </div>
@@ -942,11 +944,12 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalProveedor" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content modal-content-jv">
-            <form action="" method="POST" id="formProveedor" data-borrador="compras_proveedor">
-                <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
-                <input type="hidden" name="accion_proveedor" id="p_accion" value="registrar">
-                <input type="hidden" name="id_proveedor" id="p_id_edit">
-                <div class="modal-header-jv">
+            <div class="modal-body p-4">
+                <form action="" method="POST" id="formProveedor" data-borrador="compras_proveedor">
+                    <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                    <input type="hidden" name="accion_proveedor" id="p_accion" value="registrar">
+                    <input type="hidden" name="id_proveedor" id="p_id_edit">
+                    <div class="modal-header-jv">
                         <div>
                             <h5 class="font-brand" id="modalTitle" style="font-size:1.1rem;"><i class="bi bi-building me-2"></i>Registrar Nuevo Proveedor</h5>
                             <small>Completa los datos del proveedor para asociarlo a tus compras</small>
@@ -954,18 +957,17 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <button type="button" class="prov-close-btn" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                     </div>
 
-                <div class="modal-body p-4 pt-3">
-                    <div class="prov-form-section">
-                        <div class="prov-section-header">
-                            <span class="prov-section-chip"><i class="bi bi-file-earmark-text"></i></span>
+                    <div class="comp-section sec-fiscal">
+                        <div class="comp-section-header">
+                            <span class="comp-section-chip chip-fiscal"><i class="bi bi-file-earmark-text"></i></span>
                             <div>
-                                <div class="prov-section-title">Informaci&oacute;n Fiscal</div>
-                                <div class="prov-section-sub">Datos legales y tributarios de la empresa</div>
+                                <div class="comp-section-title">Informaci&oacute;n Fiscal</div>
+                                <div class="comp-section-sub">Datos legales de la empresa</div>
                             </div>
                         </div>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="prov-label" for="p_rif_numero">RIF / C&eacute;dula <span class="text-danger">*</span></label>
+                        <div class="row g-3 mb-0">
+                            <div class="col-md-3">
+                                <label class="comp-label">RIF / C&eacute;dula <span class="text-danger">*</span></label>
                                 <input type="hidden" name="rif" id="p_rif">
                                 <div class="input-group">
                                     <select id="p_rif_tipo" class="input-jv comp-input comp-rif-tipo" required>
@@ -978,65 +980,59 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     </select>
                                     <input type="text" id="p_rif_numero" class="input-jv comp-input" required placeholder="12345678-0" maxlength="10" inputmode="numeric">
                                 </div>
-                                <small class="prov-hint">V/E: 8 d&iacute;gitos &middot; J/G/P/C: 8 d&iacute;gitos + 1 verificador</small>
+                                <small class="comp-hint">V/E: 8 dígitos · J/G/P/C: 8 dígitos + 1 verificador</small>
                             </div>
-                            <div class="col-md-8">
-                                <label class="prov-label" for="p_empresa">Nombre de la empresa <span class="text-danger">*</span></label>
+                            <div class="col-md-9">
+                                <label class="comp-label">Nombre de la Empresa <span class="text-danger">*</span></label>
                                 <input type="text" name="nombre_empresa" id="p_empresa" class="input-jv comp-input text-uppercase" required placeholder="NOMBRE LEGAL DE LA EMPRESA" maxlength="100" oninput="this.value = this.value.toUpperCase()">
                             </div>
-                            <div class="col-12">
-                                <label class="prov-label" for="p_direccion">Direcci&oacute;n fiscal</label>
-                                <textarea name="direccion" id="p_direccion" class="input-jv comp-input" rows="2" placeholder="Direcci&oacute;n fiscal completa"></textarea>
-                            </div>
+                        </div>
+                        <div class="mt-3 mb-0">
+                            <label class="comp-label">Direcci&oacute;n Fiscal</label>
+                            <textarea name="direccion" id="p_direccion" class="input-jv comp-input" rows="2" placeholder="Direcci&oacute;n fiscal completa"></textarea>
                         </div>
                     </div>
 
-                    <hr class="prov-divider">
-
-                    <!-- Sección 2: Contacto -->
-                    <div class="prov-form-section">
-                        <div class="prov-section-header">
-                            <span class="prov-section-chip"><i class="bi bi-person-lines-fill"></i></span>
+                    <div class="comp-section sec-contacto">
+                        <div class="comp-section-header">
+                            <span class="comp-section-chip chip-contacto"><i class="bi bi-person-lines-fill"></i></span>
                             <div>
-                                <div class="prov-section-title">Contacto</div>
-                                <div class="prov-section-sub">Canales directos de comunicaci&oacute;n</div>
+                                <div class="comp-section-title">Contacto</div>
+                                <div class="comp-section-sub">&iquest;Con qui&eacute;n hablamos?</div>
                             </div>
                         </div>
-                        <div class="row g-3">
+                        <div class="row g-3 mb-0">
                             <div class="col-md-4">
-                                <label class="prov-label" for="p_tel">Tel&eacute;fono <span class="text-danger">*</span></label>
+                                <label class="comp-label">Tel&eacute;fono <span class="text-danger">*</span></label>
                                 <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input" required maxlength="20" inputmode="tel" placeholder="0412-1234567">
                                 <input type="hidden" name="telefono_completo" id="p_tel_full">
                             </div>
                             <div class="col-md-4">
-                                <label class="prov-label" for="p_contacto_nombre">Persona de contacto</label>
+                                <label class="comp-label">Persona de Contacto</label>
                                 <input type="text" name="contacto_nombre" id="p_contacto_nombre" class="input-jv comp-input" placeholder="Nombre del contacto">
                             </div>
                             <div class="col-md-4">
-                                <label class="prov-label" for="p_email">Correo electr&oacute;nico</label>
+                                <label class="comp-label">Correo Electr&oacute;nico</label>
                                 <input type="email" name="email" id="p_email" class="input-jv comp-input" placeholder="correo@ejemplo.com">
                             </div>
                         </div>
                     </div>
 
-                    <hr class="prov-divider">
-
-                    <!-- Sección 3: Condiciones Comerciales -->
-                    <div class="prov-form-section">
-                        <div class="prov-section-header">
-                            <span class="prov-section-chip"><i class="bi bi-briefcase"></i></span>
+                    <div class="comp-section sec-comercial">
+                        <div class="comp-section-header">
+                            <span class="comp-section-chip chip-comercial"><i class="bi bi-gear"></i></span>
                             <div>
-                                <div class="prov-section-title">Condiciones Comerciales</div>
-                                <div class="prov-section-sub">Par&aacute;metros operativos y moneda de negociaci&oacute;n</div>
+                                <div class="comp-section-title">Condiciones Comerciales</div>
+                                <div class="comp-section-sub">Entregas y moneda de trabajo</div>
                             </div>
                         </div>
-                        <div class="row g-3">
+                        <div class="row g-3 mb-0">
                             <div class="col-md-4">
-                                <label class="prov-label" for="p_lead_time">Plazo de entrega (d&iacute;as)</label>
+                                <label class="comp-label">Plazo de Entrega (D&iacute;as)</label>
                                 <input type="number" name="lead_time" id="p_lead_time" class="input-jv comp-input" placeholder="Ej: 7" min="0" max="365" maxlength="3" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3)">
                             </div>
                             <div class="col-md-4">
-                                <label class="prov-label" for="p_moneda">Moneda preferente</label>
+                                <label class="comp-label">Moneda</label>
                                 <select name="moneda" id="p_moneda" class="input-jv comp-input">
                                     <option value="USD">USD - D&oacute;lar</option>
                                     <option value="EUR">EUR - Euro</option>
@@ -1044,7 +1040,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="prov-label" for="p_status">Estado operativo</label>
+                                <label class="comp-label">Estado</label>
                                 <select name="status" id="p_status" class="input-jv comp-input">
                                     <option value="Activo">Activo</option>
                                     <option value="Inactivo">Inactivo</option>
@@ -1052,17 +1048,12 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="modal-footer prov-modal-footer">
-                    <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary px-4 py-2 fw-bold text-uppercase">
+                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase mt-3">
                         <i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR
                     </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -1124,9 +1115,9 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <i class="bi bi-check-lg me-2"></i>GUARDAR EN CAT&Aacute;LOGO
                     </button>
             </form>
-                </div>
         </div>
     </div>
+</div>
 </div>
 
 <!-- Prefill de solicitud para compras.js (se ejecuta antes que los scripts js_extra) -->

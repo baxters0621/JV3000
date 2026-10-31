@@ -257,6 +257,11 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                     <div class="com-resultados" id="resultadosBusquedaCli"></div>
                                 </div>
                                 <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Busca un cliente existente o escribe uno nuevo</div>
+                                <?php if ($es_admin): ?>
+                                <button type="button" class="btn btn-jv-outline w-100 mt-2" onclick="abrirCrearClienteDesdeVenta()">
+                                    <i class="bi bi-person-plus-fill me-1"></i>CREAR CLIENTE
+                                </button>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-6">
                                 <label for="s_rif_num" class="jv-modal-label">RIF / C&Eacute;DULA <span class="text-danger">*</span></label>

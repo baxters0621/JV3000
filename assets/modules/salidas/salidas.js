@@ -753,10 +753,11 @@
         // ============================================================
         // GESTIÓN DE CLIENTES (pop-up desde Ventas — solo admin)
         // ============================================================
-        let cliListModal = null;
-        let cliFormModal = null;
-        let cliFiltroActual = 'todos';
-        let cliDesdeLista = false;
+let cliListModal = null;
+let cliFormModal = null;
+let cliFiltroActual = 'todos';
+let cliDesdeLista = false;
+let cliDesdeVenta = false;
 
         // Inicializa los modales de clientes (solo si existen — admin).
         function _initCliModals() {
@@ -771,6 +772,7 @@
                         cliDesdeLista = false;
                         setTimeout(function() { if (cliListModal) cliListModal.show(); }, 300);
                     }
+                    if (cliDesdeVenta) cliDesdeVenta = false;
                 });
             }
         }
@@ -840,6 +842,26 @@
                 var docIn = document.getElementById('cliDocNum'); if (docIn) docIn.style.borderColor = '';
                 cliFormModal.show();
             }, 300);
+        }
+
+        // Abre el formulario de cliente desde el modal de venta para crear un cliente nuevo
+        // y autocompletar los campos de la venta al guardar.
+        function abrirCrearClienteDesdeVenta() {
+            cliDesdeVenta = true;
+            if (!cliFormModal) _initCliModals();
+            if (!cliFormModal) return;
+            document.getElementById('cliFormTitle').textContent = 'CREAR CLIENTE DESDE VENTA';
+            document.getElementById('cliAccion').value = 'registrar';
+            document.getElementById('cliIdEdit').value = '';
+            document.getElementById('cliNombre').value = '';
+            document.getElementById('cliDocTipo').value = 'V';
+            document.getElementById('cliDocNum').value = '';
+            document.getElementById('cliTelefono').value = '';
+            document.getElementById('cliDireccion').value = '';
+            document.getElementById('cliStatus').value = 'Activo';
+            var msg = document.getElementById('cliDocMsg'); if (msg) msg.innerHTML = '';
+            var docIn = document.getElementById('cliDocNum'); if (docIn) docIn.style.borderColor = '';
+            cliFormModal.show();
         }
 
         // Abre el formulario para editar un cliente existente.
@@ -938,6 +960,65 @@
                 document.getElementById('cliDocNum').value = docNum;
             } else {
                 document.getElementById('cliDocNum').value = '';
+            }
+
+            if (cliDesdeVenta) {
+                // Enviar vía fetch para autocompletar la venta tras crear el cliente
+                const fd = new FormData(document.getElementById('formCli'));
+                fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: fd
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.ok && data.id_cliente) {
+                        // Autocompletar campos de la venta
+                        document.getElementById('s_id_cliente').value = data.id_cliente;
+                        document.getElementById('s_cliente').value = data.nombre || '';
+                        if (toolboxCli) toolboxCli.value = data.nombre || '';
+                        var docStr = data.documento || '';
+                        var docMatch = docStr.match(/^([VEJGPC])-(\d+)(?:-(\d+))?/);
+                        if (docMatch) {
+                            document.getElementById('s_rif_tipo').value = docMatch[1];
+                            document.getElementById('s_rif_num').value = docMatch[2] + (docMatch[3] || '');
+                            formatoDocumento('s_rif_num', 's-rif-msg', 's_rif');
+                        } else {
+                            document.getElementById('s_rif_tipo').value = 'V';
+                            document.getElementById('s_rif_num').value = docStr;
+                            document.getElementById('s_rif').value = docStr || '';
+                            var m = document.getElementById('s-rif-msg'); if (m) m.innerHTML = '';
+                        }
+                        cliDesdeVenta = false;
+                        cliFormModal.hide();
+                        Swal.fire({
+                            title: 'CLIENTE CREADO',
+                            text: 'El cliente se autocompletó en la venta.',
+                            icon: 'success',
+                            confirmButtonColor: '#16A34A',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        var numInput = document.getElementById('cliDocNum');
+                        marcarError(numInput, data.mensaje || 'ERROR AL REGISTRAR EL CLIENTE.');
+                        var msgEl = document.getElementById('cliDocMsg');
+                        if (msgEl) msgEl.innerHTML = '<span style="color:var(--jv-danger);">' + (data.mensaje || 'Error') + '</span>';
+                        numInput.focus();
+                    }
+                })
+                .catch(function() {
+                    Swal.fire({
+                        title: 'ERROR DE CONEXIÓN',
+                        text: 'No se pudo crear el cliente.',
+                        icon: 'error',
+                        confirmButtonColor: '#DC2626'
+                    });
+                });
+                return;
             }
 
             var fd = new FormData(document.getElementById('formCli'));

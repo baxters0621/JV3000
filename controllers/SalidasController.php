@@ -54,6 +54,12 @@ class SalidasController extends Controller
                     $this->redirect('salidas');
                 }
                 $resultado = (new Cliente())->procesar($_POST);
+                $esFetch = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+                if ($esFetch) {
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode($resultado);
+                    exit;
+                }
                 if (!$resultado['ok']) {
                     $this->flash('danger', $resultado['mensaje'] ?? 'ERROR AL PROCESAR EL CLIENTE.');
                 }

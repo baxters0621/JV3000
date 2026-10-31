@@ -117,7 +117,16 @@ class Cliente extends Model
         );
         registrarAuditoria('registrar', 'Cliente registrado: ' . $nombre);
         $_SESSION['flash_msg'] = ['tipo' => 'success', 'texto' => 'CLIENTE REGISTRADO EXITOSAMENTE.'];
-        return ['ok' => true, 'mensaje' => 'Cliente registrado.'];
+        return [
+            'ok'      => true,
+            'mensaje' => 'Cliente registrado.',
+            'id_cliente' => $this->db->lastInsertId(),
+            'nombre'    => $nombre,
+            'documento' => $documento ?: null,
+            'telefono'  => $telefono ?: null,
+            'direccion' => $direccion ?: null,
+            'status'    => $status,
+        ];
     }
 
     /**

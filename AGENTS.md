@@ -1,4 +1,4 @@
-# AGENTS.md — JV3000 C.A.
+AGENTS.md — JV3000 C.A.
 
 Sistema web para el control de inventario, compras y ventas de JV3000 C.A., con roles
 (Administrador, Operador de Carga y Operador de Ventas) y recuperación de cuentas por
@@ -41,50 +41,48 @@ cambios quirúrgicos, siempre verificados y registrados.
   `npx skills update` (actualizar) · `npx skills add <owner/repo@skill>` (instalar) · `npx skills find <consulta>` (buscar).
   Uso habitual: `frontend-design` y `web-design-guidelines` al tocar diseño; `grill-me` para que el usuario depure un plan antes de implementarlo; `systematic-debugging` ante cualquier bug o test en rojo; `find-skills` para localizar capacidades nuevas.
 
-## Convenciones
+## Convenciones y Eficiencia de Tokens
 
-- **Respuestas directas:** sin introducciones, saludos ni resúmenes innecesarios.
-- **Modos de aprendizaje (opt-in):** solo si los pide expresamente — «modo profesor» (pistas sin solución), «modo pair», «modo senior» (mejoras y porqué, sin reescribir) y «modo debug» (hipótesis y pistas; solución al final). Por defecto, respuesta directa.
+- **Directo al grano (Ahorro de tokens):** Elimina saludos, introducciones y despedidas (evita frases como "Aquí tienes el código"). Empieza directamente con la respuesta o el código.
+- **Precisión quirúrgica:** Limítate estrictamente a lo que se pide. NO agregues funcionalidades no solicitadas, ni refactorices código no relacionado a menos que se indique.
+- **Modificaciones en Diffs:** Al editar código existente, devuelve ÚNICAMENTE las funciones/líneas modificadas o un diff limpio. NO reescribas archivos completos a menos que sea estrictamente necesario.
+- **Explicaciones:** Solo si se piden explícitamente o si existe un riesgo crítico de seguridad/rendimiento.
+- **Ahorro de contexto:** NO repitas el prompt, ni bloques de código, ni texto que el usuario ya haya proporcionado.
+- **Modos de aprendizaje (opt-in):** solo si los pide expresamente — «modo profesor», «modo pair», «modo senior» y «modo debug». Por defecto, respuesta directa.
 - **Separación estricta de responsabilidades:**
   - **Vistas** (`views/`): HTML + clases Bootstrap, sin lógica pesada.
   - **JavaScript** (`assets/`): listeners, validaciones cliente y peticiones al backend.
   - **Backend** (`controllers/`, `models/`): procesamiento, validación de servidor y respuesta JSON con `Controller::json()`.
 - **Funciones JS:** camelCase descriptivo (`abrirRecepcion()`), sin prefijos `fn_`.
-- **IDs/clases HTML:** descriptivos simples (`edit_pvp`, `modalEditar`, `tablaProductos`), sin prefijos de tipo (`cmb_`, `txt_`, `btn_`).
-- **Variables PHP:** snake_case descriptivo (`$stock_actual`, `$credito_disponible`); prohibidas abreviaturas crípticas (`$st`, `$pct`, `$row` en vistas con múltiples filas).
+- **IDs/clases HTML:** descriptivos simples (`edit_pvp`, `modalEditar`, `tablaProductos`), sin prefijos de tipo.
+- **Variables PHP:** snake_case descriptivo (`$stock_actual`, `$credito_disponible`); prohibidas abreviaturas crípticas.
 - **Controladores:** `controllers/[Modulo]Controller.php` con acciones camelCase · **modelos:** `models/[Entidad].php`.
 - **AJAX:** solo `fetch` nativo. Flujo obligatorio: listeners → validaciones cliente → fetch → manejo JSON success/error.
-- **Documentación:** docblocks en español en toda clase/método PHP y comentarios didácticos en funciones JS; mantenerlo en cambios nuevos.
+- **Documentación:** docblocks en español en toda clase/método PHP y comentarios didácticos en funciones JS.
 - El `includes/sidebar.php` va ordenado por fases operativas con títulos de sección: Configuración → Operaciones → Análisis → Control. Mantener ese orden.
 
 ## Reglas de dominio / trampas conocidas
 
-- **Roles:** `$_SESSION['id_rol']` → 1 Administrador, 2 Operador de Carga, 3 Operador de Ventas (tabla `roles`, FK en `usuarios.id_rol`). `Security::esAdmin()` → `id_rol === 1`; `puedeCargar()` → 1 o 2; `puedeVender()` → 1 o 3.
-- **Mapa de accesos por módulo** (el sidebar refleja exactamente esto): Categorías/Proveedores = admin + carga · Usuarios = solo admin · Historial de operaciones = admin (compras y ventas), carga (compras) y ventas (ventas); auditoría interna no se mezcla en esta vista · Compras = admin + carga — **Solicitudes y Recepción están integradas dentro de Compras**: atender con `?url=compras&atender_solicitud=N`, cancelar por AJAX `solicitudes/cancelar`, recepción en modal con `POST accion_recepcion` — · Ventas/Salidas = admin + ventas · Inventario = los tres roles **en consulta**, toda escritura exige admin (`$esAdmin`) · Estadísticas = admin + ventas · Imprimir reporte = los tres.
-- **Recuperación de cuenta:** PIN único en `configuracion.pin_emergencia_global`, válido para **todas** las cuentas (también la del Administrador), y código por correo (15 min). El PIN bloquea a los 3 intentos. Se guarda y compara en claro (`hash_equals`); la columna `usuarios.pin_emergencia` es legado.
-- **Todo POST exige `csrf_token` de sesión.** El login exige además el campo `btn_login`: **si falta, el POST se ignora sin error** (vuelve a pintar la pantalla).
-- **Mensajes flash:** se auto-cierran a los 4 s desde `assets/js/diseno.js` (clase `.jv-flash-out`). Ese fichero se carga en el `<head>`, así que su código de DOM debe esperar a `DOMContentLoaded`. No reimplementar el cierre en los módulos; `login.js` tiene el suyo porque `login.php` no carga `diseno.js`.
-- **Assets versionados por mtime** (`?v=`): para servir CSS/JS nuevo basta recargar, y el asset servido debe traer el `?v` nuevo.
-- **Seed `db/jv3000_portable_v6.sql`:** instalación limpia con solo datos de sistema (sin datos demo). Auto-instalador en `init.php`; usuario inicial `Administrador` / `Admin123*` (cambiar tras el primer inicio).
-- **Pregunta/respuesta de seguridad:** retirada de los formularios; las columnas y helpers quedan por legado — **no usarlas ni rehabilitarlas**.
-- **Contraseñas:** `password` en bcrypt + `password_check` (SHA-256 en minúsculas) para detectar duplicados: si se cambia una clave, actualizar las dos columnas.
-- **La bitácora se escribe con PHP** (no con PowerShell) para no dañar el UTF-8, y se verifica después: BOM intacto y sin dobles codificaciones (`Ã`/`Â`).
+- **Roles:** `$_SESSION['id_rol']` → 1 Administrador, 2 Operador de Carga, 3 Operador de Ventas. `Security::esAdmin()` → `id_rol === 1`; `puedeCargar()` → 1 o 2; `puedeVender()` → 1 o 3.
+- **Mapa de accesos por módulo:** Categorías/Proveedores = admin + carga · Usuarios = solo admin · Historial de operaciones = admin (compras y ventas), carga (compras) y ventas (ventas) · Compras = admin + carga (incluye Solicitudes y Recepción) · Ventas/Salidas = admin + ventas · Inventario = consulta los tres, escritura exige admin · Estadísticas = admin + ventas · Imprimir reporte = los tres.
+- **Recuperación de cuenta:** PIN único en `configuracion.pin_emergencia_global`, válido para **todas** las cuentas, y código por correo (15 min). El PIN bloquea a los 3 intentos. Se guarda y compara en claro (`hash_equals`).
+- **Todo POST exige `csrf_token` de sesión.** El login exige además el campo `btn_login`: **si falta, el POST se ignora sin error**.
+- **Mensajes flash:** se auto-cierran a los 4 s desde `assets/js/diseno.js` (clase `.jv-flash-out`).
+- **Assets versionados por mtime** (`?v=`): para servir CSS/JS nuevo basta recargar.
+- **Seed `db/jv3000_portable_v6.sql`:** instalación limpia con solo datos de sistema.
+- **Pregunta/respuesta de seguridad:** retirada de los formularios — **no usarlas ni rehabilitarlas**.
+- **Contraseñas:** `password` en bcrypt + `password_check` (SHA-256 en minúsculas) para detectar duplicados.
+- **La bitácora se escribe con PHP** para no dañar el UTF-8 (BOM intacto y sin dobles codificaciones).
 
 ## Forma de trabajar
 
-Antes de escribir cualquier línea de código, detente en el primer nivel que funcione (reglas «Ponytail»):
-
 1. ¿Esto realmente necesita existir? → Si la respuesta es NO, ignóralo.
-2. ¿Ya existe algo similar en este proyecto? → Reutilízalo, no lo vuelvas a escribir.
-3. ¿La librería estándar del lenguaje de programación ya lo hace? → Úsala.
-4. ¿Es una función nativa del navegador o del sistema? → Úsala.
-5. ¿Hay alguna librería ya instalada que lo resuelva? → Úsala.
-6. ¿Se puede solucionar en una sola línea? → Escribe una sola línea.
-7. Solo si nada de lo anterior funciona: escribe el código mínimo necesario.
+2. ¿Ya existe algo similar en este proyecto? → Reutilízalo.
+3. ¿La librería estándar o nativa lo hace? → Úsala.
+4. ¿Se puede solucionar en una sola línea? → Escribe una sola línea.
+5. Solo si nada de lo anterior funciona: escribe el código mínimo necesario.
 
-_Nota de seguridad: nunca recortes en validaciones de seguridad, accesibilidad o manejo de errores críticos._
-
-- **Modo quirúrgico:** al modificar algo existente, entregar solo el bloque afectado, no reescribir el fichero completo.
+- **Modo quirúrgico:** al modificar algo existente, entregar solo el bloque afectado.
 - **Bifurcación de diseño:** antes de tocar, preguntar con opciones y esperar la decisión del usuario.
 - **Al terminar:** explicar qué cambió, por qué y cómo se verificó; dejar `MEMORY.md` y la bitácora actualizados y el árbol limpio.
 
@@ -94,30 +92,28 @@ _Nota de seguridad: nunca recortes en validaciones de seguridad, accesibilidad o
 - Registrar cada cambio en `docs/BITACORA.md` y actualizar `MEMORY.md` al cerrar la tarea.
 - Ejecutar la verificación completa antes de dar el trabajo por terminado.
 - Respuestas directas, cambios quirúrgicos y docblocks en español.
-- Mantener intactas las validaciones de seguridad, la accesibilidad y el manejo de errores críticos.
+- Mantener intactas las validaciones de seguridad y accesibilidad.
 
 ⚠️ **Pregunta antes:**
-- Dependencias o librerías nuevas (incluidas skills: `npx skills add`).
-- Ficheros, módulos o secciones nuevas fuera del plan acordado.
-- Cambios en el esquema de la base de datos o en el seed `db/jv3000_portable_v6.sql`.
-- Globalizar CSS/JS que hoy es por módulo, o cambiar el formato de los datos guardados.
-- `git push`, y fijar o cambiar datos reales (PIN, usuarios, credenciales).
+- Dependencias o librerías nuevas.
+- Ficheros o módulos fuera del plan acordado.
+- Cambios en el esquema de la base de datos o en el seed.
+- Globalizar CSS/JS o cambiar el formato de los datos guardados.
+- `git push`, y fijar o cambiar datos reales.
 
 🚫 **Nunca:**
-- Recortar validaciones de seguridad, accesibilidad o manejo de errores críticos.
-- Inventar datos, resultados o funcionalidades que no se hayan probado.
+- Recortar validaciones de seguridad o manejo de errores críticos.
+- Inventar datos o funcionalidades no probadas.
 - Borrar o reescribir el historial de `docs/BITACORA.md`.
-- Exponer credenciales en ficheros, código o en la conversación.
-- Tocar `backups/` o las columnas de legado (pregunta/respuesta de seguridad) sin una tarea explícita.
+- Exponer credenciales en ficheros o código.
+- Tocar `backups/` o columnas de legado sin tarea explícita.
 
 ## Verificación
-
-Un cambio no está terminado hasta comprobar, en este orden:
 
 1. Sintaxis del fichero tocado: `php -l` / `node --check`.
 2. Tests del módulo afectado en `tests/` en verde.
 3. `powershell -ExecutionPolicy Bypass -File tools\validar.ps1` → `Validacion completada`.
-4. Comprobación HTTP real con sesión de administrador: página a **200**; si se tocó CSS/JS, el asset servido con `?v` nuevo que ya incluye el cambio.
-5. Si se tocaron datos: consulta de comprobación en la BD y verificación de que no quedó basura (usuarios temporales, intentos, archivos auxiliares).
-6. Entrada en la bitácora con el UTF-8 intacto (BOM, sin dobles codificaciones).
+4. Comprobación HTTP real con sesión de administrador (página a **200**, asset con `?v` nuevo).
+5. Comprobación en BD (sin basura o temporales).
+6. Entrada en la bitácora con UTF-8 intacto.
 7. Commit junto con la bitácora; push solo con autorización.
