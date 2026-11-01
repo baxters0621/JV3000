@@ -305,6 +305,14 @@
             background: #DC2626;
             color: #fff;
         }
+        .pagina-compras .btn-anular-compra:disabled,
+        .pagina-compras .btn-anular-compra:disabled:hover {
+            border-color: #CBD5E1;
+            background: #E2E8F0;
+            color: #94A3B8;
+            opacity: 1;
+            cursor: not-allowed;
+        }
 
         .pagina-compras .btn-jv-primary:hover {
             box-shadow: 0 8px 25px -5px rgba(5, 150, 105, 0.4);

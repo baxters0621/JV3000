@@ -232,7 +232,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                         <button type="button" class="btn-action" style="color:var(--jv-green);border-color:var(--jv-green);" onclick="abrirModalPago(<?php echo (int)$compra['id_compra']; ?>, '<?php echo htmlspecialchars(addslashes($compra['nro_factura'] ?? ''), ENT_QUOTES); ?>', <?php echo (float)$compra['total']; ?>, <?php echo (float)($compra['saldo_pendiente'] ?? 0); ?>)" data-tooltip="Registrar pago" aria-label="Registrar pago"><i class="bi bi-cash-coin"></i></button>
                                     <?php endif; ?>
                                     <?php if ($es_admin): ?>
-                                        <button type="button" class="btn-action btn-anular-compra" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="Anular compra" aria-label="Anular compra"><i class="bi bi-slash-circle"></i></button>
+                                        <?php $compra_recibida = in_array($compra['estado_recepcion'] ?? 'Pendiente', ['Parcial', 'Completa'], true); ?>
+                                        <button type="button" class="btn-action btn-anular-compra" onclick="confirmarEliminar(<?php echo (int)$compra['id_compra']; ?>)" data-tooltip="<?php echo $compra_recibida ? 'No se puede anular: ya se recibieron productos.' : 'Anular compra'; ?>" aria-label="<?php echo $compra_recibida ? 'Anulación no disponible: mercancía recibida' : 'Anular compra'; ?>" <?php echo $compra_recibida ? 'disabled' : ''; ?>><i class="bi bi-slash-circle"></i></button>
                                     <?php endif; ?>
                                 </div>
                             </td>

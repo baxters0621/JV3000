@@ -1,6 +1,38 @@
 
         const $id = (el) => document.getElementById(el);
 
+        function obtenerGrupoActividad(fecha) {
+            const partes = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(fecha || '');
+            if (!partes) return 'anteriores';
+
+            const fechaItem = new Date(Number(partes[3]), Number(partes[2]) - 1, Number(partes[1]));
+            if (Number.isNaN(fechaItem.getTime())) return 'anteriores';
+
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const inicioSemana = new Date(hoy);
+            inicioSemana.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
+            if (fechaItem.getTime() === hoy.getTime()) return 'hoy';
+            if (fechaItem >= inicioSemana && fechaItem < hoy) return 'semana';
+            return 'anteriores';
+        }
+
+        function renderActividadPorFecha(items, renderItem, mensajeVacio) {
+            const grupos = {
+                hoy: { titulo: 'HOY', items: [] },
+                semana: { titulo: 'ESTA SEMANA', items: [] },
+                anteriores: { titulo: 'ANTERIORES', items: [] }
+            };
+
+            (items || []).forEach(item => grupos[obtenerGrupoActividad(item.fecha)].items.push(item));
+            const contenido = Object.values(grupos)
+                .filter(grupo => grupo.items.length > 0)
+                .map(grupo => `<section class="activity-date-group"><h4 class="activity-date-heading">${grupo.titulo}</h4>${grupo.items.map(renderItem).join('')}</section>`)
+                .join('');
+
+            return contenido || `<p class="mb-0 text-secondary">${mensajeVacio}</p>`;
+        }
+
         // Actualización en tiempo real del dashboard
         function actualizarDashboard() {
             fetch('index.php?ajax_dashboard=1', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -11,29 +43,32 @@
                             if ($id('kpi-ventas-dia')) $id('kpi-ventas-dia').textContent = '$' + data.ventas_dia;
                             if ($id('kpi-valor-inv')) $id('kpi-valor-inv').textContent = '$' + data.valor_inventario;
 
-                            if ($id('tabla-facturas')) {
-                                let htmlFacturas = '';
-                                data.ultimas_facturas.forEach(f => {
-                                    htmlFacturas += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(f.cliente)}">${escapeHtml(f.cliente)}</td><td class="producto-tooltip" data-nombre="${escapeHtml(f.fecha)}">${f.fecha}</td><td class="monto producto-tooltip" data-nombre="$${f.total}">$${f.total}</td></tr>`;
-                                });
-                                $id('tabla-facturas').innerHTML = htmlFacturas || '<tr><td colspan="3" class="vacio">Sin ventas registradas</td></tr>';
+                            if ($id('lista-facturas')) {
+                                $id('lista-facturas').innerHTML = renderActividadPorFecha(
+                                    data.ultimas_facturas,
+                                    f => `<div class="activity-item"><span class="activity-icon activity-icon-venta"><i class="bi bi-receipt" aria-hidden="true"></i></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(f.cliente)}</div><div class="small text-secondary">Fecha: ${escapeHtml(f.fecha)} · Total: $${escapeHtml(f.total)}</div></div></div>`,
+                                    'Sin ventas registradas.'
+                                );
                             }
 
-                            if ($id('tabla-criticos')) {
-                                let htmlCriticos = '';
-                                data.tabla_criticos.forEach(c => {
-                                    let badge = c.estado === 'critico' ? 'Crítico' : 'Bajo';
-                                    htmlCriticos += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(c.producto)}">${escapeHtml(c.producto)}</td><td class="producto-tooltip" data-nombre="Stock: ${c.stock}">${c.stock}</td><td class="producto-tooltip" data-nombre="Estado: ${badge}"><span class="stock-badge ${c.estado}">${badge}</span></td></tr>`;
-                                });
-                                $id('tabla-criticos').innerHTML = htmlCriticos || '<tr><td colspan="3" class="vacio">Sin productos críticos</td></tr>';
+                            if ($id('lista-criticos')) {
+                                const productos = data.tabla_criticos || [];
+                                $id('lista-criticos').innerHTML = productos.length
+                                    ? productos.map(c => {
+                                        const stock = Number(c.stock) || 0;
+                                        const estado = c.estado === 'critico' ? 'Crítico' : 'Bajo';
+                                        const claseStock = stock === 0 ? 'text-danger fw-semibold' : 'text-secondary';
+                                        return `<div class="activity-item"><span class="activity-icon activity-icon-critico"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(c.producto)}</div><div class="small ${claseStock}">Stock: ${stock} unidades · ${estado}</div></div></div>`;
+                                    }).join('')
+                                    : '<p class="mb-0 text-secondary">Sin productos críticos.</p>';
                             }
 
-                            if ($id('tabla-compras')) {
-                                let htmlCompras = '';
-                                (data.tabla_compras || []).forEach(c => {
-                                    htmlCompras += `<tr><td class="producto-tooltip" data-nombre="${escapeHtml(c.proveedor)}">${escapeHtml(c.proveedor)}</td><td class="producto-tooltip" data-nombre="${escapeHtml(c.fecha)}">${c.fecha}</td><td class="monto producto-tooltip" data-nombre="$${c.total}">$${c.total}</td></tr>`;
-                                });
-                                $id('tabla-compras').innerHTML = htmlCompras || '<tr><td colspan="3" class="vacio">Sin compras registradas</td></tr>';
+                            if ($id('lista-compras')) {
+                                $id('lista-compras').innerHTML = renderActividadPorFecha(
+                                    data.tabla_compras,
+                                    c => `<div class="activity-item"><span class="activity-icon activity-icon-compra"><i class="bi bi-box-seam" aria-hidden="true"></i></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(c.proveedor)}</div><div class="small text-secondary">Fecha: ${escapeHtml(c.fecha)} · Total: $${escapeHtml(c.total)}</div></div></div>`,
+                                    'Sin compras registradas.'
+                                );
                             }
                         }
                     } catch (e) {
@@ -72,57 +107,6 @@
 
         // Detener al salir de la página
         window.addEventListener('beforeunload', detenerDashboard);
-
-        // ==========================================
-        // Tooltip nombre completo (hover)
-        // ==========================================
-        var tipProducto = null;
-        var tipVisible = false;
-
-        function crearTooltip() {
-            if (tipProducto) return;
-            tipProducto = document.createElement('div');
-            tipProducto.id = 'tip-producto';
-            tipProducto.setAttribute('aria-hidden', 'true');
-            document.body.appendChild(tipProducto);
-        }
-
-        function posicionarTooltip(x, y) {
-            if (!tipProducto) return;
-            var tooltipBounds = tipProducto.getBoundingClientRect();
-            var px = x + 18;
-            var py = y + 20;
-            if (px + tooltipBounds.width > window.innerWidth - 10) px = Math.max(10, x - tooltipBounds.width - 18);
-            if (py + tooltipBounds.height > window.innerHeight - 10) py = Math.max(10, y - tooltipBounds.height - 14);
-            tipProducto.style.left = px + 'px';
-            tipProducto.style.top = py + 'px';
-        }
-
-        document.addEventListener('mouseover', function(e) {
-            var tooltipElement = e.target.closest('.producto-tooltip');
-            if (tooltipElement) {
-                crearTooltip();
-                tipProducto.textContent = tooltipElement.getAttribute('data-nombre');
-                tipProducto.style.display = 'block';
-                tipVisible = true;
-            }
-        });
-
-        document.addEventListener('mouseout', function(e) {
-            var tooltipElement = e.target.closest('.producto-tooltip');
-            if (tooltipElement && !tooltipElement.contains(e.relatedTarget) && tipVisible) {
-                tipProducto.style.display = 'none';
-                tipVisible = false;
-            }
-        });
-
-        document.addEventListener('mousemove', function(e) {
-            if (tipVisible) posicionarTooltip(e.clientX, e.clientY);
-        });
-
-        document.addEventListener('touchstart', function() {
-            if (tipVisible) { tipProducto.style.display = 'none'; tipVisible = false; }
-        });
 
         // ==========================================
         // Campana de Alertas Críticas de stock

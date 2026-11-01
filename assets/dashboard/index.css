@@ -550,234 +550,86 @@
     word-break: break-word;
 }
 
-/* ==========================================
-   TABLAS
-   ========================================== */
-
-.tables-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 30px;
-    align-items: stretch;
-}
-
-.table-card {
-    background: var(--jv-bg-card);
-    border: 1px solid var(--jv-border);
+.dashboard-activity-card {
     border-radius: var(--jv-radius-lg);
-    padding: 30px 28px;
-    max-height: 520px;
-    overflow-y: auto;
-    box-shadow: var(--jv-shadow-sm);
 }
 
-.table-card h3 {
-    font-size: 1.45rem;
-    font-weight: 800;
-    color: var(--jv-navy);
-    margin: 0 0 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--jv-border);
+.dashboard-activity-card .card-header {
+    padding: 18px 20px;
 }
 
-/* Cada tarjeta con su color identitario: tinte de fondo + banda lateral fuerte */
-.table-card-ventas {
-    border-left: 6px solid #16A34A;
-    background: linear-gradient(180deg, rgba(22,163,74,0.07), rgba(22,163,74,0.02) 120px, #fff 220px);
+.dashboard-activity-card .card-body {
+    padding: 8px 20px 20px;
 }
 
-.table-card-ventas h3 {
-    color: #15803D;
+.activity-list {
+    display: grid;
+    gap: 18px;
 }
 
-.table-card-criticos {
-    border-left: 6px solid #D97706;
-    background: linear-gradient(180deg, rgba(217,119,6,0.09), rgba(217,119,6,0.02) 120px, #fff 220px);
+.activity-date-group + .activity-date-group {
+    padding-top: 14px;
+    border-top: 1px solid var(--jv-border);
 }
 
-.table-card-criticos h3 {
-    color: #B45309;
-}
-
-/* Columnas de la tabla de críticos: Stock reduce, Estado amplía para el badge */
-.table-card-criticos .data-table th:nth-child(2),
-.table-card-criticos .data-table td:nth-child(2) {
-    width: 25%;
-    text-align: center;
-}
-
-.table-card-criticos .data-table th:nth-child(3),
-.table-card-criticos .data-table td:nth-child(3) {
-    width: 35%;
-    text-align: center;
-    overflow: visible;
-}
-
-.table-card-compras {
-    border-left: 6px solid #EA580C;
-    background: linear-gradient(180deg, rgba(234,88,12,0.08), rgba(234,88,12,0.02) 120px, #fff 220px);
-}
-
-.table-card-compras h3 {
-    color: #C2410C;
-}
-
-.card-desc {
-    margin: 4px 0 16px;
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: var(--jv-text-secondary);
-    font-weight: 600;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--jv-border);
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
-
-.data-table th {
-    font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
+.activity-date-heading {
+    margin: 0 0 8px;
     color: var(--jv-text-muted);
-    font-weight: 800;
-    padding: 12px 16px;
-    border-bottom: 1.5px solid var(--jv-border);
-    text-align: left;
-    line-height: 1.3;
-    white-space: normal;
-}
-
-.data-table td {
-    padding: 18px 16px;
-    font-size: 1.2rem;
-    line-height: 1.55;
-    border-bottom: 1px solid var(--jv-border);
-    color: var(--jv-text-primary);
-    vertical-align: middle;
-    /* Ningun dato puede desbordar hacia la columna vecina:
-       se corta con puntos suspensivos dentro de su espacio */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Separador vertical sutil entre columnas: ningun dato se ve pegado a su vecino */
-.data-table th + th,
-.data-table td + td {
-    border-left: 1px solid rgba(15, 26, 46, 0.07);
-}
-
-/* El nombre nunca termina pegado al borde de su columna */
-.data-table td:first-child {
-    padding-right: 20px;
-}
-
-.data-table th:first-child,
-.data-table td:first-child {
-    width: 37%;
-    text-align: left !important;
-    padding-left: 14px;
-}
-
-.data-table th:nth-child(2),
-.data-table td:nth-child(2) {
-    width: 35%;
-    text-align: center;
-}
-
-.data-table th:nth-child(3),
-.data-table td:nth-child(3) {
-    width: 28%;
-    text-align: right;
-    padding-right: 14px;
-}
-
-.table-card-compras .data-table th:first-child,
-.table-card-compras .data-table td:first-child { width: 36%; }
-
-.table-card-compras .data-table th:nth-child(2),
-.table-card-compras .data-table td:nth-child(2) { width: 34%; text-align: center; }
-
-.table-card-compras .data-table th:nth-child(3),
-.table-card-compras .data-table td:nth-child(3) { width: 30%; text-align: right; }
-
-.producto-tooltip {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: help;
-}
-
-.data-table tbody tr:last-child td { border-bottom: none; }
-.data-table tbody tr:hover td { background: rgba(15, 26, 46, 0.03); }
-
-.monto {
-    text-align: right !important;
-    color: #16A34A;
-    font-weight: 800;
-}
-
-.stock-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 7px 15px;
-    border-radius: 20px;
-    font-size: 0.95rem;
-    font-weight: 800;
-}
-
-.stock-badge.critico {
-    background: rgba(220, 38, 38, 0.12);
-    color: var(--jv-danger);
-    border: 1px solid rgba(220, 38, 38, 0.3);
-}
-
-.stock-badge.bajo {
-    background: rgba(217, 119, 6, 0.14);
-    color: #92400E;
-    border: 1px solid rgba(217, 119, 6, 0.35);
-}
-
-.vacio {
-    text-align: center;
-    color: var(--jv-text-muted);
-    padding: 24px !important;
-    font-size: 1.02rem;
-}
-
-/* ==========================================
-   TOOLTIP NOMBRE COMPLETO (hover)
-   ========================================== */
-
-#tip-producto {
-    position: fixed;
-    z-index: 9999;
-    display: none;
-    max-width: 480px;
-    background: #0F1A2E;
-    color: #fff;
-    font-size: 1.2rem;
+    font-size: .75rem;
     font-weight: 700;
-    line-height: 1.35;
-    padding: 12px 18px;
-    border-radius: 10px;
-    box-shadow: 0 10px 28px rgba(15, 26, 46, 0.35);
-    pointer-events: none;
-    white-space: normal;
+    letter-spacing: .04em;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+}
+
+.activity-item + .activity-item {
+    border-top: 1px solid var(--jv-border);
+}
+
+.activity-icon {
+    display: inline-flex;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.activity-icon-venta {
+    color: #15803D;
+    background: #DCFCE7;
+}
+
+.activity-icon-compra {
+    color: #1D4ED8;
+    background: #DBEAFE;
+}
+
+.activity-icon-critico {
+    color: #B45309;
+    background: #FEF3C7;
+}
+
+.activity-item-copy {
+    min-width: 0;
+    flex: 1;
+    line-height: 1.45;
+}
+
+.activity-item-name {
+    color: var(--jv-navy);
+    overflow-wrap: anywhere;
 }
 
 /* ==========================================
    RESPONSIVE
    ========================================== */
-
-@media (max-width: 1400px) {
-    .tables-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .tables-grid .table-card:nth-child(3) { grid-column: 1 / -1; }
-}
 
 @media (max-width: 1240px) {
     .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
@@ -795,8 +647,6 @@
 }
 
 @media (max-width: 768px) {
-    .tables-grid { grid-template-columns: 1fr; }
-    .tables-grid .table-card:nth-child(3) { grid-column: auto; }
     .main-wrapper .container-fluid { padding: 18px 16px; }
     .dash-hero { padding: 18px 16px; }
     .dash-brand-tag { font-size: 0.95rem; }

@@ -20,6 +20,30 @@
  * @var array $css_extra
  * @var array $js_extra
  */
+$agruparActividadPorFecha = static function (array $items): array {
+    $hoy = new DateTimeImmutable('today');
+    $inicio_semana = $hoy->modify('monday this week');
+    $grupos = [
+        'hoy' => ['titulo' => 'HOY', 'items' => []],
+        'semana' => ['titulo' => 'ESTA SEMANA', 'items' => []],
+        'anteriores' => ['titulo' => 'ANTERIORES', 'items' => []],
+    ];
+
+    foreach ($items as $item) {
+        $fecha_item = DateTimeImmutable::createFromFormat('!d/m/Y', (string)($item['fecha'] ?? ''));
+        $grupo = 'anteriores';
+        if ($fecha_item !== false) {
+            if ($fecha_item->format('Y-m-d') === $hoy->format('Y-m-d')) {
+                $grupo = 'hoy';
+            } elseif ($fecha_item >= $inicio_semana && $fecha_item < $hoy) {
+                $grupo = 'semana';
+            }
+        }
+        $grupos[$grupo]['items'][] = $item;
+    }
+
+    return array_filter($grupos, static fn(array $grupo): bool => $grupo['items'] !== []);
+};
 
 // ==========================================
 // VISTA: Dashboard (Panel de Inicio) - Partial
@@ -148,95 +172,93 @@
     <!-- ACTIVIDAD RECIENTE -->
     <section class="dash-section">
         <h2 class="sec-title"><i class="bi bi-clock-history"></i> Actividad Reciente</h2>
-        <div class="tables-grid">
+        <div class="row g-4">
             <?php if ($esAdmin || $esOpVentas): ?>
-                <div class="table-card table-card-ventas">
-                    <h3>Últimas Notas de Entrega</h3>
-                    <p class="card-desc">Ventas registradas más recientes.</p>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Fecha</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-facturas">
-                            <?php if (!empty($ultimas_facturas)): ?>
-                                <?php foreach ($ultimas_facturas as $f): ?>
-                                    <tr>
-                                        <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($f['cliente'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($f['cliente']); ?></td>
-                                        <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($f['fecha'], ENT_QUOTES); ?>"><?php echo $f['fecha']; ?></td>
-                                        <td class="monto producto-tooltip" data-nombre="$<?php echo $f['total']; ?>">$<?php echo $f['total']; ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="3" class="vacio">Sin ventas registradas</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                <div class="col-12 col-xl-4">
+                    <article class="card border-light shadow-sm h-100 dashboard-activity-card">
+                        <div class="card-header bg-white border-light">
+                            <h3 class="h5 mb-0 fw-bold"><i class="bi bi-receipt me-2 text-success" aria-hidden="true"></i>Últimas Notas de Entrega</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-list" id="lista-facturas">
+                                <?php if (!empty($ultimas_facturas)): ?>
+                                    <?php foreach ($agruparActividadPorFecha($ultimas_facturas) as $grupo): ?>
+                                        <section class="activity-date-group">
+                                            <h4 class="activity-date-heading"><?php echo $grupo['titulo']; ?></h4>
+                                            <?php foreach ($grupo['items'] as $f): ?>
+                                                <div class="activity-item">
+                                                    <span class="activity-icon activity-icon-venta"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+                                                    <div class="activity-item-copy">
+                                                        <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$f['cliente'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                        <div class="small text-secondary">Fecha: <?php echo htmlspecialchars((string)$f['fecha'], ENT_QUOTES, 'UTF-8'); ?> · Total: $<?php echo htmlspecialchars((string)$f['total'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </section>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="mb-0 text-secondary">Sin ventas registradas.</p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </article>
                 </div>
             <?php endif; ?>
 
             <?php if ($esAdmin || $esOpCarga): ?>
-                <div class="table-card table-card-criticos">
-                    <h3>Productos Críticos</h3>
-                    <p class="card-desc">Stock agotado o bajo el mínimo: reponer o reparar lo antes posible.</p>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Stock</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-criticos">
-                            <?php if (!empty($tabla_criticos)): ?>
-                                <?php foreach ($tabla_criticos as $c): ?>
-                                    <tr>
-                                        <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($c['producto'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($c['producto']); ?></td>
-                                        <td class="producto-tooltip" data-nombre="Stock: <?php echo $c['stock']; ?>"><?php echo $c['stock']; ?></td>
-                                        <td class="producto-tooltip" data-nombre="Estado: <?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?>"><span class="stock-badge <?php echo $c['estado']; ?>"><?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?></span></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="3" class="vacio">Sin productos críticos</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                <div class="col-12 col-xl-4">
+                    <article class="card border-light shadow-sm h-100 dashboard-activity-card">
+                        <div class="card-header bg-white border-light">
+                            <h3 class="h5 mb-0 fw-bold"><i class="bi bi-exclamation-triangle me-2 text-warning" aria-hidden="true"></i>Productos Críticos</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-list" id="lista-criticos">
+                                <?php if (!empty($tabla_criticos)): ?>
+                                    <?php foreach ($tabla_criticos as $c): ?>
+                                        <div class="activity-item">
+                                            <span class="activity-icon activity-icon-critico"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+                                            <div class="activity-item-copy">
+                                                <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$c['producto'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <div class="small <?php echo (int)$c['stock'] === 0 ? 'text-danger fw-semibold' : 'text-secondary'; ?>">Stock: <?php echo (int)$c['stock']; ?> unidades · <?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?></div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="mb-0 text-secondary">Sin productos críticos.</p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </article>
                 </div>
 
-                <div class="table-card table-card-compras">
-                    <h3>Últimas Compras</h3>
-                    <p class="card-desc">Total de factura, IVA incluido.</p>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Proveedor</th>
-                                <th>Fecha</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-compras">
-                            <?php if (!empty($tabla_compras)): ?>
-                                <?php foreach ($tabla_compras as $co): ?>
-                                    <tr>
-                                        <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($co['proveedor'], ENT_QUOTES); ?>"><?php echo htmlspecialchars($co['proveedor']); ?></td>
-                                        <td class="producto-tooltip" data-nombre="<?php echo htmlspecialchars($co['fecha'], ENT_QUOTES); ?>"><?php echo $co['fecha']; ?></td>
-                                        <td class="monto producto-tooltip" data-nombre="$<?php echo $co['total']; ?>">$<?php echo $co['total']; ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="3" class="vacio">Sin compras registradas</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                <div class="col-12 col-xl-4">
+                    <article class="card border-light shadow-sm h-100 dashboard-activity-card">
+                        <div class="card-header bg-white border-light">
+                            <h3 class="h5 mb-0 fw-bold"><i class="bi bi-box-seam me-2 text-primary" aria-hidden="true"></i>Últimas Compras</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-list" id="lista-compras">
+                                <?php if (!empty($tabla_compras)): ?>
+                                    <?php foreach ($agruparActividadPorFecha($tabla_compras) as $grupo): ?>
+                                        <section class="activity-date-group">
+                                            <h4 class="activity-date-heading"><?php echo $grupo['titulo']; ?></h4>
+                                            <?php foreach ($grupo['items'] as $co): ?>
+                                                <div class="activity-item">
+                                                    <span class="activity-icon activity-icon-compra"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
+                                                    <div class="activity-item-copy">
+                                                        <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$co['proveedor'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                        <div class="small text-secondary">Fecha: <?php echo htmlspecialchars((string)$co['fecha'], ENT_QUOTES, 'UTF-8'); ?> · Total: $<?php echo htmlspecialchars((string)$co['total'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </section>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="mb-0 text-secondary">Sin compras registradas.</p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </article>
                 </div>
             <?php endif; ?>
         </div>

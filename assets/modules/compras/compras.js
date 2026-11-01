@@ -461,7 +461,7 @@
         function confirmarEliminar(id) {
             Swal.fire({
                 title: '¿ANULAR?',
-                text: 'La factura quedará anulada. No se puede anular si la mercancía ya fue recibida.',
+                text: '¿Estás seguro de anular esta factura? Esta acción eliminará la compra permanentemente. Solo puedes anular compras que NO hayan sido recibidas en inventario.',
                 icon: 'warning',
                 showCancelButton: true,
                 background: '#fff',
