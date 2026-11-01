@@ -46,7 +46,7 @@
                             if ($id('lista-facturas')) {
                                 $id('lista-facturas').innerHTML = renderActividadPorFecha(
                                     data.ultimas_facturas,
-                                    f => `<div class="activity-item"><span class="activity-icon activity-icon-venta"><i class="bi bi-receipt" aria-hidden="true"></i></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(f.cliente)}</div><div class="small text-secondary">Fecha: ${escapeHtml(f.fecha)} · Total: $${escapeHtml(f.total)}</div></div></div>`,
+                                    f => `<div class="activity-item"><span class="activity-status-dot activity-status-dot-venta" aria-hidden="true"></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(f.cliente)}</div><div class="small text-secondary">Fecha: ${escapeHtml(f.fecha)} · Total: $${escapeHtml(f.total)}</div></div></div>`,
                                     'Sin ventas registradas.'
                                 );
                             }
@@ -55,10 +55,14 @@
                                 const productos = data.tabla_criticos || [];
                                 $id('lista-criticos').innerHTML = productos.length
                                     ? productos.map(c => {
-                                        const stock = Number(c.stock) || 0;
+                                        const stock = Math.max(0, Number(c.stock) || 0);
                                         const estado = c.estado === 'critico' ? 'Crítico' : 'Bajo';
                                         const claseStock = stock === 0 ? 'text-danger fw-semibold' : 'text-secondary';
-                                        return `<div class="activity-item"><span class="activity-icon activity-icon-critico"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(c.producto)}</div><div class="small ${claseStock}">Stock: ${stock} unidades · ${estado}</div></div></div>`;
+                                        const porcentajeStock = stock === 0 ? 0 : 50;
+                                        const claseIndicador = stock === 0 ? 'activity-status-dot-stock-vacio' : 'activity-status-dot-critico';
+                                        const claseBarra = stock === 0 ? 'is-empty' : '';
+                                        const estadoAccesible = stock === 0 ? 'Sin existencias' : 'Stock bajo';
+                                        return `<div class="activity-item"><span class="activity-status-dot ${claseIndicador}" aria-hidden="true"></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(c.producto)}</div><div class="small ${claseStock}">Stock: ${stock} unidades · ${estado}</div><div class="progress activity-stock-progress ${claseBarra}" role="progressbar" aria-label="Nivel visual del stock" aria-valuenow="${porcentajeStock}" aria-valuemin="0" aria-valuemax="100" aria-valuetext="${estadoAccesible}"><div class="progress-bar ${stock === 0 ? 'bg-danger' : 'activity-stock-progress-low'}" style="width: ${porcentajeStock}%"></div></div></div></div>`;
                                     }).join('')
                                     : '<p class="mb-0 text-secondary">Sin productos críticos.</p>';
                             }
@@ -66,7 +70,7 @@
                             if ($id('lista-compras')) {
                                 $id('lista-compras').innerHTML = renderActividadPorFecha(
                                     data.tabla_compras,
-                                    c => `<div class="activity-item"><span class="activity-icon activity-icon-compra"><i class="bi bi-box-seam" aria-hidden="true"></i></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(c.proveedor)}</div><div class="small text-secondary">Fecha: ${escapeHtml(c.fecha)} · Total: $${escapeHtml(c.total)}</div></div></div>`,
+                                    c => `<div class="activity-item"><span class="activity-status-dot activity-status-dot-compra" aria-hidden="true"></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(c.proveedor)}</div><div class="small text-secondary">Fecha: ${escapeHtml(c.fecha)} · Total: $${escapeHtml(c.total)}</div></div></div>`,
                                     'Sin compras registradas.'
                                 );
                             }

@@ -286,10 +286,10 @@ $agruparActividadPorFecha = static function (array $items): array {
             <!-- ACTIVIDAD RECIENTE -->
             <section class="dash-section">
                 <h2 class="sec-title"><i class="bi bi-clock-history"></i> Actividad Reciente</h2>
-                <div class="row g-4">
+                <div class="row g-4 bg-transparent">
                     <?php if ($esAdmin || $esOpVentas): ?>
                         <div class="col-12 col-xl-4">
-                            <article class="card border-light shadow-sm h-100 dashboard-activity-card dashboard-activity-card-ventas">
+                            <article class="card border-0 rounded-4 shadow-sm h-100 card-actividad dashboard-activity-card dashboard-activity-card-ventas">
                                 <div class="card-header dashboard-activity-header">
                                     <h3 class="h5 mb-0 fw-bold"><span class="dashboard-activity-heading-icon" aria-hidden="true"><i class="bi bi-receipt"></i></span>Últimas Notas de Entrega</h3>
                                 </div>
@@ -301,7 +301,7 @@ $agruparActividadPorFecha = static function (array $items): array {
                                                     <h4 class="activity-date-heading"><?php echo $grupo['titulo']; ?></h4>
                                                     <?php foreach ($grupo['items'] as $f): ?>
                                                         <div class="activity-item">
-                                                            <span class="activity-icon activity-icon-venta"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+                                                            <span class="activity-status-dot activity-status-dot-venta" aria-hidden="true"></span>
                                                             <div class="activity-item-copy">
                                                                 <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$f['cliente'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                                 <div class="small text-secondary">Fecha: <?php echo htmlspecialchars((string)$f['fecha'], ENT_QUOTES, 'UTF-8'); ?> · Total: $<?php echo htmlspecialchars((string)$f['total'], ENT_QUOTES, 'UTF-8'); ?></div>
@@ -321,7 +321,7 @@ $agruparActividadPorFecha = static function (array $items): array {
 
                     <?php if ($esAdmin || $esOpCarga): ?>
                         <div class="col-12 col-xl-4">
-                            <article class="card border-light shadow-sm h-100 dashboard-activity-card dashboard-activity-card-criticos">
+                            <article class="card border-0 rounded-4 shadow-sm h-100 card-actividad dashboard-activity-card dashboard-activity-card-criticos">
                                 <div class="card-header dashboard-activity-header">
                                     <h3 class="h5 mb-0 fw-bold"><span class="dashboard-activity-heading-icon" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></span>Productos Críticos</h3>
                                 </div>
@@ -329,11 +329,15 @@ $agruparActividadPorFecha = static function (array $items): array {
                                     <div class="activity-list" id="lista-criticos">
                                         <?php if (!empty($tabla_criticos)): ?>
                                             <?php foreach ($tabla_criticos as $c): ?>
+                                                <?php $stock = max(0, (int)$c['stock']); ?>
                                                 <div class="activity-item">
-                                                    <span class="activity-icon activity-icon-critico"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+                                                    <span class="activity-status-dot <?php echo $stock === 0 ? 'activity-status-dot-stock-vacio' : 'activity-status-dot-critico'; ?>" aria-hidden="true"></span>
                                                     <div class="activity-item-copy">
                                                         <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$c['producto'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                                        <div class="small <?php echo (int)$c['stock'] === 0 ? 'text-danger fw-semibold' : 'text-secondary'; ?>">Stock: <?php echo (int)$c['stock']; ?> unidades · <?php echo $c['estado'] === 'critico' ? 'Crítico' : 'Bajo'; ?></div>
+                                                        <div class="small <?php echo $stock === 0 ? 'text-danger fw-semibold' : 'text-secondary'; ?>">Stock: <?php echo $stock; ?> unidades · <?php echo $stock === 0 ? 'Crítico' : 'Bajo'; ?></div>
+                                                        <div class="progress activity-stock-progress <?php echo $stock === 0 ? 'is-empty' : ''; ?>" role="progressbar" aria-label="Nivel visual del stock" aria-valuenow="<?php echo $stock === 0 ? '0' : '50'; ?>" aria-valuemin="0" aria-valuemax="100" aria-valuetext="<?php echo $stock === 0 ? 'Sin existencias' : 'Stock bajo'; ?>">
+                                                            <div class="progress-bar <?php echo $stock === 0 ? 'bg-danger' : 'activity-stock-progress-low'; ?>" style="width: <?php echo $stock === 0 ? '0' : '50'; ?>%"></div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             <?php endforeach; ?>
@@ -346,7 +350,7 @@ $agruparActividadPorFecha = static function (array $items): array {
                         </div>
 
                         <div class="col-12 col-xl-4">
-                            <article class="card border-light shadow-sm h-100 dashboard-activity-card dashboard-activity-card-compras">
+                            <article class="card border-0 rounded-4 shadow-sm h-100 card-actividad dashboard-activity-card dashboard-activity-card-compras">
                                 <div class="card-header dashboard-activity-header">
                                     <h3 class="h5 mb-0 fw-bold"><span class="dashboard-activity-heading-icon" aria-hidden="true"><i class="bi bi-box-seam"></i></span>Últimas Compras</h3>
                                 </div>
@@ -358,7 +362,7 @@ $agruparActividadPorFecha = static function (array $items): array {
                                                     <h4 class="activity-date-heading"><?php echo $grupo['titulo']; ?></h4>
                                                     <?php foreach ($grupo['items'] as $co): ?>
                                                         <div class="activity-item">
-                                                            <span class="activity-icon activity-icon-compra"><i class="bi bi-box-seam" aria-hidden="true"></i></span>
+                                                            <span class="activity-status-dot activity-status-dot-compra" aria-hidden="true"></span>
                                                             <div class="activity-item-copy">
                                                                 <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$co['proveedor'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                                 <div class="small text-secondary">Fecha: <?php echo htmlspecialchars((string)$co['fecha'], ENT_QUOTES, 'UTF-8'); ?> · Total: $<?php echo htmlspecialchars((string)$co['total'], ENT_QUOTES, 'UTF-8'); ?></div>

@@ -551,33 +551,23 @@
 }
 
 .dashboard-activity-card {
-    border-radius: var(--jv-radius-lg);
-    border-top: 4px solid transparent;
+    border: 0;
+    border-radius: 16px;
     overflow: hidden;
-    transition: transform .2s ease, box-shadow .2s ease;
 }
 
-.dashboard-activity-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(15, 26, 46, .12) !important;
+.card-actividad {
+    transition: transform .3s ease, box-shadow .3s ease;
 }
 
-.dashboard-activity-card-ventas {
-    border-top-color: #047857;
-}
-
-.dashboard-activity-card-criticos {
-    border-top-color: #D97706;
-}
-
-.dashboard-activity-card-compras {
-    border-top-color: #2563EB;
+.card-actividad:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, .05) !important;
 }
 
 .dashboard-activity-header {
     padding: 18px 20px;
     border: 0;
-    border-bottom: 1px solid var(--jv-border);
 }
 
 .dashboard-activity-header h3 {
@@ -589,15 +579,15 @@
 }
 
 .dashboard-activity-card-ventas .dashboard-activity-header {
-    background: linear-gradient(112deg, #ECFDF5 0%, #F4FBF7 72%, #FFFFFF 100%);
+    background: #E8F7EE;
 }
 
 .dashboard-activity-card-criticos .dashboard-activity-header {
-    background: linear-gradient(112deg, #FFF7ED 0%, #FFFAF4 72%, #FFFFFF 100%);
+    background: #FFF3D6;
 }
 
 .dashboard-activity-card-compras .dashboard-activity-header {
-    background: linear-gradient(112deg, #EFF6FF 0%, #F5F8FF 72%, #FFFFFF 100%);
+    background: #E8F0FF;
 }
 
 .dashboard-activity-heading-icon {
@@ -607,7 +597,7 @@
     height: 38px;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
+    border-radius: 50%;
     color: #fff;
     background: #047857;
 }
@@ -630,7 +620,7 @@
 
 .activity-list {
     display: grid;
-    gap: 18px;
+    gap: 12px;
 }
 
 .activity-date-group + .activity-date-group {
@@ -654,45 +644,49 @@
     border-bottom: 1px solid var(--jv-border);
 }
 
-.activity-date-group:last-child .activity-item:last-child {
+.activity-item:last-child {
     border-bottom: 0;
 }
 
-.activity-icon {
-    display: inline-flex;
-    flex: 0 0 42px;
-    width: 42px;
-    height: 42px;
-    align-items: center;
-    justify-content: center;
+.activity-status-dot {
+    flex: 0 0 9px;
+    width: 9px;
+    height: 9px;
+    margin-top: .5rem;
     border-radius: 50%;
 }
 
-.activity-icon-venta {
-    color: #15803D;
-    background: #DCFCE7;
+.activity-status-dot-venta {
+    background: #047857;
 }
 
-.activity-icon-compra {
-    color: #1D4ED8;
-    background: #DBEAFE;
+.activity-status-dot-compra {
+    background: #2563EB;
 }
 
-.activity-icon-critico {
-    color: #B45309;
-    background: #FEF3C7;
+.activity-status-dot-critico {
+    background: #D97706;
 }
 
-.dashboard-activity-card-ventas .activity-icon {
-    background: #DCFCE7;
+.activity-status-dot-stock-vacio {
+    background: #DC2626;
 }
 
-.dashboard-activity-card-criticos .activity-icon {
-    background: #FEF3C7;
+.activity-stock-progress {
+    height: 6px;
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #FFF3D6;
 }
 
-.dashboard-activity-card-compras .activity-icon {
-    background: #DBEAFE;
+.activity-stock-progress.is-empty {
+    border: 1px solid #DC2626;
+    background: transparent;
+}
+
+.activity-stock-progress-low {
+    background: #D97706;
 }
 
 .activity-item-copy {
@@ -707,11 +701,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .dashboard-activity-card {
+    .card-actividad {
         transition: none;
     }
 
-    .dashboard-activity-card:hover {
+    .card-actividad:hover {
         transform: none;
     }
 }

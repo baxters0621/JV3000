@@ -52,6 +52,7 @@ $vista_renderizada = renderDashboardActividad([
     ],
     'tabla_criticos' => [
         ['producto' => 'Producto sin existencias', 'stock' => 0, 'estado' => 'critico'],
+        ['producto' => 'Producto con stock bajo', 'stock' => 2, 'estado' => 'bajo'],
     ],
     'tabla_compras' => [
         ['proveedor' => 'Proveedor actual', 'fecha' => $hoy->format('d/m/Y'), 'total' => '40.00'],
@@ -63,6 +64,14 @@ $vista_renderizada = renderDashboardActividad([
 afirmarActividadDashboard(strpos($vista_renderizada, '<h4 class="activity-date-heading">HOY</h4>') !== false, 'La vista renderizada debe agrupar la actividad de hoy.');
 afirmarActividadDashboard(strpos($vista_renderizada, 'Cliente de nombre muy largo que debe fluir sin cortes') !== false, 'La vista renderizada debe preservar nombres largos completos.');
 afirmarActividadDashboard(strpos($vista_renderizada, 'Producto sin existencias') !== false && strpos($vista_renderizada, 'small text-danger fw-semibold">Stock: 0 unidades') !== false, 'La vista renderizada debe resaltar el stock cero en rojo.');
+afirmarActividadDashboard(
+    strpos($vista_renderizada, 'activity-stock-progress is-empty') !== false
+    && strpos($vista_renderizada, 'aria-valuenow="0"') !== false
+    && strpos($vista_renderizada, 'style="width: 0%"') !== false
+    && strpos($vista_renderizada, 'Producto con stock bajo') !== false
+    && strpos($vista_renderizada, 'style="width: 50%"') !== false,
+    'La barra visual debe quedar vacía en cero y a mitad cuando hay poco stock.'
+);
 $ayer_es_semana = $ayer >= $hoy->modify('monday this week');
 afirmarActividadDashboard(
     (strpos($vista_renderizada, '>ESTA SEMANA</h4>') !== false) === $ayer_es_semana,
@@ -75,8 +84,8 @@ foreach ($vistas as $indice => $vista) {
     $fin = strrpos($vista, '</section>');
     $actividad = $inicio === false || $fin === false ? '' : substr($vista, $inicio, $fin - $inicio);
     afirmarActividadDashboard($actividad !== '', 'No se encontró Actividad Reciente en la vista ' . $indice . '.');
-    afirmarActividadDashboard(strpos($actividad, 'class="row g-4"') !== false, 'Las tarjetas deben usar el grid Bootstrap con separación g-4.');
-    afirmarActividadDashboard(substr_count($actividad, 'class="card border-light shadow-sm h-100 dashboard-activity-card dashboard-activity-card-') === 3, 'Actividad Reciente debe tener tres tarjetas claras.');
+    afirmarActividadDashboard(strpos($actividad, 'class="row g-4 bg-transparent"') !== false, 'El grid debe flotar sobre un contenedor transparente.');
+    afirmarActividadDashboard(substr_count($actividad, 'class="card border-0 rounded-4 shadow-sm h-100 card-actividad dashboard-activity-card dashboard-activity-card-') === 3, 'Actividad Reciente debe tener tres tarjetas flotantes y redondeadas.');
     afirmarActividadDashboard(substr_count($actividad, '<table') === 0, 'Las tarjetas no deben contener tablas.');
     afirmarActividadDashboard(strpos($actividad, 'text-truncate') === false && strpos($actividad, 'producto-tooltip') === false, 'Los nombres deben fluir sin truncamiento ni tooltip.');
     foreach (['lista-facturas', 'lista-criticos', 'lista-compras'] as $elemento) {
@@ -96,22 +105,27 @@ foreach (['dashboard-activity-card-ventas', 'dashboard-activity-card-criticos', 
     afirmarActividadDashboard(strpos($css, '.' . $clase) !== false, 'Falta el acento visual ' . $clase . '.');
 }
 afirmarActividadDashboard(
-    strpos($css, 'border-top: 4px solid transparent;') !== false
-    && strpos($css, 'linear-gradient(112deg, #ECFDF5') !== false
-    && strpos($css, 'linear-gradient(112deg, #FFF7ED') !== false
-    && strpos($css, 'linear-gradient(112deg, #EFF6FF') !== false,
-    'Las cabeceras deben usar gradientes suaves y un borde superior por tema.'
+    strpos($css, 'border-radius: 16px;') !== false
+    && strpos($css, 'border: 0;') !== false
+    && strpos($css, 'background: #E8F7EE;') !== false
+    && strpos($css, 'background: #FFF3D6;') !== false
+    && strpos($css, 'background: #E8F0FF;') !== false
+    && strpos($css, 'border-radius: 50%;') !== false,
+    'Las tarjetas deben ser redondeadas y las cabeceras pastel con iconos circulares.'
 );
 afirmarActividadDashboard(
-    strpos($css, 'transition: transform .2s ease, box-shadow .2s ease;') !== false
-    && strpos($css, 'transform: translateY(-2px);') !== false,
+    strpos($css, 'transition: transform .3s ease, box-shadow .3s ease;') !== false
+    && strpos($css, 'transform: translateY(-5px);') !== false
+    && strpos($css, 'box-shadow: 0 10px 20px rgba(0, 0, 0, .05) !important;') !== false,
     'Las tarjetas deben elevarse suavemente al pasar el puntero.'
 );
 afirmarActividadDashboard(
-    strpos($css, '.activity-icon {') !== false
-    && strpos($css, 'flex: 0 0 42px;') !== false
-    && strpos($css, 'border-bottom: 1px solid var(--jv-border);') !== false,
-    'Los ítems deben llevar avatares circulares y separadores discretos.'
+    strpos($css, '.activity-status-dot {') !== false
+    && strpos($css, 'border-bottom: 1px solid var(--jv-border);') !== false
+    && strpos($css, '.activity-stock-progress.is-empty {') !== false
+    && strpos($css, 'background: transparent;') !== false
+    && strpos($css, 'border: 1px solid #DC2626;') !== false,
+    'Los ítems deben tener puntos, separadores discretos y barra vacía delineada para stock cero.'
 );
 afirmarActividadDashboard(strpos($css, '@media (prefers-reduced-motion: reduce)') !== false, 'La elevación debe respetar movimiento reducido.');
 afirmarActividadDashboard(
@@ -122,6 +136,12 @@ afirmarActividadDashboard(
 );
 afirmarActividadDashboard(strpos($javascript, "lista-facturas") !== false && strpos($javascript, "lista-criticos") !== false && strpos($javascript, "lista-compras") !== false, 'El refresco AJAX debe actualizar las tres listas.');
 afirmarActividadDashboard(strpos($javascript, 'renderActividadPorFecha') !== false, 'El refresco AJAX debe preservar la agrupación por fecha.');
+afirmarActividadDashboard(
+    strpos($javascript, 'activity-status-dot') !== false
+    && strpos($javascript, 'activity-stock-progress') !== false
+    && strpos($javascript, 'aria-valuetext') !== false,
+    'El refresco AJAX debe conservar puntos de estado y barras accesibles de stock.'
+);
 afirmarActividadDashboard(strpos($javascript, 'producto-tooltip') === false && strpos($javascript, 'tabla-facturas') === false, 'El refresco no debe conservar referencias a tablas o tooltips antiguos.');
 
 echo "OK tarjetas y agrupación de Actividad Reciente verificadas\n";
