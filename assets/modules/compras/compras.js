@@ -5,10 +5,13 @@
         // ==========================================
 
         let productos = [];
-        let toolboxTimer = null;
         let productoSeleccionado = null;
+        let proveedorCarritoId = '';
 
         const taxPercentage = (window.JV_CONFIG && typeof window.JV_CONFIG.taxPercentage === 'number') ? window.JV_CONFIG.taxPercentage : 16;
+        const proveedorSelect = document.getElementById('selProveedor');
+        const productoSelect = document.getElementById('selProductoProveedor');
+        const catalogoEstado = document.getElementById('catalogoProveedorEstado');
 
         // Formatea un número como moneda en dólares: $ con separador de miles y 2 decimales.
         function formatCurrency(amount) {
@@ -34,111 +37,58 @@
         }
 
         // ==========================================
-        // TOOLBOX — Búsqueda de productos (AJAX)
+        // CATÁLOGO DEL PROVEEDOR
         // ==========================================
-        const toolboxInput = document.getElementById('buscarProducto');
-        const resultadosBox = document.getElementById('resultadosBusqueda');
+        // Llena el selector solo con productos activos asociados al proveedor elegido.
+        function actualizarCatalogoProveedor() {
+            if (!productoSelect) return;
+            const idProveedor = proveedorSelect ? proveedorSelect.value : '';
+            const catalogo = (window.JV_CATALOGO || {})[idProveedor] || [];
+            productoSelect.innerHTML = '';
 
-        // Oculta el panel de resultados de búsqueda de productos.
-        function cerrarResultados() {
-            if (resultadosBox) resultadosBox.classList.remove('abierto');
-        }
+            const opcionInicial = document.createElement('option');
+            opcionInicial.value = '';
+            opcionInicial.textContent = idProveedor ? 'Selecciona un producto...' : 'Selecciona primero un proveedor';
+            productoSelect.appendChild(opcionInicial);
 
-        // Muestra el panel de resultados de búsqueda de productos.
-        function abrirResultados() {
-            if (resultadosBox) resultadosBox.classList.add('abierto');
-        }
-
-        // Dibuja en el panel los productos devueltos por la búsqueda AJAX; si no hay, muestra "Sin resultados".
-        function renderResultados(items) {
-            if (!resultadosBox) return;
-            resultadosBox.innerHTML = '';
-            if (!items || !items.length) {
-                const vacio = document.createElement('div');
-                vacio.className = 'com-sin-resultados';
-                vacio.textContent = 'Sin resultados';
-                resultadosBox.appendChild(vacio);
-                abrirResultados();
-                return;
-            }
-            items.forEach(function(product) {
-                const div = document.createElement('div');
-                div.className = 'com-resultado';
-                div.dataset.id = product.id;
-                div.dataset.nombre = product.nombre;
-                div.dataset.precio = product.precio_costo;
-
-                const left = document.createElement('div');
-                const nombreEl = document.createElement('div');
-                nombreEl.className = 'r-nombre';
-                nombreEl.textContent = product.nombre;
-                const skuEl = document.createElement('div');
-                skuEl.className = 'r-sku';
-                skuEl.textContent = product.sku || '';
-                if (product.sku) skuEl.dataset.tooltip = product.sku;
-                left.appendChild(nombreEl);
-                left.appendChild(skuEl);
-
-                const stockEl = document.createElement('span');
-                stockEl.className = 'r-stock';
-                stockEl.textContent = 'Stock: ' + product.stock;
-
-                div.appendChild(left);
-                div.appendChild(stockEl);
-                resultadosBox.appendChild(div);
+            catalogo.forEach(function(producto) {
+                const opcion = document.createElement('option');
+                opcion.value = String(producto.id);
+                opcion.textContent = producto.nombre + (producto.sku ? ' (' + producto.sku + ')' : '');
+                productoSelect.appendChild(opcion);
             });
-            abrirResultados();
+
+            productoSelect.disabled = !idProveedor || catalogo.length === 0;
+            if (catalogoEstado) {
+                catalogoEstado.textContent = !idProveedor
+                    ? 'Selecciona un proveedor para ver sus productos.'
+                    : catalogo.length
+                        ? catalogo.length + ' producto(s) disponible(s) en su catálogo.'
+                        : 'Este proveedor no tiene productos en su catálogo. Agrégalos desde Gestión de proveedores.';
+            }
         }
 
-        // Ejecuta la búsqueda de productos por AJAX con debounce de 350 ms para no consultar en cada tecla.
-        function buscarProductos() {
-            const searchTerm = toolboxInput.value.trim();
-            if (!searchTerm) {
-                cerrarResultados();
-                productoSeleccionado = null;
-                return;
-            }
-            if (productoSeleccionado && searchTerm !== productoSeleccionado.nombre) {
-                productoSeleccionado = null;
-            }
-            window.clearTimeout(toolboxTimer);
-            toolboxTimer = window.setTimeout(function() {
-                jvBuscarProductos({ q: searchTerm, limit: 15 }, function(searchResponse) {
-                    if (searchResponse && searchResponse.success) renderResultados(searchResponse.items);
-                    else renderResultados([]);
-                });
-            }, 350);
-        }
-
-        // Al elegir un resultado guarda el producto seleccionado, rellena el input y sugiere el precio de costo.
-        // Prioridad de la sugerencia: catálogo del proveedor elegido → costo referencial del producto.
-        function seleccionarProducto(productElement) {
-            if (!productElement || !productElement.dataset.id) return;
-            const idProducto = parseInt(productElement.dataset.id, 10);
-            productoSeleccionado = {
-                id: idProducto,
-                nombre: productElement.dataset.nombre
-            };
-            toolboxInput.value = productoSeleccionado.nombre;
+        // Al elegir un producto del catálogo carga su costo asociado al proveedor.
+        function seleccionarProductoCatalogo() {
+            productoSeleccionado = null;
             const precioEl = document.getElementById('inputPrecio');
-            if (precioEl && !precioEl.value.trim()) {
-                let suggestedPrice = costoDesdeCatalogo(idProducto);
-                if (suggestedPrice === null) suggestedPrice = parseFloat(productElement.dataset.precio) || 0;
-                precioEl.value = suggestedPrice > 0 ? suggestedPrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00';
-            }
-            cerrarResultados();
-            const cantEl = document.getElementById('inputCant');
-            if (cantEl) cantEl.focus();
-        }
+            if (precioEl) precioEl.value = '';
 
-        // Busca el costo del producto en el catálogo del proveedor seleccionado.
-        // Devuelve el costo (number) o null si no hay proveedor/entrada en catálogo.
-        function costoDesdeCatalogo(idProducto) {
-            if (!window.JV_CATALOGO) return null;
-            const provSel = document.getElementById('selProveedor');
-            if (!provSel || !provSel.value) return null;
-            const catalogoProv = window.JV_CATALOGO[provSel.value] || {};
-            return Object.prototype.hasOwnProperty.call(catalogoProv, idProducto) ? catalogoProv[idProducto] : null;
+            const idProveedor = proveedorSelect ? proveedorSelect.value : '';
+            const idProducto = productoSelect ? Number(productoSelect.value) : 0;
+            const catalogo = (window.JV_CATALOGO || {})[idProveedor] || [];
+            const producto = catalogo.find(function(entrada) {
+                return Number(entrada.id) === idProducto;
+            });
+            if (!producto) return;
+
+            productoSeleccionado = {
+                id: Number(producto.id),
+                nombre: producto.nombre
+            };
+            if (precioEl) precioEl.value = Number(producto.costo).toFixed(2);
+            const cantidadEl = document.getElementById('inputCant');
+            if (cantidadEl) cantidadEl.focus();
         }
 
         // ==========================================
@@ -146,16 +96,28 @@
         // ==========================================
         // Valida cantidad y precio y agrega el producto elegido al array 'productos' como línea de la factura.
         function agregarProducto() {
-            if (!productoSeleccionado || !productoSeleccionado.id) {
+            if (!proveedorSelect || !proveedorSelect.value) {
                 Swal.fire({
-                    title: 'Seleccione un producto',
-                    text: 'Escriba el nombre, seleccione una sugerencia y complete la cantidad, el precio y el vencimiento antes de agregarlo.',
+                    title: 'Seleccione un proveedor',
+                    text: 'Primero elija el proveedor para cargar su catálogo de productos.',
                     icon: 'warning',
                     background: '#fff',
                     color: '#212529',
                     confirmButtonColor: '#EA580C'
                 });
-                if (toolboxInput) toolboxInput.focus();
+                if (proveedorSelect) proveedorSelect.focus();
+                return;
+            }
+            if (!productoSeleccionado || !productoSeleccionado.id) {
+                Swal.fire({
+                    title: 'Seleccione un producto',
+                    text: 'Elija un producto del catálogo de este proveedor y complete la cantidad, el precio y el vencimiento.',
+                    icon: 'warning',
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#EA580C'
+                });
+                if (productoSelect) productoSelect.focus();
                 return;
             }
             const quantityText = document.getElementById('inputCant').value.trim();
@@ -210,11 +172,11 @@
             actualizarTabla();
 
             productoSeleccionado = null;
-            toolboxInput.value = '';
+            if (productoSelect) productoSelect.value = '';
             document.getElementById('inputCant').value = 1;
             document.getElementById('inputPrecio').value = '';
             document.getElementById('inputVencimiento').value = '';
-            if (toolboxInput) toolboxInput.focus();
+            if (productoSelect && !productoSelect.disabled) productoSelect.focus();
         }
 
         // Elimina del array la línea de producto en la posición dada y redibuja la tabla.
@@ -227,7 +189,7 @@
         function actualizarTabla() {
             const body = document.getElementById('productosBody');
             if (productos.length === 0) {
-                body.innerHTML = '<tr id="filaVacia"><td colspan="7" style="padding:24px 12px;text-align:center;color:var(--jv-text-muted);font-size:.85rem;border-bottom:1px solid var(--jv-border);">⬆ Busque un producto y presione + para agregarlo</td></tr>';
+                body.innerHTML = '<tr id="filaVacia"><td colspan="7" style="padding:24px 12px;text-align:center;color:var(--jv-text-muted);font-size:.85rem;border-bottom:1px solid var(--jv-border);">Seleccione un proveedor y un producto disponible para comenzar</td></tr>';
             } else {
                 body.innerHTML = '';
                 productos.forEach((product, productIndex) => {
@@ -259,7 +221,18 @@
         // ==========================================
         // PROVEEDOR — RIF del proveedor elegido
         // ==========================================
-        document.getElementById('selProveedor').addEventListener('change', function() {
+        proveedorSelect.addEventListener('change', function() {
+            if (proveedorCarritoId && proveedorCarritoId !== this.value && productos.length > 0) {
+                this.value = proveedorCarritoId;
+                Swal.fire({
+                    title: 'Carrito con productos',
+                    text: 'Quite los productos del carrito antes de cambiar de proveedor.',
+                    icon: 'warning',
+                    confirmButtonColor: '#EA580C'
+                });
+                return;
+            }
+            proveedorCarritoId = this.value;
             const opt = this.options[this.selectedIndex];
             const rifEl = document.getElementById('displayRif');
             if (opt && opt.value) {
@@ -271,7 +244,12 @@
                 rifEl.value = '-';
                 rifEl.style.color = 'var(--jv-text-muted)';
             }
+            productoSeleccionado = null;
+            if (productoSelect) productoSelect.value = '';
+            document.getElementById('inputPrecio').value = '';
+            actualizarCatalogoProveedor();
         });
+        productoSelect.addEventListener('change', seleccionarProductoCatalogo);
 
         // ==========================================
         // VALIDACIÓN DEL FORMULARIO
@@ -323,6 +301,15 @@
             }
 
             if (productos.length === 0) errores.push('AGREGUE AL MENOS UN PRODUCTO');
+            const catalogoProveedor = (window.JV_CATALOGO || {})[prov.value] || [];
+            const productosFueraCatalogo = productos.some(function(producto) {
+                return !catalogoProveedor.some(function(entrada) {
+                    return Number(entrada.id) === Number(producto.id);
+                });
+            });
+            if (productosFueraCatalogo) {
+                errores.push('HAY PRODUCTOS QUE NO PERTENECEN AL CATÁLOGO DEL PROVEEDOR. ACTUALICE EL CATÁLOGO O QUÍTELOS DEL CARRITO.');
+            }
 
             if (errores.length > 0) {
                 if (primerError) {
@@ -814,6 +801,8 @@
         // ==========================================
         document.addEventListener('DOMContentLoaded', function() {
             // (El auto-cierre de mensajes flash lo maneja diseno.js globalmente.)
+            proveedorCarritoId = proveedorSelect.value;
+            proveedorSelect.dispatchEvent(new Event('change', { bubbles: true }));
 
             const compraRecuperacion = (window.JV_CONFIG || {}).compraRecuperacion;
             const recepcionRecuperacion = (window.JV_CONFIG || {}).recepcionRecuperacion;
@@ -885,29 +874,6 @@
                     if (e) e.remove();
                 });
             });
-
-            // Toolbox: búsqueda con debounce
-            if (toolboxInput && resultadosBox) {
-                toolboxInput.addEventListener('input', buscarProductos);
-                toolboxInput.addEventListener('focus', function() {
-                    if (this.value.trim()) buscarProductos();
-                });
-                toolboxInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape') cerrarResultados();
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        const primero = resultadosBox.querySelector('.com-resultado');
-                        if (primero) seleccionarProducto(primero);
-                    }
-                });
-                resultadosBox.addEventListener('click', function(e) {
-                    const item = e.target.closest('.com-resultado');
-                    if (item) seleccionarProducto(item);
-                });
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.com-toolbox')) cerrarResultados();
-                });
-            }
 
             // Sidebar (mainWrapper definido en sidebar.js)
             if (typeof mainWrapper !== 'undefined' && mainWrapper) {

@@ -721,23 +721,16 @@
             flex-wrap: wrap;
         }
         .comp-add-product {
-            position: relative;
             flex: 1;
             min-width: 200px;
         }
-        .comp-add-product > i {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #10b981;
-            font-size: .95rem;
-            pointer-events: none;
-            z-index: 1;
-        }
         .comp-add-product .input-jv {
-            padding-left: 36px;
             width: 100%;
+        }
+        .comp-catalog-status {
+            margin-top: 5px;
+            color: var(--jv-text-muted);
+            font-size: .76rem;
         }
         .comp-add-field {
             flex: 0 0 auto;
@@ -921,84 +914,6 @@
         }
         .comp-btn-save {
             box-shadow: 0 4px 14px rgba(5,150,105,0.3);
-        }
-
-        /* ── Toolbox autocomplete ── */
-        .com-toolbox, .comp-add-product {
-            position: relative;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .com-resultados {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            z-index: 1055;
-            background: var(--jv-bg-card);
-            border: 1px solid var(--jv-border);
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            max-height: 260px;
-            overflow-y: auto;
-            display: none;
-            margin-top: 4px;
-        }
-
-        .com-resultados.abierto {
-            display: block;
-        }
-
-        .com-resultados .com-resultado {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--jv-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .com-resultados .com-resultado > div:first-child {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .com-resultados .com-resultado:hover {
-            background: rgba(16, 185, 129, 0.08);
-        }
-
-        .com-resultados .com-resultado .r-nombre {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--jv-text-primary);
-        }
-
-        .com-resultados .com-resultado .r-sku {
-            width: fit-content;
-            max-width: 100%;
-            margin-top: 2px;
-            color: var(--jv-text-secondary);
-            font-size: .9rem;
-            font-weight: 700;
-            line-height: 1.35;
-            overflow-wrap: anywhere;
-            cursor: help;
-        }
-
-        .com-resultados .com-resultado .r-stock {
-            font-size: .9rem;
-            font-weight: 700;
-            white-space: nowrap;
-            color: var(--jv-text-secondary);
-        }
-
-        .com-resultados .com-sin-resultados {
-            padding: 12px;
-            font-size: .9rem;
-            color: var(--jv-text-muted);
-            text-align: center;
         }
 
         /* ── Tooltip grande (nombre completo de productos) ── */

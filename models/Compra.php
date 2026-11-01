@@ -110,19 +110,26 @@ class Compra extends Model
     }
 
     /**
-     * Mapa de costos del catálogo de proveedores [id_proveedor][id_producto].
+     * Catálogo de productos activos agrupado por proveedor.
      *
-     * Lo usa la vista de compras para autocompletar el costo de cada línea
-     * según el proveedor seleccionado. Si el proveedor no tiene el producto
-     * en su catálogo, el costo se ingresa a mano.
-     *
-     * @return array Mapa anidado con el costo por combinación.
+     * @return array Mapa [id_proveedor => lista de productos y costo].
      */
-    public function mapaCostosCatalogo(): array
+    public function catalogoProductosPorProveedor(): array
     {
         $mapa = [];
-        foreach ($this->db->fetchAll("SELECT id_proveedor, id_producto, costo FROM catalogo_costos") as $fila) {
-            $mapa[(int)$fila['id_proveedor']][(int)$fila['id_producto']] = (float)$fila['costo'];
+        foreach ($this->db->fetchAll(
+            "SELECT cc.id_proveedor, cc.id_producto, cc.costo, p.nombre_producto, p.sku
+             FROM catalogo_costos cc
+             JOIN productos p ON p.id_producto = cc.id_producto
+             WHERE p.status = 'Activo'
+             ORDER BY p.nombre_producto"
+        ) as $fila) {
+            $mapa[(int)$fila['id_proveedor']][] = [
+                'id' => (int)$fila['id_producto'],
+                'nombre' => (string)$fila['nombre_producto'],
+                'sku' => (string)$fila['sku'],
+                'costo' => (float)$fila['costo'],
+            ];
         }
         return $mapa;
     }
@@ -274,9 +281,23 @@ class Compra extends Model
             if ($id_producto <= 0) {
                 return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO EN EL DETALLE DE LA COMPRA.'];
             }
-            $prod_fila = $this->db->fetchOne("SELECT sku, nombre_producto FROM productos WHERE id_producto = ?", [$id_producto]);
+            $prod_fila = $this->db->fetchOne(
+                "SELECT p.sku, p.nombre_producto, p.status, cc.id_catalogo
+                 FROM productos p
+                 LEFT JOIN catalogo_costos cc
+                    ON cc.id_producto = p.id_producto AND cc.id_proveedor = ?
+                 WHERE p.id_producto = ?
+                 LIMIT 1",
+                [$id_proveedor, $id_producto]
+            );
             if (!$prod_fila) {
                 return ['ok' => false, 'mensaje' => "EL PRODUCTO #$id_producto NO EXISTE."];
+            }
+            if ($prod_fila['status'] !== 'Activo') {
+                return ['ok' => false, 'mensaje' => "EL PRODUCTO {$prod_fila['nombre_producto']} ESTÁ INACTIVO."];
+            }
+            if (empty($prod_fila['id_catalogo'])) {
+                return ['ok' => false, 'mensaje' => "EL PRODUCTO {$prod_fila['nombre_producto']} NO ESTÁ EN EL CATÁLOGO DEL PROVEEDOR. AGRÉGUELO AL CATÁLOGO ANTES DE REGISTRAR LA COMPRA."];
             }
             // REGLA DE NEGOCIO: todo lote nace de una compra y TODO lote exige
             // fecha de vencimiento. Sin ella se rompe el control FEFO del inventario.

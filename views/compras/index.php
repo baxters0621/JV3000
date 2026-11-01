@@ -348,7 +348,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
 <!-- Modal: Registrar compra -->
 <script>
-    window.JV_CATALOGO = <?php echo $catalogo_costos; ?>;
+    window.JV_CATALOGO = <?php echo $catalogo_productos; ?>;
 </script>
 <div class="modal fade" id="modalCompra" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -449,20 +449,20 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <div class="comp-step-chip chip-orange">3</div>
                             <div class="comp-step-info">
                                 <div class="comp-step-title">Agregar Productos</div>
-                                <div class="comp-step-desc">Selecciona un resultado, indica cantidad, precio y vencimiento, y agr&eacute;galo al carrito</div>
+                                <div class="comp-step-desc">Elige un producto del cat&aacute;logo del proveedor, indica sus datos y agr&eacute;galo al carrito</div>
                             </div>
-                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Escribir no agrega el producto: selecciona una sugerencia y completa el vencimiento obligatorio para a&ntilde;adirlo al carrito."></i>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="La lista contiene solo productos asociados al proveedor seleccionado. Si falta uno, agr&eacute;galo a su cat&aacute;logo en Gesti&oacute;n de proveedores."></i>
                         </div>
                         <div class="comp-step-body">
 
                             <!-- Toolbar de agregar -->
                             <div class="comp-add-row">
                                 <div class="comp-add-product">
-                                    <i class="bi bi-search"></i>
-                                    <input type="text" class="input-jv" id="buscarProducto" aria-label="Buscar producto para agregar" placeholder="Buscar por nombre o c&oacute;digo SKU..." autocomplete="off">
-                                    <input type="hidden" id="selProductoId">
-                                    <input type="hidden" id="selProductoNombre">
-                                    <div class="com-resultados" id="resultadosBusqueda"></div>
+                                    <label class="comp-label-sm" for="selProductoProveedor">Producto del proveedor</label>
+                                    <select class="input-jv" id="selProductoProveedor" aria-label="Producto del catálogo del proveedor" disabled>
+                                        <option value="">Selecciona primero un proveedor</option>
+                                    </select>
+                                    <div class="comp-catalog-status" id="catalogoProveedorEstado" role="status" aria-live="polite">Selecciona un proveedor para ver sus productos.</div>
                                 </div>
                                 <div class="comp-add-field">
                                     <label class="comp-label-sm">Cantidad</label>

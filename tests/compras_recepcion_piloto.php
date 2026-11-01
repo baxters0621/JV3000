@@ -122,7 +122,7 @@ function comprasPilotoFixtures(Database $db): array
  */
 function comprasPilotoProducto(Database $db, int $categoriaId, string $sufijo, int $stock = 0, float $costo = 0): int
 {
-    return $db->insert('productos', [
+    $idProducto = $db->insert('productos', [
         'sku' => 'CP-' . strtoupper($sufijo) . '-' . bin2hex(random_bytes(3)),
         'nombre_producto' => 'Producto sintético ' . $sufijo,
         'precio_venta' => 10.00,
@@ -130,6 +130,13 @@ function comprasPilotoProducto(Database $db, int $categoriaId, string $sufijo, i
         'stock_actual' => $stock,
         'id_categoria' => $categoriaId,
     ]);
+    [, $proveedorId] = comprasPilotoFixtures($db);
+    $db->insert('catalogo_costos', [
+        'id_proveedor' => $proveedorId,
+        'id_producto' => $idProducto,
+        'costo' => max(0.01, $costo),
+    ]);
+    return $idProducto;
 }
 
 /**
@@ -440,6 +447,25 @@ try {
         '700010'
     );
     comprasPilotoAfirmar(!$resultadoProductoInexistente['ok'], 'Se descartó una línea con producto inexistente y se aceptó el resto de la compra.');
+    $db->execute(
+        'DELETE FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoA]
+    );
+    $resultadoProductoSinCatalogo = comprasPilotoRegistrar(
+        $proveedorId,
+        [[$productoA, 1, 1.00]],
+        '700011'
+    );
+    comprasPilotoAfirmar(
+        !$resultadoProductoSinCatalogo['ok']
+        && str_contains($resultadoProductoSinCatalogo['mensaje'] ?? '', 'NO ESTÁ EN EL CATÁLOGO DEL PROVEEDOR'),
+        'El servidor aceptó un producto que no está asociado al proveedor.'
+    );
+    $db->insert('catalogo_costos', [
+        'id_proveedor' => $proveedorId,
+        'id_producto' => $productoA,
+        'costo' => 1.25,
+    ]);
     $resultadoCantidadFraccionaria = comprasPilotoRegistrar(
         $proveedorId,
         [[$productoA, 1.5, 1.00]],
@@ -454,7 +480,7 @@ try {
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras') === $detallesAntesValidacion, 'La validación de líneas dejó detalles parciales.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra') === $pagosAntesValidacion, 'La validación de líneas dejó un pago inicial.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntesValidacion, 'La validación de líneas dejó auditoría parcial.');
-    echo "OK líneas inválidas mezcladas con válidas rechazan la compra completa\n";
+    echo "OK líneas inválidas y productos fuera del catálogo rechazan la compra completa\n";
 
     $productoSolicitudCarreraA = comprasPilotoProducto($db, $categoriaId, 'SOLICITUD-CARRERA-A');
     $productoSolicitudCarreraB = comprasPilotoProducto($db, $categoriaId, 'SOLICITUD-CARRERA-B');
