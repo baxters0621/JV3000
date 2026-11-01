@@ -172,7 +172,7 @@ $es_op_ventas = $id_rol === 3;
                 <div class="nav-item <?php echo $mvc_activa('usuarios') ? 'active' : ''; ?>">
                     <a href="<?php echo $prefijo; ?>index.php?url=usuarios" class="nav-link">
                         <i class="bi bi-people"></i>
-                        <span>Usuarios</span>
+                        <span>Colaboradores</span>
                     </a>
                 </div>
                 <?php endif; ?>

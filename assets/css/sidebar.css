@@ -8,7 +8,7 @@
 .nav-ram-comp   { --mod-color: #16A34A; } /* Compras: verde */
 .nav-ram-vent   { --mod-color: #DC2626; } /* Ventas: rojo */
 .nav-ram-anal   { --mod-color: #2563EB; } /* Análisis: azul */
-.nav-ram-admin  { --mod-color: #7C3AED; } /* Administración: violeta */
+.nav-ram-admin  { --mod-color: var(--jv-navy); } /* Control: azul marino institucional */
 .nav-ram-perfil { --mod-color: #0891B2; } /* Mi Perfil: cian */
 
 /* ── Contenedor ── */
@@ -202,6 +202,10 @@
 
 .nav-item.active > .nav-link i:first-child,
 .nav-link.active i:first-child { color: var(--mod-color, var(--jv-orange)); }
+
+.nav-ram-admin .nav-item.active > .nav-link {
+    background: #EFF6FF;
+}
 
 /* ── Footer ── */
 .sidebar-footer {
