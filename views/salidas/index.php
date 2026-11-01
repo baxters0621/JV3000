@@ -250,18 +250,20 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                         <div class="row g-3 mb-0">
                             <div class="col-md-6">
                                 <label for="buscarClienteSal" class="jv-modal-label">CLIENTE <span class="text-danger">*</span></label>
-                                <div class="com-toolbox">
-                                    <input type="text" class="input-jv w-100" id="buscarClienteSal" aria-label="Buscar cliente" placeholder="Buscar o escribir cliente..." autocomplete="off">
-                                    <input type="hidden" name="id_cliente" id="s_id_cliente">
-                                    <input type="hidden" name="cliente" id="s_cliente">
-                                    <div class="com-resultados" id="resultadosBusquedaCli"></div>
+                                <div class="d-flex align-items-start gap-2">
+                                    <div class="com-toolbox">
+                                        <input type="text" class="input-jv w-100" id="buscarClienteSal" aria-label="Buscar cliente" placeholder="Buscar o escribir cliente..." autocomplete="off">
+                                        <input type="hidden" name="id_cliente" id="s_id_cliente">
+                                        <input type="hidden" name="cliente" id="s_cliente">
+                                        <div class="com-resultados" id="resultadosBusquedaCli"></div>
+                                    </div>
+                                    <?php if ($es_admin): ?>
+                                        <button type="button" class="btn btn-jv-outline text-nowrap" onclick="abrirCrearClienteDesdeVenta()">
+                                            <i class="bi bi-plus-lg me-1"></i>NUEVO CLIENTE
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Busca un cliente existente o escribe uno nuevo</div>
-                                <?php if ($es_admin): ?>
-                                <button type="button" class="btn btn-jv-outline w-100 mt-2" onclick="abrirCrearClienteDesdeVenta()">
-                                    <i class="bi bi-person-plus-fill me-1"></i>CREAR CLIENTE
-                                </button>
-                                <?php endif; ?>
                             </div>
                             <div class="col-md-6">
                                 <label for="s_rif_num" class="jv-modal-label">RIF / C&Eacute;DULA <span class="text-danger">*</span></label>

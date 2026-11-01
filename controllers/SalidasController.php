@@ -50,15 +50,27 @@ class SalidasController extends Controller
 
             // Gestión de clientes (solo admin): registrar/editar
             if (isset($_POST['accion_cliente'])) {
+                $esFetch = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
                 if (!Security::esAdmin()) {
+                    if ($esFetch) {
+                        $this->json(['success' => false, 'error' => 'SIN PERMISOS PARA GESTIONAR CLIENTES.'], 403);
+                    }
                     $this->redirect('salidas');
                 }
                 $resultado = (new Cliente())->procesar($_POST);
-                $esFetch = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
                 if ($esFetch) {
-                    header('Content-Type: application/json; charset=utf-8');
-                    echo json_encode($resultado);
-                    exit;
+                    if (!$resultado['ok']) {
+                        $this->json([
+                            'success' => false,
+                            'error' => $resultado['mensaje'] ?? 'ERROR AL PROCESAR EL CLIENTE.',
+                        ], 422);
+                    }
+                    $this->json([
+                        'success' => true,
+                        'id_cliente' => (int)$resultado['id_cliente'],
+                        'nombre' => (string)$resultado['nombre'],
+                        'documento' => (string)($resultado['documento'] ?? ''),
+                    ]);
                 }
                 if (!$resultado['ok']) {
                     $this->flash('danger', $resultado['mensaje'] ?? 'ERROR AL PROCESAR EL CLIENTE.');

@@ -5,6 +5,7 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Ventas (Cliente rápido): Módulo 1 implementado y validado; el alta AJAX devuelve `success/id_cliente/nombre/documento` y completa cliente/RIF. Pendiente de prueba manual del usuario antes de iniciar Compras.
 - Instalación automática en equipo nuevo verificada de punta a punta (`init.php` + `db/jv3000_portable_v6.sql`); validación global en verde (`tools/validar.ps1`).
 - PIN de emergencia global fijado y probado E2E (bloqueo a los 3 intentos, interfaz pulida con ojos tachados y flash de 4 s); contraseñas de 8-18 sin espacios en alta, restablecimiento, recuperación y perfil, marcadas en rojo y rechazadas sin recortar.
 - Colaboradores: alta/edición con validación en cliente y servidor, nombres Unicode de 4-20 con `normalizarUsuario()` (Title_Case), insignias por rol y «Guardar cambios» solo con cambios reales. Las cuentas NO se eliminan: solo se suspenden (decisión del usuario, 2026-10-23).

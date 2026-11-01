@@ -965,6 +965,12 @@ let cliDesdeVenta = false;
             if (cliDesdeVenta) {
                 // Enviar vía fetch para autocompletar la venta tras crear el cliente
                 const fd = new FormData(document.getElementById('formCli'));
+                const botonGuardar = document.getElementById('btnGuardarCli');
+                const textoOriginal = botonGuardar ? botonGuardar.innerHTML : '';
+                if (botonGuardar) {
+                    botonGuardar.disabled = true;
+                    botonGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
+                }
                 fetch(window.location.href, {
                     method: 'POST',
                     headers: {
@@ -973,9 +979,16 @@ let cliDesdeVenta = false;
                     },
                     body: fd
                 })
-                .then(function(r) { return r.json(); })
+                .then(function(response) {
+                    return response.json().then(function(data) {
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.error || 'ERROR AL REGISTRAR EL CLIENTE.');
+                        }
+                        return data;
+                    });
+                })
                 .then(function(data) {
-                    if (data.ok && data.id_cliente) {
+                    if (data.id_cliente) {
                         // Autocompletar campos de la venta
                         document.getElementById('s_id_cliente').value = data.id_cliente;
                         document.getElementById('s_cliente').value = data.nombre || '';
@@ -1003,20 +1016,22 @@ let cliDesdeVenta = false;
                             showConfirmButton: false
                         });
                     } else {
-                        var numInput = document.getElementById('cliDocNum');
-                        marcarError(numInput, data.mensaje || 'ERROR AL REGISTRAR EL CLIENTE.');
-                        var msgEl = document.getElementById('cliDocMsg');
-                        if (msgEl) msgEl.innerHTML = '<span style="color:var(--jv-danger);">' + (data.mensaje || 'Error') + '</span>';
-                        numInput.focus();
+                        throw new Error('EL SERVIDOR NO DEVOLVIÓ EL CLIENTE REGISTRADO.');
                     }
                 })
-                .catch(function() {
+                .catch(function(error) {
                     Swal.fire({
-                        title: 'ERROR DE CONEXIÓN',
-                        text: 'No se pudo crear el cliente.',
+                        title: 'NO SE PUDO CREAR EL CLIENTE',
+                        text: error.message || 'Verifique la conexión e inténtelo de nuevo.',
                         icon: 'error',
                         confirmButtonColor: '#DC2626'
                     });
+                })
+                .finally(function() {
+                    if (botonGuardar) {
+                        botonGuardar.disabled = false;
+                        botonGuardar.innerHTML = textoOriginal;
+                    }
                 });
                 return;
             }
