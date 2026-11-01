@@ -816,7 +816,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
                         </div>
                         <div class="row g-3 mb-0">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="comp-label">RIF / C&eacute;dula <span class="text-danger">*</span></label>
                                 <input type="hidden" name="rif" id="p_rif">
                                 <div class="input-group">
@@ -832,14 +832,16 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 </div>
                                 <small class="comp-hint">V/E: 8 dígitos · J/G/P/C: 8 dígitos + 1 verificador</small>
                             </div>
-                            <div class="col-md-9">
+                            <div class="col-md-8">
                                 <label class="comp-label">Nombre de la Empresa <span class="text-danger">*</span></label>
                                 <input type="text" name="nombre_empresa" id="p_empresa" class="input-jv comp-input text-uppercase" required placeholder="NOMBRE LEGAL DE LA EMPRESA" maxlength="100" oninput="this.value = this.value.toUpperCase()">
                             </div>
                         </div>
-                        <div class="mt-3 mb-0">
-                            <label class="comp-label">Direcci&oacute;n Fiscal</label>
-                            <textarea name="direccion" id="p_direccion" class="input-jv comp-input" rows="2" placeholder="Direcci&oacute;n fiscal completa"></textarea>
+                        <div class="row g-3 mt-0">
+                            <div class="col-12">
+                                <label class="comp-label">Direcci&oacute;n Fiscal</label>
+                                <textarea name="direccion" id="p_direccion" class="input-jv comp-input" rows="2" placeholder="Direcci&oacute;n fiscal completa"></textarea>
+                            </div>
                         </div>
                     </div>
 
@@ -854,7 +856,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
                                 <label class="comp-label">Tel&eacute;fono <span class="text-danger">*</span></label>
-                                <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input" required maxlength="20" inputmode="tel" placeholder="0412-1234567">
+                                <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input w-100" required maxlength="20" inputmode="tel" placeholder="0412-1234567">
                                 <input type="hidden" name="telefono_completo" id="p_tel_full">
                             </div>
                             <div class="col-md-4">
@@ -877,7 +879,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
                         </div>
                         <div class="row g-3 mb-0">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="comp-label">Plazo de Entrega (D&iacute;as)</label>
                                 <input type="number" name="lead_time" id="p_lead_time" class="input-jv comp-input" placeholder="Ej: 7" min="0" max="365" maxlength="3" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3)">
                             </div>
@@ -889,7 +891,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     <option value="VES">VES - Bol&iacute;var</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-5">
                                 <label class="comp-label">Estado</label>
                                 <select name="status" id="p_status" class="input-jv comp-input">
                                     <option value="Activo">Activo</option>
@@ -899,7 +901,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         </div>
                     </div>
 
-                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase mt-3">
+                    <button type="submit" id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase mt-4">
                         <i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR
                     </button>
                 </form>

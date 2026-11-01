@@ -1103,6 +1103,33 @@
             color: #64748b;
             font-weight: 400;
         }
+        .pagina-compras #modalProveedor .comp-input,
+        .pagina-compras #modalProveedor .comp-rif-tipo {
+            height: 42px;
+        }
+        .pagina-compras #modalProveedor #p_rif_numero {
+            min-width: 0;
+        }
+        .pagina-compras #modalProveedor #p_direccion {
+            min-height: 64px;
+            resize: vertical;
+        }
+        .pagina-compras #modalProveedor .comp-hint {
+            font-size: .7rem;
+            color: var(--jv-text-secondary);
+            line-height: 1.35;
+        }
+        .pagina-compras #modalProveedor .iti {
+            display: block;
+            width: 100%;
+        }
+        .pagina-compras #modalProveedor .iti input {
+            width: 100%;
+            height: 42px;
+        }
+        .pagina-compras #modalProveedor .iti--separate-dial-code .iti__selected-flag {
+            height: 40px;
+        }
 
         /* ── Toolbar: búsqueda + filtros + NUEVO ── */
         .pagina-compras .prov-search { position: relative; flex: 1; min-width: 220px; max-width: 340px; }
