@@ -423,7 +423,7 @@ class Recepcion extends Model
     }
 
     /**
-     * Últimas recepciones registradas (hasta 20).
+     * Últimas recepciones registradas para el feed del módulo.
      *
      * Devuelve los movimientos de entrada de compra más recientes con
      * operador, factura, proveedor y resumen de ítems/unidades.
@@ -443,7 +443,7 @@ class Recepcion extends Model
             LEFT JOIN proveedores pr ON c.id_proveedor = pr.id_proveedor
             WHERE m.tipo_referencia = 'compra' AND m.tipo = 'Entrada' AND m.status = 'Activo'
             ORDER BY m.fecha_movimiento DESC, m.id_movimiento DESC
-            LIMIT 20
+            LIMIT 4
         ");
     }
 

@@ -1414,9 +1414,6 @@
    RECEPCIoN DE MERCADERIA + SOLICITUDES (integradas en Compras)
    Identidad alineada al antiguo modulo de recepcion (acento ambar).
    ============================================================ */
-.pagina-compras .comp-rec-card {
-    border-top: 3px solid #D97706;
-}
 .pagina-compras .comp-rec-btn {
     padding: 9px 14px;
     font-size: .8rem;
@@ -1435,6 +1432,9 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 14px rgba(217, 119, 6, .35);
 }
+.pagina-compras .comp-rec-card {
+    border-top: 3px solid #D97706;
+}
 .pagina-compras .rec-table th {
     color: #B45309;
 }
@@ -1443,6 +1443,117 @@
     color: #334155;
     font-family: var(--jv-font-main);
     font-weight: 600;
+}
+.pagina-compras .comp-rec-feed {
+    overflow: hidden;
+    border: 1px solid var(--jv-border);
+    border-top: 3px solid var(--jv-success);
+    border-radius: var(--jv-radius-lg);
+    background: var(--jv-bg-card);
+    box-shadow: 0 2px 10px rgba(15, 26, 46, .045);
+}
+.pagina-compras .comp-rec-feed-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--jv-border);
+}
+.pagina-compras .comp-rec-feed-heading-icon,
+.pagina-compras .comp-rec-feed-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+.pagina-compras .comp-rec-feed-heading-icon {
+    width: 34px;
+    height: 34px;
+    background: #ecfdf5;
+    color: #047857;
+}
+.pagina-compras .comp-rec-feed-title {
+    margin: 0;
+    color: var(--jv-navy);
+    font-size: .98rem;
+    font-weight: 700;
+}
+.pagina-compras .comp-rec-feed-list {
+    margin: 0;
+}
+.pagina-compras .comp-rec-feed-item {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 20px;
+    border-color: var(--jv-border);
+}
+.pagina-compras .comp-rec-feed-icon {
+    width: 36px;
+    height: 36px;
+    background: #ecfdf5;
+    color: #15803d;
+    font-size: 1.05rem;
+}
+.pagina-compras .comp-rec-feed-content {
+    min-width: 0;
+}
+.pagina-compras .comp-rec-feed-summary,
+.pagina-compras .comp-rec-feed-invoice {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+.pagina-compras .comp-rec-feed-summary {
+    color: var(--jv-text-primary);
+    font-size: .9rem;
+    line-height: 1.45;
+}
+.pagina-compras .comp-rec-feed-summary strong {
+    color: var(--jv-navy);
+    font-weight: 700;
+}
+.pagina-compras .comp-rec-feed-summary .comp-rec-feed-supplier {
+    color: #047857;
+}
+.pagina-compras .comp-rec-feed-invoice {
+    margin-top: 3px;
+    color: var(--jv-text-secondary);
+    font-size: .78rem;
+}
+.pagina-compras .comp-rec-feed-date {
+    color: var(--jv-text-secondary);
+    font-size: .8rem;
+    white-space: nowrap;
+}
+.pagina-compras .comp-rec-feed-empty {
+    margin: 0;
+    padding: 20px;
+    color: var(--jv-text-secondary);
+    font-size: .9rem;
+    text-align: center;
+}
+.pagina-compras .comp-rec-feed-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--jv-border);
+    background: #f8fafc;
+    text-align: right;
+}
+.pagina-compras .comp-rec-feed-footer a {
+    color: #047857;
+    font-size: .84rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.pagina-compras .comp-rec-feed-footer a:hover {
+    color: #065f46;
+    text-decoration: underline;
+}
+.pagina-compras .comp-rec-feed-footer a:focus-visible {
+    border-radius: 3px;
+    outline: 2px solid var(--jv-success);
+    outline-offset: 3px;
 }
 .pagina-compras .comp-sol-card {
     border-top: 3px solid #7C3AED;
@@ -1705,6 +1816,25 @@
     }
 }
 @media (max-width: 576px) {
+    .pagina-compras .comp-rec-feed-header {
+        padding: 12px 14px;
+    }
+    .pagina-compras .comp-rec-feed-item {
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 8px 10px;
+        padding: 12px 14px;
+    }
+    .pagina-compras .comp-rec-feed-icon {
+        grid-row: 1 / span 2;
+        align-self: start;
+    }
+    .pagina-compras .comp-rec-feed-date {
+        grid-column: 2;
+    }
+    .pagina-compras .comp-rec-feed-footer {
+        padding: 11px 14px;
+        text-align: left;
+    }
     .pagina-compras .rec-modal-header {
         flex-wrap: wrap;
     }

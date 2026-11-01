@@ -305,46 +305,43 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
     </div>
 <?php endif; ?>
 
-<!-- Últimas recepciones (integradas en Compras) -->
-<?php if (!empty($recepciones)): ?>
-    <div class="card-jv card-jv-table p-0 mb-4 comp-rec-card">
-        <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
-            <i class="bi bi-clock-history me-1" style="font-size:1rem;color:#D97706;"></i>
-            <span class="fw-bold text-uppercase" style="font-size:.8rem;letter-spacing:.5px;color:var(--jv-navy);">Últimas Recepciones</span>
-            <span class="ms-auto"></span>
-            <i class="bi bi-search me-1" style="font-size:1rem;color:#D97706;"></i>
-            <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar recepciones..." id="buscarRecepciones" onkeyup="filtrarRecepciones()" style="box-shadow:none;font-size:.95rem;padding:8px 6px;max-width:240px;">
-        </div>
-        <div class="table-responsive">
-            <table class="table-jv rec-table mb-0">
-                <thead>
-                    <tr>
-                        <th style="width:14%;">Fecha</th>
-                        <th style="width:14%;">Factura</th>
-                        <th style="width:22%;">Proveedor</th>
-                        <th class="text-center" style="width:11%;">Productos</th>
-                        <th class="text-center" style="width:11%;">Unidades</th>
-                        <th style="width:16%;">Guía/Recibo</th>
-                        <th style="width:12%;">Operador</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaRecepciones">
-                    <?php foreach ($recepciones as $recepcion): ?>
-                        <tr>
-                            <td class="fecha-cell"><?php echo date('d/m/Y H:i', strtotime($recepcion['fecha_movimiento'])); ?></td>
-                            <td style="text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($recepcion['nro_factura'] ?? '-'); ?></span></td>
-                            <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($recepcion['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($recepcion['proveedor'] ?? 'S/P'); ?></td>
-                            <td class="text-center"><span class="cant-badge">+<?php echo (int)$recepcion['num_items']; ?></span></td>
-                            <td class="text-center fw-bold text-success">+<?php echo (int)$recepcion['unidades']; ?></td>
-                            <td class="rec-documento"><?php echo htmlspecialchars($recepcion['documento_recepcion'] ?: '-'); ?></td>
-                            <td class="rec-operador"><?php echo htmlspecialchars($recepcion['operador'] ?? '-'); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+<!-- Actividad reciente de recepciones -->
+<section class="card-jv p-0 mb-4 comp-rec-feed" aria-labelledby="compRecFeedTitle">
+    <div class="comp-rec-feed-header">
+        <span class="comp-rec-feed-heading-icon" aria-hidden="true"><i class="bi bi-clock-history"></i></span>
+        <h2 class="comp-rec-feed-title" id="compRecFeedTitle">Actividad reciente</h2>
     </div>
-<?php endif; ?>
+    <?php if (!empty($recepciones)): ?>
+        <ul class="list-group list-group-flush comp-rec-feed-list">
+            <?php foreach ($recepciones as $recepcion): ?>
+                <?php
+                $marca_tiempo = strtotime($recepcion['fecha_movimiento'] ?? '');
+                $fecha_corta = $marca_tiempo !== false && date('Y-m-d', $marca_tiempo) === date('Y-m-d')
+                    ? 'Hoy, ' . date('H:i', $marca_tiempo)
+                    : ($marca_tiempo !== false ? date('d/m', $marca_tiempo) : '—');
+                ?>
+                <li class="list-group-item comp-rec-feed-item">
+                    <span class="comp-rec-feed-icon" aria-hidden="true"><i class="bi bi-check2"></i></span>
+                    <div class="comp-rec-feed-content">
+                        <p class="comp-rec-feed-summary">
+                            Se recibieron <strong>+<?php echo (int)$recepcion['unidades']; ?> unidades</strong> de
+                            <strong class="comp-rec-feed-supplier"><?php echo htmlspecialchars($recepcion['proveedor'] ?? 'Proveedor sin nombre'); ?></strong>
+                        </p>
+                        <p class="comp-rec-feed-invoice">Factura <?php echo htmlspecialchars($recepcion['nro_factura'] ?? '-'); ?></p>
+                    </div>
+                    <time class="comp-rec-feed-date"<?php if ($marca_tiempo !== false): ?> datetime="<?php echo htmlspecialchars(date('c', $marca_tiempo)); ?>"<?php endif; ?>>
+                        <?php echo htmlspecialchars($fecha_corta); ?>
+                    </time>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php else: ?>
+        <p class="comp-rec-feed-empty">Las recepciones completadas aparecerán aquí.</p>
+    <?php endif; ?>
+    <div class="comp-rec-feed-footer">
+        <a href="<?php echo $prefijo; ?>index.php?url=historial">Ver todo el historial de operaciones <span aria-hidden="true">→</span></a>
+    </div>
+</section>
 
 <!-- Modal: Registrar compra -->
 <script>

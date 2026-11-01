@@ -1097,16 +1097,6 @@
             }
         }
 
-        // Filtra por texto la tabla de recepciones ya registradas, sin recargar.
-        function filtrarRecepciones() {
-            const input = document.getElementById('buscarRecepciones');
-            const searchValue = input ? input.value.toLowerCase() : '';
-            const tableRows = document.getElementById('tablaRecepciones') ? document.getElementById('tablaRecepciones').getElementsByTagName('tr') : [];
-            for (let rowIndex = 0; rowIndex < tableRows.length; rowIndex++) {
-                tableRows[rowIndex].style.display = tableRows[rowIndex].textContent.toLowerCase().includes(searchValue) ? '' : 'none';
-            }
-        }
-
         // Valida las cantidades a recibir (entre 0 y el restante), arma el array de ítems,
         // lo guarda en el campo oculto y envía el formulario para registrar la recepción.
         function confirmarRecepcion(submitButton) {
