@@ -61,7 +61,6 @@
    ========================================== */
 
 .historial-filtros {
-    padding: 20px;
     margin-bottom: 16px;
     border: 1px solid var(--jv-border);
     border-top: 3px solid var(--jv-navy);
@@ -79,7 +78,7 @@
 }
 
 .historial-filtro-busqueda {
-    margin-bottom: 16px;
+    margin-bottom: 0;
 }
 
 .historial-busqueda-control {
@@ -117,23 +116,8 @@
     outline: none;
 }
 
-/* Fila de filtros alineada por la base (flexbox). */
-.historial-filtros-secundarios {
-    display: flex;
-    gap: 12px;
-    align-items: flex-end;
-    flex-wrap: wrap;
-}
-
-.historial-filtros-secundarios > div {
-    display: flex;
-    flex-direction: column;
-    min-width: 140px;
-    flex: 1 1 140px;
-}
-
-.historial-filtros-secundarios .historial-select,
-.historial-filtros-secundarios .historial-fecha {
+.historial-filtros .historial-select,
+.historial-filtros .historial-fecha {
     min-height: 52px;
     font-size: 1rem;
     border: 1px solid #e2e8f0;
@@ -144,8 +128,8 @@
     width: 100%;
 }
 
-.historial-filtros-secundarios .historial-select:focus,
-.historial-filtros-secundarios .historial-fecha:focus {
+.historial-filtros .historial-select:focus,
+.historial-filtros .historial-fecha:focus {
     border-color: var(--jv-orange);
     box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
     outline: none;
@@ -155,48 +139,44 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    min-height: 52px;
-    margin-left: auto;
 }
 
 .historial-acciones-filtro .btn-jv-primary {
     display: inline-flex;
+    flex: 1 1 0;
     min-height: 52px;
     align-items: center;
     justify-content: center;
     gap: 7px;
-    padding: 0 20px;
+    padding: 0 8px;
     white-space: nowrap;
-    background: var(--jv-orange);
+    background: var(--jv-navy);
     border: none;
     color: #ffffff;
     border-radius: 10px;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: .85rem;
 }
 
 .historial-acciones-filtro .btn-jv-primary:hover {
-    background: #e86e1c;
+    background: var(--jv-navy-light);
 }
 
 .historial-limpiar {
-    color: var(--jv-text-muted);
+    flex: 1 1 0;
+    color: var(--jv-text-secondary);
     font-size: .95rem;
     font-weight: 600;
-    text-decoration: none;
     padding: 0 12px;
-    height: 52px;
+    min-height: 52px;
     display: inline-flex;
     align-items: center;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: #ffffff;
+    justify-content: center;
+    white-space: nowrap;
 }
 
 .historial-limpiar:hover {
     color: var(--jv-navy);
-    border-color: #cbd5e1;
-    background: #f8fafc;
 }
 
 .historial-error-filtro {
@@ -236,7 +216,7 @@
 
 .historial-tabla {
     width: 100%;
-    min-width: 940px;
+    min-width: 1180px;
     border-collapse: collapse;
     table-layout: fixed;
 }
@@ -247,16 +227,17 @@
     color: var(--jv-text-primary);
     font-size: .9rem;
     font-weight: 700;
-    text-align: left;
+    text-align: center;
+    white-space: nowrap;
     border-bottom: 1px solid #e2e8f0;
 }
 
-.historial-tabla th:nth-child(1) { width: 17%; }
-.historial-tabla th:nth-child(2) { width: 16%; }
-.historial-tabla th:nth-child(3) { width: 21%; }
-.historial-tabla th:nth-child(4) { width: 15%; }
+.historial-tabla th:nth-child(1) { width: 16%; }
+.historial-tabla th:nth-child(2) { width: 17%; }
+.historial-tabla th:nth-child(3) { width: 18%; }
+.historial-tabla th:nth-child(4) { width: 16%; }
 .historial-tabla th:nth-child(5) { width: 16%; }
-.historial-tabla th:nth-child(6) { width: 9%; }
+.historial-tabla th:nth-child(6) { width: 11%; }
 .historial-tabla th:nth-child(7) { width: 6%; }
 
 .historial-fila td {
@@ -264,6 +245,7 @@
     border-bottom: 1px solid var(--jv-border);
     color: var(--jv-text-primary);
     vertical-align: middle;
+    text-align: center;
 }
 
 .historial-fila:last-child td {
@@ -272,15 +254,6 @@
 
 .historial-fila:hover {
     background: #f8fafc;
-}
-
-/* Canto izquierdo con el color del tipo de operación. */
-.historial-tabla .historial-tipo-compra td:first-child {
-    box-shadow: inset 4px 0 var(--historial-compra);
-}
-
-.historial-tabla .historial-tipo-venta td:first-child {
-    box-shadow: inset 4px 0 var(--historial-venta);
 }
 
 /* Primera celda: tipo + referencia (folio). */
@@ -304,6 +277,10 @@
     font-weight: 750;
 }
 
+.historial-usuario {
+    white-space: nowrap;
+}
+
 .historial-productos {
     display: -webkit-box;
     overflow: hidden;
@@ -317,8 +294,7 @@
 }
 
 .historial-unidades,
-.historial-fecha,
-.historial-estado-secundario {
+.historial-fecha {
     display: block;
     margin-top: 4px;
     color: var(--jv-text-secondary);
@@ -329,13 +305,23 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* Estado: pill principal + detalle de pago/recepción en compras. */
+/* Estado y detalles de compra en una sola fila de etiquetas compactas. */
+.historial-estado-grupo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
 .historial-estado {
     display: inline-flex;
-    padding: 4px 11px;
+    align-items: center;
+    padding: 3px 8px;
     border-radius: 999px;
-    font-size: .8rem;
+    font-size: .72rem;
     font-weight: 750;
+    white-space: nowrap;
 }
 
 .historial-estado-activa {
@@ -350,14 +336,34 @@
     border: 1px solid #ffc8ce;
 }
 
+.historial-estado-secundario {
+    display: inline-flex;
+    margin: 0;
+    padding: 3px 7px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: var(--jv-text-secondary);
+    font-size: .7rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
 /* Total: cifra tabular a la derecha, sin !important (gana por especificidad). */
 .historial-tabla td.historial-total {
-    color: var(--jv-text-primary);
     font-size: 1rem;
     font-weight: 750;
     text-align: right;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
+}
+
+.historial-tabla td.historial-total-venta {
+    color: var(--jv-success);
+}
+
+.historial-tabla td.historial-total-compra {
+    color: var(--jv-navy);
 }
 
 /* Acciones: botón compacto de detalle. */
@@ -462,23 +468,16 @@
 
 @media (max-width: 680px) {
     .historial-filtros {
-        padding: 14px;
-    }
-
-    .historial-filtros-secundarios {
-        gap: 10px;
+        padding: 14px !important;
     }
 
     .historial-acciones-filtro {
-        min-height: 44px;
         width: 100%;
-        justify-content: space-between;
     }
 
     .historial-acciones-filtro .btn-jv-primary,
     .historial-limpiar {
-        min-height: 44px;
-        height: 44px;
+        min-height: 52px;
     }
 
     .historial-tabla {

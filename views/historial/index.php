@@ -34,26 +34,26 @@
     </div>
 </div>
 
-<form class="historial-filtros" method="GET" action="<?php echo APP_URL_BASE; ?>index.php">
+<form class="historial-filtros card-jv p-4" method="GET" action="<?php echo APP_URL_BASE; ?>index.php">
     <input type="hidden" name="url" value="historial">
-    <div class="historial-filtro-busqueda">
-        <label for="buscarOperaciones">Buscar operaciones</label>
-        <div class="historial-busqueda-control">
-            <i class="bi bi-search" aria-hidden="true"></i>
-            <input
-                type="search"
-                id="buscarOperaciones"
-                name="buscar"
-                class="input-jv"
-                placeholder="Factura, proveedor, cliente, producto o usuario…"
-                value="<?php echo htmlspecialchars($filtro_buscar, ENT_QUOTES, 'UTF-8'); ?>"
-                maxlength="100"
-                autocomplete="off"
-            >
+    <div class="row g-3 align-items-end">
+        <div class="col-12 historial-filtro-busqueda">
+            <label for="buscarOperaciones">Buscar operaciones</label>
+            <div class="historial-busqueda-control">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input
+                    type="search"
+                    id="buscarOperaciones"
+                    name="buscar"
+                    class="input-jv"
+                    placeholder="Factura, proveedor, cliente, producto o usuario…"
+                    value="<?php echo htmlspecialchars($filtro_buscar, ENT_QUOTES, 'UTF-8'); ?>"
+                    maxlength="100"
+                    autocomplete="off"
+                >
+            </div>
         </div>
-    </div>
-    <div class="historial-filtros-secundarios">
-        <div>
+        <div class="col-12 col-md-3">
             <label for="tipoOperacion">Tipo</label>
             <select id="tipoOperacion" name="tipo" class="input-jv historial-select">
                 <option value="">Todas las operaciones</option>
@@ -64,7 +64,7 @@
                 <?php endforeach; ?>
             </select>
         </div>
-        <div>
+        <div class="col-12 col-md-3">
             <label for="estadoOperacion">Estado</label>
             <select id="estadoOperacion" name="estado" class="input-jv historial-select">
                 <option value="">Todos</option>
@@ -72,22 +72,24 @@
                 <option value="Anulada" <?php echo $filtro_estado === 'Anulada' ? 'selected' : ''; ?>>Anuladas</option>
             </select>
         </div>
-        <div>
+        <div class="col-6 col-md-2">
             <label for="desdeOperacion">Desde</label>
             <input type="date" id="desdeOperacion" name="desde" class="input-jv historial-fecha" value="<?php echo htmlspecialchars($filtro_desde, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
-        <div>
+        <div class="col-6 col-md-2">
             <label for="hastaOperacion">Hasta</label>
             <input type="date" id="hastaOperacion" name="hasta" class="input-jv historial-fecha" value="<?php echo htmlspecialchars($filtro_hasta, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
-        <div class="historial-acciones-filtro">
+        <div class="col-12 col-md-2 historial-acciones-filtro">
             <button type="submit" class="btn-jv-primary"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrar</button>
-            <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial" class="historial-limpiar">Limpiar</a>
+            <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial" class="btn btn-outline-secondary historial-limpiar">Limpiar</a>
         </div>
+        <?php if ($error_filtros !== ''): ?>
+            <div class="col-12">
+                <p class="historial-error-filtro" role="alert"><?php echo htmlspecialchars($error_filtros, ENT_QUOTES, 'UTF-8'); ?></p>
+            </div>
+        <?php endif; ?>
     </div>
-    <?php if ($error_filtros !== ''): ?>
-        <p class="historial-error-filtro" role="alert"><?php echo htmlspecialchars($error_filtros, ENT_QUOTES, 'UTF-8'); ?></p>
-    <?php endif; ?>
 </form>
 
 <section class="historial-resultados" aria-label="Operaciones encontradas">
@@ -127,25 +129,27 @@
                             <span class="historial-unidades"><?php echo number_format((int)$operacion['cantidad_total']); ?> unidades</span>
                         </td>
                         <td data-label="Registró">
-                            <span class="historial-celda-principal"><?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span class="historial-celda-principal historial-usuario" title="<?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?></span>
                             <time class="historial-fecha" datetime="<?php echo $fecha_operacion ? date('Y-m-d\TH:i:s', $fecha_operacion) : ''; ?>">
                                 <?php echo $fecha_operacion ? date('d/m/Y, H:i', $fecha_operacion) : 'Fecha no disponible'; ?>
                             </time>
                         </td>
                         <td data-label="Estado">
-                            <span class="historial-estado <?php echo $operacion['estado'] === 'Anulada' ? 'historial-estado-anulada' : 'historial-estado-activa'; ?>">
-                                <?php echo htmlspecialchars((string)$operacion['estado'], ENT_QUOTES, 'UTF-8'); ?>
-                            </span>
-                            <?php if ($es_compra): ?>
-                                <span class="historial-estado-secundario">
-                                    Pago: <?php echo htmlspecialchars((string)($operacion['estado_pago'] ?? 'Pendiente'), ENT_QUOTES, 'UTF-8'); ?>
+                            <div class="historial-estado-grupo">
+                                <span class="historial-estado <?php echo $operacion['estado'] === 'Anulada' ? 'historial-estado-anulada' : 'historial-estado-activa'; ?>">
+                                    <?php echo htmlspecialchars((string)$operacion['estado'], ENT_QUOTES, 'UTF-8'); ?>
                                 </span>
-                                <span class="historial-estado-secundario">
-                                    Recepción: <?php echo htmlspecialchars((string)($operacion['estado_recepcion'] ?? 'Pendiente'), ENT_QUOTES, 'UTF-8'); ?>
-                                </span>
-                            <?php endif; ?>
+                                <?php if ($es_compra): ?>
+                                    <span class="historial-estado-secundario historial-estado-pago">
+                                        Pago: <?php echo htmlspecialchars((string)($operacion['estado_pago'] ?? 'Pendiente'), ENT_QUOTES, 'UTF-8'); ?>
+                                    </span>
+                                    <span class="historial-estado-secundario historial-estado-recepcion">
+                                        Recepción: <?php echo htmlspecialchars((string)($operacion['estado_recepcion'] ?? 'Pendiente'), ENT_QUOTES, 'UTF-8'); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                         </td>
-                        <td data-label="Total" class="historial-total">
+                        <td data-label="Total" class="historial-total <?php echo $es_compra ? 'historial-total-compra' : 'historial-total-venta'; ?>">
                             $<?php echo number_format((float)$operacion['monto_total'], 2); ?>
                         </td>
                         <td data-label="Acciones" class="historial-accion-cell">
