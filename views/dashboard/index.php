@@ -186,12 +186,13 @@ $agruparActividadPorFecha = static function (array $items): array {
                                         <section class="activity-date-group">
                                             <h4 class="activity-date-heading"><?php echo $grupo['titulo']; ?></h4>
                                             <?php foreach ($grupo['items'] as $f): ?>
-                                                <div class="activity-item">
+                                                <div class="activity-item activity-financial-item">
                                                     <span class="activity-status-dot activity-status-dot-venta" aria-hidden="true"></span>
                                                     <div class="activity-item-copy">
                                                         <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$f['cliente'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                                        <div class="small text-secondary">Fecha: <?php echo htmlspecialchars((string)$f['fecha'], ENT_QUOTES, 'UTF-8'); ?> · Total: $<?php echo htmlspecialchars((string)$f['total'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                        <div class="activity-financial-date">Fecha: <?php echo htmlspecialchars((string)$f['fecha'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                     </div>
+                                                    <div class="activity-total fs-5 fw-bold text-success">$<?php echo htmlspecialchars((string)$f['total'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                 </div>
                                             <?php endforeach; ?>
                                         </section>
@@ -220,9 +221,9 @@ $agruparActividadPorFecha = static function (array $items): array {
                                             <span class="activity-status-dot <?php echo $stock === 0 ? 'activity-status-dot-stock-vacio' : 'activity-status-dot-critico'; ?>" aria-hidden="true"></span>
                                             <div class="activity-item-copy">
                                                 <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$c['producto'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                                <div class="small <?php echo $stock === 0 ? 'text-danger fw-semibold' : 'text-secondary'; ?>">Stock: <?php echo $stock; ?> unidades · <?php echo $stock === 0 ? 'Crítico' : 'Bajo'; ?></div>
-                                                <div class="progress activity-stock-progress <?php echo $stock === 0 ? 'is-empty' : ''; ?>" role="progressbar" aria-label="Nivel visual del stock" aria-valuenow="<?php echo $stock === 0 ? '0' : '50'; ?>" aria-valuemin="0" aria-valuemax="100" aria-valuetext="<?php echo $stock === 0 ? 'Sin existencias' : 'Stock bajo'; ?>">
-                                                    <div class="progress-bar <?php echo $stock === 0 ? 'bg-danger' : 'activity-stock-progress-low'; ?>" style="width: <?php echo $stock === 0 ? '0' : '50'; ?>%"></div>
+                                                <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+                                                    <span class="activity-stock-label">Stock actual: <strong class="<?php echo $stock === 0 ? 'text-danger' : 'text-secondary'; ?>"><?php echo $stock; ?></strong></span>
+                                                    <span class="badge bg-danger"><?php echo $stock === 0 ? 'Agotado' : 'Crítico'; ?></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -247,12 +248,13 @@ $agruparActividadPorFecha = static function (array $items): array {
                                         <section class="activity-date-group">
                                             <h4 class="activity-date-heading"><?php echo $grupo['titulo']; ?></h4>
                                             <?php foreach ($grupo['items'] as $co): ?>
-                                                <div class="activity-item">
+                                                <div class="activity-item activity-financial-item">
                                                     <span class="activity-status-dot activity-status-dot-compra" aria-hidden="true"></span>
                                                     <div class="activity-item-copy">
                                                         <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$co['proveedor'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                                        <div class="small text-secondary">Fecha: <?php echo htmlspecialchars((string)$co['fecha'], ENT_QUOTES, 'UTF-8'); ?> · Total: $<?php echo htmlspecialchars((string)$co['total'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                        <div class="activity-financial-date">Fecha: <?php echo htmlspecialchars((string)$co['fecha'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                     </div>
+                                                    <div class="activity-total fs-5 fw-bold text-success">$<?php echo htmlspecialchars((string)$co['total'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                 </div>
                                             <?php endforeach; ?>
                                         </section>

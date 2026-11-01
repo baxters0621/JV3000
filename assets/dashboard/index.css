@@ -672,27 +672,28 @@
     background: #DC2626;
 }
 
-.activity-stock-progress {
-    height: 6px;
-    margin-top: 8px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: #FFF3D6;
-}
-
-.activity-stock-progress.is-empty {
-    border: 1px solid #DC2626;
-    background: transparent;
-}
-
-.activity-stock-progress-low {
-    background: #D97706;
-}
-
 .activity-item-copy {
     min-width: 0;
     flex: 1;
     line-height: 1.45;
+}
+
+.activity-financial-date {
+    margin-top: 2px;
+    color: #526174;
+    font-size: .9rem;
+}
+
+.activity-total {
+    flex: 0 0 auto;
+    align-self: center;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.activity-stock-label {
+    color: var(--jv-text-secondary);
+    font-size: .9rem;
 }
 
 .activity-item-name {
