@@ -415,28 +415,43 @@
             const fd = new FormData();
             fd.append('csrf_token', window.JV_CONFIG.csrfToken);
             fd.append('items', JSON.stringify(items));
-            fetch((window.JV_BASE || '') + 'index.php?url=solicitudes/crear', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd })
-                .then(r => r.json())
+            jvFetchConTope((window.JV_BASE || '') + 'index.php?url=solicitudes/crear', {
+                ms: 12000,
+                init: { method: 'POST', body: fd }
+            })
+                .then(function(response) {
+                    return response.json().then(function(data) {
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || data.error || 'No se pudo enviar la solicitud.');
+                        }
+                        return data;
+                    });
+                })
                 .then(d => {
                     if (btn) { btn.disabled = false; btn.innerHTML = '🚚 ENVIAR SOLICITUD A COMPRAS'; }
-                    if (d.ok) {
-                        s_solicitud = [];
-                        actualizarSolicitudCompras();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'SOLICITUD ENVIADA A COMPRAS',
-                            text: 'Los productos quedaron pendientes de atención por el módulo de Compras.',
-                            background: '#fff',
-                            color: '#212529',
-                            confirmButtonColor: '#16A34A'
-                        });
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'ERROR', text: d.error || 'No se pudo enviar la solicitud.', background: '#fff', color: '#212529', confirmButtonColor: '#DC2626' });
-                    }
+                    s_solicitud = [];
+                    actualizarSolicitudCompras();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'SOLICITUD ENVIADA A COMPRAS',
+                        text: 'Los productos quedaron pendientes de atención por el módulo de Compras.',
+                        background: '#fff',
+                        color: '#212529',
+                        confirmButtonColor: '#16A34A'
+                    });
                 })
                 .catch(e => {
                     if (btn) { btn.disabled = false; btn.innerHTML = '🚚 ENVIAR SOLICITUD A COMPRAS'; }
-                    Swal.fire({ icon: 'error', title: 'ERROR DE CONEXIÓN', text: e.message, background: '#fff', color: '#212529', confirmButtonColor: '#DC2626' });
+                    Swal.fire({
+                        icon: 'error',
+                        title: e.jvTope ? 'LA SOLICITUD TARDÓ DEMASIADO' : 'ERROR DE CONEXIÓN',
+                        text: e.jvTope
+                            ? 'Revise las solicitudes en Compras antes de volver a enviarla.'
+                            : (e.message || 'Verifique la conexión e inténtelo de nuevo.'),
+                        background: '#fff',
+                        color: '#212529',
+                        confirmButtonColor: '#DC2626'
+                    });
                 });
         }
 
@@ -685,19 +700,35 @@
 
             const fd = new FormData(document.getElementById('formSalida'));
 
-            fetch((window.JV_BASE || '') + 'index.php?url=nota_entrega/store', { method:'POST', headers:{ 'X-Requested-With': 'XMLHttpRequest' }, body:fd })
-                .then(r => r.json())
+            jvFetchConTope((window.JV_BASE || '') + 'index.php?url=nota_entrega/store', {
+                ms: 12000,
+                init: {
+                    method: 'POST',
+                    body: fd
+                }
+            })
+                .then(function(response) {
+                    return response.json().then(function(data) {
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || data.error || 'ERROR AL GENERAR LA NOTA.');
+                        }
+                        return data;
+                    });
+                })
                 .then(d => {
                     btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA';
-                    if (d.ok) {
-                        window.location.href = (window.JV_BASE || '') + 'index.php?url=nota_entrega&token=' + (d.token || '');
-                    } else {
-                        Swal.fire({icon:'error',title:'ERROR',text:d.error||'Error al generar preview.',background:'#fff',color:'#212529',confirmButtonColor:'#DC2626'});
-                    }
+                    window.location.href = (window.JV_BASE || '') + 'index.php?url=nota_entrega&token=' + (d.token || '');
                 })
                 .catch(e => {
                     btn.disabled = false; btn.innerHTML = '📄 VISTA PREVIA NOTA';
-                    Swal.fire({icon:'error',title:'ERROR DE CONEXIÓN',text:e.message,background:'#fff',color:'#212529',confirmButtonColor:'#DC2626'});
+                    Swal.fire({
+                        icon: 'error',
+                        title: e.jvTope ? 'LA SOLICITUD TARDÓ DEMASIADO' : 'ERROR DE CONEXIÓN',
+                        text: e.jvTope ? 'La nota no se confirmó. Verifique la respuesta antes de volver a intentarlo.' : e.message,
+                        background: '#fff',
+                        color: '#212529',
+                        confirmButtonColor: '#DC2626'
+                    });
                 });
         }
 
@@ -971,16 +1002,22 @@ let cliDesdeVenta = false;
                     botonGuardar.disabled = true;
                     botonGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
                 }
-                fetch(window.location.href, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
+                jvFetchConTope(window.location.href, {
+                    ms: 12000,
+                    init: {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' },
+                        body: fd
                     },
-                    body: fd
                 })
                 .then(function(response) {
-                    return response.json().then(function(data) {
+                    return response.text().then(function(texto) {
+                        let data;
+                        try {
+                            data = JSON.parse(texto);
+                        } catch (error) {
+                            throw new Error('El servidor devolvió una respuesta inválida. Verifique el cliente antes de volver a registrarlo.');
+                        }
                         if (!response.ok || !data.success) {
                             throw new Error(data.error || 'ERROR AL REGISTRAR EL CLIENTE.');
                         }
@@ -1021,8 +1058,10 @@ let cliDesdeVenta = false;
                 })
                 .catch(function(error) {
                     Swal.fire({
-                        title: 'NO SE PUDO CREAR EL CLIENTE',
-                        text: error.message || 'Verifique la conexión e inténtelo de nuevo.',
+                        title: error.jvTope ? 'LA SOLICITUD TARDÓ DEMASIADO' : 'NO SE PUDO CREAR EL CLIENTE',
+                        text: error.jvTope
+                            ? 'Verifique si el cliente ya aparece en el sistema antes de volver a registrarlo.'
+                            : (error.message || 'Verifique la conexión e inténtelo de nuevo.'),
                         icon: 'error',
                         confirmButtonColor: '#DC2626'
                     });

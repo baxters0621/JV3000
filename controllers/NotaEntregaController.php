@@ -34,14 +34,25 @@ class NotaEntregaController extends Controller
             || empty($_SERVER['HTTP_X_REQUESTED_WITH'])
             || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest'
         ) {
-            $this->json(['ok' => false, 'error' => 'NO_AJAX'], 403);
+            $this->json([
+                'success' => false,
+                'message' => 'NO_AJAX',
+                'ok' => false,
+                'error' => 'NO_AJAX',
+            ], 403);
         }
 
         $idUsuario = (int)($_SESSION['id_usuario'] ?? 0);
         $resultado = (new NotaEntrega())->construirPreview($_POST, $idUsuario);
 
         if (!$resultado['ok']) {
-            $this->json(['ok' => false, 'error' => $resultado['error'] ?? 'ERROR AL GENERAR EL PREVIEW.'], 400);
+            $mensaje = $resultado['error'] ?? 'ERROR AL GENERAR EL PREVIEW.';
+            $this->json([
+                'success' => false,
+                'message' => $mensaje,
+                'ok' => false,
+                'error' => $mensaje,
+            ], 400);
         }
 
         purgarPreviewsSesion();
@@ -49,7 +60,12 @@ class NotaEntregaController extends Controller
         $_SESSION['preview_data'][$token] = $resultado['data'];
         $_SESSION['preview_limit'] = 20;
 
-        $this->json(['ok' => true, 'token' => $token]);
+        $this->json([
+            'success' => true,
+            'message' => 'VISTA PREVIA GENERADA.',
+            'ok' => true,
+            'token' => $token,
+        ]);
     }
 
     /**

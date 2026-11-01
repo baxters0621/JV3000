@@ -638,7 +638,12 @@ set_exception_handler(function (Throwable $e) {
     if ($isAjax) {
         header('Content-Type: application/json');
         http_response_code(500);
-        echo json_encode(['ok' => false, 'success' => false, 'error' => 'No se completó la operación. Intenta de nuevo.']);
+        echo json_encode([
+            'ok' => false,
+            'success' => false,
+            'message' => 'No se completó la operación. Intenta de nuevo.',
+            'error' => 'No se completó la operación. Intenta de nuevo.',
+        ]);
         exit;
     }
 
@@ -658,4 +663,3 @@ set_exception_handler(function (Throwable $e) {
 
 // --- 12. Variable global $db para compatibilidad con helpers legacy ---
 $db = Database::getInstance();
-

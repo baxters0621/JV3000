@@ -30,10 +30,20 @@ class SolicitudesController extends Controller
     public function crear(): void
     {
         if (!(Security::puedeVender() || Security::esAdmin())) {
-            $this->json(['ok' => false, 'error' => 'SIN PERMISOS PARA CREAR SOLICITUDES.'], 403);
+            $this->json([
+                'success' => false,
+                'message' => 'SIN PERMISOS PARA CREAR SOLICITUDES.',
+                'ok' => false,
+                'error' => 'SIN PERMISOS PARA CREAR SOLICITUDES.',
+            ], 403);
         }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->json(['ok' => false, 'error' => 'MÉTODO NO PERMITIDO.'], 405);
+            $this->json([
+                'success' => false,
+                'message' => 'MÉTODO NO PERMITIDO.',
+                'ok' => false,
+                'error' => 'MÉTODO NO PERMITIDO.',
+            ], 405);
         }
 
         $rawRequestItems = json_decode($_POST['items'] ?? '[]', true);
@@ -41,7 +51,12 @@ class SolicitudesController extends Controller
         $currentUserId = (int)($_SESSION['id_usuario'] ?? 0);
 
         $creationResult = (new Solicitud())->crear(is_array($rawRequestItems) ? $rawRequestItems : [], $requestReason, $currentUserId);
-        $this->json($creationResult, $creationResult['ok'] ? 200 : 400);
+        $success = (bool)$creationResult['ok'];
+        $message = (string)($creationResult['error'] ?? 'SOLICITUD CREADA.');
+        $this->json(array_merge($creationResult, [
+            'success' => $success,
+            'message' => $message,
+        ]), $success ? 200 : 400);
     }
 
     /**
@@ -56,14 +71,29 @@ class SolicitudesController extends Controller
     public function cancelar(): void
     {
         if (!Security::puedeCargar()) {
-            $this->json(['ok' => false, 'error' => 'SIN PERMISOS PARA CANCELAR SOLICITUDES.'], 403);
+            $this->json([
+                'success' => false,
+                'message' => 'SIN PERMISOS PARA CANCELAR SOLICITUDES.',
+                'ok' => false,
+                'error' => 'SIN PERMISOS PARA CANCELAR SOLICITUDES.',
+            ], 403);
         }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->json(['ok' => false, 'error' => 'MÉTODO NO PERMITIDO.'], 405);
+            $this->json([
+                'success' => false,
+                'message' => 'MÉTODO NO PERMITIDO.',
+                'ok' => false,
+                'error' => 'MÉTODO NO PERMITIDO.',
+            ], 405);
         }
 
         $requestId = (int)($_POST['id_solicitud'] ?? 0);
         $cancellationResult = (new Solicitud())->cancelar($requestId);
-        $this->json($cancellationResult, $cancellationResult['ok'] ? 200 : 400);
+        $success = (bool)$cancellationResult['ok'];
+        $message = (string)($cancellationResult['error'] ?? 'SOLICITUD CANCELADA.');
+        $this->json(array_merge($cancellationResult, [
+            'success' => $success,
+            'message' => $message,
+        ]), $success ? 200 : 400);
     }
 }

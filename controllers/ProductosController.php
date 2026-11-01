@@ -25,10 +25,10 @@ class ProductosController extends Controller
      * GET: árbol de categorías y lista paginada de productos, filtrable
      * con ?cat=ID (incluye la rama completa de la categoría) y paginable
      * con ?p=N. POST: "toggle" y "baja_vencido" solo para admin;
-     * "editar_producto" actualiza stocks, precios y estado; las acciones
-     * de categoría quedan en manos de admin o carga. Cada acción termina
-     * con flash (con origen, para que el JS reabra el lugar correcto) y
-     * redirección.
+     * "editar_producto" actualiza stocks, precios y estado; si llega por
+     * AJAX responde JSON y termina la ejecución, y si llega como POST normal
+     * conserva el flash y la redirección. Las acciones de categoría quedan
+     * en manos de admin o carga.
      *
      * @return void
      */
@@ -60,7 +60,18 @@ class ProductosController extends Controller
             $this->redirect('productos');
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'editar_producto' && $esAdmin) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'editar_producto') {
+            $esFetch = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+                && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            if (!$esAdmin) {
+                if ($esFetch) {
+                    $this->json([
+                        'success' => false,
+                        'message' => 'SIN PERMISOS PARA EDITAR PRODUCTOS.',
+                    ], 403);
+                }
+                $this->redirect('productos');
+            }
             $parsePrice = static function ($value): string {
                 $text = trim((string)$value);
                 if ($text === '' || preg_match('/[^0-9.,]/', $text)) return $text;
@@ -85,6 +96,17 @@ class ProductosController extends Controller
                 'status'          => $_POST['status'] ?? 'Activo',
                 'fecha_vencimiento' => trim($_POST['fecha_vencimiento'] ?? ''),
             ]);
+            if ($esFetch) {
+                $this->flash(
+                    $resultado['ok'] ? 'success' : 'danger',
+                    $resultado['mensaje'],
+                    'prod_editar:' . (int)($_POST['id_producto'] ?? 0)
+                );
+                $this->json([
+                    'success' => (bool)$resultado['ok'],
+                    'message' => (string)$resultado['mensaje'],
+                ], $resultado['ok'] ? 200 : 422);
+            }
             $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje'], 'prod_editar:' . (int)($_POST['id_producto'] ?? 0));
             $this->redirect('productos');
         }

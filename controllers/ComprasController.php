@@ -172,10 +172,15 @@ class ComprasController extends Controller
                 }
                 if ($esFetch) {
                     if ($resultado['ok']) {
-                        $this->json(['success' => true, 'mensaje' => $resultado['mensaje']]);
+                        $this->json([
+                            'success' => true,
+                            'message' => $resultado['mensaje'],
+                            'mensaje' => $resultado['mensaje'],
+                        ]);
                     }
                     $this->json([
                         'success' => false,
+                        'message' => $resultado['mensaje'],
                         'error' => $resultado['mensaje'],
                     ], 422);
                 }

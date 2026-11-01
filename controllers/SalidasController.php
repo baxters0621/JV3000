@@ -53,20 +53,27 @@ class SalidasController extends Controller
                 $esFetch = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
                 if (!Security::esAdmin()) {
                     if ($esFetch) {
-                        $this->json(['success' => false, 'error' => 'SIN PERMISOS PARA GESTIONAR CLIENTES.'], 403);
+                        $this->json([
+                            'success' => false,
+                            'message' => 'SIN PERMISOS PARA GESTIONAR CLIENTES.',
+                            'error' => 'SIN PERMISOS PARA GESTIONAR CLIENTES.',
+                        ], 403);
                     }
                     $this->redirect('salidas');
                 }
                 $resultado = (new Cliente())->procesar($_POST);
                 if ($esFetch) {
                     if (!$resultado['ok']) {
+                        $mensaje = $resultado['mensaje'] ?? 'ERROR AL PROCESAR EL CLIENTE.';
                         $this->json([
                             'success' => false,
-                            'error' => $resultado['mensaje'] ?? 'ERROR AL PROCESAR EL CLIENTE.',
+                            'message' => $mensaje,
+                            'error' => $mensaje,
                         ], 422);
                     }
                     $this->json([
                         'success' => true,
+                        'message' => 'CLIENTE REGISTRADO CON ÉXITO.',
                         'id_cliente' => (int)$resultado['id_cliente'],
                         'nombre' => (string)$resultado['nombre'],
                         'documento' => (string)($resultado['documento'] ?? ''),

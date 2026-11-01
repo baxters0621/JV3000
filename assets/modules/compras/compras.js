@@ -403,13 +403,13 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
             const formData = new FormData(form);
-            fetch(form.action || window.location.href, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
+            jvFetchConTope(form.action || window.location.href, {
+                ms: 12000,
+                init: {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
                 },
-                body: formData
             })
                 .then(function(response) {
                     return response.text().then(function(text) {
@@ -420,21 +420,25 @@
                             throw new Error('El servidor devolvió una respuesta inválida. Revise la compra antes de reintentar.');
                         }
                         if (!response.ok || !data.success) {
-                            throw new Error(data.error || 'NO SE PUDO REGISTRAR LA COMPRA.');
+                            throw new Error(data.message || data.error || 'NO SE PUDO REGISTRAR LA COMPRA.');
                         }
                         return data;
                     });
                 })
                 .then(function() {
                     jvBorradorLimpiar('compras_alta');
+                    btn.disabled = productos.length === 0;
+                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Compra';
                     window.location.reload();
                 })
                 .catch(function(error) {
                     btn.disabled = productos.length === 0;
                     btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Compra';
                     Swal.fire({
-                        title: 'NO SE PUDO GUARDAR LA COMPRA',
-                        text: error.message || 'Verifique la conexión e inténtelo de nuevo.',
+                        title: error.jvTope ? 'LA SOLICITUD TARDÓ DEMASIADO' : 'NO SE PUDO GUARDAR LA COMPRA',
+                        text: error.jvTope
+                            ? 'Revise la factura en Compras antes de volver a guardarla; el servidor pudo completar la operación.'
+                            : (error.message || 'Verifique la conexión e inténtelo de nuevo.'),
                         icon: 'error',
                         background: '#fff',
                         color: '#212529',
@@ -983,14 +987,16 @@
                 formData.append('accion_cancelar_solicitud', '1');
                 formData.append('id_solicitud', idSolicitud);
                 formData.append('csrf_token', (window.JV_CONFIG || {}).csrfToken || '');
-                fetch((window.JV_BASE || '') + 'index.php?url=solicitudes/cancelar', {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    body: formData
+                jvFetchConTope((window.JV_BASE || '') + 'index.php?url=solicitudes/cancelar', {
+                    ms: 12000,
+                    init: {
+                        method: 'POST',
+                        body: formData
+                    }
                 }).then(function(response) {
                     return response.json().then(function(data) {
-                        if (!response.ok || !data.ok) {
-                            throw new Error(data.error || 'No se pudo cancelar la solicitud.');
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || data.error || 'No se pudo cancelar la solicitud.');
                         }
                         window.location.reload();
                     });
@@ -998,7 +1004,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'NO SE PUDO CANCELAR',
-                        text: 'Verifica la conexión y vuelve a intentarlo.'
+                        text: 'Verifica la conexión y el estado de la solicitud antes de volver a intentarlo.'
                     });
                 });
             });

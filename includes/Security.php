@@ -105,7 +105,11 @@ class Security
         if ($isAjax) {
             header('Content-Type: application/json');
             http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Token CSRF inválido.']);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Token CSRF inválido.',
+                'error' => 'Token CSRF inválido.',
+            ]);
             exit;
         }
         $_SESSION['flash_msg'] = ['tipo' => 'danger', 'texto' => 'Error de seguridad: token CSRF inválido.'];
@@ -137,6 +141,16 @@ class Security
     public static function soloAdmin(): void
     {
         if (!self::esAdmin()) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'ACCESO DENEGADO.',
+                    'error' => 'ACCESO DENEGADO.',
+                ]);
+                exit;
+            }
             header("Location: " . BASE_PATH . "dashboard/index.php?error=acceso_prohibido");
             exit;
         }
@@ -158,6 +172,16 @@ class Security
     public static function verificarPermisoCarga(): void
     {
         if (!self::puedeCargar()) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'ACCESO DENEGADO.',
+                    'error' => 'ACCESO DENEGADO.',
+                ]);
+                exit;
+            }
             header("Location: " . BASE_PATH . "dashboard/index.php?error=acceso_denegado");
             exit;
         }
@@ -167,6 +191,16 @@ class Security
     public static function verificarPermisoVenta(): void
     {
         if (!self::puedeVender()) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'ACCESO DENEGADO.',
+                    'error' => 'ACCESO DENEGADO.',
+                ]);
+                exit;
+            }
             header("Location: " . BASE_PATH . "dashboard/index.php?error=acceso_denegado");
             exit;
         }
@@ -185,6 +219,16 @@ class Security
     // Redirigir al login
     private static function redirectToLogin(string $error = ''): void
     {
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+            http_response_code(401);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'message' => 'LA SESIÓN NO ESTÁ ACTIVA. INICIE SESIÓN NUEVAMENTE.',
+                'error' => $error !== '' ? $error : 'sesion_requerida',
+            ]);
+            exit;
+        }
         $url = BASE_PATH . 'login/login.php';
         if ($error) {
             $url .= '?error=' . $error;

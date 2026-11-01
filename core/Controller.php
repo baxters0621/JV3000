@@ -216,6 +216,7 @@ abstract class Controller
             $this->json([
                 'ok' => false,
                 'success' => false,
+                'message' => 'No se completó la operación. Intenta de nuevo.',
                 'error' => 'No se completó la operación. Intenta de nuevo.',
             ], 500);
         }

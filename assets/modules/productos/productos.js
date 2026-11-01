@@ -192,7 +192,7 @@
             });
         });
 
-        // Valida los campos del formulario de edición y envía el formulario si son correctos.
+        // Valida la edición y guarda por AJAX para poder controlar la espera y el resultado.
         function validarEditarProducto(btn) {
             var precioVenta = document.getElementById('edit_pvp');
             var valorVenta = leerPrecioEdicion(precioVenta.value);
@@ -229,9 +229,66 @@
                 return false;
             }
             document.getElementById('edit_pvp_valor').value = canonicoVenta;
+            const form = btn.form;
+            if (!form) {
+                Swal.fire({
+                    title: 'FORMULARIO NO DISPONIBLE',
+                    text: 'No se pudo asociar el botón con el formulario. Recargue la página e inténtelo de nuevo.',
+                    icon: 'error',
+                    confirmButtonColor: '#DC2626'
+                });
+                return false;
+            }
+            const textoOriginal = btn.innerHTML;
+            const restaurarBoton = function() {
+                btn.disabled = false;
+                btn.innerHTML = textoOriginal;
+            };
             btn.disabled = true;
             btn.innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span>GUARDANDO...';
-            btn.form.submit();
+            jvFetchConTope(form.action || window.location.href, {
+                ms: 12000,
+                init: {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: new FormData(form)
+                }
+            })
+                .then(function(response) {
+                    return response.text().then(function(texto) {
+                        let data;
+                        try {
+                            data = JSON.parse(texto);
+                        } catch (error) {
+                            throw new Error('El servidor devolvió una respuesta inválida. Revise el producto antes de reintentar.');
+                        }
+                        if (response.status === 422 && data.success === false) {
+                            restaurarBoton();
+                            window.location.reload();
+                            return null;
+                        }
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.message || data.error || 'NO SE PUDO ACTUALIZAR EL PRODUCTO.');
+                        }
+                        return data;
+                    });
+                })
+                .then(function(data) {
+                    if (!data) return;
+                    restaurarBoton();
+                    window.location.reload();
+                })
+                .catch(function(error) {
+                    restaurarBoton();
+                    Swal.fire({
+                        title: error.jvTope ? 'LA SOLICITUD TARDÓ DEMASIADO' : 'NO SE PUDO ACTUALIZAR EL PRODUCTO',
+                        text: error.jvTope
+                            ? 'Verifique el producto en el inventario antes de volver a guardar; el servidor pudo completar la operación.'
+                            : (error.message || 'Verifique la conexión e inténtelo de nuevo.'),
+                        icon: 'error',
+                        confirmButtonColor: '#DC2626'
+                    });
+                });
             return false;
         }
 
