@@ -306,7 +306,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <?php endif; ?>
 
 <!-- Actividad reciente de recepciones -->
-<section class="card-jv p-0 mb-4 comp-rec-feed" aria-labelledby="compRecFeedTitle">
+<section class="card-jv p-0 mt-4 mb-4 comp-rec-feed" aria-labelledby="compRecFeedTitle">
     <div class="comp-rec-feed-header">
         <span class="comp-rec-feed-heading-icon" aria-hidden="true"><i class="bi bi-clock-history"></i></span>
         <h2 class="comp-rec-feed-title" id="compRecFeedTitle">Actividad reciente</h2>
@@ -320,7 +320,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     ? 'Hoy, ' . date('H:i', $marca_tiempo)
                     : ($marca_tiempo !== false ? date('d/m', $marca_tiempo) : '—');
                 ?>
-                <li class="list-group-item comp-rec-feed-item">
+                <li class="list-group-item comp-rec-feed-item d-flex align-items-center">
                     <span class="comp-rec-feed-icon" aria-hidden="true"><i class="bi bi-check2"></i></span>
                     <div class="comp-rec-feed-content">
                         <p class="comp-rec-feed-summary">

@@ -1483,8 +1483,7 @@
     margin: 0;
 }
 .pagina-compras .comp-rec-feed-item {
-    display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) auto;
+    display: flex;
     align-items: center;
     gap: 12px;
     padding: 13px 20px;
@@ -1496,6 +1495,13 @@
     background: #ecfdf5;
     color: #15803d;
     font-size: 1.05rem;
+}
+.pagina-compras .comp-rec-feed-content {
+    flex: 1 1 auto;
+}
+.pagina-compras .comp-rec-feed-date {
+    flex: 0 0 auto;
+    margin-left: auto;
 }
 .pagina-compras .comp-rec-feed-content {
     min-width: 0;
@@ -1820,9 +1826,13 @@
         padding: 12px 14px;
     }
     .pagina-compras .comp-rec-feed-item {
+        display: grid;
         grid-template-columns: 36px minmax(0, 1fr);
         gap: 8px 10px;
         padding: 12px 14px;
+    }
+    .pagina-compras .comp-rec-feed-content {
+        flex: initial;
     }
     .pagina-compras .comp-rec-feed-icon {
         grid-row: 1 / span 2;

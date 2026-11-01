@@ -21,6 +21,12 @@ function afirmarFeedRecepciones(bool $condicion, string $mensaje): void
 
 afirmarFeedRecepciones(strpos($vista, '<ul class="list-group list-group-flush comp-rec-feed-list">') !== false, 'El feed debe usar una lista compacta.');
 afirmarFeedRecepciones($feed !== '' && strpos($feed, '<table') === false, 'La tabla de recepciones debe reemplazarse por el feed.');
+afirmarFeedRecepciones(strpos($feed, 'mt-4') !== false, 'El feed debe tener margen superior.');
+afirmarFeedRecepciones(strpos($feed, 'comp-rec-feed-item d-flex align-items-center') !== false, 'Las filas deben centrar verticalmente la fecha con flexbox.');
+preg_match_all('/<li\b[^>]*>.*?<\/li>/s', $feed, $elementos_feed);
+foreach ($elementos_feed[0] as $elemento_feed) {
+    afirmarFeedRecepciones(!preg_match('/\b(?:title|data-tooltip|data-bs-toggle)\s*=/', $elemento_feed), 'Los elementos del feed no deben mostrar tooltips.');
+}
 afirmarFeedRecepciones(strpos($feed, 'Se recibieron <strong>+') !== false && strpos($feed, 'unidades</strong> de') !== false, 'Cada evento debe resumir las unidades y el proveedor.');
 afirmarFeedRecepciones(strpos($feed, 'Factura <?php echo htmlspecialchars($recepcion[\'nro_factura\']') !== false, 'La factura debe mostrarse como texto secundario.');
 afirmarFeedRecepciones(strpos($feed, "'Hoy, ' . date('H:i'") !== false && strpos($feed, "date('d/m', \$marca_tiempo)") !== false, 'La fecha debe usar un formato breve.');
