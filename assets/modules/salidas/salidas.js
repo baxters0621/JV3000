@@ -3,6 +3,10 @@
         // SALIDAS / VENTAS — registro con toolbox y validación FEFO
         // ==========================================
 
+        if (document.querySelector('[data-actualiza-dashboard="1"]')) {
+            jvNotificarActualizacionDashboard();
+        }
+
         const salidaModal = new bootstrap.Modal(document.getElementById('modalSalida'));
         const movementTypeGroups = window.JV_CONFIG.movementTypeGroups;
         let selectedProducts = [];

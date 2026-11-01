@@ -95,6 +95,12 @@
             }
         }
 
+        window.addEventListener('storage', function(evento) {
+            if (evento.key === 'jv3000_dashboard_actualizado' && !document.hidden) {
+                actualizarDashboard();
+            }
+        });
+
         // Solo actualiza si la pestaña está visible
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {

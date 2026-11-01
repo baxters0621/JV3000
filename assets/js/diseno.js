@@ -20,6 +20,19 @@ function jvPost(params, url) {
     form.submit();
 }
 
+/**
+ * Avisa a otras pestañas que el panel debe consultar los indicadores de nuevo.
+ *
+ * @returns {void}
+ */
+function jvNotificarActualizacionDashboard() {
+    try {
+        localStorage.setItem('jv3000_dashboard_actualizado', Date.now() + ':' + Math.random());
+    } catch (error) {
+        console.warn('No se pudo notificar la actualización del dashboard:', error);
+    }
+}
+
 // ==========================================
 // ESCAPADO HTML — evita inyección en el DOM
 // ==========================================

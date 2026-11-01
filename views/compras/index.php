@@ -62,7 +62,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
 <!-- Mensajes flash (id/data-texto permiten al JS de proveedores marcar el campo con error) -->
 <?php if (!empty($flash)): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
+    <?php $actualiza_dashboard = ($flash['tipo'] ?? '') === 'success' && in_array($flash['origen'] ?? '', ['compra_crear', 'compra_anular', 'compra_pago', 'compra_recepcion'], true); ?>
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3" id="flashMsg" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>"<?php echo $actualiza_dashboard ? ' data-actualiza-dashboard="1"' : ''; ?>>
         <i class="bi bi-<?php echo $flash['tipo'] === 'success' ? 'check-circle' : 'exclamation-triangle'; ?>"></i>
         <?php echo htmlspecialchars($flash['texto']); ?>
     </div>

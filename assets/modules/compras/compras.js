@@ -4,6 +4,10 @@
         // (No mueve stock: la recepción se hace desde Inventario)
         // ==========================================
 
+        if (document.querySelector('[data-actualiza-dashboard="1"]')) {
+            jvNotificarActualizacionDashboard();
+        }
+
         let productos = [];
         let productoSeleccionado = null;
         let proveedorCarritoId = '';

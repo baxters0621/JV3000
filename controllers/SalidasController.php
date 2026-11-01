@@ -41,7 +41,7 @@ class SalidasController extends Controller
                 $outgoingId = (int)$_POST['eliminar'];
                 $cancellationResult = $modelo->anular($outgoingId);
                 if ($cancellationResult['ok']) {
-                    $this->flash('success', 'SALIDA ANULADA. STOCK RESTAURADO.');
+                    $this->flash('success', 'SALIDA ANULADA. STOCK RESTAURADO.', 'salida_anular');
                 } else {
                     $this->flash('danger', $cancellationResult['error'] ?? 'ERROR EN LA BASE DE DATOS.');
                 }
@@ -166,7 +166,7 @@ class SalidasController extends Controller
                 unset($_SESSION['preview_data']);
             }
             $message = $confirmationResult['edicion'] ? 'SALIDA ACTUALIZADA CORRECTAMENTE.' : 'VENTA REGISTRADA EXITOSAMENTE.';
-            $this->flash('success', $message);
+            $this->flash('success', $message, $confirmationResult['edicion'] ? 'salida_editar' : 'salida_crear');
             $redirectUrl = APP_URL_BASE . 'index.php?url=salidas#salida-' . (int)$confirmationResult['id_salida'];
             if ($esFetch) {
                 $this->json([

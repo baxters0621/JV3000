@@ -39,7 +39,8 @@
 
 <!-- Mensajes flash -->
 <?php if (!empty($flash)): ?>
-    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" id="flash<?php echo ucfirst($flash['tipo']); ?>" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>">
+    <?php $actualiza_dashboard = ($flash['tipo'] ?? '') === 'success' && in_array($flash['origen'] ?? '', ['salida_anular', 'salida_editar', 'salida_crear'], true); ?>
+    <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-4" id="flash<?php echo ucfirst($flash['tipo']); ?>" data-texto="<?php echo htmlspecialchars($flash['texto']); ?>"<?php echo $actualiza_dashboard ? ' data-actualiza-dashboard="1"' : ''; ?>>
         <i class="bi bi-shield-check"></i><?php echo htmlspecialchars($flash['texto']); ?>
     </div>
 <?php endif; ?>

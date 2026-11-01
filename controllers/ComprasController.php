@@ -129,7 +129,7 @@ class ComprasController extends Controller
                     }
                     $mensaje .= ' SI EL RESULTADO NO ESTÁ CLARO, REVISE EL ESTADO DE LA RECEPCIÓN ANTES DE MODIFICAR DATOS O REENVIAR.';
                 }
-                $this->flash($resultado['ok'] ? 'success' : 'danger', $mensaje);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $mensaje, $resultado['ok'] ? 'compra_recepcion' : null);
                 $this->redirect('compras');
             }
 
@@ -147,7 +147,7 @@ class ComprasController extends Controller
                     ],
                     (int)($_SESSION['id_usuario'] ?? 0)
                 );
-                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje'], $resultado['ok'] ? 'compra_pago' : null);
                 $this->redirect('compras');
             }
 
@@ -172,6 +172,7 @@ class ComprasController extends Controller
                 }
                 if ($esFetch) {
                     if ($resultado['ok']) {
+                        $this->flash('success', $resultado['mensaje'], 'compra_crear');
                         $this->json([
                             'success' => true,
                             'message' => $resultado['mensaje'],
@@ -184,7 +185,7 @@ class ComprasController extends Controller
                         'error' => $resultado['mensaje'],
                     ], 422);
                 }
-                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje'], $resultado['ok'] ? 'compra_crear' : null);
                 $this->redirect('compras');
             }
 
@@ -194,7 +195,7 @@ class ComprasController extends Controller
                     $this->redirect('compras');
                 }
                 $resultado = $modelo->anular((int)($_POST['eliminar'] ?? 0));
-                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
+                $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje'], $resultado['ok'] ? 'compra_anular' : null);
                 $this->redirect('compras');
             }
         }
