@@ -152,6 +152,7 @@
             <?php if ($preview_token !== ''): ?>
                 <form action="<?php echo BASE_PATH; ?>index.php?url=salidas/confirm&token=<?php echo urlencode($preview_token); ?>" method="POST" onsubmit="return confirmarRegistro(event)" data-borrador="nota_entrega">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
+                    <div id="confirmacionError" class="alert alert-danger d-none" role="alert" aria-live="assertive"></div>
                     <button type="submit" class="btn btn-primary" id="btnConfirmar">✓ CONFIRMAR Y REGISTRAR</button>
                 </form>
             <?php else: ?>
@@ -160,6 +161,7 @@
         </div>
     </div>
 
+    <script src="<?php echo BASE_PATH; ?>assets/js/diseno.js<?php echo jv_asset_version('js/diseno.js'); ?>"></script>
     <script src="<?php echo BASE_PATH; ?>assets/js/tooltips.js?v=5"></script>
     <script src="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.js?v=5"></script>
 </body>

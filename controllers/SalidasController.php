@@ -127,7 +127,9 @@ class SalidasController extends Controller
      * Lee el preview indicado por el token, ejecuta la confirmación en el
      * modelo Salida (inserta/actualiza salida, descuenta stock y lotes FEFO,
      * registra el movimiento) y consume el preview solo tras éxito. Ante un
-     * fallo explícito conserva el preview para corregir o reintentar.
+     * fallo explícito conserva el preview para corregir o reintentar. Las
+     * confirmaciones AJAX responden JSON; el formulario normal conserva la
+     * redirección tradicional.
      *
      * @return void
      */
@@ -139,13 +141,19 @@ class SalidasController extends Controller
             $this->redirect('salidas');
         }
 
+        $esFetch = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         $previewToken = $_GET['token'] ?? '';
         $previewData = $previewToken !== ''
             ? ($_SESSION['preview_data'][$previewToken] ?? null)
             : ($_SESSION['preview_data'] ?? null);
 
         if (!$previewData) {
-            $this->flash('danger', 'EL PREVIEW YA NO ESTÁ DISPONIBLE. REVISE SALIDAS PARA CONFIRMAR EL ESTADO ANTES DE VOLVER A REGISTRAR.');
+            $message = 'EL PREVIEW YA NO ESTÁ DISPONIBLE. REVISE SALIDAS PARA CONFIRMAR EL ESTADO ANTES DE VOLVER A REGISTRAR.';
+            if ($esFetch) {
+                $this->json(['success' => false, 'message' => $message], 409);
+            }
+            $this->flash('danger', $message);
             $this->redirect('salidas');
         }
 
@@ -157,12 +165,24 @@ class SalidasController extends Controller
             } else {
                 unset($_SESSION['preview_data']);
             }
-            $this->flash('success', $confirmationResult['edicion'] ? 'SALIDA ACTUALIZADA CORRECTAMENTE.' : 'VENTA REGISTRADA EXITOSAMENTE.');
-            header('Location: ' . APP_URL_BASE . 'index.php?url=salidas#salida-' . (int)$confirmationResult['id_salida']);
+            $message = $confirmationResult['edicion'] ? 'SALIDA ACTUALIZADA CORRECTAMENTE.' : 'VENTA REGISTRADA EXITOSAMENTE.';
+            $this->flash('success', $message);
+            $redirectUrl = APP_URL_BASE . 'index.php?url=salidas#salida-' . (int)$confirmationResult['id_salida'];
+            if ($esFetch) {
+                $this->json([
+                    'success' => true,
+                    'message' => $message,
+                    'redirect_url' => $redirectUrl,
+                ]);
+            }
+            header('Location: ' . $redirectUrl);
             exit;
         }
 
         $errorMessage = $confirmationResult['error'] ?? 'ERROR AL REGISTRAR LA SALIDA.';
+        if ($esFetch) {
+            $this->json(['success' => false, 'message' => $errorMessage], 422);
+        }
         $this->flash(
             'danger',
             $errorMessage . ' SI EL RESULTADO ES INCIERTO, REVISE SALIDAS ANTES DE REINTENTAR.'

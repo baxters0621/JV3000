@@ -12,6 +12,8 @@ $solicitudes_controller = file_get_contents($raiz . '/controllers/SolicitudesCon
 $productos_js = file_get_contents($raiz . '/assets/modules/productos/productos.js');
 $compras_js = file_get_contents($raiz . '/assets/modules/compras/compras.js');
 $salidas_js = file_get_contents($raiz . '/assets/modules/salidas/salidas.js');
+$nota_js = file_get_contents($raiz . '/assets/modules/nota_entrega/nota_entrega.js');
+$nota_view = file_get_contents($raiz . '/views/nota_entrega/nota.php');
 $controlador_base = file_get_contents($raiz . '/core/Controller.php');
 $seguridad = file_get_contents($raiz . '/includes/Security.php');
 $inicio = file_get_contents($raiz . '/init.php');
@@ -47,9 +49,18 @@ foreach ([$productos_js, $compras_js, $salidas_js] as $javascript) {
     afirmarTimeoutFetch(strpos($javascript, 'ms: 12000') !== false, 'Los módulos deben usar el tope de espera de 12 segundos.');
     afirmarTimeoutFetch(strpos($javascript, 'error.jvTope') !== false || strpos($javascript, 'e.jvTope') !== false, 'El módulo no informa de forma clara el timeout.');
 }
+afirmarTimeoutFetch(
+    strpos($salidas_controller, "'redirect_url' => \$redirectUrl") !== false
+    && strpos($nota_js, 'jvFetchConTope(form.action') !== false
+    && strpos($nota_js, 'ms: 12000') !== false
+    && strpos($nota_js, 'error.jvTope') !== false
+    && strpos($nota_js, 'resultado = await response.json()') !== false
+    && strpos($nota_view, 'assets/js/diseno.js') !== false,
+    'La confirmación final de venta debe usar AJAX con timeout, respuesta JSON y redirección explícita.'
+);
 afirmarTimeoutFetch(strpos($productos_js, 'restaurarBoton();') !== false, 'La edición de producto no restaura el botón al terminar o fallar.');
 afirmarTimeoutFetch(strpos($compras_js, 'btn.disabled = productos.length === 0;') !== false, 'El formulario de compra no libera el botón tras la respuesta.');
-afirmarTimeoutFetch(!preg_match('/\bfetch\s*\(/', $productos_js . $compras_js . $salidas_js), 'Quedó un fetch sin el helper de timeout en los módulos revisados.');
+afirmarTimeoutFetch(!preg_match('/\bfetch\s*\(/', $productos_js . $compras_js . $salidas_js . $nota_js), 'Quedó un fetch sin el helper de timeout en los módulos revisados.');
 
 afirmarTimeoutFetch(strpos($seed, "Security::esAdmin()") !== false, 'El seed debe exigir rol Administrador.');
 afirmarTimeoutFetch(strpos($seed, "['localhost', '127.0.0.1', '[::1]', '::1']") !== false, 'El seed debe limitarse a localhost.');
