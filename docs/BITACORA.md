@@ -9,6 +9,7 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 ```
 
 ---
+[2026-11-01 19:11] · Módulo: Historial de Operaciones · Cambio: Se asigna id=formFiltrosHistorial. Se confirma que el envio GET ya coincide con el controlador/modelo, preserva filtros y paginacion, y Limpiar vuelve a la lista completa; no se necesita AJAX. · Archivos: views/historial/index.php, MEMORY.md · Prueba: lint PHP y piloto de contrato vista-controlador-modelo completados.
 [2026-11-01 18:32] · Módulo: Historial de Operaciones · Cambio: Se reorganizan filtros con Grid Bootstrap, se centra la tabla y se agrupan los estados en badges compactos; los totales distinguen ventas en verde y compras en navy. · Archivos: views/historial/index.php, assets/modules/historial/historial.css, MEMORY.md · Prueba: lint PHP, tools/validar.ps1 y CSS servido por HTTP (200).
 [2026-11-01 18:25] · Módulo: Sidebar Control · Cambio: Se renombra Usuarios a Colaboradores y se sustituye el acento morado por navy con fondo activo azul suave; roles y estructura intactos. · Archivos: includes/sidebar.php, assets/css/sidebar.css, MEMORY.md · Prueba: lint PHP, tools/validar.ps1 y CSS servido por HTTP (200).
 [2026-11-01 18:16] · Módulo: Colaboradores · Cambio: Se sustituye la paleta morada por navy y azul cielo, se suaviza la tarjeta del PIN y se actualizan los textos visibles a colaborador sin renombrar campos técnicos. · Archivos: assets/dashboard/usuarios.css, views/usuarios/index.php, MEMORY.md · Prueba: lint PHP y tools/validar.ps1 completados; sin colores morados remanentes.

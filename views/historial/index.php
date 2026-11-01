@@ -34,7 +34,7 @@
     </div>
 </div>
 
-<form class="historial-filtros card-jv p-4" method="GET" action="<?php echo APP_URL_BASE; ?>index.php">
+<form id="formFiltrosHistorial" class="historial-filtros card-jv p-4" method="GET" action="<?php echo APP_URL_BASE; ?>index.php">
     <input type="hidden" name="url" value="historial">
     <div class="row g-3 align-items-end">
         <div class="col-12 historial-filtro-busqueda">
