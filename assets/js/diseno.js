@@ -139,13 +139,12 @@ function jvReportarErrorNavegador(detalle) {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         }).catch(function() { /* El reporte no tiene cliente que avise. */ });
     } catch (fallo) {
-        // El reporte es cortesía: jamás interrumpe al aviso del usuario.
+        // El reporte es cortesía: nunca debe interrumpir la interfaz.
     }
 }
 
 /**
- * Muestra una única vez el aviso amable de error inesperado del panel y
- * deja el detalle en el diario del servidor para el panel Diagnóstico.
+ * Reporta una única vez el error al diario del servidor sin mostrar avisos.
  *
  * @param {object|null} detalle mensaje, archivo, linea y stack (del evento).
  * @returns {void}
@@ -154,14 +153,6 @@ function jvAvisoErrorNavegador(detalle) {
     if (jv_aviso_error_mostrado) return;
     jv_aviso_error_mostrado = true;
     jvReportarErrorNavegador(detalle);
-    if (typeof Swal === 'undefined') return;
-    Swal.fire({
-        icon: 'warning',
-        title: 'No se completó la acción',
-        html: 'Algo falló al procesar lo último que intentaste. Lo que ya escribiste sigue ahí, no se perdió nada. Puedes intentarlo de nuevo; si vuelve a fallar, avisa al administrador.',
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#EA580C'
-    });
 }
 
 // Errores de ejecución de los scripts del panel (los fallos de carga de

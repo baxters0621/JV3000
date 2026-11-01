@@ -3,16 +3,13 @@
 // ==========================================
 // CONTROLADOR: Diagnóstico (observabilidad)
 // ==========================================
-// Panel del diario de errores: el administrador descubre los fallos del
-// sistema ANTES de que la persona usuaria los reporte. Recibe además los
-// errores reportados desde el navegador (boundary de diseno.js).
+// La captura interna permanece activa, pero el panel no se expone a usuarios.
 
 /**
- * DiagnosticoController: consulta y gestión del diario de errores.
+ * DiagnosticoController: diario interno de errores y endpoint de captura.
  *
- * index es exclusivo del Administrador. El endpoint cliente() está abierto
- * a cualquier sesión válida (los errores del navegador de cada operador
- * también son observabilidad) y exige CSRF por la validación global de POST.
+ * La interfaz y sus acciones están deshabilitadas para todos los usuarios.
+ * cliente() permanece disponible para guardar reportes del navegador.
  */
 class DiagnosticoController extends Controller
 {
@@ -20,7 +17,7 @@ class DiagnosticoController extends Controller
     private const POR_PAGINA = 50;
 
     /**
-     * Panel del diario de errores (solo Administrador).
+     * Panel del diario de errores (interfaz deshabilitada).
      *
      * Lee filtros de GET (origen, estado, búsqueda), consulta el modelo y
      * entrega los datos paginados a la vista.
@@ -29,10 +26,7 @@ class DiagnosticoController extends Controller
      */
     public function index(): void
     {
-        if (!Security::esAdmin()) {
-            header("Location: " . BASE_PATH . "dashboard/index.php?error=acceso_prohibido");
-            exit;
-        }
+        $this->denegarAccesoDiagnostico();
 
         $origen_recibido = $this->parametroTexto('origen');
         $estado_recibido = $this->parametroTexto('estado');
@@ -88,7 +82,7 @@ class DiagnosticoController extends Controller
     }
 
     /**
-     * Devuelve el detalle completo de un error (JSON, solo Administrador).
+     * Devuelve el detalle completo de un error (JSON, deshabilitado).
      *
      * Alimenta la ventana de detalle del panel sin recargar la página.
      *
@@ -96,18 +90,11 @@ class DiagnosticoController extends Controller
      */
     public function detalle(): void
     {
-        if (!Security::esAdmin()) {
-            $this->json(['ok' => false, 'error' => 'Solo el administrador consulta el diagnóstico.'], 403);
-        }
-        $fila = (new ErrorLog())->detalle((int)($_GET['id'] ?? 0));
-        if (!$fila) {
-            $this->json(['ok' => false, 'error' => 'El error ya no existe (posiblemente fue purgado).'], 404);
-        }
-        $this->json(['ok' => true, 'error' => $fila]);
+        $this->denegarAccesoDiagnostico(true);
     }
 
     /**
-     * Marca un error como resuelto (solo Administrador, POST con CSRF).
+     * Resuelve un error (acción deshabilitada para todos los usuarios).
      *
      * Responde JSON para AJAX y flash + redirección para la navegación normal.
      *
@@ -115,23 +102,28 @@ class DiagnosticoController extends Controller
      */
     public function resolver(): void
     {
-        if (!Security::esAdmin()) {
-            header("Location: " . BASE_PATH . "dashboard/index.php?error=acceso_prohibido");
-            exit;
-        }
-        $id_error = (int)($_POST['id_error'] ?? 0);
-        $resuelto = $id_error > 0 && (new ErrorLog())->marcarResuelto($id_error);
-
-        $es_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
-            && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-        if ($es_ajax) {
-            $this->json(['ok' => $resuelto]);
-        }
-        $this->flash(
-            $resuelto ? 'success' : 'danger',
-            $resuelto ? 'Error marcado como resuelto.' : 'No se pudo marcar el error (¿ya fue purgado?).'
+        $this->denegarAccesoDiagnostico(
+            !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
         );
-        $this->redirect('diagnostico');
+    }
+
+    /**
+     * Rechaza cualquier acceso a la interfaz y acciones del panel.
+     *
+     * @param bool $json Indica si la respuesta debe ser JSON.
+     * @return void
+     */
+    private function denegarAccesoDiagnostico(bool $json = false): void
+    {
+        if ($json) {
+            $this->json(['ok' => false, 'error' => 'Acceso denegado.'], 403);
+        }
+
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo 'Acceso denegado.';
+        exit;
     }
 
     /**
