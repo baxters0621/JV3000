@@ -81,7 +81,7 @@ function construirElements(campos) {
     return elementos;
 }
 
-function formFake(clave, campos, visible, restaurarAutomaticamente, contexto) {
+function formFake(clave, campos, visible, restaurarAutomaticamente, contexto, camposRelevantes) {
     const form = {
         offsetParent: visible === false ? null : {},
         escuchas: {},
@@ -91,6 +91,7 @@ function formFake(clave, campos, visible, restaurarAutomaticamente, contexto) {
         getAttribute: function(k) {
             if (k === 'data-borrador') return clave;
             if (k === 'data-borrador-contexto') return contexto || null;
+            if (k === 'data-borrador-campos-relevantes') return camposRelevantes || null;
             return null;
         },
         hasAttribute: function(k) { return k === 'data-borrador-restaurar-automatico' && restaurarAutomaticamente === true; },
@@ -147,7 +148,7 @@ const {
     jvBorradorExcluido, jvBorradorSerializar, jvBorradorRestaurar,
     jvBorradorGuardar, jvBorradorLeer, jvBorradorLimpiar,
     jvBorradorHaceTiempo, jvBorradorHaceTexto, jvBorradorDecidirSobre,
-    jvBorradorPreparar, jvBorradorActivar, jvBorradorLlave
+    jvBorradorPreparar, jvBorradorActivar, jvBorradorLlave, jvBorradorEscuchar
 } = sandbox;
 
 // Reinicia el estado del módulo entre escenarios (las "var" de arriba son
@@ -370,7 +371,8 @@ function reiniciar() {
     // ---------- 8. DecidirSobre: pregunta con Swal ----------
     {
         reiniciar();
-        const formCompra = formFake('compras_alta', [campoFake('nro_factura', 'text', '000123')], true, true);
+        const formCompra = formFake('compras_alta', [campoFake('nro_factura', 'text', '000123')], true, true,
+            null, 'id_proveedor,nro_factura,nro_control,observaciones');
         jvBorradorGuardar(formCompra, false);
         formCompra.elements.nro_factura.value = '';
         jvBorradorDecidirSobre(jvBorradorLeer('compras_alta'), formCompra);
@@ -378,6 +380,21 @@ function reiniciar() {
             'Compras restaura automáticamente su borrador sin pedir decisión.');
         afirmar(Swal.llamadas.length === 1 && Swal.llamadas[0].toast === true,
             'La recuperación automática de Compras muestra solo un aviso no bloqueante.');
+
+        reiniciar();
+        const formularioVacio = formFake('compras_alta', [
+            campoFake('accion_compra', 'hidden', 'registrar'),
+            campoFake('fecha_compra', 'date', '2026-11-01'),
+            campoFake('id_proveedor', 'select', ''),
+            campoFake('nro_factura', 'text', ''),
+            campoFake('nro_control', 'text', '')
+        ], true, true, null, 'id_proveedor,nro_factura,nro_control');
+        jvBorradorGuardar(formularioVacio, false);
+        jvBorradorDecidirSobre(jvBorradorLeer('compras_alta'), formularioVacio);
+        afirmar(jvBorradorLeer('compras_alta') === null,
+            'Un borrador de Compra sin datos del usuario se descarta.');
+        afirmar(Swal.llamadas.length === 0,
+            'Un formulario vacío de Compra no muestra el aviso de recuperación.');
 
         reiniciar();
         // Restaurar: el borrador trae 15.30 y el campo llega vacío.
@@ -466,6 +483,20 @@ function reiniciar() {
         form.escuchas.input[0]({});
         afirmar(jvBorradorLeer('nota_entrega').datos.direccion === 'Calle 5',
             'Sin borrador previo, escribir igual empieza a guardar.');
+    }
+
+    // ---------- 10b. Los cambios sintéticos de inicialización no crean borradores ----------
+    {
+        reiniciar();
+        const form = formFake('compras_alta', [campoFake('id_proveedor', 'select', '')]);
+        jvBorradorEscuchar(form);
+        form.escuchas.change[0]({ isTrusted: false });
+        afirmar(jvBorradorLeer('compras_alta') === null,
+            'Un evento change sintético de inicialización no se guarda como trabajo del usuario.');
+        form.elements.id_proveedor.value = '5';
+        form.escuchas.change[0]({ isTrusted: true });
+        afirmar(jvBorradorLeer('compras_alta').datos.id_proveedor === '5',
+            'La selección real del usuario sí se guarda como borrador.');
     }
 
     // ---------- 10a. Un borrador no debe reemplazar otra entrada dinámica ----------
@@ -571,6 +602,8 @@ function reiniciar() {
         const vistaCompras = fs.readFileSync('views/compras/index.php', 'utf8');
         afirmar(vistaCompras.includes('data-borrador-contexto="id_catalogo"'),
             'El borrador del catálogo se vincula al id de su entrada.');
+        afirmar(vistaCompras.includes('data-borrador-campos-relevantes="id_proveedor,nro_factura,nro_control,observaciones"'),
+            'Compras identifica los campos que prueban que hay trabajo real para recuperar.');
 
         const sidebar = fs.readFileSync('includes/sidebar.php', 'utf8');
         afirmar(sidebar.includes('JV_CONFIG.userId'), 'El sidebar expone JV_CONFIG.userId.');

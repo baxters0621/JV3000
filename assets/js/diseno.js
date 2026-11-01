@@ -668,6 +668,23 @@ function jvBorradorDecidir(registro, form) {
 }
 
 /**
+ * Comprueba que un borrador automático tenga algún dato que el formulario considera útil.
+ *
+ * @param {object} registro borrador leído de localStorage.
+ * @param {HTMLFormElement} form formulario destino de la restauración.
+ * @returns {boolean} true si hay contenido relevante o no se configuró el filtro.
+ */
+function jvBorradorTieneContenidoRelevante(registro, form) {
+    var campos = form.getAttribute('data-borrador-campos-relevantes');
+    if (!campos) return true;
+    var datos = registro.datos || {};
+    return String(campos).split(',').some(function(nombre) {
+        var valor = datos[nombre.trim()];
+        return valor !== null && valor !== undefined && String(valor).trim() !== '';
+    });
+}
+
+/**
  * Comprueba que el borrador corresponda al registro cargado en un formulario dinámico.
  *
  * @param {object} registro borrador leído de localStorage.
@@ -694,6 +711,10 @@ function jvBorradorContextoCoincide(registro, form) {
 function jvBorradorDecidirSobre(registro, form) {
     var clave = registro.clave;
     if (!jvBorradorContextoCoincide(registro, form)) {
+        jvBorradorLimpiar(clave);
+        return;
+    }
+    if (!jvBorradorTieneContenidoRelevante(registro, form)) {
         jvBorradorLimpiar(clave);
         return;
     }
@@ -751,7 +772,8 @@ function jvBorradorDecidirSobre(registro, form) {
  * @returns {void}
  */
 function jvBorradorEscuchar(form) {
-    var retardar = function() {
+    var retardar = function(evento) {
+        if (evento && evento.isTrusted === false) return;
         var previo = jvBorradorTemporizadores.get(form);
         if (previo) clearTimeout(previo);
         jvBorradorTemporizadores.set(form, setTimeout(function() {

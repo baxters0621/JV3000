@@ -353,7 +353,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalCompra" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-content-jv">
-            <form method="POST" id="formCompra" data-borrador="compras_alta" data-borrador-restaurar-automatico>
+            <form method="POST" id="formCompra" data-borrador="compras_alta" data-borrador-restaurar-automatico data-borrador-campos-relevantes="id_proveedor,nro_factura,nro_control,observaciones">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_compra" value="registrar">
                 <input type="hidden" name="productos_data" id="productosData">
