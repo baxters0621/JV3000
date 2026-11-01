@@ -552,6 +552,72 @@
 
 .dashboard-activity-card {
     border-radius: var(--jv-radius-lg);
+    border-top: 4px solid transparent;
+    overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.dashboard-activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(15, 26, 46, .12) !important;
+}
+
+.dashboard-activity-card-ventas {
+    border-top-color: #047857;
+}
+
+.dashboard-activity-card-criticos {
+    border-top-color: #D97706;
+}
+
+.dashboard-activity-card-compras {
+    border-top-color: #2563EB;
+}
+
+.dashboard-activity-header {
+    padding: 18px 20px;
+    border: 0;
+    border-bottom: 1px solid var(--jv-border);
+}
+
+.dashboard-activity-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--jv-navy);
+    text-wrap: balance;
+}
+
+.dashboard-activity-card-ventas .dashboard-activity-header {
+    background: linear-gradient(112deg, #ECFDF5 0%, #F4FBF7 72%, #FFFFFF 100%);
+}
+
+.dashboard-activity-card-criticos .dashboard-activity-header {
+    background: linear-gradient(112deg, #FFF7ED 0%, #FFFAF4 72%, #FFFFFF 100%);
+}
+
+.dashboard-activity-card-compras .dashboard-activity-header {
+    background: linear-gradient(112deg, #EFF6FF 0%, #F5F8FF 72%, #FFFFFF 100%);
+}
+
+.dashboard-activity-heading-icon {
+    display: inline-flex;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: #fff;
+    background: #047857;
+}
+
+.dashboard-activity-card-criticos .dashboard-activity-heading-icon {
+    background: #B45309;
+}
+
+.dashboard-activity-card-compras .dashboard-activity-heading-icon {
+    background: #1D4ED8;
 }
 
 .dashboard-activity-card .card-header {
@@ -585,17 +651,18 @@
     align-items: flex-start;
     gap: 12px;
     padding: 12px 0;
+    border-bottom: 1px solid var(--jv-border);
 }
 
-.activity-item + .activity-item {
-    border-top: 1px solid var(--jv-border);
+.activity-date-group:last-child .activity-item:last-child {
+    border-bottom: 0;
 }
 
 .activity-icon {
     display: inline-flex;
-    flex: 0 0 36px;
-    width: 36px;
-    height: 36px;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
@@ -616,6 +683,18 @@
     background: #FEF3C7;
 }
 
+.dashboard-activity-card-ventas .activity-icon {
+    background: #DCFCE7;
+}
+
+.dashboard-activity-card-criticos .activity-icon {
+    background: #FEF3C7;
+}
+
+.dashboard-activity-card-compras .activity-icon {
+    background: #DBEAFE;
+}
+
 .activity-item-copy {
     min-width: 0;
     flex: 1;
@@ -625,6 +704,16 @@
 .activity-item-name {
     color: var(--jv-navy);
     overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-activity-card {
+        transition: none;
+    }
+
+    .dashboard-activity-card:hover {
+        transform: none;
+    }
 }
 
 /* ==========================================

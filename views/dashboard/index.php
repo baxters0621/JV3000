@@ -175,9 +175,9 @@ $agruparActividadPorFecha = static function (array $items): array {
         <div class="row g-4">
             <?php if ($esAdmin || $esOpVentas): ?>
                 <div class="col-12 col-xl-4">
-                    <article class="card border-light shadow-sm h-100 dashboard-activity-card">
-                        <div class="card-header bg-white border-light">
-                            <h3 class="h5 mb-0 fw-bold"><i class="bi bi-receipt me-2 text-success" aria-hidden="true"></i>Últimas Notas de Entrega</h3>
+                    <article class="card border-light shadow-sm h-100 dashboard-activity-card dashboard-activity-card-ventas">
+                        <div class="card-header dashboard-activity-header">
+                            <h3 class="h5 mb-0 fw-bold"><span class="dashboard-activity-heading-icon" aria-hidden="true"><i class="bi bi-receipt"></i></span>Últimas Notas de Entrega</h3>
                         </div>
                         <div class="card-body">
                             <div class="activity-list" id="lista-facturas">
@@ -207,9 +207,9 @@ $agruparActividadPorFecha = static function (array $items): array {
 
             <?php if ($esAdmin || $esOpCarga): ?>
                 <div class="col-12 col-xl-4">
-                    <article class="card border-light shadow-sm h-100 dashboard-activity-card">
-                        <div class="card-header bg-white border-light">
-                            <h3 class="h5 mb-0 fw-bold"><i class="bi bi-exclamation-triangle me-2 text-warning" aria-hidden="true"></i>Productos Críticos</h3>
+                    <article class="card border-light shadow-sm h-100 dashboard-activity-card dashboard-activity-card-criticos">
+                        <div class="card-header dashboard-activity-header">
+                            <h3 class="h5 mb-0 fw-bold"><span class="dashboard-activity-heading-icon" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></span>Productos Críticos</h3>
                         </div>
                         <div class="card-body">
                             <div class="activity-list" id="lista-criticos">
@@ -232,9 +232,9 @@ $agruparActividadPorFecha = static function (array $items): array {
                 </div>
 
                 <div class="col-12 col-xl-4">
-                    <article class="card border-light shadow-sm h-100 dashboard-activity-card">
-                        <div class="card-header bg-white border-light">
-                            <h3 class="h5 mb-0 fw-bold"><i class="bi bi-box-seam me-2 text-primary" aria-hidden="true"></i>Últimas Compras</h3>
+                    <article class="card border-light shadow-sm h-100 dashboard-activity-card dashboard-activity-card-compras">
+                        <div class="card-header dashboard-activity-header">
+                            <h3 class="h5 mb-0 fw-bold"><span class="dashboard-activity-heading-icon" aria-hidden="true"><i class="bi bi-box-seam"></i></span>Últimas Compras</h3>
                         </div>
                         <div class="card-body">
                             <div class="activity-list" id="lista-compras">

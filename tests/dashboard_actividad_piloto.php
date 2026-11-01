@@ -76,7 +76,7 @@ foreach ($vistas as $indice => $vista) {
     $actividad = $inicio === false || $fin === false ? '' : substr($vista, $inicio, $fin - $inicio);
     afirmarActividadDashboard($actividad !== '', 'No se encontró Actividad Reciente en la vista ' . $indice . '.');
     afirmarActividadDashboard(strpos($actividad, 'class="row g-4"') !== false, 'Las tarjetas deben usar el grid Bootstrap con separación g-4.');
-    afirmarActividadDashboard(substr_count($actividad, 'class="card border-light shadow-sm h-100 dashboard-activity-card"') === 3, 'Actividad Reciente debe tener tres tarjetas claras.');
+    afirmarActividadDashboard(substr_count($actividad, 'class="card border-light shadow-sm h-100 dashboard-activity-card dashboard-activity-card-') === 3, 'Actividad Reciente debe tener tres tarjetas claras.');
     afirmarActividadDashboard(substr_count($actividad, '<table') === 0, 'Las tarjetas no deben contener tablas.');
     afirmarActividadDashboard(strpos($actividad, 'text-truncate') === false && strpos($actividad, 'producto-tooltip') === false, 'Los nombres deben fluir sin truncamiento ni tooltip.');
     foreach (['lista-facturas', 'lista-criticos', 'lista-compras'] as $elemento) {
@@ -92,6 +92,28 @@ foreach ($vistas as $indice => $vista) {
 }
 
 afirmarActividadDashboard(strpos($css, '.activity-item-name') !== false && strpos($css, 'overflow-wrap: anywhere;') !== false, 'Los nombres largos deben fluir en varias líneas.');
+foreach (['dashboard-activity-card-ventas', 'dashboard-activity-card-criticos', 'dashboard-activity-card-compras'] as $clase) {
+    afirmarActividadDashboard(strpos($css, '.' . $clase) !== false, 'Falta el acento visual ' . $clase . '.');
+}
+afirmarActividadDashboard(
+    strpos($css, 'border-top: 4px solid transparent;') !== false
+    && strpos($css, 'linear-gradient(112deg, #ECFDF5') !== false
+    && strpos($css, 'linear-gradient(112deg, #FFF7ED') !== false
+    && strpos($css, 'linear-gradient(112deg, #EFF6FF') !== false,
+    'Las cabeceras deben usar gradientes suaves y un borde superior por tema.'
+);
+afirmarActividadDashboard(
+    strpos($css, 'transition: transform .2s ease, box-shadow .2s ease;') !== false
+    && strpos($css, 'transform: translateY(-2px);') !== false,
+    'Las tarjetas deben elevarse suavemente al pasar el puntero.'
+);
+afirmarActividadDashboard(
+    strpos($css, '.activity-icon {') !== false
+    && strpos($css, 'flex: 0 0 42px;') !== false
+    && strpos($css, 'border-bottom: 1px solid var(--jv-border);') !== false,
+    'Los ítems deben llevar avatares circulares y separadores discretos.'
+);
+afirmarActividadDashboard(strpos($css, '@media (prefers-reduced-motion: reduce)') !== false, 'La elevación debe respetar movimiento reducido.');
 afirmarActividadDashboard(
     strpos($css, '.table-card-ventas') === false
     && strpos($css, '.table-card-criticos') === false
