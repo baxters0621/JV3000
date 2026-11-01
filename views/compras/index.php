@@ -436,8 +436,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 </div>
                                 <div class="col-md-4">
                                     <label class="comp-label">Fecha de Compra</label>
-                                    <input type="date" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha de la compra" disabled>
-                                    <input type="hidden" name="fecha_compra" value="<?php echo date('Y-m-d'); ?>">
+                                    <input type="date" name="fecha_compra" id="fechaCompra" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" min="1970-01-01" max="<?php echo date('Y-m-d'); ?>" aria-label="Fecha de la compra" required>
                                 </div>
                             </div>
                         </div>
@@ -466,7 +465,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 </div>
                                 <div class="comp-add-field">
                                     <label class="comp-label-sm">Cantidad</label>
-                                    <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999;if(this.value<1)this.value=1">
+                                    <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" step="1">
                                 </div>
                                 <div class="comp-add-field">
                                     <label class="comp-label-sm">Precio Unitario ($)</label>
@@ -757,7 +756,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                                             <small class="cat-item-meta"><?php echo htmlspecialchars($entrada_cat['sku']); ?><?php echo !empty($entrada_cat['codigo_proveedor']) ? ' · C&oacute;d. prov: ' . htmlspecialchars($entrada_cat['codigo_proveedor']) : ''; ?></small>
                                                         </div>
                                                         <span class="cat-item-costo">$<?php echo number_format((float)$entrada_cat['costo'], 2); ?></span>
-                                                        <button type="button" class="btn-cat-icon" onclick='editarProductoCatalogo(<?php echo htmlspecialchars(json_encode($entrada_cat, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, "UTF-8"); ?>)' data-tooltip="Editar costo"><i class="bi bi-pencil-square"></i></button>
+                                                        <span class="cat-item-stock">Disponible: <?php echo number_format((int)$entrada_cat['stock_disponible']); ?></span>
+                                                        <button type="button" class="btn-cat-icon" onclick='editarProductoCatalogo(<?php echo htmlspecialchars(json_encode($entrada_cat, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, "UTF-8"); ?>)' data-tooltip="Editar costo y disponible"><i class="bi bi-pencil-square"></i></button>
                                                         <button type="button" class="btn-cat-icon btn-cat-del" onclick="provEliminarCat(<?php echo (int)$entrada_cat['id_catalogo']; ?>, '<?php echo htmlspecialchars(addslashes($entrada_cat['nombre_producto'])); ?>')" data-tooltip="Quitar del cat&aacute;logo"><i class="bi bi-trash3"></i></button>
                                                     </div>
                                                 <?php endforeach; ?>
@@ -951,6 +951,10 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <div class="col-md-6">
                                 <label class="comp-label">Costo de Compra ($) <span class="text-danger">*</span></label>
                                 <input type="text" name="costo" id="cat_costo" class="input-jv comp-input" required placeholder="0.00" maxlength="12" inputmode="decimal">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="comp-label">Disponible en el proveedor <span class="text-danger">*</span></label>
+                                <input type="number" name="stock_disponible" id="cat_stock_disponible" class="input-jv comp-input" min="0" max="4294967295" step="1" value="0" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="comp-label">C&oacute;digo Interno del Proveedor</label>

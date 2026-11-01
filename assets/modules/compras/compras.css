@@ -1356,6 +1356,12 @@
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(5, 150, 105, 0.2);
         }
+        .pagina-compras .cat-item-stock {
+            color: var(--jv-text-secondary);
+            font-size: .82rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
 
         .pagina-compras .btn-cat-icon {
             width: 34px;
@@ -1700,6 +1706,18 @@
 @media (max-width: 576px) {
     .pagina-compras .rec-modal-header {
         flex-wrap: wrap;
+    }
+    .pagina-compras .prov-cat-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px 12px;
+    }
+    .pagina-compras .cat-item-info {
+        grid-column: 1 / -1;
+    }
+    .pagina-compras .cat-item-stock {
+        justify-self: end;
+        align-self: center;
     }
     .pagina-compras .comp-rec-btn {
         padding: 6px 10px;

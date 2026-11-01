@@ -19,6 +19,8 @@ assets/js/bootstrap.bundle.min.js
 *.sql
 *.dump
 !db/jv3000_portable_v6.sql
+!db/migraciones/
+!db/migraciones/*.sql
 
 # IDE / Editor
 .vscode/

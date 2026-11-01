@@ -98,6 +98,18 @@ migraciones durante el arranque normal.
 5. **Cerrar la sesión inicial.** Entra con el administrador creado, ve a
    **Usuarios** y cambia de inmediato la contraseña por defecto.
 
+### Actualizar una instalación existente para disponibilidad de proveedores
+
+Esta versión registra las existencias que cada proveedor tiene disponibles y
+las reserva al crear una compra. En una instalación existente, respalda la base
+primero y ejecuta una sola vez
+`db/migraciones/20261031_disponibilidad_catalogo_proveedor.sql` contra la base
+configurada antes de abrir JV3000. Las existencias existentes empiezan en cero;
+registra el saldo real de cada proveedor en **Compras → Proveedores → Catálogo**.
+Las compras anteriores quedan marcadas sin reserva para que una anulación
+histórica no aumente ese saldo. JV3000 no aplica esta migración durante el
+arranque normal.
+
 Los equipos clientes solo necesitan un navegador apuntando al PC servidor; no
 repiten este proceso ni llevan un `config/.env` propio.
 

@@ -6,8 +6,8 @@
 // Única capa que consulta la base de datos.
 // Registro de facturas de proveedores, anulación,
 // consultas del tablero y prefill de solicitudes.
-// (El movimiento de stock/lotes NO ocurre aquí:
-//  lo gestiona el módulo Recepción.)
+// (La reserva de existencias del proveedor ocurre aquí; el inventario
+//  propio y los lotes solo se actualizan desde Recepción.)
 
 /**
  * Compra: modelo del módulo de compras (facturas de proveedores).
@@ -15,7 +15,8 @@
  * Única capa autorizada para consultar la base de datos. Maneja el registro
  * de facturas, la anulación, el marcado como pagada, las consultas del
  * tablero (filtros y KPIs) y el prefill de solicitudes.
- * NOTA: el movimiento de stock/lotes NO ocurre aquí; lo gestiona Recepción.
+ * Reserva existencias del catálogo del proveedor al registrar; la recepción
+ * es la única que mueve el inventario propio y crea lotes.
  */
 class Compra extends Model
 {
@@ -118,7 +119,7 @@ class Compra extends Model
     {
         $mapa = [];
         foreach ($this->db->fetchAll(
-            "SELECT cc.id_proveedor, cc.id_producto, cc.costo, p.nombre_producto, p.sku
+            "SELECT cc.id_proveedor, cc.id_producto, cc.costo, cc.stock_disponible, p.nombre_producto, p.sku
              FROM catalogo_costos cc
              JOIN productos p ON p.id_producto = cc.id_producto
              WHERE p.status = 'Activo'
@@ -129,6 +130,7 @@ class Compra extends Model
                 'nombre' => (string)$fila['nombre_producto'],
                 'sku' => (string)$fila['sku'],
                 'costo' => (float)$fila['costo'],
+                'stock_disponible' => (int)$fila['stock_disponible'],
             ];
         }
         return $mapa;
@@ -206,8 +208,8 @@ class Compra extends Model
      * vencimiento) y monto de pago. Inserta la compra con sus detalles
      * dentro de una transacción y, si se atiende una solicitud, la marca
      * Atendida.
-     * Respeta el flujo original: NO mueve stock ni crea lotes aquí (eso lo
-     * hace Recepción).
+     * Reserva existencias del proveedor, pero no mueve el inventario propio
+     * ni crea lotes; esas operaciones corresponden a Recepción.
      *
      * @param array $purchaseFormData Datos del formulario (proveedor, ítems, pagos...).
      * @param int   $id_usuario Usuario que registra la compra.
@@ -220,6 +222,21 @@ class Compra extends Model
             return ['ok' => false, 'mensaje' => 'SELECCIONE UN PROVEEDOR.'];
         }
         $id_solicitud = intval($purchaseFormData['id_solicitud'] ?? 0);
+        $fecha_compra_valor = $purchaseFormData['fecha_compra'] ?? null;
+        $fecha_compra_raw = is_scalar($fecha_compra_valor) ? trim((string)$fecha_compra_valor) : '';
+        $fecha_compra_parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha_compra_raw);
+        $errores_fecha = DateTimeImmutable::getLastErrors();
+        if (
+            $fecha_compra_parsed === false
+            || ($errores_fecha !== false && ($errores_fecha['warning_count'] > 0 || $errores_fecha['error_count'] > 0))
+            || $fecha_compra_parsed->format('Y-m-d') !== $fecha_compra_raw
+        ) {
+            return ['ok' => false, 'mensaje' => 'FECHA DE COMPRA INVÁLIDA. SELECCIONE UNA FECHA REAL.'];
+        }
+        if ($fecha_compra_parsed < new DateTimeImmutable('1970-01-01') || $fecha_compra_parsed > new DateTimeImmutable('today')) {
+            return ['ok' => false, 'mensaje' => 'LA FECHA DE COMPRA DEBE ESTAR ENTRE 01/01/1970 Y HOY.'];
+        }
+        $fecha_compra = $fecha_compra_parsed->format('Y-m-d') . ' 00:00:00';
 
         // Número de factura: manual, única por proveedor, 6-8 dígitos (formato SENIAT)
         $nro_factura = trim($purchaseFormData['nro_factura'] ?? '');
@@ -328,7 +345,6 @@ class Compra extends Model
             return ['ok' => false, 'mensaje' => 'MONTO DE PAGO INVÁLIDO. MÁXIMO 99,999,999.99.'];
         }
         $status_pago = $monto_pago <= 0 ? 'Pendiente' : ($monto_pago >= $total ? 'Pagada' : 'Parcial');
-        $fecha_compra = date('Y-m-d H:i:s');
         $fecha_pago = date('Y-m-d H:i:s');
 
         // Construir detalle_pago JSON según método
@@ -413,6 +429,18 @@ class Compra extends Model
 
         $this->db->begin();
         try {
+            foreach ($items_validos as $it) {
+                $this->db->execute(
+                    "UPDATE catalogo_costos
+                     SET stock_disponible = stock_disponible - ?
+                     WHERE id_proveedor = ? AND id_producto = ? AND stock_disponible >= ?",
+                    [$it['cantidad'], $id_proveedor, $it['id'], $it['cantidad']]
+                );
+                if ($this->db->affectedRows() !== 1) {
+                    throw new DomainException("EXISTENCIAS INSUFICIENTES DEL PROVEEDOR PARA EL PRODUCTO #{$it['id']}. AJUSTE LA CANTIDAD O ACTUALICE SU CATÁLOGO.");
+                }
+            }
+
             $compra_id = $this->db->insert('compras', [
                 'nro_factura'      => $nro_factura,
                 'id_proveedor'     => $id_proveedor,
@@ -431,6 +459,7 @@ class Compra extends Model
                 'metodo_pago'      => $metodo_pago,
                 'detalle_pago'     => $detalle_pago ? json_encode($detalle_pago) : null,
                 'estado_recepcion' => 'Pendiente',
+                'stock_proveedor_reservado' => 1,
             ]);
 
             if ($monto_pago > 0) {
@@ -498,7 +527,8 @@ class Compra extends Model
         try {
             $this->db->begin();
             $compra = $this->db->fetchOne(
-                "SELECT nro_factura, status FROM compras WHERE id_compra = ? FOR UPDATE",
+                "SELECT nro_factura, id_proveedor, status, stock_proveedor_reservado
+                 FROM compras WHERE id_compra = ? FOR UPDATE",
                 [$id_compra]
             );
             if (!$compra || $compra['status'] !== 'Activa') {
@@ -513,6 +543,32 @@ class Compra extends Model
             if ($recibida > 0) {
                 $this->db->rollback();
                 return ['ok' => false, 'mensaje' => 'NO SE PUEDE ANULAR: la compra ya tiene mercancía recibida en inventario.'];
+            }
+
+            if ((int)$compra['stock_proveedor_reservado'] === 1) {
+                $detalles = $this->db->fetchAll(
+                    'SELECT id_producto, cantidad FROM detalle_compras WHERE id_compra = ? ORDER BY id_producto FOR UPDATE',
+                    [$id_compra]
+                );
+                if ($detalles === []) {
+                    throw new RuntimeException('La compra reservada no tiene detalles para devolver al catálogo del proveedor.');
+                }
+                foreach ($detalles as $detalle) {
+                    $cantidad = (int)$detalle['cantidad'];
+                    if ($cantidad <= 0) {
+                        throw new RuntimeException('La compra reservada tiene una cantidad inválida para devolver al catálogo.');
+                    }
+                    $this->db->execute(
+                        "UPDATE catalogo_costos
+                         SET stock_disponible = stock_disponible + ?
+                         WHERE id_proveedor = ? AND id_producto = ?
+                           AND stock_disponible <= 4294967295 - ?",
+                        [$cantidad, (int)$compra['id_proveedor'], (int)$detalle['id_producto'], $cantidad]
+                    );
+                    if ($this->db->affectedRows() !== 1) {
+                        throw new RuntimeException('No se pudo devolver el disponible reservado al catálogo del proveedor.');
+                    }
+                }
             }
 
             $this->db->execute(

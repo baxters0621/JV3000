@@ -11,6 +11,7 @@ $compra = prepararRecuperacionCompra([
     'id_proveedor' => '4',
     'nro_factura' => '00001234',
     'nro_control' => '00-00000001',
+    'fecha_compra' => '2026-10-30',
     'productos_data' => json_encode($productosCompra),
     'monto_pago' => '150.00',
     'metodo_pago' => 'Transferencia',
@@ -23,6 +24,7 @@ if (
     $compra === null
     || $compra['id_proveedor'] !== 4
     || $compra['nro_factura'] !== '00001234'
+    || $compra['fecha_compra'] !== '2026-10-30'
     || count($compra['productos']) !== 2
     || $compra['productos'][0]['id'] !== $compra['productos'][1]['id']
     || $compra['productos'][1]['cantidad'] !== '3'

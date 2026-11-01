@@ -93,6 +93,7 @@ class ComprasController extends Controller
                     'id_proveedor'     => (int)($_POST['id_proveedor'] ?? 0),
                     'id_producto'      => (int)($_POST['id_producto'] ?? 0),
                     'costo'            => $_POST['costo'] ?? '',
+                    'stock_disponible' => $_POST['stock_disponible'] ?? '',
                     'codigo_proveedor' => $_POST['codigo_proveedor'] ?? '',
                 ]);
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);

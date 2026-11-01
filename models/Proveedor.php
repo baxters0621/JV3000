@@ -206,7 +206,7 @@ class Proveedor extends Model
     {
         $mapa = [];
         foreach ($this->db->fetchAll(
-            "SELECT cc.id_catalogo, cc.id_proveedor, cc.id_producto, cc.costo, cc.codigo_proveedor,
+            "SELECT cc.id_catalogo, cc.id_proveedor, cc.id_producto, cc.costo, cc.stock_disponible, cc.codigo_proveedor,
                     p.nombre_producto, p.sku
              FROM catalogo_costos cc
              JOIN productos p ON cc.id_producto = p.id_producto
@@ -232,12 +232,10 @@ class Proveedor extends Model
     /**
      * Registra o edita una entrada del catálogo de costos.
      *
-     * Validaciones: proveedor y producto existen y activos, costo entre 0.01
-     * y 99,999.99, código interno opcional (máx. 50) y sin duplicar la
-     * combinación proveedor+producto al registrar o al editar (excluyendo la
-     * propia entrada).
+     * Valida proveedor y producto existentes/activos, costo, existencias,
+     * código interno y asociaciones usadas por compras aún no recibidas.
      *
-     * @param array $datos ['accion', 'id_catalogo', 'id_proveedor', 'id_producto', 'costo', 'codigo_proveedor'].
+     * @param array $datos ['accion', 'id_catalogo', 'id_proveedor', 'id_producto', 'costo', 'stock_disponible', 'codigo_proveedor'].
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
     public function procesarCatalogo(array $datos): array
@@ -247,6 +245,12 @@ class Proveedor extends Model
         $id_proveedor = (int)($datos['id_proveedor'] ?? 0);
         $id_producto = (int)($datos['id_producto'] ?? 0);
         $codigo = trim((string)($datos['codigo_proveedor'] ?? ''));
+        $stock_valor = $datos['stock_disponible'] ?? null;
+        $stock_raw = is_scalar($stock_valor) ? trim((string)$stock_valor) : '';
+        if (!preg_match('/^\d{1,10}$/D', $stock_raw) || (float)$stock_raw > 4294967295) {
+            return ['ok' => false, 'mensaje' => 'EXISTENCIAS INVÁLIDAS. DEBEN ESTAR ENTRE 0 Y 4.294.967.295.'];
+        }
+        $stock_disponible = (int)$stock_raw;
         if (mb_strlen($codigo) > 50) {
             return ['ok' => false, 'mensaje' => 'EL CÓDIGO DEL PROVEEDOR NO PUEDE EXCEDER 50 CARACTERES.'];
         }
@@ -263,35 +267,65 @@ class Proveedor extends Model
             return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO O INACTIVO.'];
         }
 
-        $duplicado = $this->db->fetchOne(
-            "SELECT id_catalogo FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?" . ($accion === 'editar' ? " AND id_catalogo != ?" : ""),
-            $accion === 'editar' ? [$id_proveedor, $id_producto, $id_catalogo] : [$id_proveedor, $id_producto]
-        );
-        if ($duplicado) {
-            return ['ok' => false, 'mensaje' => 'ESE PRODUCTO YA ESTÁ EN EL CATÁLOGO DE ESTE PROVEEDOR. EDÍTALO SI DESEAS CAMBIAR SU COSTO.'];
+        if ($accion === 'editar' && $id_catalogo <= 0) {
+            return ['ok' => false, 'mensaje' => 'ENTRADA DE CATÁLOGO INVÁLIDA.'];
         }
 
         try {
+            $this->db->begin();
+            $catalogo_original = null;
+            if ($accion === 'editar') {
+                $catalogo_original = $this->db->fetchOne(
+                    'SELECT id_catalogo, id_proveedor, id_producto FROM catalogo_costos WHERE id_catalogo = ? FOR UPDATE',
+                    [$id_catalogo]
+                );
+                if (!$catalogo_original) {
+                    $this->db->rollback();
+                    return ['ok' => false, 'mensaje' => 'ENTRADA DE CATÁLOGO INVÁLIDA.'];
+                }
+                if (
+                    ((int)$catalogo_original['id_proveedor'] !== $id_proveedor || (int)$catalogo_original['id_producto'] !== $id_producto)
+                    && $this->catalogoTieneCompraPendiente((int)$catalogo_original['id_proveedor'], (int)$catalogo_original['id_producto'])
+                ) {
+                    $this->db->rollback();
+                    return ['ok' => false, 'mensaje' => 'NO SE PUEDE CAMBIAR ESTA ASOCIACIÓN: HAY UNA COMPRA PENDIENTE DE RECEPCIÓN.'];
+                }
+            }
+
+            $duplicado = $this->db->fetchOne(
+                "SELECT id_catalogo FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?" . ($accion === 'editar' ? " AND id_catalogo != ?" : ""),
+                $accion === 'editar' ? [$id_proveedor, $id_producto, $id_catalogo] : [$id_proveedor, $id_producto]
+            );
+            if ($duplicado) {
+                $this->db->rollback();
+                return ['ok' => false, 'mensaje' => 'ESE PRODUCTO YA ESTÁ EN EL CATÁLOGO DE ESTE PROVEEDOR. EDÍTALO SI DESEAS CAMBIAR SU COSTO.'];
+            }
+
             if ($accion === 'registrar') {
                 $this->db->insert('catalogo_costos', [
                     'id_proveedor' => $id_proveedor,
                     'id_producto' => $id_producto,
                     'costo' => $costo,
+                    'stock_disponible' => $stock_disponible,
                     'codigo_proveedor' => $codigo !== '' ? $codigo : null,
                 ]);
                 registrarAuditoria('crear', 'Entrada de catálogo de costos creada');
             } else {
-                if ($id_catalogo <= 0) {
-                    return ['ok' => false, 'mensaje' => 'ENTRADA DE CATÁLOGO INVÁLIDA.'];
-                }
                 $this->db->execute(
-                    "UPDATE catalogo_costos SET id_proveedor=?, id_producto=?, costo=?, codigo_proveedor=? WHERE id_catalogo=?",
-                    [$id_proveedor, $id_producto, $costo, $codigo !== '' ? $codigo : null, $id_catalogo]
+                    "UPDATE catalogo_costos
+                     SET id_proveedor=?, id_producto=?, costo=?, stock_disponible=?, codigo_proveedor=?
+                     WHERE id_catalogo=?",
+                    [$id_proveedor, $id_producto, $costo, $stock_disponible, $codigo !== '' ? $codigo : null, $id_catalogo]
                 );
                 registrarAuditoria('editar', 'Entrada de catálogo de costos modificada');
             }
+            $this->db->commit();
             return ['ok' => true, 'mensaje' => 'CATÁLOGO ACTUALIZADO CORRECTAMENTE.'];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollback();
+            }
+            error_log('Error al guardar entrada del catálogo: ' . $e->getMessage());
             return ['ok' => false, 'mensaje' => 'ERROR AL GUARDAR LA ENTRADA DEL CATÁLOGO.'];
         }
     }
@@ -304,11 +338,57 @@ class Proveedor extends Model
      */
     public function eliminarCatalogo(int $id_catalogo): array
     {
-        if ($id_catalogo <= 0 || !$this->db->fetchOne("SELECT id_catalogo FROM catalogo_costos WHERE id_catalogo = ?", [$id_catalogo])) {
+        if ($id_catalogo <= 0) {
             return ['ok' => false, 'mensaje' => 'LA ENTRADA DEL CATÁLOGO NO EXISTE.'];
         }
-        $this->db->execute("DELETE FROM catalogo_costos WHERE id_catalogo = ?", [$id_catalogo]);
-        registrarAuditoria('eliminar', 'Entrada de catálogo de costos eliminada');
-        return ['ok' => true, 'mensaje' => 'ENTRADA ELIMINADA DEL CATÁLOGO.'];
+        try {
+            $this->db->begin();
+            $entrada = $this->db->fetchOne(
+                'SELECT id_catalogo, id_proveedor, id_producto FROM catalogo_costos WHERE id_catalogo = ? FOR UPDATE',
+                [$id_catalogo]
+            );
+            if (!$entrada) {
+                $this->db->rollback();
+                return ['ok' => false, 'mensaje' => 'LA ENTRADA DEL CATÁLOGO NO EXISTE.'];
+            }
+            if ($this->catalogoTieneCompraPendiente((int)$entrada['id_proveedor'], (int)$entrada['id_producto'])) {
+                $this->db->rollback();
+                return ['ok' => false, 'mensaje' => 'NO SE PUEDE QUITAR: HAY UNA COMPRA PENDIENTE DE RECEPCIÓN.'];
+            }
+            $this->db->execute("DELETE FROM catalogo_costos WHERE id_catalogo = ?", [$id_catalogo]);
+            if ($this->db->affectedRows() !== 1) {
+                throw new RuntimeException('No se pudo eliminar la entrada del catálogo.');
+            }
+            registrarAuditoria('eliminar', 'Entrada de catálogo de costos eliminada');
+            $this->db->commit();
+            return ['ok' => true, 'mensaje' => 'ENTRADA ELIMINADA DEL CATÁLOGO.'];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollback();
+            }
+            error_log('Error al eliminar entrada del catálogo: ' . $e->getMessage());
+            return ['ok' => false, 'mensaje' => 'ERROR AL ELIMINAR LA ENTRADA DEL CATÁLOGO.'];
+        }
+    }
+
+    /**
+     * Comprueba si una asociación respalda una compra nueva aún anulable.
+     *
+     * @param int $id_proveedor Identificador del proveedor.
+     * @param int $id_producto Identificador del producto.
+     * @return bool Indica que existe una compra reservada sin recepción.
+     */
+    private function catalogoTieneCompraPendiente(int $id_proveedor, int $id_producto): bool
+    {
+        return $this->db->fetchOne(
+            "SELECT dc.id_detalle
+             FROM detalle_compras dc
+             JOIN compras c ON c.id_compra = dc.id_compra
+             WHERE c.id_proveedor = ? AND dc.id_producto = ?
+               AND c.status = 'Activa' AND c.stock_proveedor_reservado = 1
+               AND NOT EXISTS (SELECT 1 FROM lotes l WHERE l.id_compra = c.id_compra)
+             LIMIT 1 FOR UPDATE",
+            [$id_proveedor, $id_producto]
+        ) !== null;
     }
 }

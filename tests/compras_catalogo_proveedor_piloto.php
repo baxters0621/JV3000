@@ -7,7 +7,9 @@ $raiz = dirname(__DIR__);
 $vista = file_get_contents($raiz . '/views/compras/index.php');
 $controlador = file_get_contents($raiz . '/controllers/ComprasController.php');
 $modelo = file_get_contents($raiz . '/models/Compra.php');
+$modeloProveedor = file_get_contents($raiz . '/models/Proveedor.php');
 $javascript = file_get_contents($raiz . '/assets/modules/compras/compras.js');
+$esquema = file_get_contents($raiz . '/db/jv3000_portable_v6.sql');
 
 function afirmarCatalogoCompras(bool $condicion, string $mensaje): void
 {
@@ -25,5 +27,19 @@ afirmarCatalogoCompras(strpos($javascript, 'catalogo.forEach(function(producto)'
 afirmarCatalogoCompras(strpos($javascript, 'jvBuscarProductos') === false, 'La compra todavía invoca el buscador que causaba ReferenceError.');
 afirmarCatalogoCompras(strpos($modelo, 'cc.id_proveedor = ?') !== false, 'El servidor no comprueba que el producto pertenezca al proveedor.');
 afirmarCatalogoCompras(strpos($modelo, 'NO ESTÁ EN EL CATÁLOGO DEL PROVEEDOR') !== false, 'El servidor no rechaza productos ajenos al catálogo.');
+afirmarCatalogoCompras(strpos($modelo, 'cc.stock_disponible') !== false, 'El catálogo no envía las existencias del proveedor.');
+afirmarCatalogoCompras(strpos($javascript, 'Disponible: ') !== false, 'El selector no muestra las existencias por producto.');
+afirmarCatalogoCompras(strpos($javascript, 'cantidadEnCarrito') !== false, 'El selector no descuenta del disponible lo ya agregado al carrito.');
+afirmarCatalogoCompras(strpos($modelo, 'stock_disponible = stock_disponible - ?') !== false, 'La compra no descuenta el disponible del proveedor de forma atómica.');
+afirmarCatalogoCompras(strpos($modelo, 'stock_proveedor_reservado') !== false, 'La compra no distingue las reservas nuevas de las compras anteriores a la migración.');
+afirmarCatalogoCompras(strpos($modelo, 'stock_disponible = stock_disponible + ?') !== false, 'La anulación no devuelve el disponible reservado al proveedor.');
+afirmarCatalogoCompras(strpos($modeloProveedor, 'COMPRA PENDIENTE DE RECEPCIÓN') !== false, 'El catálogo permite retirar asociaciones necesarias para anular compras pendientes.');
+afirmarCatalogoCompras(strpos($vista, 'name="stock_disponible"') !== false, 'El catálogo no permite registrar existencias disponibles del proveedor.');
+afirmarCatalogoCompras(strpos($vista, 'name="fecha_compra"') !== false && strpos($vista, 'name="fecha_compra" value=') === false, 'La fecha de compra no es editable.');
+afirmarCatalogoCompras(strpos($vista, 'id="inputCant"') !== false && strpos($vista, 'oninput="if(this.value>999999)') === false, 'La cantidad sigue forzándose durante la edición.');
+afirmarCatalogoCompras(strpos($modelo, 'DateTimeImmutable::createFromFormat') !== false, 'El servidor no valida la fecha de compra seleccionada.');
+afirmarCatalogoCompras(strpos($modelo, "\$fecha_compra = date('Y-m-d H:i:s');") === false, 'El modelo sigue sustituyendo la fecha seleccionada por la fecha actual.');
+afirmarCatalogoCompras(strpos($esquema, '`stock_disponible` int(10) unsigned NOT NULL DEFAULT 0') !== false, 'El esquema no incluye el disponible del proveedor con valor inicial cero.');
+afirmarCatalogoCompras(strpos($esquema, '`stock_proveedor_reservado` tinyint(1) NOT NULL DEFAULT 0') !== false, 'El esquema no protege compras existentes contra devoluciones de stock no reservado.');
 
 echo "OK selector de Compras limitado al catálogo activo del proveedor\n";

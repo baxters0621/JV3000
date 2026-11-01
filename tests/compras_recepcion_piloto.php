@@ -21,6 +21,7 @@ require_once $root . '/includes/helpers.php';
 require_once $root . '/core/Model.php';
 require_once $root . '/core/Controller.php';
 require_once $root . '/models/Compra.php';
+require_once $root . '/models/Proveedor.php';
 require_once $root . '/models/Recepcion.php';
 
 /**
@@ -135,6 +136,7 @@ function comprasPilotoProducto(Database $db, int $categoriaId, string $sufijo, i
         'id_proveedor' => $proveedorId,
         'id_producto' => $idProducto,
         'costo' => max(0.01, $costo),
+        'stock_disponible' => 999999,
     ]);
     return $idProducto;
 }
@@ -142,7 +144,7 @@ function comprasPilotoProducto(Database $db, int $categoriaId, string $sufijo, i
 /**
  * Construye una factura sintética conservando el contrato de Compra::registrar.
  */
-function comprasPilotoFormulario(int $proveedorId, array $productos, string $factura, int $idSolicitud = 0, float $pagoInicial = 0): array
+function comprasPilotoFormulario(int $proveedorId, array $productos, string $factura, int $idSolicitud = 0, float $pagoInicial = 0, string $fechaCompra = ''): array
 {
     $items = [];
     foreach ($productos as [$idProducto, $cantidad, $precio]) {
@@ -159,6 +161,7 @@ function comprasPilotoFormulario(int $proveedorId, array $productos, string $fac
         'id_solicitud' => $idSolicitud,
         'nro_factura' => $factura,
         'nro_control' => '00-12345678',
+        'fecha_compra' => $fechaCompra !== '' ? $fechaCompra : date('Y-m-d'),
         'observaciones' => 'Fixture sintético del piloto',
         'productos_data' => json_encode($items, JSON_THROW_ON_ERROR),
         'monto_pago' => $pagoInicial,
@@ -170,10 +173,10 @@ function comprasPilotoFormulario(int $proveedorId, array $productos, string $fac
 /**
  * Registra una compra sintética y comprueba el resultado del modelo.
  */
-function comprasPilotoRegistrar(int $proveedorId, array $productos, string $factura, int $idSolicitud = 0, float $pagoInicial = 0): array
+function comprasPilotoRegistrar(int $proveedorId, array $productos, string $factura, int $idSolicitud = 0, float $pagoInicial = 0, string $fechaCompra = ''): array
 {
     return (new Compra())->registrar(
-        comprasPilotoFormulario($proveedorId, $productos, $factura, $idSolicitud, $pagoInicial),
+        comprasPilotoFormulario($proveedorId, $productos, $factura, $idSolicitud, $pagoInicial, $fechaCompra),
         1
     );
 }
@@ -406,18 +409,25 @@ try {
     $compraResultado = comprasPilotoRegistrar($proveedorId, [
         [$productoA, 2, 12.50],
         [$productoB, 3, 2.00],
-    ], '700001', $solicitudId, 5.00);
+    ], '700001', $solicitudId, 5.00, date('Y-m-d', strtotime('-1 day')));
     comprasPilotoAfirmar($compraResultado['ok'], 'Falló el alta sintética de compra: ' . $compraResultado['mensaje']);
     $compraId = (int)$db->fetchOne("SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = '700001'", [$proveedorId])['id_compra'];
-    $compra = $db->fetchOne('SELECT subtotal, iva, total, status_pago, monto_pago, estado_recepcion FROM compras WHERE id_compra = ?', [$compraId]);
+    $fechaAtrasada = date('Y-m-d', strtotime('-1 day'));
+    $compra = $db->fetchOne('SELECT fecha_compra, subtotal, iva, total, status_pago, monto_pago, estado_recepcion FROM compras WHERE id_compra = ?', [$compraId]);
     comprasPilotoAfirmar(
-        (float)$compra['subtotal'] === 31.00
+        substr((string)$compra['fecha_compra'], 0, 10) === $fechaAtrasada
+        && (float)$compra['subtotal'] === 31.00
         && (float)$compra['iva'] === 4.96
         && (float)$compra['total'] === 35.96
         && $compra['status_pago'] === 'Parcial'
         && (float)$compra['monto_pago'] === 5.00
         && $compra['estado_recepcion'] === 'Pendiente',
         'El alta no preservó los importes, anticipo o estado actuales.'
+    );
+    comprasPilotoAfirmar(
+        (int)$db->fetchOne('SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?', [$proveedorId, $productoA])['stock_disponible'] === 999997
+        && (int)$db->fetchOne('SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?', [$proveedorId, $productoB])['stock_disponible'] === 999996,
+        'El alta no descontó del catálogo del proveedor las cantidades compradas.'
     );
     comprasPilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$productoA])['stock_actual'] === 7, 'El alta de compra alteró el stock antes de recibir.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM lotes WHERE id_compra = ?', [$compraId]) === 0, 'El alta de compra creó lotes antes de la recepción.');
@@ -429,12 +439,126 @@ try {
         'No se conservó la asociación de la solicitud atendida.'
     );
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes + 1, 'El alta de compra no generó exactamente una auditoría.');
-    echo "OK alta multiítem preserva anticipo, solicitud e inventario\n";
+    echo "OK alta multiítem conserva la fecha seleccionada y descuenta existencias del proveedor\n";
+
+    $catalogoProductoA = $db->fetchOne(
+        'SELECT id_catalogo FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoA]
+    );
+    $quitarCatalogoReservado = (new Proveedor())->eliminarCatalogo((int)$catalogoProductoA['id_catalogo']);
+    comprasPilotoAfirmar(
+        !$quitarCatalogoReservado['ok']
+        && str_contains($quitarCatalogoReservado['mensaje'], 'COMPRA PENDIENTE DE RECEPCIÓN'),
+        'Se retiró del catálogo una asociación reservada por una compra aún anulable.'
+    );
+    $productoReasignacion = comprasPilotoProducto($db, $categoriaId, 'REASIGNACION-CATALOGO');
+    $reasignarCatalogoReservado = (new Proveedor())->procesarCatalogo([
+        'accion' => 'editar',
+        'id_catalogo' => (int)$catalogoProductoA['id_catalogo'],
+        'id_proveedor' => $proveedorId,
+        'id_producto' => $productoReasignacion,
+        'costo' => '1.00',
+        'stock_disponible' => '10',
+    ]);
+    comprasPilotoAfirmar(
+        !$reasignarCatalogoReservado['ok']
+        && str_contains($reasignarCatalogoReservado['mensaje'], 'COMPRA PENDIENTE DE RECEPCIÓN'),
+        'Se reasignó una entrada usada para devolver existencias de una compra pendiente.'
+    );
+
+    $productoAnulacionStock = comprasPilotoProducto($db, $categoriaId, 'ANULACION-STOCK');
+    $compraAnulacionStock = comprasPilotoRegistrar($proveedorId, [[$productoAnulacionStock, 4, 2.00]], '700012');
+    comprasPilotoAfirmar($compraAnulacionStock['ok'], 'No se pudo crear la compra para probar la devolución del disponible.');
+    $idCompraAnulacionStock = (int)$db->fetchOne(
+        "SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = '700012'",
+        [$proveedorId]
+    )['id_compra'];
+    $disponibleTrasCompra = (int)$db->fetchOne(
+        'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoAnulacionStock]
+    )['stock_disponible'];
+    comprasPilotoAfirmar($disponibleTrasCompra === 999995, 'La compra no reservó las existencias antes de anular.');
+    $resultadoAnulacionStock = (new Compra())->anular($idCompraAnulacionStock);
+    comprasPilotoAfirmar(
+        $resultadoAnulacionStock['ok']
+        && (int)$db->fetchOne(
+            'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+            [$proveedorId, $productoAnulacionStock]
+        )['stock_disponible'] === 999999,
+        'La anulación no devolvió las existencias reservadas al proveedor.'
+    );
+
+    $productoCompraAnterior = comprasPilotoProducto($db, $categoriaId, 'COMPRA-ANTERIOR');
+    $db->execute(
+        'UPDATE catalogo_costos SET stock_disponible = 10 WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoCompraAnterior]
+    );
+    $idCompraAnterior = $db->insert('compras', [
+        'nro_factura' => '700018',
+        'id_proveedor' => $proveedorId,
+        'id_usuario' => 1,
+        'status' => 'Activa',
+    ]);
+    $db->insert('detalle_compras', [
+        'id_compra' => $idCompraAnterior,
+        'id_producto' => $productoCompraAnterior,
+        'cantidad' => 4,
+        'precio_costo' => 2.00,
+    ]);
+    $resultadoAnulacionAnterior = (new Compra())->anular($idCompraAnterior);
+    comprasPilotoAfirmar(
+        $resultadoAnulacionAnterior['ok']
+        && (int)$db->fetchOne(
+            'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+            [$proveedorId, $productoCompraAnterior]
+        )['stock_disponible'] === 10,
+        'Anular una compra anterior a la reserva alteró el disponible del proveedor.'
+    );
+    echo "OK anulación devuelve reservas nuevas y protege compras históricas\n";
 
     $comprasAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras');
     $detallesAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras');
     $pagosAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra');
     $auditoriasAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $fechaFutura = date('Y-m-d', strtotime('+1 day'));
+    $resultadoFechaFutura = comprasPilotoRegistrar(
+        $proveedorId,
+        [[$productoA, 1, 1.00]],
+        '799990',
+        0,
+        0,
+        $fechaFutura
+    );
+    comprasPilotoAfirmar(
+        !$resultadoFechaFutura['ok']
+        && str_contains($resultadoFechaFutura['mensaje'], 'NO PUEDE SER FUTURA'),
+        'El modelo aceptó una fecha de compra futura.'
+    );
+    $db->execute(
+        'UPDATE catalogo_costos SET stock_disponible = 1 WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoA]
+    );
+    $resultadoExcesoProveedor = comprasPilotoRegistrar(
+        $proveedorId,
+        [[$productoA, 2, 1.00]],
+        '799989'
+    );
+    comprasPilotoAfirmar(
+        !$resultadoExcesoProveedor['ok']
+        && str_contains($resultadoExcesoProveedor['mensaje'], 'EXISTENCIAS INSUFICIENTES'),
+        'El alta aceptó una cantidad superior al disponible o no informó el límite.'
+    );
+    comprasPilotoAfirmar(
+        (int)$db->fetchOne(
+            'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+            [$proveedorId, $productoA]
+        )['stock_disponible'] === 1,
+        'El intento de sobrecompra alteró las existencias del proveedor.'
+    );
+    $db->execute(
+        'UPDATE catalogo_costos SET stock_disponible = 999997 WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoA]
+    );
     $resultadoIdInvalido = comprasPilotoRegistrar(
         $proveedorId,
         [[$productoA, 1, 1.00], [0, 1, 1.00]],
@@ -842,6 +966,10 @@ try {
         "SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = '700007'",
         [$proveedorId]
     )['id_compra'];
+    $disponibleAntesCarreraAnulacion = (int)$db->fetchOne(
+        'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoCompraAnulacion]
+    )['stock_disponible'];
     $detalleAnulacionCarrera = (int)$db->fetchOne(
         'SELECT id_detalle FROM detalle_compras WHERE id_compra = ?',
         [$idCompraAnulacionCarrera]
@@ -895,6 +1023,10 @@ try {
         "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?",
         [$idCompraAnulacionCarrera]
     );
+    $disponibleTrasCarreraAnulacion = (int)$db->fetchOne(
+        'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoCompraAnulacion]
+    )['stock_disponible'];
     comprasPilotoAfirmar(
         $anulacionAceptada
         ? $compraCarreraFinal['status'] === 'Anulada'
@@ -903,13 +1035,15 @@ try {
             && $stockCarreraAnulacion === $stockAntesCarreraAnulacion
             && $detallesRecibidosCarrera === 0
             && $movimientosCarreraAnulacion === 0
+            && $disponibleTrasCarreraAnulacion === $disponibleAntesCarreraAnulacion + 3
         : $recepcionAceptada
             && $compraCarreraFinal['status'] === 'Activa'
             && $compraCarreraFinal['estado_recepcion'] === 'Parcial'
             && $lotesCarreraAnulacion === 1
             && $stockCarreraAnulacion === $stockAntesCarreraAnulacion + 2
             && $detallesRecibidosCarrera === 2
-            && $movimientosCarreraAnulacion === 1,
+            && $movimientosCarreraAnulacion === 1
+            && $disponibleTrasCarreraAnulacion === $disponibleAntesCarreraAnulacion,
         'La carrera dejó estado, lotes o stock incompatibles entre compra y recepción.'
     );
     comprasPilotoAfirmar(
@@ -929,6 +1063,10 @@ try {
         "SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = '700008'",
         [$proveedorId]
     )['id_compra'];
+    $disponibleAntesRollbackAnulacion = (int)$db->fetchOne(
+        'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+        [$proveedorId, $productoRollbackAnulacion]
+    )['stock_disponible'];
     $auditoriasAntesRollbackAnulacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
     $db->getConnection()->query(
         "CREATE TRIGGER compras_piloto_falla_auditoria_anulacion BEFORE INSERT ON auditoria
@@ -943,6 +1081,13 @@ try {
     comprasPilotoAfirmar(
         $db->fetchOne('SELECT status FROM compras WHERE id_compra = ?', [$idCompraRollbackAnulacion])['status'] === 'Activa',
         'El rollback dejó anulada una compra sin auditoría.'
+    );
+    comprasPilotoAfirmar(
+        (int)$db->fetchOne(
+            'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
+            [$proveedorId, $productoRollbackAnulacion]
+        )['stock_disponible'] === $disponibleAntesRollbackAnulacion,
+        'El rollback de anulación no restauró las existencias reservadas.'
     );
     comprasPilotoAfirmar(
         comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntesRollbackAnulacion,

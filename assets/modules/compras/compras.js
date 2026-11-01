@@ -39,31 +39,64 @@
         // ==========================================
         // CATÁLOGO DEL PROVEEDOR
         // ==========================================
+        // Suma las unidades de un producto que ya están reservadas en el carrito.
+        function cantidadEnCarrito(idProducto) {
+            return productos.reduce(function(total, producto) {
+                const cantidad = Number(producto.cantidad);
+                return Number(producto.id) === Number(idProducto) && Number.isSafeInteger(cantidad) && cantidad > 0
+                    ? total + cantidad
+                    : total;
+            }, 0);
+        }
+
+        // Calcula las unidades que aún pueden agregarse sin exceder el saldo del proveedor.
+        function disponibleEnCarrito(producto) {
+            const disponible = Number(producto.stock_disponible);
+            return Number.isFinite(disponible) ? Math.max(0, disponible - cantidadEnCarrito(producto.id)) : 0;
+        }
+
         // Llena el selector solo con productos activos asociados al proveedor elegido.
         function actualizarCatalogoProveedor() {
             if (!productoSelect) return;
             const idProveedor = proveedorSelect ? proveedorSelect.value : '';
             const catalogo = (window.JV_CATALOGO || {})[idProveedor] || [];
             productoSelect.innerHTML = '';
+            const cantidadEl = document.getElementById('inputCant');
 
             const opcionInicial = document.createElement('option');
             opcionInicial.value = '';
             opcionInicial.textContent = idProveedor ? 'Selecciona un producto...' : 'Selecciona primero un proveedor';
             productoSelect.appendChild(opcionInicial);
 
+            let productosConExistencia = 0;
             catalogo.forEach(function(producto) {
+                const disponible = disponibleEnCarrito(producto);
+                if (disponible > 0) productosConExistencia++;
                 const opcion = document.createElement('option');
                 opcion.value = String(producto.id);
-                opcion.textContent = producto.nombre + (producto.sku ? ' (' + producto.sku + ')' : '');
+                opcion.textContent = producto.nombre
+                    + (producto.sku ? ' (' + producto.sku + ')' : '')
+                    + ' · Disponible: ' + disponible;
+                opcion.disabled = disponible <= 0;
                 productoSelect.appendChild(opcion);
             });
 
             productoSelect.disabled = !idProveedor || catalogo.length === 0;
+            if (cantidadEl) {
+                const seleccionado = catalogo.find(function(producto) {
+                    return productoSeleccionado && Number(producto.id) === Number(productoSeleccionado.id);
+                });
+                cantidadEl.max = seleccionado
+                    ? String(Math.min(999999, disponibleEnCarrito(seleccionado)))
+                    : '999999';
+            }
             if (catalogoEstado) {
                 catalogoEstado.textContent = !idProveedor
                     ? 'Selecciona un proveedor para ver sus productos.'
-                    : catalogo.length
-                        ? catalogo.length + ' producto(s) disponible(s) en su catálogo.'
+                    : productosConExistencia
+                        ? productosConExistencia + ' producto(s) con existencias para agregar.'
+                        : catalogo.length
+                            ? 'Las existencias registradas ya están en el carrito o son cero.'
                         : 'Este proveedor no tiene productos en su catálogo. Agrégalos desde Gestión de proveedores.';
             }
         }
@@ -81,6 +114,8 @@
                 return Number(entrada.id) === idProducto;
             });
             if (!producto) return;
+            const disponible = disponibleEnCarrito(producto);
+            if (disponible <= 0) return;
 
             productoSeleccionado = {
                 id: Number(producto.id),
@@ -88,7 +123,10 @@
             };
             if (precioEl) precioEl.value = Number(producto.costo).toFixed(2);
             const cantidadEl = document.getElementById('inputCant');
-            if (cantidadEl) cantidadEl.focus();
+            if (cantidadEl) {
+                cantidadEl.max = String(Math.min(999999, disponible));
+                cantidadEl.focus();
+            }
         }
 
         // ==========================================
@@ -124,11 +162,27 @@
             const requestedQuantity = Number(quantityText);
             const precio = parseFloat(document.getElementById('inputPrecio').value.replace(/,/g, '')) || 0;
             const expirationDate = document.getElementById('inputVencimiento').value || '';
+            const catalogo = (window.JV_CATALOGO || {})[proveedorSelect.value] || [];
+            const productoCatalogo = catalogo.find(function(entrada) {
+                return Number(entrada.id) === Number(productoSeleccionado.id);
+            });
+            const disponible = productoCatalogo ? disponibleEnCarrito(productoCatalogo) : 0;
 
             if (!/^\d+(?:\.0+)?$/.test(quantityText) || !Number.isInteger(requestedQuantity) || requestedQuantity < 1 || requestedQuantity > 999999) {
                 Swal.fire({
                     title: 'Cantidad inválida',
                     text: 'Ingrese una cantidad entera entre 1 y 999,999',
+                    icon: 'warning',
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#EA580C'
+                });
+                return;
+            }
+            if (!productoCatalogo || requestedQuantity > disponible) {
+                Swal.fire({
+                    title: 'Existencias insuficientes',
+                    text: 'El proveedor solo tiene ' + disponible + ' unidad(es) disponibles para este producto.',
                     icon: 'warning',
                     background: '#fff',
                     color: '#212529',
@@ -174,6 +228,7 @@
             productoSeleccionado = null;
             if (productoSelect) productoSelect.value = '';
             document.getElementById('inputCant').value = 1;
+            document.getElementById('inputCant').max = '999999';
             document.getElementById('inputPrecio').value = '';
             document.getElementById('inputVencimiento').value = '';
             if (productoSelect && !productoSelect.disabled) productoSelect.focus();
@@ -216,6 +271,7 @@
             document.getElementById('totalCosto').textContent = formatCurrency(total);
             document.getElementById('btnGuardar').disabled = productos.length === 0;
             document.getElementById('productosData').value = JSON.stringify(productos);
+            actualizarCatalogoProveedor();
         }
 
         // ==========================================
@@ -300,6 +356,13 @@
                 if (!primerError) primerError = ctrl;
             }
 
+            const fechaCompra = document.getElementById('fechaCompra');
+            if (!fechaCompra.value || fechaCompra.value < fechaCompra.min || fechaCompra.value > fechaCompra.max) {
+                errores.push('LA FECHA DE COMPRA DEBE ESTAR ENTRE 01/01/1970 Y HOY');
+                marcarError(fechaCompra);
+                if (!primerError) primerError = fechaCompra;
+            }
+
             if (productos.length === 0) errores.push('AGREGUE AL MENOS UN PRODUCTO');
             const catalogoProveedor = (window.JV_CATALOGO || {})[prov.value] || [];
             const productosFueraCatalogo = productos.some(function(producto) {
@@ -309,6 +372,18 @@
             });
             if (productosFueraCatalogo) {
                 errores.push('HAY PRODUCTOS QUE NO PERTENECEN AL CATÁLOGO DEL PROVEEDOR. ACTUALICE EL CATÁLOGO O QUÍTELOS DEL CARRITO.');
+            }
+            const cantidadesPorProducto = new Map();
+            productos.forEach(function(producto) {
+                const idProducto = Number(producto.id);
+                cantidadesPorProducto.set(idProducto, (cantidadesPorProducto.get(idProducto) || 0) + Number(producto.cantidad));
+            });
+            const excedeDisponible = catalogoProveedor.some(function(producto) {
+                const stock = Number(producto.stock_disponible);
+                return (cantidadesPorProducto.get(Number(producto.id)) || 0) > (Number.isFinite(stock) ? stock : 0);
+            });
+            if (excedeDisponible) {
+                errores.push('LA CANTIDAD SOLICITADA SUPERA LAS EXISTENCIAS DEL PROVEEDOR. AJUSTE O QUITE PRODUCTOS DEL CARRITO.');
             }
 
             if (errores.length > 0) {
@@ -561,6 +636,7 @@
             document.getElementById('catSubtitulo').innerText = 'Asocia un producto a este proveedor con su costo de compra.';
             document.getElementById('cat_producto').value = '';
             document.getElementById('cat_costo').value = '';
+            document.getElementById('cat_stock_disponible').value = '0';
             document.getElementById('cat_codigo_prov').value = '';
             const btnCat = document.getElementById('btn-cat-submit');
             btnCat.disabled = false;
@@ -584,6 +660,7 @@
             document.getElementById('cat_producto').value = entradaData.id_producto;
             document.getElementById('cat_costo').value = parseFloat(entradaData.costo).toFixed(2);
             provFormatMoney(document.getElementById('cat_costo'));
+            document.getElementById('cat_stock_disponible').value = String(entradaData.stock_disponible || 0);
             document.getElementById('cat_codigo_prov').value = entradaData.codigo_proveedor || '';
             const btnCat = document.getElementById('btn-cat-submit');
             btnCat.disabled = false;
@@ -742,6 +819,14 @@
                         document.getElementById('cat_costo').focus();
                         return;
                     }
+                    const stockDisponible = document.getElementById('cat_stock_disponible');
+                    const stockRaw = stockDisponible.value.trim();
+                    if (!/^\d{1,10}$/.test(stockRaw) || Number(stockRaw) > 4294967295) {
+                        marcarError(stockDisponible, 'EXISTENCIAS INVÁLIDAS (0 A 4.294.967.295)');
+                        e.preventDefault();
+                        stockDisponible.focus();
+                        return;
+                    }
                     const btnGuardarCat = document.getElementById('btn-cat-submit');
                     btnGuardarCat.disabled = true;
                     btnGuardarCat.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';
@@ -811,6 +896,7 @@
                 document.getElementById('selProveedor').dispatchEvent(new Event('change', { bubbles: true }));
                 document.querySelector('input[name="nro_factura"]').value = compraRecuperacion.nro_factura || '';
                 document.querySelector('input[name="nro_control"]').value = compraRecuperacion.nro_control || '';
+                document.getElementById('fechaCompra').value = compraRecuperacion.fecha_compra || document.getElementById('fechaCompra').value;
                 productos = Array.isArray(compraRecuperacion.productos)
                     ? compraRecuperacion.productos.map(function(producto) {
                         const cantidad = Number(producto.cantidad);

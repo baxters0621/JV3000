@@ -44,8 +44,8 @@ if (!function_exists('prepararRecuperacionCompra')) {
     /**
      * Conserva solo los datos no sensibles necesarios para rehidratar un alta fallida.
      *
-     * Excluye deliberadamente anticipo, método y detalles de pago, CSRF y cualquier
-     * campo ajeno a la lista permitida. Mantiene las líneas repetidas sin alterarlas.
+     * Conserva la fecha de compra y las líneas; excluye deliberadamente anticipo,
+     * método y detalles de pago, CSRF y cualquier campo ajeno a la lista permitida.
      *
      * @param array $datos Datos POST del alta de compra.
      * @return array|null Borrador limitado para la sesión, o null si el detalle no es recuperable.
@@ -103,7 +103,8 @@ if (!function_exists('prepararRecuperacionCompra')) {
         $id_proveedor = filter_var($datos['id_proveedor'] ?? null, FILTER_VALIDATE_INT);
         $nro_factura = is_scalar($datos['nro_factura'] ?? null) ? (string)$datos['nro_factura'] : '';
         $nro_control = is_scalar($datos['nro_control'] ?? null) ? (string)$datos['nro_control'] : '';
-        if (strlen($nro_factura) > 8 || strlen($nro_control) > 11) {
+        $fecha_compra = is_scalar($datos['fecha_compra'] ?? null) ? (string)$datos['fecha_compra'] : '';
+        if (strlen($nro_factura) > 8 || strlen($nro_control) > 11 || strlen($fecha_compra) > 10) {
             return null;
         }
 
@@ -111,6 +112,7 @@ if (!function_exists('prepararRecuperacionCompra')) {
             'id_proveedor' => $id_proveedor !== false && $id_proveedor > 0 ? (int)$id_proveedor : 0,
             'nro_factura' => $nro_factura,
             'nro_control' => $nro_control,
+            'fecha_compra' => preg_match('/^\d{4}-\d{2}-\d{2}$/D', $fecha_compra) ? $fecha_compra : date('Y-m-d'),
             'productos' => $productos,
         ];
     }

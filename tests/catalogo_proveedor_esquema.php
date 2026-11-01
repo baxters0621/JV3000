@@ -27,6 +27,7 @@ final class Database
             'id_proveedor' => 3,
             'id_producto' => 11,
             'costo' => '2.50',
+            'stock_disponible' => 8,
             'codigo_proveedor' => 'SKU-PROV',
             'nombre_producto' => 'Producto sintético',
             'sku' => 'SKU-11',
@@ -63,6 +64,7 @@ afirmarContrato(
     str_contains($consulta, 'p.nombre_producto')
         && str_contains($consulta, 'p.sku')
         && str_contains($consulta, 'cc.codigo_proveedor')
+        && str_contains($consulta, 'cc.stock_disponible')
         && !preg_match('/\bp\.descripcion\b/i', $consulta),
     'La consulta debe conservar los campos soportados sin solicitar productos.descripcion.'
 );
@@ -76,6 +78,7 @@ afirmarContrato(
         && $catalogo[3][0]['nombre_producto'] === 'Producto sintético'
         && $catalogo[3][0]['sku'] === 'SKU-11'
         && $catalogo[3][0]['costo'] === '2.50'
+        && $catalogo[3][0]['stock_disponible'] === 8
         && $catalogo[3][0]['codigo_proveedor'] === 'SKU-PROV',
     'El catálogo debe conservar su agrupación y los datos restantes del producto/proveedor.'
 );
