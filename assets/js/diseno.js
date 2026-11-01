@@ -668,6 +668,22 @@ function jvBorradorDecidir(registro, form) {
 }
 
 /**
+ * Comprueba que el borrador corresponda al registro cargado en un formulario dinámico.
+ *
+ * @param {object} registro borrador leído de localStorage.
+ * @param {HTMLFormElement} form formulario destino de la restauración.
+ * @returns {boolean} true si el contexto del borrador coincide con el actual.
+ */
+function jvBorradorContextoCoincide(registro, form) {
+    var nombreCampo = form.getAttribute('data-borrador-contexto');
+    if (!nombreCampo) return true;
+    var campoActual = form.elements && form.elements[nombreCampo];
+    var datos = registro.datos || {};
+    if (!campoActual || !Object.prototype.hasOwnProperty.call(datos, nombreCampo)) return false;
+    return String(datos[nombreCampo]) === String(campoActual.value);
+}
+
+/**
  * Decide qué hacer con un borrador ya leído: purgar, restaurar con aviso o
  * preguntar (ver las reglas en la cabecera del módulo).
  *
@@ -677,6 +693,10 @@ function jvBorradorDecidir(registro, form) {
  */
 function jvBorradorDecidirSobre(registro, form) {
     var clave = registro.clave;
+    if (!jvBorradorContextoCoincide(registro, form)) {
+        jvBorradorLimpiar(clave);
+        return;
+    }
     var envioReciente = registro.enviado && jvBorradorHaceTiempo(registro.enviado) < jvBorradorVentanaEnvio;
     if (envioReciente) {
         var exito = document.querySelector ? document.querySelector('.alert-jv-success') : null;

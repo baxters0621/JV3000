@@ -81,14 +81,18 @@ function construirElements(campos) {
     return elementos;
 }
 
-function formFake(clave, campos, visible, restaurarAutomaticamente) {
+function formFake(clave, campos, visible, restaurarAutomaticamente, contexto) {
     const form = {
         offsetParent: visible === false ? null : {},
         escuchas: {},
         campos: campos,
         elements: construirElements(campos),
         addEventListener: function(ev, cb) { (form.escuchas[ev] = form.escuchas[ev] || []).push(cb); },
-        getAttribute: function(k) { return k === 'data-borrador' ? clave : null; },
+        getAttribute: function(k) {
+            if (k === 'data-borrador') return clave;
+            if (k === 'data-borrador-contexto') return contexto || null;
+            return null;
+        },
         hasAttribute: function(k) { return k === 'data-borrador-restaurar-automatico' && restaurarAutomaticamente === true; },
         contains: function(nodo) { return form.campos.indexOf(nodo) !== -1 || nodo === form; }
     };
@@ -464,6 +468,56 @@ function reiniciar() {
             'Sin borrador previo, escribir igual empieza a guardar.');
     }
 
+    // ---------- 10a. Un borrador no debe reemplazar otra entrada dinámica ----------
+    {
+        reiniciar();
+        const borradorAnterior = formFake('compras_catalogo', [
+            campoFake('id_catalogo', 'hidden', '7'),
+            campoFake('costo', 'text', '5.00')
+        ]);
+        jvBorradorGuardar(borradorAnterior, true);
+
+        const formActual = formFake('compras_catalogo', [
+            campoFake('id_catalogo', 'hidden', '42'),
+            campoFake('costo', 'text', '9.00')
+        ], false, false, 'id_catalogo');
+        const escuchasPrevias = doc.escuchas['shown.bs.modal'] ? doc.escuchas['shown.bs.modal'].length : 0;
+        jvBorradorPreparar(formActual);
+        const modal = { contains: function(nodo) { return nodo === formActual; } };
+        doc.escuchas['shown.bs.modal'].slice(escuchasPrevias).forEach(function(cb) { cb({ target: modal }); });
+
+        afirmar(formActual.elements.costo.value === '9.00',
+            'Un borrador de otro producto no reemplaza los datos del producto elegido.');
+        afirmar(jvBorradorLeer('compras_catalogo') === null,
+            'El borrador de otro producto se descarta al abrir el formulario contextual.');
+        afirmar(Swal.llamadas.length === 0,
+            'Un borrador de otro producto no muestra aviso de restauración.');
+    }
+
+    // El borrador del mismo registro aún se recupera tras un POST fallido.
+    {
+        reiniciar();
+        const borrador = formFake('compras_catalogo', [
+            campoFake('id_catalogo', 'hidden', '42'),
+            campoFake('costo', 'text', '8.00')
+        ]);
+        jvBorradorGuardar(borrador, true);
+
+        const formActual = formFake('compras_catalogo', [
+            campoFake('id_catalogo', 'hidden', '42'),
+            campoFake('costo', 'text', '9.00')
+        ], false, false, 'id_catalogo');
+        const escuchasPrevias = doc.escuchas['shown.bs.modal'] ? doc.escuchas['shown.bs.modal'].length : 0;
+        jvBorradorPreparar(formActual);
+        const modal = { contains: function(nodo) { return nodo === formActual; } };
+        doc.escuchas['shown.bs.modal'].slice(escuchasPrevias).forEach(function(cb) { cb({ target: modal }); });
+
+        afirmar(formActual.elements.costo.value === '8.00',
+            'Un borrador del mismo producto sí recupera los datos tras el envío fallido.');
+        afirmar(Swal.llamadas.length === 1,
+            'La recuperación del mismo producto conserva su aviso.');
+    }
+
     // ---------- 11. Activar conecta todos los formularios marcados ----------
     {
         reiniciar();
@@ -514,6 +568,9 @@ function reiniciar() {
             total += cuenta;
         });
         afirmar(total === 14, 'El total de formularios marcados es 14 (' + total + ').');
+        const vistaCompras = fs.readFileSync('views/compras/index.php', 'utf8');
+        afirmar(vistaCompras.includes('data-borrador-contexto="id_catalogo"'),
+            'El borrador del catálogo se vincula al id de su entrada.');
 
         const sidebar = fs.readFileSync('includes/sidebar.php', 'utf8');
         afirmar(sidebar.includes('JV_CONFIG.userId'), 'El sidebar expone JV_CONFIG.userId.');

@@ -31,6 +31,8 @@ Sin datos sensibles (claves, tokens, PIN).
 - Pregunta/respuesta de seguridad retirada; columnas por legado, no usar.
 - La huella de error agrupa por archivo:línea (o inicio del mensaje sin archivo) y el INSERT suma ocurrencias: un error repetido nunca duplica filas ni dispara un segundo correo antes de 1 hora.
 
+- Formularios dinámicos de edición: declarar `data-borrador-contexto` para validar el identificador del registro; si el borrador pertenece a otra fila, descartarlo antes de restaurar y conservar el borrador coincidente.
+
 ## Aprendizajes y errores a evitar
 
 - Si falta `config/.env`, los valores de XAMPP son válidos; no convertir un puerto ausente en configuración inválida.

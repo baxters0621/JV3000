@@ -910,7 +910,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalCatalogo" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-content-jv">
-            <form action="" method="POST" id="formCatalogo" data-borrador="compras_catalogo">
+            <form action="" method="POST" id="formCatalogo" data-borrador="compras_catalogo" data-borrador-contexto="id_catalogo">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_catalogo" id="cat_accion" value="registrar">
                 <input type="hidden" name="id_catalogo" id="cat_id_edit">
