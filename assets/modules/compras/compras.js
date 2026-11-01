@@ -516,7 +516,44 @@
             montoEl.value = monto.toFixed(2);
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
-            btn.form.submit();
+            const formData = new FormData(btn.form);
+            fetch(btn.form.action || window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+                .then(function(response) {
+                    return response.text().then(function(text) {
+                        let data;
+                        try {
+                            data = JSON.parse(text);
+                        } catch (error) {
+                            throw new Error('El servidor devolvió una respuesta inválida. Revise la compra antes de reintentar.');
+                        }
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.error || 'NO SE PUDO REGISTRAR LA COMPRA.');
+                        }
+                        return data;
+                    });
+                })
+                .then(function() {
+                    window.location.reload();
+                })
+                .catch(function(error) {
+                    btn.disabled = productos.length === 0;
+                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Compra';
+                    Swal.fire({
+                        title: 'NO SE PUDO GUARDAR LA COMPRA',
+                        text: error.message || 'Verifique la conexión e inténtelo de nuevo.',
+                        icon: 'error',
+                        background: '#fff',
+                        color: '#212529',
+                        confirmButtonColor: '#DC2626'
+                    });
+                });
             return false;
         }
 

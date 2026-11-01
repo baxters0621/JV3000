@@ -151,6 +151,8 @@ class ComprasController extends Controller
             }
 
             if (isset($_POST['accion_compra'])) {
+                $esFetch = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+                    && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
                 $resultado = $modelo->registrar($_POST, (int)($_SESSION['id_usuario'] ?? 0));
                 if ($resultado['ok']) {
                     unset($_SESSION['sol_seleccionada']);
@@ -167,6 +169,15 @@ class ComprasController extends Controller
                         ];
                     }
                     $resultado['mensaje'] .= ' EL ANTICIPO Y LOS DATOS DE PAGO NO SE CONSERVARON; DEBE INGRESARLOS NUEVAMENTE.';
+                }
+                if ($esFetch) {
+                    if ($resultado['ok']) {
+                        $this->json(['success' => true, 'mensaje' => $resultado['mensaje']]);
+                    }
+                    $this->json([
+                        'success' => false,
+                        'error' => $resultado['mensaje'],
+                    ], 422);
                 }
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
                 $this->redirect('compras');
