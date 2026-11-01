@@ -166,12 +166,12 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
 <!-- Tabla de compras -->
 <div class="card-jv card-jv-table p-0">
-    <div class="d-flex align-items-center gap-2 px-3 py-2 buscador-wrapper flex-wrap">
+    <div class="d-flex align-items-center gap-3 px-3 py-2 buscador-wrapper compras-list-toolbar">
         <div class="compras-search">
             <i class="bi bi-search"></i>
             <input type="text" class="input-jv" placeholder="Buscar por factura, proveedor, productos..." id="buscar" aria-label="Buscar compra" onkeyup="filtrar()">
         </div>
-        <select class="input-jv ms-auto" id="filtroPago" aria-label="Filtrar por estado de pago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value">
+        <select class="input-jv" id="filtroPago" aria-label="Filtrar por estado de pago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value">
             <option value="">Todos los pagos</option>
             <option value="Pendiente" <?php echo $filtro_pago === 'Pendiente' ? 'selected' : ''; ?>>Pendiente</option>
             <option value="Parcial" <?php echo $filtro_pago === 'Parcial' ? 'selected' : ''; ?>>Parcial</option>
@@ -204,15 +204,15 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <?php if (count($compras) > 0): foreach ($compras as $compra): ?>
                         <tr>
                             <td class="td-factura" data-label="Factura">
-                                <span class="codigo-badge" data-tooltip="<?php echo htmlspecialchars('Factura: ' . ($compra['nro_factura'] ?: '-') . ' · Control: ' . ($compra['nro_control'] ?: 'Sin control'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['nro_factura'] ?: '-'); ?></span>
+                                <span class="factura-texto text-truncate" data-tooltip="<?php echo htmlspecialchars('Factura: ' . ($compra['nro_factura'] ?: '-') . ' · Control: ' . ($compra['nro_control'] ?: 'Sin control'), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['nro_factura'] ?: '-'); ?></span>
                             </td>
-                            <td class="td-proveedor" data-label="Proveedor" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?>">
-                                <span class="proveedor-nombre"><?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?></span>
+                            <td class="td-proveedor" data-label="Proveedor">
+                                <span class="proveedor-nombre text-truncate" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P', ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?></span>
                             </td>
-                            <td class="td-detalle" data-label="Detalle" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? ''); ?>">
+                            <td class="td-detalle" data-label="Detalle">
                                 <div class="detalle-resumen">
                                     <span class="cant-pill" data-tooltip="Unidades totales incluidas en esta compra"><?php echo (int)$compra['total_cantidad']; ?> unidades</span>
-                                    <span class="detalle-nombres"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></span>
+                                    <span class="detalle-nombres text-truncate" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></span>
                                 </div>
                             </td>
                             <td class="td-total text-end" data-label="Total">
