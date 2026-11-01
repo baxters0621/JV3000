@@ -168,7 +168,6 @@ class ComprasController extends Controller
                             'datos' => $recuperacion,
                         ];
                     }
-                    $resultado['mensaje'] .= ' EL ANTICIPO Y LOS DATOS DE PAGO NO SE CONSERVARON; DEBE INGRESARLOS NUEVAMENTE.';
                 }
                 if ($esFetch) {
                     if ($resultado['ok']) {

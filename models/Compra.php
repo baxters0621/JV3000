@@ -298,8 +298,9 @@ class Compra extends Model
         $iva = round($subtotal * $iva_pct / 100, 2);
         $total = round($subtotal + $iva, 2);
 
-        // Comprobante de pago
-        $metodo_pago = in_array(trim($purchaseFormData['metodo_pago'] ?? ''), ['Efectivo', 'Transferencia', 'Cheque', 'Otro'], true) ? trim($purchaseFormData['metodo_pago']) : 'Efectivo';
+        // El alta registra la factura pendiente; los pagos se agregan después.
+        // Se conservan pagos iniciales para integraciones anteriores.
+        $metodo_pago = null;
         $monto_pago = round((float)($purchaseFormData['monto_pago'] ?? 0), 2);
         if ($monto_pago < 0) $monto_pago = 0;
         if ($monto_pago > 99999999.99) {
@@ -311,7 +312,13 @@ class Compra extends Model
 
         // Construir detalle_pago JSON según método
         $detalle_pago = null;
-        if ($metodo_pago === 'Efectivo') {
+        if ($monto_pago > 0) {
+            $metodo_pago = trim((string)($purchaseFormData['metodo_pago'] ?? ''));
+            if (!in_array($metodo_pago, ['Efectivo', 'Transferencia', 'Cheque', 'Otro'], true)) {
+                return ['ok' => false, 'mensaje' => 'MÉTODO DE PAGO INVÁLIDO.'];
+            }
+        }
+        if ($monto_pago > 0 && $metodo_pago === 'Efectivo') {
             $tipo = trim($purchaseFormData['efectivo_tipo'] ?? '');
             if (!in_array($tipo, ['Bolivares', 'Dolar', 'Euro'], true)) {
                 return ['ok' => false, 'mensaje' => 'SELECCIONE UN TIPO DE DIVISA VÁLIDO.'];
@@ -340,7 +347,7 @@ class Compra extends Model
                 $monto_pago = $equivalente_ves;
                 $status_pago = $monto_pago >= $total ? 'Pagada' : 'Parcial';
             }
-        } elseif ($metodo_pago === 'Transferencia') {
+        } elseif ($monto_pago > 0 && $metodo_pago === 'Transferencia') {
             $cedula = trim($purchaseFormData['pm_cedula'] ?? '');
             $telefono = trim($purchaseFormData['pm_telefono'] ?? '');
             $banco = trim($purchaseFormData['pm_banco'] ?? '');
@@ -363,13 +370,13 @@ class Compra extends Model
                 'banco'     => $banco,
                 'referencia'=> $referencia,
             ];
-        } elseif ($metodo_pago === 'Cheque') {
+        } elseif ($monto_pago > 0 && $metodo_pago === 'Cheque') {
             $cheque = trim($purchaseFormData['cheque_numero'] ?? '');
             if ($cheque === '') {
                 return ['ok' => false, 'mensaje' => 'EL NÚMERO DE CHEQUE ES OBLIGATORIO.'];
             }
             $detalle_pago = ['numero' => $cheque];
-        } elseif ($metodo_pago === 'Otro') {
+        } elseif ($monto_pago > 0 && $metodo_pago === 'Otro') {
             $desc = trim($purchaseFormData['otro_descripcion'] ?? '');
             if ($desc === '') {
                 return ['ok' => false, 'mensaje' => 'DESCRIBA LA FORMA DE PAGO.'];

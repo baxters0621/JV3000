@@ -81,7 +81,7 @@ function construirElements(campos) {
     return elementos;
 }
 
-function formFake(clave, campos, visible) {
+function formFake(clave, campos, visible, restaurarAutomaticamente) {
     const form = {
         offsetParent: visible === false ? null : {},
         escuchas: {},
@@ -89,6 +89,7 @@ function formFake(clave, campos, visible) {
         elements: construirElements(campos),
         addEventListener: function(ev, cb) { (form.escuchas[ev] = form.escuchas[ev] || []).push(cb); },
         getAttribute: function(k) { return k === 'data-borrador' ? clave : null; },
+        hasAttribute: function(k) { return k === 'data-borrador-restaurar-automatico' && restaurarAutomaticamente === true; },
         contains: function(nodo) { return form.campos.indexOf(nodo) !== -1 || nodo === form; }
     };
     return form;
@@ -364,6 +365,16 @@ function reiniciar() {
 
     // ---------- 8. DecidirSobre: pregunta con Swal ----------
     {
+        reiniciar();
+        const formCompra = formFake('compras_alta', [campoFake('nro_factura', 'text', '000123')], true, true);
+        jvBorradorGuardar(formCompra, false);
+        formCompra.elements.nro_factura.value = '';
+        jvBorradorDecidirSobre(jvBorradorLeer('compras_alta'), formCompra);
+        afirmar(formCompra.elements.nro_factura.value === '000123',
+            'Compras restaura automáticamente su borrador sin pedir decisión.');
+        afirmar(Swal.llamadas.length === 1 && Swal.llamadas[0].toast === true,
+            'La recuperación automática de Compras muestra solo un aviso no bloqueante.');
+
         reiniciar();
         // Restaurar: el borrador trae 15.30 y el campo llega vacío.
         const form = formFake('productos_editar', [campoFake('pvp', 'text', '15.30')]);

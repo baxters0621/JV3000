@@ -701,6 +701,21 @@ function jvBorradorDecidirSobre(registro, form) {
         }
         return;
     }
+    if (form.hasAttribute('data-borrador-restaurar-automatico')) {
+        jvBorradorRestaurar(form, registro.datos);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: 'Recuperamos el borrador de compra',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        }
+        return;
+    }
     jvBorradorDecidir(registro, form);
 }
 

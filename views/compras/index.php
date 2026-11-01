@@ -353,7 +353,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalCompra" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-content-jv">
-            <form method="POST" id="formCompra" data-borrador="compras_alta">
+            <form method="POST" id="formCompra" data-borrador="compras_alta" data-borrador-restaurar-automatico>
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf; ?>">
                 <input type="hidden" name="accion_compra" value="registrar">
                 <input type="hidden" name="productos_data" id="productosData">
@@ -443,276 +443,15 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         </div>
                     </div>
 
-                    <!-- PASO 3: Pago -->
-                    <div class="comp-step">
-                        <div class="comp-step-header">
-                            <div class="comp-step-chip chip-amber">3</div>
-                            <div class="comp-step-info">
-                                <div class="comp-step-title">Forma de Pago</div>
-                                <div class="comp-step-desc">Indica c&oacute;mo se est&aacute; cancelando esta compra</div>
-                            </div>
-                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Sin pagos queda Pendiente; con un abono parcial queda Parcial; al cubrir el total queda Pagada."></i>
-                        </div>
-                        <div class="comp-step-body">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="comp-label">M&eacute;todo de Pago <span class="text-danger">*</span></label>
-                                    <select name="metodo_pago" class="input-jv comp-input" id="selMetodo" aria-label="Metodo de pago">
-                                        <option value="">Selecciona un m&eacute;todo...</option>
-                                        <option value="Efectivo">Efectivo</option>
-                                        <option value="Transferencia">Transferencia / Pago M&oacute;vil</option>
-                                        <option value="Cheque">Cheque</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="comp-label">Monto Pagado ($)</label>
-                                    <input type="text" inputmode="decimal" name="monto_pago" class="input-jv comp-input" id="montoPago" aria-label="Monto pagado" value="0.00" oninput="marcarMontoEditado();formatearPrecioCompra(this)">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="comp-label">Fecha de Pago</label>
-                                    <input type="date" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" aria-label="Fecha del pago" disabled>
-                                </div>
-                            </div>
-
-                            <!-- Sub-detalle: Efectivo -->
-                            <div id="pagoEfectivo" class="comp-pago-detalle" style="display:none;">
-                                <div class="row g-3 mt-1">
-                                    <div class="col-md-4">
-                                        <label class="comp-label">Tipo de Divisa <span class="text-danger">*</span></label>
-                                        <select name="efectivo_tipo" class="input-jv comp-input" id="selEfectivoTipo">
-                                            <option value="">Selecciona...</option>
-                                            <option value="Bolivares">Bol&iacute;vares (VES)</option>
-                                            <option value="Dolar">D&oacute;lar (USD)</option>
-                                            <option value="Euro">Euro (EUR)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <!-- Campos para divisa extranjera (Dólar / Euro) -->
-                                <div id="divDivisaExtranjera" style="display:none;">
-                                    <div class="row g-3 mt-2">
-                                        <div class="col-md-4">
-                                            <label class="comp-label">Tasa BCV</label>
-                                            <div class="comp-tasa-wrapper">
-                                                <input type="text" name="tasa_cambio" class="input-jv comp-input comp-tasa-auto" id="tasaCambio" readonly>
-                                                <button type="button" class="comp-tasa-edit-btn" id="btnEditarTasa" data-tooltip="Clic para editar manualmente">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </div>
-                                            <small class="comp-tasa-info" id="tasaInfo"></small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="comp-label" id="labelMontoOriginal">Monto en USD <span class="text-danger">*</span></label>
-                                            <input type="text" inputmode="decimal" name="monto_original" class="input-jv comp-input" id="montoOriginal" placeholder="0.00" oninput="calcularEquivalenteVES();formatearPrecioCompra(this)">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="comp-label">Equivalente en VES</label>
-                                            <div class="comp-equivalente" id="divEquivalente">
-                                                <span class="comp-equivalente-valor" id="equivalenteVES">Bs. 0.00</span>
-                                            </div>
-                                            <input type="hidden" name="equivalente_ves" id="equivalenteVESInput" value="0">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Modal: Registrar Pago -->
-                                <div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-scrollable" style="max-width:520px;">
-                                        <div class="modal-content jv-modal-content">
-                                            <div class="jv-modal-header" style="background:linear-gradient(135deg,#059669,#10b981);">
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <i class="bi bi-cash-coin" style="font-size:1.3rem;"></i>
-                                                    <h5 class="jv-modal-title" id="modalPagoLabel">REGISTRAR PAGO</h5>
-                                                </div>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                                            </div>
-                                            <form method="POST" action="<?php echo $purchaseListUrl; ?>" data-borrador="compras_pago">
-                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
-                                                <input type="hidden" name="accion_pago" value="1">
-                                                <input type="hidden" name="id_compra" id="pago_id_compra">
-
-                                                <div class="jv-modal-body" style="padding:20px;">
-                                                    <div class="jv-modal-section-sub mb-3">
-                                                        <span style="font-size:.85rem;color:var(--jv-text-muted);">Factura:</span>
-                                                        <span id="pago_factura_num" style="font-weight:700;margin-left:4px;"></span>
-                                                    </div>
-
-                                                    <div class="row g-3 mb-3">
-                                                        <div class="col-6">
-                                                            <label class="jv-modal-label">TOTAL</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
-                                                                <input type="text" class="form-control" id="pago_total" readonly style="background:var(--jv-bg);font-weight:700;">
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <label class="jv-modal-label">SALDO PENDIENTE</label>
-                                                            <div class="input-group">
-                                                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
-                                                                <input type="text" class="form-control" id="pago_saldo" readonly style="background:var(--jv-bg);font-weight:700;color:var(--jv-red);">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="jv-modal-label">MONTO A PAGAR <span style="color:var(--jv-red);">*</span></label>
-                                                        <div class="input-group">
-                                                            <span class="input-group-text" style="font-size:.85rem;">$</span>
-                                                            <input type="number" step="0.01" min="0.01" class="form-control input-jv" name="monto_pago" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="jv-modal-label">MÉTODO DE PAGO <span style="color:var(--jv-red);">*</span></label>
-                                                        <select name="metodo_pago" class="form-select input-jv" id="pago_metodo" required>
-                                                            <option value="Efectivo">Efectivo</option>
-                                                            <option value="Transferencia">Transferencia</option>
-                                                            <option value="Cheque">Cheque</option>
-                                                            <option value="Otro">Otro</option>
-                                                        </select>
-                                                    </div>
-
-                                                    <!-- Detalle según método -->
-                                                    <div id="pago_detalle_transferencia" style="display:none;">
-                                                        <div class="row g-3 mb-3">
-                                                            <div class="col-6">
-                                                                <label class="jv-modal-label">Teléfono (Pago Móvil)</label>
-                                                                <input type="text" class="form-control input-jv" name="pago_telefono" placeholder="0412-1234567">
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <label class="jv-modal-label">Banco</label>
-                                                                <input type="text" class="form-control input-jv" name="pago_banco" placeholder="Banco">
-                                                            </div>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="jv-modal-label">Referencia</label>
-                                                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. referencia">
-                                                        </div>
-                                                    </div>
-
-                                                    <div id="pago_detalle_cheque" style="display:none;">
-                                                        <div class="mb-3">
-                                                            <label class="jv-modal-label">Nro. de Cheque</label>
-                                                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. cheque">
-                                                        </div>
-                                                    </div>
-
-                                                    <div id="pago_detalle_otro" style="display:none;">
-                                                        <div class="mb-3">
-                                                            <label class="jv-modal-label">Descripción</label>
-                                                            <input type="text" class="form-control input-jv" name="pago_descripcion" placeholder="Detalle del pago">
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label class="jv-modal-label">Pago rápido</label>
-                                                        <div class="d-flex gap-2">
-                                                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(25)">25%</button>
-                                                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(50)">50%</button>
-                                                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(75)">75%</button>
-                                                            <button type="button" class="btn btn-sm btn-jv-success" onclick="setPagoMonto(100)">100%</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
-                                                    <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                                                    <button type="submit" class="btn btn-jv-success module-action-btn"><i class="bi bi-check-lg me-1"></i>Registrar Pago</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sub-detalle: Transferencia / Pago Móvil -->
-                            <div id="pagoTransferencia" class="comp-pago-detalle" style="display:none;">
-                                <div class="row g-3 mt-1">
-                                    <div class="col-md-3">
-                                        <label class="comp-label">C&eacute;dula del Beneficiario <span class="text-danger">*</span></label>
-                                        <input type="text" inputmode="numeric" name="pm_cedula" class="input-jv comp-input" id="pmCedula" placeholder="V-12345678" maxlength="12">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="comp-label">Tel&eacute;fono <span class="text-danger">*</span></label>
-                                        <input type="text" inputmode="numeric" name="pm_telefono" class="input-jv comp-input" id="pmTelefono" placeholder="0412-1234567" maxlength="12">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="comp-label">Banco Destino <span class="text-danger">*</span></label>
-                                        <select name="pm_banco" class="input-jv comp-input" id="pmBanco">
-                                            <option value="">Selecciona banco...</option>
-                                            <option value="0102">Banco de Venezuela</option>
-                                            <option value="0104">Banco Provincial</option>
-                                            <option value="0105">Banco Mercantil</option>
-                                            <option value="0108">Banco BBVA Provincial</option>
-                                            <option value="0114">Banco Continental</option>
-                                            <option value="0116">Banco Plaza</option>
-                                            <option value="0128">Banco Caroní</option>
-                                            <option value="0134">Bancaribe</option>
-                                            <option value="0137">Banco Sofitasa</option>
-                                            <option value="0151">BFC Banco Fondo Común</option>
-                                            <option value="0156">100% Banco</option>
-                                            <option value="0157">Banco Exterior</option>
-                                            <option value="0163">Banco del Tesoro</option>
-                                            <option value="0166">Banco Agrícola</option>
-                                            <option value="0168">Bancrecer</option>
-                                            <option value="0169">Mi Banco</option>
-                                            <option value="0171">Banco Digital de los Trabajadores</option>
-                                            <option value="0172">Bancamiga</option>
-                                            <option value="0173">Banco Internacional</option>
-                                            <option value="0174">Banplus</option>
-                                            <option value="0175">Banco Copper National Bank</option>
-                                            <option value="0177">Banco de las Fuerzas Armadas</option>
-                                            <option value="0178">Banco Peal</option>
-                                            <option value="0182">Banco Together Bank</option>
-                                            <option value="0183">Novel Bank</option>
-                                            <option value="0185">Banco Nova</option>
-                                            <option value="0186">Spare Bank</option>
-                                            <option value="0187">Banco Tp</option>
-                                            <option value="0188">Activobank</option>
-                                            <option value="0189">Bangente</option>
-                                            <option value="0190">Banco Digital Credipag</option>
-                                            <option value="0191">Banco Nacional de Cr&eacute;dito</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="comp-label">N&ordm; Referencia <span class="text-danger">*</span></label>
-                                        <input type="text" inputmode="numeric" name="pm_referencia" class="input-jv comp-input" id="pmReferencia" placeholder="N&ordm; de confirmaci&oacute;n" maxlength="20">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sub-detalle: Cheque -->
-                            <div id="pagoCheque" class="comp-pago-detalle" style="display:none;">
-                                <div class="row g-3 mt-1">
-                                    <div class="col-md-4">
-                                        <label class="comp-label">N&ordm; de Cheque <span class="text-danger">*</span></label>
-                                        <input type="text" inputmode="numeric" name="cheque_numero" class="input-jv comp-input" id="chequeNumero" placeholder="N&ordm; del cheque" maxlength="20">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sub-detalle: Otro -->
-                            <div id="pagoOtro" class="comp-pago-detalle" style="display:none;">
-                                <div class="row g-3 mt-1">
-                                    <div class="col-md-6">
-                                        <label class="comp-label">Describe la forma de pago <span class="text-danger">*</span></label>
-                                        <input type="text" name="otro_descripcion" class="input-jv comp-input" id="otroDescripcion" placeholder="Ej: Pago con criptomoneda, bono, etc." maxlength="100">
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <!-- PASO 4: Productos -->
+                    <!-- PASO 3: Productos -->
                     <div class="comp-step comp-step-main">
                         <div class="comp-step-header">
-                            <div class="comp-step-chip chip-orange">4</div>
+                            <div class="comp-step-chip chip-orange">3</div>
                             <div class="comp-step-info">
                                 <div class="comp-step-title">Agregar Productos</div>
-                                <div class="comp-step-desc">Busca y a&ntilde;ade cada producto que est&aacute;s comprando</div>
+                                <div class="comp-step-desc">Selecciona un resultado, indica cantidad, precio y vencimiento, y agr&eacute;galo al carrito</div>
                             </div>
-                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Busca por nombre o SKU, indica cantidad, precio y fecha de vencimiento. El costo total se calcula autom&aacute;ticamente."></i>
+                            <i class="bi bi-question-circle comp-step-help" data-tooltip="Escribir no agrega el producto: selecciona una sugerencia y completa el vencimiento obligatorio para a&ntilde;adirlo al carrito."></i>
                         </div>
                         <div class="comp-step-body">
 
@@ -810,6 +549,115 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <div class="comp-modal-footer">
                     <button type="button" class="btn btn-jv-danger comp-btn-footer" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
                     <button type="button" class="btn btn-jv-success comp-btn-footer comp-btn-save" id="btnGuardar" disabled onclick="validarFormulario(this)"><i class="bi bi-check-lg me-1"></i> Guardar Compra</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Registrar Pago -->
+<div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable" style="max-width:520px;">
+        <div class="modal-content jv-modal-content">
+            <div class="jv-modal-header" style="background:linear-gradient(135deg,#059669,#10b981);">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-cash-coin" style="font-size:1.3rem;"></i>
+                    <h5 class="jv-modal-title" id="modalPagoLabel">REGISTRAR PAGO</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form method="POST" action="<?php echo $purchaseListUrl; ?>" data-borrador="compras_pago">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
+                <input type="hidden" name="accion_pago" value="1">
+                <input type="hidden" name="id_compra" id="pago_id_compra">
+
+                <div class="jv-modal-body" style="padding:20px;">
+                    <div class="jv-modal-section-sub mb-3">
+                        <span style="font-size:.85rem;color:var(--jv-text-muted);">Factura:</span>
+                        <span id="pago_factura_num" style="font-weight:700;margin-left:4px;"></span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="jv-modal-label">TOTAL</label>
+                            <div class="input-group">
+                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
+                                <input type="text" class="form-control" id="pago_total" readonly style="background:var(--jv-bg);font-weight:700;">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="jv-modal-label">SALDO PENDIENTE</label>
+                            <div class="input-group">
+                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
+                                <input type="text" class="form-control" id="pago_saldo" readonly style="background:var(--jv-bg);font-weight:700;color:var(--jv-red);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="jv-modal-label">MONTO A PAGAR <span style="color:var(--jv-red);">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="font-size:.85rem;">$</span>
+                            <input type="number" step="0.01" min="0.01" class="form-control input-jv" name="monto_pago" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="jv-modal-label">MÉTODO DE PAGO <span style="color:var(--jv-red);">*</span></label>
+                        <select name="metodo_pago" class="form-select input-jv" id="pago_metodo" required>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- Detalle según método -->
+                    <div id="pago_detalle_transferencia" style="display:none;">
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="jv-modal-label">Teléfono (Pago Móvil)</label>
+                                <input type="text" class="form-control input-jv" name="pago_telefono" placeholder="0412-1234567">
+                            </div>
+                            <div class="col-6">
+                                <label class="jv-modal-label">Banco</label>
+                                <input type="text" class="form-control input-jv" name="pago_banco" placeholder="Banco">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="jv-modal-label">Referencia</label>
+                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. referencia">
+                        </div>
+                    </div>
+
+                    <div id="pago_detalle_cheque" style="display:none;">
+                        <div class="mb-3">
+                            <label class="jv-modal-label">Nro. de Cheque</label>
+                            <input type="text" class="form-control input-jv" name="pago_referencia" placeholder="Nro. cheque">
+                        </div>
+                    </div>
+
+                    <div id="pago_detalle_otro" style="display:none;">
+                        <div class="mb-3">
+                            <label class="jv-modal-label">Descripción</label>
+                            <input type="text" class="form-control input-jv" name="pago_descripcion" placeholder="Detalle del pago">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="jv-modal-label">Pago rápido</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(25)">25%</button>
+                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(50)">50%</button>
+                            <button type="button" class="btn btn-sm btn-jv-outline" onclick="setPagoMonto(75)">75%</button>
+                            <button type="button" class="btn btn-sm btn-jv-success" onclick="setPagoMonto(100)">100%</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
+                    <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
+                    <button type="submit" class="btn btn-jv-success module-action-btn"><i class="bi bi-check-lg me-1"></i>Registrar Pago</button>
                 </div>
             </form>
         </div>

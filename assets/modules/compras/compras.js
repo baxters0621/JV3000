@@ -1,11 +1,10 @@
 
         // ==========================================
-        // COMPRAS — Registro de factura del proveedor + comprobante de pago
+        // COMPRAS — Registro de factura del proveedor y productos
         // (No mueve stock: la recepción se hace desde Inventario)
         // ==========================================
 
         let productos = [];
-        let montoEditado = false;
         let toolboxTimer = null;
         let productoSeleccionado = null;
 
@@ -32,100 +31,6 @@
                 formateado = '99,999,999.99';
             }
             el.value = formateado;
-        }
-
-        // Marca que el usuario editó el monto de pago
-        // Pone montoEditado en true para que el monto no se recalcule y quita la marca de error del campo.
-        function marcarMontoEditado() {
-            montoEditado = true;
-            var el = document.getElementById('montoPago');
-            if (el) el.classList.remove('input-error');
-        }
-
-        // Consulta la tasa BCV oficial al backend (proxy de ve.dolarapi.com)
-        // Rellena el campo #tasaCambio y muestra info de la fuente.
-        // La consulta tiene tope de espera (jvFetchConTope): mientras corre se
-        // muestra un skeleton en la línea de estado y, si vence, la tasa pasa
-        // a edición manual con un aviso claro — nunca queda colgada.
-        function obtenerTasaCambio(tipo) {
-            var tasaEl = document.getElementById('tasaCambio');
-            var infoEl = document.getElementById('tasaInfo');
-            if (!tasaEl) return;
-            tasaEl.value = '';
-            tasaEl.readOnly = true;
-            tasaEl.classList.add('comp-tasa-auto');
-            tasaEl.classList.remove('comp-tasa-editable');
-            var btn = document.getElementById('btnEditarTasa');
-            if (btn) {
-                btn.innerHTML = '<i class="bi bi-pencil"></i>';
-                btn.setAttribute('data-tooltip', 'Clic para editar manualmente');
-            }
-            if (infoEl) infoEl.innerHTML = jvSkeletonHtml('linea');
-
-            jvFetchConTope('index.php?url=tasas/obtener', { ms: 12000 })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    if (!data.ok) {
-                        activarEdicionManualTasa('Error al obtener tasa. Edita manualmente.');
-                        return;
-                    }
-                    var tasa = tipo === 'Dolar' ? data.usd_oficial : data.eur_oficial;
-                    if (!tasa || tasa <= 0) {
-                        activarEdicionManualTasa('Tasa no disponible. Edita manualmente.');
-                        return;
-                    }
-                    tasaEl.value = Number(tasa).toFixed(4);
-                    var moneda = tipo === 'Dolar' ? 'USD' : 'EUR';
-                    if (infoEl) infoEl.innerHTML = '<i class="bi bi-check-circle-fill"></i> BCV ' + data.fecha + ' &mdash; 1 ' + moneda + ' = ' + Number(tasa).toFixed(2) + ' VES';
-                    calcularEquivalenteVES();
-                })
-                .catch(function(e) {
-                    if (e && e.jvTope) {
-                        activarEdicionManualTasa('BCV no responde ahora. Digita la tasa manualmente.');
-                        return;
-                    }
-                    activarEdicionManualTasa('Sin conexión. Edita la tasa manualmente.');
-                });
-        }
-
-        // Habilita la edición manual de la tasa (mismo efecto del botón lápiz)
-        // y muestra el motivo en la línea de estado.
-        function activarEdicionManualTasa(mensaje) {
-            var tasaEl = document.getElementById('tasaCambio');
-            var infoEl = document.getElementById('tasaInfo');
-            var btn = document.getElementById('btnEditarTasa');
-            if (tasaEl) {
-                tasaEl.readOnly = false;
-                tasaEl.classList.remove('comp-tasa-auto');
-                tasaEl.classList.add('comp-tasa-editable');
-            }
-            if (btn) {
-                btn.innerHTML = '<i class="bi bi-check-lg"></i>';
-                btn.setAttribute('data-tooltip', 'Confirmar tasa manual');
-            }
-            if (infoEl) infoEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ' + mensaje;
-        }
-
-        // Calcula el equivalente en VES del monto original en divisa extranjera
-        function calcularEquivalenteVES() {
-            var tasaEl = document.getElementById('tasaCambio');
-            var montoEl = document.getElementById('montoOriginal');
-            var resultadoEl = document.getElementById('equivalenteVES');
-            var hiddenEl = document.getElementById('equivalenteVESInput');
-            var montoPagoEl = document.getElementById('montoPago');
-            if (!tasaEl || !montoEl) return;
-            var tasa = parseFloat(tasaEl.value.replace(/,/g, '')) || 0;
-            var monto = parseFloat(montoEl.value.replace(/,/g, '')) || 0;
-            var equivalente = tasa > 0 && monto > 0 ? tasa * monto : 0;
-            if (resultadoEl) {
-                resultadoEl.textContent = equivalente > 0 ? 'Bs. ' + equivalente.toFixed(2) : 'Bs. 0.00';
-            }
-            if (hiddenEl) hiddenEl.value = equivalente > 0 ? equivalente.toFixed(2) : '0';
-            // Auto-llenar monto pagado con el equivalente VES
-            if (montoPagoEl && equivalente > 0) {
-                montoPagoEl.value = equivalente.toFixed(2);
-                montoEditado = false;
-            }
         }
 
         // ==========================================
@@ -193,6 +98,9 @@
                 productoSeleccionado = null;
                 return;
             }
+            if (productoSeleccionado && searchTerm !== productoSeleccionado.nombre) {
+                productoSeleccionado = null;
+            }
             window.clearTimeout(toolboxTimer);
             toolboxTimer = window.setTimeout(function() {
                 jvBuscarProductos({ q: searchTerm, limit: 15 }, function(searchResponse) {
@@ -241,7 +149,7 @@
             if (!productoSeleccionado || !productoSeleccionado.id) {
                 Swal.fire({
                     title: 'Seleccione un producto',
-                    text: 'Busque y elija un producto de la lista',
+                    text: 'Escriba el nombre, seleccione una sugerencia y complete la cantidad, el precio y el vencimiento antes de agregarlo.',
                     icon: 'warning',
                     background: '#fff',
                     color: '#212529',
@@ -368,7 +276,7 @@
         // ==========================================
         // VALIDACIÓN DEL FORMULARIO
         // ==========================================
-        // Valida todos los campos obligatorios (proveedor, factura, método, monto y líneas);
+        // Valida proveedor, factura, control fiscal y líneas del carrito;
         // si hay errores los marca, los muestra en un resumen y evita el envío.
         function validarFormulario(btn) {
             limpiarErrores();
@@ -414,84 +322,6 @@
                 if (!primerError) primerError = ctrl;
             }
 
-            const metodo = document.getElementById('selMetodo');
-            if (!metodo.value) {
-                errores.push('SELECCIONE UN MÉTODO DE PAGO');
-                marcarError(metodo);
-                if (!primerError) primerError = metodo;
-            } else {
-                if (metodo.value === 'Efectivo') {
-                    const tipoDivisa = document.getElementById('selEfectivoTipo');
-                    if (!tipoDivisa.value) {
-                        errores.push('SELECCIONE EL TIPO DE DIVISA (BOLÍVARES O DÓLAR/EURO)');
-                        marcarError(tipoDivisa);
-                        if (!primerError) primerError = tipoDivisa;
-                    } else if (tipoDivisa.value !== 'Bolivares') {
-                        const tasa = document.getElementById('tasaCambio');
-                        const tasaVal = parseFloat(tasa.value.replace(/,/g, '')) || 0;
-                        if (tasaVal <= 0) {
-                            errores.push('LA TASA DE CAMBIO DEBE SER MAYOR A 0');
-                            marcarError(tasa);
-                            if (!primerError) primerError = tasa;
-                        }
-                        const montoOrig = document.getElementById('montoOriginal');
-                        const montoOrigVal = parseFloat(montoOrig.value.replace(/,/g, '')) || 0;
-                        if (montoOrigVal <= 0) {
-                            errores.push('EL MONTO EN LA DIVISA ES OBLIGATORIO');
-                            marcarError(montoOrig);
-                            if (!primerError) primerError = montoOrig;
-                        }
-                    }
-                } else if (metodo.value === 'Transferencia') {
-                    const cedula = document.getElementById('pmCedula');
-                    const telefono = document.getElementById('pmTelefono');
-                    const banco = document.getElementById('pmBanco');
-                    const referencia = document.getElementById('pmReferencia');
-                    if (!cedula.value.trim()) {
-                        errores.push('LA CÉDULA DEL BENEFICIARIO ES OBLIGATORIA');
-                        marcarError(cedula);
-                        if (!primerError) primerError = cedula;
-                    }
-                    if (!telefono.value.trim()) {
-                        errores.push('EL TELÉFONO ES OBLIGATORIO');
-                        marcarError(telefono);
-                        if (!primerError) primerError = telefono;
-                    }
-                    if (!banco.value) {
-                        errores.push('SELECCIONE EL BANCO DESTINO');
-                        marcarError(banco);
-                        if (!primerError) primerError = banco;
-                    }
-                    if (!referencia.value.trim()) {
-                        errores.push('EL NÚMERO DE REFERENCIA ES OBLIGATORIO');
-                        marcarError(referencia);
-                        if (!primerError) primerError = referencia;
-                    }
-                } else if (metodo.value === 'Cheque') {
-                    const cheque = document.getElementById('chequeNumero');
-                    if (!cheque.value.trim()) {
-                        errores.push('EL NÚMERO DE CHEQUE ES OBLIGATORIO');
-                        marcarError(cheque);
-                        if (!primerError) primerError = cheque;
-                    }
-                } else if (metodo.value === 'Otro') {
-                    const otro = document.getElementById('otroDescripcion');
-                    if (!otro.value.trim()) {
-                        errores.push('DESCRIBA LA FORMA DE PAGO');
-                        marcarError(otro);
-                        if (!primerError) primerError = otro;
-                    }
-                }
-            }
-
-            const montoEl = document.getElementById('montoPago');
-            const monto = parseFloat(montoEl.value.replace(/,/g, '')) || 0;
-            if (monto < 0 || monto > 99999999.99) {
-                errores.push('MONTO DE PAGO INVÁLIDO (MÁXIMO 99,999,999.99)');
-                marcarError(montoEl);
-                if (!primerError) primerError = montoEl;
-            }
-
             if (productos.length === 0) errores.push('AGREGUE AL MENOS UN PRODUCTO');
 
             if (errores.length > 0) {
@@ -513,11 +343,22 @@
                 return false;
             }
 
-            montoEl.value = monto.toFixed(2);
+            const form = btn.form;
+            if (!form) {
+                btn.disabled = productos.length === 0;
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Compra';
+                Swal.fire({
+                    title: 'FORMULARIO NO DISPONIBLE',
+                    text: 'No se pudo asociar el botón con el formulario de compra. Recargue la página e inténtelo de nuevo.',
+                    icon: 'error',
+                    confirmButtonColor: '#DC2626'
+                });
+                return false;
+            }
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> GUARDANDO...';
-            const formData = new FormData(btn.form);
-            fetch(btn.form.action || window.location.href, {
+            const formData = new FormData(form);
+            fetch(form.action || window.location.href, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
@@ -540,6 +381,7 @@
                     });
                 })
                 .then(function() {
+                    jvBorradorLimpiar('compras_alta');
                     window.location.reload();
                 })
                 .catch(function(error) {
@@ -980,8 +822,6 @@
                 document.getElementById('selProveedor').dispatchEvent(new Event('change', { bubbles: true }));
                 document.querySelector('input[name="nro_factura"]').value = compraRecuperacion.nro_factura || '';
                 document.querySelector('input[name="nro_control"]').value = compraRecuperacion.nro_control || '';
-                document.getElementById('selMetodo').value = '';
-                document.getElementById('montoPago').value = '0.00';
                 productos = Array.isArray(compraRecuperacion.productos)
                     ? compraRecuperacion.productos.map(function(producto) {
                         const cantidad = Number(producto.cantidad);
@@ -1045,69 +885,6 @@
                     if (e) e.remove();
                 });
             });
-
-            // Pago dinámico: mostrar/ocultar sub-campos según método seleccionado
-            var selMetodo = document.getElementById('selMetodo');
-            if (selMetodo) {
-                selMetodo.addEventListener('change', function() {
-                    var val = this.value;
-                    document.querySelectorAll('.comp-pago-detalle').forEach(function(el) { el.style.display = 'none'; });
-                    document.getElementById('pagoEfectivo').style.display = val === 'Efectivo' ? '' : 'none';
-                    document.getElementById('pagoTransferencia').style.display = val === 'Transferencia' ? '' : 'none';
-                    document.getElementById('pagoCheque').style.display = val === 'Cheque' ? '' : 'none';
-                    document.getElementById('pagoOtro').style.display = val === 'Otro' ? '' : 'none';
-                });
-            }
-
-            // Efectivo divisa: mostrar/ocultar campos y consultar tasa BCV automáticamente
-            var selEfectivoTipo = document.getElementById('selEfectivoTipo');
-            if (selEfectivoTipo) {
-                selEfectivoTipo.addEventListener('change', function() {
-                    var esDivisa = this.value !== 'Bolivares' && this.value !== '';
-                    document.getElementById('divDivisaExtranjera').style.display = esDivisa ? '' : 'none';
-                    // Reset campos al cambiar
-                    document.getElementById('tasaCambio').value = '';
-                    document.getElementById('tasaInfo').textContent = '';
-                    document.getElementById('montoOriginal').value = '';
-                    document.getElementById('equivalenteVES').textContent = 'Bs. 0.00';
-                    document.getElementById('equivalenteVESInput').value = '0';
-                    if (esDivisa) {
-                        var sym = this.value === 'Dolar' ? 'USD' : 'EUR';
-                        document.getElementById('labelMontoOriginal').innerHTML = 'Monto en ' + sym + ' <span class="text-danger">*</span>';
-                        obtenerTasaCambio(this.value);
-                    }
-                });
-            }
-
-            // Botón editar tasa manualmente
-            var btnEditarTasa = document.getElementById('btnEditarTasa');
-            if (btnEditarTasa) {
-                btnEditarTasa.addEventListener('click', function() {
-                    var tasa = document.getElementById('tasaCambio');
-                    if (tasa.readOnly) {
-                        tasa.readOnly = false;
-                        tasa.classList.remove('comp-tasa-auto');
-                        tasa.classList.add('comp-tasa-editable');
-                        this.innerHTML = '<i class="bi bi-check-lg"></i>';
-                        this.setAttribute('data-tooltip', 'Confirmar tasa manual');
-                        tasa.focus();
-                        tasa.select();
-                    } else {
-                        tasa.readOnly = true;
-                        tasa.classList.remove('comp-tasa-editable');
-                        tasa.classList.add('comp-tasa-auto');
-                        this.innerHTML = '<i class="bi bi-pencil"></i>';
-                        this.setAttribute('data-tooltip', 'Clic para editar manualmente');
-                        calcularEquivalenteVES();
-                    }
-                });
-            }
-
-            // Input monto original: recalcular equivalente al escribir
-            var montoOriginalEl = document.getElementById('montoOriginal');
-            if (montoOriginalEl) {
-                montoOriginalEl.addEventListener('input', calcularEquivalenteVES);
-            }
 
             // Toolbox: búsqueda con debounce
             if (toolboxInput && resultadosBox) {
