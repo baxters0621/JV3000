@@ -339,7 +339,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         <p class="comp-rec-feed-empty">Las recepciones completadas aparecerán aquí.</p>
     <?php endif; ?>
     <div class="comp-rec-feed-footer">
-        <a href="<?php echo $prefijo; ?>index.php?url=historial">Ver todo el historial de operaciones <span aria-hidden="true">→</span></a>
+        <a href="<?php echo APP_URL_BASE; ?>index.php?url=historial">Ver todo el historial de operaciones <span aria-hidden="true">→</span></a>
     </div>
 </section>
 

@@ -31,7 +31,8 @@ foreach ($elementos_feed[0] as $elemento_feed) {
 afirmarFeedRecepciones(strpos($feed, 'Se recibieron <strong>+') !== false && strpos($feed, 'unidades</strong> de') !== false, 'Cada evento debe resumir las unidades y el proveedor.');
 afirmarFeedRecepciones(strpos($feed, 'Factura <?php echo htmlspecialchars($recepcion[\'nro_factura\']') !== false, 'La factura debe mostrarse como texto secundario.');
 afirmarFeedRecepciones(strpos($feed, "'Hoy, ' . date('H:i'") !== false && strpos($feed, "date('d/m', \$marca_tiempo)") !== false, 'La fecha debe usar un formato breve.');
-afirmarFeedRecepciones(strpos($feed, 'url=historial') !== false && strpos($feed, 'Ver todo el historial de operaciones') !== false, 'El feed debe enlazar al historial de operaciones.');
+afirmarFeedRecepciones(strpos($feed, 'APP_URL_BASE; ?>index.php?url=historial') !== false && strpos($feed, 'Ver todo el historial de operaciones') !== false, 'El feed debe enlazar al historial con una URL definida.');
+afirmarFeedRecepciones(strpos($feed, '$prefijo') === false, 'El feed no debe depender de una variable de prefijo no definida.');
 afirmarFeedRecepciones(strpos($modelo, 'ORDER BY m.fecha_movimiento DESC, m.id_movimiento DESC') !== false && strpos($modelo, 'LIMIT 4') !== false, 'La consulta debe limitar las recepciones más recientes a cuatro.');
 afirmarFeedRecepciones(strpos($javascript, 'function filtrarRecepciones()') === false, 'No debe quedar lógica de búsqueda para la tabla eliminada.');
 afirmarFeedRecepciones(strpos($estilos, 'overflow-wrap: anywhere;') !== false && strpos($estilos, 'grid-template-columns: 36px minmax(0, 1fr);') !== false, 'El feed debe permitir nombres largos y adaptarse a móvil.');
