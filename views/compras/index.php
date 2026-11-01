@@ -321,7 +321,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     : ($marca_tiempo !== false ? date('d/m', $marca_tiempo) : '—');
                 ?>
                 <li class="list-group-item comp-rec-feed-item d-flex align-items-center">
-                    <span class="comp-rec-feed-icon" aria-hidden="true"><i class="bi bi-check2"></i></span>
+                    <span class="comp-rec-feed-icon me-3" aria-hidden="true"><i class="bi bi-check2"></i></span>
                     <div class="comp-rec-feed-content">
                         <p class="comp-rec-feed-summary">
                             Se recibieron <strong>+<?php echo (int)$recepcion['unidades']; ?> unidades</strong> de

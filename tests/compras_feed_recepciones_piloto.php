@@ -23,6 +23,7 @@ afirmarFeedRecepciones(strpos($vista, '<ul class="list-group list-group-flush co
 afirmarFeedRecepciones($feed !== '' && strpos($feed, '<table') === false, 'La tabla de recepciones debe reemplazarse por el feed.');
 afirmarFeedRecepciones(strpos($feed, 'mt-4') !== false, 'El feed debe tener margen superior.');
 afirmarFeedRecepciones(strpos($feed, 'comp-rec-feed-item d-flex align-items-center') !== false, 'Las filas deben centrar verticalmente la fecha con flexbox.');
+afirmarFeedRecepciones(strpos($feed, 'comp-rec-feed-icon me-3') !== false, 'El icono debe tener margen derecho para separarlo del texto.');
 preg_match_all('/<li\b[^>]*>.*?<\/li>/s', $feed, $elementos_feed);
 foreach ($elementos_feed[0] as $elemento_feed) {
     afirmarFeedRecepciones(!preg_match('/\b(?:title|data-tooltip|data-bs-toggle)\s*=/', $elemento_feed), 'Los elementos del feed no deben mostrar tooltips.');
