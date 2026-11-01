@@ -288,18 +288,14 @@ class Compra extends Model
             }
             $id_producto = intval($prod['id'] ?? 0);
             $cantidad = normalizarCantidadUnidades($prod['cantidad'] ?? null);
-            $precio_costo = round((float)($prod['precio'] ?? 0), 2);
             if ($cantidad === null) {
                 return ['ok' => false, 'mensaje' => 'CANTIDAD INVÁLIDA POR PRODUCTO. RANGO: 1 A 999,999.'];
-            }
-            if ($precio_costo < 0 || $precio_costo > 99999999.99) {
-                return ['ok' => false, 'mensaje' => "PRECIO DE COSTO INVÁLIDO PARA PRODUCTO #$id_producto. RANGO: 0 A 99,999,999.99."];
             }
             if ($id_producto <= 0) {
                 return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO EN EL DETALLE DE LA COMPRA.'];
             }
             $prod_fila = $this->db->fetchOne(
-                "SELECT p.sku, p.nombre_producto, p.status, cc.id_catalogo
+                "SELECT p.sku, p.nombre_producto, p.status, cc.id_catalogo, cc.costo
                  FROM productos p
                  LEFT JOIN catalogo_costos cc
                     ON cc.id_producto = p.id_producto AND cc.id_proveedor = ?
@@ -315,6 +311,13 @@ class Compra extends Model
             }
             if (empty($prod_fila['id_catalogo'])) {
                 return ['ok' => false, 'mensaje' => "EL PRODUCTO {$prod_fila['nombre_producto']} NO ESTÁ EN EL CATÁLOGO DEL PROVEEDOR. AGRÉGUELO AL CATÁLOGO ANTES DE REGISTRAR LA COMPRA."];
+            }
+            if (!is_numeric($prod_fila['costo'] ?? null)) {
+                return ['ok' => false, 'mensaje' => "EL COSTO DEL CATÁLOGO ES INVÁLIDO PARA {$prod_fila['nombre_producto']}. REVISE EL CATÁLOGO DEL PROVEEDOR."];
+            }
+            $precio_costo = round((float)$prod_fila['costo'], 2);
+            if ($precio_costo < 0 || $precio_costo > 99999999.99) {
+                return ['ok' => false, 'mensaje' => "EL COSTO DEL CATÁLOGO ES INVÁLIDO PARA {$prod_fila['nombre_producto']}. RANGO: 0 A 99,999,999.99."];
             }
             // REGLA DE NEGOCIO: todo lote nace de una compra y TODO lote exige
             // fecha de vencimiento. Sin ella se rompe el control FEFO del inventario.

@@ -18,24 +18,6 @@
             return '$' + Number(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
-        // ---- Formateo de precio en el input ----
-        // Normaliza lo escrito en el input de precio: solo dígitos y punto, separador de miles y tope de 99,999,999.99.
-        function formatearPrecioCompra(el) {
-            var raw = el.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-            var parts = raw.split('.');
-            var entero = parts[0].replace(/^0+/, '') || '0';
-            var decimales = parts[1] ? parts[1].slice(0, 2) : '';
-            var formateado = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            if (decimales) formateado += '.' + decimales;
-            var num = parseFloat(entero + '.' + (decimales || '0'));
-            if (num > 99999999.99) {
-                entero = '99999999';
-                decimales = '99';
-                formateado = '99,999,999.99';
-            }
-            el.value = formateado;
-        }
-
         // ==========================================
         // CATÁLOGO DEL PROVEEDOR
         // ==========================================
@@ -149,7 +131,7 @@
             if (!productoSeleccionado || !productoSeleccionado.id) {
                 Swal.fire({
                     title: 'Seleccione un producto',
-                    text: 'Elija un producto del catálogo de este proveedor y complete la cantidad, el precio y el vencimiento.',
+                    text: 'Elija un producto del catálogo de este proveedor y complete la cantidad y el vencimiento.',
                     icon: 'warning',
                     background: '#fff',
                     color: '#212529',
@@ -160,13 +142,13 @@
             }
             const quantityText = document.getElementById('inputCant').value.trim();
             const requestedQuantity = Number(quantityText);
-            const precio = parseFloat(document.getElementById('inputPrecio').value.replace(/,/g, '')) || 0;
             const expirationDate = document.getElementById('inputVencimiento').value || '';
             const catalogo = (window.JV_CATALOGO || {})[proveedorSelect.value] || [];
             const productoCatalogo = catalogo.find(function(entrada) {
                 return Number(entrada.id) === Number(productoSeleccionado.id);
             });
             const disponible = productoCatalogo ? disponibleEnCarrito(productoCatalogo) : 0;
+            const precio = productoCatalogo ? Number(productoCatalogo.costo) : NaN;
 
             if (!/^\d+(?:\.0+)?$/.test(quantityText) || !Number.isInteger(requestedQuantity) || requestedQuantity < 1 || requestedQuantity > 999999) {
                 Swal.fire({
@@ -190,10 +172,10 @@
                 });
                 return;
             }
-            if (precio < 0 || precio > 99999999.99) {
+            if (!Number.isFinite(precio) || precio < 0 || precio > 99999999.99) {
                 Swal.fire({
                     title: 'Precio inválido',
-                    text: 'Ingrese un precio entre 0 y 99,999,999.99',
+                    text: 'El costo registrado en el catálogo del proveedor no es válido. Revise el catálogo antes de continuar.',
                     icon: 'warning',
                     background: '#fff',
                     color: '#212529',
@@ -201,6 +183,7 @@
                 });
                 return;
             }
+            document.getElementById('inputPrecio').value = precio.toFixed(2);
             // REGLA DE NEGOCIO: todo lote exige fecha de vencimiento (control FEFO)
             if (!expirationDate) {
                 Swal.fire({

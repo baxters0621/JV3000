@@ -468,8 +468,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" step="1">
                                 </div>
                                 <div class="comp-add-field">
-                                    <label class="comp-label-sm">Precio Unitario ($)</label>
-                                    <input type="text" inputmode="decimal" class="input-jv" id="inputPrecio" aria-label="Precio unitario del producto" placeholder="0.00" oninput="formatearPrecioCompra(this)">
+                                    <label class="comp-label-sm">Precio Unitario del Catálogo ($)</label>
+                                    <input type="text" class="input-jv" id="inputPrecio" aria-label="Precio unitario establecido por el proveedor" placeholder="Selecciona un producto" readonly aria-readonly="true">
                                 </div>
                                 <div class="comp-add-field">
                                     <label class="comp-label-sm">Fecha de Vencimiento <span class="text-danger">*</span></label>

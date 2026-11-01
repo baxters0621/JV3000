@@ -175,6 +175,16 @@ function comprasPilotoFormulario(int $proveedorId, array $productos, string $fac
  */
 function comprasPilotoRegistrar(int $proveedorId, array $productos, string $factura, int $idSolicitud = 0, float $pagoInicial = 0, string $fechaCompra = ''): array
 {
+    $db = Database::getInstance();
+    foreach ($productos as [$idProducto, , $precioProveedor]) {
+        if ((int)$idProducto > 0) {
+            $db->execute(
+                'UPDATE catalogo_costos SET costo = ? WHERE id_proveedor = ? AND id_producto = ?',
+                [$precioProveedor, $proveedorId, (int)$idProducto]
+            );
+        }
+    }
+
     return (new Compra())->registrar(
         comprasPilotoFormulario($proveedorId, $productos, $factura, $idSolicitud, $pagoInicial, $fechaCompra),
         1
@@ -405,11 +415,20 @@ try {
         'id_producto' => $productoA,
         'cantidad_solicitada' => 2,
     ]);
+    $db->execute(
+        'UPDATE catalogo_costos SET costo = ? WHERE id_proveedor = ? AND id_producto = ?',
+        [12.50, $proveedorId, $productoA]
+    );
+    $db->execute(
+        'UPDATE catalogo_costos SET costo = ? WHERE id_proveedor = ? AND id_producto = ?',
+        [2.00, $proveedorId, $productoB]
+    );
     $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
-    $compraResultado = comprasPilotoRegistrar($proveedorId, [
-        [$productoA, 2, 12.50],
-        [$productoB, 3, 2.00],
+    $datosCompraPrecioAlterado = comprasPilotoFormulario($proveedorId, [
+        [$productoA, 2, 99.99],
+        [$productoB, 3, 88.88],
     ], '700001', $solicitudId, 5.00, date('Y-m-d', strtotime('-1 day')));
+    $compraResultado = (new Compra())->registrar($datosCompraPrecioAlterado, 1);
     comprasPilotoAfirmar($compraResultado['ok'], 'Falló el alta sintética de compra: ' . $compraResultado['mensaje']);
     $compraId = (int)$db->fetchOne("SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = '700001'", [$proveedorId])['id_compra'];
     $fechaAtrasada = date('Y-m-d', strtotime('-1 day'));
@@ -423,6 +442,18 @@ try {
         && (float)$compra['monto_pago'] === 5.00
         && $compra['estado_recepcion'] === 'Pendiente',
         'El alta no preservó los importes, anticipo o estado actuales.'
+    );
+    $costosCompra = $db->fetchAll(
+        'SELECT id_producto, precio_costo FROM detalle_compras WHERE id_compra = ? ORDER BY id_producto',
+        [$compraId]
+    );
+    comprasPilotoAfirmar(
+        count($costosCompra) === 2
+        && (int)$costosCompra[0]['id_producto'] === $productoA
+        && (float)$costosCompra[0]['precio_costo'] === 12.50
+        && (int)$costosCompra[1]['id_producto'] === $productoB
+        && (float)$costosCompra[1]['precio_costo'] === 2.00,
+        'La compra usó un precio alterado desde el navegador en vez del costo del catálogo del proveedor.'
     );
     comprasPilotoAfirmar(
         (int)$db->fetchOne('SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?', [$proveedorId, $productoA])['stock_disponible'] === 999997
