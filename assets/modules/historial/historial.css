@@ -216,13 +216,13 @@
 
 .historial-tabla {
     width: 100%;
-    min-width: 1180px;
+    min-width: 1200px;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
 .historial-tabla th {
-    padding: 12px 15px;
+    padding: 16px;
     background: #f8fafc;
     color: var(--jv-text-primary);
     font-size: .9rem;
@@ -232,16 +232,8 @@
     border-bottom: 1px solid #e2e8f0;
 }
 
-.historial-tabla th:nth-child(1) { width: 16%; }
-.historial-tabla th:nth-child(2) { width: 17%; }
-.historial-tabla th:nth-child(3) { width: 18%; }
-.historial-tabla th:nth-child(4) { width: 16%; }
-.historial-tabla th:nth-child(5) { width: 16%; }
-.historial-tabla th:nth-child(6) { width: 11%; }
-.historial-tabla th:nth-child(7) { width: 6%; }
-
 .historial-fila td {
-    padding: 18px;
+    padding: 16px;
     border-bottom: 1px solid var(--jv-border);
     color: var(--jv-text-primary);
     vertical-align: middle;
@@ -254,6 +246,14 @@
 
 .historial-fila:hover {
     background: #f8fafc;
+}
+
+.historial-tabla .historial-tipo-compra td:first-child {
+    border-left: 4px solid var(--historial-compra);
+}
+
+.historial-tabla .historial-tipo-venta td:first-child {
+    border-left: 4px solid var(--historial-venta);
 }
 
 /* Primera celda: tipo + referencia (folio). */
@@ -277,6 +277,17 @@
     font-weight: 750;
 }
 
+.historial-referencia {
+    color: var(--jv-navy);
+}
+
+.historial-contraparte {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
 .historial-usuario {
     white-space: nowrap;
 }
@@ -285,15 +296,25 @@
     display: -webkit-box;
     overflow: hidden;
     color: var(--jv-text-secondary);
-    font-size: .86rem;
+    font-size: .9rem;
     line-height: 1.45;
     overflow-wrap: break-word;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     line-clamp: 2;
+    text-align: left;
 }
 
-.historial-unidades,
+.historial-unidades {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 8px;
+    background: #f1f5f9;
+    color: var(--jv-text-secondary);
+    font-size: .72rem;
+    font-weight: 650;
+}
+
 .historial-fecha {
     display: block;
     margin-top: 4px;
@@ -308,9 +329,8 @@
 /* Estado y detalles de compra en una sola fila de etiquetas compactas. */
 .historial-estado-grupo {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
+    align-items: flex-start;
+    flex-direction: column;
     gap: 5px;
 }
 
@@ -342,11 +362,21 @@
     padding: 3px 7px;
     border: 1px solid #e2e8f0;
     border-radius: 999px;
-    background: #f8fafc;
-    color: var(--jv-text-secondary);
     font-size: .7rem;
     font-weight: 650;
     white-space: nowrap;
+}
+
+.historial-badge-ok {
+    border-color: #bae2cb;
+    background: #e3f5ea;
+    color: #075c34;
+}
+
+.historial-badge-pendiente {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: #c2410c;
 }
 
 /* Total: cifra tabular a la derecha, sin !important (gana por especificidad). */
@@ -382,16 +412,16 @@
     align-items: center;
     justify-content: center;
     border-radius: 9px;
-    background: transparent;
+    background: #f8fafc;
     border: 1px solid #e2e8f0;
     color: var(--jv-text-muted);
     transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 
 .historial-accion-cell .btn-outline-secondary:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    color: var(--jv-navy);
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
 }
 
 /* Estado vacío. */
@@ -485,6 +515,10 @@
         min-width: 0;
     }
 
+    .historial-tabla colgroup {
+        display: none;
+    }
+
     .historial-tabla thead {
         position: absolute;
         width: 1px;
@@ -507,6 +541,14 @@
         border-bottom: 1px solid var(--jv-border);
     }
 
+    .historial-fila.historial-tipo-compra {
+        border-left: 4px solid var(--historial-compra);
+    }
+
+    .historial-fila.historial-tipo-venta {
+        border-left: 4px solid var(--historial-venta);
+    }
+
     .historial-fila:last-child {
         border-bottom: 0;
     }
@@ -516,7 +558,6 @@
         min-width: 0;
         padding: 0;
         border: 0;
-        /* El canto de color por tipo no tiene sentido en tarjeta. */
         box-shadow: none !important;
     }
 

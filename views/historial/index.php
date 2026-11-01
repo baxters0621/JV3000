@@ -93,8 +93,17 @@
 </form>
 
 <section class="historial-resultados" aria-label="Operaciones encontradas">
-    <div class="historial-tabla-scroll">
+    <div class="table-responsive historial-tabla-scroll">
         <table class="historial-tabla">
+            <colgroup>
+                <col style="width:160px;">
+                <col style="width:190px;">
+                <col style="width:210px;">
+                <col style="width:170px;">
+                <col style="width:190px;">
+                <col style="width:200px;">
+                <col style="width:80px;">
+            </colgroup>
             <thead>
                 <tr>
                     <th scope="col">Operación</th>
@@ -115,35 +124,35 @@
                         $fecha_operacion = strtotime((string)$operacion['fecha']);
                     ?>
                     <tr class="historial-fila <?php echo $clase_tipo; ?>">
-                        <td data-label="Operación">
+                        <td class="historial-operacion-cell" data-label="Operación">
                             <span class="historial-tipo"><i class="bi <?php echo $es_compra ? 'bi-box-arrow-in-down' : 'bi-bag-check'; ?>" aria-hidden="true"></i><?php echo $nombre_tipo; ?></span>
                             <strong class="historial-referencia">
                                 <?php echo $es_compra ? 'Factura ' : ''; ?><?php echo htmlspecialchars((string)$operacion['referencia'], ENT_QUOTES, 'UTF-8'); ?>
                             </strong>
                         </td>
-                        <td data-label="<?php echo $es_compra ? 'Proveedor' : 'Cliente'; ?>">
-                            <span class="historial-celda-principal"><?php echo htmlspecialchars((string)$operacion['contraparte'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        <td class="historial-contraparte-cell" data-label="<?php echo $es_compra ? 'Proveedor' : 'Cliente'; ?>">
+                            <span class="historial-celda-principal historial-contraparte" title="<?php echo htmlspecialchars((string)$operacion['contraparte'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars((string)$operacion['contraparte'], ENT_QUOTES, 'UTF-8'); ?></span>
                         </td>
-                        <td data-label="Productos">
+                        <td class="historial-productos-cell" data-label="Productos">
                             <span class="historial-productos"><?php echo htmlspecialchars((string)($operacion['productos'] ?? 'Sin productos detallados'), ENT_QUOTES, 'UTF-8'); ?></span>
-                            <span class="historial-unidades"><?php echo number_format((int)$operacion['cantidad_total']); ?> unidades</span>
+                            <span class="historial-unidades badge"><?php echo number_format((int)$operacion['cantidad_total']); ?> unidades</span>
                         </td>
-                        <td data-label="Registró">
+                        <td class="historial-registrado-cell" data-label="Registró">
                             <span class="historial-celda-principal historial-usuario" title="<?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?></span>
                             <time class="historial-fecha" datetime="<?php echo $fecha_operacion ? date('Y-m-d\TH:i:s', $fecha_operacion) : ''; ?>">
                                 <?php echo $fecha_operacion ? date('d/m/Y, H:i', $fecha_operacion) : 'Fecha no disponible'; ?>
                             </time>
                         </td>
-                        <td data-label="Estado">
+                        <td class="historial-estado-cell" data-label="Estado">
                             <div class="historial-estado-grupo">
                                 <span class="historial-estado <?php echo $operacion['estado'] === 'Anulada' ? 'historial-estado-anulada' : 'historial-estado-activa'; ?>">
                                     <?php echo htmlspecialchars((string)$operacion['estado'], ENT_QUOTES, 'UTF-8'); ?>
                                 </span>
                                 <?php if ($es_compra): ?>
-                                    <span class="historial-estado-secundario historial-estado-pago">
+                                    <span class="historial-estado-secundario <?php echo ($operacion['estado_pago'] ?? '') === 'Pagada' ? 'historial-badge-ok' : 'historial-badge-pendiente'; ?>">
                                         Pago: <?php echo htmlspecialchars((string)($operacion['estado_pago'] ?? 'Pendiente'), ENT_QUOTES, 'UTF-8'); ?>
                                     </span>
-                                    <span class="historial-estado-secundario historial-estado-recepcion">
+                                    <span class="historial-estado-secundario <?php echo ($operacion['estado_recepcion'] ?? '') === 'Completa' ? 'historial-badge-ok' : 'historial-badge-pendiente'; ?>">
                                         Recepción: <?php echo htmlspecialchars((string)($operacion['estado_recepcion'] ?? 'Pendiente'), ENT_QUOTES, 'UTF-8'); ?>
                                     </span>
                                 <?php endif; ?>
