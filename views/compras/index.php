@@ -438,6 +438,13 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     <label class="comp-label">Fecha de Compra</label>
                                     <input type="date" name="fecha_compra" id="fechaCompra" class="input-jv comp-input" value="<?php echo date('Y-m-d'); ?>" min="1970-01-01" max="<?php echo date('Y-m-d'); ?>" aria-label="Fecha de la compra" required>
                                 </div>
+                                <div class="col-12">
+                                    <label class="comp-label" for="compObservaciones">Observaciones</label>
+                                    <div class="comp-obs-row">
+                                        <i class="bi bi-chat-text" aria-hidden="true"></i>
+                                        <input type="text" name="observaciones" id="compObservaciones" aria-label="Observaciones de la compra" class="input-jv" placeholder="Observaciones opcionales...">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -456,41 +463,45 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
                             <!-- Toolbar de agregar -->
                             <div class="comp-add-row">
-                                <div class="comp-add-product">
-                                    <label class="comp-label-sm" for="selProductoProveedor">Producto del proveedor</label>
-                                    <select class="input-jv" id="selProductoProveedor" aria-label="Producto del catálogo del proveedor" disabled>
-                                        <option value="">Selecciona primero un proveedor</option>
-                                    </select>
-                                    <div class="comp-catalog-status" id="catalogoProveedorEstado" role="status" aria-live="polite">Selecciona un proveedor para ver sus productos.</div>
+                                <div class="row g-3 align-items-end comp-add-grid">
+                                    <div class="col-md-4 comp-add-product">
+                                        <label class="comp-label-sm" for="selProductoProveedor">Producto del proveedor</label>
+                                        <div class="comp-catalog-status" id="catalogoProveedorEstado" role="status" aria-live="polite">Selecciona un proveedor para ver sus productos.</div>
+                                        <select class="input-jv" id="selProductoProveedor" aria-label="Producto del catálogo del proveedor" disabled>
+                                            <option value="">Selecciona primero un proveedor</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1 comp-add-field">
+                                        <label class="comp-label-sm" for="inputCant">Cantidad</label>
+                                        <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" step="1">
+                                    </div>
+                                    <div class="col-md-3 comp-add-field">
+                                        <label class="comp-label-sm" for="inputPrecio">Precio Unitario del Catálogo ($)</label>
+                                        <input type="text" class="input-jv" id="inputPrecio" aria-label="Precio unitario establecido por el proveedor" placeholder="Selecciona un producto" readonly aria-readonly="true">
+                                    </div>
+                                    <div class="col-md-2 comp-add-field">
+                                        <label class="comp-label-sm" for="inputVencimiento">Fecha de Vencimiento <span class="text-danger">*</span></label>
+                                        <input type="date" class="input-jv" id="inputVencimiento" aria-label="Fecha de vencimiento del lote" required>
+                                    </div>
+                                    <div class="col-md-2 comp-add-action">
+                                        <button type="button" class="comp-add-btn" onclick="agregarProducto()" aria-label="Agregar producto al carrito" data-tooltip="Agregar producto al carrito">
+                                            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="comp-add-field">
-                                    <label class="comp-label-sm">Cantidad</label>
-                                    <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" step="1">
-                                </div>
-                                <div class="comp-add-field">
-                                    <label class="comp-label-sm">Precio Unitario del Catálogo ($)</label>
-                                    <input type="text" class="input-jv" id="inputPrecio" aria-label="Precio unitario establecido por el proveedor" placeholder="Selecciona un producto" readonly aria-readonly="true">
-                                </div>
-                                <div class="comp-add-field">
-                                    <label class="comp-label-sm">Fecha de Vencimiento <span class="text-danger">*</span></label>
-                                    <input type="date" class="input-jv" id="inputVencimiento" aria-label="Fecha de vencimiento del lote" required>
-                                </div>
-                                <button type="button" class="comp-add-btn" onclick="agregarProducto()" data-tooltip="Agregar producto al carrito">
-                                    <i class="bi bi-plus-lg"></i>
-                                </button>
                             </div>
 
                             <!-- Tabla de productos -->
                             <div class="comp-cart-table">
                                 <table class="table-jv mb-0">
                                     <colgroup>
-                                        <col style="width:4%;">
-                                        <col style="width:38%;">
+                                        <col style="width:6%;">
+                                        <col style="width:32%;">
                                         <col style="width:10%;">
                                         <col style="width:14%;">
                                         <col style="width:16%;">
-                                        <col style="width:14%;">
-                                        <col style="width:4%;">
+                                        <col style="width:16%;">
+                                        <col style="width:6%;">
                                     </colgroup>
                                     <thead>
                                         <tr>
@@ -516,30 +527,24 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
                             <!-- Resumen -->
                             <div class="comp-cart-summary">
-                                <div class="comp-summary-item">
+                                <div class="comp-summary-item text-end">
                                     <span class="comp-summary-label">Productos</span>
                                     <span class="comp-summary-value" id="totalItems">0</span>
                                 </div>
-                                <div class="comp-summary-item">
+                                <div class="comp-summary-item text-end">
                                     <span class="comp-summary-label">Subtotal</span>
                                     <span class="comp-summary-value" id="totalSubtotal">$0.00</span>
                                 </div>
-                                <div class="comp-summary-item">
+                                <div class="comp-summary-item text-end">
                                     <span class="comp-summary-label">IVA (<?php echo $iva_pct; ?>%)</span>
                                     <span class="comp-summary-value" id="totalIva">$0.00</span>
                                 </div>
-                                <div class="comp-summary-item comp-summary-total">
+                                <div class="comp-summary-item comp-summary-total text-end">
                                     <span class="comp-summary-label">Total</span>
-                                    <span class="comp-summary-value comp-total-big" id="totalCosto">$0.00</span>
+                                    <span class="comp-summary-value comp-total-big fs-5" id="totalCosto">$0.00</span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Observaciones -->
-                    <div class="comp-obs-row">
-                        <i class="bi bi-chat-text"></i>
-                        <input type="text" name="observaciones" aria-label="Observaciones de la compra" class="input-jv" placeholder="Observaciones opcionales...">
                     </div>
 
                 </div>

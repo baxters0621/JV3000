@@ -7,6 +7,7 @@ $raiz = dirname(__DIR__);
 $vista = file_get_contents($raiz . '/views/compras/index.php');
 $modelo = file_get_contents($raiz . '/models/Compra.php');
 $javascript = file_get_contents($raiz . '/assets/modules/compras/compras.js');
+$estilos = file_get_contents($raiz . '/assets/modules/compras/compras.css');
 $diseno = file_get_contents($raiz . '/assets/js/diseno.js');
 
 function afirmarComprasFormulario(bool $condicion, string $mensaje): void
@@ -30,5 +31,14 @@ afirmarComprasFormulario(strpos($vista, 'data-borrador-restaurar-automatico') !=
 afirmarComprasFormulario(strpos($modelo, 'if ($monto_pago > 0) {') !== false, 'La validación de pago no está condicionada a un monto positivo.');
 afirmarComprasFormulario(strpos($diseno, "form.hasAttribute('data-borrador-restaurar-automatico')") !== false, 'El sistema de borradores ignora la restauración automática por formulario.');
 afirmarComprasFormulario(strpos($javascript, "jvBorradorLimpiar('compras_alta')") !== false, 'El guardado exitoso podría restaurar un carrito ya registrado.');
+afirmarComprasFormulario(substr_count($vista, 'name="observaciones"') === 1, 'Observaciones debe conservar un único campo en el formulario.');
+afirmarComprasFormulario(strpos($vista, 'id="compObservaciones"') < strpos($vista, '<!-- PASO 3: Productos -->'), 'Observaciones debe aparecer en los datos de factura antes del paso de productos.');
+afirmarComprasFormulario(strpos($vista, 'row g-3 align-items-end comp-add-grid') !== false, 'La fila para agregar productos debe usar el grid de Bootstrap.');
+foreach (['col-md-4 comp-add-product', 'col-md-1 comp-add-field', 'col-md-3 comp-add-field', 'col-md-2 comp-add-field', 'col-md-2 comp-add-action'] as $columna) {
+    afirmarComprasFormulario(strpos($vista, $columna) !== false, 'Falta la columna esperada del grid: ' . $columna);
+}
+afirmarComprasFormulario(strpos($vista, 'class="comp-add-btn"') !== false && strpos($estilos, 'width: 100%;' . "\n            height: 52px;") !== false, 'El botón de agregar debe ocupar su columna y medir lo mismo que los controles.');
+afirmarComprasFormulario(strpos($vista, 'comp-summary-item text-end') !== false && strpos($vista, 'comp-total-big fs-5') !== false, 'El resumen debe estar alineado a la derecha y destacar el total.');
+afirmarComprasFormulario(strpos($estilos, 'padding: 12px 16px !important;') !== false && strpos($estilos, 'padding: 1rem 16px !important;') !== false, 'El carrito debe conservar el espaciado solicitado y el estado vacío compacto.');
 
 echo "OK formulario de compras separado del pago y recuperación automática verificada\n";
