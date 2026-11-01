@@ -131,15 +131,15 @@
 
         <div class="card-jv p-0 overflow-hidden">
             <div class="header-card d-flex align-items-center gap-2">
-                <i class="bi bi-person-lines-fill" style="color:#7c3aed;" aria-hidden="true"></i>
-                <span class="fw-bold small text-secondary text-uppercase">Listado de Accesos</span>
+                <i class="bi bi-person-lines-fill" style="color:var(--jv-navy);" aria-hidden="true"></i>
+                <span class="fw-bold small text-secondary text-uppercase">Listado de colaboradores</span>
                 <span class="codigo-badge ms-auto"><?php echo $total_users; ?> registros</span>
             </div>
 
             <div class="buscador-usu d-flex align-items-center gap-2 px-3 py-2 flex-wrap">
                 <div class="usu-search">
                     <i class="bi bi-search" aria-hidden="true"></i>
-                    <input type="text" class="input-jv" id="buscarUsuario" placeholder="Buscar por usuario o correo…" oninput="aplicarBusquedaUsuarios()" aria-label="Buscar colaborador" aria-controls="cuerpoUsuarios">
+                    <input type="text" class="input-jv" id="buscarUsuario" placeholder="Buscar colaboradores por nombre, cédula o rol..." oninput="aplicarBusquedaUsuarios()" aria-label="Buscar colaborador" aria-controls="cuerpoUsuarios">
                 </div>
                 <span class="contador-usuarios small ms-2" id="contadorUsuarios"> </span>
                 <div class="filter-group-usu ms-auto" role="group" aria-label="Filtrar colaboradores por estado">
@@ -155,7 +155,7 @@
                     <thead>
                         <tr>
                             <th scope="col" style="width:52px;">#</th>
-                            <th scope="col" style="width:16%;">USUARIO</th>
+                            <th scope="col" style="width:16%;">COLABORADOR</th>
                             <th scope="col" style="width:20%;">CORREO</th>
                             <th scope="col" style="width:19%;">ROL</th>
                             <th scope="col" class="text-center" style="width:14%;">ESTADO</th>
@@ -370,7 +370,7 @@
                                 <div class="form-text jv-form-text" id="crear_password_confirm_guia" aria-live="polite">Repite la contraseña inicial.</div>
                             </div>
                             <div class="col-12 modal-usuarios-field">
-                                <label class="section-label" for="crear_rol"><i class="bi bi-shield-fill-check" aria-hidden="true"></i> Rol del usuario</label>
+                                <label class="section-label" for="crear_rol"><i class="bi bi-shield-fill-check" aria-hidden="true"></i> Rol del colaborador</label>
                                 <select class="input-jv w-100" id="crear_rol" aria-describedby="crear_rol_guia" required>
                                     <option value="">Seleccionar rol…</option>
                                     <?php foreach ($roles_lista as $role): if (in_array((int)$role['id_rol'], [2, 3], true)): ?>
@@ -462,7 +462,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body p-4">
-                <p class="pin-info mb-0">PIN de 6 dígitos que comparten todas las cuentas (Operadores de Carga y Ventas, y también el Administrador) para recuperar su contraseña <strong>sin internet</strong>; cada usuario lo ve en <em>Mi Perfil</em>.</p>
+                <p class="pin-info mb-0">PIN de 6 dígitos que comparten todas las cuentas (Operadores de Carga y Ventas, y también el Administrador) para recuperar su contraseña <strong>sin internet</strong>; cada colaborador lo ve en <em>Mi Perfil</em>.</p>
             </div>
             <div class="modal-footer modal-footer-jv">
                 <button type="button" class="btn-jv-secondary" data-bs-dismiss="modal">ENTENDIDO</button>

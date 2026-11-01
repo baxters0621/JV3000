@@ -1,16 +1,16 @@
-/* === THEME: COLABORADORES (Violeta — zona Admin/Control) ===== */
+/* === THEME: COLABORADORES (azul institucional — zona Admin/Control) ===== */
     html:has(body.usuarios-page), body.usuarios-page { overflow-x:hidden; }
 
     .user-header-icon {
         width:56px;height:56px;border-radius:14px;
-        background:linear-gradient(135deg,#7c3aed,#5b21b6);
+        background:linear-gradient(135deg,#0284c7,#0F1A2E);
         display:flex;align-items:center;justify-content:center;
         color:#fff;font-size:1.6rem;flex-shrink:0;
-        box-shadow:0 0 30px rgba(124, 58, 237,0.3);
+        box-shadow:0 0 30px rgba(14, 165, 233,0.3);
     }
 
     .codigo-badge {
-        background:rgba(124, 58, 237,0.12);color:#6D28D9;
+        background:rgba(14, 165, 233,0.12);color:#075985;
         font-size:.8rem;font-weight:800;padding:4px 12px;
         border-radius:20px;display:inline-block;
         letter-spacing:.5px;
@@ -19,7 +19,7 @@
 
     .estado-vacio { padding:60px 20px;text-align:center; }
     .estado-vacio i {
-        font-size:3.5rem;color:rgba(124, 58, 237,0.2);display:block;margin-bottom:16px;
+        font-size:3.5rem;color:rgba(14, 165, 233,0.2);display:block;margin-bottom:16px;
     }
     .estado-vacio span {
         font-size:.85rem;font-weight:700;text-transform:uppercase;
@@ -27,10 +27,10 @@
     }
 
     .pagina-usuarios .card-jv {
-        border-color:rgba(124, 58, 237,0.25);
-        box-shadow:var(--jv-shadow), inset 0 0 0 1px rgba(124, 58, 237,0.06);
+        border-color:rgba(14, 165, 233,0.25);
+        box-shadow:var(--jv-shadow), inset 0 0 0 1px rgba(14, 165, 233,0.06);
     }
-    .pagina-usuarios .card-jv:hover { border-color:rgba(124, 58, 237,0.45); }
+    .pagina-usuarios .card-jv:hover { border-color:rgba(14, 165, 233,0.45); }
     .pagina-usuarios { max-width:100%; overflow-x:hidden; }
     .pagina-usuarios .table-jv {
         table-layout:fixed;
@@ -38,9 +38,9 @@
         min-width:980px;
     }
     .pagina-usuarios .table-jv thead th {
-        background:linear-gradient(135deg,#5b21b6,#7c3aed);
+        background:linear-gradient(135deg,#0F1A2E,#0284c7);
         color:#fff;
-        border-bottom:2px solid rgba(124, 58, 237,0.3);
+        border-bottom:2px solid rgba(14, 165, 233,0.3);
         font-size:.95rem;
         font-weight:900;
         letter-spacing:.5px;
@@ -50,7 +50,7 @@
         text-transform:uppercase;
     }
     .pagina-usuarios .table-jv tbody td {
-        border-bottom:1px solid rgba(124, 58, 237,0.07);
+        border-bottom:1px solid rgba(14, 165, 233,0.07);
         font-size:1rem;
         padding:16px;
         vertical-align:middle;
@@ -62,22 +62,22 @@
         white-space:nowrap;
     }
     .pagina-usuarios .table-jv tbody tr:hover {
-        background:rgba(124, 58, 237,0.03);
+        background:rgba(14, 165, 233,0.03);
     }
     .pagina-usuarios .btn-jv-primary {
-        background:linear-gradient(135deg,#7c3aed,#5b21b6);
+        background:var(--jv-orange);
     }
     .pagina-usuarios .btn-jv-primary:hover {
-        box-shadow:0 8px 25px -5px rgba(124, 58, 237,0.4);
+        box-shadow:0 8px 25px -5px rgba(234,88,12,.3);
         transform:translateY(-2px);
     }
     .pagina-usuarios .input-jv:focus {
-        border-color:#7c3aed;
-        box-shadow:0 0 0 3px rgba(124, 58, 237,0.15);
+        border-color:#0284c7;
+        box-shadow:0 0 0 3px rgba(14, 165, 233,0.15);
     }
     .pagina-usuarios .header-card {
         padding:18px 24px;
-        border-left:4px solid #7c3aed;
+        border-left:4px solid #0284c7;
     }
     .pagina-usuarios .header-card i { font-size:1.1rem; }
     .pagina-usuarios .header-card span { font-size:.85rem; }
@@ -120,14 +120,14 @@
     /* ── Buscador, filtros y contador ── */
     .buscador-usu {
         border-bottom:1px solid var(--jv-border);
-        background:rgba(124, 58, 237,0.02);
+        background:rgba(14, 165, 233,0.02);
     }
     .usu-search {
         position:relative;
         display:flex;
         align-items:center;
         min-width:220px;
-        max-width:340px;
+        max-width:460px;
         flex:1;
     }
     .usu-search i {
@@ -142,7 +142,7 @@
         min-height:40px;
         width:100%;
     }
-    .usu-search .input-jv:focus { border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,0.15); }
+    .usu-search .input-jv:focus { border-color:#0284c7; box-shadow:0 0 0 3px rgba(14,165,233,0.15); }
     .contador-usuarios {
         color:var(--jv-text-muted);
         font-weight:600;
@@ -153,8 +153,8 @@
         gap:4px;
         padding:3px;
         border-radius:10px;
-        background:rgba(124, 58, 237,0.08);
-        border:1px solid rgba(124, 58, 237,0.2);
+        background:rgba(14, 165, 233,0.08);
+        border:1px solid rgba(14, 165, 233,0.2);
     }
     .btn-filter-usu {
         border:1px solid transparent;
@@ -169,20 +169,20 @@
         cursor:pointer;
         transition:color .15s ease, background-color .15s ease, box-shadow .15s ease;
     }
-    .btn-filter-usu:hover { color:#7c3aed; background:rgba(124,58,237,0.08); }
-    /* Foco visible: el grupo va sobre fondo violeta claro y el anillo debe
+    .btn-filter-usu:hover { color:#0284c7; background:rgba(14,165,233,0.08); }
+    /* Foco visible: el grupo va sobre fondo azul claro y el anillo debe
        distinguirse del botón activo. */
-    .btn-filter-usu:focus-visible { outline:3px solid rgba(124,58,237,0.45); outline-offset:2px; }
+    .btn-filter-usu:focus-visible { outline:3px solid rgba(14,165,233,0.45); outline-offset:2px; }
     .btn-filter-usu.active {
-        background:linear-gradient(135deg,#7c3aed,#5b21b6);
+        background:linear-gradient(135deg,#0284c7,#0F1A2E);
         color:#fff;
-        box-shadow:0 4px 12px -3px rgba(124,58,237,0.5);
+        box-shadow:0 4px 12px -3px rgba(14,165,233,0.5);
     }
 
     /* ── Pie de tabla y paginación ── */
     .paginacion-footer {
         border-top:1px solid var(--jv-border);
-        background:rgba(124, 58, 237,0.02);
+        background:rgba(14, 165, 233,0.02);
     }
     /* Reutiliza el aspecto de .pagination-jv (global), pero aquí las
        páginas son <button>: son acciones, no enlaces. */
@@ -203,11 +203,11 @@
         cursor:pointer;
         transition:border-color .15s ease, color .15s ease, background-color .15s ease;
     }
-    .pagina-usuarios .pagination-jv button:hover:not(:disabled) { border-color:#7c3aed; color:#7c3aed; }
-    .pagina-usuarios .pagination-jv button:focus-visible { outline:3px solid rgba(124,58,237,0.45); outline-offset:2px; }
+    .pagina-usuarios .pagination-jv button:hover:not(:disabled) { border-color:#0284c7; color:#0284c7; }
+    .pagina-usuarios .pagination-jv button:focus-visible { outline:3px solid rgba(14,165,233,0.45); outline-offset:2px; }
     .pagina-usuarios .pagination-jv button.active {
-        background:linear-gradient(135deg,#7c3aed,#5b21b6);
-        border-color:#5b21b6;
+        background:linear-gradient(135deg,#0284c7,#0F1A2E);
+        border-color:#0F1A2E;
         color:#fff;
     }
     .pagina-usuarios .pagination-jv button:disabled { opacity:.4; cursor:default; }
@@ -241,10 +241,10 @@
     .btn-accion i { pointer-events:none; }
 
     .btn-editar {
-        background:linear-gradient(135deg,#7c3aed,#5b21b6);
-        box-shadow:0 4px 12px -4px rgba(124,58,237,0.5);
+        background:linear-gradient(135deg,#0284c7,#0F1A2E);
+        box-shadow:0 4px 12px -4px rgba(14,165,233,0.5);
     }
-    .btn-editar:hover { box-shadow:0 8px 18px -5px rgba(124,58,237,0.6); }
+    .btn-editar:hover { box-shadow:0 8px 18px -5px rgba(14,165,233,0.6); }
 
     /* Restablecer contraseña: llave ámbar (color de aviso del sistema).
        Sin esta regla el botón quedaba transparente con icono blanco. */
@@ -304,14 +304,14 @@
         font-size:.8rem;font-weight:800;text-transform:uppercase;
         letter-spacing:1px;color:var(--jv-navy);
         margin-bottom:8px;padding-bottom:6px;
-        border-bottom:1px solid rgba(124, 58, 237,0.2);
+        border-bottom:1px solid rgba(14, 165, 233,0.2);
         display:flex;align-items:center;gap:4px;
     }
     .jv-form-text { font-size:.78rem; color:var(--jv-text-muted); }
     .modal-header-jv {
-        background:linear-gradient(135deg,#5b21b6,#7c3aed);
+        background:linear-gradient(135deg,#0F1A2E,#0284c7);
         color:#fff;
-        border-bottom:2px solid rgba(124,58,237,0.3);
+        border-bottom:2px solid rgba(14,165,233,0.3);
     }
     .modal-footer-jv { border-top:1px solid var(--jv-border); }
     .modal-footer-jv .btn-jv-secondary {
@@ -323,7 +323,7 @@
         border-radius:10px;
         transition:color .15s ease, border-color .15s ease;
     }
-    .modal-footer-jv .btn-jv-secondary:hover { border-color:#7c3aed; color:#7c3aed; }
+    .modal-footer-jv .btn-jv-secondary:hover { border-color:#0284c7; color:#0284c7; }
 
     .modal-usuarios-dialog {
         width: min(760px, calc(100vw - 2rem));
@@ -370,10 +370,10 @@
         gap:15px;
         margin-bottom:20px;
         padding:16px 18px;
-        border:1px solid #ddd6fe;
-        border-left:5px solid #7c3aed;
+        border:1px solid #bae6fd;
+        border-left:5px solid #0284c7;
         border-radius:13px;
-        background:linear-gradient(105deg,#f5f3ff 0%,#fff 78%);
+        background:linear-gradient(105deg,#f0f9ff 0%,#fff 78%);
     }
     #modalCrear .create-collab-intro-icon {
         display:grid;
@@ -382,17 +382,17 @@
         height:44px;
         place-items:center;
         border-radius:13px;
-        background:#6d28d9;
+        background:#075985;
         color:#fff;
         font-size:1.25rem;
-        box-shadow:0 5px 13px rgba(109,40,217,.22);
+        box-shadow:0 5px 13px rgba(2,132,199,.22);
     }
     #modalCrear .create-collab-intro strong,
     #modalCrear .create-collab-intro div > span {
         display:block;
     }
     #modalCrear .create-collab-intro strong {
-        color:#312e81;
+        color:#0F1A2E;
         font-size:1rem;
         font-weight:850;
         line-height:1.4;
@@ -406,9 +406,9 @@
     }
     #modalCrear .create-collab-section {
         padding:20px;
-        border:1px solid #ddd6fe;
+        border:1px solid #bae6fd;
         border-radius:15px;
-        background:linear-gradient(145deg,#faf9ff 0%,#f5f3ff 100%);
+        background:linear-gradient(145deg,#f8fafc 0%,#f0f9ff 100%);
     }
     #modalCrear .create-collab-section-title {
         display:flex;
@@ -416,7 +416,7 @@
         gap:12px;
         margin-bottom:18px;
         padding-bottom:13px;
-        border-bottom:1px solid #ddd6fe;
+        border-bottom:1px solid #bae6fd;
     }
     #modalCrear .create-collab-section-icon {
         display:grid;
@@ -425,13 +425,13 @@
         height:38px;
         place-items:center;
         border-radius:11px;
-        background:#ede9fe;
-        color:#6d28d9;
+        background:#e0f2fe;
+        color:#075985;
         font-size:1.05rem;
     }
     #modalCrear .create-collab-section-title h3 {
         margin:0;
-        color:#312e81;
+        color:#0F1A2E;
         font-size:1rem;
         font-weight:850;
     }
@@ -444,12 +444,12 @@
     #modalCrear .section-label {
         min-height:33px;
         padding-bottom:7px;
-        border-bottom:1px solid #d8ccf7;
+        border-bottom:1px solid #bae6fd;
         color:#24324a;
         font-size:.88rem;
         font-weight:800;
     }
-    #modalCrear .section-label .bi { color:#6d28d9; }
+    #modalCrear .section-label .bi { color:#075985; }
     #modalCrear .jv-form-text {
         min-height:40px;
         color:#475569;
@@ -515,7 +515,7 @@
         line-height:1.4;
         text-transform:none;
     }
-    .modal-usuarios .section-label .bi { color:#6d28d9; }
+    .modal-usuarios .section-label .bi { color:#075985; }
     .modal-usuarios .input-jv {
         min-height:52px;
         padding:12px 15px;
@@ -527,11 +527,11 @@
         box-shadow:none;
     }
     .modal-usuarios .input-jv:focus {
-        border-color:#7c3aed;
-        box-shadow:0 0 0 3px rgba(124,58,237,.14);
+        border-color:#0284c7;
+        box-shadow:0 0 0 3px rgba(14,165,233,.14);
     }
     .modal-usuarios .input-jv:focus-visible {
-        outline:2px solid #7c3aed;
+        outline:2px solid #0284c7;
         outline-offset:2px;
     }
     .modal-usuarios .jv-form-text {
@@ -628,7 +628,7 @@
     }
     /* Color e icono propios por rol: se identifica de un vistazo */
     .pagina-usuarios .role-badge .bi { font-size:.9rem; }
-    .badge-rol-admin  { background:rgba(124,58,237,0.12); color:#6D28D9; border-color:rgba(124,58,237,0.35); }
+    .badge-rol-admin  { background:rgba(14,165,233,0.12); color:#075985; border-color:rgba(14,165,233,0.35); }
     .badge-rol-carga  { background:#dcfce7; color:#166534; border-color:#86efac; }
     .badge-rol-ventas { background:#fee2e2; color:#b91c1c; border-color:#fca5a5; }
     .badge-rol-sinrol { background:rgba(100,116,139,0.12);color:#475569; border-color:rgba(100,116,139,0.35); }
@@ -668,8 +668,8 @@
         font-size: 1.1rem;
         cursor: pointer;
     }
-    .password-toggle:hover { background: #F1F5F9; color: #5b21b6; }
-    .password-toggle:focus-visible { outline: 3px solid rgba(124, 58, 237, .35); outline-offset: 2px; }
+    .password-toggle:hover { background: #F1F5F9; color: #0F1A2E; }
+    .password-toggle:focus-visible { outline: 3px solid rgba(14, 165, 233, .35); outline-offset: 2px; }
 
     /* ── Validación en vivo: color de la guía y del campo ── */
     .pagina-usuarios .guia-ok { color:#15803d; font-weight:700; }
@@ -691,19 +691,20 @@
     .pagina-usuarios .pin-info em { color:#334155; }
 
     /* ── Tarjeta del PIN compartido ──
-       Cabecera violeta con el mismo gradiente que los modales, pastilla de
+       Cabecera azul clara con acento institucional, pastilla de
        estado y un único botón de ayuda (52 px) arriba a la derecha. El
        párrafo explicativo vive en el modal #modalAyudaPin: así los campos
        son lo primero que se ve. */
     .pagina-usuarios .pin-card-head {
-        background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+        background:linear-gradient(105deg,#eff6ff 0%,#f8fafc 100%);
+        border-top:4px solid #0ea5e9;
     }
     .pagina-usuarios .pin-head-titulo {
         font-size:.85rem;
         font-weight:800;
         letter-spacing:.6px;
         text-transform:uppercase;
-        color:#fff;
+        color:var(--jv-navy);
     }
     .pagina-usuarios .pin-status {
         display:inline-flex;
@@ -717,14 +718,14 @@
         text-transform:uppercase;
     }
     .pagina-usuarios .pin-status-ok {
-        background:rgba(74,222,128,.18);
-        border:1px solid rgba(74,222,128,.55);
-        color:#BBF7D0;
+        background:#dcfce7;
+        border:1px solid #86efac;
+        color:#166534;
     }
     .pagina-usuarios .pin-status-pendiente {
-        background:rgba(251,191,36,.18);
-        border:1px solid rgba(251,191,36,.55);
-        color:#FDE68A;
+        background:#fef3c7;
+        border:1px solid #fcd34d;
+        color:#92400e;
     }
     .pagina-usuarios .pin-status-dot {
         width:8px;
@@ -737,8 +738,8 @@
         width:52px;
         height:52px;
         border-radius:14px;
-        border:2px solid rgba(255,255,255,.45);
-        background:rgba(255,255,255,.12);
+        border:2px solid #0284c7;
+        background:#0284c7;
         color:#fff;
         font-size:1.5rem;
         font-weight:800;
@@ -749,15 +750,16 @@
         transition:background .15s ease, transform .15s ease;
     }
     .pagina-usuarios .pin-help:hover {
-        background:rgba(255,255,255,.28);
+        background:#075985;
+        border-color:#075985;
         color:#fff;
         transform:translateY(-2px);
     }
-    .pagina-usuarios .pin-help:focus-visible { outline:3px solid rgba(255,255,255,.6); outline-offset:2px; }
+    .pagina-usuarios .pin-help:focus-visible { outline:3px solid #0f1a2e; outline-offset:2px; }
 
     /* Cuerpo con un velo muy suave para que deje de parecer plano */
     .pagina-usuarios .pin-body {
-        background:linear-gradient(180deg, rgba(124,58,237,.05) 0%, transparent 55%);
+        background:linear-gradient(180deg, rgba(14,165,233,.05) 0%, transparent 55%);
     }
 
     .pagina-usuarios .pin-form {
@@ -770,10 +772,10 @@
         max-width:710px;
         margin:0 auto 22px;
         padding:15px 18px;
-        border:1px solid #ddd6fe;
-        border-left:5px solid #7c3aed;
+        border:1px solid #bae6fd;
+        border-left:5px solid #0284c7;
         border-radius:12px;
-        background:linear-gradient(105deg,#f5f3ff 0%,#fff 72%);
+        background:linear-gradient(105deg,#f0f9ff 0%,#fff 72%);
         text-align:left;
     }
     .pagina-usuarios .pin-form-intro-icon {
@@ -783,17 +785,17 @@
         height:42px;
         place-items:center;
         border-radius:12px;
-        background:#6d28d9;
+        background:#075985;
         color:#fff;
         font-size:1.2rem;
-        box-shadow:0 5px 12px rgba(109,40,217,.22);
+        box-shadow:0 5px 12px rgba(2,132,199,.22);
     }
     .pagina-usuarios .pin-form-intro strong,
     .pagina-usuarios .pin-form-intro span:not(.pin-form-intro-icon) {
         display:block;
     }
     .pagina-usuarios .pin-form-intro strong {
-        color:#312e81;
+        color:#0F1A2E;
         font-size:.98rem;
         font-weight:850;
         line-height:1.35;
@@ -811,10 +813,10 @@
     .pagina-usuarios .pin-step {
         height:100%;
         padding:17px 18px 15px;
-        border:1px solid #ddd6fe;
+        border:1px solid #bae6fd;
         border-radius:14px;
-        background:linear-gradient(145deg,#fff 30%,#f5f3ff 100%);
-        box-shadow:0 5px 16px rgba(76,29,149,.07);
+        background:linear-gradient(145deg,#fff 30%,#f0f9ff 100%);
+        box-shadow:0 5px 16px rgba(15,26,46,.07);
     }
     .pagina-usuarios .pin-step-confirmar {
         border-color:#bae6fd;
@@ -839,29 +841,29 @@
         height:30px;
         place-items:center;
         border-radius:9px;
-        background:#6d28d9;
+        background:#075985;
         color:#fff;
         font-size:.88rem;
         font-weight:900;
-        box-shadow:0 3px 8px rgba(109,40,217,.2);
+        box-shadow:0 3px 8px rgba(2,132,199,.2);
     }
     .pagina-usuarios .pin-step-confirmar .pin-step-number {
         background:#0284c7;
         box-shadow:0 3px 8px rgba(2,132,199,.2);
     }
     .pagina-usuarios .pin-form .input-jv {
-        border:2px solid #c4b5fd;
+        border:2px solid #7dd3fc;
         background:#fff;
-        color:#4c1d95;
-        box-shadow:0 2px 7px rgba(76,29,149,.06);
+        color:#0F1A2E;
+        box-shadow:0 2px 7px rgba(15,26,46,.06);
     }
     .pagina-usuarios .pin-step-confirmar .input-jv {
         border-color:#7dd3fc;
         color:#075985;
     }
     .pagina-usuarios .pin-form .input-jv:focus {
-        border-color:#6d28d9;
-        box-shadow:0 0 0 4px rgba(124,58,237,.16);
+        border-color:#075985;
+        box-shadow:0 0 0 4px rgba(14,165,233,.16);
     }
     .pagina-usuarios .pin-step-confirmar .input-jv:focus {
         border-color:#0284c7;
@@ -879,7 +881,7 @@
         line-height:1.4;
     }
     .pagina-usuarios .pin-form .jv-form-text i {
-        color:#6d28d9;
+        color:#075985;
         font-size:1rem;
     }
     .pagina-usuarios .pin-step-confirmar .jv-form-text i {
@@ -897,14 +899,14 @@
         padding:18px 44px;
         border-radius:16px;
         background:#F8FAFC;
-        border:2px dashed rgba(124,58,237,.4);
+        border:2px dashed rgba(14,165,233,.4);
     }
     .pagina-usuarios .pin-vigente-label {
         font-size:.72rem;
         font-weight:800;
         letter-spacing:1.2px;
         text-transform:uppercase;
-        color:#7c3aed;
+        color:#0284c7;
     }
     .pagina-usuarios .pin-vigente-valor {
         font-size:2.2rem;
@@ -923,8 +925,8 @@
         letter-spacing:.45em;
         text-align:center;
         font-weight:800;
-        /* Dígitos escritos en violeta vivo, color de marca del módulo */
-        color:#5b21b6;
+        /* Dígitos en azul marino para mantener el contraste. */
+        color:#0F1A2E;
         font-variant-numeric:tabular-nums;
         /* El letter-spacing agrega espacio tras el último dígito: compensa
            a la izquierda para que el texto quede visualmente centrado */
