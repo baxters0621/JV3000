@@ -102,19 +102,24 @@ class Producto extends Model
                 return ['ok' => false, 'mensaje' => 'LA CATEGORÍA SELECCIONADA NO EXISTE O ESTÁ INACTIVA.'];
             }
         }
-        if ($fechaVencimiento === '') {
+        if ($fechaVencimiento === '' || $fechaVencimiento === '0000-00-00') {
             return ['ok' => false, 'mensaje' => 'LA FECHA DE VENCIMIENTO ES OBLIGATORIA.'];
         }
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaVencimiento)) {
+        $fechaObjeto = DateTime::createFromFormat('!Y-m-d', $fechaVencimiento);
+        if (!$fechaObjeto || $fechaObjeto->format('Y-m-d') !== $fechaVencimiento) {
             return ['ok' => false, 'mensaje' => 'FORMATO DE FECHA DE VENCIMIENTO INVÁLIDO. USE AAAA-MM-DD.'];
         }
-        // Stocks: enteros puros en rango (rechaza decimales, negativos y desbordes)
-        if (!preg_match('/^\d{1,5}$/', trim((string)$datosProducto['stock_minimo'])) || $stockMinimo <= 0) {
+        // Stocks: enteros puros en rango (rechaza decimales, letras y negativos)
+        $stockMinimoRaw = trim((string)$datosProducto['stock_minimo']);
+        $stockMaximoRaw = trim((string)$datosProducto['stock_maximo']);
+        if (!preg_match('/^\d{1,5}$/', $stockMinimoRaw) || (int)$stockMinimoRaw < 1) {
             return ['ok' => false, 'mensaje' => 'STOCK MÍNIMO DEBE SER UN ENTERO ENTRE 1 Y 99.999.'];
         }
-        if (!preg_match('/^\d{1,6}$/', trim((string)$datosProducto['stock_maximo']))) {
+        if (!preg_match('/^\d{1,6}$/', $stockMaximoRaw)) {
             return ['ok' => false, 'mensaje' => 'CAPACIDAD MÁXIMA DEBE SER 0 (HEREDAR CATEGORÍA) O UN ENTERO HASTA 999.999.'];
         }
+        $stockMinimo = (int)$stockMinimoRaw;
+        $stockMaximo = (int)$stockMaximoRaw;
         if ($stockMaximo > 0 && $stockMaximo < $stockMinimo) {
             return ['ok' => false, 'mensaje' => 'LA CAPACIDAD MÁXIMA DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO (O 0 PARA HEREDAR LA DE LA CATEGORÍA).'];
         }
@@ -168,11 +173,13 @@ class Producto extends Model
         return $this->db->fetchAll(
             "SELECT p.*, c.nombre as nombre_cat, c.ruta as cat_ruta, COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
                 -- Vencimiento real del producto = el lote con stock que vence primero (FEFO);
-                -- si no tiene lotes activos se usa la fecha legacy del producto
+                -- si no tiene lotes activos se usa la fecha legacy del producto.
+                -- Las fechas cero heredadas se ignoran para no mostrar -0001.
                 COALESCE((
                     SELECT MIN(l.fecha_vencimiento) FROM lotes l
                     WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0
-                ), p.fecha_vencimiento) as fecha_vencimiento,
+                      AND l.fecha_vencimiento > '0000-00-00'
+                ), NULLIF(p.fecha_vencimiento, '0000-00-00')) as fecha_vencimiento,
                 -- Proveedores que lo suministran según el catálogo de costos
                 (SELECT GROUP_CONCAT(pr.nombre_empresa SEPARATOR ', ')
                     FROM catalogo_costos cc JOIN proveedores pr ON cc.id_proveedor = pr.id_proveedor

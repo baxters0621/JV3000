@@ -199,32 +199,63 @@
             var canonicoVenta = Number.isFinite(valorVenta) ? valorVenta.toFixed(2) : '';
             limpiarErrores();
             let primerError = null;
+            let primerMensaje = '';
             const minimo = document.getElementById('edit_minimo');
             const maximo = document.getElementById('edit_maximo');
             const pvp = document.getElementById('edit_pvp');
-            if (!/^\d{1,5}$/.test(minimo.value.trim()) || parseInt(minimo.value, 10) <= 0) {
-                marcarError(minimo, 'STOCK MÍNIMO: ENTERO ENTRE 1 Y 99.999');
-                if (!primerError) primerError = minimo;
+            const vencimiento = document.getElementById('edit_vencimiento');
+
+            const esEntero = function(valor) {
+                return /^\d+$/.test(String(valor).trim());
+            };
+            const fechaValida = function(valor) {
+                const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(valor).trim());
+                if (!partes) return false;
+                const anio = Number(partes[1]);
+                const mes = Number(partes[2]);
+                const dia = Number(partes[3]);
+                if (anio < 1900 || mes < 1 || mes > 12 || dia < 1) return false;
+                const fecha = new Date(anio, mes - 1, dia);
+                return fecha.getFullYear() === anio
+                    && fecha.getMonth() === mes - 1
+                    && fecha.getDate() === dia;
+            };
+            const marcar = function(campo, mensaje) {
+                marcarError(campo, mensaje);
+                if (!primerError) {
+                    primerError = campo;
+                    primerMensaje = mensaje;
+                }
+            };
+
+            const minimoTexto = minimo.value.trim();
+            const maximoTexto = maximo.value.trim();
+
+            if (!esEntero(minimoTexto) || Number(minimoTexto) < 1 || Number(minimoTexto) > 99999) {
+                marcar(minimo, 'STOCK MÍNIMO: ENTERO ENTRE 1 Y 99.999');
             }
-            if (maximo && !/^\d{1,6}$/.test(maximo.value.trim())) {
-                marcarError(maximo, 'CAPACIDAD MÁXIMA: 0 (HEREDAR CATEGORÍA) O ENTERO HASTA 999.999');
-                if (!primerError) primerError = maximo;
+            if (!esEntero(maximoTexto) || Number(maximoTexto) < 0 || Number(maximoTexto) > 999999) {
+                marcar(maximo, 'CAPACIDAD MÁXIMA: 0 (HEREDAR CATEGORÍA) O ENTERO HASTA 999.999');
             }
-            if (maximo && /^\d{1,6}$/.test(maximo.value.trim()) && parseInt(maximo.value, 10) > 0
-                && /^\d{1,5}$/.test(minimo.value.trim()) && parseInt(maximo.value, 10) < parseInt(minimo.value, 10)) {
-                marcarError(maximo, 'DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO');
-                if (!primerError) primerError = maximo;
+            if (esEntero(minimoTexto) && esEntero(maximoTexto)
+                && Number(maximoTexto) > 0 && Number(maximoTexto) < Number(minimoTexto)) {
+                marcar(maximo, 'DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO');
             }
             if (!precioTieneFormatoValido(canonicoVenta)) {
-                marcarError(pvp, valorVenta > 99999.99 ? 'MÁXIMO 99.999,99' : 'FORMATO: 0,00 (MÁXIMO 99.999,99)');
-                if (!primerError) primerError = pvp;
+                marcar(pvp, valorVenta > 99999.99 ? 'MÁXIMO 99.999,99' : 'FORMATO: 0,00 (MÁXIMO 99.999,99)');
             }
-            const vencimiento = document.getElementById('edit_vencimiento');
-            if (!vencimiento.value.trim()) {
-                marcarError(vencimiento, 'FECHA DE VENCIMIENTO REQUERIDA');
-                if (!primerError) primerError = vencimiento;
+            if (!vencimiento.value.trim()
+                || vencimiento.value === '0000-00-00'
+                || !fechaValida(vencimiento.value)) {
+                marcar(vencimiento, 'FECHA DE VENCIMIENTO VÁLIDA REQUERIDA');
             }
             if (primerError) {
+                Swal.fire({
+                    title: 'REVISA EL FORMULARIO',
+                    text: primerMensaje,
+                    icon: 'warning',
+                    confirmButtonColor: '#DC2626'
+                });
                 primerError.focus();
                 return false;
             }

@@ -273,7 +273,10 @@ foreach ($categorias as $raiz) {
                         <?php
                         // Estado del vencimiento: vencido / próximo (<=7 días) /
                         // pronto (<=30 días) / vigente. Si no tiene fecha, no aplica.
-                        $expirationDate = $productRecord['fecha_vencimiento'] ?? '';
+                        $expirationDate = (string)($productRecord['fecha_vencimiento'] ?? '');
+                        if ($expirationDate === '0000-00-00' || strtotime($expirationDate) === false) {
+                            $expirationDate = '';
+                        }
                         $venc_cls = '';
                         $venc_badge = 'badge-secondary';
                         $venc_icono = 'dash-circle';
@@ -334,9 +337,15 @@ foreach ($categorias as $raiz) {
                                 </span>
                             </td>
                             <td class="text-center">
-                                <span class="badge-jv <?php echo ($productRecord['status'] == 'Activo') ? 'badge-success' : 'badge-danger'; ?>" style="font-size:.75rem;">
-                                    <i class="bi bi-<?php echo ($productRecord['status'] == 'Activo') ? 'eye' : 'eye-off'; ?>"></i>
-                                    <?php echo strtoupper($productRecord['status']); ?>
+                                <?php
+                                $es_agotado = $stock_actual === 0 && $productRecord['status'] === 'Activo';
+                                $badge_estado = $es_agotado ? 'badge-danger' : ($productRecord['status'] === 'Activo' ? 'badge-success' : 'badge-danger');
+                                $icono_estado = $es_agotado ? 'x-octagon' : ($productRecord['status'] === 'Activo' ? 'eye' : 'eye-off');
+                                $texto_estado = $es_agotado ? 'AGOTADO' : strtoupper($productRecord['status']);
+                                ?>
+                                <span class="badge-jv <?php echo $badge_estado; ?>" style="font-size:.75rem;">
+                                    <i class="bi bi-<?php echo $icono_estado; ?>"></i>
+                                    <?php echo $texto_estado; ?>
                                 </span>
                             </td>
                             <?php if ($esAdmin): ?>
@@ -540,11 +549,11 @@ foreach ($categorias as $raiz) {
                             </div>
                             <div class="col-4">
                                 <label class="small fw-bold text-secondary mb-1">STOCK MÍNIMO</label>
-                                <input type="number" class="input-jv" id="edit_minimo" name="stock_minimo" min="0" max="99999" required>
+                                <input type="number" class="input-jv" id="edit_minimo" name="stock_minimo" min="1" max="99999" step="1" inputmode="numeric" required>
                             </div>
                             <div class="col-4">
                                 <label class="small fw-bold text-secondary mb-1">CAPACIDAD MÁX.</label>
-                                <input type="number" class="input-jv" id="edit_maximo" name="stock_maximo" min="0" max="999999" required>
+                                <input type="number" class="input-jv" id="edit_maximo" name="stock_maximo" min="0" max="999999" step="1" inputmode="numeric" required>
                             </div>
                         </div>
                         <div class="row g-2 mb-2">
