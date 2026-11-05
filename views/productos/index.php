@@ -31,8 +31,8 @@ foreach ($categorias as $raiz) {
 }
 ?>
 <!-- Encabezado -->
-<div class="card-jv d-flex align-items-center gap-3 mb-3 flex-wrap" style="padding: 18px 24px; border-left: 4px solid var(--jv-orange);">
-    <div class="module-header-icon" style="background: var(--jv-orange); box-shadow: 0 4px 16px rgba(234,88,12,0.25);">
+<div class="card-jv inventario-hero d-flex align-items-center gap-3 mb-3 flex-wrap">
+    <div class="module-header-icon inventario-hero-icon">
         <i class="bi bi-box-seam text-white" style="font-size:1.5rem;"></i>
     </div>
     <div>
@@ -80,13 +80,13 @@ foreach ($categorias as $raiz) {
                     <span class="cat-panel-icono"><i class="bi bi-diagram-3-fill"></i></span>
                     <div>
                         <h2 class="cat-panel-titulo" id="tituloModalCategorias">Categor&iacute;as</h2>
-                        <small class="cat-panel-sub">Selecciona una categor&iacute;a para ver sus productos. Las subcategor&iacute;as aparecen debajo.</small>
+                        <small class="cat-panel-sub">Despliega cada categor&iacute;a principal para ver sus subcategor&iacute;as.</small>
                     </div>
                 </div>
                 <div class="cat-panel-tools">
                     <?php if ($puede_categorias): ?>
                         <button type="button" class="btn btn-jv-primary cat-btn-nueva" onclick="catAbrirForm('registrar', 0, 0)">
-                            <i class="bi bi-plus-lg" aria-hidden="true"></i><span>Nueva categor&iacute;a</span>
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i><span>Nueva categor&iacute;a principal</span>
                         </button>
                     <?php endif; ?>
                     <button type="button" class="cat-cerrar" data-bs-dismiss="modal" aria-label="Cerrar categor&iacute;as">
@@ -103,90 +103,102 @@ foreach ($categorias as $raiz) {
                     <ul class="cat-arbol" id="arbolCategorias">
                         <?php foreach ($categorias as $raiz): ?>
                             <?php
-                            // Cada categoría principal y sus subcategorías se muestran
-                            // juntas para que la jerarquía se entienda sin controles ocultos.
+                            // Cada categoría principal es un bloque desplegable:
+                            // las subcategorías quedan indentadas y conectadas visualmente.
                             $raiz_id = (int)$raiz['id_categoria'];
                             $raiz_inactiva = $raiz['status'] === 'Inactivo';
                             $raiz_total = (int)($raiz['productos_total'] ?? 0);
-                            $raiz_con_stock = (int)($raiz['productos_con_stock'] ?? 0);
+                            $raiz_hijos = count($raiz['hijos'] ?? []);
                             $raiz_sel = $raiz_id === $id_categoria_filtro;
+                            $raiz_hijos_id = 'catHijos-' . $raiz_id;
                             ?>
-                            <li class="cat-nodo cat-raiz<?php echo $raiz_inactiva ? ' cat-inactiva' : ''; ?><?php echo $raiz_sel ? ' cat-seleccionada' : ''; ?>"
+                            <li class="cat-nodo cat-raiz cat-bloque<?php echo $raiz_inactiva ? ' cat-inactiva' : ''; ?><?php echo $raiz_sel ? ' cat-seleccionada' : ''; ?>"
                                 data-id="<?php echo $raiz_id; ?>" data-status="<?php echo $raiz['status']; ?>"
                                 data-texto="<?php echo strtolower(htmlspecialchars($raiz['nombre'] . ' ' . ($raiz['codigo'] ?? ''))); ?>">
-                                <div class="cat-fila">
-                                    <a class="cat-enlace" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&cat=<?php echo $raiz_id; ?>" title="Filtrar por esta categor&iacute;a">
-                                        <i class="bi bi-folder-fill cat-icono" aria-hidden="true"></i>
+                                <div class="cat-fila cat-fila-raiz border rounded-3">
+                                    <a class="cat-enlace cat-enlace-raiz" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&cat=<?php echo $raiz_id; ?>" title="Filtrar por esta categor&iacute;a">
+                                        <i class="bi bi-folder cat-icono" aria-hidden="true"></i>
                                         <span class="cat-nivel cat-nivel-raiz">Categor&iacute;a principal</span>
                                         <span class="cat-nombre"><?php echo htmlspecialchars($raiz['nombre']); ?></span>
                                         <?php if (!empty($raiz['codigo'])): ?><span class="codigo-badge-cat cat-codigo"><?php echo htmlspecialchars($raiz['codigo']); ?></span><?php endif; ?>
-                                        <span class="cat-conteo" data-tooltip="<?php echo $raiz_con_stock; ?> con stock de <?php echo $raiz_total; ?> en la rama"><?php echo $raiz_total > 0 ? $raiz_con_stock . '/' . $raiz_total : '0'; ?></span>
                                     </a>
+                                    <span class="cat-subconteo<?php echo $raiz_hijos === 0 ? ' cat-subconteo-vacio' : ''; ?>">
+                                        <i class="bi bi-diagram-3" aria-hidden="true"></i>
+                                        <?php echo $raiz_hijos === 0 ? 'Sin subcategor&iacute;as' : $raiz_hijos . ' subcategor&iacute;a' . ($raiz_hijos === 1 ? '' : 's'); ?>
+                                    </span>
                                     <?php if ($raiz_inactiva): ?>
                                         <span class="cat-chip cat-chip-<?php echo $raiz_total > 0 ? 'sinstock' : 'oculta'; ?>"><?php echo $raiz_total > 0 ? 'SIN STOCK' : 'OCULTA'; ?></span>
                                     <?php endif; ?>
-                                    <?php if ($puede_categorias): ?>
+                                    <?php if ($puede_categorias || $raiz_hijos > 0): ?>
                                         <div class="cat-acciones">
-                                            <?php if (!$raiz_inactiva): ?>
+                                            <?php if ($puede_categorias && !$raiz_inactiva): ?>
                                                 <button type="button" class="btn-action btn-action-label btn-action-add" onclick="catAbrirForm('registrar', 0, <?php echo $raiz_id; ?>)">
                                                     <i class="bi bi-plus-lg" aria-hidden="true"></i><span>Agregar subcategor&iacute;a</span>
                                                 </button>
                                             <?php endif; ?>
-                                            <button type="button" class="btn-action btn-action-label" onclick="catAbrirForm('editar', <?php echo $raiz_id; ?>)">
-                                                <i class="bi bi-pencil-square" aria-hidden="true"></i><span>Editar</span>
-                                            </button>
-                                            <?php if ($raiz_total === 0): ?>
-                                                <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $raiz_id; ?>, <?php echo htmlspecialchars(json_encode($raiz['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $raiz['status']; ?>')">
-                                                    <i class="bi <?php echo $raiz_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>" aria-hidden="true"></i>
-                                                    <span><?php echo $raiz_inactiva ? 'Mostrar' : 'Ocultar'; ?></span>
+                                            <?php if ($puede_categorias): ?>
+                                                <button type="button" class="btn-action btn-action-label" onclick="catAbrirForm('editar', <?php echo $raiz_id; ?>)">
+                                                    <i class="bi bi-pencil-square" aria-hidden="true"></i><span>Editar</span>
+                                                </button>
+                                                <?php if ($raiz_total === 0): ?>
+                                                    <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $raiz_id; ?>, <?php echo htmlspecialchars(json_encode($raiz['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $raiz['status']; ?>')">
+                                                        <i class="bi <?php echo $raiz_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>" aria-hidden="true"></i>
+                                                        <span><?php echo $raiz_inactiva ? 'Mostrar' : 'Ocultar'; ?></span>
+                                                    </button>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                            <?php if ($raiz_hijos > 0): ?>
+                                                <button type="button" class="cat-toggle" data-bs-toggle="collapse" data-bs-target="#<?php echo $raiz_hijos_id; ?>" aria-expanded="false" aria-controls="<?php echo $raiz_hijos_id; ?>" aria-label="Mostrar u ocultar subcategor&iacute;as de <?php echo htmlspecialchars($raiz['nombre'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                    <span class="cat-toggle-ver">Ver subcategor&iacute;as</span>
+                                                    <span class="cat-toggle-ocultar">Ocultar subcategor&iacute;as</span>
+                                                    <i class="bi bi-chevron-down cat-toggle-icono" aria-hidden="true"></i>
                                                 </button>
                                             <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                <?php if (!empty($raiz['hijos'])): ?>
-                                    <ul class="cat-hijos">
-                                        <?php foreach ($raiz['hijos'] as $hija): ?>
-                                            <?php
-                                            // Subcategoría: igual que la raíz, sin expansor
-                                            // ni botón de agregar (el árbol llega a 2 niveles).
-                                            $hija_id = (int)$hija['id_categoria'];
-                                            $hija_inactiva = $hija['status'] === 'Inactivo';
-                                            $hija_total = (int)($hija['productos_total'] ?? 0);
-                                            $hija_con_stock = (int)($hija['productos_con_stock'] ?? 0);
-                                            $hija_sel = $hija_id === $id_categoria_filtro;
-                                            ?>
-                                            <li class="cat-nodo cat-hija<?php echo $hija_inactiva ? ' cat-inactiva' : ''; ?><?php echo $hija_sel ? ' cat-seleccionada' : ''; ?>"
-                                                data-id="<?php echo $hija_id; ?>" data-status="<?php echo $hija['status']; ?>"
-                                                data-texto="<?php echo strtolower(htmlspecialchars($hija['nombre'] . ' ' . ($hija['codigo'] ?? ''))); ?>">
-                                                <div class="cat-fila">
-                                                    <a class="cat-enlace" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&cat=<?php echo $hija_id; ?>" title="Filtrar por esta categor&iacute;a">
-                                                        <i class="bi bi-folder-fill cat-icono" aria-hidden="true"></i>
-                                                        <span class="cat-nivel cat-nivel-hija">Subcategor&iacute;a</span>
-                                                        <span class="cat-nombre"><?php echo htmlspecialchars($hija['nombre']); ?></span>
-                                                        <?php if (!empty($hija['codigo'])): ?><span class="codigo-badge-cat cat-codigo"><?php echo htmlspecialchars($hija['codigo']); ?></span><?php endif; ?>
-                                                        <span class="cat-conteo" data-tooltip="<?php echo $hija_con_stock; ?> con stock de <?php echo $hija_total; ?> en la rama"><?php echo $hija_total > 0 ? $hija_con_stock . '/' . $hija_total : '0'; ?></span>
-                                                    </a>
-                                                    <?php if ($hija_inactiva): ?>
-                                                        <span class="cat-chip cat-chip-<?php echo $hija_total > 0 ? 'sinstock' : 'oculta'; ?>"><?php echo $hija_total > 0 ? 'SIN STOCK' : 'OCULTA'; ?></span>
-                                                    <?php endif; ?>
-                                                    <?php if ($puede_categorias): ?>
-                                                        <div class="cat-acciones">
-                                                            <button type="button" class="btn-action btn-action-label" onclick="catAbrirForm('editar', <?php echo $hija_id; ?>)">
-                                                                <i class="bi bi-pencil-square" aria-hidden="true"></i><span>Editar</span>
-                                                            </button>
-                                                            <?php if ($hija_total === 0): ?>
-                                                                <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $hija_id; ?>, <?php echo htmlspecialchars(json_encode($hija['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $hija['status']; ?>')">
-                                                                    <i class="bi <?php echo $hija_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>" aria-hidden="true"></i>
-                                                                    <span><?php echo $hija_inactiva ? 'Mostrar' : 'Ocultar'; ?></span>
+                                <?php if ($raiz_hijos > 0): ?>
+                                    <div class="collapse cat-colapso" id="<?php echo $raiz_hijos_id; ?>">
+                                        <ul class="cat-hijos ms-4 ps-3 mb-0">
+                                            <?php foreach ($raiz['hijos'] as $hija): ?>
+                                                <?php
+                                                // Subcategoría: bloque hijo indentado, sin botón de agregar.
+                                                $hija_id = (int)$hija['id_categoria'];
+                                                $hija_inactiva = $hija['status'] === 'Inactivo';
+                                                $hija_total = (int)($hija['productos_total'] ?? 0);
+                                                $hija_sel = $hija_id === $id_categoria_filtro;
+                                                ?>
+                                                <li class="cat-nodo cat-hija<?php echo $hija_inactiva ? ' cat-inactiva' : ''; ?><?php echo $hija_sel ? ' cat-seleccionada' : ''; ?>"
+                                                    data-id="<?php echo $hija_id; ?>" data-status="<?php echo $hija['status']; ?>"
+                                                    data-texto="<?php echo strtolower(htmlspecialchars($hija['nombre'] . ' ' . ($hija['codigo'] ?? ''))); ?>">
+                                                    <div class="cat-fila cat-fila-hija bg-light border rounded-3">
+                                                        <a class="cat-enlace cat-enlace-hija" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&cat=<?php echo $hija_id; ?>" title="Filtrar por esta categor&iacute;a">
+                                                            <i class="bi bi-folder2-open cat-icono" aria-hidden="true"></i>
+                                                            <span class="cat-nivel cat-nivel-hija">Subcategor&iacute;a</span>
+                                                            <span class="cat-nombre"><?php echo htmlspecialchars($hija['nombre']); ?></span>
+                                                            <?php if (!empty($hija['codigo'])): ?><span class="codigo-badge-cat cat-codigo"><?php echo htmlspecialchars($hija['codigo']); ?></span><?php endif; ?>
+                                                        </a>
+                                                        <?php if ($hija_inactiva): ?>
+                                                            <span class="cat-chip cat-chip-<?php echo $hija_total > 0 ? 'sinstock' : 'oculta'; ?>"><?php echo $hija_total > 0 ? 'SIN STOCK' : 'OCULTA'; ?></span>
+                                                        <?php endif; ?>
+                                                        <?php if ($puede_categorias): ?>
+                                                            <div class="cat-acciones">
+                                                                <button type="button" class="btn-action btn-action-label" onclick="catAbrirForm('editar', <?php echo $hija_id; ?>)">
+                                                                    <i class="bi bi-pencil-square" aria-hidden="true"></i><span>Editar</span>
                                                                 </button>
-                                                            <?php endif; ?>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </li>
-                                        <?php endforeach; ?>
-                                    </ul>
+                                                                <?php if ($hija_total === 0): ?>
+                                                                    <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $hija_id; ?>, <?php echo htmlspecialchars(json_encode($hija['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $hija['status']; ?>')">
+                                                                        <i class="bi <?php echo $hija_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>" aria-hidden="true"></i>
+                                                                        <span><?php echo $hija_inactiva ? 'Mostrar' : 'Ocultar'; ?></span>
+                                                                    </button>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
                                 <?php endif; ?>
                             </li>
                         <?php endforeach; ?>
@@ -206,7 +218,7 @@ foreach ($categorias as $raiz) {
     <div class="buscador-wrapper px-3 py-2">
         <!-- Fila 1: buscador -->
         <div class="buscador-fila d-flex align-items-center gap-2">
-            <i class="bi bi-search me-1" style="color: var(--jv-orange);"></i>
+            <i class="bi bi-search me-1 inventario-buscador-icono"></i>
             <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nombre, código, proveedor, categoría, estado..." id="buscar" onkeyup="filtrar()" style="box-shadow: none;">
         </div>
         <!-- Fila 2: filtros, cada unidad salta de linea completa si no cabe -->
@@ -223,7 +235,7 @@ foreach ($categorias as $raiz) {
             <div class="filtro-unidad d-flex align-items-center gap-2">
                 <span class="small fw-bold text-uppercase" style="color:var(--jv-text-muted);font-size:.8rem;letter-spacing:1px;">Vence:</span>
                 <div class="btn-group btn-group-sm" role="group">
-                    <button type="button" class="btn btn-sm btn-filtro-venc active" data-venc="todas" onclick="filtrarVenc(this)" style="border-radius:6px 0 0 6px;background:rgba(234,88,12,0.15);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.3);">Todas</button>
+                    <button type="button" class="btn btn-sm btn-filtro-venc active" data-venc="todas" onclick="filtrarVenc(this)" style="border-radius:6px 0 0 6px;background:var(--inv-accent-soft);color:var(--inv-accent);border:1px solid var(--inv-accent-border);">Todas</button>
                     <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="vencido" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-danger);border:1px solid rgba(220,38,38,0.3);">Vencidos</button>
                     <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="proximo" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">Próximo</button>
                     <button type="button" class="btn btn-sm btn-filtro-venc" data-venc="pronto" onclick="filtrarVenc(this)" style="border-radius:0;background:transparent;color:var(--jv-warning);border:1px solid rgba(217,119,6,0.3);">Pronto</button>
@@ -234,18 +246,31 @@ foreach ($categorias as $raiz) {
     </div>
     <div class="table-responsive">
         <table class="table-jv mb-0">
+            <colgroup>
+                <col class="col-codigo">
+                <col class="col-producto">
+                <col class="col-categoria">
+                <col class="col-proveedor">
+                <col class="col-stock">
+                <col class="col-precio">
+                <col class="col-vence">
+                <col class="col-estado">
+                <?php if ($esAdmin): ?>
+                    <col class="col-acciones">
+                <?php endif; ?>
+            </colgroup>
             <thead>
-                <tr>
-                    <th class="text-center" style="width:10%;">CÓDIGO</th>
-                    <th style="width:20%;">PRODUCTO</th>
-                    <th style="width:11%;">CATEGORÍA</th>
-                    <th style="width:12%;">PROVEEDOR</th>
-                    <th class="text-center" style="width:10%;">STOCK</th>
-                    <th style="width:8%;">PRECIO</th>
-                    <th class="text-center" style="width:10%;">VENCE</th>
-                    <th class="text-center" style="width:9%;">ESTADO</th>
+                <tr class="align-middle">
+                    <th class="text-start th-codigo">CÓDIGO</th>
+                    <th class="text-start th-producto">PRODUCTO</th>
+                    <th class="text-start">CATEGORÍA</th>
+                    <th class="text-start">PROVEEDOR</th>
+                    <th class="text-center">STOCK</th>
+                    <th class="text-center">PRECIO</th>
+                    <th class="text-center">VENCE</th>
+                    <th class="text-center th-estado">ESTADO</th>
                     <?php if ($esAdmin): ?>
-                        <th class="text-center" style="width:10%;">ACCIONES</th>
+                        <th class="text-center th-acciones">ACCIONES</th>
                     <?php endif; ?>
                 </tr>
             </thead>
@@ -277,94 +302,116 @@ foreach ($categorias as $raiz) {
                         if ($expirationDate === '0000-00-00' || strtotime($expirationDate) === false) {
                             $expirationDate = '';
                         }
+                        $hoy = date('Y-m-d');
+                        $esta_vencido = $expirationDate !== '' && $expirationDate < $hoy;
                         $venc_cls = '';
-                        $venc_badge = 'badge-secondary';
-                        $venc_icono = 'dash-circle';
+                        $venc_badge = 'badge-success';
+                        $venc_icono = 'check-circle-fill';
                         $venc_fecha = '';
                         if ($expirationDate) {
                             $dias_vencer = floor((strtotime($expirationDate) - time()) / 86400);
                             $venc_fecha = date('d/m/Y', strtotime($expirationDate));
-                            if ($dias_vencer < 0) {
+                            if ($esta_vencido) {
                                 $venc_cls = 'vencido';
-                                $venc_badge = 'badge-danger';
-                                $venc_icono = 'exclamation-triangle';
+                                $venc_badge = 'bg-danger bg-opacity-10 text-danger border-danger';
+                                $venc_icono = 'calendar-x';
                             } elseif ($dias_vencer <= 7) {
                                 $venc_cls = 'proximo';
-                                $venc_badge = 'badge-danger';
-                                $venc_icono = 'clock';
                             } elseif ($dias_vencer <= 30) {
                                 $venc_cls = 'pronto';
-                                $venc_badge = 'badge-warning';
-                                $venc_icono = 'clock';
                             } else {
                                 $venc_cls = 'vigente';
-                                $venc_badge = 'badge-success';
-                                $venc_icono = 'check-circle';
                             }
                         }
                         ?>
-                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-cat="<?php echo (int)($productRecord['id_categoria'] ?? 0); ?>" data-cat-nombre="<?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?>" data-prov="<?php echo strtolower(htmlspecialchars($productRecord['proveedores'] ?? '')); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
-                            <td class="td-prod-sku">
-                                <span class="codigo-badge" data-tooltip="<?php echo htmlspecialchars($productRecord['sku'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
+                        <tr data-id="<?php echo $productRecord['id_producto']; ?>" data-sku="<?php echo strtolower(htmlspecialchars($productRecord['sku'])); ?>" data-nombre="<?php echo strtolower(htmlspecialchars($productRecord['nombre_producto'])); ?>" data-cat="<?php echo (int)($productRecord['id_categoria'] ?? 0); ?>" data-cat-nombre="<?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?>" data-prov-id="<?php echo (int)($productRecord['id_proveedor'] ?? 0); ?>" data-prov="<?php echo htmlspecialchars($productRecord['nombre_prov'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" data-stock="<?php echo $productRecord['stock_actual']; ?>" data-minimo="<?php echo $productRecord['stock_minimo']; ?>" data-max="<?php echo $capacidad; ?>" data-maximo="<?php echo intval($productRecord['stock_maximo'] ?? 0); ?>" data-pvp="<?php echo $productRecord['precio_venta']; ?>" data-costo="<?php echo $productRecord['precio_costo']; ?>" data-status="<?php echo $productRecord['status']; ?>" data-status-efectivo="<?php echo htmlspecialchars($productRecord['status_efectivo'] ?? $productRecord['status']); ?>" data-venc="<?php echo $productRecord['fecha_vencimiento'] ?? ''; ?>" data-venc-cls="<?php echo $venc_cls; ?>">
+                            <td class="td-prod-sku text-start">
+                                <span class="codigo-badge"><?php echo htmlspecialchars($productRecord['sku']); ?></span>
                             </td>
-                            <td class="td-prod-nombre" data-tooltip="<?php echo htmlspecialchars($productRecord['nombre_producto']); ?>">
+                            <td class="td-prod-nombre text-start">
                                 <span class="prod-nombre text-uppercase"><?php echo htmlspecialchars($productRecord['nombre_producto']); ?></span>
                             </td>
-                            <td class="td-prod-cat" data-tooltip="<?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?>">
+                            <td class="td-prod-cat text-start">
                                 <span class="prod-cat"><?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?></span>
                             </td>
-                            <td class="td-prod-prov" data-tooltip="<?php echo htmlspecialchars($productRecord['proveedores'] ?? 'Sin proveedor en catálogo'); ?>">
-                                <span class="prod-prov"><?php echo htmlspecialchars($productRecord['proveedores'] ?? '—'); ?></span>
+                            <td class="td-prod-prov text-start">
+                                <span class="prod-prov"><?php echo htmlspecialchars($productRecord['nombre_prov'] ?? '—'); ?></span>
                             </td>
                             <td class="td-stock text-center">
-                                <div class="stock-summary">
-                                    <span class="stk-num"><?php echo $stock_actual; ?></span>
-                                </div>
-                                <div class="stock-meter" role="progressbar" aria-valuenow="<?php echo $stock_actual; ?>" aria-valuemin="0" aria-valuemax="<?php echo $capacidad; ?>" aria-label="Nivel de stock">
-                                    <div class="stock-meter-fill stock-meter-<?php echo $stock_clase; ?>" style="width:<?php echo $stock_porcentaje; ?>%;"></div>
-                                </div>
-                                <div class="stk-meta">
-                                    Mín <?php echo $stock_minimo; ?> · Máx <?php echo $capacidad; ?>
+                                <div class="stock-cell">
+                                    <span class="stock-value<?php echo $stock_actual === 0 ? ' text-danger' : ''; ?>" title="Mín: <?php echo $stock_minimo; ?> · Máx: <?php echo $capacidad; ?>">
+                                        <?php echo $stock_actual; ?>
+                                    </span>
+                                    <div class="progress stock-progress" role="progressbar" aria-valuenow="<?php echo $stock_actual; ?>" aria-valuemin="0" aria-valuemax="<?php echo $capacidad; ?>" aria-label="Nivel de stock">
+                                        <div class="progress-bar bg-<?php echo $stock_clase; ?>" style="width:<?php echo $stock_porcentaje; ?>%;"></div>
+                                    </div>
+                                    <div class="stock-limits text-muted">
+                                        <span>Mín <?php echo $stock_minimo; ?></span>
+                                        <span>Máx <?php echo $capacidad; ?></span>
+                                    </div>
                                 </div>
                             </td>
-                            <td>
+                            <td class="text-center">
                                 <span class="prod-precio">$<?php echo number_format($productRecord['precio_venta'], 2); ?></span>
                             </td>
                             <td class="text-center td-vencimiento">
-                                <span class="badge-jv <?php echo $venc_badge; ?>" data-tooltip="<?php echo htmlspecialchars($venc_fecha ?: 'Sin fecha de vencimiento', ENT_QUOTES, 'UTF-8'); ?>">
-                                    <i class="bi bi-<?php echo $venc_icono; ?>"></i>
-                                    <span class="venc-fecha"><?php echo $venc_fecha ?: '—'; ?></span>
-                                </span>
+                                <?php if ($expirationDate): ?>
+                                    <span class="badge-jv <?php echo $venc_badge; ?> venc-badge-valido d-inline-flex align-items-center justify-content-center gap-1">
+                                        <i class="bi bi-<?php echo $venc_icono; ?>" aria-hidden="true"></i>
+                                        <span class="venc-fecha"><?php echo $venc_fecha; ?></span>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge-jv venc-badge-sin-fecha" aria-label="Sin vencimiento">
+                                        <span class="venc-sin-texto">SIN VENCIMIENTO</span>
+                                        <span class="venc-sin-guion" aria-hidden="true">&mdash;</span>
+                                    </span>
+                                <?php endif; ?>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center td-prod-estado">
                                 <?php
-                                $es_agotado = $stock_actual === 0 && $productRecord['status'] === 'Activo';
-                                $badge_estado = $es_agotado ? 'badge-danger' : ($productRecord['status'] === 'Activo' ? 'badge-success' : 'badge-danger');
-                                $icono_estado = $es_agotado ? 'x-octagon' : ($productRecord['status'] === 'Activo' ? 'eye' : 'eye-off');
-                                $texto_estado = $es_agotado ? 'AGOTADO' : strtoupper($productRecord['status']);
+                                $status_real = (string)$productRecord['status'];
+                                $status_efectivo = (string)($productRecord['status_efectivo'] ?? $status_real);
+                                $es_agotado = $stock_actual === 0 && $status_real === 'Activo';
+                                if ($esta_vencido) {
+                                    $badge_estado = 'bg-danger bg-opacity-10 text-danger border-danger';
+                                    $icono_estado = 'calendar-x';
+                                    $texto_estado = 'VENCIDO';
+                                } elseif ($es_agotado) {
+                                    $badge_estado = 'badge-danger';
+                                    $icono_estado = 'x-octagon';
+                                    $texto_estado = 'AGOTADO';
+                                } elseif ($status_efectivo === 'Activo') {
+                                    $badge_estado = 'badge-success';
+                                    $icono_estado = 'eye';
+                                    $texto_estado = 'ACTIVO';
+                                } else {
+                                    $badge_estado = 'badge-danger';
+                                    $icono_estado = 'eye-off';
+                                    $texto_estado = 'INACTIVO';
+                                }
                                 ?>
-                                <span class="badge-jv <?php echo $badge_estado; ?>" style="font-size:.75rem;">
+                                <span class="badge-jv <?php echo $badge_estado; ?>">
                                     <i class="bi bi-<?php echo $icono_estado; ?>"></i>
                                     <?php echo $texto_estado; ?>
                                 </span>
                             </td>
                             <?php if ($esAdmin): ?>
-                                <td class="text-center">
+                                <td class="text-center td-prod-acciones">
                                     <div class="d-flex justify-content-center gap-1">
-                                        <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(234,88,12,0.12);color:var(--jv-orange);border:1px solid rgba(234,88,12,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="editarProducto(<?php echo $productRecord['id_producto']; ?>)" data-tooltip="Editar">
-                                            <i class="bi bi-pencil"></i>
+                                        <button type="button" class="btn btn-sm p-0 btn-accion-editar" onclick="editarProducto(<?php echo $productRecord['id_producto']; ?>)" data-tooltip="Editar producto" aria-label="Editar producto">
+                                            <i class="bi bi-pencil-square"></i>
                                         </button>
                                         <?php if ($productRecord['status'] === 'Activo'): ?>
-                                            <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" data-tooltip="Desactivar">
+                                            <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" data-tooltip="Inactivar producto" aria-label="Inactivar producto">
                                                 <i class="bi bi-power"></i>
                                             </button>
                                             <?php if ($venc_cls === 'vencido'): ?>
-                                                <button type="button" class="btn btn-sm p-0 ms-1" style="width:30px;height:30px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" data-tooltip="Dar de baja por vencimiento">
+                                                <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(100,116,139,0.12);color:var(--jv-text-muted);border:1px solid rgba(100,116,139,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="bajaVencido(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>)" data-tooltip="Dar de baja por vencimiento" aria-label="Dar de baja por vencimiento">
                                                     <i class="bi bi-archive"></i>
                                                 </button>
 <?php endif; ?>
                                         <?php else: ?>
-                                            <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" data-tooltip="Reactivar">
+                                            <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" data-tooltip="Activar producto" aria-label="Activar producto">
                                                 <i class="bi bi-play-circle"></i>
                                             </button>
                                         <?php endif; ?>
@@ -378,7 +425,7 @@ foreach ($categorias as $raiz) {
                         <td colspan="<?php echo $esAdmin ? 9 : 8; ?>" class="text-center py-5">
                             <i class="bi bi-box-seam d-block mb-3 mx-auto" style="font-size: 3.5rem; color: var(--jv-text-muted);"></i>
                             <span class="text-uppercase" style="color: var(--jv-text-primary); font-weight: 700; font-size: 1.1rem;">Inventario vacío</span>
-                            <p class="mt-2" style="color: var(--jv-text-muted); font-size: 1rem;">Registra entradas desde <strong style="color: var(--jv-orange);">Compras</strong> para ver productos aquí</p>
+                            <p class="mt-2" style="color: var(--jv-text-muted); font-size: 1rem;">Registra entradas desde <strong style="color: var(--inv-accent);">Compras</strong> para ver productos aquí</p>
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -402,7 +449,7 @@ foreach ($categorias as $raiz) {
                     for ($pageNumber = $inicio_p; $pageNumber <= $fin_p; $pageNumber++):
                     ?>
                         <li class="page-item <?php echo ($pageNumber == $pagina_actual) ? 'active' : ''; ?>">
-                            <a class="page-link" style="<?php echo ($pageNumber == $pagina_actual) ? 'background:var(--jv-orange); border-color:var(--jv-orange); color:#fff;' : 'background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);'; ?>" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pageNumber; ?><?php echo $id_categoria_filtro > 0 ? '&cat=' . $id_categoria_filtro : ''; ?>"><?php echo $pageNumber; ?></a>
+                            <a class="page-link" style="<?php echo ($pageNumber == $pagina_actual) ? 'background:var(--inv-accent); border-color:var(--inv-accent); color:#fff;' : 'background:var(--jv-bg-primary); border:1px solid var(--jv-border); color:var(--jv-text-primary);'; ?>" href="<?php echo APP_URL_BASE; ?>index.php?url=productos&p=<?php echo $pageNumber; ?><?php echo $id_categoria_filtro > 0 ? '&cat=' . $id_categoria_filtro : ''; ?>"><?php echo $pageNumber; ?></a>
                         </li>
                     <?php endfor; ?>
                     <li class="page-item <?php echo ($pagina_actual >= $total_paginas) ? 'disabled' : ''; ?>">
@@ -427,7 +474,7 @@ foreach ($categorias as $raiz) {
 <div class="modal fade" id="modalCat" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-content-jv">
-            <form method="POST" id="formCat" autocomplete="off" data-borrador="productos_categoria">
+            <form method="POST" id="formCat" autocomplete="off" data-borrador="productos_categoria" data-borrador-campos-relevantes="nombre,descripcion">
                 <div class="jv-modal-header">
                     <div>
                         <h5 class="font-brand" id="modalTitleCat"><i class="bi bi-folder-plus-fill me-2"></i>NUEVA CATEGOR&Iacute;A</h5>
@@ -534,41 +581,45 @@ foreach ($categorias as $raiz) {
                         </div>
                     </div>
                     <div class="p-4 modal-producto-edit-body">
-                        <div class="mb-2">
+                        <div class="mb-3">
                             <label class="small fw-bold text-secondary mb-1">PRODUCTO</label>
-                            <input type="text" class="input-jv" id="edit_nombre" readonly disabled style="color:var(--jv-text-muted);">
+                            <input type="text" class="input-jv" id="edit_nombre" readonly disabled>
                         </div>
-                        <div class="mb-2">
+
+                        <div class="mb-3">
                             <label class="small fw-bold text-secondary mb-1">Código</label>
-                            <input type="text" class="input-jv" id="edit_sku" readonly disabled style="color:var(--jv-text-muted);">
+                            <input type="text" class="input-jv" id="edit_sku" readonly disabled>
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-4">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">STOCK ACTUAL</label>
-                                <input type="text" class="input-jv" id="edit_stock" readonly disabled style="color:var(--jv-text-muted);">
+                                <input type="text" class="input-jv" id="edit_stock" readonly disabled>
                             </div>
-                            <div class="col-4">
+                            <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">STOCK MÍNIMO</label>
                                 <input type="number" class="input-jv" id="edit_minimo" name="stock_minimo" min="1" max="99999" step="1" inputmode="numeric" required>
                             </div>
-                            <div class="col-4">
+                            <div class="col-md-4">
                                 <label class="small fw-bold text-secondary mb-1">CAPACIDAD MÁX.</label>
                                 <input type="number" class="input-jv" id="edit_maximo" name="stock_maximo" min="0" max="999999" step="1" inputmode="numeric" required>
                             </div>
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">PRECIO VENTA ($)</label>
                                 <input type="text" class="input-jv precio-edicion" id="edit_pvp" inputmode="decimal" autocomplete="off" data-max="99999.99" required>
                                 <input type="hidden" id="edit_pvp_valor" name="precio_venta">
                             </div>
-                            <div class="col-6">
+                            <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">COSTO PROMEDIO ($)</label>
-                                <input type="text" class="input-jv" id="edit_costo" readonly disabled style="color:var(--jv-text-muted);background:rgba(15,26,46,0.04);" data-tooltip="Se calcula automáticamente al recibir mercancía (costo promedio ponderado)">
+                                <input type="text" class="input-jv" id="edit_costo" readonly disabled data-tooltip="Se calcula automáticamente al recibir mercancía (costo promedio ponderado)">
                             </div>
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-12">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">CATEGOR&Iacute;A</label>
                                 <select class="input-jv" id="edit_categoria" name="id_categoria">
                                     <option value="0">&mdash; Sin categor&iacute;a &mdash;</option>
@@ -584,25 +635,39 @@ foreach ($categorias as $raiz) {
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">PROVEEDOR <span class="text-danger">*</span></label>
+                                <select class="input-jv" id="edit_proveedor" name="id_proveedor" required>
+                                    <option value="">— Seleccione proveedor —</option>
+                                    <?php foreach ($proveedores as $proveedor): ?>
+                                        <option value="<?php echo (int)$proveedor['id_proveedor']; ?>"><?php echo htmlspecialchars($proveedor['nombre_empresa']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         </div>
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
+
+                        <div class="row g-3 mb-0">
+                            <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">ESTADO</label>
                                 <select class="input-jv" id="edit_status" name="status">
                                     <option value="Activo">Activo</option>
                                     <option value="Inactivo">Inactivo</option>
                                 </select>
                             </div>
-                            <div class="col-6">
-                                <label class="small fw-bold text-secondary mb-1">VENCIMIENTO <span class="text-danger">*</span></label>
-                                <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento" required>
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-secondary mb-1">VENCIMIENTO <span class="text-muted fw-normal">(obligatorio si est&aacute; activo)</span></label>
+                                <input type="date" class="input-jv" id="edit_vencimiento" name="fecha_vencimiento">
                             </div>
                         </div>
-                        </div>
                     </div>
-                    <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
-                        <button type="button" class="btn btn-jv-danger" style="padding:8px 20px;font-size:.8rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
-                        <button type="button" class="btn btn-jv-success" style="padding:8px 20px;font-size:.8rem;" onclick="return validarEditarProducto(this)"><i class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
+
+                    <div class="modal-footer p-3 gap-2 justify-content-end bg-white border-top">
+                        <button type="button" class="btn btn-jv-danger px-4" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-1"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-jv-success px-4" onclick="return validarEditarProducto(this)">
+                            <i class="bi bi-check-lg me-1"></i> Guardar Cambios
+                        </button>
                     </div>
                 </form>
             </div>

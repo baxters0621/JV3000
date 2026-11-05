@@ -47,9 +47,13 @@ class Salida extends Model
      */
     public function obtenerSalidas(): array
     {
+        // Garantiza que GROUP_CONCAT no corte la lista de productos aunque
+        // la conexión herede un límite bajo.
+        $this->db->execute("SET SESSION group_concat_max_len = 1048576");
+
         $salidas = $this->db->fetchAll("
             SELECT s.*,
-                   GROUP_CONCAT(p.nombre_producto SEPARATOR ', ') as productos_list,
+                   GROUP_CONCAT(COALESCE(p.nombre_producto, CONCAT('Producto #', ds.id_producto)) ORDER BY ds.id_detalle SEPARATOR ', ') as productos_list,
                    SUM(ds.cantidad) as total_cantidad,
                    SUM(ds.cantidad * ds.precio_venta) as total_monto,
                    COUNT(ds.id_detalle) as num_productos,
@@ -69,10 +73,13 @@ class Salida extends Model
         if ($salidas) {
             $ids_sal = implode(',', array_map(fn($r) => (int)$r['id_salida'], $salidas));
             $detalle_all = $this->db->fetchAll("
-                SELECT ds.id_salida, ds.id_producto, ds.cantidad, ds.precio_venta, p.nombre_producto, p.sku
+                SELECT ds.id_salida, ds.id_producto, ds.cantidad, ds.precio_venta,
+                       COALESCE(p.nombre_producto, CONCAT('Producto #', ds.id_producto)) as nombre_producto,
+                       p.sku
                 FROM detalle_salidas ds
-                JOIN productos p ON ds.id_producto = p.id_producto
+                LEFT JOIN productos p ON ds.id_producto = p.id_producto
                 WHERE ds.id_salida IN ($ids_sal)
+                ORDER BY ds.id_salida, ds.id_detalle
             ");
             $mapa_det = [];
             foreach ($detalle_all as $d) {
@@ -304,6 +311,23 @@ class Salida extends Model
                 $data['rif_cliente'] = $rif_confirm;
             }
 
+            // Un cliente inactivo no puede usarse en una operación nueva.
+            if ($grupo_data !== 'merma') {
+                $id_cliente_validar = intval($data['id_cliente'] ?? 0);
+                if ($id_cliente_validar > 0) {
+                    $cliente_validar = $this->db->fetchOne(
+                        "SELECT status FROM clientes WHERE id_cliente = ?",
+                        [$id_cliente_validar]
+                    );
+                    if (!$cliente_validar) {
+                        throw new Exception("EL CLIENTE SELECCIONADO NO EXISTE.");
+                    }
+                    if ($cliente_validar['status'] !== 'Activo') {
+                        throw new Exception("EL CLIENTE SELECCIONADO ESTÁ INACTIVO Y NO PUEDE USARSE EN UNA OPERACIÓN NUEVA.");
+                    }
+                }
+            }
+
             // 0. Si es edición: restaurar el stock y los lotes de los detalles actuales
             if ($es_edicion) {
                 $salida_vieja = $this->db->fetchOne("SELECT id_salida FROM salidas WHERE id_salida = ? AND status = 'Activa' FOR UPDATE", [$id_editar]);
@@ -327,8 +351,23 @@ class Salida extends Model
             }
 
             foreach ($cantidades_por_producto as $id_producto => $cantidad) {
-                $pi = $this->db->fetchOne("SELECT stock_actual FROM productos WHERE id_producto = ?", [$id_producto]);
+                $pi = $this->db->fetchOne(
+                    "SELECT p.stock_actual, p.status,
+                            COALESCE((
+                                SELECT MIN(l.fecha_vencimiento) FROM lotes l
+                                WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0
+                                  AND l.fecha_vencimiento > '0000-00-00'
+                            ), NULLIF(p.fecha_vencimiento, '0000-00-00')) AS fecha_vencimiento
+                     FROM productos p WHERE p.id_producto = ?",
+                    [$id_producto]
+                );
                 if (!$pi) throw new Exception("Producto #$id_producto no encontrado");
+                if ($grupo_data !== 'merma' && $pi['status'] !== 'Activo') {
+                    throw new Exception("PRODUCTO INACTIVO (ID:$id_producto). NO PUEDE USARSE EN UNA OPERACIÓN NUEVA.");
+                }
+                if ($grupo_data === 'venta' && !empty($pi['fecha_vencimiento']) && $pi['fecha_vencimiento'] < date('Y-m-d')) {
+                    throw new Exception("PRODUCTO VENCIDO (ID:$id_producto, VENCE: {$pi['fecha_vencimiento']}). NO PUEDE VENDERSE.");
+                }
                 $tiene_lotes = (int)$this->db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE id_producto = ?", [$id_producto])['n'];
                 if ($tiene_lotes > 0) {
                     $disp = stockLoteDisponible($this->db, $id_producto, $solo_vencidos);

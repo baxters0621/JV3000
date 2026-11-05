@@ -65,9 +65,12 @@ if ($id_producto > 0) {
             $params[] = $id_categoria;
         }
     }
-    if (!$incluir_inactivos) {
-        $where[] = "p.status = 'Activo'";
-    }
+}
+
+// El filtro de estado aplica también cuando se consulta por id_producto:
+// un producto inactivo no debe poder seleccionarse para una operación nueva.
+if (!$incluir_inactivos) {
+    $where[] = "p.status = 'Activo'";
 }
 
 $stock_expr = $vencidos
@@ -78,9 +81,16 @@ $stock_expr = $vencidos
             THEN (CASE WHEN (p.fecha_vencimiento IS NULL OR p.fecha_vencimiento > CURDATE()) THEN p.stock_actual ELSE 0 END)
             ELSE (SELECT COALESCE(SUM(l.cantidad_restante),0) FROM lotes l WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0 AND (l.fecha_vencimiento IS NULL OR l.fecha_vencimiento > CURDATE())) END)";
 
+$fecha_expr = "COALESCE((
+                    SELECT MIN(l.fecha_vencimiento) FROM lotes l
+                    WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0
+                      AND l.fecha_vencimiento > '0000-00-00'
+                ), NULLIF(p.fecha_vencimiento, '0000-00-00'))";
+
 $sql = "SELECT p.id_producto, p.sku, p.nombre_producto, p.precio_venta, p.precio_costo,
                p.stock_actual, p.status, p.id_categoria, c.nombre AS categoria,
                $stock_expr AS stock,
+               $fecha_expr AS fecha_vencimiento,
                (SELECT MIN(l.fecha_vencimiento) FROM lotes l WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0 AND l.fecha_vencimiento IS NOT NULL) AS proximo_vencimiento
         FROM productos p
         LEFT JOIN categorias c ON p.id_categoria = c.id_categoria";
@@ -94,6 +104,8 @@ $items = [];
 foreach ($db->fetchAll($sql, $params) as $r) {
     $stock = (int)$r['stock'];
     if ($solo_con_stock && $stock <= 0) continue;
+    $fecha_vencimiento = !empty($r['fecha_vencimiento']) ? (string)$r['fecha_vencimiento'] : null;
+    $vencido_producto = $fecha_vencimiento !== null && $fecha_vencimiento < date('Y-m-d');
     $items[] = [
         'id' => (int)$r['id_producto'],
         'sku' => (string)$r['sku'],
@@ -104,8 +116,10 @@ foreach ($db->fetchAll($sql, $params) as $r) {
         'stock_actual' => (int)$r['stock_actual'],
         'categoria' => (string)($r['categoria'] ?? ''),
         'id_categoria' => (int)$r['id_categoria'],
+        'fecha_vencimiento' => $fecha_vencimiento,
         'proximo_vencimiento' => $r['proximo_vencimiento'],
-        'vencido' => $vencidos,
+        'vencido' => $vencido_producto ? 1 : 0,
+        'vencidos_modo' => $vencidos,
     ];
 }
 
