@@ -152,53 +152,93 @@
             if (btn) btn.setAttribute('aria-expanded', 'true');
         }
 
-        function renderAlertaSeccion(titulo, clase, urlAlerta, count, items, icono) {
-            if (count <= 0) return '';
-            var html = '<div class="dash-bell-sec dash-bell-' + clase + '">';
-            html += '<div class="dash-bell-sec-titulo"><span>' + escapeHtml(titulo) + ' (' + count + ')</span>';
-            html += '<a class="dash-bell-ver" href="../index.php?url=productos&alerta=' + urlAlerta + '">Ver todos</a></div>';
-            (items || []).forEach(function(it) {
-                html += '<a class="dash-bell-item" href="../index.php?url=productos&producto=' + it.id + '">';
-                html += '<i class="bi ' + icono + '"></i>';
-                html += '<span class="dash-bell-item-nombre">' + escapeHtml(it.nombre) + '</span>';
-                html += '<span class="dash-bell-item-meta">' + escapeHtml(it.meta) + '</span></a>';
-            });
+        // Base absoluta del panel (funciona tanto en el dashboard raíz como en
+        // la vista enrutada ?url=dashboard).
+        function baseUrlAlertas() {
+            var base = (window.JV_CONFIG && window.JV_CONFIG.prefijo) || window.JV_BASE || '../';
+            if (base.slice(-1) !== '/') base += '/';
+            return base;
+        }
+
+        function renderAlertaSeccion(titulo, clase, urlAlerta, count, items, icono, tipo, puedeBaja, puedeReponer) {
+            var base = baseUrlAlertas();
+            var total = Number(count) || 0;
+            var html = '<section class="dash-bell-sec dash-bell-' + clase + '">';
+            html += '<div class="dash-bell-sec-titulo"><span><i class="bi ' + icono + '" aria-hidden="true"></i> ' + escapeHtml(titulo) + ' (' + total + ')</span>';
+            if (total > 0) {
+                html += '<a class="dash-bell-ver" href="' + base + 'index.php?url=productos&alerta=' + urlAlerta + '">Ver todos</a>';
+            }
             html += '</div>';
-            return html;
+
+            if (total <= 0) {
+                html += '<p class="dash-bell-sec-vacio">' + (tipo === 'vencidos' ? 'No hay productos vencidos' : 'No hay productos con stock bajo') + '</p>';
+                return html + '</section>';
+            }
+
+            (items || []).forEach(function(it) {
+                var nombre = escapeHtml(it.nombre);
+                html += '<div class="dash-bell-item">';
+                html += '<i class="bi ' + icono + '" aria-hidden="true"></i>';
+                html += '<div class="dash-bell-item-copy"><a class="dash-bell-item-nombre" href="' + base + 'index.php?url=productos&producto=' + (Number(it.id) || 0) + '">' + nombre + '</a>';
+                if (tipo === 'vencidos') {
+                    html += '<span class="dash-bell-item-meta dash-bell-meta-venc">Vence: ' + escapeHtml(it.fecha) + '</span>';
+                } else {
+                    html += '<span class="dash-bell-item-meta dash-bell-meta-bajo">Quedan ' + (Number(it.stock) || 0) + ' <span class="dash-bell-min">(mín ' + (Number(it.minimo) || 0) + ')</span></span>';
+                }
+                html += '</div>';
+                if (tipo === 'vencidos' && puedeBaja) {
+                    html += '<button type="button" class="dash-bell-accion dash-bell-accion-danger" data-baja-id="' + (Number(it.id) || 0) + '" data-baja-nombre="' + nombre + '">Dar de baja</button>';
+                } else if (tipo === 'bajos' && puedeReponer) {
+                    var href = base + 'index.php?url=compras';
+                    if (Number(it.id_proveedor) > 0) {
+                        href += '&reponer_producto=' + (Number(it.id) || 0) + '&reponer_proveedor=' + Number(it.id_proveedor);
+                    }
+                    html += '<a class="dash-bell-accion dash-bell-accion-warn" href="' + href + '">Reponer</a>';
+                }
+                html += '</div>';
+            });
+
+            return html + '</section>';
         }
 
         function actualizarAlertas() {
-            fetch('../includes/ajax/alertas_ajax.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            fetch(baseUrlAlertas() + 'includes/ajax/alertas_ajax.php', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
                     if (!data || !data.success) return;
-                    var badge = $id('dashBellBadge');
-                    if (badge) {
-                        if (data.total > 0) {
-                            badge.textContent = Math.min(data.total, 99);
-                            badge.style.display = 'inline-flex';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    }
                     var panel = $id('dashBellPanel');
                     if (!panel) return;
-                    var html = '<div class="dash-bell-head">ALERTAS CRÍTICAS</div>';
-                    html += renderAlertaSeccion('VENCIDOS', 'ven', 'vencidos', data.counts.vencidos,
-                        data.vencidos.map(function(v) { return { id: v.id, nombre: v.nombre, meta: v.fecha }; }),
-                        'bi bi-x-octagon');
-                    html += renderAlertaSeccion('PRÓXIMOS (1-7 DÍAS)', 'prox', 'proximos', data.counts.proximos,
-                        data.proximos.map(function(v) { return { id: v.id, nombre: v.nombre, meta: v.fecha }; }),
-                        'bi bi-clock-history');
-                    html += renderAlertaSeccion('PRONTO (8-30 DÍAS)', 'pronto', 'prontos', data.counts.prontos,
-                        data.prontos.map(function(v) { return { id: v.id, nombre: v.nombre, meta: v.fecha }; }),
-                        'bi bi-calendar3');
-                    html += renderAlertaSeccion('STOCK BAJO', 'bajo', 'bajos', data.counts.bajos,
-                        data.bajos.map(function(v) { return { id: v.id, nombre: v.nombre, meta: v.stock + ' / mín ' + v.minimo }; }),
-                        'bi bi-exclamation-triangle');
-                    if (html === '<div class="dash-bell-head">ALERTAS CRÍTICAS</div>') {
-                        html += '<div class="dash-bell-empty"><i class="bi bi-check-circle"></i> Sin alertas críticas</div>';
+
+                    var badge = $id('dashBellBadge');
+                    var btn = $id('dashBellBtn');
+                    if (Number(data.total) > 0) {
+                        if (!badge && btn) {
+                            badge = document.createElement('span');
+                            badge.className = 'dash-bell-badge';
+                            badge.id = 'dashBellBadge';
+                            btn.appendChild(badge);
+                        }
+                        if (badge) {
+                            badge.textContent = Math.min(Number(data.total), 99);
+                            badge.style.display = 'inline-flex';
+                        }
+                    } else if (badge) {
+                        badge.style.display = 'none';
                     }
+
+                    var puedeBaja = (typeof data.puede_baja !== 'undefined')
+                        ? !!data.puede_baja
+                        : panel.getAttribute('data-puede-baja') === '1';
+                    var puedeReponer = (typeof data.puede_reponer !== 'undefined')
+                        ? !!data.puede_reponer
+                        : panel.getAttribute('data-puede-reponer') === '1';
+                    var counts = data.counts || {};
+                    var html = '<div class="dash-bell-head">ALERTAS CRÍTICAS</div><div class="dash-bell-body">';
+                    html += renderAlertaSeccion('VENCIDOS', 'ven', 'vencidos', counts.vencidos, data.vencidos || [],
+                        'bi bi-calendar-x-fill', 'vencidos', puedeBaja, puedeReponer);
+                    html += renderAlertaSeccion('STOCK BAJO', 'bajo', 'bajos', counts.bajos, data.bajos || [],
+                        'bi bi-exclamation-triangle-fill', 'bajos', puedeBaja, puedeReponer);
+                    html += '</div>';
                     panel.innerHTML = html;
                     if (panel.classList.contains('open')) posicionarPanelAlertas();
                 })
@@ -217,6 +257,36 @@
                 alertasIntervalo = null;
             }
         }
+
+        // Delegado: confirma y envía la baja de un producto vencido reutilizando
+        // el POST existente de Productos (solo visible para administradores).
+        document.addEventListener('click', function(e) {
+            var panel = $id('dashBellPanel');
+            if (!panel) return;
+            var boton = e.target && e.target.closest ? e.target.closest('.dash-bell-accion-danger') : null;
+            if (!boton || !panel.contains(boton)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof Swal === 'undefined' || typeof jvPost !== 'function') return;
+            var id = boton.getAttribute('data-baja-id');
+            var nombre = boton.getAttribute('data-baja-nombre') || '';
+            Swal.fire({
+                title: '¿DAR DE BAJA?',
+                html: 'Se marcará como <strong>Inactivo</strong> por vencimiento: ' + escapeHtml(nombre),
+                icon: 'warning',
+                showCancelButton: true,
+                background: '#fff',
+                color: '#212529',
+                confirmButtonColor: '#64748B',
+                cancelButtonColor: '#CED4DA',
+                confirmButtonText: 'SÍ, DAR DE BAJA',
+                cancelButtonText: 'CANCELAR'
+            }).then(function(r) {
+                if (!r.isConfirmed) return;
+                var token = panel.getAttribute('data-csrf') || (window.JV_CONFIG && window.JV_CONFIG.csrfToken) || '';
+                jvPost({ baja_vencido: id, csrf_token: token }, baseUrlAlertas() + 'index.php?url=productos');
+            });
+        });
 
         document.addEventListener('click', function(e) {
             var panel = $id('dashBellPanel');

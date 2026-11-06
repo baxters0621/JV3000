@@ -5,6 +5,8 @@
 //  - Lista de exclusión: contraseñas, PINs, códigos, tokens, csrf_token y
 //    productos_data jamás viajan a localStorage.
 //  - Serializar/Restaurar: textos, radios, checkboxes y selects.
+//  - Al restaurar, los selects avisan input/change (una sola vez, al final)
+//    para que los módulos recalculen sus secciones visibles.
 //  - Guardar/Leer: usuario atado al id, caducidad de 24 h, JSON corrupto,
 //    preservación de la marca "enviado".
 //  - Marca de envío nativo: solo cuando el submit no fue prevenido.
@@ -35,8 +37,14 @@ function campoFake(nombre, tipo, valor, extra) {
         value: valor === undefined ? '' : valor,
         checked: false,
         disabled: false,
-        options: null
+        options: null,
+        eventos: []
     }, extra || {});
+    c.dispatchEvent = function(evento) {
+        c.eventos.push(evento);
+        if (typeof c.onEvento === 'function') c.onEvento(evento);
+        return true;
+    };
     // Emula al <select> real: asignar un valor que no existe en sus opciones
     // no cambia la selección.
     if (c.options) {
@@ -137,6 +145,11 @@ const sandbox = {
     document: doc,
     window: {
         addEventListener: function(ev) { escuchasVentana.push(ev); },
+        Event: function Event(tipo, opciones) {
+            this.type = tipo;
+            this.bubbles = !!(opciones && opciones.bubbles);
+            this.isTrusted = false;
+        },
         JV_CONFIG: { userId: 7 },
         localStorage: almacenFake()
     },
@@ -289,6 +302,10 @@ function reiniciar() {
             selectRoto,
             campoFake('desaparecido', 'text', '')
         ]);
+        let usuarioAlAvisar = null;
+        select.onEvento = function(evento) {
+            if (evento.type === 'change') usuarioAlAvisar = form.elements.usuario.value;
+        };
         const cuenta = jvBorradorRestaurar(form, {
             usuario: 'jperez',
             rol: 'b',
@@ -305,6 +322,24 @@ function reiniciar() {
         afirmar(select.value === 'punto', 'Restaurar selecciona la opción del select.');
         afirmar(selectRoto.value === '', 'Restaurar ignora una opción que ya no existe.');
         afirmar(cuenta === 4, 'Restaurar cuenta solo los campos realmente restaurados (4).');
+        afirmar(select.eventos.map(function(e) { return e.type; }).join(',') === 'input,change',
+            'Restaurar avisa input y change al select recuperado.');
+        afirmar(selectRoto.eventos.length === 0, 'Restaurar no avisa un select que no pudo recuperarse.');
+        afirmar(usuarioAlAvisar === 'jperez',
+            'El aviso del select llega después de restaurar el resto del formulario.');
+    }
+
+    // ---------- 5b. Ventas refresca sus secciones al restaurar ----------
+    {
+        reiniciar();
+        const form = formFake('salidas', [
+            campoFake('id_tipo_mov', 'select-one', '1', { options: [{ value: '1' }] })
+        ]);
+        let refrescos = 0;
+        sandbox.window.toggleCampos = function() { refrescos++; };
+        jvBorradorRestaurar(form, { id_tipo_mov: '1' });
+        afirmar(refrescos === 1, 'Ventas ejecuta toggleCampos al restaurar su borrador.');
+        delete sandbox.window.toggleCampos;
     }
 
     // ---------- 6. Marca de envío nativo vs. envío prevenido ----------
@@ -604,6 +639,14 @@ function reiniciar() {
             'El borrador del catálogo se vincula al id de su entrada.');
         afirmar(vistaCompras.includes('data-borrador-campos-relevantes="id_proveedor,nro_factura,nro_control,observaciones"'),
             'Compras identifica los campos que prueban que hay trabajo real para recuperar.');
+        const vistaProductos = fs.readFileSync('views/productos/index.php', 'utf8');
+        afirmar(vistaProductos.includes('data-borrador-campos-relevantes="nombre,descripcion"'),
+            'Categorías solo recuperan borradores con nombre o descripción.');
+        const productosJs = fs.readFileSync('assets/modules/productos/productos.js', 'utf8');
+        afirmar(productosJs.includes('catLimpiarBorrador') && productosJs.includes('hide.bs.modal'),
+            'El formulario de categoría purga su borrador al cerrar.');
+        afirmar(fuente.includes("confirmButtonColor: '#1E3A8A'") && fuente.includes("cancelButtonColor: '#64748B'"),
+            'La alerta de borrador usa los colores institucionales.');
 
         const sidebar = fs.readFileSync('includes/sidebar.php', 'utf8');
         afirmar(sidebar.includes('JV_CONFIG.userId'), 'El sidebar expone JV_CONFIG.userId.');

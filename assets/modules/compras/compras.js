@@ -875,6 +875,65 @@
         // ==========================================
         // INICIALIZACIÓN
         // ==========================================
+        // Precarga una reposición enviada desde Inventario (producto y proveedor).
+        function prefillReponer() {
+            const params = new URLSearchParams(window.location.search);
+            const idProducto = Number(params.get('reponer_producto') || 0);
+            const idProveedor = Number(params.get('reponer_proveedor') || 0);
+            if (!idProducto || !idProveedor || !proveedorSelect || !productoSelect) return false;
+
+            params.delete('reponer_producto');
+            params.delete('reponer_proveedor');
+            const limpia = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
+            window.history.replaceState({}, '', limpia);
+
+            const opcionProveedor = Array.from(proveedorSelect.options).find(function(opcion) {
+                return Number(opcion.value) === idProveedor;
+            });
+            if (!opcionProveedor) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Proveedor no disponible',
+                    text: 'El proveedor del producto ya no está activo o no está disponible para compras.',
+                    confirmButtonColor: '#047857'
+                });
+                return true;
+            }
+
+            proveedorSelect.value = String(idProveedor);
+            proveedorSelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+            const opcionProducto = Array.from(productoSelect.options).find(function(opcion) {
+                return Number(opcion.value) === idProducto;
+            });
+            const modal = document.getElementById('modalCompra');
+            if (!opcionProducto) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Producto no disponible',
+                    text: 'El producto no está activo en el catálogo de este proveedor. Revísalo antes de continuar.',
+                    confirmButtonColor: '#047857'
+                });
+                if (modal) {
+                    setTimeout(function() {
+                        bootstrap.Modal.getOrCreateInstance(modal).show();
+                    }, 150);
+                }
+                return true;
+            }
+
+            productoSelect.value = String(idProducto);
+            productoSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            const cantidadEl = document.getElementById('inputCant');
+            if (cantidadEl) cantidadEl.focus();
+            if (modal) {
+                setTimeout(function() {
+                    bootstrap.Modal.getOrCreateInstance(modal).show();
+                }, 150);
+            }
+            return true;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // (El auto-cierre de mensajes flash lo maneja diseno.js globalmente.)
             proveedorCarritoId = proveedorSelect.value;
@@ -882,7 +941,8 @@
 
             const compraRecuperacion = (window.JV_CONFIG || {}).compraRecuperacion;
             const recepcionRecuperacion = (window.JV_CONFIG || {}).recepcionRecuperacion;
-            if (compraRecuperacion) {
+            const reponerPrefill = prefillReponer();
+            if (!reponerPrefill && compraRecuperacion) {
                 document.getElementById('selProveedor').value = String(compraRecuperacion.id_proveedor || '');
                 document.getElementById('selProveedor').dispatchEvent(new Event('change', { bubbles: true }));
                 document.querySelector('input[name="nro_factura"]').value = compraRecuperacion.nro_factura || '';
@@ -912,7 +972,7 @@
             }
 
             // Prefill desde una solicitud de compra (atender_solicitud)
-            else if (!recepcionRecuperacion && window.COMPRAS_SOLICITUD && window.COMPRAS_SOLICITUD.items && window.COMPRAS_SOLICITUD.items.length) {
+            else if (!reponerPrefill && !recepcionRecuperacion && window.COMPRAS_SOLICITUD && window.COMPRAS_SOLICITUD.items && window.COMPRAS_SOLICITUD.items.length) {
                 window.COMPRAS_SOLICITUD.items.forEach(function(requestItem) {
                     productos.push({
                         id: requestItem.id,

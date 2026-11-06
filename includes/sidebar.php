@@ -214,7 +214,7 @@ $es_op_ventas = $id_rol === 3;
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 <!-- ESTILOS DEL SIDEBAR -->
-<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=17">
+<link rel="stylesheet" href="<?php echo $base_assets; ?>css/sidebar.css?v=18">
 
 <script src="<?php echo $base_assets; ?>js/sweetalert2.all.min.js"></script>
 <script>

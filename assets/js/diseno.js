@@ -478,10 +478,33 @@ function jvBorradorSerializar(form) {
 }
 
 /**
+ * Avisa a los listeners que un select cambió, como si lo hubiera hecho el usuario.
+ *
+ * Asignar .value no dispara eventos; sin este aviso los módulos no reaccionan
+ * al restaurar un borrador (por ejemplo, Ventas no muestra los campos de su
+ * tipo de movimiento). Los eventos son sintéticos (isTrusted === false), así
+ * que jvBorradorEscuchar no los confunde con trabajo real del usuario.
+ *
+ * @param {HTMLSelectElement} campo select restaurado.
+ * @returns {void}
+ */
+function jvBorradorDispararEvento(campo) {
+    if (!campo || typeof campo.dispatchEvent !== 'function') return;
+    var Constructor = (typeof window !== 'undefined' && window.Event) ||
+        (typeof Event !== 'undefined' ? Event : null);
+    if (!Constructor) return;
+    ['input', 'change'].forEach(function(tipo) {
+        campo.dispatchEvent(new Constructor(tipo, { bubbles: true }));
+    });
+}
+
+/**
  * Vuelve a dejar en el formulario los valores de un borrador guardado.
  *
  * Solo toca campos que aún existen; los selects restauran únicamente si la
- * opción sigue disponible. Devuelve cuántos campos pudo recuperar.
+ * opción sigue disponible. Al terminar, avisa con input/change a los selects
+ * restaurados para que los módulos recalculen sus secciones visibles.
+ * Devuelve cuántos campos pudo recuperar.
  *
  * @param {HTMLFormElement} form formulario destino.
  * @param {object} datos mapa nombre → valor del borrador.
@@ -489,6 +512,7 @@ function jvBorradorSerializar(form) {
  */
 function jvBorradorRestaurar(form, datos) {
     var restaurados = 0;
+    var selectsRestaurados = [];
     if (!datos || !form.elements) return restaurados;
     Object.keys(datos).forEach(function(nombre) {
         var valor = datos[nombre];
@@ -517,7 +541,17 @@ function jvBorradorRestaurar(form, datos) {
         // cuenta como restaurado solo si de verdad quedó seleccionado.
         if (campo.options && String(campo.value) !== String(valor)) return;
         restaurados++;
+        if (campo.options) selectsRestaurados.push(campo);
     });
+    // Se avisa al final, con todos los valores ya puestos, para que el módulo
+    // vea el formulario completo al mostrar/ocultar sus secciones.
+    selectsRestaurados.forEach(jvBorradorDispararEvento);
+    // El change sintético no siempre ejecuta el onchange inline del módulo:
+    // Ventas refresca explícitamente sus secciones tras restaurar.
+    if (form.getAttribute('data-borrador') === 'salidas' &&
+        typeof window.toggleCampos === 'function') {
+        window.toggleCampos();
+    }
     return restaurados;
 }
 
@@ -640,8 +674,10 @@ function jvBorradorPreguntar(registro, form) {
         html: 'Guardamos lo que escribiste hace ' + jvBorradorHaceTexto(registro.actualizado) + '.',
         icon: 'question',
         confirmButtonText: 'Restaurar',
+        confirmButtonColor: '#1E3A8A',
         showCancelButton: true,
         cancelButtonText: 'Descartar',
+        cancelButtonColor: '#64748B',
         reverseButtons: true
     }).then(function(resultado) {
         if (resultado && resultado.isConfirmed) {

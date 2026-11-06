@@ -307,12 +307,15 @@ CREATE TABLE `productos` (
   `tipo_control` enum('FEFO','FIFO') NOT NULL DEFAULT 'FEFO',
   `status` enum('Activo','Inactivo') NOT NULL DEFAULT 'Activo',
   `id_categoria` int(11) NOT NULL,
+  `id_proveedor` int(11) DEFAULT NULL,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id_producto`),
   UNIQUE KEY `idx_sku` (`sku`),
   KEY `fk_prod_cat` (`id_categoria`),
+  KEY `fk_prod_prov` (`id_proveedor`),
   KEY `idx_prod_status` (`status`),
-  CONSTRAINT `fk_prod_cat` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE
+  CONSTRAINT `fk_prod_cat` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) ON DELETE CASCADE,
+  CONSTRAINT `fk_prod_prov` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

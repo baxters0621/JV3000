@@ -13,6 +13,9 @@
         let productoSeleccionado = null;
         let toolboxTimer = null;
         let toolboxTimerCli = null;
+        let clientesVentaCache = null;
+        let clientesVentaCargando = null;
+        let busquedaClientesToken = 0;
 
         // Devuelve el grupo del tipo de movimiento seleccionado (venta, regalias, merma).
         function grupoActual() {
@@ -60,7 +63,8 @@
                 div.dataset.precioVenta = product.precio_venta;
                 div.dataset.precioCosto = product.precio_costo;
                 div.dataset.stock = product.stock;
-                div.dataset.vencido = product.vencido;
+                const vencido = product.vencido === true || product.vencido === 1 || product.vencido === '1';
+                div.dataset.vencido = vencido ? '1' : '0';
 
                 const bloqueado = product.stock <= 0;
                 if (bloqueado) {
@@ -68,24 +72,25 @@
                     div.dataset.blocked = '1';
                 }
 
-                const left = document.createElement('div');
                 const nombreEl = document.createElement('div');
                 nombreEl.className = 'r-nombre';
-                const etqBloqueo = product.stock <= 0 ? '«AGOTADO» ' : (product.vencido ? '«VENCIDO» ' : '');
+                const etqBloqueo = vencido ? '«VENCIDO» ' : (product.stock <= 0 ? '«AGOTADO» ' : '');
                 nombreEl.dataset.tooltip = etqBloqueo + product.nombre;
                 nombreEl.textContent = etqBloqueo + product.nombre;
+
+                const metaEl = document.createElement('div');
+                metaEl.className = 'r-meta d-flex justify-content-between align-items-center gap-2';
                 const skuEl = document.createElement('div');
-                skuEl.className = 'r-sku';
-                skuEl.textContent = product.sku || '';
-                left.appendChild(nombreEl);
-                left.appendChild(skuEl);
-
+                skuEl.className = 'r-sku text-muted text-truncate';
+                skuEl.textContent = product.sku || 'Sin SKU';
                 const stockEl = document.createElement('span');
-                stockEl.className = 'r-stock';
+                stockEl.className = 'r-stock badge rounded-pill' + ((bloqueado || vencido) ? ' r-stock-agotado' : '');
                 stockEl.textContent = 'Stock: ' + product.stock;
+                metaEl.appendChild(skuEl);
+                metaEl.appendChild(stockEl);
 
-                div.appendChild(left);
-                div.appendChild(stockEl);
+                div.appendChild(nombreEl);
+                div.appendChild(metaEl);
                 resultadosBox.appendChild(div);
             });
             abrirResultados();
@@ -102,10 +107,19 @@
             const grupo = grupoActual();
             window.clearTimeout(toolboxTimer);
             toolboxTimer = window.setTimeout(function() {
-                jvBuscarProductos({ q: searchTerm, limit: 15, vencidos: grupo === 'merma' ? 1 : 0, solo_con_stock: grupo === 'merma' ? 1 : 0 }, function(searchResponse) {
-                    if (searchResponse && searchResponse.success) renderResultados(searchResponse.items);
-                    else renderResultados([]);
+                const params = new URLSearchParams({
+                    q: searchTerm,
+                    limit: '15',
+                    vencidos: grupo === 'merma' ? '1' : '0',
+                    solo_con_stock: grupo === 'merma' ? '1' : '0'
                 });
+                jvFetchConTope((window.JV_BASE || '') + 'includes/ajax/productos_buscar.php?' + params.toString(), { ms: 12000 })
+                    .then(function(response) { return response.json(); })
+                    .then(function(searchResponse) {
+                        if (searchResponse && searchResponse.success) renderResultados(searchResponse.items);
+                        else renderResultados([]);
+                    })
+                    .catch(function() { renderResultados([]); });
             }, 350);
         }
 
@@ -113,7 +127,20 @@
         function seleccionarProducto(productElement) {
             if (!productElement || !productElement.dataset.id) return;
             const bloqueado = productElement.dataset.blocked === '1';
+            const vencido = productElement.dataset.vencido === '1';
             const grupo = grupoActual();
+            if (vencido && grupo === 'venta') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'PRODUCTO VENCIDO',
+                    text: 'Este producto está vencido y no puede ser vendido',
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#DC2626',
+                    confirmButtonText: 'ENTENDIDO'
+                });
+                return;
+            }
             if (bloqueado && grupo !== 'merma') {
                 const productWithoutStock = {
                     id: parseInt(productElement.dataset.id, 10),
@@ -142,7 +169,8 @@
                 sku: productElement.dataset.sku,
                 precioVenta: parseFloat(productElement.dataset.precioVenta) || 0,
                 precioCosto: parseFloat(productElement.dataset.precioCosto) || 0,
-                stock: parseInt(productElement.dataset.stock, 10) || 0
+                stock: parseInt(productElement.dataset.stock, 10) || 0,
+                vencido: vencido
             };
             toolboxInput.value = productoSeleccionado.nombre;
             cargarPrecio();
@@ -164,6 +192,59 @@
             if (resultadosCli) resultadosCli.classList.add('abierto');
         }
 
+        // Normaliza texto para comparar nombres con o sin acentos y mayúsculas.
+        function normalizarBusquedaCliente(valor) {
+            return String(valor || '')
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim();
+        }
+
+        // Extrae solo dígitos para comparar teléfonos y documentos formateados.
+        function soloDigitosCliente(valor) {
+            return String(valor || '').replace(/\D+/g, '');
+        }
+
+        // Indica si un cliente coincide con el texto en nombre, documento o teléfono.
+        function clienteCoincideBusqueda(cliente, termino) {
+            const term = normalizarBusquedaCliente(termino);
+            if (!term) return true;
+            const termDigitos = soloDigitosCliente(termino);
+            const nombre = normalizarBusquedaCliente(cliente.nombre);
+            const documento = normalizarBusquedaCliente(cliente.documento);
+            const telefono = normalizarBusquedaCliente(cliente.telefono);
+            const coincideTexto = nombre.includes(term) || documento.includes(term) || telefono.includes(term);
+            const coincideDigitos = !!termDigitos && (
+                soloDigitosCliente(cliente.documento).includes(termDigitos) ||
+                soloDigitosCliente(cliente.telefono).includes(termDigitos)
+            );
+            return coincideTexto || coincideDigitos;
+        }
+
+        // Carga los clientes activos: usa el JSON local del administrador o el endpoint existente.
+        function cargarClientesVenta() {
+            if (Array.isArray(window.JV_CLIENTES)) {
+                return Promise.resolve(window.JV_CLIENTES.filter(function(c) {
+                    return (c.status || 'Activo') === 'Activo';
+                }));
+            }
+            if (clientesVentaCache) return Promise.resolve(clientesVentaCache);
+            if (clientesVentaCargando) return clientesVentaCargando;
+            clientesVentaCargando = jvFetchConTope((window.JV_BASE || '') + 'includes/ajax/clientes_buscar.php?q=&limit=100', {
+                ms: 12000,
+                init: { credentials: 'same-origin' }
+            })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    clientesVentaCache = (data && data.success && Array.isArray(data.items)) ? data.items : [];
+                    return clientesVentaCache;
+                })
+                .catch(function() { return []; })
+                .finally(function() { clientesVentaCargando = null; });
+            return clientesVentaCargando;
+        }
+
         // Dibuja la lista de clientes encontrados en la búsqueda.
         function renderResultadosCli(items) {
             if (!resultadosCli) return;
@@ -171,7 +252,7 @@
             if (!items || !items.length) {
                 const vacio = document.createElement('div');
                 vacio.className = 'com-sin-resultados';
-                vacio.textContent = 'Sin clientes registrados. Escriba el nombre manualmente.';
+                vacio.textContent = 'Sin coincidencias. Puedes escribir el nombre manualmente.';
                 resultadosCli.appendChild(vacio);
                 abrirResultadosCli();
                 return;
@@ -179,9 +260,10 @@
             items.forEach(function(it) {
                 const div = document.createElement('div');
                 div.className = 'com-resultado';
-                div.dataset.id = it.id;
+                div.dataset.id = it.id || it.id_cliente;
                 div.dataset.nombre = it.nombre;
-                div.dataset.documento = it.documento;
+                div.dataset.documento = it.documento || '';
+                div.dataset.telefono = it.telefono || '';
 
                 const left = document.createElement('div');
                 const nombreEl = document.createElement('div');
@@ -189,7 +271,8 @@
                 nombreEl.textContent = it.nombre;
                 const skuEl = document.createElement('div');
                 skuEl.className = 'r-sku';
-                skuEl.textContent = it.documento || '';
+                const referencia = [it.documento, it.telefono].filter(Boolean);
+                skuEl.textContent = referencia.length ? referencia.join(' · ') : 'Sin documento';
                 left.appendChild(nombreEl);
                 left.appendChild(skuEl);
 
@@ -199,20 +282,44 @@
             abrirResultadosCli();
         }
 
-        // Busca clientes por AJAX con retardo según lo escrito en el campo de cliente.
+        // Muestra u oculta la X según haya texto en el buscador de clientes.
+        function actualizarBotonLimpiarCliente() {
+            const btn = document.getElementById('limpiarClienteSal');
+            if (!btn || !toolboxCli) return;
+            btn.classList.toggle('d-none', toolboxCli.value.trim() === '');
+        }
+
+        // Busca clientes por nombre, documento o teléfono, sin distinguir mayúsculas ni acentos.
         function buscarClientes() {
+            if (!toolboxCli) return;
+            actualizarBotonLimpiarCliente();
             const searchTerm = toolboxCli.value.trim();
             if (!searchTerm) {
                 cerrarResultadosCli();
                 return;
             }
             window.clearTimeout(toolboxTimerCli);
+            const token = ++busquedaClientesToken;
             toolboxTimerCli = window.setTimeout(function() {
-                jvBuscarClientes({ q: searchTerm, limit: 15 }, function(searchResponse) {
-                    if (searchResponse && searchResponse.success) renderResultadosCli(searchResponse.items);
-                    else renderResultadosCli([]);
+                cargarClientesVenta().then(function(items) {
+                    if (token !== busquedaClientesToken) return;
+                    const filtrados = items.filter(function(c) {
+                        return clienteCoincideBusqueda(c, searchTerm);
+                    }).slice(0, 15);
+                    renderResultadosCli(filtrados);
                 });
-            }, 350);
+            }, 250);
+        }
+
+        // Limpia el buscador y la selección de cliente sin tocar el documento fiscal.
+        function limpiarBusquedaCliente() {
+            if (!toolboxCli) return;
+            toolboxCli.value = '';
+            actualizarBotonLimpiarCliente();
+            document.getElementById('s_id_cliente').value = '';
+            document.getElementById('s_cliente').value = '';
+            cerrarResultadosCli();
+            toolboxCli.focus();
         }
 
         // Rellena los campos de cliente y RIF al elegir un cliente de la lista.
@@ -221,6 +328,7 @@
             document.getElementById('s_cliente').value = clientElement.dataset.nombre;
             document.getElementById('s_id_cliente').value = clientElement.dataset.id;
             toolboxCli.value = clientElement.dataset.nombre;
+            actualizarBotonLimpiarCliente();
             const clientDocument = clientElement.dataset.documento || '';
             const documentMatch = clientDocument.match(/^([VEJGPC])-(\d+)(?:-(\d+))?/);
             if (documentMatch) {
@@ -261,6 +369,18 @@
                 return;
             }
             const grupo = grupoActual();
+            if (grupo === 'venta' && productoSeleccionado.vencido) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'PRODUCTO VENCIDO',
+                    text: 'Este producto está vencido y no puede ser vendido',
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#DC2626',
+                    confirmButtonText: 'ENTENDIDO'
+                });
+                return;
+            }
             if (productoYaAgregadoEnVenta(selectedProducts, grupo, productoSeleccionado.id)) {
                 Swal.fire({
                     title: 'Producto ya agregado',
@@ -492,26 +612,65 @@
             document.getElementById('s_total_monto').textContent = '$' + totalMonto.toFixed(2);
         }
 
+        // Refleja en los campos visibles los valores que el borrador restauró en los hidden.
+        function sincronizarCamposRestaurados() {
+            const tipo = document.getElementById('s_tipo');
+            const cliente = document.getElementById('s_cliente');
+            if (!tipo || !cliente) return;
+            const grupo = movementTypeGroups[tipo.value] || '';
+            if (grupo === 'venta' && toolboxCli && cliente.value.trim()) {
+                if (toolboxCli.value.trim() !== cliente.value.trim()) {
+                    toolboxCli.value = cliente.value;
+                    actualizarBotonLimpiarCliente();
+                }
+            }
+            if (grupo === 'regalias') {
+                const clienteReg = document.getElementById('s_cliente_reg');
+                if (clienteReg && cliente.value.trim() && clienteReg.value.trim() !== cliente.value.trim()) {
+                    clienteReg.value = cliente.value;
+                }
+            }
+            if (grupo === 'venta') {
+                const rif = document.getElementById('s_rif');
+                const rifNum = document.getElementById('s_rif_num');
+                const rifTipo = document.getElementById('s_rif_tipo');
+                if (rif && rifNum && rifTipo && rif.value) {
+                    const match = String(rif.value).match(/^([VEJGPC])-(\d+)(?:-(\d+))?/);
+                    if (match) {
+                        rifTipo.value = match[1];
+                        rifNum.value = match[2] + (match[3] || '');
+                        if (document.getElementById('s-rif-msg')) {
+                            formatoDocumento('s_rif_num', 's-rif-msg', 's_rif');
+                        }
+                    }
+                }
+            }
+        }
+
         // Muestra los campos según el tipo de movimiento y reinicia la lista de productos.
         function toggleCampos() {
-            limpiarErrores();
             const sel = document.getElementById('s_tipo');
+            if (!sel) return;
+            limpiarErrores();
             const tipoId = sel.value;
             const grupo = movementTypeGroups[tipoId] || '';
             document.querySelectorAll('.sal-field-group').forEach(el => {
                 el.classList.toggle('active', el.dataset.grupo === grupo);
             });
             const nombres = {venta:'REGISTRAR VENTA', regalias:'REGISTRAR REGALÍA', merma:'REGISTRAR AJUSTE'};
-            document.getElementById('modalTitle').innerText = nombres[grupo] || 'REGISTRAR MOVIMIENTO';
+            const titulo = document.getElementById('modalTitle');
+            if (titulo) titulo.innerText = nombres[grupo] || 'REGISTRAR MOVIMIENTO';
             // reset productos al cambiar tipo
             selectedProducts = [];
             s_solicitud = [];
             productoSeleccionado = null;
             if (toolboxInput) toolboxInput.value = '';
             if (resultadosBox) resultadosBox.classList.remove('abierto');
-            document.getElementById('s_precio').value = '';
+            const precio = document.getElementById('s_precio');
+            if (precio) precio.value = '';
             actualizarTablaSalida();
             actualizarSolicitudCompras();
+            sincronizarCamposRestaurados();
         }
 
         // Limpia el formulario para registrar una nueva salida y abre el modal.
@@ -555,16 +714,18 @@
         // J/G/P/C: RIF → 8 dígitos + guión + 1 verificador.
         function formatoDocumento(inputId, msgId, hiddenId, typeId) {
             var tipoElId = typeId || 's_rif_tipo';
-            var tipo = document.getElementById(tipoElId).value;
-            var nums = document.getElementById(inputId).value.replace(/\D/g, '');
-            var msg = document.getElementById(msgId);
+            var tipoEl = document.getElementById(tipoElId);
             var numInput = document.getElementById(inputId);
+            if (!tipoEl || !numInput) return;
+            var tipo = tipoEl.value;
+            var nums = numInput.value.replace(/\D/g, '');
+            var msg = document.getElementById(msgId);
             var hidden = hiddenId ? document.getElementById(hiddenId) : null;
             var esRif = (tipo === 'J' || tipo === 'G' || tipo === 'P' || tipo === 'C');
             var maxDig = esRif ? 9 : 9;
             if (nums.length > maxDig) nums = nums.slice(0, maxDig);
             if (nums === '') {
-                msg.innerHTML = '';
+                if (msg) msg.innerHTML = '';
                 numInput.style.borderColor = '';
                 numInput.value = '';
                 if (hidden) hidden.value = '';
@@ -588,11 +749,11 @@
                 valido = nums.length >= 6 && nums.length <= 9;
             }
             if (valido) {
-                msg.innerHTML = '<span style="color:var(--jv-success);">\u2713 V\u00e1lido</span>';
+                if (msg) msg.innerHTML = '<span style="color:var(--jv-success);">\u2713 V\u00e1lido</span>';
                 numInput.style.borderColor = '#16A34A';
             } else {
                 var label = esRif ? 'RIF' : 'C\u00e9dula';
-                msg.innerHTML = '<span style="color:var(--jv-danger);">' + label + ' incompleto</span>';
+                if (msg) msg.innerHTML = '<span style="color:var(--jv-danger);">' + label + ' incompleto</span>';
                 numInput.style.borderColor = '#DC2626';
             }
         }
@@ -660,6 +821,15 @@
             const tipo = document.getElementById('s_tipo');
             if (!tipo.value) { marcarError(tipo, 'SELECCIONE TIPO'); valido = false; if (!primerError) primerError = tipo; }
 
+            const fechaEl = document.getElementById('s_fecha');
+            const hoy = new Date();
+            const hoyLocal = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+            if (!fechaEl.value) {
+                marcarError(fechaEl, 'FECHA OBLIGATORIA'); valido = false; if (!primerError) primerError = fechaEl;
+            } else if (fechaEl.value > hoyLocal) {
+                marcarError(fechaEl, 'NO SE PERMITEN FECHAS FUTURAS'); valido = false; if (!primerError) primerError = fechaEl;
+            }
+
             if (!selectedProducts.length) { marcarError(document.getElementById('buscarProductoSal'), 'AGREGUE PRODUCTOS'); valido = false; if (!primerError) primerError = document.getElementById('buscarProductoSal'); }
 
             const grupo = movementTypeGroups[tipo.value] || '';
@@ -701,6 +871,7 @@
                 precio: parseFloat(p.precio_venta)
             }));
             pj.value = JSON.stringify(payload);
+            document.getElementById('s_fecha_hidden').value = fechaEl.value;
 
             const fd = new FormData(document.getElementById('formSalida'));
 
@@ -820,16 +991,18 @@ let cliDesdeVenta = false;
             cliListModal.show();
         }
 
-        // Filtra filas de la tabla de clientes por texto de búsqueda y chip de estado.
+        // Filtra filas de la tabla de clientes por nombre, documento, teléfono y chip de estado.
         function cliFiltrar() {
-            const busq = (document.getElementById('cliBuscar')?.value || '').toLowerCase().trim();
+            const textoBusqueda = document.getElementById('cliBuscar')?.value || '';
             const filas = document.querySelectorAll('#cliTablaBody .cli-fila');
             let count = 0;
             filas.forEach(function(fila) {
-                const nombre = fila.dataset.nombre || '';
-                const doc = fila.dataset.documento || '';
                 const st = fila.dataset.status || '';
-                const matchBusq = !busq || nombre.includes(busq) || doc.includes(busq);
+                const matchBusq = clienteCoincideBusqueda({
+                    nombre: fila.dataset.nombre || '',
+                    documento: fila.dataset.documento || '',
+                    telefono: fila.dataset.telefono || ''
+                }, textoBusqueda);
                 const matchFiltro = cliFiltroActual === 'todos' || st === cliFiltroActual;
                 if (matchBusq && matchFiltro) {
                     fila.style.display = '';
@@ -1153,6 +1326,7 @@ let cliDesdeVenta = false;
                 document.addEventListener('click', function(e) {
                     if (!e.target.closest('.com-toolbox')) cerrarResultadosCli();
                 });
+                actualizarBotonLimpiarCliente();
                 // Sincronizar nombre manual si no se eligió de la lista
                 toolboxCli.addEventListener('input', function() {
                     document.getElementById('s_id_cliente').value = '';

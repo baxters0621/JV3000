@@ -218,8 +218,15 @@ foreach ($categorias as $raiz) {
     <div class="buscador-wrapper px-3 py-2">
         <!-- Fila 1: buscador -->
         <div class="buscador-fila d-flex align-items-center gap-2">
-            <i class="bi bi-search me-1 inventario-buscador-icono"></i>
-            <input type="text" class="input-jv border-0 bg-transparent py-1" placeholder="Buscar por nombre, código, proveedor, categoría, estado..." id="buscar" onkeyup="filtrar()" style="box-shadow: none;">
+            <div class="input-group inventario-buscador-grupo">
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search inventario-buscador-icono" aria-hidden="true"></i>
+                </span>
+                <input type="text" class="form-control input-jv" placeholder="Buscar por nombre, código, proveedor, categoría, estado..." id="buscar" onkeyup="filtrar()" aria-label="Buscar productos">
+                <button type="button" class="btn btn-outline-secondary inventario-limpiar-busqueda" id="limpiarBusqueda" onclick="document.getElementById('buscar').value=''; document.getElementById('buscar').focus(); filtrar();" aria-label="Limpiar búsqueda" title="Limpiar búsqueda">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
         </div>
         <!-- Fila 2: filtros, cada unidad salta de linea completa si no cabe -->
         <div class="buscador-fila d-flex align-items-center flex-wrap gap-2 mt-2">
@@ -294,6 +301,7 @@ foreach ($categorias as $raiz) {
                             $stock_porcentaje = ($stock_actual / $capacidad) * 100;
                             $stock_clase = 'success';
                         }
+                        $stock_critico = $stock_actual <= $stock_minimo;
                     ?>
                         <?php
                         // Estado del vencimiento: vencido / próximo (<=7 días) /
@@ -339,8 +347,11 @@ foreach ($categorias as $raiz) {
                             </td>
                             <td class="td-stock text-center">
                                 <div class="stock-cell">
-                                    <span class="stock-value<?php echo $stock_actual === 0 ? ' text-danger' : ''; ?>" title="Mín: <?php echo $stock_minimo; ?> · Máx: <?php echo $capacidad; ?>">
+                                    <span class="stock-value<?php echo $stock_critico ? ' text-danger fw-bold' : ''; ?>" title="Mín: <?php echo $stock_minimo; ?> · Máx: <?php echo $capacidad; ?>">
                                         <?php echo $stock_actual; ?>
+                                        <?php if ($stock_critico): ?>
+                                            <i class="bi bi-exclamation-triangle-fill text-danger stock-alert-icon" title="¡Stock bajo Reponer" aria-label="¡Stock bajo! Reponer" role="img"></i>
+                                        <?php endif; ?>
                                     </span>
                                     <div class="progress stock-progress" role="progressbar" aria-valuenow="<?php echo $stock_actual; ?>" aria-valuemin="0" aria-valuemax="<?php echo $capacidad; ?>" aria-label="Nivel de stock">
                                         <div class="progress-bar bg-<?php echo $stock_clase; ?>" style="width:<?php echo $stock_porcentaje; ?>%;"></div>
@@ -373,8 +384,8 @@ foreach ($categorias as $raiz) {
                                 $status_efectivo = (string)($productRecord['status_efectivo'] ?? $status_real);
                                 $es_agotado = $stock_actual === 0 && $status_real === 'Activo';
                                 if ($esta_vencido) {
-                                    $badge_estado = 'bg-danger bg-opacity-10 text-danger border-danger';
-                                    $icono_estado = 'calendar-x';
+                                    $badge_estado = 'badge-danger';
+                                    $icono_estado = 'exclamation-triangle-fill';
                                     $texto_estado = 'VENCIDO';
                                 } elseif ($es_agotado) {
                                     $badge_estado = 'badge-danger';
@@ -401,8 +412,19 @@ foreach ($categorias as $raiz) {
                                         <button type="button" class="btn btn-sm p-0 btn-accion-editar" onclick="editarProducto(<?php echo $productRecord['id_producto']; ?>)" data-tooltip="Editar producto" aria-label="Editar producto">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
+                                        <?php if ($stock_critico): ?>
+                                            <?php if ((int)($productRecord['id_proveedor'] ?? 0) > 0): ?>
+                                                <a href="<?php echo APP_URL_BASE; ?>index.php?url=compras&reponer_producto=<?php echo (int)$productRecord['id_producto']; ?>&reponer_proveedor=<?php echo (int)$productRecord['id_proveedor']; ?>" class="btn btn-sm p-0 btn-accion-reponer" data-tooltip="Reponer producto" aria-label="Reponer producto">
+                                                    <i class="bi bi-cart-plus"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="btn btn-sm p-0 btn-accion-sin-proveedor" data-tooltip="Sin proveedor asignado" aria-label="Sin proveedor asignado" role="img">
+                                                    <i class="bi bi-exclamation-circle"></i>
+                                                </span>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
                                         <?php if ($productRecord['status'] === 'Activo'): ?>
-                                            <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(220,38,38,0.12);color:var(--jv-danger);border:1px solid rgba(220,38,38,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" data-tooltip="Inactivar producto" aria-label="Inactivar producto">
+                                            <button type="button" class="btn btn-sm p-0 btn-accion-toggle btn-accion-inactivar text-danger" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'desactivar')" data-tooltip="Inactivar producto" aria-label="Inactivar producto">
                                                 <i class="bi bi-power"></i>
                                             </button>
                                             <?php if ($venc_cls === 'vencido'): ?>
@@ -411,8 +433,8 @@ foreach ($categorias as $raiz) {
                                                 </button>
 <?php endif; ?>
                                         <?php else: ?>
-                                            <button type="button" class="btn btn-sm p-0" style="width:30px;height:30px;border-radius:8px;background:rgba(22,163,74,0.12);color:var(--jv-success);border:1px solid rgba(22,163,74,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" data-tooltip="Activar producto" aria-label="Activar producto">
-                                                <i class="bi bi-play-circle"></i>
+                                            <button type="button" class="btn btn-sm p-0 btn-accion-toggle btn-accion-activar text-success" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" data-tooltip="Activar producto" aria-label="Activar producto">
+                                                <i class="bi bi-power"></i>
                                             </button>
                                         <?php endif; ?>
                                     </div>

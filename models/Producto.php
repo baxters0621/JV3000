@@ -20,16 +20,31 @@ class Producto extends Model
      * Cambia el estado Activo/Inactivo de un producto.
      *
      * Consulta el estado actual, lo invierte y actualiza el producto,
-     * registrando la auditoría con la acción reactivado/desactivado.
+     * registrando la auditoría con la acción reactivado/desactivado. No
+     * permite reactivar un producto sin fecha de vencimiento efectiva.
      *
      * @param int $idProducto Identificador del producto.
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
     public function toggleStatus(int $idProducto): array
     {
-        $producto = $this->db->fetchOne("SELECT status, updated_at FROM productos WHERE id_producto = ?", [$idProducto]);
+        $producto = $this->db->fetchOne(
+            "SELECT p.status, p.updated_at,
+                COALESCE((
+                    SELECT MIN(l.fecha_vencimiento) FROM lotes l
+                    WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0
+                      AND l.fecha_vencimiento > '0000-00-00'
+                ), NULLIF(p.fecha_vencimiento, '0000-00-00')) AS fecha_efectiva
+             FROM productos p WHERE p.id_producto = ?",
+            [$idProducto]
+        );
         if (!$producto) return ['ok' => false, 'mensaje' => 'PRODUCTO NO ENCONTRADO.'];
         $nuevoStatus = $producto['status'] === 'Activo' ? 'Inactivo' : 'Activo';
+        // Un producto no puede volver a Activo si no tiene una fecha de
+        // vencimiento real (lote FEFO con stock o fecha legacy del producto).
+        if ($nuevoStatus === 'Activo' && empty($producto['fecha_efectiva'])) {
+            return ['ok' => false, 'mensaje' => 'UN PRODUCTO ACTIVO DEBE TENER FECHA DE VENCIMIENTO'];
+        }
         $this->db->execute("UPDATE productos SET status = ? WHERE id_producto = ? AND updated_at = ?", [$nuevoStatus, $idProducto, $producto['updated_at']]);
         if ($this->db->affectedRows() === 0) {
             return ['ok' => false, 'mensaje' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL PRODUCTO. RECARGUE LA PÁGINA.'];
@@ -70,7 +85,8 @@ class Producto extends Model
     /**
      * Edición de un producto (solo admin).
      *
-     * Valida producto, categoría, stock mínimo/máximo, precios y estado;
+     * Valida producto, categoría, stock mínimo/máximo, precios, estado y
+     * fecha de vencimiento (obligatoria solo cuando el estado es Activo);
      * luego actualiza el registro y registra la auditoría. El costo se
      * recalcula solo en la recepción de mercancía (promedio ponderado), no
      * aquí. Cambiar de categoría puede mover el producto de rama en el
@@ -83,14 +99,27 @@ class Producto extends Model
     {
         $idProducto = (int)$datosProducto['id_producto'];
         $idCategoria = (int)($datosProducto['id_categoria'] ?? 0);
+        $idProveedor = (int)($datosProducto['id_proveedor'] ?? 0);
         $stockMinimo = (int)$datosProducto['stock_minimo'];
         $stockMaximo = (int)$datosProducto['stock_maximo'];
         $precioVentaRaw = trim((string)$datosProducto['precio_venta']);
         $precioVenta = (float)$precioVentaRaw;
         $status = $datosProducto['status'];
         $fechaVencimiento = trim((string)($datosProducto['fecha_vencimiento'] ?? ''));
+        if (!in_array($status, ['Activo', 'Inactivo'], true)) $status = 'Activo';
 
         if ($idProducto <= 0) return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO.'];
+        // Proveedor: obligatorio para mantener la trazabilidad del inventario.
+        if ($idProveedor <= 0) {
+            return ['ok' => false, 'mensaje' => 'EL PROVEEDOR ES OBLIGATORIO'];
+        }
+        $proveedor = $this->db->fetchOne(
+            "SELECT nombre_empresa FROM proveedores WHERE id_proveedor = ? AND status = 'Activo'",
+            [$idProveedor]
+        );
+        if (!$proveedor) {
+            return ['ok' => false, 'mensaje' => 'EL PROVEEDOR SELECCIONADO NO EXISTE O ESTÁ INACTIVO.'];
+        }
         // Categoría: 0 (sin categoría) o una categoría existente y activa.
         $categoriaNueva = null;
         if ($idCategoria > 0) {
@@ -103,11 +132,16 @@ class Producto extends Model
             }
         }
         if ($fechaVencimiento === '' || $fechaVencimiento === '0000-00-00') {
-            return ['ok' => false, 'mensaje' => 'LA FECHA DE VENCIMIENTO ES OBLIGATORIA.'];
-        }
-        $fechaObjeto = DateTime::createFromFormat('!Y-m-d', $fechaVencimiento);
-        if (!$fechaObjeto || $fechaObjeto->format('Y-m-d') !== $fechaVencimiento) {
-            return ['ok' => false, 'mensaje' => 'FORMATO DE FECHA DE VENCIMIENTO INVÁLIDO. USE AAAA-MM-DD.'];
+            // Activo siempre exige fecha; Inactivo puede quedar sin vencimiento.
+            if ($status === 'Activo') {
+                return ['ok' => false, 'mensaje' => 'UN PRODUCTO ACTIVO DEBE TENER FECHA DE VENCIMIENTO'];
+            }
+            $fechaVencimiento = null;
+        } else {
+            $fechaObjeto = DateTime::createFromFormat('!Y-m-d', $fechaVencimiento);
+            if (!$fechaObjeto || $fechaObjeto->format('Y-m-d') !== $fechaVencimiento) {
+                return ['ok' => false, 'mensaje' => 'FORMATO DE FECHA DE VENCIMIENTO INVÁLIDO. USE AAAA-MM-DD.'];
+            }
         }
         // Stocks: enteros puros en rango (rechaza decimales, letras y negativos)
         $stockMinimoRaw = trim((string)$datosProducto['stock_minimo']);
@@ -124,13 +158,15 @@ class Producto extends Model
             return ['ok' => false, 'mensaje' => 'LA CAPACIDAD MÁXIMA DEBE SER MAYOR O IGUAL AL STOCK MÍNIMO (O 0 PARA HEREDAR LA DE LA CATEGORÍA).'];
         }
         if (!preg_match('/^(?:0|[1-9]\d{0,4})\.\d{2}$/', $precioVentaRaw) || !is_finite($precioVenta) || $precioVenta < 0.01 || $precioVenta > 99999.99) return ['ok' => false, 'mensaje' => 'PRECIO VENTA DEBE TENER DOS DECIMALES Y ESTAR ENTRE 0,01 Y 99.999,99.'];
-        if (!in_array($status, ['Activo', 'Inactivo'])) $status = 'Activo';
 
+        // Al quedar sin fecha (solo Inactivo), se libera requiere_vencimiento
+        // para respetar el CHECK de la BD sin tocar el resto de columnas.
+        $requiereVencimiento = $fechaVencimiento === null ? 0 : null;
         // Optimistic locking: verificar updated_at antes de actualizar
-        $current = $this->db->fetchOne("SELECT updated_at, id_categoria FROM productos WHERE id_producto = ?", [$idProducto]);
+        $current = $this->db->fetchOne("SELECT updated_at, id_categoria, id_proveedor FROM productos WHERE id_producto = ?", [$idProducto]);
         $this->db->execute(
-            "UPDATE productos SET id_categoria=?, stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=? WHERE id_producto=? AND updated_at=?",
-            [$idCategoria, $stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $idProducto, $current['updated_at'] ?? '']
+            "UPDATE productos SET id_categoria=?, id_proveedor=?, stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=?, requiere_vencimiento = COALESCE(?, requiere_vencimiento) WHERE id_producto=? AND updated_at=?",
+            [$idCategoria, $idProveedor, $stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $requiereVencimiento, $idProducto, $current['updated_at'] ?? '']
         );
         if ($this->db->affectedRows() === 0) {
             return ['ok' => false, 'mensaje' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL PRODUCTO. RECARGUE LA PÁGINA.'];
@@ -160,7 +196,9 @@ class Producto extends Model
      * 100) y la lista de proveedores que lo suministran según el catálogo
      * de costos. Con $idCategoria > 0 filtra por esa categoría y su rama
      * completa (productos directos y de sus subcategorías, vía ruta).
-     * Paginado con LIMIT/OFFSET.
+     * Paginado con LIMIT/OFFSET. Cada fila incluye `status_efectivo`:
+     * Inactivo si no tiene stock o no tiene fecha de vencimiento real,
+     * sin modificar el status almacenado.
      *
      * @param int $limit       Registros por página.
      * @param int $offset      Desplazamiento para la paginación.
@@ -170,7 +208,7 @@ class Producto extends Model
     public function listar(int $limit, int $offset, int $idCategoria = 0): array
     {
         [$filtro_sql, $filtro_params] = $this->filtroCategoria($idCategoria);
-        return $this->db->fetchAll(
+        $productos = $this->db->fetchAll(
             "SELECT p.*, c.nombre as nombre_cat, c.ruta as cat_ruta, COALESCE(NULLIF(p.stock_maximo,0), c.stock_maximo, 100) as capacidad,
                 -- Vencimiento real del producto = el lote con stock que vence primero (FEFO);
                 -- si no tiene lotes activos se usa la fecha legacy del producto.
@@ -184,12 +222,24 @@ class Producto extends Model
                 (SELECT GROUP_CONCAT(pr.nombre_empresa SEPARATOR ', ')
                     FROM catalogo_costos cc JOIN proveedores pr ON cc.id_proveedor = pr.id_proveedor
                     WHERE cc.id_producto = p.id_producto AND pr.status = 'Activo'
-                ) as proveedores
-            FROM productos p LEFT JOIN categorias c ON p.id_categoria = c.id_categoria"
+                ) as proveedores,
+                prov.nombre_empresa as nombre_prov
+            FROM productos p
+            LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
+            LEFT JOIN proveedores prov ON prov.id_proveedor = p.id_proveedor"
             . $filtro_sql .
             " ORDER BY p.status DESC, p.nombre_producto ASC LIMIT ? OFFSET ?",
             array_merge($filtro_params, [$limit, $offset])
         );
+        foreach ($productos as &$producto) {
+            $sinFecha = empty($producto['fecha_vencimiento'])
+                || $producto['fecha_vencimiento'] === '0000-00-00';
+            $producto['status_efectivo'] = ($sinFecha || (int)$producto['stock_actual'] === 0)
+                ? 'Inactivo'
+                : $producto['status'];
+        }
+        unset($producto);
+        return $productos;
     }
 
     /**

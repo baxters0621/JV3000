@@ -6,39 +6,98 @@
             if (alertFilterButton) filtrarVenc(alertFilterButton);
         }
 
+        // Normaliza texto para buscar sin distinguir mayúsculas, minúsculas ni acentos.
+        function normalizarBusqueda(valor) {
+            var texto = String(valor || '');
+            if (texto.normalize) {
+                texto = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+            return texto.toLowerCase().replace(/\s+/g, ' ').trim();
+        }
+
+        // Crea o retira el aviso cuando los filtros ocultan todas las filas.
+        function actualizarAvisoSinResultados(tbody, visibles, totalFilas) {
+            var aviso = document.getElementById('productosSinResultados');
+            if (visibles > 0 || totalFilas === 0) {
+                if (aviso) aviso.remove();
+                return;
+            }
+            if (aviso) return;
+
+            var tabla = tbody.closest('table');
+            var columnas = tabla ? tabla.querySelectorAll('thead th').length : 9;
+            aviso = document.createElement('tr');
+            aviso.id = 'productosSinResultados';
+            aviso.setAttribute('data-empty-row', '1');
+
+            var celda = document.createElement('td');
+            celda.colSpan = columnas;
+            celda.className = 'text-center py-5';
+            celda.style.color = 'var(--jv-text-muted)';
+            celda.innerHTML = '<i class="bi bi-search d-block mb-2" style="font-size:2rem;" aria-hidden="true"></i>'
+                + '<span style="font-weight:700;">Sin resultados</span>'
+                + '<p class="mt-2 mb-0" style="font-size:.95rem;">No hay productos que coincidan con la búsqueda.</p>';
+
+            aviso.appendChild(celda);
+            tbody.appendChild(aviso);
+        }
+
         // Aplica los filtros activos (estado, vencimiento, stock bajo y búsqueda) sobre las filas.
         function aplicarFiltros() {
+            var searchInput = document.getElementById('buscar');
+            var searchValue = normalizarBusqueda(searchInput ? searchInput.value : '');
             var activeExpirationButton = document.querySelector('.btn-filtro-venc.active');
             var expirationFilter = activeExpirationButton ? activeExpirationButton.getAttribute('data-venc') : 'todas';
             var activeStatusButton = document.querySelector('.btn-filter-prod.active');
             var statusFilter = activeStatusButton ? activeStatusButton.getAttribute('data-status') : 'todas';
-            var searchValue = document.getElementById('buscar').value.toLowerCase();
-            var productRows = document.getElementById('tablaProductos').getElementsByTagName('tr');
-            for (var rowIndex = 0; rowIndex < productRows.length; rowIndex++) {
-                var productRow = productRows[rowIndex];
-                var productStatus = productRow.getAttribute('data-status') || '';
-                if (statusFilter !== 'todas' && productStatus !== statusFilter) { productRow.style.display = 'none'; continue; }
+            var tbody = document.getElementById('tablaProductos');
+            if (!tbody) return;
+
+            var productRows = Array.from(tbody.querySelectorAll('tr[data-id]'));
+            var visibles = 0;
+
+            productRows.forEach(function(productRow) {
+                var productStatus = productRow.getAttribute('data-status-efectivo')
+                    || productRow.getAttribute('data-status')
+                    || '';
+                if (statusFilter !== 'todas' && productStatus !== statusFilter) {
+                    productRow.style.display = 'none';
+                    return;
+                }
+
                 var expirationClass = productRow.getAttribute('data-venc-cls') || '';
-                if (expirationFilter !== 'todas' && expirationClass !== expirationFilter) { productRow.style.display = 'none'; continue; }
+                if (expirationFilter !== 'todas' && expirationClass !== expirationFilter) {
+                    productRow.style.display = 'none';
+                    return;
+                }
+
                 if (filtroBajos) {
                     var currentStock = parseInt(productRow.getAttribute('data-stock') || '', 10);
                     var minimumStock = parseInt(productRow.getAttribute('data-minimo') || '', 10);
-                    if (isNaN(currentStock) || currentStock > minimumStock) { productRow.style.display = 'none'; continue; }
+                    if (isNaN(currentStock) || currentStock > minimumStock) {
+                        productRow.style.display = 'none';
+                        return;
+                    }
                 }
-                var rowText = productRow.textContent.toLowerCase();
-                productRow.style.display = (searchValue === '' || rowText.includes(searchValue)) ? '' : 'none';
-            }
+
+                var rowText = normalizarBusqueda(productRow.textContent);
+                var coincide = searchValue === '' || rowText.indexOf(searchValue) !== -1;
+                productRow.style.display = coincide ? '' : 'none';
+                if (coincide) visibles++;
+            });
+
+            actualizarAvisoSinResultados(tbody, visibles, productRows.length);
         }
         // Marca el botón de filtro por vencimiento activo y vuelve a aplicar los filtros.
         function filtrarVenc(expirationButton) {
             document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
                 b.classList.remove('active');
                 b.style.background = 'transparent';
-                b.style.color = b.dataset.venc === 'vencido' ? '#DC2626' : b.dataset.venc === 'proximo' ? '#D97706' : b.dataset.venc === 'pronto' ? '#D97706' : b.dataset.venc === 'vigente' ? '#16A34A' : '#EA580C';
+                b.style.color = b.dataset.venc === 'vencido' ? '#DC2626' : b.dataset.venc === 'proximo' ? '#D97706' : b.dataset.venc === 'pronto' ? '#D97706' : b.dataset.venc === 'vigente' ? '#16A34A' : '#1E3A8A';
             });
             expirationButton.classList.add('active');
-            expirationButton.style.background = 'rgba(234,88,12,0.15)';
-            expirationButton.style.color = '#EA580C';
+            expirationButton.style.background = 'rgba(30,58,138,0.10)';
+            expirationButton.style.color = '#1E3A8A';
             aplicarFiltros();
         }
 
@@ -204,6 +263,8 @@
             const maximo = document.getElementById('edit_maximo');
             const pvp = document.getElementById('edit_pvp');
             const vencimiento = document.getElementById('edit_vencimiento');
+            const proveedor = document.getElementById('edit_proveedor');
+            const estado = document.getElementById('edit_status');
 
             const esEntero = function(valor) {
                 return /^\d+$/.test(String(valor).trim());
@@ -244,10 +305,17 @@
             if (!precioTieneFormatoValido(canonicoVenta)) {
                 marcar(pvp, valorVenta > 99999.99 ? 'MÁXIMO 99.999,99' : 'FORMATO: 0,00 (MÁXIMO 99.999,99)');
             }
-            if (!vencimiento.value.trim()
-                || vencimiento.value === '0000-00-00'
-                || !fechaValida(vencimiento.value)) {
+            const fechaTexto = vencimiento.value.trim();
+            const estaActivo = estado && estado.value === 'Activo';
+            if (!fechaTexto || fechaTexto === '0000-00-00') {
+                if (estaActivo) {
+                    marcar(vencimiento, 'UN PRODUCTO ACTIVO DEBE TENER FECHA DE VENCIMIENTO');
+                }
+            } else if (!fechaValida(fechaTexto)) {
                 marcar(vencimiento, 'FECHA DE VENCIMIENTO VÁLIDA REQUERIDA');
+            }
+            if (!proveedor.value || Number(proveedor.value) <= 0) {
+                marcar(proveedor, 'EL PROVEEDOR ES OBLIGATORIO');
             }
             if (primerError) {
                 Swal.fire({
@@ -340,6 +408,21 @@
             formatearPrecioEdicion(document.getElementById('edit_costo'));
             document.getElementById('edit_status').value = row.getAttribute('data-status');
             document.getElementById('edit_vencimiento').value = row.getAttribute('data-venc');
+            // Proveedor actual. Si está inactivo no figura entre las opciones
+            // activas: se agrega como temporal para no cambiarlo en silencio.
+            var provId = parseInt(row.getAttribute('data-prov-id'), 10) || 0;
+            var provNombre = row.getAttribute('data-prov') || '';
+            var selectProveedor = document.getElementById('edit_proveedor');
+            var opcionProvTemporal = document.getElementById('edit_proveedor_temp');
+            if (opcionProvTemporal) opcionProvTemporal.remove();
+            if (provId > 0 && !selectProveedor.querySelector('option[value="' + provId + '"]')) {
+                var opcionProvActual = document.createElement('option');
+                opcionProvActual.id = 'edit_proveedor_temp';
+                opcionProvActual.value = String(provId);
+                opcionProvActual.textContent = provNombre + ' (inactivo)';
+                selectProveedor.appendChild(opcionProvActual);
+            }
+            selectProveedor.value = provId > 0 ? String(provId) : '';
             // Categoría actual del producto. Si está inactiva no figura entre
             // las opciones del select (que solo lista activas): se agrega
             // marcada como temporal para que no salte de rama en silencio.
@@ -402,7 +485,7 @@
             document.querySelectorAll('.btn-filtro-venc').forEach(function(b) {
                 b.classList.remove('active');
                 b.style.background = 'transparent';
-                b.style.color = b.dataset.venc === 'vencido' ? '#DC2626' : b.dataset.venc === 'proximo' ? '#D97706' : b.dataset.venc === 'pronto' ? '#D97706' : b.dataset.venc === 'vigente' ? '#16A34A' : '#EA580C';
+                b.style.color = b.dataset.venc === 'vencido' ? '#DC2626' : b.dataset.venc === 'proximo' ? '#D97706' : b.dataset.venc === 'pronto' ? '#D97706' : b.dataset.venc === 'vigente' ? '#16A34A' : '#1E3A8A';
             });
             aplicarFiltros();
         }
@@ -452,6 +535,17 @@
                 // ==========================================
 
         var catVolverAlGestor = false;
+        var catEnviando = false;
+
+        // Las categorías conservan borrador solo cuando hay nombre o descripción;
+        // al cancelar o cerrar se purga para no volver a preguntar.
+        function catLimpiarBorrador() {
+            if (typeof jvBorradorLimpiar === 'function') {
+                jvBorradorLimpiar('productos_categoria');
+                return;
+            }
+            try { window.localStorage.removeItem('jv_borrador_v1_productos_categoria'); } catch (error) { /* sin almacenamiento */ }
+        }
 
         // Abre el gestor sin quitar espacio al listado de productos.
         function catAbrirGestor() {
@@ -460,7 +554,7 @@
         }
 
         // Busca por nombre/código: oculta lo que no coincide, mantiene visible
-        // la raíz cuando algún hijo coincide, expande las ramas con resultados
+        // la raíz cuando algún hijo coincide, despliega las ramas con resultados
         // y muestra el aviso de "sin resultados" si no aparece nada.
         function catFiltrar() {
             const texto = ((document.getElementById('buscarCat') || {}).value || '').toLowerCase().trim();
@@ -469,13 +563,23 @@
                 const coincideRaiz = !texto || (raiz.dataset.texto || '').indexOf(texto) !== -1;
                 let coincideHijos = false;
                 raiz.querySelectorAll('.cat-hijos > .cat-nodo').forEach(function(hijo) {
-                    const coincide = !texto || (hijo.dataset.texto || '').indexOf(texto) !== -1;
+                    const coincide = !texto || coincideRaiz || (hijo.dataset.texto || '').indexOf(texto) !== -1;
                     hijo.style.display = coincide ? '' : 'none';
                     if (coincide) { coincideHijos = true; visibles++; }
                 });
                 const visible = coincideRaiz || coincideHijos;
                 raiz.style.display = visible ? '' : 'none';
                 if (coincideRaiz) visibles++;
+
+                const colapso = raiz.querySelector('.cat-colapso');
+                if (colapso && bootstrap.Collapse) {
+                    const instancia = bootstrap.Collapse.getOrCreateInstance(colapso, { toggle: false });
+                    if (visible && texto) {
+                        if (!colapso.classList.contains('show')) instancia.show();
+                    } else if (!visible && colapso.classList.contains('show')) {
+                        instancia.hide();
+                    }
+                }
             });
             const vacio = document.getElementById('catSinResultados');
             if (vacio) vacio.style.display = visibles === 0 ? '' : 'none';
@@ -509,6 +613,7 @@
                 datos = (window.JV_CATS || []).find(function(c) { return Number(c.id_categoria) === Number(idCategoria); }) || null;
                 if (!datos) return;
             }
+            catEnviando = false;
             document.getElementById('cat_accion').value = esEdicion ? 'editar' : 'registrar';
             document.getElementById('cat_id_edit').value = esEdicion ? datos.id_categoria : '';
             document.getElementById('cat_nombre').value = esEdicion ? datos.nombre : '';
@@ -593,6 +698,9 @@
             }
 
             if (modalFormulario) {
+                modalFormulario.addEventListener('hide.bs.modal', function() {
+                    if (!catEnviando) catLimpiarBorrador();
+                });
                 modalFormulario.addEventListener('hidden.bs.modal', function() {
                     if (!catVolverAlGestor) return;
                     catVolverAlGestor = false;
@@ -618,6 +726,7 @@
                         primerError.focus();
                         return;
                     }
+                    catEnviando = true;
                     const btnGuardarCat = document.getElementById('btn-cat-guardar');
                     btnGuardarCat.disabled = true;
                     btnGuardarCat.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>GUARDANDO...';

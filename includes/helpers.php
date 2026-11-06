@@ -1056,68 +1056,85 @@ if (!function_exists('devolverLote')) {
 // ==========================================
 if (!function_exists('jv_alertas_por_rol')) {
     /**
-     * Alertas de stock para la campana del Panel de Inicio.
-     * Consolidado: 2 queries en vez de 11.
+     * Alertas críticas para la campana del Panel de Inicio.
+     *
+     * Devuelve dos grupos sin solapamiento:
+     * - VENCIDOS: productos activos con fecha de vencimiento anterior a hoy.
+     * - STOCK BAJO: productos activos en o bajo el mínimo que NO estén vencidos.
+     *
+     * La lista se limita a 8 elementos por grupo para el panel, pero los
+     * conteos siempre reflejan el total real. Las alertas de stock bajo se
+     * muestran a todos los roles; las acciones se habilitan según el rol.
+     *
+     * @param int|null $id_rol Rol de la sesión activa (1 admin, 2 carga, 3 ventas).
+     * @return array{total:int,counts:array<string,int>,vencidos:array<int,array<string,mixed>>,bajos:array<int,array<string,mixed>>,puede_baja:bool,puede_reponer:bool}
      */
     function jv_alertas_por_rol(?int $id_rol = null): array
     {
         $db = Database::getInstance();
         $id_rol = $id_rol ?? (int)($_SESSION['id_rol'] ?? 0);
-        $es_ventas = ($id_rol === 3);
 
-        // Query 1: Todas las alertas de vencimiento (vencidos + próximos + prontos) en una sola
+        // Query 1: productos vencidos (fecha anterior a hoy).
         $vencimientoFilas = $db->fetchAll(
-            "SELECT id_producto, nombre_producto, fecha_vencimiento,
-                    CASE
-                        WHEN fecha_vencimiento < CURDATE() THEN 'vencido'
-                        WHEN fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 'proximo'
-                        WHEN fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN 'pronto'
-                    END as categoria
+            "SELECT id_producto, nombre_producto, fecha_vencimiento
              FROM productos
-             WHERE status = 'Activo' AND fecha_vencimiento IS NOT NULL
-               AND fecha_vencimiento <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+             WHERE status = 'Activo'
+               AND fecha_vencimiento IS NOT NULL
+               AND fecha_vencimiento <> '0000-00-00'
+               AND fecha_vencimiento < CURDATE()
              ORDER BY fecha_vencimiento ASC"
         );
 
-        $vencidos = []; $proximos = []; $prontos = [];
-        $count_vencidos = 0; $count_proximos = 0; $count_prontos = 0;
+        $vencidos = [];
         foreach ($vencimientoFilas as $r) {
-            $cat = $r['categoria'];
-            if ($cat === 'vencido') $count_vencidos++;
-            elseif ($cat === 'proximo') $count_proximos++;
-            elseif ($cat === 'pronto') $count_prontos++;
-
-            $item = ['id' => (int)$r['id_producto'], 'nombre' => (string)$r['nombre_producto'], 'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento']))];
-            if ($cat === 'vencido' && count($vencidos) < 8) $vencidos[] = $item;
-            elseif ($cat === 'proximo' && count($proximos) < 8) $proximos[] = $item;
-            elseif ($cat === 'pronto' && count($prontos) < 8) $prontos[] = $item;
-        }
-
-        // Query 2: Stock bajo (solo admin + carga) + conteo total
-        $bajos = [];
-        $count_bajos = 0;
-        if (!$es_ventas) {
-            $bajoFilas = $db->fetchAll(
-                "SELECT id_producto, nombre_producto, stock_actual, stock_minimo
-                 FROM productos
-                 WHERE status = 'Activo' AND stock_actual <= stock_minimo
-                 ORDER BY stock_actual ASC"
-            );
-            $count_bajos = count($bajoFilas);
-            foreach (array_slice($bajoFilas, 0, 8) as $r) {
-                $bajos[] = ['id' => (int)$r['id_producto'], 'nombre' => (string)$r['nombre_producto'], 'stock' => (int)$r['stock_actual'], 'minimo' => (int)$r['stock_minimo']];
+            if (count($vencidos) >= 8) {
+                break;
             }
+            $vencidos[] = [
+                'id' => (int)$r['id_producto'],
+                'nombre' => (string)$r['nombre_producto'],
+                'fecha' => date('d/m/Y', strtotime($r['fecha_vencimiento'])),
+            ];
         }
 
-        $total = $count_vencidos + $count_proximos + $count_prontos + $count_bajos;
+        // Query 2: stock bajo, excluyendo los ya listados como vencidos.
+        $bajoFilas = $db->fetchAll(
+            "SELECT id_producto, nombre_producto, stock_actual, stock_minimo, id_proveedor
+             FROM productos
+             WHERE status = 'Activo'
+               AND stock_actual <= stock_minimo
+               AND NOT (
+                   fecha_vencimiento IS NOT NULL
+                   AND fecha_vencimiento <> '0000-00-00'
+                   AND fecha_vencimiento < CURDATE()
+               )
+             ORDER BY stock_actual ASC, nombre_producto ASC"
+        );
+
+        $bajos = [];
+        foreach ($bajoFilas as $r) {
+            if (count($bajos) >= 8) {
+                break;
+            }
+            $bajos[] = [
+                'id' => (int)$r['id_producto'],
+                'nombre' => (string)$r['nombre_producto'],
+                'stock' => (int)$r['stock_actual'],
+                'minimo' => (int)$r['stock_minimo'],
+                'id_proveedor' => (int)($r['id_proveedor'] ?? 0),
+            ];
+        }
+
+        $count_vencidos = count($vencimientoFilas);
+        $count_bajos = count($bajoFilas);
 
         return [
-            'total' => $total,
-            'counts' => ['vencidos' => $count_vencidos, 'proximos' => $count_proximos, 'prontos' => $count_prontos, 'bajos' => $count_bajos],
+            'total' => $count_vencidos + $count_bajos,
+            'counts' => ['vencidos' => $count_vencidos, 'bajos' => $count_bajos],
             'vencidos' => $vencidos,
-            'proximos' => $proximos,
-            'prontos' => $prontos,
             'bajos' => $bajos,
+            'puede_baja' => ($id_rol === 1),
+            'puede_reponer' => in_array($id_rol, [1, 2], true),
         ];
     }
 }

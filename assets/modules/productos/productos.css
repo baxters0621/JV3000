@@ -1,8 +1,209 @@
 
-        /* === THEME: INVENTARIO (Cyan/Teal) ================ */
+        /* === THEME: INVENTARIO (Navy/Teal) ================ */
+
+        .pagina-productos {
+            --inv-accent: #1E3A8A;
+            --inv-accent-hover: #172554;
+            --inv-accent-soft: rgba(30, 58, 138, 0.10);
+            --inv-accent-border: rgba(30, 58, 138, 0.22);
+            --inv-accent-shadow: rgba(30, 58, 138, 0.22);
+        }
 
         .pagina-productos.container-fluid {
             padding-inline: clamp(24px, 2.5vw, 40px) !important;
+        }
+
+        /* ── Identidad del módulo: azul marino corporativo ── */
+        .pagina-productos .inventario-hero {
+            padding: 18px 24px;
+            border-left: 4px solid var(--inv-accent);
+        }
+
+        .pagina-productos .inventario-hero-icon {
+            background: var(--inv-accent);
+            box-shadow: 0 4px 16px var(--inv-accent-shadow);
+        }
+
+        .pagina-productos .btn-jv-primary {
+            background: var(--inv-accent);
+            box-shadow: 0 1px 2px rgba(30, 58, 138, 0.16);
+        }
+
+        .pagina-productos .btn-jv-primary:hover,
+        .pagina-productos .btn-jv-primary:focus-visible {
+            background: var(--inv-accent-hover);
+            color: #fff;
+            box-shadow: 0 4px 12px var(--inv-accent-shadow);
+        }
+
+        .pagina-productos .btn-jv-primary:focus-visible {
+            outline: 3px solid rgba(30, 58, 138, 0.35);
+            outline-offset: 2px;
+        }
+
+        .pagina-productos .inventario-buscador-icono {
+            color: var(--inv-accent);
+        }
+
+        /* ── Buscador con lupa y botón Limpiar dentro de un input-group ── */
+        .pagina-productos .inventario-buscador-grupo {
+            flex: 1 1 auto;
+            flex-wrap: nowrap;
+            width: 100%;
+            height: 42px;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .pagina-productos .inventario-buscador-grupo .input-group-text {
+            width: 42px;
+            justify-content: center;
+            padding: 0;
+            background: #fff;
+            border-color: var(--jv-border);
+            border-radius: 10px 0 0 10px;
+            color: #94A3B8;
+        }
+
+        .pagina-productos .inventario-buscador-grupo .form-control.input-jv {
+            height: 42px;
+            min-width: 0;
+            max-width: none !important;
+            padding: 0 12px !important;
+            border-color: var(--jv-border);
+            border-left: 0;
+            border-right: 0;
+            border-radius: 0;
+            box-shadow: none;
+            font-size: .95rem !important;
+        }
+
+        .pagina-productos .inventario-buscador-grupo .form-control.input-jv:focus {
+            border-color: var(--jv-border);
+            box-shadow: inset 0 0 0 1px var(--inv-accent-border);
+        }
+
+        .pagina-productos .inventario-buscador-grupo .inventario-limpiar-busqueda {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 42px;
+            padding: 0;
+            background: #fff;
+            border-color: var(--jv-border);
+            border-left: 0;
+            border-radius: 0 10px 10px 0;
+            color: #94A3B8;
+        }
+
+        .pagina-productos .inventario-buscador-grupo .inventario-limpiar-busqueda:hover {
+            background: #F8FAFC;
+            border-color: var(--jv-border-hover);
+            color: var(--jv-text-primary);
+        }
+
+        .pagina-productos .inventario-buscador-grupo input:placeholder-shown + .inventario-limpiar-busqueda {
+            display: none;
+        }
+
+        .pagina-productos .inventario-limpiar-busqueda i {
+            font-size: .72rem !important;
+        }
+
+        /* ── Botón Activar/Inactivar: verde para activar, rojo para inactivar ── */
+        .pagina-productos .btn-accion-toggle {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .95rem;
+            transition: .15s;
+        }
+
+        .pagina-productos .btn-accion-inactivar {
+            background: rgba(220, 38, 38, 0.12);
+            border: 1px solid rgba(220, 38, 38, 0.25);
+        }
+
+        .pagina-productos .btn-accion-inactivar:hover,
+        .pagina-productos .btn-accion-inactivar:focus-visible {
+            background: var(--jv-danger);
+            border-color: var(--jv-danger);
+            color: #fff !important;
+        }
+
+        .pagina-productos .btn-accion-activar {
+            background: rgba(22, 163, 74, 0.12);
+            border: 1px solid rgba(22, 163, 74, 0.25);
+        }
+
+        .pagina-productos .btn-accion-activar:hover,
+        .pagina-productos .btn-accion-activar:focus-visible {
+            background: var(--jv-success);
+            border-color: var(--jv-success);
+            color: #fff !important;
+        }
+
+        .pagina-productos .btn-accion-toggle:focus-visible {
+            outline: 2px solid currentColor;
+            outline-offset: 2px;
+        }
+
+        .pagina-productos .btn-accion-editar {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--inv-accent-soft);
+            color: var(--inv-accent);
+            border: 1px solid var(--inv-accent-border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .95rem;
+            transition: .15s;
+        }
+
+        .pagina-productos .btn-accion-editar:hover {
+            background: var(--inv-accent);
+            color: #fff;
+            border-color: var(--inv-accent);
+        }
+
+        .pagina-productos .btn-accion-reponer {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: rgba(4, 120, 87, 0.12);
+            color: #047857;
+            border: 1px solid rgba(4, 120, 87, 0.25);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .95rem;
+            transition: .15s;
+        }
+
+        .pagina-productos .btn-accion-reponer:hover {
+            background: #047857;
+            color: #fff;
+            border-color: #047857;
+        }
+
+        .pagina-productos .btn-accion-sin-proveedor {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: rgba(217, 119, 6, 0.12);
+            color: #B45309;
+            border: 1px solid rgba(217, 119, 6, 0.25);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .95rem;
+            cursor: help;
         }
 
         .pagina-productos > .card-jv:first-child {
@@ -27,6 +228,17 @@
             border-spacing: 0;
         }
 
+        /* Reparto exacto de columnas: la suma debe ser 100% */
+        .table-jv .col-codigo    { width: 11%; }
+        .table-jv .col-producto  { width: 21%; }
+        .table-jv .col-categoria { width: 12%; }
+        .table-jv .col-proveedor { width: 10%; }
+        .table-jv .col-stock     { width: 8%; }
+        .table-jv .col-precio    { width: 7%; }
+        .table-jv .col-vence     { width: 10%; }
+        .table-jv .col-estado    { width: 9%; }
+        .table-jv .col-acciones  { width: 12%; }
+
         .table-jv thead {
             background: #0e7490 !important;
         }
@@ -37,7 +249,7 @@
             font-weight: 900 !important;
             letter-spacing: 0.5px !important;
             font-size: 0.95rem !important;
-            padding: 16px 16px !important;
+            padding: 12px 10px !important;
             border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
             vertical-align: middle;
             white-space: normal;
@@ -53,7 +265,7 @@
         }
 
         .table-jv tbody td {
-            padding: 14px 12px !important;
+            padding: 14px 10px !important;
             border-bottom: 1px dashed var(--jv-border) !important;
             font-size: 1rem;
             vertical-align: middle;
@@ -70,12 +282,12 @@
 
         .table-jv thead th:first-child,
         .table-jv tbody td:first-child {
-            padding-left: 16px !important;
+            padding-left: 14px !important;
         }
 
         .table-jv thead th:last-child,
         .table-jv tbody td:last-child {
-            padding-right: 16px !important;
+            padding-right: 14px !important;
         }
 
         .table-jv tbody td:first-child {
@@ -84,43 +296,93 @@
             transition: box-shadow 0.2s ease;
         }
 
-        .table-jv tbody tr:hover td:first-child {
-            box-shadow: inset 3px 0 0 #22d3ee;
+        .pagina-productos .table-jv tbody tr:hover td:first-child {
+            box-shadow: inset 3px 0 0 var(--inv-accent);
         }
 
-        /* ── Columnas con texto largo: ellipsis + tooltip (mouse muestra el completo) ── */
-        .td-prod-sku {
-            text-align: center;
+        /* ── Columnas con texto largo: sin truncamiento, con salto de línea ── */
+        .table-jv thead th.th-codigo,
+        .table-jv tbody td.td-prod-sku {
+            min-width: 140px;
+            padding-left: 12px !important;
+            padding-right: 10px !important;
+            text-align: left;
             white-space: nowrap;
+            overflow: hidden;
         }
-        .td-prod-sku .codigo-badge { cursor: help; }
+        .td-prod-sku .codigo-badge {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            cursor: default;
+        }
 
         .prod-precio {
             font-weight: 700;
         }
 
-        .td-prod-nombre {
-            max-width: 320px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            cursor: help;
-        }
-
+        .td-prod-nombre,
         .td-prod-cat {
-            max-width: 140px;
+            max-width: none;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            cursor: help;
+            text-overflow: clip;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+            cursor: default;
+            line-height: 1.35;
         }
 
         .td-prod-prov {
             max-width: 200px;
             overflow: hidden;
-            text-overflow: ellipsis;
+            text-overflow: clip;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            cursor: default;
+        }
+
+        .td-prod-estado {
+            min-width: 100px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .table-jv thead th.th-estado {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .td-prod-estado .badge-jv {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: .75rem;
+            margin-inline: auto;
+        }
+
+        .table-jv thead th.th-acciones,
+        .td-prod-acciones {
+            min-width: 144px;
+            padding-left: 6px !important;
+            padding-right: 6px !important;
+            text-align: center;
             white-space: nowrap;
-            cursor: help;
+            vertical-align: middle;
+        }
+
+        .td-prod-acciones > .d-flex {
+            width: 100%;
+            flex-wrap: nowrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .td-prod-acciones > .d-flex > .btn {
+            flex: 0 0 auto;
         }
 
         .prod-nombre {
@@ -186,14 +448,14 @@
 
         /* Padding compacto: libera espacio para badges en columnas angostas */
         .table-jv thead th {
-            padding-left: 8px !important;
-            padding-right: 8px !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
             padding-top: 12px !important;
             padding-bottom: 12px !important;
         }
 
         .table-jv tbody td {
-            padding: 14px 8px !important;
+            padding: 14px 10px !important;
             font-size: .9rem;
         }
 
@@ -204,30 +466,75 @@
             font-size: .74rem !important;
         }
 
-        .td-vencimiento {
-            min-width: 104px;
+        .table-jv tbody td.td-vencimiento {
+            min-width: 116px;
+            text-align: center;
+            vertical-align: middle;
             /* Menos padding lateral: la fecha necesita todo el ancho posible */
             padding-left: 6px !important;
             padding-right: 6px !important;
         }
 
-        /* Badge de vencimiento: icono + fecha SIEMPRE lado a lado, sin recorte */
         .td-vencimiento .badge-jv {
             display: inline-flex;
+            align-items: center;
             justify-content: center;
-            gap: 3px;
-            padding: 4px 6px;
-            white-space: nowrap;
-            font-size: .74rem !important;
-            overflow: visible;
+            gap: 4px;
+            max-width: 100%;
+            margin: 0 auto;
+            text-align: center;
+            vertical-align: middle;
         }
 
-        .td-vencimiento .badge-jv > i {
+        .td-vencimiento .venc-badge-valido {
+            padding: 4px 8px;
+            font-size: 0.85rem !important;
+            line-height: 1.15;
+            white-space: nowrap;
+        }
+
+        .td-vencimiento .venc-badge-valido > i {
             flex: 0 0 auto;
+            font-size: 0.8rem;
         }
 
         .td-vencimiento .venc-fecha {
             white-space: nowrap;
+        }
+
+        .td-vencimiento .venc-badge-sin-fecha {
+            padding: 3px 6px !important;
+            font-size: 0.62rem !important;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: 0.2px;
+            white-space: normal;
+            background: #F1F5F9 !important;
+            color: #475569 !important;
+            border: 1px solid #E2E8F0 !important;
+        }
+
+        .td-vencimiento .venc-sin-guion {
+            display: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #64748B;
+        }
+
+        @media (max-width: 1100px) {
+            .td-vencimiento .venc-badge-sin-fecha .venc-sin-texto {
+                display: none;
+            }
+
+            .td-vencimiento .venc-badge-sin-fecha .venc-sin-guion {
+                display: inline;
+            }
+
+            .td-vencimiento .venc-badge-sin-fecha {
+                padding: 3px 7px !important;
+                white-space: nowrap;
+            }
         }
 
         .badge-info {
@@ -238,51 +545,62 @@
 
         /* ── Columna stock ── */
         .td-stock {
-            min-width: 130px;
+            min-width: 80px;
+            padding-left: 4px !important;
+            padding-right: 4px !important;
             text-align: center;
         }
 
-        .td-stock .stk-num {
-            font-size: 1.1rem;
-            font-weight: 900;
+        .td-stock .stock-cell {
+            width: 100%;
+            max-width: 68px;
+            margin: 0 auto;
+        }
+
+        .td-stock .stock-value {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            line-height: 1.1;
             color: var(--jv-text-primary);
-            line-height: 1;
         }
 
-        .stock-summary {
-            display: flex;
-            justify-content: center;
-            width: min(100%, 72px);
-            margin: 0 auto 7px;
+        .td-stock .stock-alert-icon {
+            margin-left: 3px;
+            font-size: .78rem;
+            vertical-align: baseline;
         }
 
-        .stock-meter {
-            width: min(100%, 72px);
-            height: 5px;
-            margin: 0 auto 5px;
+        .td-stock .stock-progress {
+            width: 100%;
+            max-width: 60px;
+            height: 4px;
+            margin: 0 auto 2px;
             overflow: hidden;
             border-radius: 999px;
-            background: #e2e8f0;
+            background-color: #E2E8F0;
         }
 
-        .stock-meter-fill {
-            height: 100%;
+        .td-stock .stock-progress .progress-bar {
             border-radius: inherit;
             transition: width .25s ease;
         }
 
-        .stock-meter-danger { background: var(--jv-danger); }
-        .stock-meter-success { background: var(--jv-success); }
-        .stock-meter-info { background: var(--jv-info); }
-
-        .td-stock .stk-meta {
-            width: min(100%, 72px);
-            margin-inline: auto;
-            text-align: center;
-            font-size: .72rem;
-            color: var(--jv-text-muted);
+        .td-stock .stock-limits {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 1px 5px;
+            margin: 0;
+            font-size: 0.62rem;
             font-weight: 600;
-            margin-top: 2px;
+            line-height: 1.1;
+        }
+
+        .td-stock .stock-limits span {
+            white-space: nowrap;
         }
 
         .buscador-wrapper {
@@ -299,8 +617,8 @@
             font-size: 1.15rem !important;
         }
 
-        .card-jv-table {
-            border-top: 4px solid #22d3ee;
+        .pagina-productos .card-jv-table {
+            border-top: 3px solid var(--jv-border-hover);
             border-radius: var(--jv-radius) !important;
             overflow: hidden;
         }
@@ -352,8 +670,11 @@
         }
 
         .modal-producto-edit-body .input-jv {
+            height: 42px;
             min-height: 42px;
-            padding: 9px 12px;
+            min-width: 0;
+            padding: 0 12px;
+            line-height: 1.4;
             background: #ffffff;
             border-color: #cbd5e1;
             box-shadow: 0 1px 2px rgba(15, 26, 46, .04);
@@ -365,13 +686,13 @@
             cursor: not-allowed;
         }
 
-        .modal-producto-edit > form > .d-flex:last-child {
+        .modal-producto-edit > form > .modal-footer {
             padding: 16px 24px !important;
             background: #ffffff;
             border-top: 1px solid #e2e8f0 !important;
         }
 
-        .modal-producto-edit > form > .d-flex:last-child .btn {
+        .modal-producto-edit > form > .modal-footer .btn {
             min-height: 40px;
             border-radius: 8px;
             font-weight: 700;
@@ -420,14 +741,28 @@
                 font-size: .9rem;
             }
 
+            /* Excepciones de padding que deben sobrevivir a la media query */
+            .pagina-productos .table-jv thead th.th-codigo,
+            .pagina-productos .table-jv tbody td.td-prod-sku {
+                padding-left: 12px !important;
+                padding-right: 10px !important;
+            }
+
+            .pagina-productos .table-jv thead th.th-acciones,
+            .pagina-productos .table-jv tbody td.td-prod-acciones {
+                padding-left: 6px !important;
+                padding-right: 6px !important;
+            }
+
+            .pagina-productos .table-jv tbody td.td-vencimiento {
+                padding-left: 6px !important;
+                padding-right: 6px !important;
+            }
+
             .pagina-productos .badge-jv {
                 padding-left: 8px;
                 padding-right: 8px;
                 font-size: .78rem;
-            }
-
-            .pagina-productos .td-vencimiento .badge-jv {
-                font-size: .72rem !important;
             }
 
             .pagina-productos .codigo-badge {
@@ -511,7 +846,11 @@
             background:transparent;color:var(--jv-text-muted);border:1px solid var(--jv-border);
             transition:.15s;cursor:pointer;
         }
-        .btn-filter-prod.active { background:rgba(6,182,212,0.15); color:#0E7490; border-color:rgba(6,182,212,0.3); }
+        .pagina-productos .btn-filter-prod.active {
+            background: var(--inv-accent-soft);
+            color: var(--inv-accent);
+            border-color: var(--inv-accent-border);
+        }
         .btn-filter-prod:first-child { border-radius:6px 0 0 6px; }
         .btn-filter-prod:last-child { border-radius:0 6px 6px 0; }
 
@@ -713,7 +1052,7 @@
             font-size: .92rem;
             font-weight: 800;
             white-space: nowrap;
-            box-shadow: 0 5px 12px rgba(234, 88, 12, .2);
+            box-shadow: 0 5px 12px var(--inv-accent-shadow);
         }
         .pagina-productos .cat-cerrar {
             width: 42px; height: 42px;
@@ -722,7 +1061,7 @@
             background: #fff; color: #475569; font-size: 1rem;
             transition: background .16s, color .16s, border-color .16s;
         }
-        .pagina-productos .cat-cerrar:hover { background: #FFF1E8; color: #C2410C; border-color: #FDBA74; }
+        .pagina-productos .cat-cerrar:hover { background: #EFF6FF; color: var(--inv-accent); border-color: var(--inv-accent-border); }
         .pagina-productos .cat-panel-titulo {
             font-size: 1.35rem; line-height: 1.2; font-weight: 800; letter-spacing: -.02em;
             margin: 0 0 4px; color: #172B4D;
@@ -761,18 +1100,20 @@
             background: #fff;
         }
         .pagina-productos .cat-arbol { list-style: none; margin: 0; padding: 0; }
+        .pagina-productos .cat-bloque { margin-bottom: 12px; }
+        .pagina-productos .cat-bloque:last-child { margin-bottom: 0; }
         .pagina-productos .cat-hijos {
-            list-style: none; margin: 4px 0 7px 23px; padding: 0 0 0 18px;
+            list-style: none;
             position: relative;
         }
         .pagina-productos .cat-hijos::before {
-            content: ''; position: absolute; left: 4px; top: 0; bottom: 14px;
+            content: ''; position: absolute; left: 8px; top: 0; bottom: 14px;
             width: 2px; background: #BCE7EF; border-radius: 2px;
         }
         .pagina-productos .cat-hijos .cat-nodo { position: relative; }
         .pagina-productos .cat-hijos .cat-nodo::before {
-            content: ''; position: absolute; left: -14px; top: 50%;
-            width: 14px; height: 2px; background: #BCE7EF;
+            content: ''; position: absolute; left: -8px; top: 50%;
+            width: 8px; height: 2px; background: #BCE7EF;
         }
 
         .pagina-productos .cat-fila {
@@ -783,13 +1124,26 @@
             background: var(--cat-blue-soft);
             transition: background .16s, border-color .16s, box-shadow .16s;
         }
-        .pagina-productos .cat-fila:hover { background: #E5F0FF; border-color: #AFC9F4; }
-        .pagina-productos .cat-hija > .cat-fila {
-            min-height: 52px;
-            border-color: #CBE9EE; border-left-color: var(--cat-teal);
-            background: var(--cat-teal-soft);
+        .pagina-productos .cat-fila-raiz {
+            min-height: 66px; margin: 0; padding: 12px 14px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(15, 26, 46, .04);
         }
-        .pagina-productos .cat-hija > .cat-fila:hover { background: #DDF7FA; border-color: #9DD9E2; }
+        .pagina-productos .cat-fila-raiz:hover { background: #F8FAFD; border-color: #AFC9F4; }
+        .pagina-productos .cat-fila-raiz .cat-enlace { flex: 1 1 280px; }
+        .pagina-productos .cat-fila-raiz .cat-nombre { font-size: 1.04rem; font-weight: 800; }
+        .pagina-productos .cat-fila-hija {
+            min-height: 52px; margin: 6px 0; padding: 8px 10px;
+            border-color: #E2E8F0 !important; border-left: 3px solid var(--cat-teal) !important;
+            background: #F8FAFC !important;
+        }
+        .pagina-productos .cat-fila-hija:hover {
+            background: #F1F5F9 !important;
+            border-color: #CBD5E1 !important;
+            border-left: 3px solid var(--cat-teal) !important;
+        }
+        .pagina-productos .cat-fila-hija .cat-enlace { flex: 1 1 320px; }
+        .pagina-productos .cat-fila-hija .cat-nombre { font-size: .89rem; font-weight: 600; }
         .pagina-productos .cat-enlace {
             display: inline-flex; align-items: center; gap: 8px;
             flex: 1 1 430px; min-width: 0;
@@ -807,7 +1161,30 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             text-transform: uppercase;
         }
-        .pagina-productos .cat-hija .cat-nombre { font-weight: 650; font-size: .91rem; }
+        .pagina-productos .cat-subconteo {
+            display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+            padding: 5px 10px; border: 1px solid #DCE5F0; border-radius: 999px;
+            background: #F8FAFC; color: #475569;
+            font-size: .78rem; font-weight: 700; white-space: nowrap;
+        }
+        .pagina-productos .cat-subconteo-vacio {
+            background: #F1F5F9; color: #64748B; border-style: dashed;
+        }
+        .pagina-productos .cat-toggle {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            flex-shrink: 0; min-height: 36px; padding: 6px 11px;
+            border: 1px solid #BFDBFE; border-radius: 9px;
+            background: #EFF6FF; color: #1D4ED8;
+            font-size: .78rem; font-weight: 700; white-space: nowrap;
+            transition: background .16s, border-color .16s, color .16s;
+        }
+        .pagina-productos .cat-toggle:hover {
+            background: #DBEAFE; border-color: #93C5FD; color: #1E40AF;
+        }
+        .pagina-productos .cat-toggle-icono { transition: transform .2s ease; }
+        .pagina-productos .cat-toggle[aria-expanded="true"] .cat-toggle-icono { transform: rotate(180deg); }
+        .pagina-productos .cat-toggle[aria-expanded="true"] .cat-toggle-ver { display: none; }
+        .pagina-productos .cat-toggle[aria-expanded="false"] .cat-toggle-ocultar { display: none; }
         .pagina-productos .cat-nivel {
             flex: 0 0 auto;
             padding: 4px 8px;
@@ -853,11 +1230,18 @@
             background: #DBEAFE; border-color: #60A5FA;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, .12);
         }
+        .pagina-productos .cat-seleccionada > .cat-fila.cat-fila-hija {
+            background: #DBEAFE !important; border-color: #60A5FA !important;
+            border-left: 3px solid var(--cat-teal) !important;
+        }
+        .pagina-productos .cat-seleccionada > .cat-fila.cat-fila-hija:hover {
+            background: #DBEAFE !important;
+        }
         .pagina-productos .cat-seleccionada > .cat-fila .cat-nombre,
         .pagina-productos .cat-seleccionada > .cat-fila .cat-icono { color: #174CB8; }
         .pagina-productos .cat-acciones {
             display: inline-flex; align-items: center; justify-content: flex-end;
-            flex: 1 1 100%; gap: 7px; flex-shrink: 0;
+            flex: 1 1 100%; flex-wrap: wrap; gap: 7px; flex-shrink: 0;
             opacity: 1;
         }
         .pagina-productos .cat-acciones .btn-action {
@@ -870,16 +1254,16 @@
         }
         .pagina-productos .cat-acciones .btn-action-label { gap: 7px; }
         .pagina-productos .cat-acciones .btn-action-add {
-            background: #FFF7ED; border-color: #FED7AA; color: #C2410C;
-        }
-        .pagina-productos .cat-acciones .btn-action-add:hover {
-            background: #FFEDD5; border-color: #FDBA74; color: #9A3412;
+            background: var(--inv-accent-soft); border-color: var(--inv-accent-border); color: var(--inv-accent);
         }
         .pagina-productos .cat-acciones .btn-action-state {
             background: #F8FAFC; color: #475569;
         }
         .pagina-productos .cat-acciones .btn-action:hover {
             border-color: #93B4E8; color: #174CB8; background: #F4F8FF;
+        }
+        .pagina-productos .cat-acciones .btn-action-add:hover {
+            background: rgba(30,58,138,0.16); border-color: rgba(30,58,138,0.35); color: var(--inv-accent-hover);
         }
         .pagina-productos .cat-acciones .btn-action .bi-eye-slash-fill { color: #C2410C; }
         .pagina-productos .cat-acciones .btn-action .bi-eye-fill { color: #15803D; }
@@ -924,8 +1308,15 @@
             .pagina-productos .cat-panel-buscar > i { left: 31px; }
             .pagina-productos .cat-arbol-cont { padding: 10px 12px 16px; }
             .pagina-productos .cat-fila { gap: 5px; padding: 6px; }
+            .pagina-productos .cat-fila-raiz { padding: 10px; }
+            .pagina-productos .cat-fila-raiz .cat-nombre { font-size: .95rem; }
+            .pagina-productos .cat-fila-hija { padding: 7px; }
+            .pagina-productos .cat-fila-raiz .cat-enlace,
+            .pagina-productos .cat-fila-hija .cat-enlace { flex-basis: 100%; }
             .pagina-productos .cat-enlace { flex-basis: 100%; }
             .pagina-productos .cat-nombre { font-size: .84rem; }
+            .pagina-productos .cat-subconteo { font-size: .7rem; padding: 4px 8px; }
+            .pagina-productos .cat-toggle { min-height: 34px; padding: 5px 9px; font-size: .72rem; }
             .pagina-productos .cat-hija .cat-nombre { font-size: .82rem; }
             .pagina-productos .cat-codigo { display: none; }
             .pagina-productos .cat-nivel { font-size: .68rem; }

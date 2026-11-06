@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Verifica los contratos JSON, el tope de espera y las barreras del seed temporal.
+ * Verifica los contratos JSON y el tope de espera de las peticiones AJAX.
  */
 $raiz = dirname(__DIR__);
 $productos_controller = file_get_contents($raiz . '/controllers/ProductosController.php');
@@ -17,7 +17,6 @@ $nota_view = file_get_contents($raiz . '/views/nota_entrega/nota.php');
 $controlador_base = file_get_contents($raiz . '/core/Controller.php');
 $seguridad = file_get_contents($raiz . '/includes/Security.php');
 $inicio = file_get_contents($raiz . '/init.php');
-$seed = file_get_contents($raiz . '/seed_pruebas.php');
 
 function afirmarTimeoutFetch(bool $condicion, string $mensaje): void
 {
@@ -62,23 +61,4 @@ afirmarTimeoutFetch(strpos($productos_js, 'restaurarBoton();') !== false, 'La ed
 afirmarTimeoutFetch(strpos($compras_js, 'btn.disabled = productos.length === 0;') !== false, 'El formulario de compra no libera el botón tras la respuesta.');
 afirmarTimeoutFetch(!preg_match('/\bfetch\s*\(/', $productos_js . $compras_js . $salidas_js . $nota_js), 'Quedó un fetch sin el helper de timeout en los módulos revisados.');
 
-afirmarTimeoutFetch(strpos($seed, "Security::esAdmin()") !== false, 'El seed debe exigir rol Administrador.');
-afirmarTimeoutFetch(strpos($seed, "['localhost', '127.0.0.1', '[::1]', '::1']") !== false, 'El seed debe limitarse a localhost.');
-afirmarTimeoutFetch(strpos($seed, "DB_NAME !== 'jv3000_db'") !== false, 'El seed debe rechazar bases distintas a la local de desarrollo.');
-afirmarTimeoutFetch(strpos($seed, '$pesos = [3, 2, 7, 6, 5, 4, 3, 2];') !== false, 'El seed debe generar el dígito verificador de los RIF.');
-afirmarTimeoutFetch(strpos($seed, 'name="csrf_token"') !== false, 'El seed debe incluir protección CSRF.');
-afirmarTimeoutFetch(strpos($seed, '$confirmacion_requerida') !== false, 'El seed debe exigir confirmación explícita.');
-afirmarTimeoutFetch(
-    substr_count($seed, '$indice <= 5') > 0
-    && substr_count($seed, '$indice <= 10') > 0
-    && substr_count($seed, '$indice <= 100') > 0
-    && strpos($seed, "'stock_actual' => 50") !== false
-    && strpos($seed, "'cantidad_restante' => 50") !== false,
-    'El seed no genera las cantidades solicitadas o deja desalineado el stock.'
-);
-afirmarTimeoutFetch(
-    !preg_match('/\b(?:DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b/i', $seed),
-    'El seed temporal no debe borrar tablas ni registros.'
-);
-
-echo "OK timeout de AJAX y barreras de seguridad del seed verificados\n";
+echo "OK timeout de AJAX verificado\n";

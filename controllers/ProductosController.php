@@ -85,17 +85,22 @@ class ProductosController extends Controller
                 }
                 return is_numeric($text) ? number_format((float)$text, 2, '.', '') : $text;
             };
-            $resultado = $modelo->editar([
-                'id_producto'     => (int)($_POST['id_producto'] ?? 0),
-                // Categoría: 0 = sin categoría; el modelo valida que exista y esté activa
-                'id_categoria'    => (int)($_POST['id_categoria'] ?? 0),
-                // Stocks crudos: el modelo valida que sean enteros puros en rango
-                'stock_minimo'    => trim((string)($_POST['stock_minimo'] ?? '')),
-                'stock_maximo'    => trim((string)($_POST['stock_maximo'] ?? '')),
-                'precio_venta'    => $parsePrice($_POST['precio_venta'] ?? 0),
-                'status'          => $_POST['status'] ?? 'Activo',
-                'fecha_vencimiento' => trim($_POST['fecha_vencimiento'] ?? ''),
-            ]);
+            $idProveedor = (int)($_POST['id_proveedor'] ?? 0);
+            $resultado = $idProveedor > 0
+                ? $modelo->editar([
+                    'id_producto'     => (int)($_POST['id_producto'] ?? 0),
+                    // Categoría: 0 = sin categoría; el modelo valida que exista y esté activa
+                    'id_categoria'    => (int)($_POST['id_categoria'] ?? 0),
+                    // Proveedor: obligatorio; el modelo valida que exista y esté activo
+                    'id_proveedor'    => $idProveedor,
+                    // Stocks crudos: el modelo valida que sean enteros puros en rango
+                    'stock_minimo'    => trim((string)($_POST['stock_minimo'] ?? '')),
+                    'stock_maximo'    => trim((string)($_POST['stock_maximo'] ?? '')),
+                    'precio_venta'    => $parsePrice($_POST['precio_venta'] ?? 0),
+                    'status'          => $_POST['status'] ?? 'Activo',
+                    'fecha_vencimiento' => trim($_POST['fecha_vencimiento'] ?? ''),
+                ])
+                : ['ok' => false, 'mensaje' => 'EL PROVEEDOR ES OBLIGATORIO'];
             if ($esFetch) {
                 $this->flash(
                     $resultado['ok'] ? 'success' : 'danger',
@@ -166,6 +171,12 @@ class ProductosController extends Controller
         $modeloCategoria->sincronizarPorStock();
         $categorias = $modeloCategoria->listarArbol();
 
+        // Proveedores activos para el select obligatorio del modal de edición.
+        $proveedores = array_values(array_filter(
+            (new Proveedor())->listar(),
+            static fn(array $proveedor): bool => ($proveedor['status'] ?? '') === 'Activo'
+        ));
+
         $this->view('productos/index', [
             'titulo'       => 'Inventario | JV3000 C.A.',
             'wrapper_class' => 'pagina-productos',
@@ -181,6 +192,7 @@ class ProductosController extends Controller
             'offset'           => $offset,
             'registros_por_pagina' => $registros_por_pagina,
             'categorias'        => $categorias,
+            'proveedores'       => $proveedores,
             'id_categoria_filtro' => $id_categoria_filtro,
             'categoria_filtro'    => $categoria_filtro,
         ]);

@@ -82,47 +82,7 @@ $agruparActividadPorFecha = static function (array $items): array {
                     <span class="dash-bell-badge" id="dashBellBadge"><?php echo min($alertas['total'], 99); ?></span>
                 <?php endif; ?>
             </button>
-            <div class="dash-bell-panel" id="dashBellPanel">
-                <div class="dash-bell-head">ALERTAS CRÍTICAS</div>
-                <?php if ($alertas['total'] === 0): ?>
-                    <div class="dash-bell-empty"><i class="bi bi-check-circle"></i> Sin alertas críticas</div>
-                <?php else: ?>
-                    <?php
-                    $secciones = [
-                        'vencidos' => ['titulo' => 'VENCIDOS', 'clase' => 'ven', 'alerta' => 'vencidos', 'count' => $alertas['counts']['vencidos'], 'items' => $alertas['vencidos']],
-                        'proximos' => ['titulo' => 'PRÓXIMOS (1-7 DÍAS)', 'clase' => 'prox', 'alerta' => 'proximos', 'count' => $alertas['counts']['proximos'], 'items' => $alertas['proximos']],
-                        'prontos' => ['titulo' => 'PRONTO (8-30 DÍAS)', 'clase' => 'pronto', 'alerta' => 'prontos', 'count' => $alertas['counts']['prontos'], 'items' => $alertas['prontos']],
-                    ];
-                    if ($rol_user_id !== 3) {
-                        $secciones['bajos'] = ['titulo' => 'STOCK BAJO', 'clase' => 'bajo', 'alerta' => 'bajos', 'count' => $alertas['counts']['bajos'], 'items' => $alertas['bajos']];
-                    }
-                    foreach ($secciones as $clave => $sec):
-                        if ($sec['count'] <= 0) {
-                            continue;
-                        }
-                    ?>
-                    <div class="dash-bell-sec dash-bell-<?php echo $sec['clase']; ?>">
-                        <div class="dash-bell-sec-titulo">
-                            <span><?php echo $sec['titulo']; ?> (<?php echo $sec['count']; ?>)</span>
-                            <a href="<?php echo BASE_PATH; ?>index.php?url=productos&alerta=<?php echo $sec['alerta']; ?>" class="dash-bell-ver">Ver todos</a>
-                        </div>
-                        <?php foreach ($sec['items'] as $it): ?>
-                            <a class="dash-bell-item" href="<?php echo BASE_PATH; ?>index.php?url=productos&producto=<?php echo (int)$it['id']; ?>">
-                                <i class="bi bi-<?php echo $clave === 'bajos' ? 'exclamation-triangle' : ($clave === 'proximos' ? 'clock-history' : ($clave === 'prontos' ? 'calendar3' : 'x-octagon')); ?>"></i>
-                                <span class="dash-bell-item-nombre"><?php echo htmlspecialchars($it['nombre']); ?></span>
-                                <span class="dash-bell-item-meta">
-                                    <?php if ($clave === 'bajos'): ?>
-                                        <?php echo (int)$it['stock']; ?> / mín <?php echo (int)$it['minimo']; ?>
-                                    <?php else: ?>
-                                        <?php echo htmlspecialchars($it['fecha']); ?>
-                                    <?php endif; ?>
-                                </span>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
+            <?php include __DIR__ . '/_campana_alertas.php'; ?>
         </div>
     </div>
 

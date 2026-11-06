@@ -18,7 +18,7 @@
 ?>
 <div class="pagina-salidas">
 <!-- Encabezado -->
-<div class="card-jv d-flex align-items-center gap-3 mb-3 flex-wrap" style="padding:18px 24px;border-left:4px solid #dc2626;">
+<div class="card-jv sal-hero d-flex align-items-center gap-3 mb-3 flex-wrap">
     <div class="sal-header-icon"><i class="bi bi-cart-x-fill"></i></div>
     <div>
         <h1 class="module-title">SALIDAS / VENTAS</h1>
@@ -28,7 +28,7 @@
         <?php if ($es_admin): ?>
             <button class="btn btn-clientes-sal module-action-btn d-flex align-items-center gap-2" onclick="abrirGestorCli()">
                 <i class="bi bi-people-fill"></i>CLIENTES
-                <span class="badge rounded-pill" style="background:#059669;color:#fff;font-size:.78rem;padding:4px 10px;margin-left:2px;"><?php echo $cli_activos; ?></span>
+                <span class="badge rounded-pill cli-count-badge"><?php echo $cli_activos; ?></span>
             </button>
         <?php endif; ?>
         <button class="btn btn-jv-primary module-action-btn" onclick="nuevaSalida()">
@@ -64,35 +64,35 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 <!-- Estadísticas / Widgets -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-success);background:linear-gradient(135deg,rgba(22,163,74,0.04),rgba(22,163,74,0.01));">
-            <div class="widget-icon" style="background:rgba(22,163,74,0.12);color:var(--jv-success);">
+        <div class="widget-card h-100">
+            <div class="widget-icon widget-icon--success">
                 <i class="bi bi-currency-dollar"></i>
             </div>
             <div>
-                <div class="widget-label">Ventas del Mes</div>
-                <div class="widget-value" style="color: var(--jv-text-primary);">$<?php echo number_format($kpis['ventas_mes'], 2); ?></div>
+                <div class="widget-label fs-6 text-muted">Ventas del Mes</div>
+                <div class="widget-value fs-3 fw-bold">$<?php echo number_format($kpis['ventas_mes'], 2); ?></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-info);background:linear-gradient(135deg,rgba(14,165,233,0.04),rgba(14,165,233,0.01));">
-            <div class="widget-icon" style="background:rgba(14,165,233,0.12);color:var(--jv-info);">
+        <div class="widget-card h-100">
+            <div class="widget-icon widget-icon--info">
                 <i class="bi bi-boxes"></i>
             </div>
             <div>
-                <div class="widget-label">Unidades Vendidas (Mes)</div>
-                <div class="widget-value" style="color: var(--jv-text-primary);"><?php echo number_format($kpis['und_mes'], 0); ?></div>
+                <div class="widget-label fs-6 text-muted">Unidades Vendidas (Mes)</div>
+                <div class="widget-value fs-3 fw-bold"><?php echo number_format($kpis['und_mes'], 0); ?></div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="widget-card" style="border-left:4px solid var(--jv-warning);background:linear-gradient(135deg,rgba(245,158,11,0.04),rgba(245,158,11,0.01));">
-            <div class="widget-icon" style="background:rgba(245,158,11,0.12);color:var(--jv-warning);">
+        <div class="widget-card h-100">
+            <div class="widget-icon widget-icon--warning">
                 <i class="bi bi-receipt"></i>
             </div>
             <div>
-                <div class="widget-label">Ventas de Hoy</div>
-                <div class="widget-value" style="color: var(--jv-text-primary);"><?php echo (int)$kpis['ventas_hoy']; ?></div>
+                <div class="widget-label fs-6 text-muted">Ventas de Hoy</div>
+                <div class="widget-value fs-3 fw-bold"><?php echo (int)$kpis['ventas_hoy']; ?></div>
             </div>
         </div>
     </div>
@@ -146,28 +146,28 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <div class="cli-rif"><?php echo htmlspecialchars($outgoingRecord['rif_cliente'] ?? 'S/RIF'); ?></div>
                             </td>
                             <td class="td-productos" data-tooltip="<?php echo htmlspecialchars($productos_lista); ?>"><?php echo htmlspecialchars($productos_lista); ?></td>
-                            <td class="text-center"><span class="badge-jv badge-danger" style="padding:6px 14px;">-<?php echo $outgoingRecord['total_cantidad']; ?></span></td>
+                            <td class="text-center"><span class="badge-cant">-<?php echo $outgoingRecord['total_cantidad']; ?></span></td>
                             <td class="text-center"><?php
                                                     $nombre_tipo = $outgoingRecord['tipo_mov_nombre'] ?? '';
                                                     $observaciones = $outgoingRecord['observaciones'] ?? '';
                                                     $causa_ajuste = '';
                                                     if (preg_match('/^Causa:\s*(.+?)(?:\s*\||$)/', $observaciones, $causeMatch)) $causa_ajuste = trim($causeMatch[1]);
-                                                    if ($grupo_mov === 'venta') echo '<span class="badge-jv badge-success"><i class="bi bi-cart me-1"></i>Venta</span>';
-                                                    elseif ($grupo_mov === 'regalias') echo '<span class="badge-jv badge-info"><i class="bi bi-gift me-1"></i>Regalía</span>';
-                                                    else echo '<span class="badge-jv badge-warning" style="cursor:pointer;" data-tooltip="' . htmlspecialchars($nombre_tipo . ($causa_ajuste ? ': ' . $causa_ajuste : ''), ENT_QUOTES, 'UTF-8') . '" onclick="verDetalleDano(' . htmlspecialchars(json_encode($nombre_tipo, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars(json_encode($causa_ajuste, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo, ENT_QUOTES, 'UTF-8') . '</span>';
+                                                    if ($grupo_mov === 'venta') echo '<span class="badge bg-success bg-opacity-10 text-success border-0"><i class="bi bi-cart me-1"></i>Venta</span>';
+                                                    elseif ($grupo_mov === 'regalias') echo '<span class="badge bg-info bg-opacity-10 text-jv-info border-0"><i class="bi bi-gift me-1"></i>Regalía</span>';
+                                                    else echo '<span class="badge bg-warning bg-opacity-10 text-jv-warning border-0" style="cursor:pointer;" data-tooltip="' . htmlspecialchars($nombre_tipo . ($causa_ajuste ? ': ' . $causa_ajuste : ''), ENT_QUOTES, 'UTF-8') . '" onclick="verDetalleDano(' . htmlspecialchars(json_encode($nombre_tipo, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars(json_encode($causa_ajuste, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo, ENT_QUOTES, 'UTF-8') . '</span>';
                                                     ?></td>
-                            <td class="td-total" style="<?php echo $grupo_mov === 'merma' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">$<?php echo number_format($outgoingRecord['total_monto'] ?? 0, 2); ?></td>
+                            <td class="td-total <?php echo $grupo_mov === 'merma' ? 'text-danger' : 'text-success'; ?>">$<?php echo number_format($outgoingRecord['total_monto'] ?? 0, 2); ?></td>
                             <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($outgoingRecord['fecha_salida'])); ?></td>
                             <td class="sal-celda-acciones text-center">
                                 <div class="sal-acciones-grupo">
-                                <button class="btn-action" onclick="verFactura(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Ver Nota" aria-label="Ver nota">
+                                <button class="btn-action btn-ver" onclick="verFactura(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Ver Nota" aria-label="Ver nota">
                                     <i class="bi bi-receipt"></i>
                                 </button>
-                                <button class="btn-action" onclick='editarSalida(<?php echo json_encode($outgoingRecord); ?>)' data-tooltip="Editar" aria-label="Editar salida">
+                                <button class="btn-action btn-editar" onclick='editarSalida(<?php echo json_encode($outgoingRecord); ?>)' data-tooltip="Editar" aria-label="Editar salida">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
                                 <?php if (Security::esAdmin()): ?>
-                                    <button class="btn-action" onclick="confirmarEliminar(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Anular" aria-label="Anular salida">
+                                    <button class="btn-action btn-anular" onclick="confirmarEliminar(<?php echo $outgoingRecord['id_salida']; ?>)" data-tooltip="Anular" aria-label="Anular salida">
                                         <i class="bi bi-slash-circle"></i>
                                     </button>
                                 <?php endif; ?>
@@ -232,9 +232,9 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                             </div>
                             <div class="col-md-6">
                                 <label for="s_fecha" class="jv-modal-label">FECHA</label>
-                                <input type="date" id="s_fecha" aria-label="Fecha de la salida" class="input-jv" value="<?php echo date('Y-m-d'); ?>" disabled>
-                                <input type="hidden" name="fecha_salida" id="s_fecha_hidden" value="<?php echo date('Y-m-d'); ?>">
-                                <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Se registra la fecha de hoy autom&aacute;ticamente</div>
+                                <input type="date" id="s_fecha" name="fecha_salida" aria-label="Fecha de la salida" class="input-jv" value="<?php echo date('Y-m-d'); ?>" max="<?php echo date('Y-m-d'); ?>" required>
+                                <input type="hidden" id="s_fecha_hidden" value="<?php echo date('Y-m-d'); ?>">
+                                <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Puedes registrar ventas de d&iacute;as anteriores. No se permiten fechas futuras.</div>
                             </div>
                         </div>
                     </div>
@@ -248,27 +248,31 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <div class="jv-modal-section-sub">Para la factura de la venta</div>
                             </div>
                         </div>
-                        <div class="row g-3 mb-0">
+                        <div class="row g-3 mb-0 align-items-start">
                             <div class="col-md-6">
                                 <label for="buscarClienteSal" class="jv-modal-label">CLIENTE <span class="text-danger">*</span></label>
-                                <div class="d-flex align-items-start gap-2">
+                                <div class="d-flex align-items-center gap-2 sal-cliente-toolbar">
                                     <div class="com-toolbox">
-                                        <input type="text" class="input-jv w-100" id="buscarClienteSal" aria-label="Buscar cliente" placeholder="Buscar o escribir cliente..." autocomplete="off">
+                                        <div class="input-group sal-cliente-search">
+                                            <span class="input-group-text bg-white text-muted"><i class="bi bi-search" aria-hidden="true"></i></span>
+                                            <input type="text" class="form-control input-jv" id="buscarClienteSal" aria-label="Buscar cliente por nombre, RIF o teléfono" placeholder="Buscar por nombre, RIF o teléfono..." autocomplete="off">
+                                            <button type="button" class="btn btn-outline-secondary d-none sal-limpiar-cliente" id="limpiarClienteSal" onclick="limpiarBusquedaCliente()" aria-label="Limpiar búsqueda" title="Limpiar búsqueda"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                                        </div>
                                         <input type="hidden" name="id_cliente" id="s_id_cliente">
                                         <input type="hidden" name="cliente" id="s_cliente">
                                         <div class="com-resultados" id="resultadosBusquedaCli"></div>
                                     </div>
                                     <?php if ($es_admin): ?>
-                                        <button type="button" class="btn btn-jv-outline text-nowrap" onclick="abrirCrearClienteDesdeVenta()">
-                                            <i class="bi bi-plus-lg me-1"></i>NUEVO CLIENTE
+                                        <button type="button" class="btn btn-outline-success text-nowrap d-inline-flex align-items-center justify-content-center gap-1 sal-btn-nuevo-cliente" onclick="abrirCrearClienteDesdeVenta()">
+                                            <i class="bi bi-person-plus" aria-hidden="true"></i><span>NUEVO CLIENTE</span>
                                         </button>
                                     <?php endif; ?>
                                 </div>
-                                <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Busca un cliente existente o escribe uno nuevo</div>
+                                <div class="jv-modal-hint"><i class="bi bi-info-circle me-1"></i>Busca por nombre, RIF o teléfono y elige un resultado.</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="s_rif_num" class="jv-modal-label">RIF / C&Eacute;DULA <span class="text-danger">*</span></label>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-2 align-items-stretch sal-rif-toolbar">
                                     <select id="s_rif_tipo" aria-label="Tipo de RIF o cedula" class="input-jv" style="max-width:70px;flex-shrink:0;" onchange="formatoDocumento('s_rif_num','s-rif-msg','s_rif')">
                                         <option value="V">V-</option>
                                         <option value="J">J-</option>
@@ -472,62 +476,63 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                 </button>
             </div>
             <div class="modal-body p-3">
-                <div class="jv-modal-section" style="border-left:4px solid #059669;">
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-0">
-                        <div class="d-flex align-items-center gap-2" style="flex:1;min-width:200px;">
-                            <i class="bi bi-search" style="font-size:1rem;color:#059669;"></i>
-                            <input type="text" class="input-jv border-0 bg-transparent" id="cliBuscar" placeholder="Buscar por nombre o documento..." style="box-shadow:none;font-size:1rem;padding:8px 6px;flex:1;" oninput="cliFiltrar()">
+                <div class="jv-modal-section cli-panel">
+                    <div class="d-flex align-items-center gap-2 flex-wrap cli-toolbar">
+                        <div class="d-flex align-items-center gap-2 flex-grow-1 cli-search">
+                            <i class="bi bi-search cli-search-icon"></i>
+                            <input type="text" class="input-jv border-0 bg-transparent cli-search-input" id="cliBuscar" placeholder="Buscar por nombre, RIF o teléfono..." oninput="cliFiltrar()">
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="btn btn-action-sm" onclick="cliSetFiltro('todos')" id="cliFiltTodos" style="background:#059669;color:#fff;">Todos</button>
-                            <button class="btn btn-action-sm" onclick="cliSetFiltro('Activo')" id="cliFiltAct" style="background:#d1fae5;color:#065f46;">Activos</button>
-                            <button class="btn btn-action-sm" onclick="cliSetFiltro('Inactivo')" id="cliFiltInact" style="background:#fee2e2;color:#991b1b;">Inactivos</button>
+                        <div class="d-flex align-items-center gap-2 cli-filtros">
+                            <button class="btn btn-action-sm cli-filtro cli-filtro-todos" onclick="cliSetFiltro('todos')" id="cliFiltTodos">Todos</button>
+                            <button class="btn btn-action-sm cli-filtro cli-filtro-activo" onclick="cliSetFiltro('Activo')" id="cliFiltAct">Activos</button>
+                            <button class="btn btn-action-sm cli-filtro cli-filtro-inactivo" onclick="cliSetFiltro('Inactivo')" id="cliFiltInact">Inactivos</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="jv-modal-section" style="border-left:4px solid #059669;">
+                <div class="jv-modal-section cli-panel">
                     <div class="jv-modal-section-head">
-                        <span class="jv-modal-chip" style="background:#059669;box-shadow:0 3px 10px rgba(5,150,105,0.3);"><i class="bi bi-list-ul"></i></span>
+                        <span class="jv-modal-chip cli-chip"><i class="bi bi-list-ul"></i></span>
                         <div>
-                            <div class="jv-modal-section-title">Clientes registrados <span class="badge rounded-pill ms-2" style="background:#059669;color:#fff;font-size:.85rem;" id="cliTotalBadge"><?php echo count($cli_gestion); ?></span></div>                            <div class="jv-modal-section-sub">Total de clientes en el sistema</div>
+                            <div class="jv-modal-section-title">Clientes registrados <span class="badge rounded-pill ms-2 cli-total-badge" id="cliTotalBadge"><?php echo count($cli_gestion); ?></span></div>
+                            <div class="jv-modal-section-sub">Total de clientes en el sistema</div>
                         </div>
                     </div>
-                    <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;">
-                        <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
+                    <div class="table-responsive cli-tabla-wrap">
+                        <table class="cli-tabla">
                             <thead>
-                                <tr style="background:#065f46;">
-                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;width:30px;text-align:center;">#</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;">Cliente</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;width:140px;">Documento</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;width:120px;">Tel&eacute;fono</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;text-align:center;width:90px;">Estado</th>
-                                    <th style="padding:10px 12px;color:#fff;font-size:.95rem;text-transform:uppercase;text-align:center;width:80px;">Acciones</th>
+                                <tr>
+                                    <th class="text-center cli-col-num">#</th>
+                                    <th>Cliente</th>
+                                    <th class="cli-col-doc">Documento</th>
+                                    <th class="cli-col-tel">Tel&eacute;fono</th>
+                                    <th class="text-center cli-col-estado">Estado</th>
+                                    <th class="text-center cli-col-acciones">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="cliTablaBody">
                                 <?php if (count($cli_gestion) > 0): ?>
                                     <?php foreach ($cli_gestion as $idx => $cli): ?>
-                                        <tr class="cli-fila" data-status="<?php echo $cli['status']; ?>" data-nombre="<?php echo htmlspecialchars(strtolower($cli['nombre'])); ?>" data-documento="<?php echo htmlspecialchars(strtolower($cli['documento'] ?? '')); ?>">
-                                            <td style="text-align:center;color:var(--jv-text-muted);padding:10px 12px;font-size:.95rem;"><?php echo $idx + 1; ?></td>
-                                            <td style="padding:10px 12px;">
-                                                <div style="font-weight:700;font-size:1rem;color:var(--jv-text-primary);"><?php echo htmlspecialchars($cli['nombre']); ?></div>
+                                        <tr class="cli-fila" data-status="<?php echo $cli['status']; ?>" data-nombre="<?php echo htmlspecialchars(strtolower($cli['nombre'])); ?>" data-documento="<?php echo htmlspecialchars(strtolower($cli['documento'] ?? '')); ?>" data-telefono="<?php echo htmlspecialchars(strtolower($cli['telefono'] ?? '')); ?>">
+                                            <td class="text-center cli-num"><?php echo $idx + 1; ?></td>
+                                            <td class="cli-celda-cliente">
+                                                <div class="cli-nombre"><?php echo htmlspecialchars($cli['nombre']); ?></div>
                                                 <?php if (!empty($cli['direccion'])): ?>
-                                                    <div style="font-size:.95rem;color:var(--jv-text-secondary);margin-top:2px;"><i class="bi bi-geo-alt me-1"></i><?php echo htmlspecialchars($cli['direccion']); ?></div>
+                                                    <div class="cli-direccion"><i class="bi bi-geo-alt me-1"></i><?php echo htmlspecialchars($cli['direccion']); ?></div>
                                                 <?php endif; ?>
                                             </td>
-                                            <td style="padding:10px 12px;font-size:.95rem;color:var(--jv-text-primary);white-space:nowrap;"><?php echo htmlspecialchars($cli['documento'] ?: '&mdash;'); ?></td>
-                                            <td style="padding:10px 12px;font-size:.95rem;color:var(--jv-text-primary);white-space:nowrap;"><?php echo htmlspecialchars($cli['telefono'] ?: '&mdash;'); ?></td>
-                                            <td style="text-align:center;padding:10px 12px;">
+                                            <td class="cli-dato"><?php echo $cli['documento'] ? htmlspecialchars($cli['documento']) : '&mdash;'; ?></td>
+                                            <td class="cli-dato"><?php echo $cli['telefono'] ? htmlspecialchars($cli['telefono']) : '&mdash;'; ?></td>
+                                            <td class="text-center">
                                                 <?php if ($cli['status'] === 'Activo'): ?>
-                                                    <span class="badge-jv badge-success">Activo</span>
+                                                    <span class="badge rounded-pill cli-badge-activo">Activo</span>
                                                 <?php else: ?>
-                                                    <span class="badge-jv badge-warning">Inactivo</span>
+                                                    <span class="badge rounded-pill cli-badge-inactivo">Inactivo</span>
                                                 <?php endif; ?>
                                             </td>
-                                            <td style="text-align:center;padding:10px 12px;white-space:nowrap;">
-                                                <button class="btn-action" onclick="cliEditar(<?php echo $cli['id_cliente']; ?>)" data-tooltip="Editar"><i class="bi bi-pencil-square"></i></button>
-                                                <button class="btn-action" onclick="cliToggleStatus(<?php echo $cli['id_cliente']; ?>, '<?php echo $cli['status']; ?>')" data-tooltip="<?php echo $cli['status'] === 'Activo' ? 'Desactivar' : 'Activar'; ?>" style="<?php echo $cli['status'] === 'Activo' ? 'color:var(--jv-danger);' : 'color:var(--jv-success);'; ?>">
+                                            <td class="text-center cli-acciones">
+                                                <button class="btn-action cli-btn-editar" onclick="cliEditar(<?php echo $cli['id_cliente']; ?>)" data-tooltip="Editar" aria-label="Editar cliente"><i class="bi bi-pencil-square"></i></button>
+                                                <button class="btn-action cli-btn-toggle <?php echo $cli['status'] === 'Activo' ? 'cli-btn-desactivar' : 'cli-btn-activar'; ?>" onclick="cliToggleStatus(<?php echo $cli['id_cliente']; ?>, '<?php echo $cli['status']; ?>')" data-tooltip="<?php echo $cli['status'] === 'Activo' ? 'Desactivar' : 'Activar'; ?>" aria-label="<?php echo $cli['status'] === 'Activo' ? 'Desactivar cliente' : 'Activar cliente'; ?>">
                                                     <i class="bi bi-<?php echo $cli['status'] === 'Activo' ? 'x-circle' : 'check-circle'; ?>"></i>
                                                 </button>
                                             </td>
@@ -535,8 +540,8 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr id="cliVacio">
-                                        <td colspan="6" style="text-align:center;padding:30px;color:var(--jv-text-muted);">
-                                            <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.4;"></i>
+                                        <td colspan="6" class="cli-vacio">
+                                            <i class="bi bi-people"></i>
                                             No hay clientes registrados
                                         </td>
                                     </tr>
@@ -548,7 +553,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
             </div>
 
             <div class="jv-modal-footer">
-                <button type="button" class="btn btn-jv-primary module-action-btn" onclick="nuevaCli()">
+                <button type="button" class="btn btn-jv-primary module-action-btn cli-btn-primario" onclick="nuevaCli()">
                     <i class="bi bi-plus-lg me-1"></i>NUEVO CLIENTE
                 </button>
             </div>
@@ -624,7 +629,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                     <button type="button" class="btn btn-jv-ghost" data-bs-dismiss="modal">
                         <i class="bi bi-x-lg me-1"></i>CANCELAR
                     </button>
-                    <button type="button" class="btn btn-jv-primary module-action-btn" id="btnGuardarCli" onclick="cliEnviarForm()">
+                    <button type="button" class="btn btn-jv-primary module-action-btn cli-btn-primario" id="btnGuardarCli" onclick="cliEnviarForm()">
                         <i class="bi bi-check-lg me-2"></i>GUARDAR
                     </button>
                 </div>

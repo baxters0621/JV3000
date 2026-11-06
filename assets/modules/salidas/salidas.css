@@ -27,8 +27,8 @@
         /* ── Los modales de clientes usan gradiente verde ── */
         .pagina-salidas #modalCliListHeader,
         .pagina-salidas #modalCliHeader {
-            --jv-modal-gradient-start: #065F46;
-            --jv-modal-gradient-mid: #059669;
+            --jv-modal-gradient-start: #064E3B;
+            --jv-modal-gradient-mid: var(--cli-accent, #047857);
             --jv-modal-gradient-end: #10B981;
             --jv-modal-gradient-border: #34D399;
         }
@@ -621,14 +621,34 @@
             left: 0;
             right: 0;
             z-index: 1055;
-            background: var(--jv-bg-card);
+            background: #fff;
             border: 1px solid var(--jv-border);
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            max-height: 260px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+            max-height: 250px;
             overflow-y: auto;
             display: none;
             margin-top: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: #CBD5E1 transparent;
+            scrollbar-gutter: stable;
+        }
+
+        .com-resultados::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .com-resultados::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .com-resultados::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 999px;
+        }
+
+        .com-resultados::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
         }
 
         .com-resultados.abierto {
@@ -636,39 +656,62 @@
         }
 
         .com-resultados .com-resultado {
-            padding: 10px 14px;
+            padding: 12px;
             cursor: pointer;
             border-bottom: 1px solid var(--jv-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
+            transition: background .15s ease;
+        }
+
+        .com-resultados .com-resultado:last-child {
+            border-bottom: 0;
         }
 
         .com-resultados .com-resultado:hover {
-            background: rgba(220, 38, 38, 0.08);
+            background: #F8FAFC;
+        }
+
+        .pagina-salidas #resultadosBusquedaSal .com-resultado:hover {
+            background: #F8FAFC;
         }
 
         .com-resultados .com-resultado .r-nombre {
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: .95rem;
+            font-weight: 700;
+            line-height: 1.35;
             color: var(--jv-text-primary);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 320px;
+        }
+
+        .com-resultados .com-resultado .r-meta {
+            margin-top: 3px;
+            min-width: 0;
         }
 
         .com-resultados .com-resultado .r-sku {
-            font-size: .85rem;
+            font-size: .78rem;
             color: var(--jv-text-muted);
+            min-width: 0;
         }
 
         .com-resultados .com-resultado .r-stock {
-            font-size: .9rem;
+            flex: 0 0 auto;
+            padding: 2px 8px;
+            border: 1px solid #A7F3D0;
+            border-radius: 999px;
+            background: #ECFDF5;
+            color: #047857;
+            font-size: .72rem;
             font-weight: 700;
+            line-height: 1.4;
             white-space: nowrap;
-            color: var(--jv-text-secondary);
+        }
+
+        .com-resultados .com-resultado .r-stock-agotado {
+            border-color: #FECACA;
+            background: #FEF2F2;
+            color: #B91C1C;
         }
 
         .com-resultados .com-sin-resultados {
@@ -740,8 +783,8 @@
 
         /* Botón CLIENTES en header — outline verde */
         .pagina-salidas .btn-clientes-sal {
-            border-color: #059669;
-            color: #059669;
+            border-color: var(--cli-accent);
+            color: var(--cli-accent);
             font-weight: 700;
             font-size: .88rem;
             padding: 10px 18px;
@@ -750,9 +793,9 @@
         }
 
         .pagina-salidas .btn-clientes-sal:hover {
-            background: #059669;
+            background: var(--cli-accent);
             color: #fff;
-            box-shadow: 0 6px 20px -4px rgba(5, 150, 105, 0.45);
+            box-shadow: 0 6px 20px -4px rgba(4, 120, 87, 0.45);
             transform: translateY(-1px);
         }
 
@@ -761,8 +804,672 @@
         }
 
         .pagina-salidas .module-action-btn[onclick="abrirGestorCli()"]:hover {
-            background: #059669 !important;
+            background: var(--cli-accent) !important;
             color: #fff !important;
-            box-shadow: 0 6px 20px -4px rgba(5, 150, 105, 0.45);
+            box-shadow: 0 6px 20px -4px rgba(4, 120, 87, 0.45);
             transform: translateY(-1px);
+        }
+
+        /* ============================================================
+           REDISEÑO VISUAL — VENTAS / SALIDAS
+           Cabecera neutra, widgets suaves y acciones sutiles.
+           ============================================================ */
+
+        /* ── Base del módulo: elimina la sensación de fuente gigante ── */
+        .pagina-salidas {
+            font-size: 1rem;
+            line-height: 1.6;
+            /* Identidad propia del gestor de clientes (verde esmeralda) */
+            --cli-accent: #047857;
+            --cli-accent-hover: #065F46;
+            --cli-accent-soft: rgba(4, 120, 87, .10);
+            --cli-accent-border: rgba(4, 120, 87, .30);
+        }
+
+        /* ── Hero ── */
+        .pagina-salidas .card-jv {
+            border-color: var(--jv-border);
+            box-shadow: var(--jv-shadow-sm);
+        }
+
+        .pagina-salidas .card-jv:hover {
+            border-color: var(--jv-border-hover);
+            box-shadow: var(--jv-shadow);
+        }
+
+        .pagina-salidas .card-jv.sal-hero {
+            padding: 18px 24px;
+            background: var(--jv-bg-card);
+            border-left: 4px solid var(--jv-danger);
+        }
+
+        /* ── Widgets ── */
+        .pagina-salidas .widget-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-height: 96px;
+            padding: 20px 22px;
+            background: var(--jv-bg-card);
+            border: 1px solid var(--jv-border);
+            border-radius: var(--jv-radius-lg);
+            box-shadow: var(--jv-shadow-sm);
+            transition: box-shadow .2s, border-color .2s, transform .2s;
+        }
+
+        .pagina-salidas .widget-card:hover {
+            border-color: var(--jv-border-hover);
+            box-shadow: var(--jv-shadow);
+            transform: translateY(-1px);
+        }
+
+        .pagina-salidas .widget-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .pagina-salidas .widget-icon--success {
+            background: rgba(22, 163, 74, .12);
+            color: var(--jv-success);
+        }
+
+        .pagina-salidas .widget-icon--info {
+            background: rgba(37, 99, 235, .12);
+            color: var(--jv-info);
+        }
+
+        .pagina-salidas .widget-icon--warning {
+            background: rgba(217, 119, 6, .12);
+            color: var(--jv-warning);
+        }
+
+        .pagina-salidas .widget-label {
+            margin-bottom: 2px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .pagina-salidas .widget-value {
+            line-height: 1.2;
+            color: var(--jv-text-primary);
+        }
+
+        /* ── Botones de la cabecera ── */
+        .pagina-salidas .btn-jv-primary {
+            background: var(--jv-danger);
+            border: 1px solid var(--jv-danger);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, .18);
+        }
+
+        .pagina-salidas .btn-jv-primary:hover {
+            background: #B91C1C;
+            border-color: #B91C1C;
+            box-shadow: 0 6px 18px rgba(220, 38, 38, .28);
+            transform: translateY(-1px);
+        }
+
+        .pagina-salidas .btn-clientes-sal {
+            background: transparent;
+            color: var(--cli-accent);
+            border: 1.5px solid var(--cli-accent);
+            border-radius: var(--jv-radius);
+            font-weight: 700;
+            font-size: .85rem;
+            padding: 10px 18px;
+            transition: .15s;
+        }
+
+        .pagina-salidas .btn-clientes-sal:hover {
+            background: var(--cli-accent);
+            color: #fff;
+            box-shadow: 0 6px 18px -4px rgba(4, 120, 87, .4);
+            transform: translateY(-1px);
+        }
+
+        .pagina-salidas .module-action-btn[onclick="abrirGestorCli()"]:hover {
+            background: var(--cli-accent) !important;
+            color: #fff !important;
+            box-shadow: 0 6px 18px -4px rgba(4, 120, 87, .4);
+            transform: translateY(-1px);
+        }
+
+        .pagina-salidas .cli-count-badge {
+            background: var(--cli-accent-soft);
+            color: var(--cli-accent);
+            font-size: .72rem;
+            font-weight: 700;
+            padding: 4px 8px;
+        }
+
+        .pagina-salidas .btn-clientes-sal:hover .cli-count-badge {
+            background: rgba(255, 255, 255, .18);
+            color: #fff;
+        }
+
+        /* ── Tabla: cabecera neutra ── */
+        .pagina-salidas .salidas-list-table {
+            min-width: 1200px;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .pagina-salidas .salidas-list-table thead th {
+            background: #F8FAFC !important;
+            color: var(--jv-text-secondary) !important;
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 13px 16px !important;
+            border-top: 1px solid var(--jv-border) !important;
+            border-bottom: 1px solid var(--jv-border) !important;
+            white-space: nowrap;
+        }
+
+        .pagina-salidas .salidas-list-table tbody td {
+            padding: 16px !important;
+            font-size: .85rem;
+            font-weight: 500;
+            color: var(--jv-text-primary);
+            border-bottom: 1px solid var(--jv-border) !important;
+            vertical-align: middle;
+        }
+
+        .pagina-salidas .salidas-list-table tbody tr:hover {
+            background: #F8FAFC;
+            box-shadow: none;
+        }
+
+        .pagina-salidas .salidas-list-table tbody tr:last-child td {
+            border-bottom: 0 !important;
+        }
+
+        /* ── Cliente en dos líneas ── */
+        .pagina-salidas .salidas-list-table .td-cliente {
+            min-width: 0;
+            overflow: hidden;
+            cursor: help;
+        }
+
+        .pagina-salidas .salidas-list-table .td-cliente .cli-nombre {
+            font-size: .85rem;
+            font-weight: 700;
+            line-height: 1.35;
+            color: var(--jv-text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pagina-salidas .salidas-list-table .td-cliente .cli-rif {
+            font-size: .72rem;
+            font-weight: 500;
+            line-height: 1.35;
+            color: var(--jv-text-muted);
+        }
+
+        /* ── Celdas secundarias ── */
+        .pagina-salidas .td-control,
+        .pagina-salidas .td-productos {
+            font-size: .82rem;
+            font-weight: 500;
+            color: var(--jv-text-secondary);
+        }
+
+        .pagina-salidas .td-productos {
+            min-width: 0;
+            overflow: visible;
+            text-overflow: clip;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            line-height: 1.35;
+            cursor: help;
+        }
+
+        .pagina-salidas .td-total {
+            font-size: .9rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .pagina-salidas .salidas-list-table tbody td.fecha-cell {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--jv-text-secondary);
+            white-space: nowrap;
+        }
+
+        /* ── Badges de la tabla ── */
+        .pagina-salidas .codigo-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(220, 38, 38, .08);
+            color: var(--jv-danger);
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: .02em;
+            white-space: nowrap;
+        }
+
+        .pagina-salidas .badge-cant {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 50rem;
+            background: rgba(220, 38, 38, .08);
+            color: var(--jv-danger);
+            font-size: .72rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+
+        /* ── Acciones sutiles ── */
+        .pagina-salidas .salidas-list-table .sal-celda-acciones .btn-action {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--jv-text-muted);
+            font-size: 1rem;
+            transition: color .15s, background-color .15s;
+        }
+
+        .pagina-salidas .salidas-list-table .sal-celda-acciones .btn-action:hover {
+            transform: none;
+        }
+
+        .pagina-salidas .salidas-list-table .sal-celda-acciones .btn-ver:hover {
+            color: var(--jv-info);
+            background: rgba(37, 99, 235, .08);
+        }
+
+        .pagina-salidas .salidas-list-table .sal-celda-acciones .btn-editar:hover {
+            color: var(--jv-text-primary);
+            background: rgba(15, 26, 46, .06);
+        }
+
+        .pagina-salidas .salidas-list-table .sal-celda-acciones .btn-anular:hover {
+            color: var(--jv-danger);
+            background: rgba(220, 38, 38, .08);
+        }
+
+        /* ============================================================
+           GESTIÓN DE CLIENTES — IDENTIDAD VERDE ESMERALDA
+           Botón CLIENTES, buscador, filtros, tabla y pie del modal.
+           ============================================================ */
+
+        .pagina-salidas #modalCliList .cli-panel {
+            border-left: 4px solid var(--cli-accent);
+        }
+
+        /* ── Buscador y filtros en una sola línea ── */
+        .pagina-salidas #modalCliList .cli-toolbar {
+            gap: 12px;
+            margin: 0;
+        }
+
+        .pagina-salidas #modalCliList .cli-search {
+            min-width: 220px;
+            border: 1px solid var(--jv-border);
+            border-radius: 10px;
+            background: var(--jv-bg-card);
+            padding: 0 10px;
+        }
+
+        .pagina-salidas #modalCliList .cli-search-icon {
+            color: var(--cli-accent);
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .pagina-salidas #modalCliList .cli-search-input {
+            box-shadow: none;
+            font-size: .92rem;
+            padding: 9px 4px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .pagina-salidas #modalCliList .cli-search-input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .pagina-salidas #modalCliList .cli-filtros {
+            flex-shrink: 0;
+        }
+
+        .pagina-salidas #modalCliList .cli-filtro {
+            border: 0;
+            border-radius: 8px;
+            font-size: .82rem;
+            font-weight: 700;
+            padding: 8px 14px;
+            transition: transform .15s, opacity .15s;
+        }
+
+        .pagina-salidas #modalCliList .cli-filtro-todos {
+            background: var(--cli-accent);
+            color: #fff;
+        }
+
+        .pagina-salidas #modalCliList .cli-filtro-activo {
+            background: var(--cli-accent-soft);
+            color: var(--cli-accent);
+        }
+
+        .pagina-salidas #modalCliList .cli-filtro-inactivo {
+            background: #F1F5F9;
+            color: var(--jv-text-secondary);
+        }
+
+        .pagina-salidas #modalCliList .cli-filtro:hover {
+            transform: translateY(-1px);
+        }
+
+        /* ── Chip y contador de la sección ── */
+        .pagina-salidas #modalCliList .cli-chip {
+            background: var(--cli-accent);
+            color: #fff;
+            box-shadow: 0 3px 10px rgba(4, 120, 87, .30);
+        }
+
+        .pagina-salidas #modalCliList .cli-total-badge {
+            background: var(--cli-accent);
+            color: #fff;
+            font-size: .78rem;
+            font-weight: 700;
+            padding: 4px 9px;
+        }
+
+        /* ── Tabla de clientes: más aire y jerarquía ── */
+        .pagina-salidas #modalCliList .cli-tabla-wrap {
+            border: 1px solid var(--jv-border);
+            border-radius: 10px;
+            background: var(--jv-bg-card);
+        }
+
+        .pagina-salidas #modalCliList .cli-tabla {
+            width: 100%;
+            min-width: 640px;
+            border-collapse: collapse;
+            background: var(--jv-bg-card);
+        }
+
+        .pagina-salidas #modalCliList .cli-tabla thead th {
+            background: var(--cli-accent);
+            color: #fff;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 12px 16px;
+            border: 0;
+            white-space: nowrap;
+        }
+
+        .pagina-salidas #modalCliList .cli-tabla thead th:first-child {
+            border-top-left-radius: 9px;
+        }
+
+        .pagina-salidas #modalCliList .cli-tabla thead th:last-child {
+            border-top-right-radius: 9px;
+        }
+
+        .pagina-salidas #modalCliList .cli-col-num {
+            width: 48px;
+        }
+
+        .pagina-salidas #modalCliList .cli-col-doc {
+            width: 150px;
+        }
+
+        .pagina-salidas #modalCliList .cli-col-tel {
+            width: 130px;
+        }
+
+        .pagina-salidas #modalCliList .cli-col-estado {
+            width: 100px;
+        }
+
+        .pagina-salidas #modalCliList .cli-col-acciones {
+            width: 100px;
+        }
+
+        .pagina-salidas #modalCliList .cli-tabla tbody td {
+            padding: 14px 16px;
+            font-size: .88rem;
+            font-weight: 500;
+            color: var(--jv-text-primary);
+            border-bottom: 1px solid var(--jv-border);
+            vertical-align: middle;
+        }
+
+        .pagina-salidas #modalCliList .cli-tabla tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .pagina-salidas #modalCliList .cli-tabla tbody tr:hover {
+            background: rgba(4, 120, 87, .04);
+        }
+
+        .pagina-salidas #modalCliList .cli-num {
+            color: var(--jv-text-muted);
+            font-size: .82rem;
+        }
+
+        .pagina-salidas #modalCliList .cli-nombre {
+            font-weight: 700;
+            font-size: .92rem;
+            line-height: 1.35;
+            color: var(--jv-text-primary);
+        }
+
+        .pagina-salidas #modalCliList .cli-direccion {
+            margin-top: 3px;
+            font-size: .78rem;
+            line-height: 1.35;
+            color: var(--jv-text-muted);
+        }
+
+        .pagina-salidas #modalCliList .cli-dato {
+            font-size: .85rem;
+            color: var(--jv-text-secondary);
+            white-space: nowrap;
+        }
+
+        .pagina-salidas #modalCliList .cli-badge-activo,
+        .pagina-salidas #modalCliList .cli-badge-inactivo {
+            font-size: .72rem;
+            font-weight: 700;
+            padding: 5px 10px;
+        }
+
+        .pagina-salidas #modalCliList .cli-badge-activo {
+            background: rgba(22, 163, 74, .12);
+            color: #15803D;
+        }
+
+        .pagina-salidas #modalCliList .cli-badge-inactivo {
+            background: #F1F5F9;
+            color: var(--jv-text-secondary);
+        }
+
+        /* ── Acciones de fila: editar / activar / desactivar ── */
+        .pagina-salidas #modalCliList .cli-acciones .btn-action {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--jv-text-muted);
+            font-size: 1rem;
+            transition: color .15s, background-color .15s;
+        }
+
+        .pagina-salidas #modalCliList .cli-acciones .btn-action:hover {
+            transform: none;
+        }
+
+        .pagina-salidas #modalCliList .cli-acciones .cli-btn-editar:hover {
+            color: var(--cli-accent);
+            background: var(--cli-accent-soft);
+        }
+
+        .pagina-salidas #modalCliList .cli-acciones .cli-btn-activar:hover {
+            color: var(--cli-accent);
+            background: var(--cli-accent-soft);
+        }
+
+        .pagina-salidas #modalCliList .cli-acciones .cli-btn-desactivar:hover {
+            color: var(--jv-danger);
+            background: rgba(220, 38, 38, .08);
+        }
+
+        .pagina-salidas #modalCliList .cli-vacio {
+            padding: 30px !important;
+            text-align: center;
+            color: var(--jv-text-muted);
+        }
+
+        .pagina-salidas #modalCliList .cli-vacio i {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 2rem;
+            opacity: .4;
+        }
+
+        /* ── Pie del modal: NUEVO CLIENTE y GUARDAR en verde ── */
+        .pagina-salidas #modalCliList .cli-btn-primario,
+        .pagina-salidas #modalCli .cli-btn-primario {
+            background: var(--cli-accent);
+            border-color: var(--cli-accent);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(4, 120, 87, .18);
+        }
+
+        .pagina-salidas #modalCliList .cli-btn-primario:hover,
+        .pagina-salidas #modalCli .cli-btn-primario:hover {
+            background: var(--cli-accent-hover);
+            border-color: var(--cli-accent-hover);
+            color: #fff;
+            box-shadow: 0 6px 18px rgba(4, 120, 87, .28);
+        }
+
+        /* ── Responsive: filtros cómodos en pantallas medianas/pequeñas ── */
+        @media (max-width: 575.98px) {
+            .pagina-salidas #modalCliList .cli-search {
+                flex: 1 1 100%;
+            }
+
+            .pagina-salidas #modalCliList .cli-filtros {
+                width: 100%;
+            }
+
+            .pagina-salidas #modalCliList .cli-filtro {
+                flex: 1;
+            }
+        }
+
+        /* ── Buscador de clientes de la venta ── */
+        .pagina-salidas .sal-cliente-toolbar {
+            min-width: 0;
+        }
+
+        .pagina-salidas .sal-cliente-toolbar .com-toolbox {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .pagina-salidas .sal-cliente-search {
+            flex-wrap: nowrap;
+            height: 42px;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .pagina-salidas .sal-cliente-search .input-group-text {
+            width: 42px;
+            justify-content: center;
+            padding: 0;
+            background: #fff;
+            border-color: var(--jv-border);
+            border-radius: 10px 0 0 10px;
+            color: #94A3B8;
+        }
+
+        .pagina-salidas .sal-cliente-search .form-control.input-jv {
+            height: 42px;
+            min-width: 0;
+            padding: 0 12px;
+            border-color: var(--jv-border);
+            border-left: 0;
+            border-right: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .pagina-salidas .sal-cliente-search .form-control.input-jv:focus {
+            border-color: var(--jv-border);
+            box-shadow: inset 0 0 0 1px var(--cli-accent-border);
+        }
+
+        .pagina-salidas .sal-cliente-search .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 42px;
+            padding: 0;
+            background: #fff;
+            border-color: var(--jv-border);
+            border-left: 0;
+            border-radius: 0 10px 10px 0;
+            color: #94A3B8;
+        }
+
+        .pagina-salidas .sal-cliente-search .btn:hover {
+            background: #F8FAFC;
+            border-color: var(--jv-border-hover);
+            color: var(--jv-text-primary);
+        }
+
+        .pagina-salidas .sal-limpiar-cliente i {
+            font-size: .72rem;
+        }
+
+        .pagina-salidas .sal-btn-nuevo-cliente {
+            flex: 0 0 auto;
+            height: 42px;
+            padding: 0 16px;
+            border: 1.5px solid var(--cli-accent-border);
+            border-radius: 10px;
+            background: #fff;
+            color: var(--cli-accent);
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: .02em;
+            transition: .15s ease;
+        }
+
+        .pagina-salidas .sal-btn-nuevo-cliente:hover,
+        .pagina-salidas .sal-btn-nuevo-cliente:focus-visible {
+            background: var(--cli-accent-soft);
+            border-color: var(--cli-accent);
+            color: var(--cli-accent-hover);
+            box-shadow: 0 4px 12px -4px var(--cli-accent-border);
+        }
+
+        .pagina-salidas .sal-rif-toolbar .input-jv {
+            min-height: 100%;
         }

@@ -4,7 +4,7 @@
 
 /* ── Colores de acento por rama (iconos y estados) ── */
 .nav-ram-panel  { --mod-color: #475569; } /* Panel: gris pizarra */
-.nav-ram-inv    { --mod-color: #EA580C; } /* Inventario: naranja */
+.nav-ram-inv    { --mod-color: #1E3A8A; } /* Inventario: azul marino corporativo */
 .nav-ram-comp   { --mod-color: #16A34A; } /* Compras: verde */
 .nav-ram-vent   { --mod-color: #DC2626; } /* Ventas: rojo */
 .nav-ram-anal   { --mod-color: #2563EB; } /* Análisis: azul */
@@ -202,6 +202,12 @@
 
 .nav-item.active > .nav-link i:first-child,
 .nav-link.active i:first-child { color: var(--mod-color, var(--jv-orange)); }
+
+.nav-ram-inv .nav-item.active > .nav-link,
+.nav-ram-inv .nav-link.active,
+.nav-ram-inv.nav-group.open > .nav-group-toggle {
+    background: #EFF6FF;
+}
 
 .nav-ram-admin .nav-item.active > .nav-link {
     background: #EFF6FF;
