@@ -5,6 +5,10 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Presentación / Datos demo (2026-11-06): seed temporal ejecutado y autoborrado; 3 categorías, 3 proveedores, 4 clientes, 10 productos, 3 compras (2 pagadas y 1 pendiente, todas con recepción completa) y 5 ventas (2 de hoy). Ventas de hoy $282.00, ventas del mes $616.00, compras $1,969.68; stock total 120 y conciliado con lotes. El método de pago de cada venta se guarda en `observaciones` porque `salidas` no tiene columna propia.
+
+- Categorías / Inactivación (2026-11-07): ocultar una categoría con productos queda bloqueado con SweetAlert y el mensaje exacto «No puedes inactivar esta categoría porque tiene productos. Reasígnalos primero.»; una raíz vacía oculta sus hijas en cascada y deja auditoría. El select de producto solo lista activas (conserva la actual inactiva marcada para no perderla) y el modelo rechaza categorías inactivas; Inventario e Historial no filtran categorías por estado. Prueba: categorias_jerarquia (52 aserciones) y categorias_vista en verde; validar.ps1 OK.
+
 - Ventas / Cabecera de tabla (2026-11-07): el thead principal usa fondo rojo suave #FEF2F2, texto #991B1B en mayusculas/negrita y borde inferior de 2px rgba(220,38,38,0.2). Solo CSS; sin cambios de HTML ni logica.
 - Ventas / Empty state (2026-11-07): la tabla sin registros usa icono clipboard-x coral #F87171 en círculo suave, título navy en negrita y subtítulo muted con CTA; la fila lleva gradiente blanco a #FEF2F2 y padding py-5. Solo HTML/CSS; sin cambios de lógica.
 - Responsive global Fase 1 (2026-11-06): Inventario, Ventas y Compras ocultan columnas secundarias con d-none d-xl-table-cell, envuelven las tablas de modales en table-responsive y reducen la tabla principal de Compras a 960px; el sidebar baja a 220px entre 769 y 1199.98px (sidebar.css?v=19). diseno.css bloquea el scroll horizontal global y ajusta paddings. Sin cambios de logica PHP, controladores, consultas ni datos. Pendiente Fase 2: Historial, Colaboradores y revision visual del usuario.

@@ -660,10 +660,26 @@
             return duplicada ? 'YA EXISTE UNA CATEGOR\u00cdA CON ESE NOMBRE EN ESTE NIVEL.' : '';
         }
 
-        // Confirma ocultar/mostrar una categoría SIN productos (el estado de las
-        // categorías con productos lo maneja el stock de forma automática).
-        function catToggleStatus(idCategoria, nombre, statusActual) {
+        // Confirma ocultar/mostrar una categoría SIN productos. Si tiene
+        // productos, muestra el aviso y no envía la petición: su estado lo
+        // controla el stock.
+        function catToggleStatus(idCategoria, nombre, statusActual, totalProductos) {
             const activa = statusActual === 'Activo';
+            const productos = Number(totalProductos) || 0;
+
+            if (activa && productos > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'ACCI\u00d3N NO PERMITIDA',
+                    text: 'No puedes inactivar esta categor\u00eda porque tiene productos. Reas\u00edgnalos primero.',
+                    confirmButtonColor: '#DC2626',
+                    confirmButtonText: 'ENTENDIDO',
+                    background: '#fff',
+                    color: '#212529'
+                });
+                return;
+            }
+
             Swal.fire({
                 title: activa ? '\u00bfOCULTAR CATEGOR\u00cdA?' : '\u00bfMOSTRAR DE NUEVO?',
                 html: activa

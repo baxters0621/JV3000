@@ -86,6 +86,12 @@ assert.match(jsProductos, /origen === 'cat_crear'/, 'El JS debe reaccionar al or
 assert.match(jsProductos, /origen\.indexOf\('cat_editar:'\)/, 'El JS debe reabrir la edición con su id.');
 assert.match(jsProductos, /origen\.indexOf\('prod_editar:'\)/, 'El JS debe reabrir el producto editado.');
 assert.match(jsProductos, /catToggleStatus|toggle_categoria: idCategoria/, 'El toggle debe enviar toggle_categoria con CSRF.');
+assert.match(
+    jsProductos,
+    /No puedes inactivar esta categor\\u00eda porque tiene productos\. Reas\\u00edgnalos primero\./,
+    'El aviso debe impedir inactivar categorías con productos.'
+);
+assert.match(vista, /catToggleStatus\([\s\S]*?\$raiz_total/, 'El árbol debe enviar el conteo de productos al toggle.');
 
 // 7. Sidebar renombrado.
 assert.match(sidebar, /<span>Categor&iacute;as<\/span>|<span>Categorías<\/span>/, 'El sidebar debe llamarse «Categorías».');

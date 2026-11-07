@@ -140,8 +140,8 @@ foreach ($categorias as $raiz) {
                                                 <button type="button" class="btn-action btn-action-label" onclick="catAbrirForm('editar', <?php echo $raiz_id; ?>)">
                                                     <i class="bi bi-pencil-square" aria-hidden="true"></i><span>Editar</span>
                                                 </button>
-                                                <?php if ($raiz_total === 0): ?>
-                                                    <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $raiz_id; ?>, <?php echo htmlspecialchars(json_encode($raiz['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $raiz['status']; ?>')">
+                                                <?php if ($raiz_total === 0 || !$raiz_inactiva): ?>
+                                                    <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $raiz_id; ?>, <?php echo htmlspecialchars(json_encode($raiz['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $raiz['status']; ?>', <?php echo $raiz_total; ?>)">
                                                         <i class="bi <?php echo $raiz_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>" aria-hidden="true"></i>
                                                         <span><?php echo $raiz_inactiva ? 'Mostrar' : 'Ocultar'; ?></span>
                                                     </button>
@@ -186,8 +186,8 @@ foreach ($categorias as $raiz) {
                                                                 <button type="button" class="btn-action btn-action-label" onclick="catAbrirForm('editar', <?php echo $hija_id; ?>)">
                                                                     <i class="bi bi-pencil-square" aria-hidden="true"></i><span>Editar</span>
                                                                 </button>
-                                                                <?php if ($hija_total === 0): ?>
-                                                                    <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $hija_id; ?>, <?php echo htmlspecialchars(json_encode($hija['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $hija['status']; ?>')">
+                                                                <?php if ($hija_total === 0 || !$hija_inactiva): ?>
+                                                                    <button type="button" class="btn-action btn-action-label btn-action-state" onclick="catToggleStatus(<?php echo $hija_id; ?>, <?php echo htmlspecialchars(json_encode($hija['nombre'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, '<?php echo $hija['status']; ?>', <?php echo $hija_total; ?>)">
                                                                         <i class="bi <?php echo $hija_inactiva ? 'bi-eye-fill' : 'bi-eye-slash-fill'; ?>" aria-hidden="true"></i>
                                                                         <span><?php echo $hija_inactiva ? 'Mostrar' : 'Ocultar'; ?></span>
                                                                     </button>

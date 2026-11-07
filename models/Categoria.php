@@ -282,8 +282,9 @@ class Categoria extends Model
      * Regla de negocio: el estado de una categoría CON productos lo maneja
      * el stock de forma automática (ver sincronizarPorStock), así que el
      * cambio manual solo se permite cuando ni ella ni sus subcategorías
-     * tienen productos. Sirve para ocultar categorías planificadas
-     * y aún sin uso, o volver a mostrarlas.
+     * tienen productos. Al ocultar una raíz, sus hijas se ocultan en
+     * cascada. Sirve para ocultar categorías planificadas y aún sin uso,
+     * o volver a mostrarlas.
      *
      * @param int $id_categoria Identificador de la categoría.
      * @return array ['ok'=>bool, 'mensaje'=>string].
@@ -306,19 +307,57 @@ class Categoria extends Model
             [$ruta, $ruta . '/%']
         )['total'] ?? 0);
 
+        $nuevo_estado = $categoria['status'] === 'Activo' ? 'Inactivo' : 'Activo';
+
         if ($total > 0) {
+            if ($nuevo_estado === 'Inactivo') {
+                return [
+                    'ok' => false,
+                    'mensaje' => 'No puedes inactivar esta categoría porque tiene productos. Reasígnalos primero.',
+                ];
+            }
             return ['ok' => false, 'mensaje' => 'NO SE PUEDE CAMBIAR A MANO: LA CATEGORÍA TIENE PRODUCTOS Y SU ESTADO LO MANEJA EL STOCK.'];
         }
 
-        $nuevo_estado = $categoria['status'] === 'Activo' ? 'Inactivo' : 'Activo';
-        $this->db->execute("UPDATE categorias SET status = ? WHERE id_categoria = ?", [$nuevo_estado, $id_categoria]);
-        registrarAuditoria(
-            'toggle_status',
-            ($nuevo_estado === 'Inactivo' ? 'Categoría sin productos ocultada: ' : 'Categoría sin productos visible: ') . $categoria['nombre']
-        );
+        $this->db->begin();
+        try {
+            // Una categoría principal sin productos arrastra a sus hijas al
+            // ocultarse, para que no queden subcategorías visibles bajo un
+            // padre inactivo.
+            $hijos = [];
+            if ($nuevo_estado === 'Inactivo') {
+                $hijos = $this->db->fetchAll(
+                    "SELECT id_categoria, nombre FROM categorias WHERE parent_id = ? AND status <> 'Inactivo'",
+                    [$id_categoria]
+                );
+            }
+
+            $this->db->execute("UPDATE categorias SET status = ? WHERE id_categoria = ?", [$nuevo_estado, $id_categoria]);
+            if ($hijos !== []) {
+                $this->db->execute(
+                    "UPDATE categorias SET status = 'Inactivo' WHERE parent_id = ? AND status <> 'Inactivo'",
+                    [$id_categoria]
+                );
+            }
+
+            $detalle = $nuevo_estado === 'Inactivo'
+                ? 'Categoría sin productos ocultada: ' . $categoria['nombre']
+                : 'Categoría sin productos visible: ' . $categoria['nombre'];
+            if ($hijos !== []) {
+                $detalle .= ' (subcategorías en cascada: ' . implode(', ', array_column($hijos, 'nombre')) . ')';
+            }
+            registrarAuditoria('toggle_status', $detalle);
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollback();
+            return ['ok' => false, 'mensaje' => 'ERROR EN LA BASE DE DATOS.'];
+        }
+
         return [
             'ok' => true,
-            'mensaje' => $nuevo_estado === 'Inactivo' ? 'CATEGORÍA OCULTADA (SIN PRODUCTOS).' : 'CATEGORÍA VISIBLE DE NUEVO.',
+            'mensaje' => $nuevo_estado === 'Inactivo'
+                ? ($hijos !== [] ? 'CATEGORÍA Y SUBCATEGORÍAS OCULTADAS (SIN PRODUCTOS).' : 'CATEGORÍA OCULTADA (SIN PRODUCTOS).')
+                : 'CATEGORÍA VISIBLE DE NUEVO.',
         ];
     }
 

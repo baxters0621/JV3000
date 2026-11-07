@@ -40,6 +40,7 @@ class Database
     public array $syncSubcategorias = [];   // Subcategorías en sincronizarPorStock
     public array $syncRaices = [];          // Raíces en sincronizarPorStock
     public array $filasJerarquia = [];      // Reparación de nivel/ruta
+    public array $hijosToggle = [];          // Subcategorías que se ocultan en cascada
 
     /** Registro de lo sucedido. */
     public array $consultas = [];
@@ -101,6 +102,9 @@ class Database
         if (strpos($sql, 'ORDER BY nivel ASC') !== false) {
             return $this->filasJerarquia;
         }
+        if (strpos($sql, 'SELECT id_categoria, nombre FROM categorias WHERE parent_id = ?') !== false) {
+            return $this->hijosToggle;
+        }
         return [];
     }
 
@@ -157,6 +161,7 @@ $limpiar = static function () use ($db): void {
     $db->syncSubcategorias = [];
     $db->syncRaices = [];
     $db->filasJerarquia = [];
+    $db->hijosToggle = [];
     $db->consultas = [];
     $db->escrituras = [];
 };
@@ -274,6 +279,10 @@ $db->filaToggle = $raizMotos;
 $db->productosEnRama = 3;
 $resultado = $modelo->toggleStatus(9);
 $afirmar(!$resultado['ok'], 'El estado de una categoría con productos lo maneja el stock.');
+$afirmar(
+    str_contains($resultado['mensaje'], 'No puedes inactivar esta categoría porque tiene productos. Reasígnalos primero.'),
+    'El bloqueo por productos debe explicar que hay que reasignarlos.'
+);
 $afirmar($db->escrituras === [], 'El rechazo del cambio a mano no debe escribir nada.');
 $consultaToggle = $db->consultas[1]['sql'] ?? '';
 $afirmar(
@@ -289,6 +298,33 @@ $resultado = $modelo->toggleStatus(9);
 $afirmar($resultado['ok'] && strpos($resultado['mensaje'], 'OCULTADA') !== false, 'Una categoría vacía puede ocultarse a mano.');
 $estado = $db->escrituras[0] ?? [];
 $afirmar(($estado['params'][0] ?? '') === 'Inactivo', 'Ocultar pone el estado en Inactivo.');
+
+// 11-bis. Ocultar una raíz sin productos arrastra a sus subcategorías.
+$limpiar();
+$db->filaToggle = $raizMotos;
+$db->productosEnRama = 0;
+$db->hijosToggle = [
+    ['id_categoria' => 13, 'nombre' => 'RIN 13'],
+    ['id_categoria' => 14, 'nombre' => 'RIN 14'],
+];
+$resultado = $modelo->toggleStatus(9);
+$afirmar($resultado['ok'], 'Una raíz vacía puede ocultarse con sus subcategorías.');
+$afirmar(str_contains($resultado['mensaje'], 'SUBCATEGOR'), 'El mensaje debe confirmar la cascada.');
+$actualizaciones = array_values(array_filter(
+    $db->escrituras,
+    static fn(array $escritura): bool => ($escritura['tipo'] ?? '') === 'execute'
+        && str_starts_with($escritura['sql'] ?? '', 'UPDATE categorias')
+));
+$afirmar(count($actualizaciones) === 2, 'La cascada debe actualizar la raíz y sus hijas.');
+$afirmar(
+    ($actualizaciones[0]['params'][0] ?? '') === 'Inactivo' && (int)($actualizaciones[0]['params'][1] ?? 0) === 9,
+    'La raíz se oculta primero.'
+);
+$afirmar(
+    str_contains($actualizaciones[1]['sql'] ?? '', 'parent_id = ?')
+        && (int)($actualizaciones[1]['params'][0] ?? 0) === 9,
+    'Las subcategorías se ocultan por parent_id.'
+);
 
 // 12. Estado automático por stock: subcategoría llena sin stock se apaga.
 $limpiar();
