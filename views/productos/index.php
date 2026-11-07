@@ -270,8 +270,8 @@ foreach ($categorias as $raiz) {
                 <tr class="align-middle">
                     <th class="text-start th-codigo">CÓDIGO</th>
                     <th class="text-start th-producto">PRODUCTO</th>
-                    <th class="text-start">CATEGORÍA</th>
-                    <th class="text-start">PROVEEDOR</th>
+                    <th class="text-start d-none d-xl-table-cell">CATEGORÍA</th>
+                    <th class="text-start d-none d-xl-table-cell">PROVEEDOR</th>
                     <th class="text-center">STOCK</th>
                     <th class="text-center">PRECIO</th>
                     <th class="text-center">VENCE</th>
@@ -339,10 +339,10 @@ foreach ($categorias as $raiz) {
                             <td class="td-prod-nombre text-start">
                                 <span class="prod-nombre text-uppercase"><?php echo htmlspecialchars($productRecord['nombre_producto']); ?></span>
                             </td>
-                            <td class="td-prod-cat text-start">
+                            <td class="td-prod-cat text-start d-none d-xl-table-cell">
                                 <span class="prod-cat"><?php echo htmlspecialchars($productRecord['nombre_cat'] ?? 'Sin categoría'); ?></span>
                             </td>
-                            <td class="td-prod-prov text-start">
+                            <td class="td-prod-prov text-start d-none d-xl-table-cell">
                                 <span class="prod-prov"><?php echo htmlspecialchars($productRecord['nombre_prov'] ?? '—'); ?></span>
                             </td>
                             <td class="td-stock text-center">
@@ -456,7 +456,7 @@ foreach ($categorias as $raiz) {
     </div>
 
     <?php if ($total_paginas > 1): ?>
-        <div class="d-flex justify-content-between align-items-center p-4" style="border-top: 1px solid var(--jv-border);">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center p-3 p-lg-4" style="border-top: 1px solid var(--jv-border);">
             <div class="small text-secondary">
                 Mostrando <?php echo ($offset + 1); ?> a <?php echo min($offset + $registros_por_pagina, $total_registros); ?> de <?php echo $total_registros; ?> productos
             </div>

@@ -7,7 +7,7 @@ $raiz = dirname(__DIR__);
 $vista = file_get_contents($raiz . '/views/compras/index.php');
 $estilos = file_get_contents($raiz . '/assets/modules/compras/compras.css');
 $inicio_tabla = strpos($vista, '<!-- Tabla de compras -->');
-$fin_tabla = strpos($vista, '<!-- Actividad reciente de recepciones -->', $inicio_tabla);
+$fin_tabla = strpos($vista, '<!-- Compras pendientes de recepción', $inicio_tabla);
 $tabla = $inicio_tabla === false || $fin_tabla === false ? '' : substr($vista, $inicio_tabla, $fin_tabla - $inicio_tabla);
 
 function afirmarTablaCompras(bool $condicion, string $mensaje): void
@@ -24,7 +24,7 @@ afirmarTablaCompras(strpos($tabla, 'class="factura-texto text-truncate"') !== fa
 afirmarTablaCompras(strpos($tabla, 'class="codigo-badge" data-tooltip=') === false, 'La factura no debe usar el badge blanco.');
 afirmarTablaCompras(strpos($tabla, 'class="proveedor-nombre text-truncate" data-tooltip=') !== false, 'El proveedor debe truncarse y conservar acceso al nombre completo.');
 afirmarTablaCompras(strpos($tabla, 'class="detalle-nombres text-truncate" data-tooltip=') !== false, 'El detalle debe truncarse y conservar acceso a la lista completa.');
-afirmarTablaCompras(substr_count($tabla, '<th>') === 7, 'La tabla debe conservar sus siete columnas.');
+afirmarTablaCompras(preg_match_all('/<th\b/', $tabla) === 7, 'La tabla debe conservar sus siete columnas.');
 foreach (['col-factura', 'col-proveedor', 'col-detalle', 'col-total', 'col-pago', 'col-fecha', 'col-acciones'] as $columna) {
     afirmarTablaCompras(strpos($tabla, 'class="' . $columna . '"') !== false, 'Falta la columna ' . $columna . '.');
 }

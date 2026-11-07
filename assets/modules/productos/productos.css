@@ -1368,3 +1368,22 @@
         .pagina-productos #modalCat .jv-modal-section { padding: 18px 20px; margin-bottom: 16px; }
         .pagina-productos #modalCat .jv-modal-footer { padding: 16px 24px; }
         .pagina-productos #modalCat .jv-modal-footer .btn { padding: 10px 24px; font-size: .88rem; }
+
+@media (max-width: 1199.98px) {
+    .pagina-productos .table-jv {
+        min-width: 760px;
+    }
+
+    .pagina-productos .table-jv .col-categoria,
+    .pagina-productos .table-jv .col-proveedor {
+        display: none;
+    }
+
+    .pagina-productos .table-jv .col-codigo { width: 12%; }
+    .pagina-productos .table-jv .col-producto { width: 30%; }
+    .pagina-productos .table-jv .col-stock { width: 10%; }
+    .pagina-productos .table-jv .col-precio { width: 10%; }
+    .pagina-productos .table-jv .col-vence { width: 14%; }
+    .pagina-productos .table-jv .col-estado { width: 12%; }
+    .pagina-productos .table-jv .col-acciones { width: 12%; }
+}

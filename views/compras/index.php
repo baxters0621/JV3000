@@ -196,7 +196,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <th>Proveedor</th>
                     <th>Detalle</th>
                     <th>Total</th>
-                    <th>Pago</th>
+                    <th class="d-none d-xl-table-cell">Pago</th>
                     <th>Fecha</th>
                     <th>Acciones</th>
                 </tr>
@@ -219,7 +219,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             <td class="td-total text-end" data-label="Total">
                                 <span class="total-monto">$<?php echo number_format($compra['total'], 2); ?></span>
                             </td>
-                            <td class="text-center" data-label="Pago">
+                            <td class="text-center d-none d-xl-table-cell" data-label="Pago">
                                 <?php $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
                                 <span class="badge-jv <?php echo $status_pago === 'Pagada' ? 'badge-success' : 'badge-warning'; ?>"><i class="bi <?php echo $status_pago === 'Pagada' ? 'bi-check-circle' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $status_pago; ?></span>
                                 <?php if ($status_pago !== 'Pagada' && (float)($compra['saldo_pendiente'] ?? 0) > 0): ?>
@@ -272,10 +272,10 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <thead>
                     <tr>
                         <th style="width:12%;">Factura</th>
-                        <th style="width:10%;">Nro. Control</th>
+                        <th class="d-none d-xl-table-cell" style="width:10%;">Nro. Control</th>
                         <th style="width:17%;">Proveedor</th>
-                        <th class="text-center" style="width:7%;">Items</th>
-                        <th class="text-center" style="width:8%;">Unds</th>
+                        <th class="text-center d-none d-xl-table-cell" style="width:7%;">Items</th>
+                        <th class="text-center d-none d-xl-table-cell" style="width:8%;">Unds</th>
                         <th class="text-center" style="width:11%;">Estado</th>
                         <th style="width:8%;">Fecha</th>
                         <th class="text-center" style="width:130px;">Acción</th>
@@ -285,10 +285,10 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <?php foreach ($compras_pendientes as $compra_pendiente): ?>
                         <tr>
                             <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($compra_pendiente['nro_factura']); ?></span></td>
-                            <td style="color:var(--jv-text-muted);font-weight:600;"><?php echo htmlspecialchars($compra_pendiente['nro_control'] ?: '-'); ?></td>
+                            <td class="d-none d-xl-table-cell" style="color:var(--jv-text-muted);font-weight:600;"><?php echo htmlspecialchars($compra_pendiente['nro_control'] ?: '-'); ?></td>
                             <td class="td-proveedor text-uppercase fw-bold" data-tooltip="<?php echo htmlspecialchars($compra_pendiente['proveedor'] ?? 'S/P'); ?>"><?php echo htmlspecialchars($compra_pendiente['proveedor'] ?? 'S/P'); ?></td>
-                            <td class="text-center"><span class="cant-badge"><?php echo (int)$compra_pendiente['items_pend']; ?></span></td>
-                            <td class="text-center fw-bold"><?php echo (int)$compra_pendiente['unidades_pend']; ?></td>
+                            <td class="text-center d-none d-xl-table-cell"><span class="cant-badge"><?php echo (int)$compra_pendiente['items_pend']; ?></span></td>
+                            <td class="text-center fw-bold d-none d-xl-table-cell"><?php echo (int)$compra_pendiente['unidades_pend']; ?></td>
                             <td class="text-center">
                                 <?php $estado_recepcion = $compra_pendiente['estado_recepcion']; ?>
                                 <span class="badge-jv <?php echo $estado_recepcion === 'Parcial' ? 'badge-info' : 'badge-warning'; ?>"><i class="bi <?php echo $estado_recepcion === 'Parcial' ? 'bi-arrow-repeat' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $estado_recepcion; ?></span>
@@ -491,7 +491,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                             </div>
 
                             <!-- Tabla de productos -->
-                            <div class="comp-cart-table">
+                            <div class="comp-cart-table table-responsive">
                                 <table class="table-jv mb-0">
                                     <colgroup>
                                         <col style="width:6%;">
@@ -702,14 +702,14 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     </button>
                 </div>
 
-                <div style="border:1px solid var(--jv-border);border-radius:10px;overflow:hidden;">
+                <div class="table-responsive" style="border:1px solid var(--jv-border);border-radius:10px;overflow-x:auto;overflow-y:hidden;">
                     <table class="table-jv mb-0" style="--jv-min-w:0;">
                         <thead>
                             <tr>
                                 <th>Empresa</th>
                                 <th>RIF</th>
-                                <th>Tel&eacute;fono</th>
-                                <th class="text-center">Productos</th>
+                                <th class="d-none d-xl-table-cell">Tel&eacute;fono</th>
+                                <th class="text-center d-none d-xl-table-cell">Productos</th>
                                 <th class="text-center">Estado</th>
                                 <th class="text-center">Acciones</th>
                             </tr>
@@ -724,8 +724,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                     <tr class="prov-fila" data-status="<?php echo $gestion_prov['status']; ?>" data-texto="<?php echo strtolower(htmlspecialchars($gestion_prov['nombre_empresa'] . ' ' . $gestion_prov['rif'] . ' ' . ($gestion_prov['telefono'] ?? ''))); ?>">
                                         <td class="fw-bold text-uppercase"><?php echo htmlspecialchars($gestion_prov['nombre_empresa']); ?></td>
                                         <td><span class="codigo-badge"><?php echo htmlspecialchars($gestion_prov['rif']); ?></span></td>
-                                        <td class="text-secondary"><?php echo !empty($gestion_prov['telefono']) ? htmlspecialchars(formatearTelefono($gestion_prov['telefono'])) : '&mdash;'; ?></td>
-                                        <td class="text-center">
+                                        <td class="text-secondary d-none d-xl-table-cell"><?php echo !empty($gestion_prov['telefono']) ? htmlspecialchars(formatearTelefono($gestion_prov['telefono'])) : '&mdash;'; ?></td>
+                                        <td class="text-center d-none d-xl-table-cell">
                                             <button type="button" class="cant-badge border-0" style="cursor:pointer;" onclick="provToggleDetalle(<?php echo (int)$gestion_prov['id_proveedor']; ?>)" data-tooltip="Ver productos que suministra">
                                                 <i class="bi bi-box-seam me-1"></i><?php echo count($entradas_cat); ?>
                                             </button>
@@ -1030,7 +1030,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
                     <div class="rec-section" style="margin-bottom:0;">
                         <div class="rec-section-label"><i class="bi bi-box-seam me-1"></i>Productos a recibir <span class="fw-normal text-secondary">(ajuste la cantidad, m&aacute;x. lo pendiente)</span></div>
-                        <div style="border:1px solid var(--jv-border);border-radius:8px;overflow:hidden;">
+                        <div class="table-responsive" style="border:1px solid var(--jv-border);border-radius:8px;overflow-x:auto;overflow-y:hidden;">
                             <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
                                 <thead>
                                     <tr style="background:linear-gradient(135deg,#B45309,#D97706);">

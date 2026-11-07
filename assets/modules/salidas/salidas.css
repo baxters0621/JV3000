@@ -70,24 +70,46 @@
         }
 
         /* ── Empty state ── */
+        .sal-empty-row td {
+            background: linear-gradient(to bottom, #fff 0%, #FEF2F2 100%);
+        }
+
         .estado-vacio {
-            padding: 60px 20px;
+            padding: 8px 20px;
             text-align: center;
         }
 
-        .estado-vacio i {
-            font-size: 3.5rem;
-            color: rgba(220, 38, 38, 0.2);
-            display: block;
-            margin-bottom: 16px;
+        .estado-vacio-icono {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin-bottom: 18px;
+            border-radius: 50%;
+            background: rgba(220, 38, 38, 0.08);
+            color: #F87171;
         }
 
-        .estado-vacio span {
-            font-size: 1.05rem;
+        .estado-vacio-icono i {
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        .estado-vacio-titulo {
+            margin: 0 0 6px;
+            color: var(--jv-navy);
+            font-size: 1.1rem;
             font-weight: 700;
+            line-height: 1.35;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        .estado-vacio-subtitulo {
+            margin: 0;
             color: var(--jv-text-muted);
+            font-size: .9rem;
+            line-height: 1.5;
         }
 
         /* ── Scoped module styles ── */
@@ -431,7 +453,8 @@
         .pagina-salidas .sal-prod-table {
             border: 1px solid var(--jv-border);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: hidden;
             margin-top: 10px;
         }
 
@@ -583,7 +606,8 @@
         .pagina-salidas .sal-solicitud-table {
             border: 1px solid var(--jv-border);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: hidden;
         }
 
         .pagina-salidas .sal-solicitud-table table {
@@ -953,7 +977,7 @@
             color: #fff;
         }
 
-        /* ── Tabla: cabecera neutra ── */
+        /* ── Tabla: cabecera con identidad roja ── */
         .pagina-salidas .salidas-list-table {
             min-width: 1200px;
             border-collapse: separate;
@@ -961,15 +985,15 @@
         }
 
         .pagina-salidas .salidas-list-table thead th {
-            background: #F8FAFC !important;
-            color: var(--jv-text-secondary) !important;
+            background: #FEF2F2 !important;
+            color: #991B1B !important;
             font-size: .75rem;
             font-weight: 700;
             letter-spacing: .06em;
             text-transform: uppercase;
             padding: 13px 16px !important;
             border-top: 1px solid var(--jv-border) !important;
-            border-bottom: 1px solid var(--jv-border) !important;
+            border-bottom: 2px solid rgba(220, 38, 38, 0.2) !important;
             white-space: nowrap;
         }
 
@@ -1473,3 +1497,32 @@
         .pagina-salidas .sal-rif-toolbar .input-jv {
             min-height: 100%;
         }
+
+@media (max-width: 1199.98px) {
+    .pagina-salidas .salidas-list-table {
+        min-width: 900px;
+    }
+
+    .pagina-salidas .salidas-list-table .sal-col-control,
+    .pagina-salidas .salidas-list-table .sal-col-cantidad,
+    .pagina-salidas .salidas-list-table .sal-col-tipo {
+        display: none;
+    }
+
+    .pagina-salidas .salidas-list-table .sal-col-nota { width: 10%; }
+    .pagina-salidas .salidas-list-table .sal-col-cliente { width: 22%; }
+    .pagina-salidas .salidas-list-table .sal-col-productos { width: 32%; }
+    .pagina-salidas .salidas-list-table .sal-col-total { width: 12%; }
+    .pagina-salidas .salidas-list-table .sal-col-fecha { width: 12%; }
+    .pagina-salidas .salidas-list-table .sal-col-acciones { width: 12%; }
+
+    .pagina-salidas #modalCliList .cli-tabla {
+        min-width: 460px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .pagina-salidas #modalCliList .cli-tabla {
+        min-width: 0;
+    }
+}

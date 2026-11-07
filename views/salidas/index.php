@@ -120,11 +120,11 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
             <thead>
                 <tr>
                     <th>Nota</th>
-                    <th>N° Control</th>
+                    <th class="d-none d-xl-table-cell">N° Control</th>
                     <th>Cliente</th>
                     <th>Productos</th>
-                    <th class="text-center">Cant</th>
-                    <th class="text-center">Tipo</th>
+                    <th class="text-center d-none d-xl-table-cell">Cant</th>
+                    <th class="text-center d-none d-xl-table-cell">Tipo</th>
                     <th>Total</th>
                     <th class="text-center">Fecha</th>
                     <th class="text-center">Acciones</th>
@@ -140,14 +140,14 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                         ?>
                         <tr>
                             <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($outgoingRecord['nro_factura_manual'] ?: '#' . $outgoingRecord['id_salida']); ?></span></td>
-                            <td class="td-control" data-tooltip="<?php echo htmlspecialchars($outgoingRecord['nro_control']); ?>"><?php echo htmlspecialchars($outgoingRecord['nro_control']); ?></td>
+                            <td class="td-control d-none d-xl-table-cell" data-tooltip="<?php echo htmlspecialchars($outgoingRecord['nro_control']); ?>"><?php echo htmlspecialchars($outgoingRecord['nro_control']); ?></td>
                             <td class="text-uppercase td-cliente" data-tooltip="<?php echo htmlspecialchars(($outgoingRecord['cliente'] ?? 'S/Cliente') . ' - ' . ($outgoingRecord['rif_cliente'] ?? 'S/RIF')); ?>">
                                 <div class="cli-nombre"><?php echo htmlspecialchars($outgoingRecord['cliente'] ?? 'S/Cliente'); ?></div>
                                 <div class="cli-rif"><?php echo htmlspecialchars($outgoingRecord['rif_cliente'] ?? 'S/RIF'); ?></div>
                             </td>
                             <td class="td-productos" data-tooltip="<?php echo htmlspecialchars($productos_lista); ?>"><?php echo htmlspecialchars($productos_lista); ?></td>
-                            <td class="text-center"><span class="badge-cant">-<?php echo $outgoingRecord['total_cantidad']; ?></span></td>
-                            <td class="text-center"><?php
+                            <td class="text-center d-none d-xl-table-cell"><span class="badge-cant">-<?php echo $outgoingRecord['total_cantidad']; ?></span></td>
+                            <td class="text-center d-none d-xl-table-cell"><?php
                                                     $nombre_tipo = $outgoingRecord['tipo_mov_nombre'] ?? '';
                                                     $observaciones = $outgoingRecord['observaciones'] ?? '';
                                                     $causa_ajuste = '';
@@ -176,11 +176,14 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr>
-                        <td colspan="9">
+                    <tr class="sal-empty-row">
+                        <td colspan="9" class="py-5">
                             <div class="estado-vacio">
-                                <i class="bi bi-clipboard-x"></i>
-                                <span>No hay registros de ventas</span>
+                                <div class="estado-vacio-icono" aria-hidden="true">
+                                    <i class="bi bi-clipboard-x"></i>
+                                </div>
+                                <p class="estado-vacio-titulo fw-bold">No hay registros de ventas</p>
+                                <p class="estado-vacio-subtitulo text-muted mb-0">Haz clic en &laquo;Nueva Venta&raquo; para comenzar</p>
                             </div>
                         </td>
                     </tr>
@@ -386,7 +389,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                     </div>
 
                     <!-- TABLA DE PRODUCTOS -->
-                    <div class="sal-prod-table">
+                    <div class="sal-prod-table table-responsive">
                         <table>
                             <thead>
                                 <tr>
@@ -420,7 +423,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <div class="jv-modal-section-sub">Sin stock disponible, se pedir&aacute;n a Compras</div>
                             </div>
                         </div>
-                        <div class="sal-solicitud-table">
+                        <div class="sal-solicitud-table table-responsive">
                             <table>
                                 <thead>
                                     <tr>
@@ -504,8 +507,8 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <tr>
                                     <th class="text-center cli-col-num">#</th>
                                     <th>Cliente</th>
-                                    <th class="cli-col-doc">Documento</th>
-                                    <th class="cli-col-tel">Tel&eacute;fono</th>
+                                    <th class="cli-col-doc d-none d-xl-table-cell">Documento</th>
+                                    <th class="cli-col-tel d-none d-xl-table-cell">Tel&eacute;fono</th>
                                     <th class="text-center cli-col-estado">Estado</th>
                                     <th class="text-center cli-col-acciones">Acciones</th>
                                 </tr>
@@ -521,8 +524,8 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                                     <div class="cli-direccion"><i class="bi bi-geo-alt me-1"></i><?php echo htmlspecialchars($cli['direccion']); ?></div>
                                                 <?php endif; ?>
                                             </td>
-                                            <td class="cli-dato"><?php echo $cli['documento'] ? htmlspecialchars($cli['documento']) : '&mdash;'; ?></td>
-                                            <td class="cli-dato"><?php echo $cli['telefono'] ? htmlspecialchars($cli['telefono']) : '&mdash;'; ?></td>
+                                            <td class="cli-dato d-none d-xl-table-cell"><?php echo $cli['documento'] ? htmlspecialchars($cli['documento']) : '&mdash;'; ?></td>
+                                            <td class="cli-dato d-none d-xl-table-cell"><?php echo $cli['telefono'] ? htmlspecialchars($cli['telefono']) : '&mdash;'; ?></td>
                                             <td class="text-center">
                                                 <?php if ($cli['status'] === 'Activo'): ?>
                                                     <span class="badge rounded-pill cli-badge-activo">Activo</span>

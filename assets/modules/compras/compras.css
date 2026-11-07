@@ -1950,3 +1950,24 @@
         padding: 0;
     }
 }
+
+@media (max-width: 1199.98px) {
+    .pagina-compras .compras-list-table {
+        min-width: 960px;
+    }
+
+    .pagina-compras .compras-list-table colgroup .col-pago {
+        display: none;
+    }
+
+    .pagina-compras .compras-list-table colgroup .col-factura   { width: 16%; }
+    .pagina-compras .compras-list-table colgroup .col-proveedor { width: 20%; }
+    .pagina-compras .compras-list-table colgroup .col-detalle   { width: 32%; }
+    .pagina-compras .compras-list-table colgroup .col-total     { width: 12%; }
+    .pagina-compras .compras-list-table colgroup .col-fecha     { width: 10%; }
+    .pagina-compras .compras-list-table colgroup .col-acciones  { width: 10%; }
+
+    .pagina-compras #modalRecepcion .table-responsive > table {
+        min-width: 720px;
+    }
+}

@@ -1057,3 +1057,52 @@ select.input-jv { appearance: auto; cursor: pointer; }
     letter-spacing: .3px;
     margin-top: 4px;
 }
+
+@media (max-width: 1199.98px) {
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .main-wrapper,
+    .main-wrapper > .container-fluid {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .container-fluid.px-4.py-4 {
+        padding: 16px !important;
+    }
+
+    .card-jv {
+        padding: 18px 20px;
+    }
+
+    .module-title {
+        font-size: 1.7rem;
+        letter-spacing: -.6px;
+    }
+
+    .module-action-btn {
+        padding: 10px 20px;
+        font-size: .92rem;
+    }
+
+    .table-responsive {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .container-fluid.px-4.py-4 {
+        padding: 12px !important;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+}
