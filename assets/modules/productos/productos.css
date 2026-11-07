@@ -230,14 +230,14 @@
 
         /* Reparto exacto de columnas: la suma debe ser 100% */
         .table-jv .col-codigo    { width: 11%; }
-        .table-jv .col-producto  { width: 21%; }
-        .table-jv .col-categoria { width: 12%; }
+        .table-jv .col-producto  { width: 20%; }
+        .table-jv .col-categoria { width: 11%; }
         .table-jv .col-proveedor { width: 10%; }
         .table-jv .col-stock     { width: 8%; }
         .table-jv .col-precio    { width: 7%; }
         .table-jv .col-vence     { width: 10%; }
         .table-jv .col-estado    { width: 9%; }
-        .table-jv .col-acciones  { width: 12%; }
+        .table-jv .col-acciones  { width: 14%; }
 
         .table-jv thead {
             background: #0e7490 !important;
@@ -372,11 +372,12 @@
             text-align: center;
             white-space: nowrap;
             vertical-align: middle;
+            overflow: visible !important;
         }
 
         .td-prod-acciones > .d-flex {
             width: 100%;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             justify-content: center;
             align-items: center;
         }
@@ -1380,10 +1381,10 @@
     }
 
     .pagina-productos .table-jv .col-codigo { width: 12%; }
-    .pagina-productos .table-jv .col-producto { width: 30%; }
+    .pagina-productos .table-jv .col-producto { width: 27%; }
     .pagina-productos .table-jv .col-stock { width: 10%; }
-    .pagina-productos .table-jv .col-precio { width: 10%; }
-    .pagina-productos .table-jv .col-vence { width: 14%; }
-    .pagina-productos .table-jv .col-estado { width: 12%; }
-    .pagina-productos .table-jv .col-acciones { width: 12%; }
+    .pagina-productos .table-jv .col-precio { width: 9%; }
+    .pagina-productos .table-jv .col-vence { width: 12%; }
+    .pagina-productos .table-jv .col-estado { width: 11%; }
+    .pagina-productos .table-jv .col-acciones { width: 19%; }
 }

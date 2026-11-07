@@ -119,8 +119,8 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
             </colgroup>
             <thead>
                 <tr>
-                    <th>Nota</th>
-                    <th class="d-none d-xl-table-cell">N° Control</th>
+                    <th class="sal-th-nota">Nota</th>
+                    <th class="sal-th-control d-none d-xl-table-cell">N° Control</th>
                     <th>Cliente</th>
                     <th>Productos</th>
                     <th class="text-center d-none d-xl-table-cell">Cant</th>
@@ -139,7 +139,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                         $grupo_mov = Salida::grupoDeTipo($outgoingRecord['tipo_mov_nombre'] ?? '');
                         ?>
                         <tr>
-                            <td style="vertical-align:middle;text-align:center;"><span class="codigo-badge"><?php echo htmlspecialchars($outgoingRecord['nro_factura_manual'] ?: '#' . $outgoingRecord['id_salida']); ?></span></td>
+                            <td class="sal-celda-nota"><span class="codigo-badge"><?php echo htmlspecialchars($outgoingRecord['nro_factura_manual'] ?: '#' . $outgoingRecord['id_salida']); ?></span></td>
                             <td class="td-control d-none d-xl-table-cell" data-tooltip="<?php echo htmlspecialchars($outgoingRecord['nro_control']); ?>"><?php echo htmlspecialchars($outgoingRecord['nro_control']); ?></td>
                             <td class="text-uppercase td-cliente" data-tooltip="<?php echo htmlspecialchars(($outgoingRecord['cliente'] ?? 'S/Cliente') . ' - ' . ($outgoingRecord['rif_cliente'] ?? 'S/RIF')); ?>">
                                 <div class="cli-nombre"><?php echo htmlspecialchars($outgoingRecord['cliente'] ?? 'S/Cliente'); ?></div>

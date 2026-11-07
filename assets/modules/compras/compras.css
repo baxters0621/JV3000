@@ -91,13 +91,13 @@
         }
 
         /* Column widths for the purchase list, balanced for invoice and details. */
-        .pagina-compras .compras-list-table colgroup .col-factura   { width: 17%; }
+        .pagina-compras .compras-list-table colgroup .col-factura   { width: 16%; }
         .pagina-compras .compras-list-table colgroup .col-proveedor { width: 20%; }
-        .pagina-compras .compras-list-table colgroup .col-detalle   { width: 24%; }
+        .pagina-compras .compras-list-table colgroup .col-detalle   { width: 20%; }
         .pagina-compras .compras-list-table colgroup .col-total     { width: 11%; }
         .pagina-compras .compras-list-table colgroup .col-pago      { width: 12%; }
-        .pagina-compras .compras-list-table colgroup .col-fecha     { width: 8%; }
-        .pagina-compras .compras-list-table colgroup .col-acciones  { width: 8%; }
+        .pagina-compras .compras-list-table colgroup .col-fecha     { width: 9%; }
+        .pagina-compras .compras-list-table colgroup .col-acciones  { width: 12%; }
 
         /* Header: continuous green strip — gradient on row, not cells */
         .pagina-compras .table-jv thead {
@@ -120,7 +120,7 @@
         }
 
         .pagina-compras .compras-list-table {
-            min-width: 1200px;
+            min-width: 1040px;
         }
 
         .pagina-compras .compras-list-table thead th {
@@ -293,7 +293,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: nowrap;
         }
         .pagina-compras .btn-anular-compra {
             border-color: rgba(220, 38, 38, .28);
@@ -1962,10 +1963,10 @@
 
     .pagina-compras .compras-list-table colgroup .col-factura   { width: 16%; }
     .pagina-compras .compras-list-table colgroup .col-proveedor { width: 20%; }
-    .pagina-compras .compras-list-table colgroup .col-detalle   { width: 32%; }
+    .pagina-compras .compras-list-table colgroup .col-detalle   { width: 29%; }
     .pagina-compras .compras-list-table colgroup .col-total     { width: 12%; }
     .pagina-compras .compras-list-table colgroup .col-fecha     { width: 10%; }
-    .pagina-compras .compras-list-table colgroup .col-acciones  { width: 10%; }
+    .pagina-compras .compras-list-table colgroup .col-acciones  { width: 13%; }
 
     .pagina-compras #modalRecepcion .table-responsive > table {
         min-width: 720px;
