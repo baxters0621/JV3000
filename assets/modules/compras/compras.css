@@ -2126,3 +2126,8 @@
 #modalDetalleCompra .detalle-compra-total-final {
     border-top: 0 !important;
 }
+
+#modalDetalleCompra .detalle-compra-body {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+}

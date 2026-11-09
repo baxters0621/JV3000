@@ -673,13 +673,13 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
         <div class="modal-content jv-modal-content">
             <div class="jv-modal-header">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-receipt" style="font-size:1.3rem;"></i>
+                    <i class="bi bi-receipt fs-4"></i>
                     <h5 class="jv-modal-title" id="modalDetalleCompraLabel">DETALLE DE FACTURA</h5>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
 
-            <div class="jv-modal-body detalle-compra-body">
+            <div class="modal-body jv-modal-body detalle-compra-body">
                 <div class="row g-3 g-md-4 detalle-compra-cabecera mb-4 pb-3 border-bottom">
                     <div class="col-md-6">
                         <span class="jv-modal-label">PROVEEDOR</span>
@@ -743,8 +743,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
-                <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cerrar</button>
+            <div class="jv-modal-footer">
+                <button type="button" class="btn btn-jv-danger" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cerrar</button>
             </div>
         </div>
     </div>
