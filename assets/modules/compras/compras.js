@@ -1264,3 +1264,110 @@
                 metodoSelect.addEventListener('change', togglePagoDetalle);
             }
         });
+
+        // ==========================================
+        // MODAL DE DETALLE DE FACTURA
+        // ==========================================
+
+        // Convierte una fecha de la BD (YYYY-MM-DD o timestamp) a dd/mm/yyyy.
+        function formatearFechaDetalle(fecha) {
+            if (!fecha) return '\u2014';
+            var partes = String(fecha).slice(0, 10).split('-');
+            return partes.length === 3 ? partes[2] + '/' + partes[1] + '/' + partes[0] : String(fecha);
+        }
+
+        // Abre el modal y carga la cabecera y las líneas de la compra desde el endpoint JSON.
+        function abrirDetalleCompra(idCompra) {
+            var modalEl = document.getElementById('modalDetalleCompra');
+            var itemsBody = document.getElementById('detalleCompraItems');
+            if (!modalEl || !itemsBody || !Number.isInteger(idCompra) || idCompra <= 0) return;
+
+            document.getElementById('detalleCompraProveedor').textContent = '\u2014';
+            document.getElementById('detalleCompraRif').textContent = '\u2014';
+            document.getElementById('detalleCompraDireccion').textContent = '\u2014';
+            document.getElementById('detalleCompraTelefono').textContent = '\u2014';
+            document.getElementById('detalleCompraFactura').textContent = '\u2014';
+            document.getElementById('detalleCompraFecha').textContent = '\u2014';
+            document.getElementById('detalleCompraSubtotal').textContent = formatCurrency(0);
+            document.getElementById('detalleCompraIva').textContent = formatCurrency(0);
+            document.getElementById('detalleCompraTotal').textContent = formatCurrency(0);
+            itemsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Cargando detalle...</td></tr>';
+
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+            var url = (window.JV_BASE || '') + 'index.php?url=compras/detalle&id_compra=' + encodeURIComponent(idCompra);
+            jvFetchConTope(url, {
+                ms: 12000,
+                init: {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                }
+            }).then(function(response) {
+                return response.text().then(function(texto) {
+                    var data = null;
+                    try {
+                        data = JSON.parse(texto);
+                    } catch (error) {
+                        data = null;
+                    }
+                    if (!response.ok || !data || !data.success) {
+                        throw new Error((data && (data.message || data.error)) || 'No se pudo cargar el detalle de la factura.');
+                    }
+                    return data;
+                });
+            }).then(function(data) {
+                var compra = data.compra || {};
+                var items = Array.isArray(data.items) ? data.items : [];
+
+                document.getElementById('detalleCompraProveedor').textContent = compra.proveedor || 'S/P';
+                document.getElementById('detalleCompraRif').textContent = compra.proveedor_rif || '\u2014';
+                document.getElementById('detalleCompraDireccion').textContent = compra.proveedor_direccion || '\u2014';
+                document.getElementById('detalleCompraTelefono').textContent = compra.proveedor_telefono || '\u2014';
+                document.getElementById('detalleCompraFactura').textContent = compra.nro_factura || '\u2014';
+                document.getElementById('detalleCompraFecha').textContent = formatearFechaDetalle(compra.fecha_compra);
+
+                if (items.length === 0) {
+                    itemsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Esta factura no tiene productos registrados.</td></tr>';
+                } else {
+                    itemsBody.innerHTML = items.map(function(item) {
+                        var sku = item.sku
+                            ? '<div class="detalle-compra-sku">' + escapeHtml(item.sku) + '</div>'
+                            : '';
+                        return '<tr>' +
+                            '<td><div class="detalle-compra-producto">' + escapeHtml(item.nombre_producto || '-') + '</div>' + sku + '</td>' +
+                            '<td class="text-center">' + Number(item.cantidad || 0) + '</td>' +
+                            '<td class="text-end">' + formatCurrency(item.precio_costo || 0) + '</td>' +
+                            '<td class="text-end">' + formatCurrency(item.total_linea || 0) + '</td>' +
+                            '</tr>';
+                    }).join('');
+                }
+
+                document.getElementById('detalleCompraSubtotal').textContent = formatCurrency(compra.subtotal || 0);
+                document.getElementById('detalleCompraIva').textContent = formatCurrency(compra.iva || 0);
+                document.getElementById('detalleCompraTotal').textContent = formatCurrency(compra.total || 0);
+            }).catch(function(error) {
+                var mensaje = error && error.jvTope
+                    ? 'La consulta tard\u00f3 demasiado. Verifica la conexi\u00f3n e int\u00e9ntalo de nuevo.'
+                    : (error && error.message) || 'No se pudo cargar el detalle de la factura.';
+                itemsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">' + escapeHtml(mensaje) + '</td></tr>';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'NO SE PUDO CARGAR',
+                    text: mensaje,
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#EA580C'
+                });
+            });
+        }
+
+        // Delegación: cualquier clic dentro de la celda "Detalle" abre su factura.
+        (function() {
+            var tabla = document.getElementById('tablaEntradas');
+            if (!tabla) return;
+            tabla.addEventListener('click', function(evento) {
+                var boton = evento.target.closest('.btn-detalle-compra');
+                if (!boton || !tabla.contains(boton)) return;
+                abrirDetalleCompra(Number(boton.dataset.idCompra));
+            });
+        })();

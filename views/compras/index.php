@@ -211,9 +211,9 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 <span class="proveedor-nombre text-truncate" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P', ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?></span>
                             </td>
                             <td class="td-detalle" data-label="Detalle">
-                                <div class="detalle-resumen">
-                                    <span class="cant-pill" data-tooltip="Unidades totales incluidas en esta compra"><?php echo (int)$compra['total_cantidad']; ?> unidades</span>
+                                <div class="detalle-celda d-flex justify-content-between align-items-center gap-2">
                                     <span class="detalle-nombres text-truncate" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-detalle-compra flex-shrink-0" data-id-compra="<?php echo (int)$compra['id_compra']; ?>" data-tooltip="Ver detalle de la factura" aria-label="Ver detalle de la factura N° <?php echo htmlspecialchars($compra['nro_factura'] ?: '-', ENT_QUOTES, 'UTF-8'); ?>"><i class="bi bi-eye me-1" aria-hidden="true"></i>Ver Detalle</button>
                                 </div>
                             </td>
                             <td class="td-total text-end" data-label="Total">
@@ -663,6 +663,89 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                     <button type="submit" class="btn btn-jv-success module-action-btn"><i class="bi bi-check-lg me-1"></i>Registrar Pago</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Ver Detalle de Factura -->
+<div class="modal fade" id="modalDetalleCompra" tabindex="-1" aria-labelledby="modalDetalleCompraLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content jv-modal-content">
+            <div class="jv-modal-header" style="background:linear-gradient(135deg,#1E3A5F,#2563EB);">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt" style="font-size:1.3rem;"></i>
+                    <h5 class="jv-modal-title" id="modalDetalleCompraLabel">DETALLE DE FACTURA</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="jv-modal-body detalle-compra-body">
+                <div class="row g-3 g-md-4 detalle-compra-cabecera mb-4 pb-3 border-bottom">
+                    <div class="col-md-6">
+                        <span class="jv-modal-label">PROVEEDOR</span>
+                        <div class="detalle-compra-dato" id="detalleCompraProveedor">&mdash;</div>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="jv-modal-label">RIF</span>
+                        <div class="detalle-compra-dato" id="detalleCompraRif">&mdash;</div>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="jv-modal-label">FACTURA</span>
+                        <div class="detalle-compra-dato" id="detalleCompraFactura">&mdash;</div>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="jv-modal-label">DIRECCIÓN</span>
+                        <div class="detalle-compra-dato" id="detalleCompraDireccion">&mdash;</div>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="jv-modal-label">TELÉFONO</span>
+                        <div class="detalle-compra-dato" id="detalleCompraTelefono">&mdash;</div>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="jv-modal-label">FECHA</span>
+                        <div class="detalle-compra-dato" id="detalleCompraFecha">&mdash;</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive detalle-compra-tabla-wrap">
+                    <table class="table align-middle mb-0 detalle-compra-tabla">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="text-secondary">Producto</th>
+                                <th class="text-center text-secondary">Cantidad</th>
+                                <th class="text-end text-secondary">Precio Unit.</th>
+                                <th class="text-end text-secondary">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detalleCompraItems">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Cargando detalle...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="detalle-compra-totales d-flex flex-column gap-2">
+                    <div class="detalle-compra-total-row">
+                        <span>Subtotal</span>
+                        <span class="text-end" id="detalleCompraSubtotal">$0.00</span>
+                    </div>
+                    <div class="detalle-compra-total-row d-none">
+                        <span>IVA</span>
+                        <span class="text-end" id="detalleCompraIva">$0.00</span>
+                    </div>
+                    <div class="detalle-compra-total-row detalle-compra-total-final">
+                        <span>TOTAL</span>
+                        <span class="text-end fw-bold fs-5" id="detalleCompraTotal">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
+                <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cerrar</button>
+            </div>
         </div>
     </div>
 </div>

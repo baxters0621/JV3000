@@ -28,6 +28,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Dashboard / Alertas críticas: la campana muestra solo VENCIDOS y STOCK BAJO (sin duplicar vencidos), con scroll interno y encabezados sticky; stock bajo visible para todos los roles, Dar de baja solo admin (POST existente) y Reponer admin/carga con proveedor precargado; partial compartido `views/dashboard/_campana_alertas.php`.
 
+- Compras / Detalle de factura (2026-11-08): el resumen de la celda Detalle queda como texto normal y un botón explícito (btn-sm btn-outline-primary, icono bi-eye) con data-id-compra abre #modalDetalleCompra; la celda muestra nombre truncado y botón en una sola línea, sin badge de unidades. El listener delegado usa .btn-detalle-compra. El modal carga por GET compras/detalle (solo status Activa; admin/carga) con obtenerDetalle() y muestra proveedor con RIF/dirección/teléfono, factura/fecha, líneas con cantidad/precio/total y subtotal/IVA/total. Rediseño 2026-11-08: cabecera de tabla clara, datos fiscales con más aire, celdas uniformes y totales con gap. Sin cambios en creación, esquema, seed ni permisos; piloto de tabla alineado a 1040 px. Validado con php -l, node, pilotos, validar.ps1 y HTTP con sesión admin. Ajuste 2026-11-09: la fila de IVA se oculta con d-none (el span #detalleCompraIva se conserva para compras.js) y compras.css cierra con reglas !important por ID para thead claro, celdas blancas y total verde de 1.5rem; no dependen de .pagina-compras.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

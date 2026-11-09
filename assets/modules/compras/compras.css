@@ -229,7 +229,7 @@
         .pagina-compras .td-detalle {
             overflow: hidden;
             text-align: left !important;
-            cursor: help;
+            cursor: default;
         }
         .pagina-compras .detalle-resumen {
             display: flex;
@@ -1858,7 +1858,7 @@
     .pagina-compras .compras-list-table .detalle-nombres {
         display: block;
         max-width: 100%;
-        margin-top: 2px;
+        margin-top: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -1971,4 +1971,135 @@
     .pagina-compras #modalRecepcion .table-responsive > table {
         min-width: 720px;
     }
+}
+
+/* ── Ver detalle de factura ── */
+.pagina-compras .detalle-celda {
+    width: 100%;
+    min-width: 0;
+}
+.pagina-compras .detalle-nombres {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-top: 0;
+}
+.pagina-compras .btn-detalle-compra {
+    flex-shrink: 0;
+    padding: 3px 12px;
+    font-size: .76rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+.pagina-compras .btn-detalle-compra i {
+    font-size: .85rem;
+}
+
+.pagina-compras .detalle-compra-body {
+    padding: 20px;
+}
+.pagina-compras .detalle-compra-cabecera {
+    border-bottom-color: var(--jv-border) !important;
+}
+.pagina-compras .detalle-compra-cabecera .jv-modal-label {
+    margin-bottom: 4px;
+    color: var(--jv-text-muted);
+    font-size: .75rem;
+    letter-spacing: .05em;
+}
+.pagina-compras .detalle-compra-dato {
+    margin-top: 0;
+    color: var(--jv-text-primary);
+    font-weight: 700;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+.pagina-compras .detalle-compra-tabla-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 1px solid var(--jv-border);
+    border-radius: 8px;
+}
+.pagina-compras .detalle-compra-tabla {
+    width: 100%;
+    min-width: 480px;
+}
+.pagina-compras .detalle-compra-tabla thead th {
+    padding: 10px 8px;
+    background: #F8FAFC;
+    color: var(--jv-text-muted);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--jv-border);
+}
+.pagina-compras .detalle-compra-tabla tbody td {
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--jv-border);
+    font-size: .9rem;
+}
+.pagina-compras .detalle-compra-tabla tbody tr:last-child td {
+    border-bottom: 0;
+}
+.pagina-compras .detalle-compra-producto {
+    color: var(--jv-text-primary);
+    font-weight: 600;
+}
+.pagina-compras .detalle-compra-sku {
+    color: var(--jv-text-muted);
+    font-size: .78rem;
+}
+.pagina-compras .detalle-compra-totales {
+    width: min(100%, 340px);
+    margin: 20px 0 0 auto;
+}
+.pagina-compras .detalle-compra-total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    color: var(--jv-text-primary);
+    font-size: .92rem;
+}
+.pagina-compras .detalle-compra-total-row > span:last-child {
+    min-width: 110px;
+}
+.pagina-compras .detalle-compra-total-final {
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--jv-border);
+    color: var(--jv-navy);
+    font-weight: 800;
+}
+.pagina-compras .detalle-compra-total-final > span:last-child {
+    color: var(--jv-success);
+}
+@media (max-width: 767.98px) {
+    .pagina-compras .detalle-compra-body {
+        padding: 16px;
+    }
+    .pagina-compras .detalle-compra-totales {
+        width: 100%;
+    }
+}
+
+/* Modal de detalle de compra: diseño limpio forzado */
+#modalDetalleCompra .detalle-compra-tabla thead th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    font-size: 0.85rem !important;
+    text-transform: uppercase !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+#modalDetalleCompra .detalle-compra-tabla tbody td {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    padding: 12px 8px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+#detalleCompraTotal {
+    color: #16a34a !important;
+    font-weight: 700 !important;
+    font-size: 1.5rem !important;
 }

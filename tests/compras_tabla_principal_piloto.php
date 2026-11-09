@@ -30,6 +30,6 @@ foreach (['col-factura', 'col-proveedor', 'col-detalle', 'col-total', 'col-pago'
 }
 afirmarTablaCompras(strpos($estilos, '.pagina-compras .compras-list-table thead th') !== false && strpos($estilos, 'white-space: nowrap;') !== false, 'Los encabezados deben permanecer en una sola línea.');
 afirmarTablaCompras(strpos($estilos, '.pagina-compras .compras-list-table tbody#tablaEntradas > tr > td:first-child') !== false && strpos($estilos, 'border-left: 0;') !== false, 'Las filas de la tabla principal no deben mostrar el borde verde lateral.');
-afirmarTablaCompras(strpos($estilos, '.pagina-compras .compras-list-table {') !== false && strpos($estilos, 'min-width: 1200px;') !== false, 'La tabla debe reservar ancho suficiente y permitir desplazamiento horizontal.');
+afirmarTablaCompras(strpos($estilos, '.pagina-compras .compras-list-table {') !== false && strpos($estilos, 'min-width: 1040px;') !== false, 'La tabla debe reservar ancho suficiente y permitir desplazamiento horizontal.');
 
 echo "OK tabla principal de Compras verificada\n";

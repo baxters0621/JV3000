@@ -298,6 +298,38 @@ class ComprasController extends Controller
     }
 
     /**
+     * Devuelve en JSON la cabecera de la compra (con los datos fiscales del
+     * proveedor) y sus ítems.
+     *
+     * Endpoint de solo lectura usado por el modal "Ver detalle" del tablero.
+     * Exige permisos de carga (administrador u operador de carga).
+     *
+     * @return void
+     */
+    public function detalle(): void
+    {
+        Security::verificarPermisoCarga();
+
+        $id_compra = isset($_GET['id_compra']) && is_scalar($_GET['id_compra'])
+            ? (int)$_GET['id_compra']
+            : 0;
+        if ($id_compra <= 0) {
+            $this->json(['success' => false, 'message' => 'COMPRA INVÁLIDA.'], 422);
+        }
+
+        $detalle = (new Compra())->obtenerDetalle($id_compra);
+        if ($detalle === null) {
+            $this->json(['success' => false, 'message' => 'COMPRA NO ENCONTRADA.'], 404);
+        }
+
+        $this->json([
+            'success' => true,
+            'compra'  => $detalle['compra'],
+            'items'   => $detalle['items'],
+        ]);
+    }
+
+    /**
      * Cancela la solicitud seleccionada para atender y vuelve a compras.
      *
      * Simplemente elimina la solicitud guardada en sesión (prefill) y

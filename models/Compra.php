@@ -95,6 +95,61 @@ class Compra extends Model
     }
 
     /**
+     * Obtiene la cabecera y los ítems de una compra activa.
+     *
+     * Se usa en el modal "Ver detalle" del tablero de Compras. Solo expone
+     * compras con status Activa, igual que el listado principal. Devuelve la
+     * cabecera de la factura (proveedor con RIF, dirección y teléfono, número,
+     * fecha e importes) y todas sus líneas con el total calculado.
+     *
+     * @param int $id_compra Identificador de la compra.
+     * @return array|null ['compra' => array, 'items' => array] o null si no existe.
+     */
+    public function obtenerDetalle(int $id_compra): ?array
+    {
+        $compra = $this->db->fetchOne(
+            "SELECT c.id_compra, c.nro_factura, c.nro_control, c.fecha_compra,
+                    c.subtotal, c.iva, c.total, c.status_pago,
+                    COALESCE(pr.nombre_empresa, 'S/P') AS proveedor,
+                    COALESCE(pr.rif, '') AS proveedor_rif,
+                    COALESCE(pr.direccion, '') AS proveedor_direccion,
+                    COALESCE(pr.telefono, '') AS proveedor_telefono
+             FROM compras c
+             LEFT JOIN proveedores pr ON pr.id_proveedor = c.id_proveedor
+             WHERE c.id_compra = ? AND c.status = 'Activa'",
+            [$id_compra]
+        );
+        if (!$compra) {
+            return null;
+        }
+
+        $items = $this->db->fetchAll(
+            "SELECT dc.id_detalle, p.nombre_producto, p.sku,
+                    dc.cantidad, dc.precio_costo,
+                    ROUND(dc.cantidad * dc.precio_costo, 2) AS total_linea
+             FROM detalle_compras dc
+             INNER JOIN productos p ON p.id_producto = dc.id_producto
+             WHERE dc.id_compra = ?
+             ORDER BY dc.id_detalle ASC",
+            [$id_compra]
+        );
+
+        $compra['id_compra'] = (int)$compra['id_compra'];
+        $compra['subtotal'] = (float)$compra['subtotal'];
+        $compra['iva'] = (float)$compra['iva'];
+        $compra['total'] = (float)$compra['total'];
+        foreach ($items as &$item) {
+            $item['id_detalle'] = (int)$item['id_detalle'];
+            $item['cantidad'] = (int)$item['cantidad'];
+            $item['precio_costo'] = (float)$item['precio_costo'];
+            $item['total_linea'] = (float)$item['total_linea'];
+        }
+        unset($item);
+
+        return ['compra' => $compra, 'items' => $items];
+    }
+
+    /**
      * Proveedores activos para el formulario de compra.
      *
      * Devuelve id, nombre y RIF de los proveedores activos, ordenados
