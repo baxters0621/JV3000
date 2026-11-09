@@ -22,6 +22,14 @@
             return '$' + Number(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
+        // Formatea un monto en bolívares al estilo venezolano: Bs. 1.234,56.
+        function formatBs(amount) {
+            return 'Bs. ' + new Intl.NumberFormat('es-VE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(Number(amount) || 0);
+        }
+
         // ==========================================
         // CATÁLOGO DEL PROVEEDOR
         // ==========================================
@@ -1288,9 +1296,9 @@
             document.getElementById('detalleCompraTelefono').textContent = '\u2014';
             document.getElementById('detalleCompraFactura').textContent = '\u2014';
             document.getElementById('detalleCompraFecha').textContent = '\u2014';
-            document.getElementById('detalleCompraSubtotal').textContent = formatCurrency(0);
-            document.getElementById('detalleCompraIva').textContent = formatCurrency(0);
-            document.getElementById('detalleCompraTotal').textContent = formatCurrency(0);
+            document.getElementById('detalleCompraSubtotal').textContent = '\u2014';
+            document.getElementById('detalleCompraIva').textContent = '\u2014';
+            document.getElementById('detalleCompraTotal').textContent = '\u2014';
             itemsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Cargando detalle...</td></tr>';
 
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -1319,6 +1327,12 @@
                 var compra = data.compra || {};
                 var items = Array.isArray(data.items) ? data.items : [];
 
+                // Conversión referencial: si no hay tasa BCV se mantiene el monto en dólares.
+                var tasa = Number(data.tasa_bcv) || 0;
+                var aBs = function(valor) {
+                    return tasa > 0 ? formatBs(Number(valor) * tasa) : formatCurrency(valor);
+                };
+
                 document.getElementById('detalleCompraProveedor').textContent = compra.proveedor || 'S/P';
                 document.getElementById('detalleCompraRif').textContent = compra.proveedor_rif || '\u2014';
                 document.getElementById('detalleCompraDireccion').textContent = compra.proveedor_direccion || '\u2014';
@@ -1336,15 +1350,15 @@
                         return '<tr>' +
                             '<td><div class="detalle-compra-producto">' + escapeHtml(item.nombre_producto || '-') + '</div>' + sku + '</td>' +
                             '<td class="text-center">' + Number(item.cantidad || 0) + '</td>' +
-                            '<td class="text-end">' + formatCurrency(item.precio_costo || 0) + '</td>' +
-                            '<td class="text-end">' + formatCurrency(item.total_linea || 0) + '</td>' +
+                            '<td class="text-end">' + aBs(item.precio_costo || 0) + '</td>' +
+                            '<td class="text-end">' + aBs(item.total_linea || 0) + '</td>' +
                             '</tr>';
                     }).join('');
                 }
 
-                document.getElementById('detalleCompraSubtotal').textContent = formatCurrency(compra.subtotal || 0);
-                document.getElementById('detalleCompraIva').textContent = formatCurrency(compra.iva || 0);
-                document.getElementById('detalleCompraTotal').textContent = formatCurrency(compra.total || 0);
+                document.getElementById('detalleCompraSubtotal').textContent = aBs(compra.subtotal || 0);
+                document.getElementById('detalleCompraIva').textContent = aBs(compra.iva || 0);
+                document.getElementById('detalleCompraTotal').textContent = aBs(compra.total || 0);
             }).catch(function(error) {
                 var mensaje = error && error.jvTope
                     ? 'La consulta tard\u00f3 demasiado. Verifica la conexi\u00f3n e int\u00e9ntalo de nuevo.'

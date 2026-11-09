@@ -1182,3 +1182,120 @@ function jv_asset_version(string $ruta): string
     $archivo = $raiz . '/assets/' . ltrim($ruta, '/');
     return is_file($archivo) ? '?v=' . filemtime($archivo) : '';
 }
+
+if (!function_exists('jv_tasa_bcv')) {
+    /**
+     * Devuelve la tasa oficial USD→VES del BCV.
+     *
+     * Reutiliza el caché de TasasController (cache/tasas_bcv.json, 30 min).
+     * Si venció, consulta ve.dolarapi.com con un tope corto para no retrasar
+     * la página; si la API falla, devuelve el caché viejo o null.
+     *
+     * @return array{usd:?float,fecha:?string,cache:bool} Tasa, fecha y origen.
+     */
+    function jv_tasa_bcv(): array
+    {
+        $raiz = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__);
+        $archivo_cache = $raiz . '/cache/tasas_bcv.json';
+        $ttl = 1800;
+
+        $cache = null;
+        if (is_file($archivo_cache)) {
+            $cache = json_decode((string)@file_get_contents($archivo_cache), true);
+            if (!is_array($cache)) {
+                $cache = null;
+            }
+        }
+
+        $vigente = $cache
+            && !empty($cache['usd_oficial'])
+            && (time() - (int)($cache['timestamp'] ?? 0)) < $ttl;
+
+        if ($vigente) {
+            return [
+                'usd'   => (float)$cache['usd_oficial'],
+                'fecha' => (string)($cache['fecha'] ?? ''),
+                'cache' => true,
+            ];
+        }
+
+        $usd = jv_consultar_tasa_bcv_api();
+        if ($usd !== null && $usd > 0) {
+            $directorio = dirname($archivo_cache);
+            if (!is_dir($directorio)) {
+                @mkdir($directorio, 0755, true);
+            }
+            @file_put_contents($archivo_cache, json_encode([
+                'usd_oficial' => $usd,
+                'eur_oficial' => $cache['eur_oficial'] ?? null,
+                'fecha'       => date('Y-m-d'),
+                'timestamp'   => time(),
+            ]), LOCK_EX);
+
+            return ['usd' => $usd, 'fecha' => date('Y-m-d'), 'cache' => false];
+        }
+
+        if ($cache && !empty($cache['usd_oficial'])) {
+            return [
+                'usd'   => (float)$cache['usd_oficial'],
+                'fecha' => (string)($cache['fecha'] ?? ''),
+                'cache' => true,
+            ];
+        }
+
+        return ['usd' => null, 'fecha' => null, 'cache' => false];
+    }
+}
+
+if (!function_exists('jv_consultar_tasa_bcv_api')) {
+    /**
+     * Consulta la tasa oficial USD del BCV con un tope de tiempo corto.
+     *
+     * @return float|null Tasa redondeada a 4 decimales, o null si falla.
+     */
+    function jv_consultar_tasa_bcv_api(): ?float
+    {
+        if (!function_exists('curl_init')) {
+            return null;
+        }
+
+        $canal = curl_init('https://ve.dolarapi.com/v1/dolares/oficial');
+        curl_setopt_array($canal, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT_MS     => 2500,
+            CURLOPT_CONNECTTIMEOUT_MS => 1500,
+            CURLOPT_USERAGENT      => 'JV3000/1.0',
+            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+        ]);
+        $respuesta = curl_exec($canal);
+        curl_close($canal);
+
+        if (!is_string($respuesta) || trim($respuesta) === '') {
+            return null;
+        }
+
+        $datos = json_decode($respuesta, true);
+        if (!is_array($datos)) {
+            return null;
+        }
+        $promedio = $datos['promedio'] ?? ($datos[0]['promedio'] ?? null);
+        if (!is_numeric($promedio) || (float)$promedio <= 0) {
+            return null;
+        }
+
+        return round((float)$promedio, 4);
+    }
+}
+
+if (!function_exists('jv_formatear_bolivares')) {
+    /**
+     * Formatea un monto en bolívares con el estilo venezolano.
+     *
+     * @param float $monto Monto en VES.
+     * @return string Ejemplo: "Bs. 1.234,56".
+     */
+    function jv_formatear_bolivares(float $monto): string
+    {
+        return 'Bs. ' . number_format($monto, 2, ',', '.');
+    }
+}

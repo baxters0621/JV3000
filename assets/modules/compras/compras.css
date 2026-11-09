@@ -2138,3 +2138,23 @@
     min-height: 0 !important;
     overflow-y: auto !important;
 }
+
+/* Etiqueta de la tasa BCV: visible pero discreta. */
+.comp-tasa-bcv {
+    font-size: 0.72rem;
+    color: var(--jv-text-muted);
+    letter-spacing: 0.2px;
+    margin: -0.75rem 0 1.25rem;
+}
+
+.comp-tasa-bcv .bi {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+#modalDetalleCompra .detalle-compra-tasa {
+    font-size: 0.72rem;
+    color: #64748b;
+    text-align: right;
+    margin-top: 4px;
+}

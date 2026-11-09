@@ -255,6 +255,9 @@ class ComprasController extends Controller
         }
         unset($c);
 
+        // Tasa oficial BCV: los montos se guardan en USD y solo se convierten al mostrarse.
+        $tasa_bcv = jv_tasa_bcv();
+
         $this->view('compras/index', [
             'titulo'              => 'Compras | JV3000 C.A.',
             'wrapper_class'       => 'pagina-compras',
@@ -277,6 +280,8 @@ class ComprasController extends Controller
             'solicitudes_pendientes' => $sol_pendientes,
             'filtro_pago'         => $filtro_pago,
             'iva_pct'             => $iva_pct,
+            'tasa_bcv'            => $tasa_bcv['usd'],
+            'tasa_bcv_fecha'      => $tasa_bcv['fecha'],
             'es_admin'            => Security::esAdmin(),
             'flash'               => $this->consumeFlash(),
             'csrf'                => Security::generateToken(),
@@ -322,10 +327,14 @@ class ComprasController extends Controller
             $this->json(['success' => false, 'message' => 'COMPRA NO ENCONTRADA.'], 404);
         }
 
+        // La tasa viaja con el detalle para que el modal convierta sin otra petición.
+        $tasa_bcv = jv_tasa_bcv();
+
         $this->json([
-            'success' => true,
-            'compra'  => $detalle['compra'],
-            'items'   => $detalle['items'],
+            'success'  => true,
+            'tasa_bcv' => $tasa_bcv['usd'],
+            'compra'   => $detalle['compra'],
+            'items'    => $detalle['items'],
         ]);
     }
 

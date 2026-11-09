@@ -17,11 +17,14 @@
 /** @var array<int, array<string, mixed>> $compras_pendientes Compras pendientes de recepción */
 /** @var int $unidades_por_recibir Unidades pendientes por recibir */
 /** @var array<int, array<string, mixed>> $recepciones Últimas recepciones registradas */
+/** @var float|null $tasa_bcv Tasa oficial USD→VES del día */
+/** @var string|null $tasa_bcv_fecha Fecha de la tasa BCV (Y-m-d) */
 
 // ==========================================
 // VISTA: Compras (index)
 // ==========================================
 // Solo muestra los datos. No hace consultas.
+$tasa_bcv_vis = isset($tasa_bcv) && (float)$tasa_bcv > 0 ? (float)$tasa_bcv : 0.0;
 $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 ?>
 <!-- Encabezado -->
@@ -96,14 +99,32 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
     <div class="col-md-4">
         <div class="widget-card widget-blue">
             <div class="widget-icon widget-icon-blue">
-                <i class="bi bi-currency-dollar"></i>
+                <i class="bi bi-<?php echo $tasa_bcv_vis > 0 ? 'cash-stack' : 'currency-dollar'; ?>"></i>
             </div>
             <div>
                 <div class="widget-label">Invertido (Mes)</div>
-                <div class="widget-value">$<?php echo number_format((float)$kpis['invertido_mes'], 0); ?></div>
+                <div class="widget-value"><?php echo $tasa_bcv_vis > 0
+                    ? jv_formatear_bolivares((float)$kpis['invertido_mes'] * $tasa_bcv_vis)
+                    : '$' . number_format((float)$kpis['invertido_mes'], 0); ?></div>
             </div>
         </div>
     </div>
+</div>
+
+<?php
+// Etiqueta de tasa BCV: obligatoria por normativa, pero discreta.
+$tasa_bcv_fecha_legible = '';
+if (!empty($tasa_bcv_fecha)) {
+    $marca_tasa = strtotime((string)$tasa_bcv_fecha);
+    $tasa_bcv_fecha_legible = $marca_tasa ? date('d/m/Y', $marca_tasa) : '';
+}
+?>
+<div class="comp-tasa-bcv text-end">
+    <?php if ($tasa_bcv_vis > 0): ?>
+        <i class="bi bi-bank me-1"></i>Tasa BCV: <?php echo jv_formatear_bolivares($tasa_bcv_vis); ?><?php echo $tasa_bcv_fecha_legible !== '' ? ' · ' . $tasa_bcv_fecha_legible : ''; ?>
+    <?php else: ?>
+        <i class="bi bi-bank me-1"></i>Tasa BCV no disponible
+    <?php endif; ?>
 </div>
 
 <!-- Solicitudes de reposición pendientes (integradas en Compras) -->
@@ -217,7 +238,9 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                                 </div>
                             </td>
                             <td class="td-total text-end" data-label="Total">
-                                <span class="total-monto">$<?php echo number_format($compra['total'], 2); ?></span>
+                                <span class="total-monto"><?php echo $tasa_bcv_vis > 0
+                                    ? jv_formatear_bolivares((float)$compra['total'] * $tasa_bcv_vis)
+                                    : '$' . number_format((float)$compra['total'], 2); ?></span>
                             </td>
                             <td class="text-center d-none d-xl-table-cell" data-label="Pago">
                                 <?php $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
@@ -740,6 +763,11 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                         <span>TOTAL</span>
                         <span class="text-end fw-bold fs-5" id="detalleCompraTotal">$0.00</span>
                     </div>
+                    <?php if ($tasa_bcv_vis > 0): ?>
+                        <div class="detalle-compra-tasa">
+                            Montos convertidos a Bs. con la tasa BCV de <?php echo jv_formatear_bolivares($tasa_bcv_vis); ?><?php echo $tasa_bcv_fecha_legible !== '' ? ' del ' . $tasa_bcv_fecha_legible : ''; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
