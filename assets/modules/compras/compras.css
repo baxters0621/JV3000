@@ -2084,22 +2084,45 @@
     }
 }
 
-/* Modal de detalle de compra: diseño limpio forzado */
+/* Forzar diseño limpio en el modal de detalle */
+#modalDetalleCompra .modal-content {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+#modalDetalleCompra .jv-modal-header {
+    background: #1E3A5F !important; /* Azul oscuro institucional */
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+
 #modalDetalleCompra .detalle-compra-tabla thead th {
     background-color: #f8fafc !important;
     color: #475569 !important;
     font-size: 0.85rem !important;
     text-transform: uppercase !important;
-    border-bottom: 2px solid #e2e8f0 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    font-weight: 700 !important;
 }
+
 #modalDetalleCompra .detalle-compra-tabla tbody td {
     background-color: #ffffff !important;
     color: #1e293b !important;
-    padding: 12px 8px !important;
-    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 14px 12px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    vertical-align: middle !important;
 }
-#detalleCompraTotal {
+
+#modalDetalleCompra #detalleCompraTotal {
     color: #16a34a !important;
     font-weight: 700 !important;
     font-size: 1.5rem !important;
+}
+
+#modalDetalleCompra .detalle-compra-totales {
+    padding: 20px 10px 10px !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+#modalDetalleCompra .detalle-compra-total-final {
+    border-top: 0 !important;
 }

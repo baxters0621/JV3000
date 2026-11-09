@@ -671,7 +671,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 <div class="modal fade" id="modalDetalleCompra" tabindex="-1" aria-labelledby="modalDetalleCompraLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content jv-modal-content">
-            <div class="jv-modal-header" style="background:linear-gradient(135deg,#1E3A5F,#2563EB);">
+            <div class="jv-modal-header">
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-receipt" style="font-size:1.3rem;"></i>
                     <h5 class="jv-modal-title" id="modalDetalleCompraLabel">DETALLE DE FACTURA</h5>
@@ -709,12 +709,12 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 
                 <div class="table-responsive detalle-compra-tabla-wrap">
                     <table class="table align-middle mb-0 detalle-compra-tabla">
-                        <thead class="bg-light">
+                        <thead>
                             <tr>
-                                <th class="text-secondary">Producto</th>
-                                <th class="text-center text-secondary">Cantidad</th>
-                                <th class="text-end text-secondary">Precio Unit.</th>
-                                <th class="text-end text-secondary">Total</th>
+                                <th>Producto</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">Precio Unit.</th>
+                                <th class="text-end">Total</th>
                             </tr>
                         </thead>
                         <tbody id="detalleCompraItems">
