@@ -19,12 +19,22 @@
 /** @var array<int, array<string, mixed>> $recepciones Últimas recepciones registradas */
 /** @var float|null $tasa_bcv Tasa oficial USD→VES del día */
 /** @var string|null $tasa_bcv_fecha Fecha de la tasa BCV (Y-m-d) */
+/** @var bool $tasa_bcv_manual Indica si la tasa mostrada fue fijada a mano */
+/** @var array{usd:?float,fecha:?string} $tasa_bcv_manual_guardada Tasa manual almacenada */
+/** @var float|null $tasa_bcv_referencia Última tasa conocida para validar la manual */
 
 // ==========================================
 // VISTA: Compras (index)
 // ==========================================
 // Solo muestra los datos. No hace consultas.
 $tasa_bcv_vis = isset($tasa_bcv) && (float)$tasa_bcv > 0 ? (float)$tasa_bcv : 0.0;
+$tasa_bcv_es_manual = !empty($tasa_bcv_manual);
+$tasa_manual_guardada_vis = isset($tasa_bcv_manual_guardada['usd']) && (float)$tasa_bcv_manual_guardada['usd'] > 0
+    ? (float)$tasa_bcv_manual_guardada['usd']
+    : 0.0;
+$tasa_bcv_ref_vis = isset($tasa_bcv_referencia) && (float)$tasa_bcv_referencia > 0
+    ? (float)$tasa_bcv_referencia
+    : 0.0;
 $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
 ?>
 <!-- Encabezado -->
@@ -103,7 +113,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
             </div>
             <div>
                 <div class="widget-label">Invertido (Mes)</div>
-                <div class="widget-value"><?php echo $tasa_bcv_vis > 0
+                <div class="widget-value" id="widgetInvertidoMes" data-usd="<?php echo htmlspecialchars((string)(float)$kpis['invertido_mes'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo $tasa_bcv_vis > 0
                     ? jv_formatear_bolivares((float)$kpis['invertido_mes'] * $tasa_bcv_vis)
                     : '$' . number_format((float)$kpis['invertido_mes'], 0); ?></div>
             </div>
@@ -119,12 +129,19 @@ if (!empty($tasa_bcv_fecha)) {
     $tasa_bcv_fecha_legible = $marca_tasa ? date('d/m/Y', $marca_tasa) : '';
 }
 ?>
-<div class="comp-tasa-bcv text-end">
-    <?php if ($tasa_bcv_vis > 0): ?>
-        <i class="bi bi-bank me-1"></i>Tasa BCV: <?php echo jv_formatear_bolivares($tasa_bcv_vis); ?><?php echo $tasa_bcv_fecha_legible !== '' ? ' · ' . $tasa_bcv_fecha_legible : ''; ?>
-    <?php else: ?>
-        <i class="bi bi-bank me-1"></i>Tasa BCV no disponible
-    <?php endif; ?>
+<div class="comp-tasa-bcv-wrap text-end">
+    <span class="comp-tasa-bcv<?php echo $tasa_bcv_es_manual ? ' es-manual' : ''; ?>" id="tasaBcvChip">
+        <i class="bi bi-bank"></i>
+        <span id="tasaBcvLectura">
+            <?php if ($tasa_bcv_vis > 0): ?>
+                Tasa BCV<?php echo $tasa_bcv_es_manual ? ' (manual)' : ''; ?>:
+                <strong><?php echo jv_formatear_bolivares($tasa_bcv_vis, 2); ?></strong><?php echo $tasa_bcv_fecha_legible !== '' ? ' &middot; ' . $tasa_bcv_fecha_legible : ''; ?>
+            <?php else: ?>
+                Tasa BCV no disponible
+            <?php endif; ?>
+        </span>
+        <button type="button" class="comp-tasa-bcv-edit" data-bs-toggle="modal" data-bs-target="#modalTasaBcv" aria-label="Fijar tasa BCV" data-tooltip="Fijar tasa BCV"><i class="bi bi-pencil"></i></button>
+    </span>
 </div>
 
 <!-- Solicitudes de reposición pendientes (integradas en Compras) -->
@@ -238,7 +255,7 @@ if (!empty($tasa_bcv_fecha)) {
                                 </div>
                             </td>
                             <td class="td-total text-end" data-label="Total">
-                                <span class="total-monto"><?php echo $tasa_bcv_vis > 0
+                                <span class="total-monto" data-usd="<?php echo htmlspecialchars((string)(float)$compra['total'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo $tasa_bcv_vis > 0
                                     ? jv_formatear_bolivares((float)$compra['total'] * $tasa_bcv_vis)
                                     : '$' . number_format((float)$compra['total'], 2); ?></span>
                             </td>
@@ -763,17 +780,74 @@ if (!empty($tasa_bcv_fecha)) {
                         <span>TOTAL</span>
                         <span class="text-end fw-bold fs-5" id="detalleCompraTotal">$0.00</span>
                     </div>
-                    <?php if ($tasa_bcv_vis > 0): ?>
-                        <div class="detalle-compra-tasa">
-                            Montos convertidos a Bs. con la tasa BCV de <?php echo jv_formatear_bolivares($tasa_bcv_vis); ?><?php echo $tasa_bcv_fecha_legible !== '' ? ' del ' . $tasa_bcv_fecha_legible : ''; ?>
-                        </div>
-                    <?php endif; ?>
+                    <div class="detalle-compra-tasa<?php echo $tasa_bcv_vis > 0 ? '' : ' d-none'; ?>" id="detalleCompraTasa">
+                        <?php if ($tasa_bcv_vis > 0): ?>
+                            Montos convertidos a Bs. con la tasa BCV de <?php echo jv_formatear_bolivares($tasa_bcv_vis, 2); ?><?php echo $tasa_bcv_fecha_legible !== '' ? ' del ' . $tasa_bcv_fecha_legible : ''; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
 
             <div class="jv-modal-footer">
                 <button type="button" class="btn btn-jv-danger" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cerrar</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     TASA BCV MANUAL (prioridad sobre la consulta automática)
+     ============================================================ -->
+<div class="modal fade" id="modalTasaBcv" tabindex="-1" aria-labelledby="modalTasaBcvTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-jv">
+            <form method="post" action="<?php echo APP_URL_BASE; ?>index.php?url=compras/tasa_manual" class="m-0">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf, ENT_QUOTES); ?>">
+
+                <div class="jv-modal-header">
+                    <h5 id="modalTasaBcvTitulo"><i class="bi bi-bank me-2"></i>Tasa BCV</h5>
+                </div>
+
+                <div class="modal-body jv-modal-body">
+                    <p class="small text-secondary mb-3">
+                        La tasa manual tiene prioridad sobre la consulta automática al BCV.
+                        Al guardarla se aplica de inmediato a todos los montos en bolívares;
+                        usa «Volver a automática» para retomar la tasa oficial.
+                    </p>
+
+                    <label for="tasa_manual" class="form-label small fw-bold">Tasa USD &rarr; VES</label>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">Bs.</span>
+                        <input type="text" class="form-control" id="tasa_manual" name="tasa_manual"
+                               inputmode="decimal" autocomplete="off" required
+                               placeholder="<?php echo $tasa_bcv_vis > 0 ? htmlspecialchars(number_format($tasa_bcv_vis, 2, ',', '.'), ENT_QUOTES) : '897,54'; ?>"
+                               value="<?php echo $tasa_manual_guardada_vis > 0 ? htmlspecialchars(number_format($tasa_manual_guardada_vis, 2, ',', '.'), ENT_QUOTES) : ''; ?>">
+                    </div>
+
+                    <div class="tasa-manual-referencia">
+                        <?php if ($tasa_bcv_ref_vis > 0): ?>
+                            <i class="bi bi-info-circle me-1"></i>Última referencia: <strong id="tasaBcvReferencia"><?php echo jv_formatear_bolivares($tasa_bcv_ref_vis, 2); ?></strong>.
+                            Solo se aceptan valores dentro del &plusmn;20% de esa referencia.
+                        <?php else: ?>
+                            <i class="bi bi-info-circle me-1"></i>No hay tasa de referencia: se guardará sin comparación.
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="jv-modal-footer justify-content-between">
+                    <div>
+                        <?php if ($tasa_manual_guardada_vis > 0): ?>
+                            <button type="submit" name="accion_tasa" value="automatica" formnovalidate class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Volver a automática
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-jv-danger" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
+                        <button type="submit" name="accion_tasa" value="guardar" class="btn btn-jv-success"><i class="bi bi-check-lg me-1"></i>Guardar tasa</button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>

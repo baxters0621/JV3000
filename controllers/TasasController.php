@@ -35,6 +35,21 @@ class TasasController extends Controller
      */
     public function obtener(): void
     {
+        // La tasa manual tiene prioridad sobre la caché y la API externa.
+        $manual = jv_tasa_bcv_manual();
+        if ($manual['usd'] !== null) {
+            $this->json([
+                'ok'          => true,
+                'usd_oficial' => $manual['usd'],
+                'eur_oficial' => null,
+                'fecha'       => $manual['fecha'],
+                'fuente'      => 'Manual',
+                'cache'       => false,
+                'manual'      => true,
+            ]);
+            return;
+        }
+
         $cacheFile = self::CACHE_DIR . '/tasas_bcv.json';
 
         // Intentar leer cache

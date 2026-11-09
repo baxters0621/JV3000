@@ -282,6 +282,9 @@ class ComprasController extends Controller
             'iva_pct'             => $iva_pct,
             'tasa_bcv'            => $tasa_bcv['usd'],
             'tasa_bcv_fecha'      => $tasa_bcv['fecha'],
+            'tasa_bcv_manual'     => $tasa_bcv['manual'],
+            'tasa_bcv_manual_guardada' => jv_tasa_bcv_manual(),
+            'tasa_bcv_referencia' => jv_tasa_bcv_referencia(),
             'es_admin'            => Security::esAdmin(),
             'flash'               => $this->consumeFlash(),
             'csrf'                => Security::generateToken(),
@@ -331,11 +334,131 @@ class ComprasController extends Controller
         $tasa_bcv = jv_tasa_bcv();
 
         $this->json([
-            'success'  => true,
-            'tasa_bcv' => $tasa_bcv['usd'],
-            'compra'   => $detalle['compra'],
-            'items'    => $detalle['items'],
+            'success'        => true,
+            'tasa_bcv'       => $tasa_bcv['usd'],
+            'tasa_bcv_fecha' => $tasa_bcv['fecha'],
+            'compra'         => $detalle['compra'],
+            'items'          => $detalle['items'],
         ]);
+    }
+
+    /**
+     * Fija o retira la tasa BCV manual.
+     *
+     * La tasa manual tiene prioridad sobre la API y el caché. Al guardarla
+     * se invalida cache/tasas_bcv.json y se responde JSON al AJAX para que
+     * la interfaz actualice la tasa y los montos sin recargar la página.
+     *
+     * @return void
+     */
+    public function tasa_manual(): void
+    {
+        Security::verificarPermisoCarga();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('compras');
+        }
+
+        $es_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
+
+        if (($_POST['accion_tasa'] ?? '') === 'automatica') {
+            setConfig('tasa_bcv_manual', '');
+            setConfig('tasa_bcv_manual_fecha', '');
+            jv_limpiar_cache_tasa_bcv();
+            registrarAuditoria('Tasa BCV manual retirada', 'Se vuelve a la tasa automática.');
+
+            $automatica = $es_ajax ? jv_tasa_bcv() : ['usd' => null, 'fecha' => null];
+            $this->responderTasaManual(
+                true,
+                $automatica['usd'],
+                $automatica['fecha'],
+                false,
+                'Tasa BCV automática restablecida.',
+                $es_ajax
+            );
+            return;
+        }
+
+        $valor = trim((string)($_POST['tasa_manual'] ?? ''));
+        $valor = str_replace(',', '.', $valor);
+
+        if ($valor === '' || !is_numeric($valor)) {
+            $this->responderTasaManual(
+                false,
+                null,
+                null,
+                true,
+                'Ingresa una tasa numérica válida.',
+                $es_ajax,
+                422
+            );
+            return;
+        }
+
+        $tasa = round((float)$valor, 4);
+        $error = jv_validar_tasa_manual($tasa, jv_tasa_bcv_referencia());
+        if ($error !== null) {
+            $this->responderTasaManual(false, null, null, true, $error, $es_ajax, 422);
+            return;
+        }
+
+        $fecha = date('Y-m-d H:i:s');
+        setConfig('tasa_bcv_manual', (string)$tasa);
+        setConfig('tasa_bcv_manual_fecha', $fecha);
+
+        // Limpieza inmediata: la próxima consulta no puede devolver la caché vieja.
+        jv_limpiar_cache_tasa_bcv();
+
+        registrarAuditoria('Tasa BCV manual', 'Bs. ' . number_format($tasa, 2, ',', '.'));
+
+        $this->responderTasaManual(
+            true,
+            $tasa,
+            $fecha,
+            true,
+            'Tasa BCV manual guardada: ' . jv_formatear_bolivares($tasa, 2) . '.',
+            $es_ajax
+        );
+    }
+
+    /**
+     * Responde el resultado de fijar o retirar la tasa manual.
+     *
+     * En AJAX devuelve JSON con el nuevo valor; en POST nativo conserva el
+     * flash y la redirección de siempre.
+     *
+     * @param bool        $ok      Indica si la operación fue exitosa.
+     * @param float|null  $tasa    Tasa aplicada.
+     * @param string|null $fecha   Fecha de la tasa (Y-m-d o Y-m-d H:i:s).
+     * @param bool        $manual  Indica si la tasa es manual.
+     * @param string      $mensaje Mensaje para el usuario.
+     * @param bool        $es_ajax Indica si la petición es AJAX.
+     * @param int         $status  Código HTTP para la respuesta JSON.
+     * @return void
+     */
+    private function responderTasaManual(
+        bool $ok,
+        ?float $tasa,
+        ?string $fecha,
+        bool $manual,
+        string $mensaje,
+        bool $es_ajax,
+        int $status = 200
+    ): void {
+        if ($es_ajax) {
+            $this->json([
+                'success'     => $ok,
+                'tasa'        => $tasa,
+                'valor'       => $tasa !== null && $tasa > 0 ? jv_formatear_bolivares($tasa, 2) : null,
+                'valor_input' => $tasa !== null && $tasa > 0 ? number_format($tasa, 2, ',', '.') : '',
+                'fecha'       => $fecha !== null && $fecha !== '' ? date('d/m/Y', strtotime($fecha)) : null,
+                'manual'      => $manual,
+                'message'     => $mensaje,
+            ], $status);
+        }
+
+        $this->flash($ok ? 'success' : 'danger', $mensaje);
+        $this->redirect('compras');
     }
 
     /**

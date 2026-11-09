@@ -22,12 +22,20 @@
             return '$' + Number(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
-        // Formatea un monto en bolívares al estilo venezolano: Bs. 1.234,56.
-        function formatBs(amount) {
-            return 'Bs. ' + new Intl.NumberFormat('es-VE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(Number(amount) || 0);
+        // Formatea un monto en bolívares al estilo venezolano.
+        // Sin decimales por defecto: los céntimos de bolívar no aportan
+        // información y ensanchan las cifras hasta recortar las columnas.
+        function formatBs(amount, decimales) {
+            const opciones = {
+                minimumFractionDigits: Number.isInteger(decimales) ? decimales : 0,
+                maximumFractionDigits: Number.isInteger(decimales) ? decimales : 0
+            };
+            return 'Bs. ' + new Intl.NumberFormat('es-VE', opciones).format(Number(amount) || 0);
+        }
+
+        // Formatea un monto en dólares sin decimales, para el respaldo sin tasa.
+        function formatUsd(amount) {
+            return '$' + new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(amount) || 0);
         }
 
         // ==========================================
@@ -1284,6 +1292,143 @@
             return partes.length === 3 ? partes[2] + '/' + partes[1] + '/' + partes[0] : String(fecha);
         }
 
+        // Refleja la tasa recién guardada en la etiqueta, el widget y la tabla.
+        function aplicarTasaBcv(data) {
+            var tasa = Number(data && data.tasa) > 0 ? Number(data.tasa) : 0;
+            var manual = !!(data && data.manual === true);
+            var chip = document.getElementById('tasaBcvChip');
+            var lectura = document.getElementById('tasaBcvLectura');
+
+            if (chip) {
+                chip.classList.toggle('es-manual', manual && tasa > 0);
+            }
+
+            if (lectura) {
+                lectura.textContent = '';
+                lectura.appendChild(document.createTextNode(
+                    tasa > 0
+                        ? (manual ? 'Tasa BCV (manual): ' : 'Tasa BCV: ')
+                        : 'Tasa BCV no disponible'
+                ));
+                if (tasa > 0) {
+                    var fuerte = document.createElement('strong');
+                    fuerte.textContent = (data && data.valor) || formatBs(tasa, 2);
+                    lectura.appendChild(fuerte);
+                    if (data && data.fecha) {
+                        lectura.appendChild(document.createTextNode(' \u00b7 ' + data.fecha));
+                    }
+                }
+            }
+
+            var invertido = document.getElementById('widgetInvertidoMes');
+            if (invertido) {
+                var usdInvertido = Number(invertido.dataset.usd) || 0;
+                invertido.textContent = tasa > 0 ? formatBs(usdInvertido * tasa) : formatUsd(usdInvertido);
+            }
+
+            var totales = document.querySelectorAll('#tablaEntradas .total-monto[data-usd]');
+            Array.prototype.forEach.call(totales, function(elemento) {
+                var usd = Number(elemento.dataset.usd) || 0;
+                elemento.textContent = tasa > 0 ? formatBs(usd * tasa) : formatUsd(usd);
+            });
+
+            var notaDetalle = document.getElementById('detalleCompraTasa');
+            if (notaDetalle) {
+                if (tasa > 0) {
+                    notaDetalle.textContent = 'Montos convertidos a Bs. con la tasa BCV de '
+                        + formatBs(tasa, 2)
+                        + (data && data.fecha ? ' del ' + data.fecha : '');
+                    notaDetalle.classList.remove('d-none');
+                } else {
+                    notaDetalle.textContent = '';
+                    notaDetalle.classList.add('d-none');
+                }
+            }
+
+            var entrada = document.getElementById('tasa_manual');
+            if (entrada && data && typeof data.valor_input === 'string') {
+                entrada.value = data.valor_input;
+            }
+
+            var referencia = document.getElementById('tasaBcvReferencia');
+            if (referencia && tasa > 0) {
+                referencia.textContent = (data && data.valor) || formatBs(tasa, 2);
+            }
+        }
+
+        // Guarda o retira la tasa por AJAX y actualiza la interfaz sin recargar.
+        (function() {
+            var formTasa = document.querySelector('#modalTasaBcv form');
+            if (!formTasa) return;
+
+            formTasa.addEventListener('submit', function(evento) {
+                evento.preventDefault();
+
+                var botones = formTasa.querySelectorAll('button[type="submit"]');
+                Array.prototype.forEach.call(botones, function(boton) {
+                    boton.disabled = true;
+                });
+
+                var datos = new FormData(formTasa);
+                var accion = evento.submitter && evento.submitter.name === 'accion_tasa'
+                    ? evento.submitter.value
+                    : 'guardar';
+                datos.set('accion_tasa', accion);
+
+                jvFetchConTope(formTasa.action || window.location.href, {
+                    ms: 12000,
+                    init: {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' },
+                        body: datos
+                    }
+                }).then(function(respuesta) {
+                    return respuesta.text().then(function(texto) {
+                        var data;
+                        try {
+                            data = JSON.parse(texto);
+                        } catch (error) {
+                            throw new Error('El servidor devolvió una respuesta inválida.');
+                        }
+                        if (!respuesta.ok || !data.success) {
+                            throw new Error(data.message || data.error || 'NO SE PUDO GUARDAR LA TASA.');
+                        }
+                        return data;
+                    });
+                }).then(function(data) {
+                    aplicarTasaBcv(data);
+
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('modalTasaBcv'));
+                    if (modal) modal.hide();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'TASA ACTUALIZADA',
+                        text: data.message || 'La tasa se actualizó correctamente.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#fff',
+                        color: '#212529'
+                    });
+                }).catch(function(error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: error.jvTope ? 'LA SOLICITUD TARDÓ DEMASIADO' : 'NO SE PUDO GUARDAR LA TASA',
+                        text: error.jvTope
+                            ? 'Verifica la tasa en pantalla antes de reintentar.'
+                            : (error.message || 'Inténtalo de nuevo.'),
+                        background: '#fff',
+                        color: '#212529',
+                        confirmButtonColor: '#DC2626'
+                    });
+                }).finally(function() {
+                    Array.prototype.forEach.call(botones, function(boton) {
+                        boton.disabled = false;
+                    });
+                });
+            });
+        })();
+
         // Abre el modal y carga la cabecera y las líneas de la compra desde el endpoint JSON.
         function abrirDetalleCompra(idCompra) {
             var modalEl = document.getElementById('modalDetalleCompra');
@@ -1359,6 +1504,19 @@
                 document.getElementById('detalleCompraSubtotal').textContent = aBs(compra.subtotal || 0);
                 document.getElementById('detalleCompraIva').textContent = aBs(compra.iva || 0);
                 document.getElementById('detalleCompraTotal').textContent = aBs(compra.total || 0);
+
+                var notaDetalle = document.getElementById('detalleCompraTasa');
+                if (notaDetalle) {
+                    if (tasa > 0) {
+                        notaDetalle.textContent = 'Montos convertidos a Bs. con la tasa BCV de '
+                            + formatBs(tasa, 2)
+                            + (data.tasa_bcv_fecha ? ' del ' + data.tasa_bcv_fecha : '');
+                        notaDetalle.classList.remove('d-none');
+                    } else {
+                        notaDetalle.textContent = '';
+                        notaDetalle.classList.add('d-none');
+                    }
+                }
             }).catch(function(error) {
                 var mensaje = error && error.jvTope
                     ? 'La consulta tard\u00f3 demasiado. Verifica la conexi\u00f3n e int\u00e9ntalo de nuevo.'

@@ -1187,14 +1187,26 @@ if (!function_exists('jv_tasa_bcv')) {
     /**
      * Devuelve la tasa oficial USD→VES del BCV.
      *
-     * Reutiliza el caché de TasasController (cache/tasas_bcv.json, 30 min).
-     * Si venció, consulta ve.dolarapi.com con un tope corto para no retrasar
-     * la página; si la API falla, devuelve el caché viejo o null.
+     * Prioridad absoluta: si existe una tasa fijada manualmente, se devuelve
+     * de inmediato sin consultar la API ni el caché temporal. Si no existe,
+     * reutiliza cache/tasas_bcv.json (30 min) y, al vencer, consulta la API.
+     * Si la API falla, devuelve el caché viejo o null.
      *
-     * @return array{usd:?float,fecha:?string,cache:bool} Tasa, fecha y origen.
+     * @return array{usd:?float,fecha:?string,cache:bool,manual:bool} Tasa, fecha y origen.
      */
     function jv_tasa_bcv(): array
     {
+        // 1. La tasa manual manda sobre la API y sobre cualquier caché vieja.
+        $manual = jv_tasa_bcv_manual();
+        if ($manual['usd'] !== null) {
+            return [
+                'usd'    => $manual['usd'],
+                'fecha'  => $manual['fecha'],
+                'cache'  => false,
+                'manual' => true,
+            ];
+        }
+
         $raiz = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__);
         $archivo_cache = $raiz . '/cache/tasas_bcv.json';
         $ttl = 1800;
@@ -1216,6 +1228,7 @@ if (!function_exists('jv_tasa_bcv')) {
                 'usd'   => (float)$cache['usd_oficial'],
                 'fecha' => (string)($cache['fecha'] ?? ''),
                 'cache' => true,
+                'manual' => false,
             ];
         }
 
@@ -1232,18 +1245,119 @@ if (!function_exists('jv_tasa_bcv')) {
                 'timestamp'   => time(),
             ]), LOCK_EX);
 
-            return ['usd' => $usd, 'fecha' => date('Y-m-d'), 'cache' => false];
+            return ['usd' => $usd, 'fecha' => date('Y-m-d'), 'cache' => false, 'manual' => false];
         }
 
+        // Sin internet: se usa el caché viejo si existe.
         if ($cache && !empty($cache['usd_oficial'])) {
             return [
                 'usd'   => (float)$cache['usd_oficial'],
                 'fecha' => (string)($cache['fecha'] ?? ''),
                 'cache' => true,
+                'manual' => false,
             ];
         }
 
-        return ['usd' => null, 'fecha' => null, 'cache' => false];
+        return ['usd' => null, 'fecha' => null, 'cache' => false, 'manual' => false];
+    }
+}
+
+if (!function_exists('jv_limpiar_cache_tasa_bcv')) {
+    /**
+     * Invalida el caché temporal de la tasa BCV.
+     *
+     * Se ejecuta al guardar o retirar la tasa manual para que la siguiente
+     * lectura no devuelva el valor viejo de cache/tasas_bcv.json.
+     *
+     * @return void
+     */
+    function jv_limpiar_cache_tasa_bcv(): void
+    {
+        $raiz = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__);
+        $archivo_cache = $raiz . '/cache/tasas_bcv.json';
+        if (is_file($archivo_cache)) {
+            @unlink($archivo_cache);
+        }
+    }
+}
+
+if (!function_exists('jv_tasa_bcv_manual')) {
+    /**
+     * Devuelve la tasa BCV fijada manualmente (respaldo sin internet).
+     *
+     * @return array{usd:?float,fecha:?string} Tasa manual y su fecha (Y-m-d).
+     */
+    function jv_tasa_bcv_manual(): array
+    {
+        $valor = trim(getConfig('tasa_bcv_manual', ''));
+        if ($valor === '' || !is_numeric($valor) || (float)$valor <= 0) {
+            return ['usd' => null, 'fecha' => null];
+        }
+
+        $marca = trim(getConfig('tasa_bcv_manual_fecha', ''));
+        return [
+            'usd'   => (float)$valor,
+            'fecha' => $marca !== '' ? substr($marca, 0, 10) : date('Y-m-d'),
+        ];
+    }
+}
+
+if (!function_exists('jv_tasa_bcv_referencia')) {
+    /**
+     * Última referencia conocida para validar una tasa manual.
+     *
+     * Usa el caché oficial (aunque esté vencido) y, si no existe, la última
+     * tasa manual guardada.
+     *
+     * @return float|null Tasa de referencia o null si no hay ninguna.
+     */
+    function jv_tasa_bcv_referencia(): ?float
+    {
+        $raiz = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__);
+        $archivo_cache = $raiz . '/cache/tasas_bcv.json';
+        if (is_file($archivo_cache)) {
+            $cache = json_decode((string)@file_get_contents($archivo_cache), true);
+            if (is_array($cache) && !empty($cache['usd_oficial'])) {
+                return (float)$cache['usd_oficial'];
+            }
+        }
+
+        return jv_tasa_bcv_manual()['usd'];
+    }
+}
+
+if (!function_exists('jv_validar_tasa_manual')) {
+    /**
+     * Valida una tasa ingresada a mano contra la última referencia.
+     *
+     * Evita que un error de tipeo (por ejemplo 700 cuando la referencia es
+     * 800) se guarde como tasa de trabajo.
+     *
+     * @param float      $tasa       Tasa propuesta.
+     * @param float|null $referencia Última tasa conocida.
+     * @param float      $margen     Desviación máxima permitida (0.20 = 20%).
+     * @return string|null Mensaje de error, o null si es válida.
+     */
+    function jv_validar_tasa_manual(float $tasa, ?float $referencia, float $margen = 0.20): ?string
+    {
+        if ($tasa <= 0) {
+            return 'La tasa debe ser mayor que cero.';
+        }
+        if ($tasa > 100000) {
+            return 'La tasa ingresada está fuera de rango.';
+        }
+        if ($referencia === null || $referencia <= 0) {
+            return null;
+        }
+
+        $desviacion = abs($tasa - $referencia) / $referencia;
+        if ($desviacion > $margen) {
+            return 'La tasa ' . jv_formatear_bolivares($tasa, 2)
+                . ' se aleja más del ' . (int)round($margen * 100) . '% de la última referencia ('
+                . jv_formatear_bolivares($referencia, 2) . '). Verifica el valor.';
+        }
+
+        return null;
     }
 }
 
@@ -1291,11 +1405,13 @@ if (!function_exists('jv_formatear_bolivares')) {
     /**
      * Formatea un monto en bolívares con el estilo venezolano.
      *
-     * @param float $monto Monto en VES.
-     * @return string Ejemplo: "Bs. 1.234,56".
+     * @param float $monto     Monto en VES.
+     * @param int   $decimales Decimales a mostrar (0 por defecto: los céntimos
+     *                         de bolívar no aportan información útil).
+     * @return string Ejemplo: "Bs. 1.234" o "Bs. 897,54".
      */
-    function jv_formatear_bolivares(float $monto): string
+    function jv_formatear_bolivares(float $monto, int $decimales = 0): string
     {
-        return 'Bs. ' . number_format($monto, 2, ',', '.');
+        return 'Bs. ' . number_format($monto, $decimales, ',', '.');
     }
 }
