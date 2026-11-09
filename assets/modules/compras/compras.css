@@ -2092,7 +2092,14 @@
 
 #modalDetalleCompra .jv-modal-header {
     background: #1E3A5F !important; /* Azul oscuro institucional */
+    color: #fff !important;
     border-bottom: 2px solid #e2e8f0 !important;
+}
+
+#modalDetalleCompra .jv-modal-header .bi {
+    color: #fff !important;
+    font-size: 1.35rem !important;
+    opacity: .92;
 }
 
 #modalDetalleCompra .detalle-compra-tabla thead th {
