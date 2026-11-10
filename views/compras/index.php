@@ -112,8 +112,8 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
                 <i class="bi bi-<?php echo $tasa_bcv_vis > 0 ? 'cash-stack' : 'currency-dollar'; ?>"></i>
             </div>
             <div>
-                <div class="widget-label">Invertido (Mes)</div>
-                <div class="widget-value" id="widgetInvertidoMes" data-usd="<?php echo htmlspecialchars((string)(float)$kpis['invertido_mes'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo format_bs((float)$kpis['invertido_mes'], $tasa_bcv_vis ?: null); ?></div>
+                <div class="widget-label">Pagado (Mes)</div>
+                <div class="widget-value" id="widgetPagadoMes" data-usd="<?php echo htmlspecialchars((string)(float)$kpis['pagado_mes'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo format_bs((float)$kpis['pagado_mes'], $tasa_bcv_vis ?: null); ?></div>
             </div>
         </div>
     </div>

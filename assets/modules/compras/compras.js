@@ -1901,10 +1901,10 @@
                 }
             }
 
-            var invertido = document.getElementById('widgetInvertidoMes');
-            if (invertido) {
-                var usdInvertido = Number(invertido.dataset.usd) || 0;
-                invertido.textContent = formatBs(usdInvertido, tasa);
+            var pagado = document.getElementById('widgetPagadoMes');
+            if (pagado) {
+                var usdPagado = Number(pagado.dataset.usd) || 0;
+                pagado.textContent = formatBs(usdPagado, tasa);
             }
 
             var totales = document.querySelectorAll('#tablaEntradas .total-monto[data-usd]');

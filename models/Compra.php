@@ -195,25 +195,24 @@ class Compra extends Model
      * KPIs de la cabecera del tablero de compras.
      *
      * Calcula el total de compras activas, las pendientes de pago y el
-     * monto invertido en el mes en curso.
+     * dinero efectivamente pagado en el mes en curso.
      *
-     * @return array ['total_compras'=>int, 'por_pagar'=>int, 'invertido_mes'=>float].
+     * @return array ['total_compras'=>int, 'por_pagar'=>int, 'pagado_mes'=>float].
      */
     public function kpis(): array
     {
         $total = (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM compras WHERE status = 'Activa'")['t'] ?? 0);
         $por_pagar = (int)($this->db->fetchOne("SELECT COUNT(*) as t FROM compras WHERE status = 'Activa' AND status_pago IN ('Pendiente', 'Parcial')")['t'] ?? 0);
         $mes = $this->db->fetchOne(
-            "SELECT COALESCE(SUM(c.total),0) as t FROM compras c
-             WHERE c.fecha_compra >= DATE_FORMAT(CURDATE(),'%Y-%m-01')
-               AND c.fecha_compra < DATE_FORMAT(CURDATE() + INTERVAL 1 MONTH,'%Y-%m-01')
-               AND c.status = 'Activa'"
+            "SELECT COALESCE(SUM(p.monto),0) as t FROM pagos_compra p
+             WHERE p.fecha_pago >= DATE_FORMAT(CURDATE(),'%Y-%m-01')
+               AND p.fecha_pago < DATE_FORMAT(CURDATE() + INTERVAL 1 MONTH,'%Y-%m-01')"
         );
 
         return [
             'total_compras' => $total,
             'por_pagar'     => $por_pagar,
-            'invertido_mes' => (float)($mes['t'] ?? 0),
+            'pagado_mes'    => (float)($mes['t'] ?? 0),
         ];
     }
 

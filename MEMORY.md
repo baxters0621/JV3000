@@ -43,6 +43,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Compras / Teléfono del proveedor (2026-11-10): el modal captura solo el número nacional (`412-486-2167`) con límites por país y validación en servidor (Venezuela: 10 dígitos sin 0 inicial); `formatearTelefono()` muestra `+58 412-555-0101`. No depende del `utilsScript` remoto.
 
+- Compras / Pagado (Mes) (2026-11-10): la cabecera de Compras muestra `pagado_mes`, suma `pagos_compra.monto` del mes (no `compras.total`) y el widget es `widgetPagadoMes`; refleja dinero efectivamente pagado. Con los datos actuales sigue en $1,969.68 porque los pagos coinciden con las compras. Sin cambios de BD; el POST de pago recarga la página.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.
