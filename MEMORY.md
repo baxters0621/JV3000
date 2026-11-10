@@ -60,6 +60,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Salidas / tarjeta de venta (2026-11-10): la columna Productos en vista angosta muestra solo nombres y el botón «Ver detalle»; se retiraron los distintivos ×N (.prod-cant) y se mantiene «+N más». Las cantidades siguen en el modal de detalle.
 - Nota de Entrega / Totales (2026-11-10): el documento muestra solo dos líneas, «Subtotal» y «MONTO TOTAL» en rojo; el IVA se sigue calculando en `NotaEntrega::armarNota()` pero su renglón ya no se imprime. En regalías el aviso fiscal va como distintivo `.iva-exento` junto a la etiqueta Subtotal, sin fila extra. CSS `?v=7`; retirada la regla `.totals .row.iva` y la leyenda de tasa BCV bajo los totales.
 
+- Estadísticas / Fase 1 (2026-11-10): filtros globales (periodo/rango + categoría con subárbol por `categorias.ruta` + proveedor) en `Estadistica::obtenerDatos(periodo, desde, hasta, categoria, proveedor)`; KPIs Ventas/Margen %/Unidades+ticket/Compras, series ventas-compras-margen, dona por categoría, Top 10 y rentabilidad paginada con costo real del lote (`COALESCE(l.precio_costo,p.precio_costo)`). Endpoint `estadisticas/rentabilidad` (XHR + `puedeVender()`). Chart.js ya instalado; barras de ranking en CSS. Sin cambios de BD.
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

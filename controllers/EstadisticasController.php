@@ -41,11 +41,13 @@ class EstadisticasController extends Controller
         $desde = $filtros_periodo['desde'];
         $hasta = $filtros_periodo['hasta'];
 
-        $datos   = $modelo->obtenerDatos($periodo, $desde, $hasta);
+        $datos   = $modelo->obtenerDatos($periodo, $desde, $hasta, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
         $periodos = $modelo->periodos();
+        $categorias = (new Categoria())->listar();
+        $proveedores = (new Proveedor())->listar();
 
         // Validar que $datos tenga las keys esperadas; si no, usar valores por defecto
-        $expectedKeys = ['periodo', 'etiqueta', 'mensaje', 'desde', 'hasta', 'ventas', 'compras', 'ganancia', 'ventas_ant', 'compras_ant', 'pct_ventas', 'pct_compras', 'pct_ganancia', 'labels_ventas', 'data_ventas', 'labels_compras', 'data_compras', 'top_labels', 'top_cant'];
+        $expectedKeys = ['periodo', 'etiqueta', 'mensaje', 'desde', 'hasta', 'ventas', 'compras', 'ganancia', 'unidades', 'operaciones', 'ticket', 'margen_pct', 'ventas_ant', 'compras_ant', 'ganancia_ant', 'unidades_ant', 'pct_ventas', 'pct_compras', 'pct_ganancia', 'pct_unidades', 'labels_ventas', 'data_ventas', 'labels_compras', 'data_compras', 'data_margen', 'cat_labels', 'cat_data', 'top_rows', 'top_labels', 'top_cant', 'rent_rows', 'rent_total', 'rent_pagina', 'rent_paginas'];
         $hasAllKeys = count(array_intersect($expectedKeys, array_keys($datos))) === count($expectedKeys);
         if (!$hasAllKeys) {
             error_log('Los datos calculados para Estadísticas no contienen todas las columnas esperadas.');
@@ -63,15 +65,25 @@ class EstadisticasController extends Controller
             'csrf'          => Security::generateToken(),
             'flash'         => $flash,
             'periodos'      => $periodos,
+            'categorias'    => $categorias,
+            'proveedores'   => $proveedores,
             'datos'         => $datos,
             'error_fechas'  => $filtros_periodo['error'],
             'js_config'     => [
-                'periodo'   => $datos['periodo'],
-                'labels'    => $datos['labels_ventas'],
-                'ventas'    => $datos['data_ventas'],
-                'compras'   => $datos['data_compras'],
-                'topLabels' => $datos['top_labels'],
-                'topCant'   => $datos['top_cant'],
+                'periodo'     => $datos['periodo'],
+                'labels'      => $datos['labels_ventas'],
+                'ventas'      => $datos['data_ventas'],
+                'compras'     => $datos['data_compras'],
+                'margenes'    => $datos['data_margen'],
+                'catLabels'   => $datos['cat_labels'],
+                'catData'     => $datos['cat_data'],
+                'topRows'     => $datos['top_rows'],
+                'topLabels'   => $datos['top_labels'],
+                'topCant'     => $datos['top_cant'],
+                'rentRows'    => $datos['rent_rows'],
+                'rentTotal'   => $datos['rent_total'],
+                'rentPagina'  => $datos['rent_pagina'],
+                'rentPaginas' => $datos['rent_paginas'],
             ],
         ]);
     }
@@ -106,7 +118,9 @@ class EstadisticasController extends Controller
         $statisticsData = (new Estadistica())->obtenerDatos(
             $filtros_periodo['periodo'],
             $filtros_periodo['desde'],
-            $filtros_periodo['hasta']
+            $filtros_periodo['hasta'],
+            $filtros_periodo['categoria'],
+            $filtros_periodo['proveedor']
         );
 
         $this->json([
@@ -119,23 +133,78 @@ class EstadisticasController extends Controller
             'ventas'       => (float)$statisticsData['ventas'],
             'compras'      => (float)$statisticsData['compras'],
             'ganancia'     => (float)$statisticsData['ganancia'],
+            'unidades'     => (float)$statisticsData['unidades'],
+            'operaciones'  => (int)$statisticsData['operaciones'],
+            'ticket'       => (float)$statisticsData['ticket'],
+            'margen_pct'   => $statisticsData['margen_pct'],
             'ventas_ant'   => (float)$statisticsData['ventas_ant'],
             'compras_ant'  => (float)$statisticsData['compras_ant'],
             'pct_ventas'   => $statisticsData['pct_ventas'],
             'pct_compras'  => $statisticsData['pct_compras'],
             'pct_ganancia' => $statisticsData['pct_ganancia'],
+            'pct_unidades' => $statisticsData['pct_unidades'],
             'labels'       => $statisticsData['labels_ventas'],
             'data_ventas'  => $statisticsData['data_ventas'],
             'data_compras' => $statisticsData['data_compras'],
+            'data_margen'  => $statisticsData['data_margen'],
+            'catLabels'    => $statisticsData['cat_labels'],
+            'catData'      => $statisticsData['cat_data'],
+            'topRows'      => $statisticsData['top_rows'],
             'topLabels'    => $statisticsData['top_labels'],
             'topCant'      => $statisticsData['top_cant'],
+            'rentRows'     => $statisticsData['rent_rows'],
+            'rentTotal'    => (int)$statisticsData['rent_total'],
+            'rentPagina'   => (int)$statisticsData['rent_pagina'],
+            'rentPaginas'  => (int)$statisticsData['rent_paginas'],
         ]);
     }
 
     /**
-     * Valida los filtros de período compartidos por la página y el refresco AJAX.
+     * Endpoint AJAX de la tabla de rentabilidad paginada.
      *
-     * @return array{periodo: string, desde: string, hasta: string, error: string}
+     * Recalcula la ventana con los mismos filtros globales y devuelve una
+     * página de productos ordenados por margen real (costo del lote vendido).
+     *
+     * @return void
+     */
+    public function rentabilidad(): void
+    {
+        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+        if (!Security::puedeVender()) {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+
+        $filtros = $this->filtrosPeriodo();
+        if ($filtros['error'] !== '') {
+            $this->json([
+                'success' => false,
+                'error'   => 'rango_invalido',
+                'mensaje' => $filtros['error'],
+            ], 422);
+        }
+
+        $pagina = (int)$this->parametroGet('pagina');
+        $modelo = new Estadistica();
+        $ventana = $modelo->resolverVentana($filtros['periodo'], $filtros['desde'], $filtros['hasta']);
+        $rentabilidad = $modelo->obtenerRentabilidad($ventana, $filtros['categoria'], $filtros['proveedor'], $pagina);
+
+        $this->json([
+            'success'     => true,
+            'filas'       => $rentabilidad['filas'],
+            'total'       => (int)$rentabilidad['total'],
+            'pagina'      => (int)$rentabilidad['pagina'],
+            'paginas'     => (int)$rentabilidad['paginas'],
+            'por_pagina'  => (int)$rentabilidad['por_pagina'],
+            'etiqueta'    => $ventana['etiqueta'],
+        ]);
+    }
+
+    /**
+     * Valida los filtros compartidos por la página y el refresco AJAX.
+     *
+     * @return array{periodo: string, desde: string, hasta: string, categoria: int, proveedor: int, error: string}
      */
     private function filtrosPeriodo(): array
     {
@@ -145,6 +214,8 @@ class EstadisticasController extends Controller
             : 'trimestre';
         $desde = $this->parametroGet('desde');
         $hasta = $this->parametroGet('hasta');
+        $categoria = max(0, (int)$this->parametroGet('categoria'));
+        $proveedor = max(0, (int)$this->parametroGet('proveedor'));
         $error = '';
 
         if ($periodo === 'rango') {
@@ -159,14 +230,14 @@ class EstadisticasController extends Controller
                 $error = 'Las estadísticas no pueden consultar fechas futuras.';
             }
             if ($error !== '') {
-                return ['periodo' => 'trimestre', 'desde' => '', 'hasta' => '', 'error' => $error];
+                return ['periodo' => 'trimestre', 'desde' => '', 'hasta' => '', 'categoria' => $categoria, 'proveedor' => $proveedor, 'error' => $error];
             }
         } else {
             $desde = '';
             $hasta = '';
         }
 
-        return ['periodo' => $periodo, 'desde' => $desde, 'hasta' => $hasta, 'error' => ''];
+        return ['periodo' => $periodo, 'desde' => $desde, 'hasta' => $hasta, 'categoria' => $categoria, 'proveedor' => $proveedor, 'error' => ''];
     }
 
     /**

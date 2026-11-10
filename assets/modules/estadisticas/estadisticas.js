@@ -1,3 +1,12 @@
+/**
+ * Estadísticas: KPIs, gráficos y tablas del panel comercial.
+ *
+ * Los datos iniciales llegan en window.JV_CONFIG (js_config). El refresco
+ * automático y la paginación consultan los endpoints JSON del controlador
+ * sin recargar la página.
+ */
+(function () {
+    'use strict';
 
     Chart.defaults.color = '#6C757D';
     Chart.defaults.borderColor = 'rgba(222,226,230,0.5)';
@@ -6,27 +15,39 @@
     const animacionGrafico = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         ? false
         : { duration: 350 };
+    const coloresCategoria = ['#0f2a4c', '#c12738', '#0e7490', '#16A34A', '#EA580C', '#7C3AED', '#CA8A04', '#DB2777'];
 
-    // Obtiene la tasa configurada por el backend.
+    let chartFlujo = null;
+    let chartCategoria = null;
+    let refreshEnCurso = false;
+    let paginaRentabilidad = 1;
+    let paginasRentabilidad = 1;
+
+    // ---------- HELPERS ----------
     function tasaBcvActual() {
         const tasa = Number(cfg.tasaBcv);
         return Number.isFinite(tasa) && tasa > 0 ? tasa : 0;
     }
 
-    // Prefiere la tasa de la respuesta AJAX y cae a la tasa de la página.
     function tasaDeRespuesta(response) {
         const tasa = Number(response && response.tasa_bcv);
         return Number.isFinite(tasa) && tasa > 0 ? tasa : tasaBcvActual();
     }
 
-    // ---------- HELPERS DE ESTADO ----------
-    // Indica si una serie numérica tiene al menos un valor distinto de cero
-    // (decide si los gráficos muestran el estado vacío).
     function tieneDatos(serie) {
-        return Array.isArray(serie) && serie.some(v => Number(v) !== 0);
+        return Array.isArray(serie) && serie.some(valor => Number(valor) !== 0);
     }
 
-    // Muestra u oculta el mensaje "sin datos" superpuesto a un canvas según existan datos.
+    function escaparHtml(texto) {
+        return String(texto ?? '').replace(/[&<>"']/g, caracter => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[caracter]);
+    }
+
+    function formatearNumero(valor) {
+        return Number(valor || 0).toLocaleString('es-VE', { maximumFractionDigits: 0 });
+    }
+
     function toggleEmptyCanvas(canvasId, emptyId, hasData) {
         const empty = document.getElementById(emptyId);
         if (!empty) return;
@@ -35,39 +56,37 @@
         empty.classList.toggle('d-none', hasData);
     }
 
-    // Explica el periodo sin operaciones sin confundirlo con falta de datos guardados.
-    function toggleAvisoSinDatos(statisticsResponse) {
+    function toggleAvisoSinDatos(response) {
         const aviso = document.getElementById('aviso-sin-datos');
         if (!aviso) return;
-        const hayMovimiento = Number(statisticsResponse.ventas) !== 0 || Number(statisticsResponse.compras) !== 0;
+        const hayMovimiento = Number(response.ventas) !== 0 || Number(response.compras) !== 0;
         aviso.classList.toggle('d-none', hayMovimiento);
         if (hayMovimiento) return;
 
         const titulo = document.getElementById('aviso-sin-datos-titulo');
         const detalle = document.getElementById('aviso-sin-datos-detalle');
-        const ventasAnteriores = Number(statisticsResponse.ventas_ant) || 0;
-        const comprasAnteriores = Number(statisticsResponse.compras_ant) || 0;
-        if (titulo) titulo.textContent = 'No hay movimientos en ' + (statisticsResponse.etiqueta || 'este período');
+        const ventasAnteriores = Number(response.ventas_ant) || 0;
+        const comprasAnteriores = Number(response.compras_ant) || 0;
+        if (titulo) titulo.textContent = 'No hay movimientos en ' + (response.etiqueta || 'este período');
         if (detalle) {
-            const tasa = tasaDeRespuesta(statisticsResponse);
+            const tasa = tasaDeRespuesta(response);
             detalle.textContent = ventasAnteriores !== 0 || comprasAnteriores !== 0
                 ? 'El período anterior registró ventas de ' + formatBs(ventasAnteriores, tasa) + ' y compras de ' + formatBs(comprasAnteriores, tasa) + '.'
                 : 'Revisa un período más amplio para consultar las operaciones registradas.';
         }
     }
 
-    // ---------- GRÁFICO DE LÍNEAS: VENTAS VS COMPRAS ----------
-    let chartFlujo = null;
-    // Dibuja o redibuja el gráfico de líneas comparando ventas y compras por periodo.
-    // Convierte las series a bolívares cuando hay tasa; si no, conserva USD y lo advierte.
-    function crearChartFlujo(labels, ventas, compras, tasa) {
+    // ---------- GRÁFICO DE LÍNEAS ----------
+    function crearChartFlujo(labels, ventas, compras, margenes, tasa) {
         if (chartFlujo) chartFlujo.destroy();
 
         const tasaUsada = Number(tasa) > 0 ? Number(tasa) : tasaBcvActual();
         const hayTasa = tasaUsada > 0;
         const moneda = hayTasa ? 'Bs.' : 'USD';
-        const ventasGrafico = (Array.isArray(ventas) ? ventas : []).map(valor => hayTasa ? Number(valor) * tasaUsada : Number(valor));
-        const comprasGrafico = (Array.isArray(compras) ? compras : []).map(valor => hayTasa ? Number(valor) * tasaUsada : Number(valor));
+        const convertir = serie => (Array.isArray(serie) ? serie : []).map(valor => hayTasa ? Number(valor) * tasaUsada : Number(valor));
+        const ventasGrafico = convertir(ventas);
+        const comprasGrafico = convertir(compras);
+        const margenGrafico = convertir(margenes);
 
         chartFlujo = new Chart(document.getElementById('chartFlujo'), {
             type: 'line',
@@ -75,15 +94,17 @@
                 labels: labels,
                 datasets: [
                     { label: 'Ventas (' + moneda + ')', data: ventasGrafico, borderColor: '#DC2626', backgroundColor: 'rgba(220,38,38,0.10)', fill: true, tension: 0.32, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#DC2626' },
-                    { label: 'Compras (' + moneda + ')', data: comprasGrafico, borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,0.10)', fill: true, tension: 0.32, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#16A34A' }
+                    { label: 'Compras (' + moneda + ')', data: comprasGrafico, borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,0.08)', fill: true, tension: 0.32, borderWidth: 2, pointRadius: 2, pointBackgroundColor: '#16A34A' },
+                    { label: 'Margen (' + moneda + ')', data: margenGrafico, borderColor: '#0e7490', backgroundColor: 'rgba(14,116,144,0.08)', fill: false, tension: 0.32, borderWidth: 2, borderDash: [6, 4], pointRadius: 2, pointBackgroundColor: '#0e7490' }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: animacionGrafico,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' }, usePointStyle: true, padding: 16 } }
+                    legend: { position: 'bottom', labels: { font: { size: 13, weight: 'bold' }, usePointStyle: true, padding: 14 } }
                 },
                 scales: {
                     y: {
@@ -103,176 +124,344 @@
             }
         });
 
-        return tieneDatos(ventasGrafico) || tieneDatos(comprasGrafico);
+        return tieneDatos(ventasGrafico) || tieneDatos(comprasGrafico) || tieneDatos(margenGrafico);
     }
 
-    // ---------- GRÁFICO DE BARRAS HORIZONTALES: TOP 5 ----------
-    let chartTop = null;
-    // Dibuja o redibuja el gráfico de barras horizontales con el top 5 de productos más vendidos.
-    function crearChartTop(labels, quantities) {
-        if (chartTop) chartTop.destroy();
-        const chartData = (labels && labels.length > 0) ? quantities : [0];
-        const chartLabels = (labels && labels.length > 0) ? labels : ['Sin datos'];
-        chartTop = new Chart(document.getElementById('chartTop'), {
-            type: 'bar',
+    // ---------- DONA POR CATEGORÍA ----------
+    function crearChartCategoria(labels, data, tasa) {
+        if (chartCategoria) chartCategoria.destroy();
+        if (!Array.isArray(labels) || labels.length === 0) return false;
+
+        const tasaUsada = Number(tasa) > 0 ? Number(tasa) : tasaBcvActual();
+        const hayTasa = tasaUsada > 0;
+        const valores = data.map(valor => hayTasa ? Number(valor) * tasaUsada : Number(valor));
+
+        chartCategoria = new Chart(document.getElementById('chartCategoria'), {            type: 'doughnut',
             data: {
-                labels: chartLabels,
+                labels: labels,
                 datasets: [{
-                    label: 'Unidades',
-                    data: chartData,
-                    backgroundColor: ['#c12738', '#d65361', '#df7c87', '#e9a7ae', '#f3d2d5'],
-                    borderRadius: 8,
-                    barThickness: 22
+                    data: valores,
+                    backgroundColor: labels.map((_, indice) => coloresCategoria[indice % coloresCategoria.length]),
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 6
                 }]
             },
             options: {
-                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: animacionGrafico,
+                cutout: '62%',
+                radius: '86%',
                 plugins: {
-                    legend: { display: false },
+                    legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' }, usePointStyle: true, padding: 12, boxWidth: 10 } },
                     tooltip: {
                         callbacks: {
-                            title: (items) => items[0] ? items[0].label : '',
-                            label: (ctx) => ' ' + ctx.parsed.x + ' uds'
-                        }
-                    }
-                },
-                scales: {
-                    x: { beginAtZero: true, grid: { color: 'rgba(222,226,230,0.35)' }, ticks: { precision: 0, font: { size: 12 } } },
-                    y: {
-                        grid: { display: false },
-                        ticks: {
-                            font: { size: 13, weight: 'bold' },
-                            callback: function(value) {
-                                const label = String(this.getLabelForValue(value));
-                                return label.length > 24 ? label.slice(0, 23) + '…' : label;
+                            label: function (contexto) {
+                                const valor = Number(contexto.parsed) || 0;
+                                const total = contexto.dataset.data.reduce((suma, item) => suma + (Number(item) || 0), 0);
+                                const parte = total > 0 ? (valor / total) * 100 : 0;
+                                const monto = hayTasa ? formatBsValue(valor) : '$' + valor.toFixed(2);
+                                return ' ' + contexto.label + ': ' + monto + ' (' + parte.toFixed(1) + '%)';
                             }
                         }
                     }
                 }
             }
         });
+
+        // Recalcula el lienzo tras el primer layout (móvil monta la tarjeta
+        // después de crear el gráfico y Chart.js conserva el tamaño inicial).
+        requestAnimationFrame(() => {
+            if (!chartCategoria) return;
+            chartCategoria.resize();
+            chartCategoria.update('none');
+        });
+
+        return valores.some(valor => Number(valor) !== 0);
     }
 
-    // ---------- ACTUALIZAR INTERFAZ DESDE DATOS ----------
-    // Actualiza los KPI, sellos de comparación y gráficos con los datos obtenidos del servidor.
-    function actualizarUI(statisticsResponse) {
-        if (!statisticsResponse || !statisticsResponse.success) return;
+    // ---------- TABLAS ----------
+    function renderTop(rows) {
+        const cuerpo = document.getElementById('tablaTopCuerpo');
+        const vacio = document.getElementById('vacio-top');
+        if (!cuerpo) return;
 
-        const tasa = tasaDeRespuesta(statisticsResponse);
+        const filas = Array.isArray(rows) ? rows : [];
+        const totalUnidades = filas.reduce((suma, fila) => suma + (Number(fila.unidades) || 0), 0);
+        const maxUnidades = filas.reduce((maximo, fila) => Math.max(maximo, Number(fila.unidades) || 0), 0);
+        cuerpo.innerHTML = filas.map((fila, indice) => {
+            const unidades = Number(fila.unidades) || 0;
+            const parte = totalUnidades > 0 ? (unidades / totalUnidades) * 100 : 0;
+            const ancho = maxUnidades > 0 ? Math.max(2, Math.min(100, (unidades / maxUnidades) * 100)) : 0;
+            return '<tr>' +
+                '<td class="col-puesto">' + (indice + 1) + '</td>' +
+                '<td class="celda-producto"><span class="prod-nombre">' + escaparHtml(fila.nombre_producto) + '</span><span class="prod-sku">' + escaparHtml(fila.sku) + '</span></td>' +
+                '<td class="num">' + formatearNumero(unidades) + '</td>' +
+                '<td class="col-barra"><div class="rank-linea">' +
+                    '<div class="rank-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(parte) + '"><span style="width:' + ancho + '%"></span></div>' +
+                    '<span class="rank-pct">' + parte.toFixed(1).replace('.', ',') + '%</span>' +
+                '</div></td>' +
+            '</tr>';
+        }).join('');
+
+        if (vacio) vacio.classList.toggle('d-none', filas.length > 0);
+    }
+
+    function claseMargen(porcentaje) {
+        if (porcentaje >= 30) return 'margen-alto';
+        if (porcentaje >= 15) return 'margen-medio';
+        return 'margen-bajo';
+    }
+
+    function renderRentabilidad(payload) {
+        const cuerpo = document.getElementById('tablaRentabilidadCuerpo');
+        const vacio = document.getElementById('vacio-rentabilidad');
+        const resumen = document.getElementById('rentResumen');
+        const nav = document.getElementById('paginacionRentabilidad');
+        const indicador = document.getElementById('rentIndicador');
+        if (!cuerpo || !payload) return;
+
+        const tasa = tasaDeRespuesta(payload);
+        const filas = Array.isArray(payload.filas) ? payload.filas : [];
+
+        cuerpo.innerHTML = filas.map(fila => {
+            const margenPct = Number(fila.margen_pct) || 0;
+            const ancho = Math.max(2, Math.min(100, margenPct));
+            return '<tr>' +
+                '<td class="celda-producto"><span class="prod-nombre">' + escaparHtml(fila.nombre_producto) + '</span><span class="prod-sku">' + escaparHtml(fila.sku) + '</span></td>' +
+                '<td class="num">' + formatearNumero(fila.unidades) + '</td>' +
+                '<td class="num col-ingreso">' + formatBs(fila.ingreso, tasa) + '</td>' +
+                '<td class="num importe-margen">' + formatBs(fila.margen, tasa) + '</td>' +
+                '<td class="col-barra"><div class="rank-linea">' +
+                    '<div class="rank-bar rank-bar--margen ' + claseMargen(margenPct) + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(margenPct) + '"><span style="width:' + ancho + '%"></span></div>' +
+                    '<span class="rank-pct">' + margenPct.toFixed(1).replace('.', ',') + '%</span>' +
+                '</div></td>' +
+            '</tr>';
+        }).join('');
+
+        if (vacio) vacio.classList.toggle('d-none', filas.length > 0);
+        paginaRentabilidad = Number(payload.pagina) || 1;
+        paginasRentabilidad = Number(payload.paginas) || 1;
+        if (nav) {
+            nav.dataset.pagina = String(paginaRentabilidad);
+            nav.dataset.paginas = String(paginasRentabilidad);
+            const [anterior, siguiente] = nav.querySelectorAll('button');
+            if (anterior) {
+                anterior.dataset.pagina = String(Math.max(1, paginaRentabilidad - 1));
+                anterior.disabled = paginaRentabilidad <= 1;
+            }
+            if (siguiente) {
+                siguiente.dataset.pagina = String(Math.min(paginasRentabilidad, paginaRentabilidad + 1));
+                siguiente.disabled = paginaRentabilidad >= paginasRentabilidad;
+            }
+        }
+        if (indicador) indicador.textContent = paginaRentabilidad + ' / ' + paginasRentabilidad;
+        if (resumen) {
+            const total = Number(payload.total) || 0;
+            if (total === 0) {
+                resumen.textContent = '0 productos';
+            } else {
+                const desde = (paginaRentabilidad - 1) * (Number(payload.por_pagina) || 20) + 1;
+                const hasta = desde + filas.length - 1;
+                resumen.textContent = 'Mostrando ' + desde + '–' + hasta + ' de ' + total;
+            }
+        }
+    }
+
+    // ---------- ACTUALIZAR INTERFAZ ----------
+    function actualizarUI(response) {
+        if (!response || !response.success) return;
+
+        const tasa = tasaDeRespuesta(response);
         const updateText = (elementId, value) => { const element = document.getElementById(elementId); if (element) element.textContent = value; };
-        updateText('kpi-ventas', formatBs(statisticsResponse.ventas, tasa));
-        updateText('kpi-compras', formatBs(statisticsResponse.compras, tasa));
-        updateText('kpi-ganancia', formatBs(statisticsResponse.ganancia, tasa));
+        updateText('kpi-ventas', formatBs(response.ventas, tasa));
+        updateText('kpi-ganancia', formatBs(response.ganancia, tasa));
+        updateText('kpi-unidades', formatearNumero(response.unidades));
+        updateText('kpi-compras', formatBs(response.compras, tasa));
+        updateText('kpi-operaciones', formatearNumero(response.operaciones) + ' operaciones');
+        updateText('kpi-ticket', 'Ticket promedio ' + formatBs(response.ticket, tasa));
+        updateText('kpi-margen-pct', response.margen_pct === null || response.margen_pct === undefined
+            ? 'Sin ventas en el periodo'
+            : Number(response.margen_pct).toFixed(1).replace('.', ',') + ' % sobre ventas');
 
-        const comparisonPercentages = {
-            'kpi-ventas': statisticsResponse.pct_ventas,
-            'kpi-compras': statisticsResponse.pct_compras,
-            'kpi-ganancia': statisticsResponse.pct_ganancia
+        const comparaciones = {
+            'kpi-ventas': response.pct_ventas,
+            'kpi-ganancia': response.pct_ganancia,
+            'kpi-unidades': response.pct_unidades,
+            'kpi-compras': response.pct_compras
         };
-        for (const [elementId, percentage] of Object.entries(comparisonPercentages)) {
-            const comparisonContainer = document.getElementById(elementId)?.parentElement?.querySelector('.cmp-wrap');
-            if (!comparisonContainer) continue;
-            comparisonContainer.innerHTML = percentage === null || percentage === undefined
-                ? '<span class="cmp-sello cmp-nulo">—</span>'
-                : (percentage >= 0
-                    ? `<span class="cmp-sello cmp-subida" title="Aumento respecto al periodo anterior"><i class="bi bi-arrow-up-right"></i> +${percentage.toFixed(1)}%</span>`
-                    : `<span class="cmp-sello cmp-bajada" title="Descenso respecto al periodo anterior"><i class="bi bi-arrow-down-right"></i> ${percentage.toFixed(1)}%</span>`);
+        for (const [elementId, porcentaje] of Object.entries(comparaciones)) {
+            const contenedor = document.getElementById(elementId)?.parentElement?.querySelector('.cmp-wrap');
+            if (!contenedor) continue;
+            contenedor.innerHTML = porcentaje === null || porcentaje === undefined
+                ? '<span class="cmp-sello cmp-nulo" title="Sin datos en el periodo anterior">—</span>'
+                : (porcentaje >= 0
+                    ? '<span class="cmp-sello cmp-subida" title="Aumento respecto al periodo anterior"><i class="bi bi-arrow-up-right"></i> +' + Number(porcentaje).toFixed(1) + '%</span>'
+                    : '<span class="cmp-sello cmp-bajada" title="Descenso respecto al periodo anterior"><i class="bi bi-arrow-down-right"></i> ' + Number(porcentaje).toFixed(1) + '%</span>');
         }
 
-        updateText('cmp-mensaje-texto', statisticsResponse.mensaje);
-        updateText('cmp-periodo', statisticsResponse.etiqueta);
+        updateText('cmp-mensaje-texto', response.mensaje);
+        updateText('cmp-periodo', response.etiqueta);
 
-        const hayTop = Array.isArray(statisticsResponse.topLabels) && statisticsResponse.topLabels.length > 0;
-
-        const hayFlujo = crearChartFlujo(statisticsResponse.labels, statisticsResponse.data_ventas, statisticsResponse.data_compras, tasa);
+        const hayFlujo = crearChartFlujo(response.labels, response.data_ventas, response.data_compras, response.data_margen, tasa);
         toggleEmptyCanvas('chartFlujo', 'empty-flujo', hayFlujo);
-        crearChartTop(statisticsResponse.topLabels, statisticsResponse.topCant);
-        toggleEmptyCanvas('chartTop', 'empty-top', hayTop);
-        toggleAvisoSinDatos(statisticsResponse);
+        const hayCategoria = crearChartCategoria(response.catLabels, response.catData, tasa);
+        toggleEmptyCanvas('chartCategoria', 'empty-categoria', hayCategoria);
+
+        renderTop(response.topRows);
+        if (paginaRentabilidad === 1) {
+            renderRentabilidad({
+                filas: response.rentRows,
+                total: response.rentTotal,
+                pagina: response.rentPagina,
+                paginas: response.rentPaginas,
+                por_pagina: 20,
+                tasa_bcv: tasa
+            });
+        }
+        toggleAvisoSinDatos(response);
     }
 
-    // ---------- FILTROS: BOTONES DE PERIODO ----------
-    document.querySelectorAll('.btn-filtro-periodo').forEach(periodButton => {
-        periodButton.addEventListener('click', () => {
-            const selectedPeriod = periodButton.dataset.periodo;
-            window.location.href = (window.JV_BASE || '') + 'index.php?url=estadisticas&periodo=' + selectedPeriod;
+    // ---------- FILTROS ----------
+    function parametrosFiltros() {
+        const periodo = document.getElementById('filtro-periodo')?.value || 'trimestre';
+        const parametros = new URLSearchParams({ periodo: periodo });
+        if (periodo === 'rango') {
+            const desde = document.getElementById('desde_f');
+            const hasta = document.getElementById('hasta_f');
+            parametros.set('desde', desde ? desde.value : '');
+            parametros.set('hasta', hasta ? hasta.value : '');
+        }
+        parametros.set('categoria', document.getElementById('filtro-categoria')?.value || '0');
+        parametros.set('proveedor', document.getElementById('filtro-proveedor')?.value || '0');
+        return parametros;
+    }
+
+    const formFiltros = document.getElementById('formFiltrosStats');
+    const filtroPeriodo = document.getElementById('filtro-periodo');
+    const btnRango = document.querySelectorAll('.btn-filtro-periodo');
+
+    btnRango.forEach(boton => {
+        boton.addEventListener('click', () => {
+            if (filtroPeriodo) filtroPeriodo.value = boton.dataset.periodo || 'trimestre';
+            if (formFiltros) formFiltros.submit();
         });
     });
 
-    // ---------- RENDER INICIAL ----------
-    if (cfg.labels) {
-        const hayFlujoInicial = crearChartFlujo(cfg.labels, cfg.ventas, cfg.compras, cfg.tasaBcv);
-        toggleEmptyCanvas('chartFlujo', 'empty-flujo', hayFlujoInicial);
-    }
-    if (cfg.topLabels) {
-        crearChartTop(cfg.topLabels, cfg.topCant);
-        toggleEmptyCanvas('chartTop', 'empty-top', cfg.topLabels.length > 0);
-    }
+    ['desde_f', 'hasta_f'].forEach(id => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener('change', () => {
+            if (filtroPeriodo) filtroPeriodo.value = 'rango';
+        });
+    });
 
-    // ---------- VALIDACIÓN DEL FILTRO POR FECHAS ----------
-    // Valida en el cliente que el rango sea coherente (no vacío, desde <= hasta,
-    // y no futuro) antes de enviar el formulario al servidor.
-    const filtroFechas = document.querySelector('.filtro-fechas');
+    ['filtro-categoria', 'filtro-proveedor'].forEach(id => {
+        const select = document.getElementById(id);
+        if (!select) return;
+        select.addEventListener('change', () => {
+            if (filtroPeriodo && filtroPeriodo.value === 'rango') {
+                const desde = document.getElementById('desde_f');
+                const hasta = document.getElementById('hasta_f');
+                if (!desde?.value || !hasta?.value) {
+                    const aviso = document.getElementById('error-fechas');
+                    if (aviso) {
+                        aviso.textContent = 'Indica Desde y Hasta para aplicar el rango de fechas.';
+                        aviso.classList.remove('d-none');
+                    }
+                    return;
+                }
+            }
+            if (formFiltros) formFiltros.submit();
+        });
+    });
+
     const avisoFechas = document.getElementById('error-fechas');
-    if (filtroFechas) {
-        filtroFechas.addEventListener('submit', (e) => {
+    if (formFiltros) {
+        formFiltros.addEventListener('submit', (evento) => {
+            if (!filtroPeriodo || filtroPeriodo.value !== 'rango') return;
             const desde = document.getElementById('desde_f');
             const hasta = document.getElementById('hasta_f');
             const hoy = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
-            const mostrarError = (texto) => {
+            const mostrarError = texto => {
                 if (avisoFechas) { avisoFechas.textContent = texto; avisoFechas.classList.remove('d-none'); }
             };
 
-            if (!desde.value || !hasta.value) { mostrarError('Indica la fecha Desde y Hasta para filtrar por rango.'); e.preventDefault(); return; }
+            if (!desde.value || !hasta.value) { mostrarError('Indica la fecha Desde y Hasta para filtrar por rango.'); evento.preventDefault(); return; }
             const d = new Date(desde.value + 'T00:00:00');
             const h = new Date(hasta.value + 'T00:00:00');
-            if (d > h) { mostrarError('La fecha Hasta no puede ser anterior a la fecha Desde.'); e.preventDefault(); return; }
-            if (h > hoy) { mostrarError('La fecha Hasta no puede ser futura.'); e.preventDefault(); return; }
+            if (d > h) { mostrarError('La fecha Hasta no puede ser anterior a la fecha Desde.'); evento.preventDefault(); return; }
+            if (h > hoy) { mostrarError('La fecha Hasta no puede ser futura.'); evento.preventDefault(); return; }
             if (avisoFechas) avisoFechas.classList.add('d-none');
         });
     }
 
-    // ---------- AUTO-REFRESH CADA 60 S ----------
-    const urlParams = new URLSearchParams(window.location.search);
-    const periodoActivo = cfg.periodo || 'trimestre';
-    const qs = periodoActivo === 'rango'
-        ? '&periodo=rango&desde=' + (urlParams.get('desde') || '') + '&hasta=' + (urlParams.get('hasta') || '')
-        : '&periodo=' + periodoActivo;
+    // ---------- PAGINACIÓN DE RENTABILIDAD ----------
+    async function cargarRentabilidad(pagina) {
+        const parametros = parametrosFiltros();
+        parametros.set('pagina', String(pagina));
+        try {
+            const respuesta = await jvFetchConTope((window.JV_BASE || '') + 'index.php?url=estadisticas/rentabilidad&' + parametros.toString(), { ms: 12000 });
+            if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+            const datos = await respuesta.json();
+            if (!datos || !datos.success) throw new Error('Respuesta inválida');
+            renderRentabilidad(datos);
+        } catch (error) {
+            console.error('No se pudo paginar la rentabilidad:', error);
+            const alerta = document.getElementById('error-estadisticas');
+            if (alerta) alerta.classList.remove('d-none');
+        }
+    }
 
-    // Consulta los datos de estadísticas del periodo activo y actualiza la
-    // interfaz sin recargar la página. Si la espera supera 700 ms se muestran
-    // skeletons sobre KPI y gráficos (las respuestas rápidas no parpadean) y,
-    // si la petición vence su tope de 12 s, el aviso existente cambia a
-    // "está tardando" — la espera nunca queda sin rostro ni sin salida.
+    const navRentabilidad = document.getElementById('paginacionRentabilidad');
+    if (navRentabilidad) {
+        paginaRentabilidad = Number(navRentabilidad.dataset.pagina) || 1;
+        paginasRentabilidad = Number(navRentabilidad.dataset.paginas) || 1;
+        navRentabilidad.addEventListener('click', evento => {
+            const boton = evento.target.closest('button[data-pagina]');
+            if (!boton || boton.disabled) return;
+            cargarRentabilidad(Number(boton.dataset.pagina));
+        });
+    }
+
+    // ---------- RENDER INICIAL DE GRÁFICOS ----------
+    if (cfg.labels) {
+        const hayFlujoInicial = crearChartFlujo(cfg.labels, cfg.ventas, cfg.compras, cfg.margenes, cfg.tasaBcv);
+        toggleEmptyCanvas('chartFlujo', 'empty-flujo', hayFlujoInicial);
+    }
+    if (cfg.catLabels) {
+        const hayCategoriaInicial = crearChartCategoria(cfg.catLabels, cfg.catData, cfg.tasaBcv);
+        toggleEmptyCanvas('chartCategoria', 'empty-categoria', hayCategoriaInicial);
+    }
+
+    // ---------- AUTO-REFRESH CADA 60 S ----------
     function refreshEstadisticas() {
         if (refreshEnCurso) return;
         refreshEnCurso = true;
         document.body.classList.add('stats-refrescando');
 
         const cargas = [];
-        ['kpi-ventas', 'kpi-compras', 'kpi-ganancia'].forEach(id => {
+        ['kpi-ventas', 'kpi-compras', 'kpi-ganancia', 'kpi-unidades'].forEach(id => {
             cargas.push(jvCargaIniciar(document.getElementById(id), { variante: 'kpi' }));
         });
-        ['chartFlujo', 'chartTop'].forEach(id => {
+        ['chartFlujo', 'chartCategoria'].forEach(id => {
             const lienzo = document.getElementById(id);
             if (lienzo && lienzo.parentElement) {
                 cargas.push(jvCargaIniciar(lienzo.parentElement, { variante: 'grafico' }));
             }
         });
 
-        jvFetchConTope((window.JV_BASE || '') + 'index.php?url=estadisticas/datos' + qs, { ms: 12000 })
+        jvFetchConTope((window.JV_BASE || '') + 'index.php?url=estadisticas/datos&' + parametrosFiltros().toString(), { ms: 12000 })
             .then(response => {
                 if (!response.ok) throw new Error('El servidor respondió con HTTP ' + response.status + '.');
                 return response.json();
             })
-            .then(statisticsResponse => {
-                if (!statisticsResponse || !statisticsResponse.success) {
+            .then(datos => {
+                if (!datos || !datos.success) {
                     throw new Error('El servidor no pudo calcular las estadísticas.');
                 }
-                actualizarUI(statisticsResponse);
+                actualizarUI(datos);
                 const error = document.getElementById('error-estadisticas');
                 if (error) error.classList.add('d-none');
             })
@@ -284,8 +473,8 @@
                         ? 'Esto está tardando más de lo normal. Reintenta en un momento.'
                         : 'No se pudieron actualizar las estadísticas.';
                 }
-                const alert = document.getElementById('error-estadisticas');
-                if (alert) alert.classList.remove('d-none');
+                const alerta = document.getElementById('error-estadisticas');
+                if (alerta) alerta.classList.remove('d-none');
             })
             .finally(() => {
                 cargas.forEach(carga => carga.fin());
@@ -293,7 +482,18 @@
                 document.body.classList.remove('stats-refrescando');
             });
     }
-    let refreshEnCurso = false;
+
     const retryButton = document.getElementById('reintentar-estadisticas');
     if (retryButton) retryButton.addEventListener('click', refreshEstadisticas);
+
+    // Ajuste final del lienzo cuando termina de cargar todo (fuentes, iconos).
+    window.addEventListener('load', () => {
+        [chartFlujo, chartCategoria].forEach(grafico => {
+            if (!grafico) return;
+            grafico.resize();
+            grafico.update('none');
+        });
+    });
+
     setInterval(refreshEstadisticas, 60000);
+})();
