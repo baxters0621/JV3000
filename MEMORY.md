@@ -49,6 +49,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Compras / Validación de proveedor (2026-11-10): RIF V/E con 8 dígitos y J/G/P/C con 8+verificador (solo formato, sin módulo 11); teléfono VE con prefijos 0412/0414/0416/0424/0426/0410/0411/0418/0419 y otros países con intl-tel-input/backend. Se retiró la ayuda del RIF y el grupo usa .comp-rif-grupo; backend con validarRifProveedor/validarTelefonoProveedor y Compra.php alineado.
 
+- Compras / Proveedores (2026-11-10): `provAbrirForm()` no debe llamar directamente funciones declaradas en el segundo DOMContentLoaded; se usa `window.jvRifProvConfigurar` con guard. La regresión de b26f891 impedía abrir Nuevo/Editar con `ReferenceError: configurarRif is not defined`; verificada con Edge headless/CDP sin excepciones.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

@@ -52,6 +52,8 @@ afirmarModalProveedor(strpos($javascript, 'telMaximosPorPais') !== false, 'El JS
 afirmarModalProveedor(strpos($modelo, 'validarTelefonoProveedor($telefono)') !== false, 'El modelo debe validar el teléfono también en el servidor.');
 afirmarModalProveedor(strpos($modelo, 'validarRifProveedor($rif)') !== false, 'El modelo debe validar el RIF por tipo de documento.');
 afirmarModalProveedor(strpos($javascript, 'validarRifProv') !== false && strpos($javascript, 'telVenezuelaValido') !== false, 'El JS debe validar RIF y prefijos venezolanos.');
+afirmarModalProveedor(strpos($javascript, "typeof window.jvRifProvConfigurar === 'function'") !== false, 'El formulario debe esperar a que el configurador del RIF esté disponible.');
+afirmarModalProveedor(strpos($javascript, 'window.jvRifProvConfigurar = configurarRif;') !== false, 'El configurador del RIF debe exponerse al ámbito del gestor.');
 afirmarModalProveedor(strpos($javascript, '4(12|14|16|24|26|10|11|18|19)') !== false, 'El JS debe exigir los prefijos móviles venezolanos.');
 afirmarModalProveedor(strpos($compra, 'validarRifProveedor(normalizarDocumento($prov[\'rif\'] ?? \'\'))') !== false, 'El alta de compras debe aceptar cédulas V/E de 8 dígitos.');
 afirmarModalProveedor(formatearTelefono('+58-412-5550101') === '+58 412-555-0101', 'El teléfono venezolano debe mostrarse como +58 412-555-0101.');

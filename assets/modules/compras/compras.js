@@ -890,7 +890,9 @@
             document.getElementById('p_rif_tipo').value = esEdicion ? (proveedorData.rif.charAt(0) || 'J') : 'J';
             document.getElementById('p_rif_numero').value = esEdicion ? proveedorData.rif.substring(2) : '';
             document.getElementById('p_rif').value = esEdicion ? proveedorData.rif : '';
-            configurarRif();
+            if (typeof window.jvRifProvConfigurar === 'function') {
+                window.jvRifProvConfigurar();
+            }
             document.getElementById('p_empresa').value = esEdicion ? proveedorData.nombre_empresa : '';
             document.getElementById('p_contacto_nombre').value = esEdicion ? (proveedorData.contacto || '') : '';
             document.getElementById('p_email').value = esEdicion ? (proveedorData.email || '') : '';
@@ -1266,6 +1268,8 @@
                 }
                 formatearRif();
             }
+
+            window.jvRifProvConfigurar = configurarRif;
 
             function validarRifProv() {
                 if (!rifNumero) return true;
