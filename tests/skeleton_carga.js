@@ -170,8 +170,10 @@ const { jvSkeletonHtml, jvCargaIniciar, jvCargaTarde, jvFetchConTope } = sandbox
 
     // ---------- 6. Integraciones en los módulos ----------
     afirmar(/\.jv-skel\b/.test(css) && css.includes('jv-skel-brillo') && css.includes('prefers-reduced-motion'), 'El CSS global define el skeleton, su animación y el fallback de movimiento reducido.');
-    afirmar(compras.includes('jvFetchConTope') && compras.includes('jvSkeletonHtml'), 'La tasa BCV usa el skeleton y el tope de espera.');
-    afirmar(compras.includes('BCV no responde ahora. Digita la tasa manualmente.'), 'El tope de la tasa activa la edición manual con aviso claro.');
+    // La consulta automática de la tasa BCV se retiró en 39aec71; ahora la tasa
+    // se administra desde el modal manual, que también usa el tope de espera.
+    afirmar(compras.includes('jvFetchConTope') && compras.includes('formTasa'), 'La tasa BCV manual usa el tope de espera.');
+    afirmar(compras.includes('NO SE PUDO GUARDAR LA TASA'), 'La tasa manual informa cuando no se puede guardar.');
     afirmar(estadisticas.includes('jvCargaIniciar') && estadisticas.includes('jvFetchConTope'), 'El refresh de estadísticas usa skeletons y tope.');
     afirmar(estadisticas.includes('Esto está tardando más de lo normal.'), 'Estadísticas comunica la espera prolongada con su texto propio.');
     afirmar(tasas.includes('curl_multi_init') && tasas.includes('CURLOPT_TIMEOUT') && !tasas.includes('stream_context_create'), 'El backend de tasas consulta en paralelo con curl (sin stream_context de serie).');

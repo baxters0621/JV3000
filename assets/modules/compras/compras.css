@@ -343,6 +343,31 @@
             box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
         }
 
+        /* Factura generada: solo lectura para operadores, editable por admin. */
+        .pagina-compras .comp-input[readonly] {
+            background: #f8fafc;
+            cursor: default;
+        }
+        .pagina-compras .comp-input[readonly]:focus {
+            border-color: var(--jv-border);
+            box-shadow: none;
+        }
+        .comp-editar-factura {
+            background: none;
+            border: 0;
+            padding: 0;
+            color: var(--jv-text-muted);
+            font-size: .75rem;
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .comp-editar-factura:hover,
+        .comp-editar-factura:focus-visible {
+            color: #1e3a5f;
+            outline: none;
+        }
+
         .pagina-compras .buscador-wrapper {
             border-bottom: 1px solid var(--jv-border);
             background: rgba(15,26,46,0.02);

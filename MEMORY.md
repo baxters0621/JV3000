@@ -37,6 +37,8 @@ Sin datos sensibles (claves, tokens, PIN).
 - Compras / Pago en Bs. (2026-11-09): el modal Registrar Pago captura Bs. y envía USD; el input visible no tiene name, los ocultos `monto_usd` y `monto_pago` se sincronizan con `window.JV_CONFIG.tasaBcv`, muestran "Equivalente: $X.XX" y el backend sigue leyendo `monto_pago`. Sin cambios de backend/SQL/BD.
 - Compras / Factura duplicada (2026-11-09): `compras/factura_estado` (GET, admin+carga) devuelve `Compra::estadoFactura()` con existencia por número, mismo proveedor y último/siguiente del proveedor; el input `#nroFactura` se pinta rojo (duplicado propio), ámbar (existe en otro proveedor) o verde (libre) al salir/cambiar proveedor. `validarFormulario` es async y revalida antes de enviar; el backend mantiene el bloqueo solo por proveedor. Sin cambios de esquema ni datos. Prueba: `compras_factura_duplicada_piloto` + validar.ps1 en verde.
 
+- Compras / Factura automática y pago saneado (2026-11-10): al elegir proveedor se genera el consecutivo con MAX histórico (incluye anuladas) y 00000001 sin historial; readonly para operadores y desbloqueo manual solo para admin con confirmación. compras/factura_estado devuelve existe/mismo_proveedor/ultima/siguiente y el guardado bloquea duplicados por proveedor (también anuladas). El monto de pago en Bs. es texto decimal sin spinners, se sanea a 10 enteros/2 decimales y se limita al saldo; sigue enviando USD. Sin cambios de esquema. El piloto skeleton_carga se alineó al flujo manual de tasa (la consulta automática se retiró en 39aec71).
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.
@@ -70,3 +72,5 @@ Sin datos sensibles (claves, tokens, PIN).
 - Restos de herramientas de agentes en el repo (refs/agents, refs/cline, ramas agents/* y copilot/*): los checkpoints se borraron el 29/10; las ramas agents/* guardan commits sin fusionar en main — no borrarlas ni fusionarlas sin revisar su contenido.
 
 - Los pilotos que cuentan etiquetas `<th>` deben acotar el fragmento a una sola tabla y aceptar atributos; una clase responsive no debe romper el conteo.
+
+- Los cambios sintéticos de borrador (isTrusted === false) llegan con el formulario ya completo: la factura restaurada se conserva en modo recovery; solo un cambio real del proveedor regenera el consecutivo.

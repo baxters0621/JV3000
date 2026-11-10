@@ -462,9 +462,14 @@ if (!empty($tasa_bcv_fecha)) {
                         <div class="comp-step-body">
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="comp-label">N&uacute;mero de Factura <span class="text-danger">*</span></label>
-                                    <input type="text" inputmode="numeric" name="nro_factura" id="nroFactura" aria-label="Numero de factura" aria-describedby="nroFacturaAyuda" class="input-jv comp-input" placeholder="Ej: 00001234 (6 a 8 d&iacute;gitos)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" maxlength="8" required>
-                                    <small id="nroFacturaAyuda" class="comp-hint" role="status" aria-live="polite">Selecciona un proveedor para ver el &uacute;ltimo n&uacute;mero registrado.</small>
+                                    <div class="d-flex align-items-center justify-content-between gap-2">
+                                        <label class="comp-label mb-0">N&uacute;mero de Factura <span class="text-danger">*</span></label>
+                                        <?php if (Security::esAdmin()): ?>
+                                            <button type="button" id="btnEditarFactura" class="comp-editar-factura" aria-controls="nroFactura" aria-pressed="false">Editar n&uacute;mero</button>
+                                        <?php endif; ?>
+                                    </div>
+                                    <input type="text" inputmode="numeric" name="nro_factura" id="nroFactura" aria-label="Numero de factura" aria-describedby="nroFacturaAyuda" class="input-jv comp-input" placeholder="Se genera al elegir el proveedor" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" maxlength="8" readonly aria-readonly="true" required>
+                                    <small id="nroFacturaAyuda" class="comp-hint" role="status" aria-live="polite">Selecciona un proveedor para generar el n&uacute;mero de factura.</small>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="comp-label">N&uacute;mero de Control <span class="text-danger">*</span></label>
@@ -636,11 +641,12 @@ if (!empty($tasa_bcv_fecha)) {
                         <label class="jv-modal-label">MONTO A PAGAR (Bs.) <span style="color:var(--jv-red);">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text" style="font-size:.85rem;">Bs.</span>
-                            <input type="number" step="0.01" min="0.01" class="form-control input-jv" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
+                            <input type="text" inputmode="decimal" autocomplete="off" maxlength="13" class="form-control input-jv" id="pago_monto" required placeholder="0.00" aria-describedby="pago_monto_max pago_equivalente_usd" style="font-weight:700;font-size:1.1rem;">
                         </div>
                         <input type="hidden" name="monto_usd" id="pago_monto_usd" value="">
                         <input type="hidden" name="monto_pago" id="pago_monto_pago" value="">
-                        <small id="pago_equivalente_usd" class="d-block mt-1 text-secondary" style="font-size:.78rem;">Equivalente: $0.00</small>
+                        <small id="pago_monto_max" class="d-block mt-1 text-secondary" style="font-size:.78rem;">M&aacute;ximo: Bs. 0,00</small>
+                        <small id="pago_equivalente_usd" class="d-block text-secondary" style="font-size:.78rem;">Equivalente: $0.00</small>
                     </div>
 
                     <div class="mb-3">

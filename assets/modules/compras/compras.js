@@ -324,12 +324,16 @@
         let facturaSecuencia = 0;
         let facturaDuplicada = false;
         let facturaUltimaConsulta = null;
+        let facturaModo = 'auto';
 
         // Arma la URL del endpoint de solo lectura con el proveedor actual.
-        function urlEstadoFactura(nroFactura) {
+        function urlEstadoFactura(nroFactura, idProveedor) {
             const params = new URLSearchParams();
-            if (proveedorSelect && proveedorSelect.value) {
-                params.set('id_proveedor', proveedorSelect.value);
+            const proveedor = idProveedor !== undefined
+                ? idProveedor
+                : (proveedorSelect ? proveedorSelect.value : '');
+            if (proveedor) {
+                params.set('id_proveedor', proveedor);
             }
             if (nroFactura) {
                 params.set('nro_factura', nroFactura);
@@ -443,43 +447,182 @@
                 });
         }
 
+        // Genera el consecutivo del proveedor y lo deja fijo en el campo.
+        function generarFacturaAutomatica() {
+            if (!nroFacturaInput) return Promise.resolve(null);
+            const idProveedor = proveedorSelect ? proveedorSelect.value : '';
+            if (!idProveedor) {
+                facturaModo = 'auto';
+                nroFacturaInput.value = '';
+                marcarFactura('neutro');
+                aplicarAyudaFactura('Selecciona un proveedor para generar el número de factura.', null);
+                return Promise.resolve(null);
+            }
+
+            facturaModo = 'auto';
+            const secuencia = ++facturaSecuencia;
+            return jvFetchConTope(urlEstadoFactura('', idProveedor), {
+                ms: 8000,
+                init: {
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store'
+                }
+            })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (secuencia !== facturaSecuencia || facturaModo !== 'auto') return null;
+                    if (!data || !data.success) {
+                        throw new Error((data && data.message) || 'No se pudo generar la factura.');
+                    }
+                    facturaUltimaConsulta = data;
+                    if (!data.siguiente) {
+                        nroFacturaInput.value = '';
+                        marcarFactura('neutro');
+                        aplicarAyudaFactura('No hay más números disponibles para este proveedor.', 'text-danger');
+                        return data;
+                    }
+                    nroFacturaInput.value = data.siguiente;
+                    marcarFactura('libre');
+                    aplicarAyudaFactura(
+                        data.ultima
+                            ? 'Factura generada: ' + data.siguiente + '. Última registrada: ' + data.ultima + '.'
+                            : 'Factura generada: ' + data.siguiente + '. Sin facturas previas.',
+                        'text-success'
+                    );
+                    return data;
+                })
+                .catch(function() {
+                    if (secuencia !== facturaSecuencia || facturaModo !== 'auto') return null;
+                    nroFacturaInput.value = '';
+                    marcarFactura('neutro');
+                    aplicarAyudaFactura('No se pudo generar la factura. Revisa tu conexión e inténtalo de nuevo.', 'text-warning');
+                    return null;
+                });
+        }
+
         // Antes de guardar exige una última verificación del número.
         function asegurarFacturaUnica() {
             if (!nroFacturaInput || !nroFacturaInput.value.trim()) {
                 return Promise.resolve(true);
             }
-            if (facturaDuplicada) {
-                avisarFacturaDuplicada();
-                return Promise.resolve(false);
-            }
-            return consultarEstadoFactura(true).then(function() {
-                if (facturaDuplicada) {
-                    avisarFacturaDuplicada();
-                    return false;
+            const verificacion = facturaDuplicada
+                ? Promise.resolve()
+                : consultarEstadoFactura(true);
+            return verificacion.then(function() {
+                if (!facturaDuplicada) return true;
+                if (facturaModo === 'auto') {
+                    return generarFacturaAutomatica().then(function(data) {
+                        Swal.fire({
+                            title: 'FACTURA ACTUALIZADA',
+                            text: data && data.siguiente
+                                ? 'Otra compra usó ese número; se actualizó a ' + data.siguiente + '. Guarda de nuevo.'
+                                : 'Otra compra usó ese número y no hay un consecutivo disponible. Revisa la factura.',
+                            icon: 'info',
+                            background: '#fff',
+                            color: '#212529',
+                            confirmButtonColor: '#059669'
+                        });
+                        return false;
+                    });
                 }
-                return true;
+                avisarFacturaDuplicada();
+                return false;
             });
         }
 
-        // Conecta los eventos del campo y refresca la ayuda al cargar la vista.
+        // Conecta los eventos del campo y genera el número al cargar la vista.
         function inicializarVerificacionFactura() {
             if (!nroFacturaInput) return;
+
+            const btnEditarFactura = document.getElementById('btnEditarFactura');
+            if (btnEditarFactura) {
+                btnEditarFactura.addEventListener('click', function() {
+                    const bloqueado = nroFacturaInput.hasAttribute('readonly');
+                    if (!bloqueado) {
+                        nroFacturaInput.setAttribute('readonly', 'readonly');
+                        nroFacturaInput.setAttribute('aria-readonly', 'true');
+                        btnEditarFactura.textContent = 'Editar número';
+                        btnEditarFactura.setAttribute('aria-pressed', 'false');
+                        generarFacturaAutomatica();
+                        return;
+                    }
+                    Swal.fire({
+                        title: 'EDICIÓN MANUAL',
+                        text: 'Edita el número solo si la factura física no coincide con la secuencia generada.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Editar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#DC2626',
+                        cancelButtonColor: '#6B7280',
+                        background: '#fff',
+                        color: '#212529',
+                        reverseButtons: true
+                    }).then(function(result) {
+                        if (!result.isConfirmed) return;
+                        nroFacturaInput.removeAttribute('readonly');
+                        nroFacturaInput.setAttribute('aria-readonly', 'false');
+                        facturaModo = 'manual';
+                        btnEditarFactura.textContent = 'Bloquear';
+                        btnEditarFactura.setAttribute('aria-pressed', 'true');
+                        nroFacturaInput.focus();
+                        nroFacturaInput.select();
+                    });
+                });
+            }
+
+            // Recuerda si el valor llegó de una recuperación o borrador.
+            function recordarModoFactura() {
+                if (facturaModo !== 'manual') {
+                    facturaModo = nroFacturaInput.value.trim() ? 'recovery' : 'auto';
+                }
+            }
+
             nroFacturaInput.addEventListener('blur', function() {
                 consultarEstadoFactura(true);
             });
             nroFacturaInput.addEventListener('input', function() {
+                recordarModoFactura();
                 marcarFactura('neutro');
                 aplicarAyudaFactura(ayudaFacturaBase(), null);
             });
+            nroFacturaInput.addEventListener('change', recordarModoFactura);
+
             if (proveedorSelect) {
-                proveedorSelect.addEventListener('change', function() {
+                proveedorSelect.addEventListener('change', function(evento) {
+                    // Los cambios sintéticos (borrador restaurado) llegan con el
+                    // formulario ya completo: conservar la factura restaurada.
+                    if (evento && evento.isTrusted === false && nroFacturaInput.value.trim()) {
+                        facturaUltimaConsulta = null;
+                        facturaModo = 'recovery';
+                        consultarEstadoFactura(false);
+                        return;
+                    }
+                    nroFacturaInput.value = '';
                     facturaUltimaConsulta = null;
+                    facturaModo = 'auto';
+                    if (!nroFacturaInput.hasAttribute('readonly')) {
+                        nroFacturaInput.setAttribute('readonly', 'readonly');
+                        nroFacturaInput.setAttribute('aria-readonly', 'true');
+                        if (btnEditarFactura) {
+                            btnEditarFactura.textContent = 'Editar número';
+                            btnEditarFactura.setAttribute('aria-pressed', 'false');
+                        }
+                    }
                     marcarFactura('neutro');
-                    aplicarAyudaFactura(ayudaFacturaBase(), null);
-                    consultarEstadoFactura(false);
+                    aplicarAyudaFactura('Generando el número de factura...', null);
+                    generarFacturaAutomatica();
                 });
             }
-            consultarEstadoFactura(false);
+
+            if (nroFacturaInput.value.trim()) {
+                facturaModo = 'recovery';
+                consultarEstadoFactura(false);
+            } else {
+                generarFacturaAutomatica();
+            }
         }
 
         // ==========================================
@@ -1424,25 +1567,61 @@
 
         let pagoTotal = 0;
         let pagoSaldo = 0;
+        let pagoSaldoBs = 0;
 
         function abrirModalPago(idCompra, factura, total, saldo) {
             pagoTotal = total;
             pagoSaldo = saldo;
             var tasa = tasaBcvActual();
-            var saldoBs = tasa > 0 ? saldo * tasa : 0;
+            pagoSaldoBs = tasa > 0 ? saldo * tasa : 0;
             document.getElementById('pago_id_compra').value = idCompra;
             document.getElementById('pago_factura_num').textContent = factura || '-';
             document.getElementById('pago_total').value = formatBs(total, tasa);
             document.getElementById('pago_saldo').value = formatBs(saldo, tasa);
             document.getElementById('pago_monto').value = '';
-            document.getElementById('pago_monto').max = tasa > 0 ? saldoBs.toFixed(2) : '';
-            document.getElementById('pago_monto').placeholder = tasa > 0 ? saldoBs.toFixed(2) : 'Tasa BCV no disponible';
+            document.getElementById('pago_monto').placeholder = tasa > 0 ? pagoSaldoBs.toFixed(2) : 'Tasa BCV no disponible';
             document.getElementById('pago_monto').disabled = tasa <= 0;
             document.getElementById('pago_metodo').value = 'Efectivo';
+            actualizarPagoMaximo(null, false);
             actualizarMontoPagoDesdeBs();
             togglePagoDetalle();
             var modal = new bootstrap.Modal(document.getElementById('modalPago'));
             modal.show();
+        }
+
+        // Limpia ceros, signos y exponentes; deja hasta 10 enteros y 2 decimales.
+        function normalizarMontoBs(valor, conservarPuntoFinal) {
+            var texto = String(valor == null ? '' : valor).replace(/,/g, '.').replace(/[^\d.]/g, '');
+            var partes = texto.split('.');
+            var enteros = (partes.shift() || '').replace(/^0+(?=\d)/, '').slice(0, 10);
+            var decimales = partes.join('').slice(0, 2);
+            if (texto.charAt(0) === '.') enteros = '0';
+            if (decimales) return enteros + '.' + decimales;
+            return conservarPuntoFinal && texto.indexOf('.') !== -1 ? enteros + '.' : enteros;
+        }
+
+        // Muestra el tope en Bs. y avisa si el monto se recortó al saldo.
+        function actualizarPagoMaximo(mensaje, advertencia) {
+            var ayuda = document.getElementById('pago_monto_max');
+            if (!ayuda) return;
+            ayuda.textContent = mensaje || (pagoSaldoBs > 0
+                ? 'Máximo: ' + formatBsValor(pagoSaldoBs, 2)
+                : 'Máximo: —');
+            ayuda.classList.toggle('text-warning', !!advertencia);
+            ayuda.classList.toggle('text-secondary', !advertencia);
+        }
+
+        // Evita que el monto escrito supere el saldo pendiente en bolívares.
+        function limitarMontoPagoAlSaldo() {
+            var inputBs = document.getElementById('pago_monto');
+            if (!inputBs) return;
+            var montoBs = Number(inputBs.value);
+            if (pagoSaldoBs > 0 && Number.isFinite(montoBs) && montoBs > pagoSaldoBs + 0.009) {
+                inputBs.value = pagoSaldoBs.toFixed(2);
+                actualizarPagoMaximo('Máximo: ' + formatBsValor(pagoSaldoBs, 2) + '. Se ajustó al saldo pendiente.', true);
+            } else {
+                actualizarPagoMaximo(null, false);
+            }
         }
 
         function setPagoMonto(pct) {
@@ -1461,7 +1640,7 @@
             if (!inputBs || !hiddenUsd || !hiddenPago) return;
 
             var tasa = tasaBcvActual();
-            var valorBs = Number(inputBs.value);
+            var valorBs = Number(normalizarMontoBs(inputBs.value));
             var montoUsd = tasa > 0 && Number.isFinite(valorBs) ? valorBs / tasa : 0;
             var montoRedondeado = Math.round(montoUsd * 100) / 100;
             var valorUsd = montoRedondeado > 0 ? montoRedondeado.toFixed(2) : '';
@@ -1491,19 +1670,42 @@
 
             var montoPago = document.getElementById('pago_monto');
             if (montoPago) {
-                montoPago.addEventListener('input', actualizarMontoPagoDesdeBs);
+                montoPago.addEventListener('input', function() {
+                    montoPago.value = normalizarMontoBs(montoPago.value, true);
+                    limitarMontoPagoAlSaldo();
+                    actualizarMontoPagoDesdeBs();
+                });
             }
 
             var formPago = document.getElementById('formPago');
             if (formPago) {
                 formPago.addEventListener('submit', function(evento) {
+                    var inputBs = document.getElementById('pago_monto');
+                    if (inputBs) {
+                        inputBs.value = normalizarMontoBs(inputBs.value);
+                        limitarMontoPagoAlSaldo();
+                    }
                     actualizarMontoPagoDesdeBs();
+                    var montoBs = Number(inputBs ? inputBs.value : 0);
                     var montoUsd = Number(document.getElementById('pago_monto_pago').value);
-                    if (tasaBcvActual() <= 0 || !(montoUsd > 0)) {
+                    var tasa = tasaBcvActual();
+                    if (tasa <= 0 || !(montoBs > 0) || !(montoUsd > 0)) {
                         evento.preventDefault();
                         Swal.fire({
                             title: 'Monto inválido',
                             text: 'No se pudo calcular el equivalente en dólares. Verifica la tasa BCV e inténtalo de nuevo.',
+                            icon: 'warning',
+                            background: '#fff',
+                            color: '#212529',
+                            confirmButtonColor: '#EA580C'
+                        });
+                        return;
+                    }
+                    if (pagoSaldoBs > 0 && montoBs > pagoSaldoBs + 0.009) {
+                        evento.preventDefault();
+                        Swal.fire({
+                            title: 'Monto excedido',
+                            text: 'El monto no puede superar el saldo pendiente de la compra.',
                             icon: 'warning',
                             background: '#fff',
                             color: '#212529',
