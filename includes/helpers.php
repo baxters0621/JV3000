@@ -1361,13 +1361,64 @@ if (!function_exists('jv_validar_tasa_manual')) {
     }
 }
 
-if (!function_exists('jv_consultar_tasa_bcv_api')) {
+if (!function_exists('jv_consultar_tasa_bcv_oficial')) {
     /**
-     * Consulta la tasa oficial USD del BCV con un tope de tiempo corto.
+     * Consulta la tasa USD en la página oficial del BCV.
+     *
+     * El sitio del BCV no envía el certificado intermedio completo; por eso
+     * se usa la cadena Sectigo incluida en includes/certificados, manteniendo
+     * la verificación SSL activa.
      *
      * @return float|null Tasa redondeada a 4 decimales, o null si falla.
      */
-    function jv_consultar_tasa_bcv_api(): ?float
+    function jv_consultar_tasa_bcv_oficial(): ?float
+    {
+        if (!function_exists('curl_init')) {
+            return null;
+        }
+
+        $raiz = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__);
+        $certificado = $raiz . '/includes/certificados/bcv_sectigo.pem';
+
+        $canal = curl_init('https://www.bcv.org.ve/');
+        $opciones = [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT_MS     => 4000,
+            CURLOPT_CONNECTTIMEOUT_MS => 2500,
+            CURLOPT_USERAGENT      => 'JV3000/1.0',
+            CURLOPT_HTTPHEADER     => ['Accept: text/html'],
+        ];
+        if (is_file($certificado)) {
+            $opciones[CURLOPT_CAINFO] = $certificado;
+        }
+        curl_setopt_array($canal, $opciones);
+        $respuesta = curl_exec($canal);
+        curl_close($canal);
+
+        if (!is_string($respuesta) || trim($respuesta) === '') {
+            return null;
+        }
+
+        if (!preg_match('/id="dolar".*?<strong class="strong-tb">\s*([0-9.,]+)\s*<\/strong>/s', $respuesta, $coincidencia)) {
+            return null;
+        }
+
+        $valor = str_replace(',', '.', trim($coincidencia[1]));
+        if (!is_numeric($valor) || (float)$valor <= 0 || (float)$valor > 100000) {
+            return null;
+        }
+
+        return round((float)$valor, 4);
+    }
+}
+
+if (!function_exists('jv_consultar_tasa_bcv_dolarapi')) {
+    /**
+     * Consulta la tasa USD en ve.dolarapi.com como respaldo.
+     *
+     * @return float|null Tasa redondeada a 4 decimales, o null si falla.
+     */
+    function jv_consultar_tasa_bcv_dolarapi(): ?float
     {
         if (!function_exists('curl_init')) {
             return null;
@@ -1398,6 +1449,26 @@ if (!function_exists('jv_consultar_tasa_bcv_api')) {
         }
 
         return round((float)$promedio, 4);
+    }
+}
+
+if (!function_exists('jv_consultar_tasa_bcv_api')) {
+    /**
+     * Consulta la tasa oficial USD del BCV.
+     *
+     * Prioriza la página oficial del BCV; si no responde, usa dolarapi.com
+     * como respaldo para no dejar la tasa en null.
+     *
+     * @return float|null Tasa redondeada a 4 decimales, o null si falla.
+     */
+    function jv_consultar_tasa_bcv_api(): ?float
+    {
+        $oficial = jv_consultar_tasa_bcv_oficial();
+        if ($oficial !== null) {
+            return $oficial;
+        }
+
+        return jv_consultar_tasa_bcv_dolarapi();
     }
 }
 

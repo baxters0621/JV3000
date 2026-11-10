@@ -121,10 +121,12 @@ class TasasController extends Controller
     }
 
     /**
-     * Consulta en paralelo los endpoints de USD y EUR de ve.dolarapi.com.
+     * Consulta en paralelo las tasas USD y EUR.
      *
-     * Usa curl_multi para que las dos peticiones corran a la vez, con tope
-     * de 6 s por petición: la espera total ya no se acumula en serie.
+     * El USD se toma de la página oficial del BCV (con la cadena Sectigo
+     * incluida en el proyecto); si esa consulta falla, se usa el respaldo de
+     * ve.dolarapi.com. El EUR sigue saliendo de ve.dolarapi.com. Las tres
+     * peticiones corren a la vez con tope de 6 s.
      *
      * @return array{0:?float,1:?float} Promedio USD y EUR, o null si falla.
      */
@@ -132,7 +134,26 @@ class TasasController extends Controller
     {
         $manejador_multiple = curl_multi_init();
         $peticiones = [];
-        foreach (['/dolares/oficial', '/euros/oficial'] as $i => $endpoint) {
+
+        // 0: página oficial del BCV (HTML con la tasa USD).
+        $canal = curl_init('https://www.bcv.org.ve/');
+        $opciones = [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 6,
+            CURLOPT_CONNECTTIMEOUT => 4,
+            CURLOPT_USERAGENT      => 'JV3000/1.0',
+            CURLOPT_HTTPHEADER     => ['Accept: text/html'],
+        ];
+        $certificado = __DIR__ . '/../includes/certificados/bcv_sectigo.pem';
+        if (is_file($certificado)) {
+            $opciones[CURLOPT_CAINFO] = $certificado;
+        }
+        curl_setopt_array($canal, $opciones);
+        curl_multi_add_handle($manejador_multiple, $canal);
+        $peticiones['bcv'] = $canal;
+
+        // 1 y 2: dolarapi (USD de respaldo y EUR).
+        foreach (['usd_respaldo' => '/dolares/oficial', 'eur' => '/euros/oficial'] as $clave => $endpoint) {
             $canal = curl_init(self::API_BASE . $endpoint);
             curl_setopt_array($canal, [
                 CURLOPT_RETURNTRANSFER => true,
@@ -142,10 +163,10 @@ class TasasController extends Controller
                 CURLOPT_HTTPHEADER     => ['Accept: application/json'],
             ]);
             curl_multi_add_handle($manejador_multiple, $canal);
-            $peticiones[$i] = $canal;
+            $peticiones[$clave] = $canal;
         }
 
-        // Ejecutar hasta que ambas terminen (éxito, error o tope de tiempo).
+        // Ejecutar hasta que todas terminen (éxito, error o tope de tiempo).
         do {
             $estado = curl_multi_exec($manejador_multiple, $activo);
             if ($activo) {
@@ -153,14 +174,43 @@ class TasasController extends Controller
             }
         } while ($activo && $estado === CURLM_OK);
 
-        $tasas = [];
-        foreach ($peticiones as $canal) {
-            $tasas[] = $this->extraerPromedio(curl_multi_getcontent($canal));
+        $respuestas = [];
+        foreach ($peticiones as $clave => $canal) {
+            $respuestas[$clave] = curl_multi_getcontent($canal);
             curl_multi_remove_handle($manejador_multiple, $canal);
             curl_close($canal);
         }
         curl_multi_close($manejador_multiple);
-        return $tasas;
+
+        $usd = $this->extraerDolarBcv($respuestas['bcv'] ?? null);
+        if ($usd === null) {
+            $usd = $this->extraerPromedio($respuestas['usd_respaldo'] ?? null);
+        }
+        $eur = $this->extraerPromedio($respuestas['eur'] ?? null);
+
+        return [$usd, $eur];
+    }
+
+    /**
+     * Extrae el USD del HTML de la página oficial del BCV.
+     *
+     * @param string|false|null $respuesta Cuerpo crudo de la respuesta.
+     * @return float|null Tasa redondeada a 4 decimales, o null.
+     */
+    private function extraerDolarBcv($respuesta): ?float
+    {
+        if (!is_string($respuesta) || trim($respuesta) === '') {
+            return null;
+        }
+        if (!preg_match('/id="dolar".*?<strong class="strong-tb">\s*([0-9.,]+)\s*<\/strong>/s', $respuesta, $coincidencia)) {
+            return null;
+        }
+        $valor = str_replace(',', '.', trim($coincidencia[1]));
+        if (!is_numeric($valor) || (float)$valor <= 0 || (float)$valor > 100000) {
+            return null;
+        }
+
+        return round((float)$valor, 4);
     }
 
     /**
