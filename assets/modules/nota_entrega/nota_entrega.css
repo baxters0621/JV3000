@@ -243,10 +243,6 @@
             padding: 0;
         }
 
-        .totals .row.iva {
-            color: #0891b2;
-        }
-
         .totals .row.total {
             border-top: 2px solid #0f172a;
             margin-top: 6px;
@@ -259,6 +255,20 @@
         .totals .row .label {
             font-weight: 600;
             color: #475569;
+        }
+
+        /* Marca fiscal del subtotal cuando la operación no causa IVA */
+        .totals .row .iva-exento {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 5px;
+            border: 1px solid rgba(8, 145, 178, .35);
+            border-radius: 3px;
+            font-size: .62rem;
+            font-weight: 700;
+            letter-spacing: .4px;
+            color: #0891b2;
+            vertical-align: middle;
         }
 
         /* ── Base legal ── */

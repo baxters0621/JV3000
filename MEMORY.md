@@ -57,6 +57,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Nota de Entrega (2026-11-10): metadatos en `.doc-meta` a la derecha bajo el título (sin `.num-row` ni raya en `.doc-header`); dirección del cliente desde `clientes.direccion` con `NotaEntrega::obtenerDireccionCliente()` (id_cliente y fallback por documento) mostrada en `.info-box--full`; `.totals .row > *` neutraliza el `width:100%` de Bootstrap para que etiqueta y monto compartan línea.
 
+- Nota de Entrega / Totales (2026-11-10): el documento muestra solo dos líneas, «Subtotal» y «MONTO TOTAL» en rojo; el IVA se sigue calculando en `NotaEntrega::armarNota()` pero su renglón ya no se imprime. En regalías el aviso fiscal va como distintivo `.iva-exento` junto a la etiqueta Subtotal, sin fila extra. CSS `?v=7`; retirada la regla `.totals .row.iva`.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.
@@ -85,6 +87,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Los modales de Colaboradores se renderizan fuera de `.pagina-usuarios`: no escribir reglas de modal bajo ese ancestro.
 - El ítem «Panel de Inicio» se oculta con `$en_panel_inicio`; verificar `nav-ram-panel` en lugar del chip del hero. Formularios con `novalidate` y `jvPost` necesitan listener submit explícito y las claves del controlador.
 - Al limpiar sesiones de prueba en `C:\xampp\tmp` usar el `sid` exacto, nunca comodines; `Invoke-WebRequest` descarta Cookie: usar `curl.exe -H "Cookie: PHPSESSID=sid"`. El render CLI con `init.php` requiere `$_SESSION['ip_addr'] = REMOTE_ADDR`.
+- `Get-Date -UFormat %s` devuelve una época desfasada por la zona horaria local y hace caducar la sesión artesanal (`sesion_expirada`): usar `[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()`. Para probar ramas de la vista sin datos reales, un arnés CLI que cargue config/Database/helpers/Model y llame a `Database::getInstance()->connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT)` antes de `armarNota()`.
 - En guiones PHP, `'\n'` no se expande (usar comillas dobles o `PHP_EOL`); `NULL ?? 'x'` da `'x'`, así que comprobar nulos con `=== null`, no con coalescing ni `isset()`.
 - Los ficheros de `includes/ajax/` pasan por init.php: la sesión ya viene validada; la puerta por rol va tras el chequeo XHR y responde 403 JSON (no redirigir). Sesiones artesanales para pruebas HTTP: crear el archivo con id fijo y `ip_addr` igual al REMOTE_ADDR real; usar `http://127.0.0.1` (con `localhost` llega `::1` y validateSession destruye la sesión) y `curl.exe -b "PHPSESSID=..."`.
 - Restos de herramientas de agentes en el repo (refs/agents, refs/cline, ramas agents/* y copilot/*): los checkpoints se borraron el 29/10; las ramas agents/* guardan commits sin fusionar en main — no borrarlas ni fusionarlas sin revisar su contenido.

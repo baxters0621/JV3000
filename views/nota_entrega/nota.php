@@ -38,7 +38,7 @@
     <title>Nota de Entrega #<?php echo $data['id_salida'] ?? 'PREVIEW'; ?> | <?php echo htmlspecialchars($empresa); ?></title>
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/bootstrap-icons.css">
-    <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.css?v=6">
+    <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.css?v=7">
 </head>
 
 <body>
@@ -119,12 +119,7 @@
 
         <?php if (!$es_merma): ?>
             <div class="totals">
-                <div class="row"><span class="label">Base Imponible</span><span><?php echo format_bs((float)$subtotal, $tasa_bcv ?? null); ?></span></div>
-                <?php if ($es_venta): ?>
-                    <div class="row iva"><span class="label">I.V.A. (<?php echo $iva_pct; ?>%)</span><span><?php echo format_bs((float)$iva, $tasa_bcv ?? null); ?></span></div>
-                <?php else: ?>
-                    <div class="row iva"><span class="label">I.V.A.</span><span>EXENTO</span></div>
-                <?php endif; ?>
+                <div class="row"><span class="label">Subtotal<?php if (!$es_venta): ?> <span class="iva-exento">EXENTO</span><?php endif; ?></span><span><?php echo format_bs((float)$subtotal, $tasa_bcv ?? null); ?></span></div>
                 <div class="row total"><span>MONTO TOTAL</span><span><?php echo format_bs((float)$total_neto, $tasa_bcv ?? null); ?></span></div>
             </div>
         <?php else: ?>
