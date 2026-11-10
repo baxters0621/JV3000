@@ -17,7 +17,6 @@
 /** @var float $iva */
 /** @var float $total_neto */
 /** @var float|null $tasa_bcv Tasa BCV para mostrar montos en Bs. */
-/** @var string|null $tasa_bcv_fecha Fecha de la tasa BCV (Y-m-d). */
 /** @var string $preview_token */
 /** @var string $csrf */
 /** @var string $direccion_cliente Dirección fiscal del cliente ('' si no está registrada). */
@@ -125,12 +124,6 @@
         <?php else: ?>
             <div class="totals">
                 <div class="row total" style="border:none;color:#6C757D;"><span>VALOR</span><span><?php echo format_bs(0, $tasa_bcv ?? null); ?></span></div>
-            </div>
-        <?php endif; ?>
-
-        <?php if (!$es_merma && !empty($tasa_bcv)): ?>
-            <div style="text-align:right;font-size:.72rem;color:#6C757D;margin-top:6px;">
-                Montos en Bs. a la tasa BCV de <?php echo jv_formatear_bolivares((float)$tasa_bcv, 2); ?><?php echo !empty($tasa_bcv_fecha) ? ' del ' . date('d/m/Y', strtotime((string)$tasa_bcv_fecha)) : ''; ?>.
             </div>
         <?php endif; ?>
 
