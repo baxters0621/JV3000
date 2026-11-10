@@ -605,7 +605,7 @@ if (!empty($tasa_bcv_fecha)) {
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <form method="POST" action="<?php echo $purchaseListUrl; ?>" data-borrador="compras_pago">
+            <form method="POST" action="<?php echo $purchaseListUrl; ?>" id="formPago" data-borrador="compras_pago">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf); ?>">
                 <input type="hidden" name="accion_pago" value="1">
                 <input type="hidden" name="id_compra" id="pago_id_compra">
@@ -632,11 +632,14 @@ if (!empty($tasa_bcv_fecha)) {
                     </div>
 
                     <div class="mb-3">
-                        <label class="jv-modal-label">MONTO A PAGAR (USD) <span style="color:var(--jv-red);">*</span></label>
+                        <label class="jv-modal-label">MONTO A PAGAR (Bs.) <span style="color:var(--jv-red);">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text" style="font-size:.85rem;">$</span>
-                            <input type="number" step="0.01" min="0.01" class="form-control input-jv" name="monto_pago" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
+                            <span class="input-group-text" style="font-size:.85rem;">Bs.</span>
+                            <input type="number" step="0.01" min="0.01" class="form-control input-jv" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
                         </div>
+                        <input type="hidden" name="monto_usd" id="pago_monto_usd" value="">
+                        <input type="hidden" name="monto_pago" id="pago_monto_pago" value="">
+                        <small id="pago_equivalente_usd" class="d-block mt-1 text-secondary" style="font-size:.78rem;">Equivalente: $0.00</small>
                     </div>
 
                     <div class="mb-3">

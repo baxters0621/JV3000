@@ -34,6 +34,14 @@
             return Number.isFinite(tasa) && tasa > 0 ? tasa : 0;
         }
 
+        // Muestra un monto en dólares con dos decimales para el feedback del pago.
+        function formatearUsd(monto) {
+            return '$' + Number(monto).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
         // ==========================================
         // CATÁLOGO DEL PROVEEDOR
         // ==========================================
@@ -1245,22 +1253,52 @@
         function abrirModalPago(idCompra, factura, total, saldo) {
             pagoTotal = total;
             pagoSaldo = saldo;
+            var tasa = tasaBcvActual();
+            var saldoBs = tasa > 0 ? saldo * tasa : 0;
             document.getElementById('pago_id_compra').value = idCompra;
             document.getElementById('pago_factura_num').textContent = factura || '-';
-            document.getElementById('pago_total').value = formatBs(total, tasaBcvActual());
-            document.getElementById('pago_saldo').value = formatBs(saldo, tasaBcvActual());
+            document.getElementById('pago_total').value = formatBs(total, tasa);
+            document.getElementById('pago_saldo').value = formatBs(saldo, tasa);
             document.getElementById('pago_monto').value = '';
-            document.getElementById('pago_monto').max = saldo.toFixed(2);
-            document.getElementById('pago_monto').placeholder = saldo.toFixed(2);
+            document.getElementById('pago_monto').max = tasa > 0 ? saldoBs.toFixed(2) : '';
+            document.getElementById('pago_monto').placeholder = tasa > 0 ? saldoBs.toFixed(2) : 'Tasa BCV no disponible';
+            document.getElementById('pago_monto').disabled = tasa <= 0;
             document.getElementById('pago_metodo').value = 'Efectivo';
+            actualizarMontoPagoDesdeBs();
             togglePagoDetalle();
             var modal = new bootstrap.Modal(document.getElementById('modalPago'));
             modal.show();
         }
 
         function setPagoMonto(pct) {
-            var monto = (pagoSaldo * pct / 100).toFixed(2);
-            document.getElementById('pago_monto').value = monto;
+            var tasa = tasaBcvActual();
+            var montoBs = tasa > 0 ? (pagoSaldo * tasa * pct / 100) : 0;
+            document.getElementById('pago_monto').value = montoBs.toFixed(2);
+            actualizarMontoPagoDesdeBs();
+        }
+
+        // Convierte lo escrito en Bs. a USD y sincroniza los campos ocultos.
+        function actualizarMontoPagoDesdeBs() {
+            var inputBs = document.getElementById('pago_monto');
+            var hiddenUsd = document.getElementById('pago_monto_usd');
+            var hiddenPago = document.getElementById('pago_monto_pago');
+            var equivalente = document.getElementById('pago_equivalente_usd');
+            if (!inputBs || !hiddenUsd || !hiddenPago) return;
+
+            var tasa = tasaBcvActual();
+            var valorBs = Number(inputBs.value);
+            var montoUsd = tasa > 0 && Number.isFinite(valorBs) ? valorBs / tasa : 0;
+            var montoRedondeado = Math.round(montoUsd * 100) / 100;
+            var valorUsd = montoRedondeado > 0 ? montoRedondeado.toFixed(2) : '';
+
+            hiddenUsd.value = valorUsd;
+            hiddenPago.value = valorUsd;
+
+            if (equivalente) {
+                equivalente.textContent = tasa > 0
+                    ? 'Equivalente: ' + formatearUsd(montoRedondeado)
+                    : 'Equivalente: —';
+            }
         }
 
         function togglePagoDetalle() {
@@ -1274,6 +1312,30 @@
             var metodoSelect = document.getElementById('pago_metodo');
             if (metodoSelect) {
                 metodoSelect.addEventListener('change', togglePagoDetalle);
+            }
+
+            var montoPago = document.getElementById('pago_monto');
+            if (montoPago) {
+                montoPago.addEventListener('input', actualizarMontoPagoDesdeBs);
+            }
+
+            var formPago = document.getElementById('formPago');
+            if (formPago) {
+                formPago.addEventListener('submit', function(evento) {
+                    actualizarMontoPagoDesdeBs();
+                    var montoUsd = Number(document.getElementById('pago_monto_pago').value);
+                    if (tasaBcvActual() <= 0 || !(montoUsd > 0)) {
+                        evento.preventDefault();
+                        Swal.fire({
+                            title: 'Monto inválido',
+                            text: 'No se pudo calcular el equivalente en dólares. Verifica la tasa BCV e inténtalo de nuevo.',
+                            icon: 'warning',
+                            background: '#fff',
+                            color: '#212529',
+                            confirmButtonColor: '#EA580C'
+                        });
+                    }
+                });
             }
         });
 

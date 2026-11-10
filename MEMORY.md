@@ -34,6 +34,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Conversión visual USD→Bs (2026-11-09): helper `format_bs($monto_usd, ?float $tasa = null)` en includes/helpers.php y `formatBs`/`formatBsValue` en assets/js/moneda.js; Controller inyecta `tasa_bcv`, `tasa_bcv_fecha` y `js_config.tasaBcv`, y `json()` agrega `tasa_bcv`. Dashboard, Ventas, Compras, Productos, Historial, Estadísticas, Nota de Entrega, Reporte de Inventario y mensajes flash de Compras/Pagos muestran Bs. BD, columnas, SQL y modelos siguen en USD; los inputs de captura (precio de venta, costo de compra, monto de pago) siguen en USD y etiquetados. Sin tasa válida se muestra —.
 
+- Compras / Pago en Bs. (2026-11-09): el modal Registrar Pago captura Bs. y envía USD; el input visible no tiene name, los ocultos `monto_usd` y `monto_pago` se sincronizan con `window.JV_CONFIG.tasaBcv`, muestran "Equivalente: $X.XX" y el backend sigue leyendo `monto_pago`. Sin cambios de backend/SQL/BD.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.
