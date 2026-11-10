@@ -903,12 +903,11 @@
             btnSubmit.innerHTML = '<i class="bi bi-shield-check me-2"></i>GUARDAR PROVEEDOR';
             document.getElementById('p_rif_numero').dispatchEvent(new Event('input'));
 
-            if (window.provIti && typeof window.provIti.setNumber === 'function') {
+            if (typeof window.jvTelProvCargar === 'function') {
+                window.jvTelProvCargar(esEdicion ? (proveedorData.telefono || '') : '');
+            } else if (window.provIti && typeof window.provIti.setNumber === 'function') {
                 window.provIti.setNumber(esEdicion ? (proveedorData.telefono || '') : '');
                 document.getElementById('p_tel_full').value = window.provIti.getNumber();
-            } else if (window.provIti && typeof window.provIti.reset === 'function') {
-                window.provIti.reset();
-                document.getElementById('p_tel_full').value = '';
             }
 
             bootstrap.Modal.getOrCreateInstance(document.getElementById('modalProvList')).hide();
@@ -1021,20 +1020,157 @@
 
         // Inicialización exclusiva del gestor de proveedores.
         document.addEventListener('DOMContentLoaded', function() {
-            // Selector internacional de teléfono del formulario de proveedor
+            // Selector internacional de teléfono del formulario de proveedor.
+            // La limitación y el formato se hacen aquí para no depender de que
+            // el utilsScript del CDN termine de cargar.
             const telInputProv = document.getElementById('p_tel');
-            if (telInputProv && window.intlTelInput) {
-                window.provIti = window.intlTelInput(telInputProv, {
-                    initialCountry: 've',
-                    preferredCountries: ['ve', 'us', 'co', 'es', 'mx', 'pa'],
-                    separateDialCode: true,
-                    utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
+            const telFullProv = document.getElementById('p_tel_full');
+            const telMaximosPorPais = { ve: 10, us: 10, co: 10, es: 9, mx: 10, pa: 8 };
+
+            function telDatosPais() {
+                if (window.provIti && typeof window.provIti.getSelectedCountryData === 'function') {
+                    const datos = window.provIti.getSelectedCountryData();
+                    if (datos && datos.iso2) return datos;
+                }
+                return { iso2: 've', dialCode: '58' };
+            }
+
+            function telMaximoDigitos() {
+                const datos = telDatosPais();
+                if (telMaximosPorPais[datos.iso2]) return telMaximosPorPais[datos.iso2];
+                const codigo = String(datos.dialCode || '58').replace(/\D/g, '');
+                return Math.max(4, 15 - codigo.length);
+            }
+
+            function telDigitosNormalizados() {
+                if (!telInputProv) return '';
+                const datos = telDatosPais();
+                const maximo = telMaximoDigitos();
+                let digitos = telInputProv.value.replace(/\D/g, '');
+                const codigo = String(datos.dialCode || '58').replace(/\D/g, '');
+                if (codigo && digitos.length > maximo && digitos.indexOf(codigo) === 0) {
+                    digitos = digitos.slice(codigo.length);
+                }
+                if (datos.iso2 === 've' && digitos.charAt(0) === '0') {
+                    digitos = digitos.slice(1);
+                }
+                return digitos.slice(0, maximo);
+            }
+
+            // Recorta los dígitos sobrantes conservando los separadores visibles.
+            function telRecortar() {
+                if (!telInputProv) return;
+                const datos = telDatosPais();
+                const maximo = telMaximoDigitos();
+                const digitos = telInputProv.value.replace(/\D/g, '');
+                const codigo = String(datos.dialCode || '58').replace(/\D/g, '');
+                let permitido = (datos.iso2 === 've' && digitos.charAt(0) === '0') ? maximo + 1 : maximo;
+                // Si pegan el número con el código de país, deja que el
+                // normalizador lo quite antes de recortar el número nacional.
+                if (codigo && digitos.indexOf(codigo) === 0 && digitos.length > maximo) {
+                    permitido = Math.max(permitido, maximo + codigo.length);
+                }
+                let vistos = 0;
+                const recortado = telInputProv.value.replace(/\d/g, function(digito) {
+                    vistos++;
+                    return vistos <= permitido ? digito : '';
                 });
-                const sincronizarTel = function() {
-                    document.getElementById('p_tel_full').value = window.provIti.getNumber();
-                };
-                telInputProv.addEventListener('countrychange', sincronizarTel);
-                telInputProv.addEventListener('input', sincronizarTel);
+                if (recortado !== telInputProv.value) telInputProv.value = recortado;
+            }
+
+            // Da un formato legible al número nacional (el +58 va aparte).
+            function telFormatear() {
+                if (!telInputProv) return;
+                const datos = telDatosPais();
+                const digitos = telDigitosNormalizados();
+                if (!digitos) {
+                    telInputProv.value = '';
+                    return;
+                }
+                if (['ve', 'us', 'co', 'mx', 'pa'].includes(datos.iso2)) {
+                    if (digitos.length <= 3) {
+                        telInputProv.value = digitos;
+                    } else if (digitos.length <= 6) {
+                        telInputProv.value = digitos.slice(0, 3) + '-' + digitos.slice(3);
+                    } else {
+                        telInputProv.value = digitos.slice(0, 3) + '-' + digitos.slice(3, 6) + '-' + digitos.slice(6, 10);
+                    }
+                    return;
+                }
+                if (datos.iso2 === 'es' && digitos.length === 9) {
+                    telInputProv.value = digitos.slice(0, 3) + '-' + digitos.slice(3, 6) + '-' + digitos.slice(6);
+                    return;
+                }
+                telInputProv.value = digitos.replace(/(\d{3})(?=\d)/g, '$1-');
+            }
+
+            function telE164() {
+                const datos = telDatosPais();
+                const digitos = telDigitosNormalizados();
+                if (!digitos) return '';
+                const codigo = String(datos.dialCode || '58').replace(/\D/g, '');
+                return '+' + codigo + digitos;
+            }
+
+            function telSincronizar() {
+                if (telFullProv) telFullProv.value = telE164();
+            }
+
+            window.jvTelProvSincronizar = function() {
+                telRecortar();
+                telFormatear();
+                telSincronizar();
+            };
+            window.jvTelProvNumero = telE164;
+            window.jvTelProvCargar = function(telefono) {
+                if (!telInputProv) return;
+                const datos = String(telefono || '');
+                if (!datos) {
+                    if (window.provIti && typeof window.provIti.reset === 'function') {
+                        window.provIti.reset();
+                    }
+                    telInputProv.value = '';
+                    telSincronizar();
+                    return;
+                }
+                if (window.provIti && typeof window.provIti.setNumber === 'function') {
+                    window.provIti.setNumber(datos);
+                }
+                if (!telInputProv.value) {
+                    let digitos = datos.replace(/\D/g, '');
+                    if (digitos.indexOf('58') === 0) digitos = digitos.slice(2);
+                    telInputProv.value = digitos;
+                }
+                window.jvTelProvSincronizar();
+            };
+
+            if (telInputProv) {
+                if (window.intlTelInput) {
+                    window.provIti = window.intlTelInput(telInputProv, {
+                        initialCountry: 've',
+                        preferredCountries: ['ve', 'us', 'co', 'es', 'mx', 'pa'],
+                        separateDialCode: true,
+                        utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
+                    });
+                    telInputProv.addEventListener('countrychange', function() {
+                        telRecortar();
+                        telFormatear();
+                        telSincronizar();
+                    });
+                }
+                telInputProv.addEventListener('input', function() {
+                    telRecortar();
+                    telSincronizar();
+                });
+                telInputProv.addEventListener('change', function() {
+                    telRecortar();
+                    telSincronizar();
+                });
+                telInputProv.addEventListener('blur', function() {
+                    telRecortar();
+                    telFormatear();
+                    telSincronizar();
+                });
             }
 
             // Máscara en vivo del RIF: solo dígitos + guión verificador en el campo numérico
@@ -1096,13 +1232,21 @@
                         if (!primerError) primerError = rifValidar;
                     }
 
-                    if (window.provIti) {
-                        document.getElementById('p_tel_full').value = window.provIti.getNumber();
-                        var telRaw = window.provIti.getNumber().replace(/\D/g, '');
-                        // Venezuela: +58 + 10 dígitos = 12 dígitos totales
-                        if (telRaw.length < 12) {
+                    if (document.getElementById('p_tel')) {
+                        const telE164 = typeof window.jvTelProvNumero === 'function'
+                            ? window.jvTelProvNumero()
+                            : (window.provIti ? window.provIti.getNumber() : '');
+                        document.getElementById('p_tel_full').value = telE164;
+                        const telDigitos = telE164.replace(/\D/g, '');
+                        const datosTel = window.provIti && typeof window.provIti.getSelectedCountryData === 'function'
+                            ? window.provIti.getSelectedCountryData()
+                            : { iso2: 've' };
+                        // Venezuela: +58 + 10 dígitos = 12 dígitos totales.
+                        const telValido = /^\+\d{8,15}$/.test(telE164)
+                            && (datosTel.iso2 !== 've' || telDigitos.length === 12);
+                        if (!telValido) {
                             const telValidar = document.getElementById('p_tel');
-                            marcarError(telValidar, 'TEL\u00c9FONO INV\u00c1LIDO (10 d\u00edgitos requeridos)');
+                            marcarError(telValidar, 'TEL\u00c9FONO INV\u00c1LIDO (10 d\u00edgitos para Venezuela, sin el 0 inicial)');
                             e.preventDefault();
                             if (!primerError) primerError = telValidar;
                         }

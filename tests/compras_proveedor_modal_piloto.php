@@ -6,6 +6,9 @@
 $raiz = dirname(__DIR__);
 $vista = file_get_contents($raiz . '/views/compras/index.php');
 $estilos = file_get_contents($raiz . '/assets/modules/compras/compras.css');
+$modelo = file_get_contents($raiz . '/models/Proveedor.php');
+$javascript = file_get_contents($raiz . '/assets/modules/compras/compras.js');
+require_once $raiz . '/includes/helpers.php';
 $inicio_modal = strpos($vista, '<div class="modal fade" id="modalProveedor"');
 $fin_modal = strpos($vista, '<!-- POP-UP 3:', $inicio_modal);
 $modal = $inicio_modal === false || $fin_modal === false ? '' : substr($vista, $inicio_modal, $fin_modal - $inicio_modal);
@@ -35,5 +38,16 @@ afirmarModalProveedor(preg_match('/<div class="col-lg-4">\s*<label class="comp-l
 afirmarModalProveedor(preg_match('/<div class="col-lg-4">\s*<label class="comp-label">Estado/is', $modal) === 1, 'El estado debe ocupar un tercio en escritorio.');
 afirmarModalProveedor(substr_count($modal, 'class="col-lg-4"') === 3, 'Las tres condiciones comerciales deben ser simétricas.');
 afirmarModalProveedor(strpos($modal, 'id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase mt-4"') !== false, 'Guardar debe ocupar el ancho completo, separado con mt-4.');
+afirmarModalProveedor(strpos($modal, 'maxlength="15"') !== false, 'El teléfono debe limitar la cantidad de dígitos visibles.');
+afirmarModalProveedor(strpos($modal, 'autocomplete="tel-national"') !== false, 'El teléfono debe declarar que se captura sin el código de país.');
+afirmarModalProveedor(strpos($modal, 'placeholder="412-486-2167"') !== false, 'El teléfono debe mostrar el formato nacional esperado.');
+afirmarModalProveedor(strpos($modal, 'id="p_tel_full"') !== false, 'El formulario debe conservar el teléfono completo para el servidor.');
+afirmarModalProveedor(strpos($javascript, 'telRecortar') !== false && strpos($javascript, 'telFormatear') !== false && strpos($javascript, 'telE164') !== false, 'El JS debe recortar, formatear y construir el E.164 del teléfono.');
+afirmarModalProveedor(strpos($javascript, 'window.jvTelProvCargar') !== false && strpos($javascript, 'window.jvTelProvNumero') !== false, 'El JS debe exponer la carga y lectura del teléfono del proveedor.');
+afirmarModalProveedor(strpos($javascript, 'telMaximosPorPais') !== false, 'El JS debe limitar los dígitos según el país.');
+afirmarModalProveedor(strpos($modelo, 'validarTelefono($telefono)') !== false, 'El modelo debe validar el teléfono también en el servidor.');
+afirmarModalProveedor(strpos($modelo, "str_starts_with(\$telefono, '+58')") !== false, 'El modelo debe exigir 10 dígitos nacionales para Venezuela.');
+afirmarModalProveedor(formatearTelefono('+58-412-5550101') === '+58 412-555-0101', 'El teléfono venezolano debe mostrarse como +58 412-555-0101.');
+afirmarModalProveedor(formatearTelefono('+14155550123') === '+1 415-555-0123', 'El teléfono de EE. UU. debe conservar su código de país de un dígito.');
 
-echo "OK estructura visual del modal de proveedor verificada\n";
+echo "OK estructura visual y teléfono del modal de proveedor verificados\n";

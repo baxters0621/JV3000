@@ -323,15 +323,28 @@ if (!function_exists('formatearTelefono')) {
      */
     function formatearTelefono($e164)
     {
-        if (str_starts_with($e164, '+58')) {
-            $num = substr($e164, 3);
-            return '(58) ' . substr($num, 0, 3) . '-' . substr($num, 3);
+        $digitos = preg_replace('/\D/', '', (string)$e164);
+        $formatos = [
+            '507' => [4, 4],
+            '58'  => [3, 3, 4],
+            '57'  => [3, 3, 4],
+            '52'  => [3, 3, 4],
+            '34'  => [3, 3, 3],
+            '1'   => [3, 3, 4],
+        ];
+        foreach ($formatos as $codigo => $grupos) {
+            if (!str_starts_with($digitos, $codigo)) continue;
+            $nacional = substr($digitos, strlen($codigo));
+            if (strlen($nacional) !== array_sum($grupos)) continue;
+            $partes = [];
+            $pos = 0;
+            foreach ($grupos as $largo) {
+                $partes[] = substr($nacional, $pos, $largo);
+                $pos += $largo;
+            }
+            return '+' . $codigo . ' ' . implode('-', $partes);
         }
-        if (preg_match('/^\+(\d{1,3})(\d+)$/', $e164, $m)) {
-            $parts = str_split($m[2], 3);
-            return '+' . $m[1] . ' ' . implode('-', $parts);
-        }
-        return $e164;
+        return $digitos !== '' ? '+' . $digitos : (string)$e164;
     }
 }
 

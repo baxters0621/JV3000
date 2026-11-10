@@ -1041,7 +1041,7 @@ if (!empty($tasa_bcv_fecha)) {
                         <div class="row g-3 mb-0">
                             <div class="col-md-4">
                                 <label class="comp-label">Tel&eacute;fono <span class="text-danger">*</span></label>
-                                <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input w-100" required maxlength="20" inputmode="tel" placeholder="0412-1234567">
+                                <input type="tel" name="telefono" id="p_tel" class="input-jv comp-input w-100" required maxlength="15" inputmode="tel" autocomplete="tel-national" aria-label="Tel&eacute;fono del proveedor sin el c&oacute;digo de pa&iacute;s" placeholder="412-486-2167">
                                 <input type="hidden" name="telefono_completo" id="p_tel_full">
                             </div>
                             <div class="col-md-4">

@@ -41,6 +41,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Formato de bolívares (2026-11-09): todos los montos en Bs. usan coma de miles y punto decimal con 2 decimales fijos (ej. Bs. 1,234.56) mediante jv_formatear_bolivares()/format_bs() en PHP y formatBs()/formatBsValue()/formatBsValor() en JS. La tasa manual se captura con punto decimal; los inputs de captura en USD no cambian.
 
+- Compras / Teléfono del proveedor (2026-11-10): el modal captura solo el número nacional (`412-486-2167`) con límites por país y validación en servidor (Venezuela: 10 dígitos sin 0 inicial); `formatearTelefono()` muestra `+58 412-555-0101`. No depende del `utilsScript` remoto.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

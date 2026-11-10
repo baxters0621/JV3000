@@ -72,8 +72,11 @@ class Proveedor extends Model
         if (!validarRIF($rif)) {
             return ['ok' => false, 'mensaje' => 'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0'];
         }
-        if (empty($telefono) || strlen(preg_replace('/[^0-9+]/', '', $telefono)) < 7) {
-            return ['ok' => false, 'mensaje' => 'TELÉFONO INVÁLIDO. INGRESE UN NÚMERO VÁLIDO.'];
+        if (empty($telefono) || !validarTelefono($telefono)) {
+            return ['ok' => false, 'mensaje' => 'TELÉFONO INVÁLIDO. INGRESE UN NÚMERO VÁLIDO CON CÓDIGO DE PAÍS.'];
+        }
+        if (str_starts_with($telefono, '+58') && strlen(preg_replace('/\D/', '', $telefono)) !== 12) {
+            return ['ok' => false, 'mensaje' => 'TELÉFONO INVÁLIDO. PARA VENEZUELA USE 10 DÍGITOS SIN EL 0 INICIAL.'];
         }
 
         $data = [
