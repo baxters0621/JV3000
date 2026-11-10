@@ -45,6 +45,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Compras / Pagado (Mes) (2026-11-10): la cabecera de Compras muestra `pagado_mes`, suma `pagos_compra.monto` del mes (no `compras.total`) y el widget es `widgetPagadoMes`; refleja dinero efectivamente pagado. Con los datos actuales sigue en $1,969.68 porque los pagos coinciden con las compras. Sin cambios de BD; el POST de pago recarga la página.
 
+- Dashboard / Última Venta y precio de Inventario (2026-11-10): el KPI "Última Venta" de dashboard/index.php suma todas las líneas de la última venta activa y coincide con el primer ítem de Últimas Notas de Entrega; antes tomaba solo la primera línea. La columna PRECIO de Inventario pasa a 12% en escritorio y 14% bajo 1200 px (min-width 820), con importe y encabezado a la derecha y cifras tabulares. "Valor del Inventario" sigue siendo la foto actual a costo y las listas siguen mostrando los últimos 5; sin cambios de BD.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

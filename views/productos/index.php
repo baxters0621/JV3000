@@ -274,7 +274,7 @@ foreach ($categorias as $raiz) {
                     <th class="text-start d-none d-xl-table-cell">CATEGORÍA</th>
                     <th class="text-start d-none d-xl-table-cell">PROVEEDOR</th>
                     <th class="text-center">STOCK</th>
-                    <th class="text-center">PRECIO (Bs.)</th>
+                    <th class="text-end">PRECIO (Bs.)</th>
                     <th class="text-center">VENCE</th>
                     <th class="text-center th-estado">ESTADO</th>
                     <?php if ($esAdmin): ?>
@@ -363,7 +363,7 @@ foreach ($categorias as $raiz) {
                                     </div>
                                 </div>
                             </td>
-                            <td class="text-center">
+                            <td class="text-end">
                                 <span class="prod-precio"><?php echo format_bs((float)$productRecord['precio_venta'], $tasa_bcv ?? null); ?></span>
                             </td>
                             <td class="text-center td-vencimiento">

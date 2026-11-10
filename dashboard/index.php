@@ -48,15 +48,20 @@ function obtenerDatosDashboard(Database $db): array
 {
     $datos = [];
 
-    // El KPI de ventas del panel debe reflejar la última venta registrada, no solo
-    // las ventas del día actual; de ese modo la tarjeta y la tabla muestran un
-    // mismo criterio de "reciente" incluso cuando la última nota no pertenece a hoy.
-    $vd = $db->fetchOne("SELECT COALESCE(ds.cantidad * ds.precio_venta, 0) as total
+    // El KPI de ventas del panel refleja el total completo de la última venta
+    // registrada (todas sus líneas de detalle), de modo que coincida con el
+    // primer ítem de "Últimas Notas de Entrega".
+    $vd = $db->fetchOne("SELECT COALESCE(SUM(ds.cantidad * ds.precio_venta), 0) as total
         FROM salidas s
         JOIN detalle_salidas ds ON s.id_salida = ds.id_salida
         WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'
-        ORDER BY s.fecha_salida DESC, s.id_salida DESC
-        LIMIT 1");
+          AND s.id_salida = (
+              SELECT s2.id_salida
+              FROM salidas s2
+              WHERE s2.id_tipo_mov = 1 AND s2.status = 'Activa'
+              ORDER BY s2.fecha_salida DESC, s2.id_salida DESC
+              LIMIT 1
+          )");
     $datos['ventas_dia'] = (float)($vd['total'] ?? 0);
 
     $vi = $db->fetchOne("SELECT COALESCE(SUM(CASE WHEN lotes.valor_lotes IS NULL THEN p.stock_actual * p.precio_costo ELSE lotes.valor_lotes END), 0) AS valor
