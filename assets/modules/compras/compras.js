@@ -1770,19 +1770,6 @@
                 elemento.textContent = formatBs(usd, tasa);
             });
 
-            var notaDetalle = document.getElementById('detalleCompraTasa');
-            if (notaDetalle) {
-                if (tasa > 0) {
-                    notaDetalle.textContent = 'Montos convertidos a Bs. con la tasa BCV de '
-                        + formatBsValor(tasa, 2)
-                        + (data && data.fecha ? ' del ' + data.fecha : '');
-                    notaDetalle.classList.remove('d-none');
-                } else {
-                    notaDetalle.textContent = '';
-                    notaDetalle.classList.add('d-none');
-                }
-            }
-
             var entrada = document.getElementById('tasa_manual');
             if (entrada && data && typeof data.valor_input === 'string') {
                 entrada.value = data.valor_input;
@@ -1943,18 +1930,6 @@
                 document.getElementById('detalleCompraIva').textContent = aBs(compra.iva || 0);
                 document.getElementById('detalleCompraTotal').textContent = aBs(compra.total || 0);
 
-                var notaDetalle = document.getElementById('detalleCompraTasa');
-                if (notaDetalle) {
-                    if (tasa > 0) {
-                        notaDetalle.textContent = 'Montos convertidos a Bs. con la tasa BCV de '
-                            + formatBsValor(tasa, 2)
-                            + (data.tasa_bcv_fecha ? ' del ' + data.tasa_bcv_fecha : '');
-                        notaDetalle.classList.remove('d-none');
-                    } else {
-                        notaDetalle.textContent = '';
-                        notaDetalle.classList.add('d-none');
-                    }
-                }
             }).catch(function(error) {
                 var mensaje = error && error.jvTope
                     ? 'La consulta tard\u00f3 demasiado. Verifica la conexi\u00f3n e int\u00e9ntalo de nuevo.'

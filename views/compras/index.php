@@ -784,11 +784,6 @@ if (!empty($tasa_bcv_fecha)) {
                         <span>TOTAL</span>
                         <span class="text-end fw-bold fs-5" id="detalleCompraTotal">Bs. 0</span>
                     </div>
-                    <div class="detalle-compra-tasa<?php echo $tasa_bcv_vis > 0 ? '' : ' d-none'; ?>" id="detalleCompraTasa">
-                        <?php if ($tasa_bcv_vis > 0): ?>
-                            Montos convertidos a Bs. con la tasa BCV de <?php echo jv_formatear_bolivares($tasa_bcv_vis, 2); ?><?php echo $tasa_bcv_fecha_legible !== '' ? ' del ' . $tasa_bcv_fecha_legible : ''; ?>
-                        <?php endif; ?>
-                    </div>
                 </div>
             </div>
 
