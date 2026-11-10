@@ -211,7 +211,6 @@ if (!empty($tasa_bcv_fecha)) {
         <select class="input-jv" id="filtroPago" aria-label="Filtrar por estado de pago" onchange="window.location='<?php echo $purchaseListUrl; ?>&filtro_pago='+this.value">
             <option value="">Todos los pagos</option>
             <option value="Pendiente" <?php echo $filtro_pago === 'Pendiente' ? 'selected' : ''; ?>>Pendiente</option>
-            <option value="Parcial" <?php echo $filtro_pago === 'Parcial' ? 'selected' : ''; ?>>Parcial</option>
             <option value="Pagada" <?php echo $filtro_pago === 'Pagada' ? 'selected' : ''; ?>>Pagada</option>
         </select>
     </div>

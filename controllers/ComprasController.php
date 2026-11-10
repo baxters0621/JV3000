@@ -202,7 +202,7 @@ class ComprasController extends Controller
 
         // --- GET: filtros ---
         $filtro_proveedor = (int)($_GET['filtro_proveedor'] ?? 0);
-        $filtro_pago = in_array($_GET['filtro_pago'] ?? '', ['Pendiente', 'Parcial', 'Pagada'], true) ? $_GET['filtro_pago'] : '';
+        $filtro_pago = in_array($_GET['filtro_pago'] ?? '', ['Pendiente', 'Pagada'], true) ? $_GET['filtro_pago'] : '';
         $sol_seleccionada = $_SESSION['sol_seleccionada'] ?? null;
         $iva_pct = (float)getConfig('iva_porcentaje', '16');
 

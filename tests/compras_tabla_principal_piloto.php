@@ -20,6 +20,8 @@ function afirmarTablaCompras(bool $condicion, string $mensaje): void
 afirmarTablaCompras($tabla !== '', 'No se encontró la tabla principal de Compras.');
 afirmarTablaCompras(strpos($tabla, 'd-flex align-items-center gap-3') !== false && strpos($tabla, 'compras-list-toolbar') !== false, 'El buscador y el filtro de pago deben compartir la fila flex.');
 afirmarTablaCompras(strpos($tabla, 'id="buscar"') < strpos($tabla, 'id="filtroPago"'), 'El buscador y el filtro deben estar en la misma barra.');
+afirmarTablaCompras(strpos($tabla, 'value="Pendiente"') !== false && strpos($tabla, 'value="Pagada"') !== false, 'El filtro de pago debe conservar Pendiente y Pagada.');
+afirmarTablaCompras(strpos($tabla, 'value="Parcial"') === false, 'El filtro de pago ya no debe ofrecer la opción Parcial.');
 afirmarTablaCompras(strpos($tabla, 'class="factura-texto text-truncate"') !== false, 'La factura debe ser texto limpio truncable.');
 afirmarTablaCompras(strpos($tabla, 'class="codigo-badge" data-tooltip=') === false, 'La factura no debe usar el badge blanco.');
 afirmarTablaCompras(strpos($tabla, 'class="proveedor-nombre text-truncate" data-tooltip=') !== false, 'El proveedor debe truncarse y conservar acceso al nombre completo.');
