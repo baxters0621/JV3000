@@ -30,9 +30,10 @@ afirmarModalProveedor(strpos($modal, 'id="p_tel" class="input-jv comp-input w-10
 afirmarModalProveedor(strpos($estilos, '#modalProveedor .iti {') !== false && strpos($estilos, '#modalProveedor .iti input {') !== false, 'El selector internacional debe conservar el ancho y altura del teléfono.');
 afirmarModalProveedor(strpos($estilos, '#modalProveedor .comp-input,') !== false && strpos($estilos, 'height: 42px;') !== false, 'Los controles del modal deben tener altura uniforme.');
 afirmarModalProveedor(strpos($modal, 'id="p_lead_time"') !== false && strpos($modal, 'id="p_moneda"') !== false && strpos($modal, 'id="p_status"') !== false, 'Faltan campos de condiciones comerciales.');
-afirmarModalProveedor(preg_match('/<div class="col-md-3">\s*<label class="comp-label">Plazo/is', $modal) === 1, 'El plazo debe ocupar tres columnas.');
-afirmarModalProveedor(preg_match('/<div class="col-md-4">\s*<label class="comp-label">Moneda/is', $modal) === 1, 'La moneda debe ocupar cuatro columnas.');
-afirmarModalProveedor(preg_match('/<div class="col-md-5">\s*<label class="comp-label">Estado/is', $modal) === 1, 'El estado debe ocupar cinco columnas.');
+afirmarModalProveedor(preg_match('/<div class="col-lg-4">\s*<label class="comp-label">Plazo/is', $modal) === 1, 'El plazo debe ocupar un tercio en escritorio para que su etiqueta no se parta.');
+afirmarModalProveedor(preg_match('/<div class="col-lg-4">\s*<label class="comp-label">Moneda/is', $modal) === 1, 'La moneda debe ocupar un tercio en escritorio.');
+afirmarModalProveedor(preg_match('/<div class="col-lg-4">\s*<label class="comp-label">Estado/is', $modal) === 1, 'El estado debe ocupar un tercio en escritorio.');
+afirmarModalProveedor(substr_count($modal, 'class="col-lg-4"') === 3, 'Las tres condiciones comerciales deben ser simétricas.');
 afirmarModalProveedor(strpos($modal, 'id="btn-prov-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase mt-4"') !== false, 'Guardar debe ocupar el ancho completo, separado con mt-4.');
 
 echo "OK estructura visual del modal de proveedor verificada\n";

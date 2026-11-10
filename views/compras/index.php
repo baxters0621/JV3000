@@ -1064,11 +1064,11 @@ if (!empty($tasa_bcv_fecha)) {
                             </div>
                         </div>
                         <div class="row g-3 mb-0">
-                            <div class="col-md-3">
+                            <div class="col-lg-4">
                                 <label class="comp-label">Plazo de Entrega (D&iacute;as)</label>
                                 <input type="number" name="lead_time" id="p_lead_time" class="input-jv comp-input" placeholder="Ej: 7" min="0" max="365" maxlength="3" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3)">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-lg-4">
                                 <label class="comp-label">Moneda</label>
                                 <select name="moneda" id="p_moneda" class="input-jv comp-input">
                                     <option value="USD">USD - D&oacute;lar</option>
@@ -1076,7 +1076,7 @@ if (!empty($tasa_bcv_fecha)) {
                                     <option value="VES">VES - Bol&iacute;var</option>
                                 </select>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-lg-4">
                                 <label class="comp-label">Estado</label>
                                 <select name="status" id="p_status" class="input-jv comp-input">
                                     <option value="Activo">Activo</option>
