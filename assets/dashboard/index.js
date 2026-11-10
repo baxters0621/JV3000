@@ -40,13 +40,14 @@
                 .then(data => {
                     try {
                         if (data.success) {
-                            if ($id('kpi-ventas-dia')) $id('kpi-ventas-dia').textContent = '$' + data.ventas_dia;
-                            if ($id('kpi-valor-inv')) $id('kpi-valor-inv').textContent = '$' + data.valor_inventario;
+                            const tasaBcv = Number(data.tasa_bcv) || Number(window.JV_CONFIG && window.JV_CONFIG.tasaBcv) || 0;
+                            if ($id('kpi-ventas-dia')) $id('kpi-ventas-dia').textContent = formatBs(data.ventas_dia, tasaBcv);
+                            if ($id('kpi-valor-inv')) $id('kpi-valor-inv').textContent = formatBs(data.valor_inventario, tasaBcv);
 
                             if ($id('lista-facturas')) {
                                 $id('lista-facturas').innerHTML = renderActividadPorFecha(
                                     data.ultimas_facturas,
-                                    f => `<div class="activity-item activity-financial-item"><span class="activity-status-dot activity-status-dot-venta" aria-hidden="true"></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(f.cliente)}</div><div class="activity-financial-date">Fecha: ${escapeHtml(f.fecha)}</div></div><div class="activity-total fs-5 fw-bold text-success">$${escapeHtml(f.total)}</div></div>`,
+                                    f => `<div class="activity-item activity-financial-item"><span class="activity-status-dot activity-status-dot-venta" aria-hidden="true"></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(f.cliente)}</div><div class="activity-financial-date">Fecha: ${escapeHtml(f.fecha)}</div></div><div class="activity-total fs-5 fw-bold text-success">${formatBs(f.total, tasaBcv)}</div></div>`,
                                     'Sin ventas registradas.'
                                 );
                             }
@@ -67,7 +68,7 @@
                             if ($id('lista-compras')) {
                                 $id('lista-compras').innerHTML = renderActividadPorFecha(
                                     data.tabla_compras,
-                                    c => `<div class="activity-item activity-financial-item"><span class="activity-status-dot activity-status-dot-compra" aria-hidden="true"></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(c.proveedor)}</div><div class="activity-financial-date">Fecha: ${escapeHtml(c.fecha)}</div></div><div class="activity-total fs-5 fw-bold text-success">$${escapeHtml(c.total)}</div></div>`,
+                                    c => `<div class="activity-item activity-financial-item"><span class="activity-status-dot activity-status-dot-compra" aria-hidden="true"></span><div class="activity-item-copy"><div class="fs-6 fw-bold activity-item-name">${escapeHtml(c.proveedor)}</div><div class="activity-financial-date">Fecha: ${escapeHtml(c.fecha)}</div></div><div class="activity-total fs-5 fw-bold text-success">${formatBs(c.total, tasaBcv)}</div></div>`,
                                     'Sin compras registradas.'
                                 );
                             }

@@ -12,6 +12,7 @@
 /** @var array<int, array<string, mixed>> $categorias Árbol de categorías (raíces con 'hijos') */
 /** @var int $id_categoria_filtro Categoría seleccionada en el árbol (0 = todas) */
 /** @var array<string, mixed>|null $categoria_filtro Fila de la categoría del filtro */
+/** @var float|null $tasa_bcv Tasa BCV para mostrar el precio en Bs. */
 
 // ==========================================
 // VISTA: Inventario / Productos (index)
@@ -273,7 +274,7 @@ foreach ($categorias as $raiz) {
                     <th class="text-start d-none d-xl-table-cell">CATEGORÍA</th>
                     <th class="text-start d-none d-xl-table-cell">PROVEEDOR</th>
                     <th class="text-center">STOCK</th>
-                    <th class="text-center">PRECIO</th>
+                    <th class="text-center">PRECIO (Bs.)</th>
                     <th class="text-center">VENCE</th>
                     <th class="text-center th-estado">ESTADO</th>
                     <?php if ($esAdmin): ?>
@@ -363,7 +364,7 @@ foreach ($categorias as $raiz) {
                                 </div>
                             </td>
                             <td class="text-center">
-                                <span class="prod-precio">$<?php echo number_format($productRecord['precio_venta'], 2); ?></span>
+                                <span class="prod-precio"><?php echo format_bs((float)$productRecord['precio_venta'], $tasa_bcv ?? null); ?></span>
                             </td>
                             <td class="text-center td-vencimiento">
                                 <?php if ($expirationDate): ?>

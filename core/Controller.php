@@ -74,6 +74,7 @@ abstract class Controller
      */
     protected function view(string $view, array $data = []): void
     {
+        $data = $this->inyectarTasaBcv($data);
         $data = $this->versionarAssets($data);
         $this->viewData = $data;
         $__view = $view;
@@ -99,6 +100,7 @@ abstract class Controller
      */
     protected function renderRaw(string $view, array $data = []): void
     {
+        $data = $this->inyectarTasaBcv($data);
         extract($data);
         $file = APP_VIEWS . "/{$view}.php";
         if (!file_exists($file)) {
@@ -120,10 +122,48 @@ abstract class Controller
      */
     protected function json(array $data, int $status = 200): void
     {
+        if (!array_key_exists('tasa_bcv', $data)) {
+            $datos_tasa = jv_tasa_bcv();
+            $data['tasa_bcv'] = isset($datos_tasa['usd']) && (float)$datos_tasa['usd'] > 0
+                ? (float)$datos_tasa['usd']
+                : 0.0;
+            $data['tasa_bcv_fecha'] = $datos_tasa['fecha'] ?? null;
+        }
+
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data);
         exit;
+    }
+
+    /**
+     * Inyecta la tasa BCV y su configuración JS en los datos de la vista.
+     *
+     * Evita repetir la consulta en cada controlador y deja la tasa disponible
+     * para las vistas que formatean montos en bolívares. Si el controlador ya
+     * envió una tasa (por ejemplo, Compras), se respeta su valor.
+     *
+     * @param array $data Datos que se exponen a la vista.
+     * @return array Datos con tasa_bcv, tasa_bcv_fecha y js_config.tasaBcv.
+     */
+    private function inyectarTasaBcv(array $data): array
+    {
+        if (!array_key_exists('tasa_bcv', $data)) {
+            $datos_tasa = jv_tasa_bcv();
+            $data['tasa_bcv'] = isset($datos_tasa['usd']) && (float)$datos_tasa['usd'] > 0
+                ? (float)$datos_tasa['usd']
+                : 0.0;
+            $data['tasa_bcv_fecha'] = $datos_tasa['fecha'] ?? null;
+        }
+
+        if (!isset($data['js_config']) || !is_array($data['js_config'])) {
+            $data['js_config'] = [];
+        }
+        if (!array_key_exists('tasaBcv', $data['js_config'])) {
+            $data['js_config']['tasaBcv'] = (float)($data['tasa_bcv'] ?? 0);
+        }
+
+        return $data;
     }
 
     /**

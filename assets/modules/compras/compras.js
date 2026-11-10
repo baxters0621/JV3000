@@ -17,15 +17,10 @@
         const productoSelect = document.getElementById('selProductoProveedor');
         const catalogoEstado = document.getElementById('catalogoProveedorEstado');
 
-        // Formatea un número como moneda en dólares: $ con separador de miles y 2 decimales.
-        function formatCurrency(amount) {
-            return '$' + Number(amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        }
-
-        // Formatea un monto en bolívares al estilo venezolano.
+        // Formatea un monto que YA está en bolívares al estilo venezolano.
         // Sin decimales por defecto: los céntimos de bolívar no aportan
         // información y ensanchan las cifras hasta recortar las columnas.
-        function formatBs(amount, decimales) {
+        function formatBsValor(amount, decimales) {
             const opciones = {
                 minimumFractionDigits: Number.isInteger(decimales) ? decimales : 0,
                 maximumFractionDigits: Number.isInteger(decimales) ? decimales : 0
@@ -33,9 +28,10 @@
             return 'Bs. ' + new Intl.NumberFormat('es-VE', opciones).format(Number(amount) || 0);
         }
 
-        // Formatea un monto en dólares sin decimales, para el respaldo sin tasa.
-        function formatUsd(amount) {
-            return '$' + new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(amount) || 0);
+        // Obtiene la tasa BCV vigente configurada por el backend.
+        function tasaBcvActual() {
+            const tasa = Number(window.JV_CONFIG && window.JV_CONFIG.tasaBcv);
+            return Number.isFinite(tasa) && tasa > 0 ? tasa : 0;
         }
 
         // ==========================================
@@ -123,7 +119,7 @@
                 id: Number(producto.id),
                 nombre: producto.nombre
             };
-            if (precioEl) precioEl.value = Number(producto.costo).toFixed(2);
+            if (precioEl) precioEl.value = formatBs(Number(producto.costo), tasaBcvActual());
             const cantidadEl = document.getElementById('inputCant');
             if (cantidadEl) {
                 cantidadEl.max = String(Math.min(999999, disponible));
@@ -203,7 +199,7 @@
                 });
                 return;
             }
-            document.getElementById('inputPrecio').value = precio.toFixed(2);
+            document.getElementById('inputPrecio').value = formatBs(precio, tasaBcvActual());
             // REGLA DE NEGOCIO: todo lote exige fecha de vencimiento (control FEFO)
             if (!expirationDate) {
                 Swal.fire({
@@ -256,9 +252,9 @@
                     tr.innerHTML = '<td style="padding:10px 12px;color:var(--jv-text-muted);text-align:center;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + (productIndex + 1) + '</td>' +
                         '<td style="padding:10px 12px;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + escapeHtml(product.nombre) + '</td>' +
                         '<td style="padding:10px 12px;font-size:.95rem;text-align:center;border-bottom:1px solid var(--jv-border);">' + product.cantidad + '</td>' +
-                        '<td style="padding:10px 12px;font-size:.95rem;text-align:right;color:var(--jv-text-muted);border-bottom:1px solid var(--jv-border);">' + formatCurrency(product.precio) + '</td>' +
+                        '<td style="padding:10px 12px;font-size:.95rem;text-align:right;color:var(--jv-text-muted);border-bottom:1px solid var(--jv-border);">' + formatBs(product.precio, tasaBcvActual()) + '</td>' +
                         '<td style="padding:10px 12px;font-size:.95rem;text-align:center;color:var(--jv-text-muted);border-bottom:1px solid var(--jv-border);">' + formattedExpirationDate + '</td>' +
-                        '<td style="padding:10px 12px;font-size:1rem;text-align:right;color:var(--jv-navy);font-weight:700;border-bottom:1px solid var(--jv-border);">' + formatCurrency(product.total) + '</td>' +
+                        '<td style="padding:10px 12px;font-size:1rem;text-align:right;color:var(--jv-navy);font-weight:700;border-bottom:1px solid var(--jv-border);">' + formatBs(product.total, tasaBcvActual()) + '</td>' +
                         '<td style="padding:10px 12px;border-bottom:1px solid var(--jv-border);"><button type="button" class="btn btn-sm border-0" style="padding:0;color:var(--jv-danger);font-size:1rem;line-height:1;" onclick="quitarProducto(' + productIndex + ')"><i class="bi bi-x-circle"></i></button></td>';
                     body.appendChild(tr);
                 });
@@ -269,9 +265,9 @@
             const iva = subtotal * taxPercentage / 100;
             const total = subtotal + iva;
             document.getElementById('totalItems').textContent = productos.length;
-            document.getElementById('totalSubtotal').textContent = formatCurrency(subtotal);
-            document.getElementById('totalIva').textContent = formatCurrency(iva);
-            document.getElementById('totalCosto').textContent = formatCurrency(total);
+            document.getElementById('totalSubtotal').textContent = formatBs(subtotal, tasaBcvActual());
+            document.getElementById('totalIva').textContent = formatBs(iva, tasaBcvActual());
+            document.getElementById('totalCosto').textContent = formatBs(total, tasaBcvActual());
             document.getElementById('btnGuardar').disabled = productos.length === 0;
             document.getElementById('productosData').value = JSON.stringify(productos);
             actualizarCatalogoProveedor();
@@ -1165,7 +1161,7 @@
                     '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--jv-border);">' +
                         '<input type="date" class="input-jv rec-venc" data-id="' + pendingItem.id_detalle + '" value="' + (restoredItem ? restoredItem.fecha_vencimiento : (pendingItem.vence || '')) + '" style="width:130px;padding:8px 10px;">' +
                     '</td>' +
-                    '<td style="padding:10px 12px;text-align:right;color:var(--jv-text-primary);font-weight:600;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + pendingItem.precio.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '</td>';
+                    '<td style="padding:10px 12px;text-align:right;color:var(--jv-text-primary);font-weight:600;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + formatBs(pendingItem.precio, tasaBcvActual()) + '</td>';
                 recBody.appendChild(tr);
             });
 
@@ -1251,8 +1247,8 @@
             pagoSaldo = saldo;
             document.getElementById('pago_id_compra').value = idCompra;
             document.getElementById('pago_factura_num').textContent = factura || '-';
-            document.getElementById('pago_total').value = formatCurrency(total);
-            document.getElementById('pago_saldo').value = formatCurrency(saldo);
+            document.getElementById('pago_total').value = formatBs(total, tasaBcvActual());
+            document.getElementById('pago_saldo').value = formatBs(saldo, tasaBcvActual());
             document.getElementById('pago_monto').value = '';
             document.getElementById('pago_monto').max = saldo.toFixed(2);
             document.getElementById('pago_monto').placeholder = saldo.toFixed(2);
@@ -1296,6 +1292,9 @@
         function aplicarTasaBcv(data) {
             var tasa = Number(data && data.tasa) > 0 ? Number(data.tasa) : 0;
             var manual = !!(data && data.manual === true);
+            if (window.JV_CONFIG) {
+                window.JV_CONFIG.tasaBcv = tasa;
+            }
             var chip = document.getElementById('tasaBcvChip');
             var lectura = document.getElementById('tasaBcvLectura');
 
@@ -1312,7 +1311,7 @@
                 ));
                 if (tasa > 0) {
                     var fuerte = document.createElement('strong');
-                    fuerte.textContent = (data && data.valor) || formatBs(tasa, 2);
+                    fuerte.textContent = (data && data.valor) || formatBsValor(tasa, 2);
                     lectura.appendChild(fuerte);
                     if (data && data.fecha) {
                         lectura.appendChild(document.createTextNode(' \u00b7 ' + data.fecha));
@@ -1323,20 +1322,20 @@
             var invertido = document.getElementById('widgetInvertidoMes');
             if (invertido) {
                 var usdInvertido = Number(invertido.dataset.usd) || 0;
-                invertido.textContent = tasa > 0 ? formatBs(usdInvertido * tasa) : formatUsd(usdInvertido);
+                invertido.textContent = formatBs(usdInvertido, tasa);
             }
 
             var totales = document.querySelectorAll('#tablaEntradas .total-monto[data-usd]');
             Array.prototype.forEach.call(totales, function(elemento) {
                 var usd = Number(elemento.dataset.usd) || 0;
-                elemento.textContent = tasa > 0 ? formatBs(usd * tasa) : formatUsd(usd);
+                elemento.textContent = formatBs(usd, tasa);
             });
 
             var notaDetalle = document.getElementById('detalleCompraTasa');
             if (notaDetalle) {
                 if (tasa > 0) {
                     notaDetalle.textContent = 'Montos convertidos a Bs. con la tasa BCV de '
-                        + formatBs(tasa, 2)
+                        + formatBsValor(tasa, 2)
                         + (data && data.fecha ? ' del ' + data.fecha : '');
                     notaDetalle.classList.remove('d-none');
                 } else {
@@ -1352,7 +1351,7 @@
 
             var referencia = document.getElementById('tasaBcvReferencia');
             if (referencia && tasa > 0) {
-                referencia.textContent = (data && data.valor) || formatBs(tasa, 2);
+                referencia.textContent = (data && data.valor) || formatBsValor(tasa, 2);
             }
         }
 
@@ -1472,10 +1471,10 @@
                 var compra = data.compra || {};
                 var items = Array.isArray(data.items) ? data.items : [];
 
-                // Conversión referencial: si no hay tasa BCV se mantiene el monto en dólares.
-                var tasa = Number(data.tasa_bcv) || 0;
+                // Conversión a bolívares con la tasa enviada por el backend.
+                var tasa = Number(data.tasa_bcv) || tasaBcvActual();
                 var aBs = function(valor) {
-                    return tasa > 0 ? formatBs(Number(valor) * tasa) : formatCurrency(valor);
+                    return formatBs(Number(valor), tasa);
                 };
 
                 document.getElementById('detalleCompraProveedor').textContent = compra.proveedor || 'S/P';
@@ -1509,7 +1508,7 @@
                 if (notaDetalle) {
                     if (tasa > 0) {
                         notaDetalle.textContent = 'Montos convertidos a Bs. con la tasa BCV de '
-                            + formatBs(tasa, 2)
+                            + formatBsValor(tasa, 2)
                             + (data.tasa_bcv_fecha ? ' del ' + data.tasa_bcv_fecha : '');
                         notaDetalle.classList.remove('d-none');
                     } else {

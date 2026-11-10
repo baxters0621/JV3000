@@ -6,6 +6,10 @@ require_once __DIR__ . '/../init.php';
 $jv_cache_bust = static fn(string $ruta): string => is_file($ruta) ? '?v=' . filemtime($ruta) : '';
 
 $db = Database::getInstance();
+$tasa_bcv_datos = jv_tasa_bcv();
+$tasa_bcv = isset($tasa_bcv_datos['usd']) && (float)$tasa_bcv_datos['usd'] > 0
+    ? (float)$tasa_bcv_datos['usd']
+    : 0.0;
 $nombre_user = $_SESSION['usuario'] ?? 'Usuario';
 $rol_user_id = $_SESSION['id_rol'] ?? 0;
 $rol_data = $db->fetchOne("SELECT nombre_rol FROM roles WHERE id_rol = ?", [$rol_user_id]);
@@ -53,7 +57,7 @@ function obtenerDatosDashboard(Database $db): array
         WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'
         ORDER BY s.fecha_salida DESC, s.id_salida DESC
         LIMIT 1");
-    $datos['ventas_dia'] = number_format((float)($vd['total'] ?? 0), 2);
+    $datos['ventas_dia'] = (float)($vd['total'] ?? 0);
 
     $vi = $db->fetchOne("SELECT COALESCE(SUM(CASE WHEN lotes.valor_lotes IS NULL THEN p.stock_actual * p.precio_costo ELSE lotes.valor_lotes END), 0) AS valor
         FROM productos p
@@ -64,16 +68,16 @@ function obtenerDatosDashboard(Database $db): array
             GROUP BY id_producto
         ) lotes ON lotes.id_producto = p.id_producto
         WHERE p.status = 'Activo'");
-    $datos['valor_inventario'] = number_format((float)($vi['valor'] ?? 0), 2);
+    $datos['valor_inventario'] = (float)($vi['valor'] ?? 0);
 
     $fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.id_salida, s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
-    $datos['ultimas_facturas'] = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => number_format($r['total'], 2)], $fac);
+    $datos['ultimas_facturas'] = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => (float)$r['total']], $fac);
 
     $compras = $db->fetchAll("SELECT c.nro_factura, c.fecha_compra, c.total, COALESCE(pr.nombre_empresa, 'S/P') as proveedor FROM compras c LEFT JOIN proveedores pr ON c.id_proveedor = pr.id_proveedor WHERE c.status = 'Activa' ORDER BY c.fecha_compra DESC LIMIT 5");
     $datos['tabla_compras'] = array_map(fn($r) => [
         'proveedor' => $r['proveedor'],
         'fecha' => date('d/m/Y', strtotime($r['fecha_compra'])),
-        'total' => number_format($r['total'], 2)
+        'total' => (float)$r['total']
     ], $compras);
 
     $crit = $db->fetchAll("SELECT nombre_producto, stock_actual, stock_minimo FROM productos WHERE (stock_actual <= stock_minimo OR stock_actual = 0) AND status = 'Activo' ORDER BY stock_actual ASC LIMIT 5");
@@ -95,7 +99,7 @@ if (isset($_GET['ajax_dashboard'])) {
         echo json_encode(['success' => false, 'error' => 'acceso_denegado']);
         exit;
     }
-    echo json_encode(['success' => true] + obtenerDatosDashboard($db));
+    echo json_encode(['success' => true, 'tasa_bcv' => $tasa_bcv] + obtenerDatosDashboard($db));
     exit();
 }
 
@@ -231,14 +235,14 @@ $agruparActividadPorFecha = static function (array $items): array {
                 <h2 class="sec-title"><i class="bi bi-speedometer2"></i> Indicadores Clave</h2>
                 <div class="kpi-grid">
                     <div class="kpi-card kpi-card-verde">
-                        <div class="kpi-icon kpi-icon-verde"><i class="bi bi-currency-dollar"></i></div>
+                        <div class="kpi-icon kpi-icon-verde"><i class="bi bi-cash-coin"></i></div>
                         <div class="kpi-label">Última Venta</div>
-                        <div class="kpi-value" id="kpi-ventas-dia">$<?php echo $ventas_dia; ?></div>
+                        <div class="kpi-value" id="kpi-ventas-dia"><?php echo format_bs((float)$ventas_dia, $tasa_bcv); ?></div>
                     </div>
                     <div class="kpi-card kpi-card-teal">
                         <div class="kpi-icon kpi-icon-teal"><i class="bi bi-box-seam"></i></div>
                         <div class="kpi-label">Valor del Inventario</div>
-                        <div class="kpi-value" id="kpi-valor-inv">$<?php echo $valor_inventario; ?></div>
+                        <div class="kpi-value" id="kpi-valor-inv"><?php echo format_bs((float)$valor_inventario, $tasa_bcv); ?></div>
                     </div>
                 </div>
             </section>
@@ -266,7 +270,7 @@ $agruparActividadPorFecha = static function (array $items): array {
                                                                 <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$f['cliente'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                                 <div class="activity-financial-date">Fecha: <?php echo htmlspecialchars((string)$f['fecha'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                             </div>
-                                                            <div class="activity-total fs-5 fw-bold text-success">$<?php echo htmlspecialchars((string)$f['total'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                            <div class="activity-total fs-5 fw-bold text-success"><?php echo htmlspecialchars(format_bs((float)$f['total'], $tasa_bcv), ENT_QUOTES, 'UTF-8'); ?></div>
                                                         </div>
                                                     <?php endforeach; ?>
                                                 </section>
@@ -328,7 +332,7 @@ $agruparActividadPorFecha = static function (array $items): array {
                                                                 <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$co['proveedor'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                                 <div class="activity-financial-date">Fecha: <?php echo htmlspecialchars((string)$co['fecha'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                             </div>
-                                                            <div class="activity-total fs-5 fw-bold text-success">$<?php echo htmlspecialchars((string)$co['total'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                            <div class="activity-total fs-5 fw-bold text-success"><?php echo htmlspecialchars(format_bs((float)$co['total'], $tasa_bcv), ENT_QUOTES, 'UTF-8'); ?></div>
                                                         </div>
                                                     <?php endforeach; ?>
                                                 </section>

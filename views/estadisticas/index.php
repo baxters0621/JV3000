@@ -4,6 +4,7 @@
 /** @var array<string, array<string, mixed>> $periodos */
 /** @var array<string, mixed> $datos */
 /** @var string $error_fechas */
+/** @var float|null $tasa_bcv Tasa BCV para mostrar los montos en Bs. */
 
 // ==========================================
 // VISTA: Estadísticas (index)
@@ -61,10 +62,10 @@
 <div class="row g-3 mb-3">
     <div class="col-lg-4 col-12">
         <div class="widget-card">
-            <div class="widget-icon widget-icon-rojo" aria-hidden="true"><i class="bi bi-currency-dollar"></i></div>
+            <div class="widget-icon widget-icon-rojo" aria-hidden="true"><i class="bi bi-cash-coin"></i></div>
             <div class="widget-cuerpo">
                 <div class="widget-label">Ventas</div>
-                <div class="widget-value" id="kpi-ventas">$<?php echo number_format(isset($datos['ventas']) ? $datos['ventas'] : 0, 2); ?></div>
+                <div class="widget-value" id="kpi-ventas"><?php echo format_bs((float)(isset($datos['ventas']) ? $datos['ventas'] : 0), $tasa_bcv ?? null); ?></div>
                 <div class="cmp-wrap"><?php echo jv_sello(isset($datos['pct_ventas']) ? $datos['pct_ventas'] : null); ?></div>
             </div>
         </div>
@@ -74,7 +75,7 @@
             <div class="widget-icon widget-icon-verde" aria-hidden="true"><i class="bi bi-truck"></i></div>
             <div class="widget-cuerpo">
                 <div class="widget-label">Compras</div>
-                <div class="widget-value" id="kpi-compras">$<?php echo number_format(isset($datos['compras']) ? $datos['compras'] : 0, 2); ?></div>
+                <div class="widget-value" id="kpi-compras"><?php echo format_bs((float)(isset($datos['compras']) ? $datos['compras'] : 0), $tasa_bcv ?? null); ?></div>
                 <div class="cmp-wrap"><?php echo jv_sello(isset($datos['pct_compras']) ? $datos['pct_compras'] : null); ?></div>
             </div>
         </div>
@@ -84,7 +85,7 @@
             <div class="widget-icon widget-icon-azul" aria-hidden="true"><i class="bi bi-graph-up"></i></div>
             <div class="widget-cuerpo">
                 <div class="widget-label">Ganancia</div>
-                <div class="widget-value widget-value-ganancia" id="kpi-ganancia">$<?php echo number_format(isset($datos['ganancia']) ? $datos['ganancia'] : 0, 2); ?></div>
+                <div class="widget-value widget-value-ganancia" id="kpi-ganancia"><?php echo format_bs((float)(isset($datos['ganancia']) ? $datos['ganancia'] : 0), $tasa_bcv ?? null); ?></div>
                 <div class="cmp-wrap"><?php echo jv_sello(isset($datos['pct_ganancia']) ? $datos['pct_ganancia'] : null); ?></div>
             </div>
         </div>
@@ -111,8 +112,8 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
         <span id="aviso-sin-datos-detalle">
             <?php if ($ventas_anteriores > 0 || $compras_anteriores > 0): ?>
                 El período anterior sí tuvo actividad:
-                ventas $<?php echo number_format($ventas_anteriores, 2); ?>,
-                compras $<?php echo number_format($compras_anteriores, 2); ?>.
+                ventas <?php echo format_bs($ventas_anteriores, $tasa_bcv ?? null); ?>,
+                compras <?php echo format_bs($compras_anteriores, $tasa_bcv ?? null); ?>.
             <?php else: ?>
                 Revisa un período más amplio para consultar las operaciones registradas.
             <?php endif; ?>

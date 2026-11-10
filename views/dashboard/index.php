@@ -11,8 +11,9 @@
  * @var string $iniciales
  * @var array $alertas
  * @var int $rol_user_id
- * @var string $ventas_dia
- * @var string $valor_inventario
+ * @var float $ventas_dia
+ * @var float $valor_inventario
+ * @var float|null $tasa_bcv
  * @var array $ultimas_facturas
  * @var array $tabla_criticos
  * @var array $tabla_compras
@@ -117,14 +118,14 @@ $agruparActividadPorFecha = static function (array $items): array {
         <h2 class="sec-title"><i class="bi bi-speedometer2"></i> Indicadores Clave</h2>
         <div class="kpi-grid">
             <div class="kpi-card kpi-card-verde">
-                <div class="kpi-icon kpi-icon-verde"><i class="bi bi-currency-dollar"></i></div>
+                <div class="kpi-icon kpi-icon-verde"><i class="bi bi-cash-coin"></i></div>
                 <div class="kpi-label">Última Venta</div>
-                <div class="kpi-value" id="kpi-ventas-dia">$<?php echo $ventas_dia; ?></div>
+                <div class="kpi-value" id="kpi-ventas-dia"><?php echo format_bs((float)$ventas_dia, $tasa_bcv ?? null); ?></div>
             </div>
             <div class="kpi-card kpi-card-teal">
                 <div class="kpi-icon kpi-icon-teal"><i class="bi bi-box-seam"></i></div>
                 <div class="kpi-label">Valor del Inventario</div>
-                <div class="kpi-value" id="kpi-valor-inv">$<?php echo $valor_inventario; ?></div>
+                <div class="kpi-value" id="kpi-valor-inv"><?php echo format_bs((float)$valor_inventario, $tasa_bcv ?? null); ?></div>
             </div>
         </div>
     </section>
@@ -152,7 +153,7 @@ $agruparActividadPorFecha = static function (array $items): array {
                                                         <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$f['cliente'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                         <div class="activity-financial-date">Fecha: <?php echo htmlspecialchars((string)$f['fecha'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                     </div>
-                                                    <div class="activity-total fs-5 fw-bold text-success">$<?php echo htmlspecialchars((string)$f['total'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                    <div class="activity-total fs-5 fw-bold text-success"><?php echo htmlspecialchars(format_bs((float)$f['total'], $tasa_bcv ?? null), ENT_QUOTES, 'UTF-8'); ?></div>
                                                 </div>
                                             <?php endforeach; ?>
                                         </section>
@@ -214,7 +215,7 @@ $agruparActividadPorFecha = static function (array $items): array {
                                                         <div class="fs-6 fw-bold activity-item-name"><?php echo htmlspecialchars((string)$co['proveedor'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                         <div class="activity-financial-date">Fecha: <?php echo htmlspecialchars((string)$co['fecha'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                     </div>
-                                                    <div class="activity-total fs-5 fw-bold text-success">$<?php echo htmlspecialchars((string)$co['total'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                    <div class="activity-total fs-5 fw-bold text-success"><?php echo htmlspecialchars(format_bs((float)$co['total'], $tasa_bcv ?? null), ENT_QUOTES, 'UTF-8'); ?></div>
                                                 </div>
                                             <?php endforeach; ?>
                                         </section>

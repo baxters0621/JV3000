@@ -16,6 +16,8 @@
 /** @var float $iva_pct */
 /** @var float $iva */
 /** @var float $total_neto */
+/** @var float|null $tasa_bcv Tasa BCV para mostrar montos en Bs. */
+/** @var string|null $tasa_bcv_fecha Fecha de la tasa BCV (Y-m-d). */
 /** @var string $preview_token */
 /** @var string $csrf */
 /** @var array<string, string>|null $flash */
@@ -104,8 +106,8 @@
                     <tr>
                         <td><?php echo $detail['cantidad']; ?></td>
                         <td><strong class="pv-nombre" data-tooltip="<?php echo htmlspecialchars($detail['nombre_producto'] ?? ''); ?>"><?php echo htmlspecialchars($detail['nombre_producto'] ?? ''); ?></strong><br><span style="font-size:.85rem;color:#6C757D;">SKU: <?php echo htmlspecialchars($detail['sku'] ?? ''); ?></span></td>
-                        <td><?php if ($es_regalias && $detail['precio_venta'] == 0 && ($detail['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($detail['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">GRATIS</span><?php else: ?>$ <?php echo number_format($detail['precio_venta'], 2); ?><?php endif; ?></td>
-                        <td><?php if ($es_regalias && $detail['precio_venta'] == 0 && ($detail['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;">$ <?php echo number_format($detail['cantidad'] * $detail['precio_original'], 2); ?></span> <span style="color:#198754;font-weight:700;">$ 0.00</span><?php else: ?>$ <?php echo number_format($lineTotal, 2); ?><?php endif; ?></td>
+                        <td><?php if ($es_regalias && $detail['precio_venta'] == 0 && ($detail['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;"><?php echo format_bs((float)$detail['precio_original'], $tasa_bcv ?? null); ?></span> <span style="color:#198754;font-weight:700;">GRATIS</span><?php else: ?><?php echo format_bs((float)$detail['precio_venta'], $tasa_bcv ?? null); ?><?php endif; ?></td>
+                        <td><?php if ($es_regalias && $detail['precio_venta'] == 0 && ($detail['precio_original'] ?? 0) > 0): ?><span style="text-decoration:line-through;color:#6C757D;"><?php echo format_bs((float)$detail['cantidad'] * (float)$detail['precio_original'], $tasa_bcv ?? null); ?></span> <span style="color:#198754;font-weight:700;"><?php echo format_bs(0, $tasa_bcv ?? null); ?></span><?php else: ?><?php echo format_bs((float)$lineTotal, $tasa_bcv ?? null); ?><?php endif; ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -113,17 +115,23 @@
 
         <?php if (!$es_merma): ?>
             <div class="totals">
-                <div class="row"><span class="label">Base Imponible</span><span>$ <?php echo number_format($subtotal, 2); ?></span></div>
+                <div class="row"><span class="label">Base Imponible</span><span><?php echo format_bs((float)$subtotal, $tasa_bcv ?? null); ?></span></div>
                 <?php if ($es_venta): ?>
-                    <div class="row iva"><span class="label">I.V.A. (<?php echo $iva_pct; ?>%)</span><span>$ <?php echo number_format($iva, 2); ?></span></div>
+                    <div class="row iva"><span class="label">I.V.A. (<?php echo $iva_pct; ?>%)</span><span><?php echo format_bs((float)$iva, $tasa_bcv ?? null); ?></span></div>
                 <?php else: ?>
                     <div class="row iva"><span class="label">I.V.A.</span><span>EXENTO</span></div>
                 <?php endif; ?>
-                <div class="row total"><span>MONTO TOTAL</span><span>$ <?php echo number_format($total_neto, 2); ?></span></div>
+                <div class="row total"><span>MONTO TOTAL</span><span><?php echo format_bs((float)$total_neto, $tasa_bcv ?? null); ?></span></div>
             </div>
         <?php else: ?>
             <div class="totals">
-                <div class="row total" style="border:none;color:#6C757D;"><span>VALOR</span><span>$ 0.00</span></div>
+                <div class="row total" style="border:none;color:#6C757D;"><span>VALOR</span><span><?php echo format_bs(0, $tasa_bcv ?? null); ?></span></div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!$es_merma && !empty($tasa_bcv)): ?>
+            <div style="text-align:right;font-size:.72rem;color:#6C757D;margin-top:6px;">
+                Montos en Bs. a la tasa BCV de <?php echo jv_formatear_bolivares((float)$tasa_bcv, 2); ?><?php echo !empty($tasa_bcv_fecha) ? ' del ' . date('d/m/Y', strtotime((string)$tasa_bcv_fecha)) : ''; ?>.
             </div>
         <?php endif; ?>
 

@@ -1486,3 +1486,38 @@ if (!function_exists('jv_formatear_bolivares')) {
         return 'Bs. ' . number_format($monto, $decimales, ',', '.');
     }
 }
+
+if (!function_exists('format_bs')) {
+    /**
+     * Convierte un monto en dólares a bolívares para mostrarlo en la interfaz.
+     *
+     * La base de datos y la lógica interna siguen trabajando en USD; esta
+     * función es exclusivamente de presentación. Usa la tasa manual si está
+     * configurada, o la tasa automática del BCV como respaldo. Si no hay una
+     * tasa válida devuelve una raya para no inventar montos.
+     *
+     * @param float      $monto_usd Monto en dólares.
+     * @param float|null $tasa      Tasa VES por USD; si se omite se consulta.
+     * @return string Ejemplo: "Bs. 1.771.275" o "—" si no hay tasa.
+     */
+    function format_bs(float $monto_usd, ?float $tasa = null): string
+    {
+        static $tasa_cache = null;
+
+        if ($tasa === null || $tasa <= 0) {
+            if ($tasa_cache === null) {
+                $datos_tasa = jv_tasa_bcv();
+                $tasa_cache = isset($datos_tasa['usd']) && (float)$datos_tasa['usd'] > 0
+                    ? (float)$datos_tasa['usd']
+                    : 0.0;
+            }
+            $tasa = $tasa_cache;
+        }
+
+        if ($tasa <= 0) {
+            return '—';
+        }
+
+        return jv_formatear_bolivares($monto_usd * $tasa, 0);
+    }
+}

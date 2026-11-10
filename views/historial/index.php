@@ -13,6 +13,7 @@
 /** @var int $total_paginas */
 /** @var string $query_string */
 /** @var int $page */
+/** @var float|null $tasa_bcv Tasa BCV para mostrar el total en Bs. */
 ?>
 <?php if ($flash): ?>
     <div class="alert-jv alert-jv-<?php echo $flash['tipo']; ?> flash-auto mb-3">
@@ -186,7 +187,7 @@
                             </div>
                         </td>
                         <td data-label="Total" class="historial-total fs-5 fw-bold text-end <?php echo $es_compra ? 'text-success' : 'text-danger'; ?>">
-                            $<?php echo number_format((float)$operacion['monto_total'], 2); ?>
+                            <?php echo format_bs((float)$operacion['monto_total'], $tasa_bcv ?? null); ?>
                         </td>
                         <td data-label="Acciones" class="historial-accion-cell">
                             <button type="button" class="btn btn-sm btn-outline-primary historial-btn-ver" data-bs-toggle="modal" data-bs-target="#modalDetalleOperacion" data-operacion="<?php echo htmlspecialchars((string)$operacion['id_operacion'], ENT_QUOTES, 'UTF-8'); ?>" title="Ver detalle" aria-label="Ver detalle de <?php echo htmlspecialchars((string)$operacion['referencia'], ENT_QUOTES, 'UTF-8'); ?>">

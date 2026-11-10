@@ -113,9 +113,7 @@ $purchaseListUrl = APP_URL_BASE . 'index.php?url=compras';
             </div>
             <div>
                 <div class="widget-label">Invertido (Mes)</div>
-                <div class="widget-value" id="widgetInvertidoMes" data-usd="<?php echo htmlspecialchars((string)(float)$kpis['invertido_mes'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo $tasa_bcv_vis > 0
-                    ? jv_formatear_bolivares((float)$kpis['invertido_mes'] * $tasa_bcv_vis)
-                    : '$' . number_format((float)$kpis['invertido_mes'], 0); ?></div>
+                <div class="widget-value" id="widgetInvertidoMes" data-usd="<?php echo htmlspecialchars((string)(float)$kpis['invertido_mes'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo format_bs((float)$kpis['invertido_mes'], $tasa_bcv_vis ?: null); ?></div>
             </div>
         </div>
     </div>
@@ -255,15 +253,13 @@ if (!empty($tasa_bcv_fecha)) {
                                 </div>
                             </td>
                             <td class="td-total text-end" data-label="Total">
-                                <span class="total-monto" data-usd="<?php echo htmlspecialchars((string)(float)$compra['total'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo $tasa_bcv_vis > 0
-                                    ? jv_formatear_bolivares((float)$compra['total'] * $tasa_bcv_vis)
-                                    : '$' . number_format((float)$compra['total'], 2); ?></span>
+                                <span class="total-monto" data-usd="<?php echo htmlspecialchars((string)(float)$compra['total'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo format_bs((float)$compra['total'], $tasa_bcv_vis ?: null); ?></span>
                             </td>
                             <td class="text-center d-none d-xl-table-cell" data-label="Pago">
                                 <?php $status_pago = $compra['status_pago'] ?? 'Pendiente'; ?>
                                 <span class="badge-jv <?php echo $status_pago === 'Pagada' ? 'badge-success' : 'badge-warning'; ?>"><i class="bi <?php echo $status_pago === 'Pagada' ? 'bi-check-circle' : 'bi-hourglass-split'; ?> me-1"></i><?php echo $status_pago; ?></span>
                                 <?php if ($status_pago !== 'Pagada' && (float)($compra['saldo_pendiente'] ?? 0) > 0): ?>
-                                    <div class="mt-1" style="font-size:.75rem;color:var(--jv-red);">Saldo: $<?php echo number_format($compra['saldo_pendiente'], 2); ?></div>
+                                    <div class="mt-1" style="font-size:.75rem;color:var(--jv-red);">Saldo: <?php echo format_bs((float)$compra['saldo_pendiente'], $tasa_bcv_vis ?: null); ?></div>
                                 <?php endif; ?>
                             </td>
                             <td class="td-fecha" data-label="Fecha"><?php echo date('d/m/Y', strtotime($compra['fecha_compra'])); ?></td>
@@ -515,7 +511,7 @@ if (!empty($tasa_bcv_fecha)) {
                                         <input type="number" class="input-jv" id="inputCant" aria-label="Cantidad del producto" value="1" min="1" max="999999" step="1">
                                     </div>
                                     <div class="col-md-3 comp-add-field">
-                                        <label class="comp-label-sm" for="inputPrecio">Precio Unitario del Catálogo ($)</label>
+                                        <label class="comp-label-sm" for="inputPrecio">Precio Unitario del Catálogo (Bs.)</label>
                                         <input type="text" class="input-jv" id="inputPrecio" aria-label="Precio unitario establecido por el proveedor" placeholder="Selecciona un producto" readonly aria-readonly="true">
                                     </div>
                                     <div class="col-md-2 comp-add-field">
@@ -572,15 +568,15 @@ if (!empty($tasa_bcv_fecha)) {
                                 </div>
                                 <div class="comp-summary-item text-end">
                                     <span class="comp-summary-label">Subtotal</span>
-                                    <span class="comp-summary-value" id="totalSubtotal">$0.00</span>
+                                    <span class="comp-summary-value" id="totalSubtotal">Bs. 0</span>
                                 </div>
                                 <div class="comp-summary-item text-end">
                                     <span class="comp-summary-label">IVA (<?php echo $iva_pct; ?>%)</span>
-                                    <span class="comp-summary-value" id="totalIva">$0.00</span>
+                                    <span class="comp-summary-value" id="totalIva">Bs. 0</span>
                                 </div>
                                 <div class="comp-summary-item comp-summary-total text-end">
                                     <span class="comp-summary-label">Total</span>
-                                    <span class="comp-summary-value comp-total-big fs-5" id="totalCosto">$0.00</span>
+                                    <span class="comp-summary-value comp-total-big fs-5" id="totalCosto">Bs. 0</span>
                                 </div>
                             </div>
                         </div>
@@ -622,23 +618,21 @@ if (!empty($tasa_bcv_fecha)) {
 
                     <div class="row g-3 mb-3">
                         <div class="col-6">
-                            <label class="jv-modal-label">TOTAL</label>
+                            <label class="jv-modal-label">TOTAL (Bs.)</label>
                             <div class="input-group">
-                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
                                 <input type="text" class="form-control" id="pago_total" readonly style="background:var(--jv-bg);font-weight:700;">
                             </div>
                         </div>
                         <div class="col-6">
-                            <label class="jv-modal-label">SALDO PENDIENTE</label>
+                            <label class="jv-modal-label">SALDO PENDIENTE (Bs.)</label>
                             <div class="input-group">
-                                <span class="input-group-text" style="background:var(--jv-bg);font-size:.85rem;">$</span>
                                 <input type="text" class="form-control" id="pago_saldo" readonly style="background:var(--jv-bg);font-weight:700;color:var(--jv-red);">
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="jv-modal-label">MONTO A PAGAR <span style="color:var(--jv-red);">*</span></label>
+                        <label class="jv-modal-label">MONTO A PAGAR (USD) <span style="color:var(--jv-red);">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text" style="font-size:.85rem;">$</span>
                             <input type="number" step="0.01" min="0.01" class="form-control input-jv" name="monto_pago" id="pago_monto" required placeholder="0.00" style="font-weight:700;font-size:1.1rem;">
@@ -770,15 +764,15 @@ if (!empty($tasa_bcv_fecha)) {
                 <div class="detalle-compra-totales d-flex flex-column gap-2">
                     <div class="detalle-compra-total-row">
                         <span>Subtotal</span>
-                        <span class="text-end" id="detalleCompraSubtotal">$0.00</span>
+                        <span class="text-end" id="detalleCompraSubtotal">Bs. 0</span>
                     </div>
                     <div class="detalle-compra-total-row d-none">
                         <span>IVA</span>
-                        <span class="text-end" id="detalleCompraIva">$0.00</span>
+                        <span class="text-end" id="detalleCompraIva">Bs. 0</span>
                     </div>
                     <div class="detalle-compra-total-row detalle-compra-total-final">
                         <span>TOTAL</span>
-                        <span class="text-end fw-bold fs-5" id="detalleCompraTotal">$0.00</span>
+                        <span class="text-end fw-bold fs-5" id="detalleCompraTotal">Bs. 0</span>
                     </div>
                     <div class="detalle-compra-tasa<?php echo $tasa_bcv_vis > 0 ? '' : ' d-none'; ?>" id="detalleCompraTasa">
                         <?php if ($tasa_bcv_vis > 0): ?>
@@ -944,7 +938,7 @@ if (!empty($tasa_bcv_fecha)) {
                                                             <span class="cat-item-nombre" data-tooltip="<?php echo htmlspecialchars($entrada_cat['nombre_producto']); ?>"><?php echo htmlspecialchars($entrada_cat['nombre_producto']); ?></span>
                                                             <small class="cat-item-meta"><?php echo htmlspecialchars($entrada_cat['sku']); ?><?php echo !empty($entrada_cat['codigo_proveedor']) ? ' · C&oacute;d. prov: ' . htmlspecialchars($entrada_cat['codigo_proveedor']) : ''; ?></small>
                                                         </div>
-                                                        <span class="cat-item-costo">$<?php echo number_format((float)$entrada_cat['costo'], 2); ?></span>
+                                                        <span class="cat-item-costo"><?php echo format_bs((float)$entrada_cat['costo'], $tasa_bcv_vis ?: null); ?></span>
                                                         <span class="cat-item-stock">Disponible: <?php echo number_format((int)$entrada_cat['stock_disponible']); ?></span>
                                                         <button type="button" class="btn-cat-icon" onclick='editarProductoCatalogo(<?php echo htmlspecialchars(json_encode($entrada_cat, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, "UTF-8"); ?>)' data-tooltip="Editar costo y disponible"><i class="bi bi-pencil-square"></i></button>
                                                         <button type="button" class="btn-cat-icon btn-cat-del" onclick="provEliminarCat(<?php echo (int)$entrada_cat['id_catalogo']; ?>, '<?php echo htmlspecialchars(addslashes($entrada_cat['nombre_producto'])); ?>')" data-tooltip="Quitar del cat&aacute;logo"><i class="bi bi-trash3"></i></button>

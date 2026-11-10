@@ -8,6 +8,7 @@
 /** @var array<int, array<string, mixed>> $cli_gestion Clientes para gestión (admin) */
 /** @var int $cli_activos Total de clientes activos */
 /** @var bool $es_admin Es administrador */
+/** @var float|null $tasa_bcv Tasa BCV para mostrar montos en Bs. */
 
 // ==========================================
 // VISTA: Salidas / Ventas (index)
@@ -66,11 +67,11 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
     <div class="col-md-4">
         <div class="widget-card h-100">
             <div class="widget-icon widget-icon--success">
-                <i class="bi bi-currency-dollar"></i>
+                <i class="bi bi-cash-coin"></i>
             </div>
             <div>
                 <div class="widget-label fs-6 text-muted">Ventas del Mes</div>
-                <div class="widget-value fs-3 fw-bold">$<?php echo number_format($kpis['ventas_mes'], 2); ?></div>
+                <div class="widget-value fs-3 fw-bold"><?php echo format_bs((float)$kpis['ventas_mes'], $tasa_bcv ?? null); ?></div>
             </div>
         </div>
     </div>
@@ -156,7 +157,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                                     elseif ($grupo_mov === 'regalias') echo '<span class="badge bg-info bg-opacity-10 text-jv-info border-0"><i class="bi bi-gift me-1"></i>Regalía</span>';
                                                     else echo '<span class="badge bg-warning bg-opacity-10 text-jv-warning border-0" style="cursor:pointer;" data-tooltip="' . htmlspecialchars($nombre_tipo . ($causa_ajuste ? ': ' . $causa_ajuste : ''), ENT_QUOTES, 'UTF-8') . '" onclick="verDetalleDano(' . htmlspecialchars(json_encode($nombre_tipo, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars(json_encode($causa_ajuste, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo, ENT_QUOTES, 'UTF-8') . '</span>';
                                                     ?></td>
-                            <td class="td-total <?php echo $grupo_mov === 'merma' ? 'text-danger' : 'text-success'; ?>">$<?php echo number_format($outgoingRecord['total_monto'] ?? 0, 2); ?></td>
+                            <td class="td-total <?php echo $grupo_mov === 'merma' ? 'text-danger' : 'text-success'; ?>"><?php echo format_bs((float)($outgoingRecord['total_monto'] ?? 0), $tasa_bcv ?? null); ?></td>
                             <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($outgoingRecord['fecha_salida'])); ?></td>
                             <td class="sal-celda-acciones text-center">
                                 <div class="sal-acciones-grupo">
@@ -377,7 +378,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <input type="number" id="s_cant" aria-label="Cantidad del producto" class="input-jv" value="1" min="1" max="999999" oninput="if(this.value>999999)this.value=999999">
                             </div>
                             <div class="col-md-3">
-                                <label for="s_precio" class="jv-modal-label">Precio $</label>
+                                <label for="s_precio" class="jv-modal-label">Precio unitario (USD)</label>
                                 <input type="text" inputmode="decimal" id="s_precio" aria-label="Precio unitario del producto" class="input-jv input-precio-readonly" placeholder="0.00" readonly>
                             </div>
                             <div class="col-md-2">
@@ -411,7 +412,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 
                     <div class="sal-totales-bar">
                         <span class="tt-label">Productos <span class="tt-valor" id="s_total_items">0</span></span>
-                        <span class="tt-label ms-auto">Total Venta <span class="tt-valor" id="s_total_monto">$0.00</span></span>
+                        <span class="tt-label ms-auto">Total Venta <span class="tt-valor" id="s_total_monto">Bs. 0</span></span>
                     </div>
 
                     <!-- SOLICITUD A COMPRAS (venta sin stock) -->

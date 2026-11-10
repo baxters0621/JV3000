@@ -557,9 +557,9 @@ class Compra extends Model
             if ($status_pago === 'Pagada') {
                 $msg .= 'COMPROBANTE DE PAGO REGISTRADO.';
             } elseif ($status_pago === 'Parcial') {
-                $msg .= 'ABONO REGISTRADO: ' . number_format($monto_pago, 2) . ' DE ' . number_format($total, 2) . '.';
+                $msg .= 'ABONO REGISTRADO: ' . format_bs((float)$monto_pago) . ' DE ' . format_bs((float)$total) . '.';
             } else {
-                $msg .= 'PAGO PENDIENTE (' . number_format($monto_pago, 2) . ' DE ' . number_format($total, 2) . ').';
+                $msg .= 'PAGO PENDIENTE (' . format_bs((float)$monto_pago) . ' DE ' . format_bs((float)$total) . ').';
             }
             return ['ok' => true, 'mensaje' => $msg];
         } catch (DomainException $e) {

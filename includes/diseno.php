@@ -12,6 +12,9 @@ $base_assets = BASE_PATH . 'assets/';
 <!-- ACCIONES POST SEGURAS -->
 <script src="<?php echo $base_assets; ?>js/diseno.js<?php echo jv_asset_version('js/diseno.js'); ?>"></script>
 
+<!-- CONVERSIÓN Y FORMATO DE MONTOS EN BOLÍVARES -->
+<script src="<?php echo $base_assets; ?>js/moneda.js<?php echo jv_asset_version('js/moneda.js'); ?>"></script>
+
 <!-- TOOLTIP GLOBAL COMPARTIDO (un solo <div> para toda la app) -->
 <script src="<?php echo $base_assets; ?>js/tooltips.js?v=5"></script>
 

@@ -32,6 +32,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Compras / Bolívares (2026-11-09): la tasa manual (`configuracion.tasa_bcv_manual`) tiene prioridad absoluta en `jv_tasa_bcv()` y `TasasController`; al guardarla se invalida `cache/tasas_bcv.json` (`jv_limpiar_cache_tasa_bcv()`), se responde JSON y `compras.js` actualiza el chip y los montos en Bs sin recargar (widget con `data-usd`, totales y nota del detalle). Sin tasa manual se consulta la página oficial del BCV (cadena Sectigo en `includes/certificados/bcv_sectigo.pem` porque el sitio no envía el intermedio) y `ve.dolarapi.com` queda como respaldo; cache de 30 min. `formatBs()` usa Intl es-VE. Carrito y modal de pago siguen en USD (captura). BD intacta en USD.
 
+- Conversión visual USD→Bs (2026-11-09): helper `format_bs($monto_usd, ?float $tasa = null)` en includes/helpers.php y `formatBs`/`formatBsValue` en assets/js/moneda.js; Controller inyecta `tasa_bcv`, `tasa_bcv_fecha` y `js_config.tasaBcv`, y `json()` agrega `tasa_bcv`. Dashboard, Ventas, Compras, Productos, Historial, Estadísticas, Nota de Entrega, Reporte de Inventario y mensajes flash de Compras/Pagos muestran Bs. BD, columnas, SQL y modelos siguen en USD; los inputs de captura (precio de venta, costo de compra, monto de pago) siguen en USD y etiquetados. Sin tasa válida se muestra —.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

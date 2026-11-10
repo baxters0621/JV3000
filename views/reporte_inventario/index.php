@@ -1,6 +1,8 @@
 <?php
 
 /** @var array<int, array<string, mixed>> $productos */
+/** @var float|null $tasa_bcv Tasa BCV para mostrar montos en Bs. */
+/** @var string|null $tasa_bcv_fecha Fecha de la tasa BCV (Y-m-d). */
 
 // ==========================================
 // VISTA: Reporte de Inventario (standalone imprimible)
@@ -36,6 +38,9 @@ $valor_venta_total = 0;
                 <h3 class="m-0 text-uppercase fw-bold text-primary">Estado de Inventario</h3>
                 <p class="m-0 small text-muted">Fecha: <strong><?php echo date('d/m/Y'); ?></strong> | Hora: <strong><?php echo date('h:i A'); ?></strong></p>
                 <p class="m-0 small">Generado por: <span class="badge bg-light text-dark border"><?php echo htmlspecialchars($_SESSION['usuario'] ?? ''); ?></span></p>
+                <?php if (!empty($tasa_bcv)): ?>
+                    <p class="m-0 small text-muted">Tasa BCV: <strong><?php echo jv_formatear_bolivares((float)$tasa_bcv, 2); ?></strong><?php echo !empty($tasa_bcv_fecha) ? ' del ' . date('d/m/Y', strtotime((string)$tasa_bcv_fecha)) : ''; ?></p>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -49,9 +54,9 @@ $valor_venta_total = 0;
                         <th width="14%">Proveedor</th>
                         <th width="7%">Stock</th>
                         <th width="7%">Cap.</th>
-                        <th width="9%">P. Costo</th>
-                        <th width="9%">P. Venta</th>
-                        <th width="10%">Valor Total</th>
+                        <th width="9%">P. Costo (Bs.)</th>
+                        <th width="9%">P. Venta (Bs.)</th>
+                        <th width="10%">Valor Total (Bs.)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,9 +72,9 @@ $valor_venta_total = 0;
                             <td class="text-center small text-muted"><?php echo htmlspecialchars($producto['ultimo_proveedor'] ?? '-'); ?></td>
                             <td class="text-center <?php echo ($producto['stock_actual'] <= 5) ? 'text-danger fw-bold' : ''; ?>"><?php echo number_format($producto['stock_actual'], 0); ?></td>
                             <td class="text-center small text-muted"><?php echo number_format((int)$producto['capacidad'], 0); ?></td>
-                            <td class="text-end pe-2 small">$<?php echo number_format($producto['precio_costo'], 2); ?></td>
-                            <td class="text-end pe-2 small">$<?php echo number_format($producto['precio_venta'], 2); ?></td>
-                            <td class="text-end pe-2 fw-bold">$<?php echo number_format($producto['valor_venta'], 2); ?></td>
+                            <td class="text-end pe-2 small"><?php echo format_bs((float)$producto['precio_costo'], $tasa_bcv ?? null); ?></td>
+                            <td class="text-end pe-2 small"><?php echo format_bs((float)$producto['precio_venta'], $tasa_bcv ?? null); ?></td>
+                            <td class="text-end pe-2 fw-bold"><?php echo format_bs((float)$producto['valor_venta'], $tasa_bcv ?? null); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -78,9 +83,9 @@ $valor_venta_total = 0;
                         <td colspan="4" class="text-end text-uppercase py-2 pe-3 small">Totales Consolidados:</td>
                         <td class="text-center py-2"><?php echo number_format($gran_total_stock, 0); ?> Unds.</td>
                         <td></td>
-                        <td class="text-end pe-2 py-2 text-primary fw-bold">$<?php echo number_format($valor_costo_total, 2); ?></td>
-                        <td class="text-end pe-2 py-2 text-success fw-bold">$<?php echo number_format($valor_venta_total, 2); ?></td>
-                        <td class="text-end pe-2 py-2 text-success fw-bold">$<?php echo number_format($valor_venta_total, 2); ?></td>
+                        <td class="text-end pe-2 py-2 text-primary fw-bold"><?php echo format_bs((float)$valor_costo_total, $tasa_bcv ?? null); ?></td>
+                        <td class="text-end pe-2 py-2 text-success fw-bold"><?php echo format_bs((float)$valor_venta_total, $tasa_bcv ?? null); ?></td>
+                        <td class="text-end pe-2 py-2 text-success fw-bold"><?php echo format_bs((float)$valor_venta_total, $tasa_bcv ?? null); ?></td>
                     </tr>
                 </tfoot>
             </table>

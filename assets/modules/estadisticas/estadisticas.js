@@ -7,6 +7,18 @@
         ? false
         : { duration: 350 };
 
+    // Obtiene la tasa configurada por el backend.
+    function tasaBcvActual() {
+        const tasa = Number(cfg.tasaBcv);
+        return Number.isFinite(tasa) && tasa > 0 ? tasa : 0;
+    }
+
+    // Prefiere la tasa de la respuesta AJAX y cae a la tasa de la página.
+    function tasaDeRespuesta(response) {
+        const tasa = Number(response && response.tasa_bcv);
+        return Number.isFinite(tasa) && tasa > 0 ? tasa : tasaBcvActual();
+    }
+
     // ---------- HELPERS DE ESTADO ----------
     // Indica si una serie numérica tiene al menos un valor distinto de cero
     // (decide si los gráficos muestran el estado vacío).
@@ -37,26 +49,33 @@
         const comprasAnteriores = Number(statisticsResponse.compras_ant) || 0;
         if (titulo) titulo.textContent = 'No hay movimientos en ' + (statisticsResponse.etiqueta || 'este período');
         if (detalle) {
+            const tasa = tasaDeRespuesta(statisticsResponse);
             detalle.textContent = ventasAnteriores !== 0 || comprasAnteriores !== 0
-                ? 'El período anterior registró ventas de ' + formatCurrency(ventasAnteriores) + ' y compras de ' + formatCurrency(comprasAnteriores) + '.'
+                ? 'El período anterior registró ventas de ' + formatBs(ventasAnteriores, tasa) + ' y compras de ' + formatBs(comprasAnteriores, tasa) + '.'
                 : 'Revisa un período más amplio para consultar las operaciones registradas.';
         }
     }
 
-    const formatCurrency = amount => '$' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
     // ---------- GRÁFICO DE LÍNEAS: VENTAS VS COMPRAS ----------
     let chartFlujo = null;
     // Dibuja o redibuja el gráfico de líneas comparando ventas y compras por periodo.
-    function crearChartFlujo(labels, ventas, compras) {
+    // Convierte las series a bolívares cuando hay tasa; si no, conserva USD y lo advierte.
+    function crearChartFlujo(labels, ventas, compras, tasa) {
         if (chartFlujo) chartFlujo.destroy();
+
+        const tasaUsada = Number(tasa) > 0 ? Number(tasa) : tasaBcvActual();
+        const hayTasa = tasaUsada > 0;
+        const moneda = hayTasa ? 'Bs.' : 'USD';
+        const ventasGrafico = (Array.isArray(ventas) ? ventas : []).map(valor => hayTasa ? Number(valor) * tasaUsada : Number(valor));
+        const comprasGrafico = (Array.isArray(compras) ? compras : []).map(valor => hayTasa ? Number(valor) * tasaUsada : Number(valor));
+
         chartFlujo = new Chart(document.getElementById('chartFlujo'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Ventas ($)', data: ventas, borderColor: '#DC2626', backgroundColor: 'rgba(220,38,38,0.10)', fill: true, tension: 0.32, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#DC2626' },
-                    { label: 'Compras ($)', data: compras, borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,0.10)', fill: true, tension: 0.32, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#16A34A' }
+                    { label: 'Ventas (' + moneda + ')', data: ventasGrafico, borderColor: '#DC2626', backgroundColor: 'rgba(220,38,38,0.10)', fill: true, tension: 0.32, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#DC2626' },
+                    { label: 'Compras (' + moneda + ')', data: comprasGrafico, borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,0.10)', fill: true, tension: 0.32, borderWidth: 3, pointRadius: 3, pointBackgroundColor: '#16A34A' }
                 ]
             },
             options: {
@@ -67,11 +86,24 @@
                     legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' }, usePointStyle: true, padding: 16 } }
                 },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(222,226,230,0.35)' }, ticks: { font: { size: 12 } } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(222,226,230,0.35)' },
+                        ticks: {
+                            font: { size: 12 },
+                            callback: function (value) {
+                                return hayTasa
+                                    ? formatBsValue(value)
+                                    : '$' + Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 });
+                            }
+                        }
+                    },
                     x: { grid: { display: false }, ticks: { font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 12 } }
                 }
             }
         });
+
+        return tieneDatos(ventasGrafico) || tieneDatos(comprasGrafico);
     }
 
     // ---------- GRÁFICO DE BARRAS HORIZONTALES: TOP 5 ----------
@@ -129,10 +161,11 @@
     function actualizarUI(statisticsResponse) {
         if (!statisticsResponse || !statisticsResponse.success) return;
 
+        const tasa = tasaDeRespuesta(statisticsResponse);
         const updateText = (elementId, value) => { const element = document.getElementById(elementId); if (element) element.textContent = value; };
-        updateText('kpi-ventas', formatCurrency(statisticsResponse.ventas));
-        updateText('kpi-compras', formatCurrency(statisticsResponse.compras));
-        updateText('kpi-ganancia', formatCurrency(statisticsResponse.ganancia));
+        updateText('kpi-ventas', formatBs(statisticsResponse.ventas, tasa));
+        updateText('kpi-compras', formatBs(statisticsResponse.compras, tasa));
+        updateText('kpi-ganancia', formatBs(statisticsResponse.ganancia, tasa));
 
         const comparisonPercentages = {
             'kpi-ventas': statisticsResponse.pct_ventas,
@@ -152,12 +185,10 @@
         updateText('cmp-mensaje-texto', statisticsResponse.mensaje);
         updateText('cmp-periodo', statisticsResponse.etiqueta);
 
-        const hayVentas = tieneDatos(statisticsResponse.data_ventas);
-        const hayCompras = tieneDatos(statisticsResponse.data_compras);
         const hayTop = Array.isArray(statisticsResponse.topLabels) && statisticsResponse.topLabels.length > 0;
 
-        crearChartFlujo(statisticsResponse.labels, statisticsResponse.data_ventas, statisticsResponse.data_compras);
-        toggleEmptyCanvas('chartFlujo', 'empty-flujo', (hayVentas || hayCompras));
+        const hayFlujo = crearChartFlujo(statisticsResponse.labels, statisticsResponse.data_ventas, statisticsResponse.data_compras, tasa);
+        toggleEmptyCanvas('chartFlujo', 'empty-flujo', hayFlujo);
         crearChartTop(statisticsResponse.topLabels, statisticsResponse.topCant);
         toggleEmptyCanvas('chartTop', 'empty-top', hayTop);
         toggleAvisoSinDatos(statisticsResponse);
@@ -173,8 +204,8 @@
 
     // ---------- RENDER INICIAL ----------
     if (cfg.labels) {
-        crearChartFlujo(cfg.labels, cfg.ventas, cfg.compras);
-        toggleEmptyCanvas('chartFlujo', 'empty-flujo', (tieneDatos(cfg.ventas) || tieneDatos(cfg.compras)));
+        const hayFlujoInicial = crearChartFlujo(cfg.labels, cfg.ventas, cfg.compras, cfg.tasaBcv);
+        toggleEmptyCanvas('chartFlujo', 'empty-flujo', hayFlujoInicial);
     }
     if (cfg.topLabels) {
         crearChartTop(cfg.topLabels, cfg.topCant);

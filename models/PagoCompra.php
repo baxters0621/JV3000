@@ -64,7 +64,7 @@ class PagoCompra extends Model
                 return $rechazar('LA COMPRA YA ESTÁ PAGADA COMPLETAMENTE.');
             }
             if ($monto > round($saldo, 2)) {
-                return $rechazar("EL MONTO EXCEDE EL SALDO PENDIENTE (\$" . number_format($saldo, 2) . ").");
+                return $rechazar('EL MONTO EXCEDE EL SALDO PENDIENTE (' . format_bs((float)$saldo) . ').');
             }
 
             // Insertar pago
@@ -88,7 +88,7 @@ class PagoCompra extends Model
             $saldoPendiente = max(0, $total - $nuevoPagado);
             $mensaje = $saldoPendiente <= 0.01
                 ? 'PAGO REGISTRADO. COMPRA PAGADA COMPLETAMENTE.'
-                : 'PAGO REGISTRADO. SALDO PENDIENTE: $' . number_format($saldoPendiente, 2) . '.';
+                : 'PAGO REGISTRADO. SALDO PENDIENTE: ' . format_bs((float)$saldoPendiente) . '.';
 
             return ['ok' => true, 'mensaje' => $mensaje, 'saldo_pendiente' => $saldoPendiente];
         } catch (Throwable $e) {

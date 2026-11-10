@@ -116,7 +116,7 @@ class DashboardController extends Controller
             WHERE s.id_tipo_mov = 1 AND s.status = 'Activa'
               AND s.fecha_salida >= CURDATE()
               AND s.fecha_salida < CURDATE() + INTERVAL 1 DAY");
-        $datos['ventas_dia'] = number_format((float)($vd['total'] ?? 0), 2);
+        $datos['ventas_dia'] = (float)($vd['total'] ?? 0);
 
         // Valor del inventario (costo de lotes + fallback a productos)
         $vi = $db->fetchOne("SELECT COALESCE(SUM(CASE WHEN lotes.valor_lotes IS NULL THEN p.stock_actual * p.precio_costo ELSE lotes.valor_lotes END), 0) AS valor
@@ -128,18 +128,18 @@ class DashboardController extends Controller
                 GROUP BY id_producto
             ) lotes ON lotes.id_producto = p.id_producto
             WHERE p.status = 'Activo'");
-        $datos['valor_inventario'] = number_format((float)($vi['valor'] ?? 0), 2);
+        $datos['valor_inventario'] = (float)($vi['valor'] ?? 0);
 
         // Últimas 5 notas de entrega
         $fac = $db->fetchAll("SELECT s.cliente, MAX(s.fecha_salida) as fecha_salida, SUM(ds.cantidad * ds.precio_venta) as total, s.nro_factura_manual FROM salidas s JOIN detalle_salidas ds ON s.id_salida = ds.id_salida WHERE s.id_tipo_mov = 1 AND s.status = 'Activa' GROUP BY s.id_salida, s.nro_factura_manual ORDER BY MAX(s.fecha_salida) DESC LIMIT 5");
-        $datos['ultimas_facturas'] = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => number_format($r['total'], 2)], $fac);
+        $datos['ultimas_facturas'] = array_map(fn($r) => ['cliente' => $r['cliente'] ?: 'S/N', 'fecha' => date('d/m/Y', strtotime($r['fecha_salida'])), 'total' => (float)$r['total']], $fac);
 
         // Últimas 5 compras
         $compras = $db->fetchAll("SELECT c.nro_factura, c.fecha_compra, c.total, COALESCE(pr.nombre_empresa, 'S/P') as proveedor FROM compras c LEFT JOIN proveedores pr ON c.id_proveedor = pr.id_proveedor WHERE c.status = 'Activa' ORDER BY c.fecha_compra DESC LIMIT 5");
         $datos['tabla_compras'] = array_map(fn($r) => [
             'proveedor' => $r['proveedor'],
             'fecha' => date('d/m/Y', strtotime($r['fecha_compra'])),
-            'total' => number_format($r['total'], 2)
+            'total' => (float)$r['total']
         ], $compras);
 
         // Productos críticos (stock <= mínimo)

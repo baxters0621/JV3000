@@ -4,6 +4,7 @@
  * Verifica tarjetas, listas legibles y actualización AJAX de Actividad Reciente.
  */
 $raiz = dirname(__DIR__);
+require_once $raiz . '/includes/helpers.php';
 $vistas = [
     file_get_contents($raiz . '/views/dashboard/index.php'),
     file_get_contents($raiz . '/dashboard/index.php'),
@@ -43,12 +44,13 @@ $vista_renderizada = renderDashboardActividad([
     'iniciales' => 'UP',
     'alertas' => ['total' => 0],
     'rol_user_id' => 1,
-    'ventas_dia' => '0.00',
-    'valor_inventario' => '0.00',
+    'tasa_bcv' => 100.0,
+    'ventas_dia' => 0.0,
+    'valor_inventario' => 0.0,
     'ultimas_facturas' => [
-        ['cliente' => 'Cliente de nombre muy largo que debe fluir sin cortes', 'fecha' => $hoy->format('d/m/Y'), 'total' => '10.00'],
-        ['cliente' => 'Cliente de ayer', 'fecha' => $ayer->format('d/m/Y'), 'total' => '20.00'],
-        ['cliente' => 'Cliente anterior', 'fecha' => $fecha_anterior->format('d/m/Y'), 'total' => '30.00'],
+        ['cliente' => 'Cliente de nombre muy largo que debe fluir sin cortes', 'fecha' => $hoy->format('d/m/Y'), 'total' => 10.0],
+        ['cliente' => 'Cliente de ayer', 'fecha' => $ayer->format('d/m/Y'), 'total' => 20.0],
+        ['cliente' => 'Cliente anterior', 'fecha' => $fecha_anterior->format('d/m/Y'), 'total' => 30.0],
     ],
     'tabla_criticos' => [
         ['producto' => 'Producto sin existencias', 'stock' => 0, 'estado' => 'critico'],
@@ -73,8 +75,9 @@ $vista_sin_stock = renderDashboardActividad([
     'iniciales' => 'UP',
     'alertas' => ['total' => 0],
     'rol_user_id' => 1,
-    'ventas_dia' => '0.00',
-    'valor_inventario' => '0.00',
+    'tasa_bcv' => 100.0,
+    'ventas_dia' => 0.0,
+    'valor_inventario' => 0.0,
     'ultimas_facturas' => [],
     'tabla_criticos' => [
         ['producto' => 'Producto agotado', 'stock' => 0, 'estado' => 'critico'],
@@ -98,8 +101,8 @@ afirmarActividadDashboard(
 afirmarActividadDashboard(
     strpos($vista_renderizada, 'activity-financial-item') !== false
     && strpos($vista_renderizada, 'activity-financial-date">Fecha:') !== false
-    && strpos($vista_renderizada, 'activity-total fs-5 fw-bold text-success">$10.00</div>') !== false
-    && strpos($vista_renderizada, 'activity-total fs-5 fw-bold text-success">$40.00</div>') !== false,
+    && strpos($vista_renderizada, 'activity-total fs-5 fw-bold text-success">Bs. 1.000</div>') !== false
+    && strpos($vista_renderizada, 'activity-total fs-5 fw-bold text-success">Bs. 4.000</div>') !== false,
     'Ventas y compras deben resaltar el monto a la derecha y mantener la fecha legible.'
 );
 afirmarActividadDashboard(

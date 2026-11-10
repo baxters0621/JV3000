@@ -585,7 +585,7 @@
             if (!selectedProducts.length) {
                 tbody.innerHTML = '<tr id="s_fila_vacia"><td colspan="6" class="sal-fila-vacia">⬆ Agregue productos con los controles de arriba</td></tr>';
                 document.getElementById('s_total_items').textContent = '0';
-                document.getElementById('s_total_monto').textContent = '$0.00';
+                document.getElementById('s_total_monto').textContent = formatBs(0);
                 return;
             }
             let html = '';
@@ -600,8 +600,8 @@
                     <td class="td-prod-num">${i+1}</td>
                     <td class="td-prod-nombre" data-tooltip="${escapeHtml(desc)}">${escapeHtml(desc)}</td>
                     <td class="td-prod-cant">${p.cantidad}</td>
-                    <td class="td-prod-precio">$${p.precio_venta.toFixed(2)}</td>
-                    <td class="td-prod-subtotal">$${subtotal.toFixed(2)}</td>
+                    <td class="td-prod-precio">${formatBs(p.precio_venta)}</td>
+                    <td class="td-prod-subtotal">${formatBs(subtotal)}</td>
                     <td style="text-align:center;border-bottom:1px solid var(--jv-border);">
                         <button type="button" onclick="quitarProductoSalida(${i})" style="background:none;border:none;color:var(--jv-danger);font-size:1.2rem;cursor:pointer;padding:2px 6px;" title="Quitar">&times;</button>
                     </td>
@@ -609,7 +609,7 @@
             });
             tbody.innerHTML = html;
             document.getElementById('s_total_items').textContent = totalItems;
-            document.getElementById('s_total_monto').textContent = '$' + totalMonto.toFixed(2);
+            document.getElementById('s_total_monto').textContent = formatBs(totalMonto);
         }
 
         // Refleja en los campos visibles los valores que el borrador restauró en los hidden.
