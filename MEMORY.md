@@ -57,6 +57,7 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Nota de Entrega (2026-11-10): metadatos en `.doc-meta` a la derecha bajo el título (sin `.num-row` ni raya en `.doc-header`); dirección del cliente desde `clientes.direccion` con `NotaEntrega::obtenerDireccionCliente()` (id_cliente y fallback por documento) mostrada en `.info-box--full`; `.totals .row > *` neutraliza el `width:100%` de Bootstrap para que etiqueta y monto compartan línea.
 
+- Salidas / tarjeta de venta (2026-11-10): la columna Productos en vista angosta muestra solo nombres y el botón «Ver detalle»; se retiraron los distintivos ×N (.prod-cant) y se mantiene «+N más». Las cantidades siguen en el modal de detalle.
 - Nota de Entrega / Totales (2026-11-10): el documento muestra solo dos líneas, «Subtotal» y «MONTO TOTAL» en rojo; el IVA se sigue calculando en `NotaEntrega::armarNota()` pero su renglón ya no se imprime. En regalías el aviso fiscal va como distintivo `.iva-exento` junto a la etiqueta Subtotal, sin fila extra. CSS `?v=7`; retirada la regla `.totals .row.iva` y la leyenda de tasa BCV bajo los totales.
 
 ## Decisiones (y por qué)

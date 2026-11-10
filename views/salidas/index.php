@@ -168,9 +168,6 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                             <?php foreach ($productos_visibles as $prod_det): ?>
                                                 <li>
                                                     <span class="prod-nombre-item"><?php echo htmlspecialchars($prod_det['nombre_producto'] ?? ''); ?></span>
-                                                    <?php if ((int)($prod_det['cantidad'] ?? 0) > 1): ?>
-                                                        <span class="prod-cant">&times;<?php echo (int)$prod_det['cantidad']; ?></span>
-                                                    <?php endif; ?>
                                                 </li>
                                             <?php endforeach; ?>
                                             <?php if ($productos_restantes > 0): ?>
