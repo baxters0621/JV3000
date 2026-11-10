@@ -236,6 +236,18 @@ if (!function_exists('validarRIF')) {
     }
 }
 
+if (!function_exists('validarRifProveedor')) {
+    /**
+     * RIF de proveedor: V/E con 8 dígitos; J/G/P/C con 8 dígitos + verificador.
+     * Ej: V-12345678 · J-12345678-9
+     */
+    function validarRifProveedor(string $d): bool
+    {
+        return (bool)preg_match('/^[VE]-[0-9]{8}$/', $d)
+            || (bool)preg_match('/^[JGPC]-[0-9]{8}-[0-9]$/', $d);
+    }
+}
+
 if (!function_exists('validarDocumentoFiscal')) {
     /**
      * Acepta cédula o RIF (para el campo "RIF / Cédula" de ventas).
@@ -312,6 +324,23 @@ if (!function_exists('validarTelefono')) {
     {
         $digits = preg_replace('/\D/', '', $tel);
         return str_starts_with($tel, '+') && strlen($digits) >= 8 && strlen($digits) <= 15;
+    }
+}
+
+if (!function_exists('validarTelefonoProveedor')) {
+    /**
+     * Valida el teléfono del proveedor: Venezuela exige un prefijo móvil
+     * válido; el resto de países usa el E.164 general.
+     */
+    function validarTelefonoProveedor(string $tel): bool
+    {
+        if (preg_match('/^\+58(412|414|416|424|426|410|411|418|419)[0-9]{7}$/', $tel)) {
+            return true;
+        }
+        if (str_starts_with($tel, '+58')) {
+            return false;
+        }
+        return validarTelefono($tel);
     }
 }
 

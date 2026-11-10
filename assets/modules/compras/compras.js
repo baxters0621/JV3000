@@ -890,6 +890,7 @@
             document.getElementById('p_rif_tipo').value = esEdicion ? (proveedorData.rif.charAt(0) || 'J') : 'J';
             document.getElementById('p_rif_numero').value = esEdicion ? proveedorData.rif.substring(2) : '';
             document.getElementById('p_rif').value = esEdicion ? proveedorData.rif : '';
+            configurarRif();
             document.getElementById('p_empresa').value = esEdicion ? proveedorData.nombre_empresa : '';
             document.getElementById('p_contacto_nombre').value = esEdicion ? (proveedorData.contacto || '') : '';
             document.getElementById('p_email').value = esEdicion ? (proveedorData.email || '') : '';
@@ -1116,6 +1117,49 @@
                 if (telFullProv) telFullProv.value = telE164();
             }
 
+            function telVenezuelaValido(digitos) {
+                return /^4(12|14|16|24|26|10|11|18|19)\d{7}$/.test(digitos);
+            }
+
+            function limpiarErrorTelefono() {
+                if (!telInputProv) return;
+                telInputProv.classList.remove('input-error');
+                telInputProv.removeAttribute('aria-invalid');
+                const aviso = document.getElementById('p_tel_err');
+                if (aviso) aviso.remove();
+            }
+
+            function validarTelefonoProv() {
+                if (!telInputProv) return true;
+                const datos = telDatosPais();
+                const digitos = telDigitosNormalizados();
+                const e164 = telE164();
+                if (telFullProv) telFullProv.value = e164;
+
+                let valido;
+                if (datos.iso2 === 've') {
+                    valido = telVenezuelaValido(digitos);
+                } else if (typeof window.intlTelInputUtils !== 'undefined'
+                    && window.provIti && typeof window.provIti.isValidNumber === 'function') {
+                    try {
+                        valido = window.provIti.isValidNumber();
+                    } catch (error) {
+                        valido = digitos.length === telMaximoDigitos();
+                    }
+                } else {
+                    valido = digitos.length === telMaximoDigitos();
+                }
+
+                if (!valido) {
+                    marcarError(telInputProv, datos.iso2 === 've'
+                        ? 'TEL\u00c9FONO INV\u00c1LIDO. USA UN PREFIJO 0412, 0414, 0416, 0424, 0426, 0410, 0411, 0418 O 0419.'
+                        : 'TEL\u00c9FONO INV\u00c1LIDO PARA EL PA\u00cdS SELECCIONADO.');
+                    return false;
+                }
+                limpiarErrorTelefono();
+                return true;
+            }
+
             window.jvTelProvSincronizar = function() {
                 telRecortar();
                 telFormatear();
@@ -1156,53 +1200,105 @@
                         telRecortar();
                         telFormatear();
                         telSincronizar();
+                        limpiarErrorTelefono();
                     });
                 }
                 telInputProv.addEventListener('input', function() {
                     telRecortar();
                     telSincronizar();
+                    limpiarErrorTelefono();
                 });
                 telInputProv.addEventListener('change', function() {
                     telRecortar();
                     telSincronizar();
+                    limpiarErrorTelefono();
                 });
                 telInputProv.addEventListener('blur', function() {
                     telRecortar();
                     telFormatear();
                     telSincronizar();
+                    validarTelefonoProv();
                 });
             }
 
-            // Máscara en vivo del RIF: solo dígitos + guión verificador en el campo numérico
+            // Máscara y validación del RIF/Cédula según el tipo seleccionado.
             const rifNumero = document.getElementById('p_rif_numero');
             const rifTipo = document.getElementById('p_rif_tipo');
             const rifHidden = document.getElementById('p_rif');
 
+            function rifEsJuridico() {
+                return !!(rifTipo && ['J', 'G', 'P', 'C'].includes(rifTipo.value));
+            }
+
+            function limpiarErrorRif() {
+                if (!rifNumero) return;
+                rifNumero.classList.remove('input-error');
+                rifNumero.removeAttribute('aria-invalid');
+                const aviso = document.getElementById('p_rif_numero_err');
+                if (aviso) aviso.remove();
+            }
+
             function sincronizarRif() {
-                var tipo = rifTipo ? rifTipo.value : 'J';
-                var numero = rifNumero ? rifNumero.value.replace(/[^0-9-]/g, '') : '';
-                rifHidden.value = tipo + '-' + numero;
+                const tipo = rifTipo ? rifTipo.value : 'J';
+                const numero = rifNumero ? rifNumero.value.replace(/[^0-9-]/g, '') : '';
+                if (rifHidden) rifHidden.value = numero ? tipo + '-' + numero : '';
+            }
+
+            function formatearRif() {
+                if (!rifNumero) return;
+                const valor = rifNumero.value.replace(/[^0-9]/g, '');
+                const juridico = rifEsJuridico();
+                const maxCuerpo = juridico ? 9 : 8;
+                const cuerpo = valor.substring(0, maxCuerpo);
+                rifNumero.value = juridico && cuerpo.length > 8
+                    ? cuerpo.substring(0, 8) + '-' + cuerpo.substring(8)
+                    : cuerpo;
+                sincronizarRif();
+            }
+
+            function configurarRif() {
+                if (!rifNumero) return;
+                const juridico = rifEsJuridico();
+                rifNumero.maxLength = juridico ? 10 : 8;
+                rifNumero.placeholder = juridico ? '12345678-9' : '12345678';
+                if (!juridico) {
+                    rifNumero.value = rifNumero.value.replace(/\D/g, '').slice(0, 8);
+                }
+                formatearRif();
+            }
+
+            function validarRifProv() {
+                if (!rifNumero) return true;
+                sincronizarRif();
+                const tipo = rifTipo ? rifTipo.value : 'J';
+                const valor = rifHidden ? rifHidden.value : '';
+                const valido = ['V', 'E'].includes(tipo)
+                    ? /^[VE]-\d{8}$/.test(valor)
+                    : /^[JGPC]-\d{8}-\d$/.test(valor);
+                if (!valido) {
+                    marcarError(rifNumero, 'RIF INV\u00c1LIDO. V/E: 8 D\u00cdGITOS; J/G/P/C: 8 D\u00cdGITOS + VERIFICADOR.');
+                    const grupo = rifNumero.closest('.comp-rif-grupo');
+                    const aviso = document.getElementById('p_rif_numero_err');
+                    if (grupo && aviso) grupo.insertAdjacentElement('afterend', aviso);
+                    return false;
+                }
+                limpiarErrorRif();
+                return true;
             }
 
             if (rifTipo) {
-                rifTipo.addEventListener('change', sincronizarRif);
+                rifTipo.addEventListener('change', function() {
+                    limpiarErrorRif();
+                    configurarRif();
+                });
             }
             if (rifNumero) {
-                rifNumero.addEventListener('input', function(e) {
-                    let valor = e.target.value.replace(/[^0-9]/g, '');
-                    let formateado = '';
-                    if (valor.length > 0) {
-                        const esJuridico = rifTipo && ['J','G','P','C'].includes(rifTipo.value);
-                        const maxCuerpo = esJuridico ? 9 : 8;
-                        const cuerpo = valor.substring(0, maxCuerpo);
-                        formateado = cuerpo;
-                        if (esJuridico && valor.length > 8) {
-                            formateado = cuerpo.substring(0, 8) + '-' + cuerpo.substring(8);
-                        }
-                    }
-                    e.target.value = formateado;
-                    sincronizarRif();
+                configurarRif();
+                rifNumero.addEventListener('input', function() {
+                    formatearRif();
+                    limpiarErrorRif();
                 });
+                rifNumero.addEventListener('blur', validarRifProv);
             }
 
             // Formateo en vivo del costo del catálogo
@@ -1223,33 +1319,14 @@
                         if (!primerError) primerError = empresaEl;
                     }
 
-                    // Sincronizar RIF antes de validar
-                    sincronizarRif();
-                    const rifValidar = document.getElementById('p_rif');
-                    if (!/^[VEJGPC]-\d{8}(-\d)?$/.test(rifValidar.value)) {
-                        marcarError(document.getElementById('p_rif_numero'), 'RIF INV\u00c1LIDO (use: V-12345678 o J-12345678-9)');
+                    if (!validarRifProv()) {
                         e.preventDefault();
-                        if (!primerError) primerError = rifValidar;
+                        if (!primerError) primerError = rifNumero;
                     }
 
-                    if (document.getElementById('p_tel')) {
-                        const telE164 = typeof window.jvTelProvNumero === 'function'
-                            ? window.jvTelProvNumero()
-                            : (window.provIti ? window.provIti.getNumber() : '');
-                        document.getElementById('p_tel_full').value = telE164;
-                        const telDigitos = telE164.replace(/\D/g, '');
-                        const datosTel = window.provIti && typeof window.provIti.getSelectedCountryData === 'function'
-                            ? window.provIti.getSelectedCountryData()
-                            : { iso2: 've' };
-                        // Venezuela: +58 + 10 dígitos = 12 dígitos totales.
-                        const telValido = /^\+\d{8,15}$/.test(telE164)
-                            && (datosTel.iso2 !== 've' || telDigitos.length === 12);
-                        if (!telValido) {
-                            const telValidar = document.getElementById('p_tel');
-                            marcarError(telValidar, 'TEL\u00c9FONO INV\u00c1LIDO (10 d\u00edgitos para Venezuela, sin el 0 inicial)');
-                            e.preventDefault();
-                            if (!primerError) primerError = telValidar;
-                        }
+                    if (telInputProv && !validarTelefonoProv()) {
+                        e.preventDefault();
+                        if (!primerError) primerError = telInputProv;
                     }
 
                     const emailValidar = document.getElementById('p_email');

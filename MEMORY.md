@@ -47,6 +47,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Dashboard / Última Venta y precio de Inventario (2026-11-10): el KPI "Última Venta" de dashboard/index.php suma todas las líneas de la última venta activa y coincide con el primer ítem de Últimas Notas de Entrega; antes tomaba solo la primera línea. La columna PRECIO de Inventario pasa a 12% en escritorio y 14% bajo 1200 px (min-width 820), con importe y encabezado a la derecha y cifras tabulares. "Valor del Inventario" sigue siendo la foto actual a costo y las listas siguen mostrando los últimos 5; sin cambios de BD.
 
+- Compras / Validación de proveedor (2026-11-10): RIF V/E con 8 dígitos y J/G/P/C con 8+verificador (solo formato, sin módulo 11); teléfono VE con prefijos 0412/0414/0416/0424/0426/0410/0411/0418/0419 y otros países con intl-tel-input/backend. Se retiró la ayuda del RIF y el grupo usa .comp-rif-grupo; backend con validarRifProveedor/validarTelefonoProveedor y Compra.php alineado.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

@@ -387,7 +387,7 @@ class Compra extends Model
         if ($prov['status'] !== 'Activo') {
             return ['ok' => false, 'mensaje' => 'EL PROVEEDOR ESTÁ INACTIVO. NO SE PUEDE REGISTRAR LA COMPRA.'];
         }
-        if (!validarRIF(normalizarDocumento($prov['rif'] ?? ''))) {
+        if (!validarRifProveedor(normalizarDocumento($prov['rif'] ?? ''))) {
             return ['ok' => false, 'mensaje' => 'EL PROVEEDOR SELECCIONADO NO TIENE UN RIF VÁLIDO. CORRÍJALO EN PROVEEDORES.'];
         }
 

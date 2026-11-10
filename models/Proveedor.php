@@ -69,14 +69,11 @@ class Proveedor extends Model
         if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['ok' => false, 'mensaje' => 'FORMATO DE CORREO ELECTRÓNICO INVÁLIDO.'];
         }
-        if (!validarRIF($rif)) {
-            return ['ok' => false, 'mensaje' => 'FORMATO DE RIF INVÁLIDO. USE: J-12345678-0'];
+        if (!validarRifProveedor($rif)) {
+            return ['ok' => false, 'mensaje' => 'RIF INVÁLIDO. V/E: 8 DÍGITOS; J/G/P/C: 8 DÍGITOS + VERIFICADOR.'];
         }
-        if (empty($telefono) || !validarTelefono($telefono)) {
-            return ['ok' => false, 'mensaje' => 'TELÉFONO INVÁLIDO. INGRESE UN NÚMERO VÁLIDO CON CÓDIGO DE PAÍS.'];
-        }
-        if (str_starts_with($telefono, '+58') && strlen(preg_replace('/\D/', '', $telefono)) !== 12) {
-            return ['ok' => false, 'mensaje' => 'TELÉFONO INVÁLIDO. PARA VENEZUELA USE 10 DÍGITOS SIN EL 0 INICIAL.'];
+        if (empty($telefono) || !validarTelefonoProveedor($telefono)) {
+            return ['ok' => false, 'mensaje' => 'TELÉFONO INVÁLIDO PARA EL PAÍS SELECCIONADO.'];
         }
 
         $data = [

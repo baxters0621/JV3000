@@ -687,10 +687,10 @@
             width: 100%;
         }
         .comp-rif-tipo {
-            width: 70px !important;
-            min-width: 70px !important;
-            flex: 0 0 70px !important;
-            max-width: 70px !important;
+            width: 64px !important;
+            min-width: 64px !important;
+            flex: 0 0 64px !important;
+            max-width: 64px !important;
             text-align: center;
             font-weight: 800;
             font-size: 1rem;
@@ -703,6 +703,24 @@
         .comp-rif-tipo:focus {
             border-color: var(--jv-orange) !important;
             box-shadow: 0 0 0 3px rgba(234,88,12,0.12) !important;
+        }
+        .comp-rif-grupo {
+            display: flex;
+            width: 100%;
+            align-items: stretch;
+        }
+        .comp-rif-grupo .comp-rif-tipo {
+            margin: 0;
+        }
+        .comp-rif-grupo #p_rif_numero {
+            flex: 1 1 auto;
+            width: auto;
+            min-width: 0;
+            max-width: 100%;
+            margin: 0;
+            border-left: 1px solid var(--jv-border);
+            border-radius: 0 var(--jv-radius) var(--jv-radius) 0 !important;
+            box-sizing: border-box;
         }
         .input-group .comp-input:last-child {
             border-radius: 0 var(--jv-radius) var(--jv-radius) 0 !important;

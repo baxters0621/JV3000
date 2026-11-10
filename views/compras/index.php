@@ -1004,7 +1004,7 @@ if (!empty($tasa_bcv_fecha)) {
                             <div class="col-md-4">
                                 <label class="comp-label">RIF / C&eacute;dula <span class="text-danger">*</span></label>
                                 <input type="hidden" name="rif" id="p_rif">
-                                <div class="input-group">
+                                <div class="comp-rif-grupo">
                                     <select id="p_rif_tipo" class="input-jv comp-input comp-rif-tipo" required>
                                         <option value="V">V</option>
                                         <option value="E">E</option>
@@ -1013,9 +1013,8 @@ if (!empty($tasa_bcv_fecha)) {
                                         <option value="P">P</option>
                                         <option value="C">C</option>
                                     </select>
-                                    <input type="text" id="p_rif_numero" class="input-jv comp-input" required placeholder="12345678-0" maxlength="10" inputmode="numeric">
+                                    <input type="text" id="p_rif_numero" class="input-jv comp-input" required placeholder="12345678-9" maxlength="10" inputmode="numeric">
                                 </div>
-                                <small class="comp-hint">V/E: 8 dígitos · J/G/P/C: 8 dígitos + 1 verificador</small>
                             </div>
                             <div class="col-md-8">
                                 <label class="comp-label">Nombre de la Empresa <span class="text-danger">*</span></label>
