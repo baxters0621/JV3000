@@ -51,6 +51,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Compras / Proveedores (2026-11-10): `provAbrirForm()` no debe llamar directamente funciones declaradas en el segundo DOMContentLoaded; se usa `window.jvRifProvConfigurar` con guard. La regresión de b26f891 impedía abrir Nuevo/Editar con `ReferenceError: configurarRif is not defined`; verificada con Edge headless/CDP sin excepciones.
 
+- Ventas / KPI y tabla (2026-11-10): el KPI de mes se llama "Artículos Vendidos (Mes)" (suma unidades de todos los productos, no tipos). La tabla usa Total 13% y Fecha 9%, Total a la derecha con padding 20 px y tabular-nums, min-width 1100; Control/Cant/Tipo se ocultan con d-xxl y el breakpoint compacto es 1399.98 px, por lo que entre 1200 y 1399 se usa la tabla compacta. Verificado con Edge headless a 1280/1440 sin solapamiento ni scroll horizontal.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

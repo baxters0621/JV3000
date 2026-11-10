@@ -135,18 +135,18 @@
         }
 
         .pagina-salidas .salidas-list-table {
-            min-width: 1130px;
+            min-width: 1100px;
         }
 
-        .pagina-salidas .salidas-list-table .sal-col-nota { width: 12.5%; }
-        .pagina-salidas .salidas-list-table .sal-col-control { width: 12%; }
-        .pagina-salidas .salidas-list-table .sal-col-cliente { width: 12.5%; }
-        .pagina-salidas .salidas-list-table .sal-col-productos { width: 16.5%; }
+        .pagina-salidas .salidas-list-table .sal-col-nota { width: 10.5%; }
+        .pagina-salidas .salidas-list-table .sal-col-control { width: 9.5%; }
+        .pagina-salidas .salidas-list-table .sal-col-cliente { width: 12%; }
+        .pagina-salidas .salidas-list-table .sal-col-productos { width: 16%; }
         .pagina-salidas .salidas-list-table .sal-col-cantidad { width: 6%; }
-        .pagina-salidas .salidas-list-table .sal-col-tipo { width: 9%; }
-        .pagina-salidas .salidas-list-table .sal-col-total { width: 8.5%; }
-        .pagina-salidas .salidas-list-table .sal-col-fecha { width: 8.5%; }
-        .pagina-salidas .salidas-list-table .sal-col-acciones { width: 14.5%; }
+        .pagina-salidas .salidas-list-table .sal-col-tipo { width: 8.5%; }
+        .pagina-salidas .salidas-list-table .sal-col-total { width: 13%; }
+        .pagina-salidas .salidas-list-table .sal-col-fecha { width: 9%; }
+        .pagina-salidas .salidas-list-table .sal-col-acciones { width: 15.5%; }
 
         .pagina-salidas .salidas-list-table thead th {
             padding: 14px 12px !important;
@@ -990,7 +990,7 @@
 
         /* ── Tabla: cabecera con identidad roja ── */
         .pagina-salidas .salidas-list-table {
-            min-width: 1130px;
+            min-width: 1100px;
             border-collapse: separate;
             border-spacing: 0;
         }
@@ -1068,10 +1068,13 @@
             cursor: help;
         }
 
-        .pagina-salidas .td-total {
+        .pagina-salidas .salidas-list-table tbody td.td-total {
+            text-align: right;
+            padding-right: 20px !important;
             font-size: .9rem;
             font-weight: 700;
             white-space: nowrap;
+            font-variant-numeric: tabular-nums;
         }
 
         .pagina-salidas .salidas-list-table tbody td.fecha-cell {
@@ -1079,6 +1082,7 @@
             font-weight: 600;
             color: var(--jv-text-secondary);
             white-space: nowrap;
+            font-variant-numeric: tabular-nums;
         }
 
         /* ── Badges de la tabla ── */
@@ -1509,7 +1513,7 @@
             min-height: 100%;
         }
 
-@media (max-width: 1199.98px) {
+@media (max-width: 1399.98px) {
     .pagina-salidas .salidas-list-table {
         min-width: 900px;
     }
@@ -1520,12 +1524,12 @@
         display: none;
     }
 
-    .pagina-salidas .salidas-list-table .sal-col-nota { width: 16%; }
-    .pagina-salidas .salidas-list-table .sal-col-cliente { width: 20%; }
-    .pagina-salidas .salidas-list-table .sal-col-productos { width: 23%; }
-    .pagina-salidas .salidas-list-table .sal-col-total { width: 12%; }
+    .pagina-salidas .salidas-list-table .sal-col-nota { width: 13%; }
+    .pagina-salidas .salidas-list-table .sal-col-cliente { width: 18%; }
+    .pagina-salidas .salidas-list-table .sal-col-productos { width: 21%; }
+    .pagina-salidas .salidas-list-table .sal-col-total { width: 17%; }
     .pagina-salidas .salidas-list-table .sal-col-fecha { width: 11%; }
-    .pagina-salidas .salidas-list-table .sal-col-acciones { width: 18%; }
+    .pagina-salidas .salidas-list-table .sal-col-acciones { width: 20%; }
 
     .pagina-salidas #modalCliList .cli-tabla {
         min-width: 460px;

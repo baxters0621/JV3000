@@ -81,7 +81,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                 <i class="bi bi-boxes"></i>
             </div>
             <div>
-                <div class="widget-label fs-6 text-muted">Unidades Vendidas (Mes)</div>
+                <div class="widget-label fs-6 text-muted" title="Cantidad total de unidades vendidas en el mes">Artículos Vendidos (Mes)</div>
                 <div class="widget-value fs-3 fw-bold"><?php echo number_format($kpis['und_mes'], 0); ?></div>
             </div>
         </div>
@@ -121,12 +121,12 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
             <thead>
                 <tr>
                     <th class="sal-th-nota">Nota</th>
-                    <th class="sal-th-control d-none d-xl-table-cell">N° Control</th>
+                    <th class="sal-th-control d-none d-xxl-table-cell">N° Control</th>
                     <th>Cliente</th>
                     <th>Productos</th>
-                    <th class="text-center d-none d-xl-table-cell">Cant</th>
-                    <th class="text-center d-none d-xl-table-cell">Tipo</th>
-                    <th>Total</th>
+                    <th class="text-center d-none d-xxl-table-cell">Cant</th>
+                    <th class="text-center d-none d-xxl-table-cell">Tipo</th>
+                    <th class="text-end">Total</th>
                     <th class="text-center">Fecha</th>
                     <th class="text-center">Acciones</th>
                 </tr>
@@ -141,14 +141,14 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                         ?>
                         <tr>
                             <td class="sal-celda-nota"><span class="codigo-badge"><?php echo htmlspecialchars($outgoingRecord['nro_factura_manual'] ?: '#' . $outgoingRecord['id_salida']); ?></span></td>
-                            <td class="td-control d-none d-xl-table-cell" data-tooltip="<?php echo htmlspecialchars($outgoingRecord['nro_control']); ?>"><?php echo htmlspecialchars($outgoingRecord['nro_control']); ?></td>
+                            <td class="td-control d-none d-xxl-table-cell" data-tooltip="<?php echo htmlspecialchars($outgoingRecord['nro_control']); ?>"><?php echo htmlspecialchars($outgoingRecord['nro_control']); ?></td>
                             <td class="text-uppercase td-cliente" data-tooltip="<?php echo htmlspecialchars(($outgoingRecord['cliente'] ?? 'S/Cliente') . ' - ' . ($outgoingRecord['rif_cliente'] ?? 'S/RIF')); ?>">
                                 <div class="cli-nombre"><?php echo htmlspecialchars($outgoingRecord['cliente'] ?? 'S/Cliente'); ?></div>
                                 <div class="cli-rif"><?php echo htmlspecialchars($outgoingRecord['rif_cliente'] ?? 'S/RIF'); ?></div>
                             </td>
                             <td class="td-productos" data-tooltip="<?php echo htmlspecialchars($productos_lista); ?>"><?php echo htmlspecialchars($productos_lista); ?></td>
-                            <td class="text-center d-none d-xl-table-cell"><span class="badge-cant">-<?php echo $outgoingRecord['total_cantidad']; ?></span></td>
-                            <td class="text-center d-none d-xl-table-cell"><?php
+                            <td class="text-center d-none d-xxl-table-cell"><span class="badge-cant">-<?php echo $outgoingRecord['total_cantidad']; ?></span></td>
+                            <td class="text-center d-none d-xxl-table-cell"><?php
                                                     $nombre_tipo = $outgoingRecord['tipo_mov_nombre'] ?? '';
                                                     $observaciones = $outgoingRecord['observaciones'] ?? '';
                                                     $causa_ajuste = '';
@@ -157,7 +157,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                                     elseif ($grupo_mov === 'regalias') echo '<span class="badge bg-info bg-opacity-10 text-jv-info border-0"><i class="bi bi-gift me-1"></i>Regalía</span>';
                                                     else echo '<span class="badge bg-warning bg-opacity-10 text-jv-warning border-0" style="cursor:pointer;" data-tooltip="' . htmlspecialchars($nombre_tipo . ($causa_ajuste ? ': ' . $causa_ajuste : ''), ENT_QUOTES, 'UTF-8') . '" onclick="verDetalleDano(' . htmlspecialchars(json_encode($nombre_tipo, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ', ' . htmlspecialchars(json_encode($causa_ajuste, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') . ')"><i class="bi bi-exclamation-triangle me-1"></i>' . htmlspecialchars($nombre_tipo, ENT_QUOTES, 'UTF-8') . '</span>';
                                                     ?></td>
-                            <td class="td-total <?php echo $grupo_mov === 'merma' ? 'text-danger' : 'text-success'; ?>"><?php echo format_bs((float)($outgoingRecord['total_monto'] ?? 0), $tasa_bcv ?? null); ?></td>
+                            <td class="td-total text-end <?php echo $grupo_mov === 'merma' ? 'text-danger' : 'text-success'; ?>"><?php echo format_bs((float)($outgoingRecord['total_monto'] ?? 0), $tasa_bcv ?? null); ?></td>
                             <td class="text-center fecha-cell"><?php echo date('d/m/Y', strtotime($outgoingRecord['fecha_salida'])); ?></td>
                             <td class="sal-celda-acciones text-center">
                                 <div class="sal-acciones-grupo">
