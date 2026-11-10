@@ -1474,16 +1474,16 @@ if (!function_exists('jv_consultar_tasa_bcv_api')) {
 
 if (!function_exists('jv_formatear_bolivares')) {
     /**
-     * Formatea un monto en bolívares con el estilo venezolano.
+     * Formatea un monto en bolívares con separador de miles por coma y
+     * decimales por punto, para que no se confunda con un decimal.
      *
      * @param float $monto     Monto en VES.
-     * @param int   $decimales Decimales a mostrar (0 por defecto: los céntimos
-     *                         de bolívar no aportan información útil).
-     * @return string Ejemplo: "Bs. 1.234" o "Bs. 897,54".
+     * @param int   $decimales Decimales a mostrar (2 por defecto).
+     * @return string Ejemplo: "Bs. 1,234.00" o "Bs. 897.54".
      */
-    function jv_formatear_bolivares(float $monto, int $decimales = 0): string
+    function jv_formatear_bolivares(float $monto, int $decimales = 2): string
     {
-        return 'Bs. ' . number_format($monto, $decimales, ',', '.');
+        return 'Bs. ' . number_format($monto, $decimales, '.', ',');
     }
 }
 
@@ -1498,7 +1498,7 @@ if (!function_exists('format_bs')) {
      *
      * @param float      $monto_usd Monto en dólares.
      * @param float|null $tasa      Tasa VES por USD; si se omite se consulta.
-     * @return string Ejemplo: "Bs. 1.771.275" o "—" si no hay tasa.
+     * @return string Ejemplo: "Bs. 1,771,275.00" o "—" si no hay tasa.
      */
     function format_bs(float $monto_usd, ?float $tasa = null): string
     {
@@ -1518,6 +1518,6 @@ if (!function_exists('format_bs')) {
             return '—';
         }
 
-        return jv_formatear_bolivares($monto_usd * $tasa, 0);
+        return jv_formatear_bolivares($monto_usd * $tasa, 2);
     }
 }

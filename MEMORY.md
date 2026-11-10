@@ -39,6 +39,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Compras / Factura automática y pago saneado (2026-11-10): al elegir proveedor se genera el consecutivo con MAX histórico (incluye anuladas) y 00000001 sin historial; readonly para operadores y desbloqueo manual solo para admin con confirmación. compras/factura_estado devuelve existe/mismo_proveedor/ultima/siguiente y el guardado bloquea duplicados por proveedor (también anuladas). El monto de pago en Bs. es texto decimal sin spinners, se sanea a 10 enteros/2 decimales y se limita al saldo; sigue enviando USD. La nota "Montos convertidos a Bs..." del modal de detalle se retiró por innecesaria (2026-11-10); el chip de tasa y la conversión siguen. Sin cambios de esquema. El piloto skeleton_carga se alineó al flujo manual de tasa (la consulta automática se retiró en 39aec71). El filtro de pago ya no ofrece Parcial (solo Pendiente/Pagada); el estado sigue en datos y badges, y filtro_pago=Parcial cae a todos.
 
+- Formato de bolívares (2026-11-09): todos los montos en Bs. usan coma de miles y punto decimal con 2 decimales fijos (ej. Bs. 1,234.56) mediante jv_formatear_bolivares()/format_bs() en PHP y formatBs()/formatBsValue()/formatBsValor() en JS. La tasa manual se captura con punto decimal; los inputs de captura en USD no cambian.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

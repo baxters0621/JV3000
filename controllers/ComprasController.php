@@ -431,7 +431,7 @@ class ComprasController extends Controller
         // Limpieza inmediata: la próxima consulta no puede devolver la caché vieja.
         jv_limpiar_cache_tasa_bcv();
 
-        registrarAuditoria('Tasa BCV manual', 'Bs. ' . number_format($tasa, 2, ',', '.'));
+        registrarAuditoria('Tasa BCV manual', 'Bs. ' . number_format($tasa, 2, '.', ','));
 
         $this->responderTasaManual(
             true,
@@ -472,7 +472,7 @@ class ComprasController extends Controller
                 'success'     => $ok,
                 'tasa'        => $tasa,
                 'valor'       => $tasa !== null && $tasa > 0 ? jv_formatear_bolivares($tasa, 2) : null,
-                'valor_input' => $tasa !== null && $tasa > 0 ? number_format($tasa, 2, ',', '.') : '',
+                'valor_input' => $tasa !== null && $tasa > 0 ? number_format($tasa, 2, '.', '') : '',
                 'fecha'       => $fecha !== null && $fecha !== '' ? date('d/m/Y', strtotime($fecha)) : null,
                 'manual'      => $manual,
                 'message'     => $mensaje,

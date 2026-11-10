@@ -412,7 +412,7 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
 
                     <div class="sal-totales-bar">
                         <span class="tt-label">Productos <span class="tt-valor" id="s_total_items">0</span></span>
-                        <span class="tt-label ms-auto">Total Venta <span class="tt-valor" id="s_total_monto">Bs. 0</span></span>
+                        <span class="tt-label ms-auto">Total Venta <span class="tt-valor" id="s_total_monto">Bs. 0.00</span></span>
                     </div>
 
                     <!-- SOLICITUD A COMPRAS (venta sin stock) -->

@@ -101,8 +101,8 @@ afirmarActividadDashboard(
 afirmarActividadDashboard(
     strpos($vista_renderizada, 'activity-financial-item') !== false
     && strpos($vista_renderizada, 'activity-financial-date">Fecha:') !== false
-    && strpos($vista_renderizada, 'activity-total fs-5 fw-bold text-success">Bs. 1.000</div>') !== false
-    && strpos($vista_renderizada, 'activity-total fs-5 fw-bold text-success">Bs. 4.000</div>') !== false,
+    && strpos($vista_renderizada, 'activity-total fs-5 fw-bold text-success">Bs. 1,000.00</div>') !== false
+    && strpos($vista_renderizada, 'activity-total fs-5 fw-bold text-success">Bs. 4,000.00</div>') !== false,
     'Ventas y compras deben resaltar el monto a la derecha y mantener la fecha legible.'
 );
 afirmarActividadDashboard(

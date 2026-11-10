@@ -17,15 +17,14 @@
         const productoSelect = document.getElementById('selProductoProveedor');
         const catalogoEstado = document.getElementById('catalogoProveedorEstado');
 
-        // Formatea un monto que YA está en bolívares al estilo venezolano.
-        // Sin decimales por defecto: los céntimos de bolívar no aportan
-        // información y ensanchan las cifras hasta recortar las columnas.
+        // Formatea un monto que YA está en bolívares con coma de miles y punto
+        // decimal (estilo dólar) para que no se confunda con un decimal.
         function formatBsValor(amount, decimales) {
             const opciones = {
-                minimumFractionDigits: Number.isInteger(decimales) ? decimales : 0,
-                maximumFractionDigits: Number.isInteger(decimales) ? decimales : 0
+                minimumFractionDigits: Number.isInteger(decimales) ? decimales : 2,
+                maximumFractionDigits: Number.isInteger(decimales) ? decimales : 2
             };
-            return 'Bs. ' + new Intl.NumberFormat('es-VE', opciones).format(Number(amount) || 0);
+            return 'Bs. ' + new Intl.NumberFormat('en-US', opciones).format(Number(amount) || 0);
         }
 
         // Obtiene la tasa BCV vigente configurada por el backend.

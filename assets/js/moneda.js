@@ -13,13 +13,14 @@
         return Number.isFinite(convertido) ? convertido : 0;
     }
 
-    // Formatea un monto que YA está en bolívares.
+    // Formatea un monto que YA está en bolívares con coma de miles y punto
+    // decimal (estilo dólar) para que no se confunda con un decimal.
     function formatearBolivares(monto, decimales) {
         const opciones = {
-            minimumFractionDigits: Number.isInteger(decimales) ? decimales : 0,
-            maximumFractionDigits: Number.isInteger(decimales) ? decimales : 0
+            minimumFractionDigits: Number.isInteger(decimales) ? decimales : 2,
+            maximumFractionDigits: Number.isInteger(decimales) ? decimales : 2
         };
-        return 'Bs. ' + new Intl.NumberFormat('es-VE', opciones).format(numero(monto));
+        return 'Bs. ' + new Intl.NumberFormat('en-US', opciones).format(numero(monto));
     }
 
     // Obtiene la tasa explícita o la configurada globalmente por el backend.
@@ -36,20 +37,20 @@
      *
      * @param {number|string} montoUsd Monto en dólares.
      * @param {number|string} [tasa] Tasa VES por USD; si se omite usa JV_CONFIG.tasaBcv.
-     * @returns {string} Ejemplo: "Bs. 1.771.275" o "—" si no hay tasa.
+     * @returns {string} Ejemplo: "Bs. 1,771,275.00" o "—" si no hay tasa.
      */
     window.formatBs = function (montoUsd, tasa) {
         const tasaUsada = obtenerTasa(tasa);
         if (tasaUsada <= 0) return '—';
-        return formatearBolivares(numero(montoUsd) * tasaUsada, 0);
+        return formatearBolivares(numero(montoUsd) * tasaUsada, 2);
     };
 
     /**
      * Formatea un monto que ya está en bolívares, sin multiplicar por la tasa.
      *
      * @param {number|string} montoBs Monto en bolívares.
-     * @param {number} [decimales] Decimales a mostrar (0 por defecto).
-     * @returns {string} Ejemplo: "Bs. 899,27".
+     * @param {number} [decimales] Decimales a mostrar (2 por defecto).
+     * @returns {string} Ejemplo: "Bs. 899.27".
      */
     window.formatBsValue = function (montoBs, decimales) {
         return formatearBolivares(montoBs, decimales);

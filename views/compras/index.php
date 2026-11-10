@@ -573,15 +573,15 @@ if (!empty($tasa_bcv_fecha)) {
                                 </div>
                                 <div class="comp-summary-item text-end">
                                     <span class="comp-summary-label">Subtotal</span>
-                                    <span class="comp-summary-value" id="totalSubtotal">Bs. 0</span>
+                                    <span class="comp-summary-value" id="totalSubtotal">Bs. 0.00</span>
                                 </div>
                                 <div class="comp-summary-item text-end">
                                     <span class="comp-summary-label">IVA (<?php echo $iva_pct; ?>%)</span>
-                                    <span class="comp-summary-value" id="totalIva">Bs. 0</span>
+                                    <span class="comp-summary-value" id="totalIva">Bs. 0.00</span>
                                 </div>
                                 <div class="comp-summary-item comp-summary-total text-end">
                                     <span class="comp-summary-label">Total</span>
-                                    <span class="comp-summary-value comp-total-big fs-5" id="totalCosto">Bs. 0</span>
+                                    <span class="comp-summary-value comp-total-big fs-5" id="totalCosto">Bs. 0.00</span>
                                 </div>
                             </div>
                         </div>
@@ -644,7 +644,7 @@ if (!empty($tasa_bcv_fecha)) {
                         </div>
                         <input type="hidden" name="monto_usd" id="pago_monto_usd" value="">
                         <input type="hidden" name="monto_pago" id="pago_monto_pago" value="">
-                        <small id="pago_monto_max" class="d-block mt-1 text-secondary" style="font-size:.78rem;">M&aacute;ximo: Bs. 0,00</small>
+                        <small id="pago_monto_max" class="d-block mt-1 text-secondary" style="font-size:.78rem;">M&aacute;ximo: Bs. 0.00</small>
                         <small id="pago_equivalente_usd" class="d-block text-secondary" style="font-size:.78rem;">Equivalente: $0.00</small>
                     </div>
 
@@ -773,15 +773,15 @@ if (!empty($tasa_bcv_fecha)) {
                 <div class="detalle-compra-totales d-flex flex-column gap-2">
                     <div class="detalle-compra-total-row">
                         <span>Subtotal</span>
-                        <span class="text-end" id="detalleCompraSubtotal">Bs. 0</span>
+                        <span class="text-end" id="detalleCompraSubtotal">Bs. 0.00</span>
                     </div>
                     <div class="detalle-compra-total-row d-none">
                         <span>IVA</span>
-                        <span class="text-end" id="detalleCompraIva">Bs. 0</span>
+                        <span class="text-end" id="detalleCompraIva">Bs. 0.00</span>
                     </div>
                     <div class="detalle-compra-total-row detalle-compra-total-final">
                         <span>TOTAL</span>
-                        <span class="text-end fw-bold fs-5" id="detalleCompraTotal">Bs. 0</span>
+                        <span class="text-end fw-bold fs-5" id="detalleCompraTotal">Bs. 0.00</span>
                     </div>
                 </div>
             </div>
@@ -818,8 +818,8 @@ if (!empty($tasa_bcv_fecha)) {
                         <span class="input-group-text">Bs.</span>
                         <input type="text" class="form-control" id="tasa_manual" name="tasa_manual"
                                inputmode="decimal" autocomplete="off" required
-                               placeholder="<?php echo $tasa_bcv_vis > 0 ? htmlspecialchars(number_format($tasa_bcv_vis, 2, ',', '.'), ENT_QUOTES) : '897,54'; ?>"
-                               value="<?php echo $tasa_manual_guardada_vis > 0 ? htmlspecialchars(number_format($tasa_manual_guardada_vis, 2, ',', '.'), ENT_QUOTES) : ''; ?>">
+                               placeholder="<?php echo $tasa_bcv_vis > 0 ? htmlspecialchars(number_format($tasa_bcv_vis, 2, '.', ''), ENT_QUOTES) : '897.54'; ?>"
+                               value="<?php echo $tasa_manual_guardada_vis > 0 ? htmlspecialchars(number_format($tasa_manual_guardada_vis, 2, '.', ''), ENT_QUOTES) : ''; ?>">
                     </div>
 
                     <div class="tasa-manual-referencia">
