@@ -1541,3 +1541,194 @@
         min-width: 0;
     }
 }
+
+/* ── Celda de productos: lista legible + detalle ── */
+.pagina-salidas .salidas-list-table .td-productos {
+    overflow: visible;
+    white-space: normal;
+    cursor: default;
+    padding-right: 10px !important;
+}
+
+.pagina-salidas .prod-celda {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+}
+
+.pagina-salidas .prod-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.pagina-salidas .prod-lista li {
+    position: relative;
+    padding-left: 11px;
+    color: #334155;
+    font-family: var(--jv-font-brand);
+    font-size: .82rem;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: .005em;
+}
+
+.pagina-salidas .prod-lista li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: .58em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #FCA5A5;
+}
+
+.pagina-salidas .prod-lista li.prod-mas {
+    color: #64748B;
+    font-size: .74rem;
+    font-weight: 600;
+}
+
+.pagina-salidas .prod-lista li.prod-mas::before {
+    display: none;
+}
+
+.pagina-salidas .prod-cant {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #FEF2F2;
+    color: #B91C1C;
+    font-size: .68rem;
+    font-weight: 800;
+    line-height: 1.45;
+}
+
+.pagina-salidas .btn-detalle-venta {
+    margin-top: 1px;
+    padding: 3px 9px;
+    border-radius: 7px;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+/* ── Modal de detalle de la venta ── */
+.pagina-salidas #modalDetalleVenta .det-venta-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 20px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: #F8FAFC;
+    border: 1px solid var(--jv-border);
+    border-radius: 10px;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-meta > div {
+    min-width: 0;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748B;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-meta strong {
+    display: block;
+    color: #17324D;
+    font-size: .86rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-tabla-wrap {
+    overflow: auto;
+    border: 1px solid var(--jv-border);
+    border-radius: 10px;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-tabla {
+    margin: 0;
+    min-width: 520px;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-tabla thead th {
+    padding: 10px 12px;
+    background: #F8FAFC;
+    color: #475569;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--jv-border);
+    white-space: nowrap;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-tabla tbody td {
+    padding: 10px 12px;
+    color: #334155;
+    font-size: .84rem;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-tabla tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-nombre {
+    color: #17324D;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-sku {
+    display: block;
+    margin-top: 1px;
+    color: #94A3B8;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    color: #7F1D1D;
+    border-top: 2px solid #FECACA;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-total span {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.pagina-salidas #modalDetalleVenta .det-venta-total strong {
+    font-size: 1.15rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 575.98px) {
+    .pagina-salidas #modalDetalleVenta .det-venta-meta {
+        grid-template-columns: 1fr;
+    }
+}

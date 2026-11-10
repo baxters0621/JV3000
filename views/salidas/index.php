@@ -136,6 +136,21 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                     <?php foreach ($salidas as $outgoingRecord): ?>
                         <?php
                         $productos_lista = $outgoingRecord['productos_list'] ?? '';
+                        $productos_detalle = json_decode((string)($outgoingRecord['productos_json'] ?? '[]'), true);
+                        if (!is_array($productos_detalle)) {
+                            $productos_detalle = [];
+                        }
+                        $productos_visibles = array_slice($productos_detalle, 0, 3);
+                        $productos_restantes = max(0, count($productos_detalle) - count($productos_visibles));
+                        $detalle_venta_payload = [
+                            'nota' => $outgoingRecord['nro_factura_manual'] ?: '#' . $outgoingRecord['id_salida'],
+                            'cliente' => $outgoingRecord['cliente'] ?? 'S/Cliente',
+                            'rif' => $outgoingRecord['rif_cliente'] ?? 'S/RIF',
+                            'fecha' => date('d/m/Y', strtotime($outgoingRecord['fecha_salida'])),
+                            'tipo' => $outgoingRecord['tipo_mov_nombre'] ?? '',
+                            'total' => (float)($outgoingRecord['total_monto'] ?? 0),
+                            'productos' => $productos_detalle,
+                        ];
                         // Grupo del tipo de movimiento: venta / regalias / merma.
                         $grupo_mov = Salida::grupoDeTipo($outgoingRecord['tipo_mov_nombre'] ?? '');
                         ?>
@@ -146,7 +161,30 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                                 <div class="cli-nombre"><?php echo htmlspecialchars($outgoingRecord['cliente'] ?? 'S/Cliente'); ?></div>
                                 <div class="cli-rif"><?php echo htmlspecialchars($outgoingRecord['rif_cliente'] ?? 'S/RIF'); ?></div>
                             </td>
-                            <td class="td-productos" data-tooltip="<?php echo htmlspecialchars($productos_lista); ?>"><?php echo htmlspecialchars($productos_lista); ?></td>
+                            <td class="td-productos">
+                                <div class="prod-celda">
+                                    <?php if (!empty($productos_detalle)): ?>
+                                        <ul class="prod-lista">
+                                            <?php foreach ($productos_visibles as $prod_det): ?>
+                                                <li>
+                                                    <span class="prod-nombre-item"><?php echo htmlspecialchars($prod_det['nombre_producto'] ?? ''); ?></span>
+                                                    <?php if ((int)($prod_det['cantidad'] ?? 0) > 1): ?>
+                                                        <span class="prod-cant">&times;<?php echo (int)$prod_det['cantidad']; ?></span>
+                                                    <?php endif; ?>
+                                                </li>
+                                            <?php endforeach; ?>
+                                            <?php if ($productos_restantes > 0): ?>
+                                                <li class="prod-mas">+<?php echo $productos_restantes; ?> m&aacute;s</li>
+                                            <?php endif; ?>
+                                        </ul>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-detalle-venta" data-salida="<?php echo htmlspecialchars(json_encode($detalle_venta_payload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>" onclick="verDetalleVenta(this)" aria-label="Ver detalle de la venta <?php echo htmlspecialchars($detalle_venta_payload['nota'], ENT_QUOTES, 'UTF-8'); ?>">
+                                            <i class="bi bi-eye me-1" aria-hidden="true"></i>Ver detalle
+                                        </button>
+                                    <?php else: ?>
+                                        <span class="text-muted">&mdash;</span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
                             <td class="text-center d-none d-xxl-table-cell"><span class="badge-cant">-<?php echo $outgoingRecord['total_cantidad']; ?></span></td>
                             <td class="text-center d-none d-xxl-table-cell"><?php
                                                     $nombre_tipo = $outgoingRecord['tipo_mov_nombre'] ?? '';
@@ -461,6 +499,53 @@ window.JV_CLIENTES = <?php echo json_encode(array_map(function($c) {
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DETALLE DE LA VENTA -->
+<div class="modal fade" id="modalDetalleVenta" tabindex="-1" aria-labelledby="detalleVentaTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content modal-content-jv">
+            <div class="jv-modal-header">
+                <div>
+                    <h5 class="font-brand" id="detalleVentaTitulo"><i class="bi bi-receipt me-2"></i>DETALLE DE LA VENTA</h5>
+                    <small id="detalleVentaNota">Nota</small>
+                </div>
+                <button type="button" class="jv-modal-close" data-bs-dismiss="modal" aria-label="Cerrar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="det-venta-meta">
+                    <div><span class="det-venta-label">Cliente</span><strong id="detalleVentaCliente">&mdash;</strong></div>
+                    <div><span class="det-venta-label">RIF / C&eacute;dula</span><strong id="detalleVentaRif">&mdash;</strong></div>
+                    <div><span class="det-venta-label">Fecha</span><strong id="detalleVentaFecha">&mdash;</strong></div>
+                    <div><span class="det-venta-label">Tipo</span><strong id="detalleVentaTipo">&mdash;</strong></div>
+                </div>
+                <div class="table-responsive det-venta-tabla-wrap">
+                    <table class="table det-venta-tabla mb-0">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cant.</th>
+                                <th class="text-end">Precio</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detalleVentaProductos"></tbody>
+                    </table>
+                </div>
+                <div class="det-venta-total">
+                    <span>Total de la venta</span>
+                    <strong id="detalleVentaTotal">Bs. 0.00</strong>
+                </div>
+            </div>
+            <div class="jv-modal-footer">
+                <button type="button" class="btn btn-jv-ghost" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>CERRAR
+                </button>
+            </div>
         </div>
     </div>
 </div>

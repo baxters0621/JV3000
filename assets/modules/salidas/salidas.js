@@ -925,6 +925,52 @@
             window.open((window.JV_BASE || '') + 'index.php?url=nota_entrega&id=' + id, '_blank');
         }
 
+        let detalleVentaModal = null;
+
+        // Abre el modal con el detalle completo de productos de una venta.
+        function verDetalleVenta(boton) {
+            let datos = {};
+            try {
+                datos = JSON.parse((boton && boton.dataset.salida) || '{}');
+            } catch (error) {
+                return;
+            }
+            const ponerTexto = function (id, valor) {
+                const elemento = document.getElementById(id);
+                if (elemento) elemento.textContent = valor || '—';
+            };
+            ponerTexto('detalleVentaNota', 'Nota ' + (datos.nota || ''));
+            ponerTexto('detalleVentaCliente', datos.cliente);
+            ponerTexto('detalleVentaRif', datos.rif);
+            ponerTexto('detalleVentaFecha', datos.fecha);
+            ponerTexto('detalleVentaTipo', datos.tipo);
+
+            const cuerpo = document.getElementById('detalleVentaProductos');
+            if (cuerpo) {
+                const productos = Array.isArray(datos.productos) ? datos.productos : [];
+                cuerpo.innerHTML = productos.length ? productos.map(function (producto) {
+                    const cantidad = Number(producto.cantidad) || 0;
+                    const precio = Number(producto.precio_venta) || 0;
+                    const subtotal = cantidad * precio;
+                    const sku = producto.sku ? '<span class="det-venta-sku">' + escapeHtml(producto.sku) + '</span>' : '';
+                    return '<tr>' +
+                        '<td><div class="det-venta-nombre">' + escapeHtml(producto.nombre_producto || '') + '</div>' + sku + '</td>' +
+                        '<td class="text-center">' + cantidad + '</td>' +
+                        '<td class="text-end">' + formatBs(precio) + '</td>' +
+                        '<td class="text-end">' + formatBs(subtotal) + '</td>' +
+                        '</tr>';
+                }).join('') : '<tr><td colspan="4" class="text-center text-muted py-4">Sin productos registrados.</td></tr>';
+            }
+
+            const total = document.getElementById('detalleVentaTotal');
+            if (total) total.textContent = formatBs(Number(datos.total) || 0);
+
+            if (!detalleVentaModal) {
+                detalleVentaModal = new bootstrap.Modal(document.getElementById('modalDetalleVenta'));
+            }
+            detalleVentaModal.show();
+        }
+
         // Filtra las filas de la tabla de salidas según el texto de búsqueda.
         function filtrarSalidas() {
             const input = document.getElementById('buscarSal');

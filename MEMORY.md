@@ -53,6 +53,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Ventas / KPI y tabla (2026-11-10): el KPI de mes se llama "Artículos Vendidos (Mes)" (suma unidades de todos los productos, no tipos). La tabla usa Total 13% y Fecha 9%, Total a la derecha con padding 20 px y tabular-nums, min-width 1100; Control/Cant/Tipo se ocultan con d-xxl y el breakpoint compacto es 1399.98 px, por lo que entre 1200 y 1399 se usa la tabla compacta. Verificado con Edge headless a 1280/1440 sin solapamiento ni scroll horizontal.
 
+- Ventas / Celda de productos y detalle (2026-11-10): la columna Productos usa `productos_json` para mostrar hasta 3 nombres con cantidad y "+N más" en una lista con viñetas, sin tooltip oscuro; cada fila ofrece "Ver detalle" y `#modalDetalleVenta` muestra cliente, RIF, fecha, tipo, SKU, cantidad, precio, subtotal y total en Bs. El detalle se construye en el cliente con `formatBs`; sin cambios de backend, SQL ni BD.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

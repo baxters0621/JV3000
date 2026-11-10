@@ -6,6 +6,7 @@
 $raiz = dirname(__DIR__);
 $vista = file_get_contents($raiz . '/views/salidas/index.php');
 $css = file_get_contents($raiz . '/assets/modules/salidas/salidas.css');
+$js = file_get_contents($raiz . '/assets/modules/salidas/salidas.js');
 
 function afirmarSalidasPrecio(bool $condicion, string $mensaje): void
 {
@@ -72,5 +73,24 @@ afirmarSalidasPrecio(
     && strpos($css, 'min-width: 900px;') !== false,
     'La tabla debe conservar sus anchos mínimos de escritorio y compacto.'
 );
+afirmarSalidasPrecio(
+    strpos($vista, 'id="modalDetalleVenta"') !== false
+    && strpos($vista, 'onclick="verDetalleVenta(this)"') !== false
+    && strpos($vista, 'class="prod-lista"') !== false
+    && strpos($vista, 'class="td-productos" data-tooltip=') === false,
+    'La celda de productos debe mostrar una lista y un botón de detalle sin tooltip.'
+);
+afirmarSalidasPrecio(
+    strpos($js, 'function verDetalleVenta(boton)') !== false
+    && strpos($js, 'detalleVentaProductos') !== false
+    && strpos($js, 'formatBs(precio)') !== false,
+    'El detalle de la venta debe construirse desde el JSON de productos.'
+);
+afirmarSalidasPrecio(
+    strpos($css, '.pagina-salidas .prod-lista') !== false
+    && strpos($css, '.pagina-salidas .btn-detalle-venta') !== false
+    && strpos($css, '#modalDetalleVenta .det-venta-tabla') !== false,
+    'La lista, el botón y el modal de detalle deben tener estilos propios.'
+);
 
-echo "OK KPI de artículos vendidos y tabla de Ventas verificados\n";
+echo "OK KPI, tabla y detalle de Ventas verificados\n";
