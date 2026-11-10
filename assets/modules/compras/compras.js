@@ -315,11 +315,179 @@
         productoSelect.addEventListener('change', seleccionarProductoCatalogo);
 
         // ==========================================
+        // VERIFICACIÓN DEL NÚMERO DE FACTURA
+        // ==========================================
+        // Consulta al backend si la factura ya existe y cuál fue el último
+        // número registrado del proveedor, para avisar mientras se escribe.
+        const nroFacturaInput = document.getElementById('nroFactura');
+        const nroFacturaAyuda = document.getElementById('nroFacturaAyuda');
+        let facturaSecuencia = 0;
+        let facturaDuplicada = false;
+        let facturaUltimaConsulta = null;
+
+        // Arma la URL del endpoint de solo lectura con el proveedor actual.
+        function urlEstadoFactura(nroFactura) {
+            const params = new URLSearchParams();
+            if (proveedorSelect && proveedorSelect.value) {
+                params.set('id_proveedor', proveedorSelect.value);
+            }
+            if (nroFactura) {
+                params.set('nro_factura', nroFactura);
+            }
+            return (window.JV_BASE || '') + 'index.php?url=compras/factura_estado&' + params.toString();
+        }
+
+        // Escribe el texto de ayuda y su color sin tocar el borde del campo.
+        function aplicarAyudaFactura(texto, tono) {
+            if (!nroFacturaAyuda) return;
+            nroFacturaAyuda.textContent = texto;
+            nroFacturaAyuda.classList.remove('text-danger', 'text-warning', 'text-success');
+            if (tono) nroFacturaAyuda.classList.add(tono);
+        }
+
+        // Devuelve la ayuda con el último número conocido del proveedor.
+        function ayudaFacturaBase() {
+            if (facturaUltimaConsulta && facturaUltimaConsulta.ultima) {
+                return 'Último registrado: ' + facturaUltimaConsulta.ultima
+                    + (facturaUltimaConsulta.siguiente ? '. Siguiente sugerido: ' + facturaUltimaConsulta.siguiente + '.' : '.');
+            }
+            return 'Escribe el número de factura (6 a 8 dígitos).';
+        }
+
+        // Aplica el borde y el estado accesible del campo según el resultado.
+        function marcarFactura(estado) {
+            if (!nroFacturaInput) return;
+            nroFacturaInput.classList.remove('input-error', 'input-ok', 'input-warn');
+            nroFacturaInput.removeAttribute('aria-invalid');
+            facturaDuplicada = false;
+            if (estado === 'duplicada') {
+                nroFacturaInput.classList.add('input-error');
+                nroFacturaInput.setAttribute('aria-invalid', 'true');
+                facturaDuplicada = true;
+            } else if (estado === 'cruzada') {
+                nroFacturaInput.classList.add('input-warn');
+            } else if (estado === 'libre') {
+                nroFacturaInput.classList.add('input-ok');
+            }
+        }
+
+        // Avisa con SweetAlert cuando el número pertenece al mismo proveedor.
+        function avisarFacturaDuplicada() {
+            marcarFactura('duplicada');
+            if (nroFacturaInput) {
+                nroFacturaInput.focus();
+                nroFacturaInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            Swal.fire({
+                title: 'FACTURA DUPLICADA',
+                text: 'Esta factura ya fue registrada anteriormente para este proveedor.',
+                icon: 'error',
+                background: '#fff',
+                color: '#212529',
+                confirmButtonColor: '#DC2626'
+            });
+        }
+
+        // Consulta el estado del número actual (o solo el último si va vacío).
+        function consultarEstadoFactura(mostrarAviso) {
+            if (!nroFacturaInput) return Promise.resolve(null);
+            const nroFactura = nroFacturaInput.value.trim();
+            if (nroFactura && !/^\d{6,8}$/.test(nroFactura)) {
+                marcarFactura('neutro');
+                aplicarAyudaFactura('El número debe tener entre 6 y 8 dígitos.', 'text-danger');
+                return Promise.resolve(null);
+            }
+
+            facturaDuplicada = false;
+            const secuencia = ++facturaSecuencia;
+            return jvFetchConTope(urlEstadoFactura(nroFactura), {
+                ms: 8000,
+                init: {
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store'
+                }
+            })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (secuencia !== facturaSecuencia) return null;
+                    if (!data || !data.success) {
+                        throw new Error((data && data.message) || 'No se pudo verificar la factura.');
+                    }
+                    facturaUltimaConsulta = data;
+                    if (nroFactura && data.existe) {
+                        if (data.mismo_proveedor) {
+                            marcarFactura('duplicada');
+                            aplicarAyudaFactura('\u26a0\ufe0f Esta factura ya está registrada.', 'text-danger');
+                        } else {
+                            marcarFactura('cruzada');
+                            aplicarAyudaFactura('Este número ya existe para ' + (data.proveedor || 'otro proveedor') + '. Verifica antes de continuar.', 'text-warning');
+                        }
+                    } else {
+                        marcarFactura(nroFactura ? 'libre' : 'neutro');
+                        aplicarAyudaFactura(ayudaFacturaBase(), nroFactura ? 'text-success' : null);
+                    }
+                    return data;
+                })
+                .catch(function() {
+                    if (secuencia !== facturaSecuencia) return null;
+                    marcarFactura('neutro');
+                    aplicarAyudaFactura(
+                        mostrarAviso
+                            ? 'No se pudo verificar la factura. El servidor la validará al guardar.'
+                            : 'No se pudo consultar el último número registrado.',
+                        'text-warning'
+                    );
+                    return null;
+                });
+        }
+
+        // Antes de guardar exige una última verificación del número.
+        function asegurarFacturaUnica() {
+            if (!nroFacturaInput || !nroFacturaInput.value.trim()) {
+                return Promise.resolve(true);
+            }
+            if (facturaDuplicada) {
+                avisarFacturaDuplicada();
+                return Promise.resolve(false);
+            }
+            return consultarEstadoFactura(true).then(function() {
+                if (facturaDuplicada) {
+                    avisarFacturaDuplicada();
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        // Conecta los eventos del campo y refresca la ayuda al cargar la vista.
+        function inicializarVerificacionFactura() {
+            if (!nroFacturaInput) return;
+            nroFacturaInput.addEventListener('blur', function() {
+                consultarEstadoFactura(true);
+            });
+            nroFacturaInput.addEventListener('input', function() {
+                marcarFactura('neutro');
+                aplicarAyudaFactura(ayudaFacturaBase(), null);
+            });
+            if (proveedorSelect) {
+                proveedorSelect.addEventListener('change', function() {
+                    facturaUltimaConsulta = null;
+                    marcarFactura('neutro');
+                    aplicarAyudaFactura(ayudaFacturaBase(), null);
+                    consultarEstadoFactura(false);
+                });
+            }
+            consultarEstadoFactura(false);
+        }
+
+        // ==========================================
         // VALIDACIÓN DEL FORMULARIO
         // ==========================================
         // Valida proveedor, factura, control fiscal y líneas del carrito;
         // si hay errores los marca, los muestra en un resumen y evita el envío.
-        function validarFormulario(btn) {
+        async function validarFormulario(btn) {
             limpiarErrores();
             const errores = [];
             let primerError = null;
@@ -409,6 +577,11 @@
                     color: '#212529',
                     confirmButtonColor: '#EA580C'
                 });
+                return false;
+            }
+
+            const facturaUnica = await asegurarFacturaUnica();
+            if (!facturaUnica) {
                 return false;
             }
 
@@ -1031,6 +1204,8 @@
                     if (e) e.remove();
                 });
             });
+
+            inicializarVerificacionFactura();
 
             // Sidebar (mainWrapper definido en sidebar.js)
             if (typeof mainWrapper !== 'undefined' && mainWrapper) {

@@ -343,6 +343,28 @@ class ComprasController extends Controller
     }
 
     /**
+     * Devuelve en JSON el estado de un número de factura y el último
+     * registrado para el proveedor indicado.
+     *
+     * Endpoint de solo lectura usado por la validación en vivo del formulario
+     * de alta (evento blur) y por la ayuda visual del campo. Exige permisos de
+     * carga. Si no se recibe número, solo informa el último consecutivo.
+     *
+     * @return void
+     */
+    public function factura_estado(): void
+    {
+        Security::verificarPermisoCarga();
+
+        $nro_factura = trim((string)($_GET['nro_factura'] ?? ''));
+        $id_proveedor = (int)($_GET['id_proveedor'] ?? 0);
+
+        $estado = (new Compra())->estadoFactura($nro_factura, $id_proveedor);
+
+        $this->json(array_merge(['success' => true], $estado));
+    }
+
+    /**
      * Fija o retira la tasa BCV manual.
      *
      * La tasa manual tiene prioridad sobre la API y el caché. Al guardarla

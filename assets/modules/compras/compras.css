@@ -333,6 +333,16 @@
             box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
         }
 
+        /* Estados de la verificación en vivo del número de factura. */
+        .pagina-compras .comp-input.input-ok {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12) !important;
+        }
+        .pagina-compras .comp-input.input-warn {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
+        }
+
         .pagina-compras .buscador-wrapper {
             border-bottom: 1px solid var(--jv-border);
             background: rgba(15,26,46,0.02);

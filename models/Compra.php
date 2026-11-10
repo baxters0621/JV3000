@@ -256,6 +256,71 @@ class Compra extends Model
     }
 
     /**
+     * Consulta el estado de un número de factura y el último registrado.
+     *
+     * Devuelve si el número ya existe en una compra activa (y si pertenece al
+     * mismo proveedor), además del último número registrado para el proveedor
+     * indicado y el consecutivo sugerido. Se usa tanto en la validación en
+     * vivo del formulario como en la ayuda visual del campo.
+     *
+     * @param string $nro_factura Número de factura a consultar (puede ir vacío).
+     * @param int    $id_proveedor Proveedor seleccionado (0 = último global).
+     * @return array{existe:bool,id_proveedor:?int,proveedor:?string,mismo_proveedor:bool,ultima:?string,siguiente:?string}
+     */
+    public function estadoFactura(string $nro_factura, int $id_proveedor = 0): array
+    {
+        $nro_factura = trim($nro_factura);
+        $resultado = [
+            'existe'          => false,
+            'id_proveedor'    => null,
+            'proveedor'       => null,
+            'mismo_proveedor' => false,
+            'ultima'          => null,
+            'siguiente'       => null,
+        ];
+
+        if ($nro_factura !== '' && preg_match('/^\d{6,8}$/', $nro_factura)) {
+            $fila = $this->db->fetchOne(
+                "SELECT c.id_proveedor, pr.nombre_empresa
+                 FROM compras c
+                 LEFT JOIN proveedores pr ON pr.id_proveedor = c.id_proveedor
+                 WHERE c.nro_factura = ? AND c.status = 'Activa'
+                 LIMIT 1",
+                [$nro_factura]
+            );
+            if ($fila) {
+                $resultado['existe'] = true;
+                $resultado['id_proveedor'] = (int)$fila['id_proveedor'];
+                $resultado['proveedor'] = $fila['nombre_empresa'] ?? null;
+                $resultado['mismo_proveedor'] = (int)$fila['id_proveedor'] === $id_proveedor;
+            }
+        }
+
+        $sql = "SELECT nro_factura FROM compras WHERE status = 'Activa'";
+        $parametros = [];
+        if ($id_proveedor > 0) {
+            $sql .= ' AND id_proveedor = ?';
+            $parametros[] = $id_proveedor;
+        }
+        $sql .= ' ORDER BY id_compra DESC LIMIT 1';
+        $ultima = $this->db->fetchOne($sql, $parametros);
+        if ($ultima && $ultima['nro_factura'] !== '') {
+            $resultado['ultima'] = $ultima['nro_factura'];
+            $siguiente = (int)$ultima['nro_factura'] + 1;
+            if ($siguiente <= 99999999) {
+                $resultado['siguiente'] = str_pad(
+                    (string)$siguiente,
+                    max(6, strlen($ultima['nro_factura'])),
+                    '0',
+                    STR_PAD_LEFT
+                );
+            }
+        }
+
+        return $resultado;
+    }
+
+    /**
      * Registra una compra (factura del proveedor + comprobante de pago).
      *
      * Valida proveedor (activo, RIF válido), número de factura único por
@@ -301,8 +366,8 @@ class Compra extends Model
         if (!preg_match('/^\d{6,8}$/', $nro_factura)) {
             return ['ok' => false, 'mensaje' => 'NRO. FACTURA INVÁLIDO. DEBE TENER ENTRE 6 Y 8 DÍGITOS.'];
         }
-        if ($this->db->fetchOne("SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = ? AND status = 'Activa'", [$id_proveedor, $nro_factura])) {
-            return ['ok' => false, 'mensaje' => 'ESA FACTURA YA ESTÁ REGISTRADA PARA EL PROVEEDOR.'];
+        if ($this->db->fetchOne("SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = ? AND status = 'Activa' LIMIT 1", [$id_proveedor, $nro_factura])) {
+            return ['ok' => false, 'mensaje' => 'ESTA FACTURA YA FUE REGISTRADA ANTERIORMENTE PARA ESTE PROVEEDOR.'];
         }
 
         // Número de control: obligatorio, formato 00-00000000

@@ -35,6 +35,7 @@ Sin datos sensibles (claves, tokens, PIN).
 - Conversión visual USD→Bs (2026-11-09): helper `format_bs($monto_usd, ?float $tasa = null)` en includes/helpers.php y `formatBs`/`formatBsValue` en assets/js/moneda.js; Controller inyecta `tasa_bcv`, `tasa_bcv_fecha` y `js_config.tasaBcv`, y `json()` agrega `tasa_bcv`. Dashboard, Ventas, Compras, Productos, Historial, Estadísticas, Nota de Entrega, Reporte de Inventario y mensajes flash de Compras/Pagos muestran Bs. BD, columnas, SQL y modelos siguen en USD; los inputs de captura (precio de venta, costo de compra, monto de pago) siguen en USD y etiquetados. Sin tasa válida se muestra —.
 
 - Compras / Pago en Bs. (2026-11-09): el modal Registrar Pago captura Bs. y envía USD; el input visible no tiene name, los ocultos `monto_usd` y `monto_pago` se sincronizan con `window.JV_CONFIG.tasaBcv`, muestran "Equivalente: $X.XX" y el backend sigue leyendo `monto_pago`. Sin cambios de backend/SQL/BD.
+- Compras / Factura duplicada (2026-11-09): `compras/factura_estado` (GET, admin+carga) devuelve `Compra::estadoFactura()` con existencia por número, mismo proveedor y último/siguiente del proveedor; el input `#nroFactura` se pinta rojo (duplicado propio), ámbar (existe en otro proveedor) o verde (libre) al salir/cambiar proveedor. `validarFormulario` es async y revalida antes de enviar; el backend mantiene el bloqueo solo por proveedor. Sin cambios de esquema ni datos. Prueba: `compras_factura_duplicada_piloto` + validar.ps1 en verde.
 
 ## Decisiones (y por qué)
 

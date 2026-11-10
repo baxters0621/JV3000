@@ -463,7 +463,8 @@ if (!empty($tasa_bcv_fecha)) {
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="comp-label">N&uacute;mero de Factura <span class="text-danger">*</span></label>
-                                    <input type="text" inputmode="numeric" name="nro_factura" aria-label="Numero de factura" class="input-jv comp-input" placeholder="Ej: 00001234 (6 a 8 d&iacute;gitos)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" maxlength="8" required>
+                                    <input type="text" inputmode="numeric" name="nro_factura" id="nroFactura" aria-label="Numero de factura" aria-describedby="nroFacturaAyuda" class="input-jv comp-input" placeholder="Ej: 00001234 (6 a 8 d&iacute;gitos)" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,8)" maxlength="8" required>
+                                    <small id="nroFacturaAyuda" class="comp-hint" role="status" aria-live="polite">Selecciona un proveedor para ver el &uacute;ltimo n&uacute;mero registrado.</small>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="comp-label">N&uacute;mero de Control <span class="text-danger">*</span></label>
