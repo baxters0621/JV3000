@@ -71,6 +71,38 @@ class NotaEntrega extends Model
     }
 
     /**
+     * Resuelve la dirección fiscal de un cliente para la nota.
+     *
+     * Busca primero por el identificador del cliente y, si no lo hay o no
+     * tiene dirección, por el documento fiscal normalizado. Devuelve cadena
+     * vacía cuando no encuentra nada (cliente libre o "consumidor final").
+     *
+     * @param int|null $idCliente  Identificador del cliente (null si no aplica).
+     * @param string   $documento  RIF o cédula normalizado de la salida.
+     * @return string Dirección registrada o cadena vacía.
+     */
+    public function obtenerDireccionCliente(?int $idCliente, string $documento = ''): string
+    {
+        $candidatos = [];
+        if ($idCliente) {
+            $candidatos[] = ['SELECT direccion FROM clientes WHERE id_cliente = ?', [$idCliente]];
+        }
+        if ($documento !== '' && $documento !== 'N/A') {
+            $candidatos[] = ['SELECT direccion FROM clientes WHERE documento = ? LIMIT 1', [$documento]];
+        }
+
+        foreach ($candidatos as [$sql, $parametros]) {
+            $fila = $this->db->fetchOne($sql, $parametros);
+            $direccion = is_array($fila) ? trim((string)($fila['direccion'] ?? '')) : '';
+            if ($direccion !== '') {
+                return $direccion;
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Construye el detalle de la nota a partir de un preview en sesión.
      *
      * Consulta los productos guardados en productos_data (JSON) o, como
@@ -322,6 +354,11 @@ class NotaEntrega extends Model
         $dir_emp = getConfig('empresa_direccion', 'Naguanagua, Edo. Carabobo');
         $email_emp = getConfig('empresa_email', '');
 
+        $direccion_cliente = $this->obtenerDireccionCliente(
+            (int)($data['id_cliente'] ?? 0) ?: null,
+            (string)($data['rif_cliente'] ?? '')
+        );
+
         $badge_color = '#DC2626';
         $badge_label = $tipo_mov;
         if ($es_regalias) {
@@ -348,6 +385,7 @@ class NotaEntrega extends Model
             'tel_emp'        => $tel_emp,
             'dir_emp'        => $dir_emp,
             'email_emp'      => $email_emp,
+            'direccion_cliente' => $direccion_cliente,
             'badge_color'    => $badge_color,
             'badge_label'    => $badge_label,
             'hora_actual'    => date('H:i:s'),

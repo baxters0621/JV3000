@@ -55,6 +55,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Ventas / Celda de productos y detalle (2026-11-10): la columna Productos usa `productos_json` para mostrar hasta 3 nombres con cantidad y "+N más" en una lista con viñetas, sin tooltip oscuro; cada fila ofrece "Ver detalle" y `#modalDetalleVenta` muestra cliente, RIF, fecha, tipo, SKU, cantidad, precio, subtotal y total en Bs. El detalle se construye en el cliente con `formatBs`; sin cambios de backend, SQL ni BD.
 
+- Nota de Entrega (2026-11-10): metadatos en `.doc-meta` a la derecha bajo el título (sin `.num-row` ni raya en `.doc-header`); dirección del cliente desde `clientes.direccion` con `NotaEntrega::obtenerDireccionCliente()` (id_cliente y fallback por documento) mostrada en `.info-box--full`; `.totals .row > *` neutraliza el `width:100%` de Bootstrap para que etiqueta y monto compartan línea.
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

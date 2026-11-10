@@ -20,6 +20,7 @@
 /** @var string|null $tasa_bcv_fecha Fecha de la tasa BCV (Y-m-d). */
 /** @var string $preview_token */
 /** @var string $csrf */
+/** @var string $direccion_cliente Dirección fiscal del cliente ('' si no está registrada). */
 /** @var array<string, string>|null $flash */
 
 // ==========================================
@@ -37,7 +38,7 @@
     <title>Nota de Entrega #<?php echo $data['id_salida'] ?? 'PREVIEW'; ?> | <?php echo htmlspecialchars($empresa); ?></title>
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/css/bootstrap-icons.css">
-    <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.css?v=5">
+    <link rel="stylesheet" href="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.css?v=6">
 </head>
 
 <body>
@@ -56,14 +57,13 @@
             <div class="doc-type">
                 <h1><?php echo $es_merma ? 'NOTA DE SALIDA' : 'NOTA DE ENTREGA'; ?></h1>
                 <div class="type-sub"><?php echo $es_merma ? 'Ajuste de inventario' : 'Oficial'; ?></div>
+                <div class="doc-meta">
+                    <div class="meta-item"><span class="meta-k">N° N/ENTREGA</span><span class="meta-v"><?php echo htmlspecialchars($data['nro_factura_manual'] ?? 'PENDIENTE'); ?></span></div>
+                    <div class="meta-item"><span class="meta-k">N° CONTROL</span><span class="meta-v"><?php echo htmlspecialchars($data['nro_control'] ?? '—'); ?></span></div>
+                    <div class="meta-item"><span class="meta-k">FECHA</span><span class="meta-v"><?php echo date('d/m/Y', strtotime($data['fecha_salida'])); ?></span></div>
+                    <div class="meta-item"><span class="meta-k">HORA</span><span class="meta-v"><?php echo $hora_actual; ?></span></div>
+                </div>
             </div>
-        </div>
-
-        <div class="num-row">
-            <span class="num-item"><strong>N° N/ENTREGA:</strong> <?php echo htmlspecialchars($data['nro_factura_manual'] ?? 'PENDIENTE'); ?></span>
-            <span class="num-item"><strong>N° CONTROL:</strong> <?php echo htmlspecialchars($data['nro_control'] ?? '—'); ?></span>
-            <span class="num-item"><strong>FECHA:</strong> <?php echo date('d/m/Y', strtotime($data['fecha_salida'])); ?></span>
-            <span class="num-item"><strong>HORA:</strong> <?php echo $hora_actual; ?></span>
         </div>
 
         <?php if (!empty($flash)): ?>
@@ -87,6 +87,10 @@
                 <div class="info-box">
                     <label>RIF / Cédula</label>
                     <div class="value"><?php echo htmlspecialchars($data['rif_cliente'] ?? 'SIN IDENTIFICACIÓN'); ?></div>
+                </div>
+                <div class="info-box info-box--full">
+                    <label>Dirección</label>
+                    <div class="value value--dir"><?php echo htmlspecialchars($direccion_cliente !== '' ? $direccion_cliente : '—'); ?></div>
                 </div>
             </div>
         <?php endif; ?>
