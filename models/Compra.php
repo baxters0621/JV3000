@@ -166,26 +166,46 @@ class Compra extends Model
     }
 
     /**
-     * Catálogo de productos activos agrupado por proveedor.
+     * Catálogo de productos agrupado por proveedor.
+     *
+     * Incluye también productos Inactivos o agotados: la compra es el camino
+     * para reponerlos y Recepción se encarga de reactivarlos. Cada producto
+     * viaja con su estado calculado (activo, agotado, vencido o inactivo) para
+     * que el formulario pueda advertirlo antes de comprar.
      *
      * @return array Mapa [id_proveedor => lista de productos y costo].
      */
     public function catalogoProductosPorProveedor(): array
     {
         $mapa = [];
+        $hoy = date('Y-m-d');
         foreach ($this->db->fetchAll(
-            "SELECT cc.id_proveedor, cc.id_producto, cc.costo, cc.stock_disponible, p.nombre_producto, p.sku
+            "SELECT cc.id_proveedor, cc.id_producto, cc.costo, cc.stock_disponible,
+                    p.nombre_producto, p.sku, p.status, p.stock_actual, p.fecha_vencimiento
              FROM catalogo_costos cc
              JOIN productos p ON p.id_producto = cc.id_producto
-             WHERE p.status = 'Activo'
              ORDER BY p.nombre_producto"
         ) as $fila) {
+            $status = (string)$fila['status'];
+            $fecha_vencimiento = (string)($fila['fecha_vencimiento'] ?? '');
+            $vencido = $fecha_vencimiento !== ''
+                && $fecha_vencimiento !== '0000-00-00'
+                && $fecha_vencimiento < $hoy;
+            $agotado = (int)$fila['stock_actual'] <= 0;
+            $estado = $vencido
+                ? 'vencido'
+                : ($agotado ? 'agotado' : ($status === 'Inactivo' ? 'inactivo' : 'activo'));
+
             $mapa[(int)$fila['id_proveedor']][] = [
                 'id' => (int)$fila['id_producto'],
                 'nombre' => (string)$fila['nombre_producto'],
                 'sku' => (string)$fila['sku'],
                 'costo' => (float)$fila['costo'],
                 'stock_disponible' => (int)$fila['stock_disponible'],
+                'status' => $status,
+                'stock_actual' => (int)$fila['stock_actual'],
+                'fecha_vencimiento' => $fecha_vencimiento,
+                'estado' => $estado,
             ];
         }
         return $mapa;
@@ -425,9 +445,8 @@ class Compra extends Model
             if (!$prod_fila) {
                 return ['ok' => false, 'mensaje' => "EL PRODUCTO #$id_producto NO EXISTE."];
             }
-            if ($prod_fila['status'] !== 'Activo') {
-                return ['ok' => false, 'mensaje' => "EL PRODUCTO {$prod_fila['nombre_producto']} ESTÁ INACTIVO."];
-            }
+            // Se permite comprar productos Inactivos o agotados: la compra es
+            // el mecanismo para reponerlos y Recepción los reactiva al ingresar.
             if (empty($prod_fila['id_catalogo'])) {
                 return ['ok' => false, 'mensaje' => "EL PRODUCTO {$prod_fila['nombre_producto']} NO ESTÁ EN EL CATÁLOGO DEL PROVEEDOR. AGRÉGUELO AL CATÁLOGO ANTES DE REGISTRAR LA COMPRA."];
             }

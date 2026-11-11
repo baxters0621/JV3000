@@ -510,6 +510,7 @@ if (!empty($tasa_bcv_fecha)) {
                                         <select class="input-jv" id="selProductoProveedor" aria-label="Producto del catálogo del proveedor" disabled>
                                             <option value="">Selecciona primero un proveedor</option>
                                         </select>
+                                        <span id="estadoProductoCompra" class="badge d-none mt-1" role="status" aria-live="polite"></span>
                                     </div>
                                     <div class="col-md-1 comp-add-field">
                                         <label class="comp-label-sm" for="inputCant">Cantidad</label>

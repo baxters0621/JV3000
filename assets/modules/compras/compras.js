@@ -60,9 +60,29 @@
             return Number.isFinite(disponible) ? Math.max(0, disponible - cantidadEnCarrito(producto.id)) : 0;
         }
 
-        // Llena el selector solo con productos activos asociados al proveedor elegido.
+        // Devuelve la etiqueta visible del estado de un producto del catálogo.
+        function etiquetaEstadoCompra(estado) {
+            const etiquetas = { vencido: 'VENCIDO', agotado: 'AGOTADO', inactivo: 'INACTIVO' };
+            return etiquetas[estado] || '';
+        }
+
+        // Muestra u oculta el badge de estado junto al selector de producto.
+        function actualizarBadgeEstado(producto) {
+            const badge = document.getElementById('estadoProductoCompra');
+            if (!badge) return;
+            const etiqueta = producto ? etiquetaEstadoCompra(producto.estado) : '';
+            badge.className = 'badge d-none mt-1';
+            badge.textContent = '';
+            if (!etiqueta) return;
+            badge.textContent = etiqueta;
+            badge.classList.add(producto.estado === 'inactivo' ? 'text-bg-warning' : 'text-bg-danger');
+        }
+
+        // Llena el selector con productos del proveedor, incluidos los que hay
+        // que reponer (inactivos, agotados o vencidos).
         function actualizarCatalogoProveedor() {
             if (!productoSelect) return;
+            actualizarBadgeEstado(null);
             const idProveedor = proveedorSelect ? proveedorSelect.value : '';
             const catalogo = (window.JV_CATALOGO || {})[idProveedor] || [];
             productoSelect.innerHTML = '';
@@ -79,9 +99,11 @@
                 if (disponible > 0) productosConExistencia++;
                 const opcion = document.createElement('option');
                 opcion.value = String(producto.id);
+                const etiqueta = etiquetaEstadoCompra(producto.estado);
                 opcion.textContent = producto.nombre
                     + (producto.sku ? ' (' + producto.sku + ')' : '')
-                    + ' · Disponible: ' + disponible;
+                    + ' · Disponible: ' + disponible
+                    + (etiqueta ? ' · ' + etiqueta : '');
                 opcion.disabled = disponible <= 0;
                 productoSelect.appendChild(opcion);
             });
@@ -109,6 +131,7 @@
         // Al elegir un producto del catálogo carga su costo asociado al proveedor.
         function seleccionarProductoCatalogo() {
             productoSeleccionado = null;
+            actualizarBadgeEstado(null);
             const precioEl = document.getElementById('inputPrecio');
             if (precioEl) precioEl.value = '';
 
@@ -126,6 +149,7 @@
                 id: Number(producto.id),
                 nombre: producto.nombre
             };
+            actualizarBadgeEstado(producto);
             if (precioEl) precioEl.value = formatBs(Number(producto.costo), tasaBcvActual());
             const cantidadEl = document.getElementById('inputCant');
             if (cantidadEl) {

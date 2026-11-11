@@ -73,6 +73,7 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Alarma de stock / estilo (2026-11-11): el CSS inyectado usa tarjetas blancas con icono `::before`, botón Reponer pill navy y «Ya no vender» gris discreto; ancho 600 px, pulso del icono y `prefers-reduced-motion`. Solo estilos: la lógica y el HTML no cambian.## Decisiones (y por qué)
 
+- Compras / reponer inactivos (2026-11-11): `Compra::catalogoProductosPorProveedor()` incluye productos Inactivos/agotados/vencidos con `estado` calculado; `Compra::registrar()` ya no exige status Activo (la compra es el camino de reposición); el selector muestra sufijo AGOTADO/VENCIDO/INACTIVO y un badge; Ventas sigue excluyéndolos vía `productos_buscar.php`; Recepción los reactiva con `reactivarPorStock()`.
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.
 - Los flashes llevan origen (`Controller::flash(..., $origen)` + `data-origen`): el JS reabre el modal correcto y marca el campo responsable; el heurístico por texto queda de respaldo.
 - Límites de error: Router captura el Throwable de cada acción y delega en Controller::responderError (JSON en AJAX — todo fetch lleva X-Requested-With —, flash y redirección en web); el navegador muestra UN aviso amable por página desde diseno.js. Un módulo roto no bota al usuario ni muere en silencio.

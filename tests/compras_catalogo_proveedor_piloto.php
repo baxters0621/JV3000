@@ -26,7 +26,8 @@ afirmarCatalogoCompras(
 afirmarCatalogoCompras(strpos($vista, 'window.JV_CATALOGO = <?php echo $catalogo_productos; ?>;') !== false, 'La vista no recibe el catálogo por proveedor.');
 afirmarCatalogoCompras(strpos($vista, 'id="buscarProducto"') === false, 'La búsqueda general de productos sigue habilitada.');
 afirmarCatalogoCompras(strpos($controlador, 'catalogoProductosPorProveedor()') !== false, 'El controlador no carga el catálogo asociado a cada proveedor.');
-afirmarCatalogoCompras(strpos($modelo, "WHERE p.status = 'Activo'") !== false, 'El catálogo incluye productos inactivos.');
+afirmarCatalogoCompras(strpos($modelo, "WHERE p.status = 'Activo'") === false, 'El catálogo de compras sigue ocultando productos inactivos que deben poder reponerse.');
+afirmarCatalogoCompras(strpos($modelo, "'estado'") !== false, 'El catálogo no informa el estado del producto (activo, agotado, vencido o inactivo).');
 afirmarCatalogoCompras(strpos($javascript, 'catalogo.forEach(function(producto)') !== false, 'El selector no se llena desde el catálogo del proveedor.');
 afirmarCatalogoCompras(strpos($javascript, 'jvBuscarProductos') === false, 'La compra todavía invoca el buscador que causaba ReferenceError.');
 afirmarCatalogoCompras(strpos($modelo, 'cc.id_proveedor = ?') !== false, 'El servidor no comprueba que el producto pertenezca al proveedor.');
@@ -50,4 +51,4 @@ afirmarCatalogoCompras(strpos($modelo, "\$fecha_compra = date('Y-m-d H:i:s');") 
 afirmarCatalogoCompras(strpos($esquema, '`stock_disponible` int(10) unsigned NOT NULL DEFAULT 0') !== false, 'El esquema no incluye el disponible del proveedor con valor inicial cero.');
 afirmarCatalogoCompras(strpos($esquema, '`stock_proveedor_reservado` tinyint(1) NOT NULL DEFAULT 0') !== false, 'El esquema no protege compras existentes contra devoluciones de stock no reservado.');
 
-echo "OK selector de Compras limitado al catálogo activo del proveedor\n";
+echo "OK selector de Compras con catálogo del proveedor y estados para reponer\n";
