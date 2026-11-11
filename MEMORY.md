@@ -70,7 +70,8 @@ Sin datos sensibles (claves, tokens, PIN).
 - Alarma de stock (2026-11-11): la venta desactiva el producto al llegar a stock 0 dentro de la transacción (`Producto::sincronizarEstadoPorStock`) y la recepción lo reactiva si cumple fecha/categoría/proveedor y no está descartado (`reactivarPorStock`). Modal SweetAlert2 no bloqueante en dashboard y tras confirmar venta, sin posponer: ENTENDIDO solo cierra la instancia y la alarma reaparece en la próxima carga; descartes del admin en `configuracion.productos_descartados` (JSON) vía `productos/descartar`; las alertas incluyen agotados inactivos y exponen `puede_descartar`.
 
 - Alarma de stock / modal (2026-11-11): `assets/js/alarma_stock.js` inyecta su propio `<style id="jv-alarma-estilos">` (no depende de diseno.css, que la Nota de Entrega no carga); HTML con `ul.jv-alarma-lista`/`li.jv-alarma-item`, botones `swal2-styled` y «Ya no vender» como enlace terciario. `dashboard/index.php` carga `alarma_stock.js` antes de `dashboard/index.js` (el `js_extra` de `DashboardController` no aplica porque el panel es un archivo directo).
-## Decisiones (y por qué)
+
+- Alarma de stock / estilo (2026-11-11): el CSS inyectado usa tarjetas blancas con icono `::before`, botón Reponer pill navy y «Ya no vender» gris discreto; ancho 600 px, pulso del icono y `prefers-reduced-motion`. Solo estilos: la lógica y el HTML no cambian.## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.
 - Los flashes llevan origen (`Controller::flash(..., $origen)` + `data-origen`): el JS reabre el modal correcto y marca el campo responsable; el heurístico por texto queda de respaldo.
