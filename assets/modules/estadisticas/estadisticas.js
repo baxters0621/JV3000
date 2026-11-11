@@ -610,6 +610,124 @@
         });
     });
 
+    // ---------- PROVEEDORES ----------
+    function claseNoRotacion(porcentaje) {
+        if (porcentaje >= 50) return 'margen-bajo';
+        if (porcentaje >= 20) return 'margen-medio';
+        return 'margen-alto';
+    }
+
+    function renderProveedores(payload) {
+        const cuerpo = document.getElementById('tablaProveedoresCuerpo');
+        if (!cuerpo) return;
+        const filas = Array.isArray(payload.filas) ? payload.filas : [];
+        const tasa = tasaDeRespuesta(payload);
+
+        cuerpo.innerHTML = filas.map(fila => {
+            const pctNoRotacion = Number(fila.pct_no_rotacion) || 0;
+            const margenPct = fila.margen_pct === null || fila.margen_pct === undefined
+                ? '—'
+                : Number(fila.margen_pct).toFixed(1).replace('.', ',') + ' %';
+            const id = Number(fila.id_proveedor);
+            return '<tr data-proveedor="' + id + '">' +
+                '<td class="celda-producto"><span class="prod-nombre">' + escaparHtml(fila.nombre_empresa) + '</span>' +
+                    '<span class="prod-sku">' + formatearNumero(fila.productos_asignados) + ' productos activos' +
+                    (fila.lead_time ? ' · ' + formatearNumero(fila.lead_time) + ' días de entrega' : '') + '</span></td>' +
+                '<td class="num">' + formatBs(fila.monto_comprado, tasa) +
+                    '<span class="prod-sku">' + formatearNumero(fila.unidades_compradas) + ' uds</span></td>' +
+                '<td class="num importe-margen">' + formatBs(fila.margen, tasa) +
+                    '<span class="prod-sku">' + formatearNumero(fila.unidades_vendidas) + ' uds vendidas</span></td>' +
+                '<td class="num d-none d-md-table-cell">' + margenPct + '</td>' +
+                '<td class="num"><span class="no-rotacion ' + claseNoRotacion(pctNoRotacion) + '">' + pctNoRotacion.toFixed(1).replace('.', ',') + ' %</span>' +
+                    '<span class="prod-sku">' + formatearNumero(fila.productos_sin_rotar) + ' de ' + formatearNumero(fila.productos_asignados) + '</span></td>' +
+                '<td class="num"><button type="button" class="btn-detalle-prov" data-proveedor="' + id + '" aria-expanded="false" aria-controls="detalleProv-' + id + '" title="Ver productos sin ventas">' +
+                    '<i class="bi bi-chevron-down" aria-hidden="true"></i><span class="visually-hidden">Ver productos sin ventas</span></button></td>' +
+            '</tr>' +
+            '<tr class="detalle-prov d-none" id="detalleProv-' + id + '" data-cargado="0"><td colspan="6">' +
+                '<div class="detalle-prov-cuerpo"><p class="detalle-prov-titulo">Productos sin ventas en el periodo</p>' +
+                '<div class="detalle-prov-lista" data-lista></div></div></td></tr>';
+        }).join('');
+
+        document.getElementById('vacio-proveedores')?.classList.toggle('d-none', filas.length > 0);
+        actualizarPie('paginacionProveedores', 'provIndicador', 'provResumen', payload, 'proveedores');
+    }
+
+    async function cargarDetalleProveedor(id, filaDetalle, boton) {
+        const lista = filaDetalle.querySelector('[data-lista]');
+        if (!lista) return;
+
+        if (filaDetalle.dataset.cargado === '1') {
+            const abierto = filaDetalle.classList.toggle('d-none') === false;
+            if (boton) {
+                boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+                boton.classList.toggle('abierto', abierto);
+            }
+            return;
+        }
+
+        lista.innerHTML = '<p class="detalle-prov-vacio">Cargando productos…</p>';
+        const parametros = parametrosFiltros();
+        parametros.set('id_proveedor', String(id));
+        try {
+            const respuesta = await jvFetchConTope((window.JV_BASE || '') + 'index.php?url=estadisticas/productosProveedor&' + parametros.toString(), { ms: 12000 });
+            if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+            const datos = await respuesta.json();
+            if (!datos || !datos.success) throw new Error('Respuesta inválida');
+            const filas = Array.isArray(datos.filas) ? datos.filas : [];
+            const tasa = tasaDeRespuesta(datos);
+            lista.innerHTML = filas.length === 0
+                ? '<p class="detalle-prov-vacio">Todos sus productos con stock rotaron en el periodo.</p>'
+                : '<ul class="detalle-prov-items">' + filas.map(fila =>
+                    '<li><a class="enlace-producto" href="' + escaparHtml(urlProducto(fila.sku)) + '">' + escaparHtml(fila.nombre_producto) + '</a>' +
+                    '<span class="prod-sku">' + escaparHtml(fila.sku) + '</span>' +
+                    '<span class="detalle-prov-meta">Stock ' + formatearNumero(fila.stock_actual) +
+                    ' · ' + formatBs(fila.valor_inmovilizado, tasa) +
+                    (fila.dias_sin_vender !== null && fila.dias_sin_vender !== undefined ? ' · ' + formatearNumero(fila.dias_sin_vender) + ' d sin vender' : '') +
+                    '</span></li>').join('') + '</ul>';
+            filaDetalle.dataset.cargado = '1';
+            filaDetalle.classList.remove('d-none');
+            if (boton) {
+                boton.setAttribute('aria-expanded', 'true');
+                boton.classList.add('abierto');
+            }
+        } catch (error) {
+            console.error('No se pudo cargar el detalle del proveedor:', error);
+            lista.innerHTML = '<p class="detalle-prov-vacio">No se pudo cargar el detalle. Intenta de nuevo.</p>';
+        }
+    }
+
+    const cuerpoProveedores = document.getElementById('tablaProveedoresCuerpo');
+    if (cuerpoProveedores) {
+        cuerpoProveedores.addEventListener('click', evento => {
+            const boton = evento.target.closest('.btn-detalle-prov');
+            if (!boton) return;
+            const id = Number(boton.dataset.proveedor);
+            const filaDetalle = document.getElementById('detalleProv-' + id);
+            if (!filaDetalle) return;
+            cargarDetalleProveedor(id, filaDetalle, boton);
+        });
+    }
+
+    const navProveedores = document.getElementById('paginacionProveedores');
+    if (navProveedores) {
+        navProveedores.addEventListener('click', async evento => {
+            const boton = evento.target.closest('button[data-pagina]');
+            if (!boton || boton.disabled) return;
+            const parametros = parametrosFiltros();
+            parametros.set('pagina', String(boton.dataset.pagina));
+            try {
+                const respuesta = await jvFetchConTope((window.JV_BASE || '') + 'index.php?url=estadisticas/proveedores&' + parametros.toString(), { ms: 12000 });
+                if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+                const datos = await respuesta.json();
+                if (!datos || !datos.success) throw new Error('Respuesta inválida');
+                renderProveedores(datos);
+            } catch (error) {
+                console.error('No se pudo paginar proveedores:', error);
+                document.getElementById('error-estadisticas')?.classList.remove('d-none');
+            }
+        });
+    }
+
     // ---------- RENDER INICIAL DE GRÁFICOS ----------
     if (cfg.labels) {
         const hayFlujoInicial = crearChartFlujo(cfg.labels, cfg.ventas, cfg.compras, cfg.margenes, cfg.tasaBcv);

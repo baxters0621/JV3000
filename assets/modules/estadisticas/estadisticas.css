@@ -705,6 +705,76 @@
         background:rgba(220,38,38,.14);
         color:#B91C1C;
     }
+    .no-rotacion {
+        display:inline-block;
+        padding:2px 9px;
+        border-radius:99px;
+        font-size:.78rem;
+        font-weight:800;
+        white-space:nowrap;
+    }
+    .no-rotacion.margen-alto { background:rgba(22,163,74,.14); color:#15803D; }
+    .no-rotacion.margen-medio { background:rgba(217,119,6,.14); color:#B45309; }
+    .no-rotacion.margen-bajo { background:rgba(220,38,38,.14); color:#B91C1C; }
+    .btn-detalle-prov {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:32px;
+        height:32px;
+        border-radius:8px;
+        border:1px solid var(--jv-border);
+        background:transparent;
+        color:var(--jv-navy);
+        cursor:pointer;
+        transition:transform .2s ease, border-color .2s ease, color .2s ease;
+    }
+    .btn-detalle-prov:hover { border-color:var(--jv-orange); color:var(--jv-orange); }
+    .btn-detalle-prov i { transition:transform .2s ease; }
+    .btn-detalle-prov.abierto i { transform:rotate(180deg); }
+    .detalle-prov > td {
+        background:rgba(15,42,76,.035);
+        padding:0 !important;
+    }
+    .detalle-prov-cuerpo {
+        padding:14px 18px 16px;
+        border-top:1px dashed var(--jv-border);
+    }
+    .detalle-prov-titulo {
+        margin:0 0 10px;
+        font-size:.76rem;
+        font-weight:800;
+        letter-spacing:.5px;
+        text-transform:uppercase;
+        color:var(--jv-text-muted);
+    }
+    .detalle-prov-items {
+        list-style:none;
+        margin:0;
+        padding:0;
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+        gap:8px 18px;
+    }
+    .detalle-prov-items li {
+        padding:8px 10px;
+        border:1px solid var(--jv-border);
+        border-radius:9px;
+        background:var(--jv-bg-card);
+    }
+    .detalle-prov-meta {
+        display:block;
+        margin-top:2px;
+        font-size:.74rem;
+        font-weight:650;
+        color:var(--jv-text-muted);
+    }
+    .detalle-prov-vacio {
+        margin:0;
+        font-size:.86rem;
+        font-weight:650;
+        color:var(--jv-text-muted);
+    }
 
     /* === RESPONSIVE =================================== */
     @media (max-width: 1200px) {

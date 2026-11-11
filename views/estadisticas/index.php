@@ -9,6 +9,7 @@
 /** @var array<string, mixed> $inventario_critico */
 /** @var array<string, mixed> $rotacion */
 /** @var array<string, mixed> $vencimientos */
+/** @var array<string, mixed> $proveedores_tabla */
 /** @var float|null $tasa_bcv Tasa BCV para mostrar los montos en Bs. */
 
 // ==========================================
@@ -518,6 +519,86 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
             <button type="button" class="btn-pagina" data-pagina="<?php echo max(1, (int)$vencimientos['pagina'] - 1); ?>" <?php echo (int)$vencimientos['pagina'] <= 1 ? 'disabled' : ''; ?>>Anterior</button>
             <span class="pagina-indicador" id="vencIndicador"><?php echo (int)$vencimientos['pagina']; ?> / <?php echo (int)$vencimientos['paginas']; ?></span>
             <button type="button" class="btn-pagina" data-pagina="<?php echo min((int)$vencimientos['paginas'], (int)$vencimientos['pagina'] + 1); ?>" <?php echo (int)$vencimientos['pagina'] >= (int)$vencimientos['paginas'] ? 'disabled' : ''; ?>>Siguiente</button>
+        </nav>
+    </div>
+</div>
+
+<!-- PROVEEDORES -->
+<?php $prov_filas = is_array($proveedores_tabla['filas'] ?? null) ? $proveedores_tabla['filas'] : []; ?>
+<h2 class="seccion-titulo" id="proveedores"><i class="bi bi-truck" aria-hidden="true"></i>Proveedores <span class="seccion-nota">volumen, margen y productos que no rotan</span></h2>
+<div class="chart-card tabla-card mb-4">
+    <div class="tabla-scroll">
+        <table class="tabla-stats tabla-proveedores" id="tablaProveedores">
+            <caption class="visually-hidden">Consolidado por proveedor: compras, margen generado y productos sin ventas en el periodo</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Proveedor</th>
+                    <th scope="col" class="num">Comprado</th>
+                    <th scope="col" class="num">Margen</th>
+                    <th scope="col" class="num d-none d-md-table-cell">% margen</th>
+                    <th scope="col" class="num">No rotan</th>
+                    <th scope="col" class="num"><span class="visually-hidden">Detalle</span></th>
+                </tr>
+            </thead>
+            <tbody id="tablaProveedoresCuerpo">
+                <?php foreach ($prov_filas as $fila_prov): ?>
+                    <?php
+                    $pct_no_rotacion = (float)$fila_prov['pct_no_rotacion'];
+                    $clase_no_rotacion = $pct_no_rotacion >= 50 ? 'margen-bajo' : ($pct_no_rotacion >= 20 ? 'margen-medio' : 'margen-alto');
+                    $margen_pct_prov = $fila_prov['margen_pct'];
+                    ?>
+                    <tr data-proveedor="<?php echo (int)$fila_prov['id_proveedor']; ?>">
+                        <td class="celda-producto">
+                            <span class="prod-nombre"><?php echo htmlspecialchars($fila_prov['nombre_empresa']); ?></span>
+                            <span class="prod-sku">
+                                <?php echo (int)$fila_prov['productos_asignados']; ?> productos activos
+                                <?php echo !empty($fila_prov['lead_time']) ? ' · ' . (int)$fila_prov['lead_time'] . ' días de entrega' : ''; ?>
+                            </span>
+                        </td>
+                        <td class="num">
+                            <?php echo format_bs((float)$fila_prov['monto_comprado'], $tasa_bcv ?? null); ?>
+                            <span class="prod-sku"><?php echo $folio($fila_prov['unidades_compradas']); ?> uds</span>
+                        </td>
+                        <td class="num importe-margen">
+                            <?php echo format_bs((float)$fila_prov['margen'], $tasa_bcv ?? null); ?>
+                            <span class="prod-sku"><?php echo $folio($fila_prov['unidades_vendidas']); ?> uds vendidas</span>
+                        </td>
+                        <td class="num d-none d-md-table-cell">
+                            <?php echo $margen_pct_prov !== null ? number_format((float)$margen_pct_prov, 1, ',', '.') . ' %' : '—'; ?>
+                        </td>
+                        <td class="num">
+                            <span class="no-rotacion <?php echo $clase_no_rotacion; ?>"><?php echo number_format($pct_no_rotacion, 1, ',', '.'); ?> %</span>
+                            <span class="prod-sku"><?php echo (int)$fila_prov['productos_sin_rotar']; ?> de <?php echo (int)$fila_prov['productos_asignados']; ?></span>
+                        </td>
+                        <td class="num">
+                            <button type="button" class="btn-detalle-prov" data-proveedor="<?php echo (int)$fila_prov['id_proveedor']; ?>" aria-expanded="false" aria-controls="detalleProv-<?php echo (int)$fila_prov['id_proveedor']; ?>" title="Ver productos sin ventas de <?php echo htmlspecialchars($fila_prov['nombre_empresa']); ?>">
+                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                <span class="visually-hidden">Ver productos sin ventas</span>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="detalle-prov d-none" id="detalleProv-<?php echo (int)$fila_prov['id_proveedor']; ?>" data-cargado="0">
+                        <td colspan="6">
+                            <div class="detalle-prov-cuerpo">
+                                <p class="detalle-prov-titulo">Productos sin ventas en el periodo</p>
+                                <div class="detalle-prov-lista" data-lista></div>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <div class="tabla-vacia <?php echo $prov_filas === [] ? '' : 'd-none'; ?>" id="vacio-proveedores">
+        <i class="bi bi-inbox" aria-hidden="true"></i>
+        <span>No hay proveedores activos para los filtros seleccionados</span>
+    </div>
+    <div class="tabla-pie">
+        <span class="tabla-resumen" id="provResumen"><?php echo $prov_filas === [] ? '0 proveedores' : 'Mostrando ' . count($prov_filas) . ' de ' . (int)$proveedores_tabla['total'] . ' proveedores'; ?></span>
+        <nav class="tabla-paginacion" id="paginacionProveedores" aria-label="Paginación de proveedores" data-pagina="<?php echo (int)$proveedores_tabla['pagina']; ?>" data-paginas="<?php echo (int)$proveedores_tabla['paginas']; ?>">
+            <button type="button" class="btn-pagina" data-pagina="<?php echo max(1, (int)$proveedores_tabla['pagina'] - 1); ?>" <?php echo (int)$proveedores_tabla['pagina'] <= 1 ? 'disabled' : ''; ?>>Anterior</button>
+            <span class="pagina-indicador" id="provIndicador"><?php echo (int)$proveedores_tabla['pagina']; ?> / <?php echo (int)$proveedores_tabla['paginas']; ?></span>
+            <button type="button" class="btn-pagina" data-pagina="<?php echo min((int)$proveedores_tabla['paginas'], (int)$proveedores_tabla['pagina'] + 1); ?>" <?php echo (int)$proveedores_tabla['pagina'] >= (int)$proveedores_tabla['paginas'] ? 'disabled' : ''; ?>>Siguiente</button>
         </nav>
     </div>
 </div>

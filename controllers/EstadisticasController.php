@@ -50,6 +50,7 @@ class EstadisticasController extends Controller
         $inventario_critico = $modelo->inventarioCritico($ventana_filtros, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
         $rotacion = $modelo->rotacionProductos($ventana_filtros, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
         $vencimientos = $modelo->vencimientosPorTramo($filtros_periodo['categoria'], $filtros_periodo['proveedor']);
+        $proveedores_tabla = $modelo->proveedoresResumen($ventana_filtros, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
 
         // Validar que $datos tenga las keys esperadas; si no, usar valores por defecto
         $expectedKeys = ['periodo', 'etiqueta', 'mensaje', 'desde', 'hasta', 'ventas', 'compras', 'ganancia', 'unidades', 'operaciones', 'ticket', 'margen_pct', 'ventas_ant', 'compras_ant', 'ganancia_ant', 'unidades_ant', 'pct_ventas', 'pct_compras', 'pct_ganancia', 'pct_unidades', 'labels_ventas', 'data_ventas', 'labels_compras', 'data_compras', 'data_margen', 'cat_labels', 'cat_data', 'top_rows', 'top_labels', 'top_cant', 'rent_rows', 'rent_total', 'rent_pagina', 'rent_paginas'];
@@ -76,6 +77,7 @@ class EstadisticasController extends Controller
             'inventario_critico' => $inventario_critico,
             'rotacion'      => $rotacion,
             'vencimientos'  => $vencimientos,
+            'proveedores_tabla' => $proveedores_tabla,
             'error_fechas'  => $filtros_periodo['error'],
             'js_config'     => [
                 'periodo'     => $datos['periodo'],
@@ -285,6 +287,76 @@ class EstadisticasController extends Controller
             'por_pagina' => (int)$resultado['por_pagina'],
             'conteos'    => $resultado['conteos'],
             'tramo'      => $resultado['tramo'],
+        ]);
+    }
+
+    /**
+     * Endpoint AJAX del consolidado por proveedor.
+     *
+     * @return void
+     */
+    public function proveedores(): void
+    {
+        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+        if (!Security::puedeVender()) {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+
+        $filtros = $this->filtrosPeriodo();
+        if ($filtros['error'] !== '') {
+            $this->json(['success' => false, 'error' => 'rango_invalido', 'mensaje' => $filtros['error']], 422);
+        }
+
+        $pagina = (int)$this->parametroGet('pagina');
+        $modelo = new Estadistica();
+        $ventana = $modelo->resolverVentana($filtros['periodo'], $filtros['desde'], $filtros['hasta']);
+        $resultado = $modelo->proveedoresResumen($ventana, $filtros['categoria'], $filtros['proveedor'], $pagina);
+
+        $this->json([
+            'success'    => true,
+            'filas'      => $resultado['filas'],
+            'total'      => (int)$resultado['total'],
+            'pagina'     => (int)$resultado['pagina'],
+            'paginas'    => (int)$resultado['paginas'],
+            'por_pagina' => (int)$resultado['por_pagina'],
+        ]);
+    }
+
+    /**
+     * Endpoint AJAX del detalle de productos sin rotación de un proveedor.
+     *
+     * @return void
+     */
+    public function productosProveedor(): void
+    {
+        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+        if (!Security::puedeVender()) {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+
+        $filtros = $this->filtrosPeriodo();
+        if ($filtros['error'] !== '') {
+            $this->json(['success' => false, 'error' => 'rango_invalido', 'mensaje' => $filtros['error']], 422);
+        }
+
+        $id_proveedor = (int)$this->parametroGet('id_proveedor');
+        if ($id_proveedor <= 0) {
+            $this->json(['success' => false, 'error' => 'proveedor_invalido'], 422);
+        }
+
+        $modelo = new Estadistica();
+        $ventana = $modelo->resolverVentana($filtros['periodo'], $filtros['desde'], $filtros['hasta']);
+        $filas = $modelo->productosSinRotacionPorProveedor($ventana, $id_proveedor, $filtros['categoria']);
+
+        $this->json([
+            'success'      => true,
+            'id_proveedor' => $id_proveedor,
+            'filas'        => $filas,
+            'total'        => count($filas),
         ]);
     }
 

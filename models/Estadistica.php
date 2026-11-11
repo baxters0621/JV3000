@@ -823,6 +823,253 @@ class Estadistica extends Model
     }
 
     /**
+     * Consolidado por proveedor: volumen comprado, margen generado y no rotación.
+     *
+     * El margen se calcula con el costo real del lote vendido (igual que la
+     * tabla de rentabilidad) agrupado por el proveedor asignado al producto.
+     * La no rotación cuenta productos activos con stock que no vendieron en
+     * el periodo; el porcentaje usa los productos activos del proveedor.
+     *
+     * @param array $ventana       Ventana calculada con ventana().
+     * @param int   $id_categoria  Categoría del filtro global (0 = todas).
+     * @param int   $id_proveedor  Proveedor del filtro global (0 = todos).
+     * @param int   $pagina        Página solicitada (1-based).
+     * @param int   $por_pagina    Filas por página.
+     * @return array Filas, total, página y páginas.
+     */
+    public function proveedoresResumen(array $ventana, int $id_categoria = 0, int $id_proveedor = 0, int $pagina = 1, int $por_pagina = 8): array
+    {
+        $por_pagina = max(3, min(50, $por_pagina));
+        $pagina = max(1, $pagina);
+        $desde = $ventana['desde'] . ' 00:00:00';
+        $hasta = $ventana['hasta'] . ' 23:59:59';
+
+        $filtroProv = '';
+        if ($id_proveedor > 0) {
+            $filtroProv = ' AND pr.id_proveedor = ?';
+        }
+
+        $paramsCategoriaProv = [];
+        $filtroCategoriaProv = '';
+        if ($id_categoria > 0) {
+            $filtroCategoriaProv = " AND EXISTS (
+                SELECT 1 FROM productos p2
+                WHERE p2.id_proveedor = pr.id_proveedor
+                  AND p2.status = 'Activo'
+                  " . $this->filtroCategoria('p2', $id_categoria, $paramsCategoriaProv) . "
+            )";
+        }
+
+        $conteoParams = $paramsCategoriaProv;
+        if ($id_proveedor > 0) {
+            $conteoParams[] = $id_proveedor;
+        }
+        $conteo = $this->db->fetchOne(
+            "SELECT COUNT(*) AS total FROM proveedores pr WHERE pr.status = 'Activo' {$filtroCategoriaProv} {$filtroProv}",
+            $conteoParams
+        );
+
+        $total = (int)($conteo['total'] ?? 0);
+        $paginas = max(1, (int)ceil($total / $por_pagina));
+        $pagina = min($pagina, $paginas);
+        $desplazamiento = ($pagina - 1) * $por_pagina;
+
+        $parametros = [];
+
+        $filtroCompras = '';
+        $paramsCompras = [];
+        $filtroCompras = $this->filtroCategoria('p', $id_categoria, $paramsCompras);
+
+        $paramsVentas = [];
+        $filtroVentas = $this->filtroCategoria('p', $id_categoria, $paramsVentas);
+
+        $paramsNoRotacion = [];
+        $filtroNoRotacion = $this->filtroCategoria('p', $id_categoria, $paramsNoRotacion);
+
+        $paramsAsignados = [];
+        $filtroAsignados = $this->filtroCategoria('p', $id_categoria, $paramsAsignados);
+
+        $paramsCatalogo = [];
+        $filtroCatalogo = $this->filtroCategoria('p', $id_categoria, $paramsCatalogo);
+
+        $parametros = array_merge([$desde, $hasta], $paramsCompras);
+        $parametros = array_merge($parametros, [$desde, $hasta], $paramsVentas);
+        $parametros = array_merge($parametros, [$desde, $hasta], $paramsNoRotacion);
+        $parametros = array_merge($parametros, $paramsAsignados);
+        $parametros = array_merge($parametros, $paramsCatalogo);
+        $parametros = array_merge($parametros, $paramsCategoriaProv);
+
+        if ($id_proveedor > 0) {
+            $parametros[] = $id_proveedor;
+        }
+        $parametros[] = $por_pagina;
+        $parametros[] = $desplazamiento;
+
+        $filas = $this->db->fetchAll("
+            SELECT pr.id_proveedor, pr.nombre_empresa, pr.lead_time,
+                   COALESCE(cu.unidades, 0) AS unidades_compradas,
+                   COALESCE(cu.monto, 0) AS monto_comprado,
+                   cu.ultima_compra,
+                   COALESCE(ve.unidades, 0) AS unidades_vendidas,
+                   COALESCE(ve.ingreso, 0) AS ingreso,
+                   COALESCE(ve.margen, 0) AS margen,
+                   COALESCE(nr.total, 0) AS productos_sin_rotar,
+                   COALESCE(asig.total, 0) AS productos_asignados,
+                   COALESCE(ct.total, 0) AS productos_en_catalogo
+            FROM proveedores pr
+            LEFT JOIN (
+                SELECT c.id_proveedor, SUM(dc.cantidad) AS unidades,
+                       SUM(dc.cantidad * dc.precio_costo) AS monto,
+                       MAX(c.fecha_compra) AS ultima_compra
+                FROM compras c
+                JOIN detalle_compras dc ON dc.id_compra = c.id_compra
+                JOIN productos p ON p.id_producto = dc.id_producto
+                WHERE c.status = 'Activa'
+                  AND c.fecha_compra BETWEEN ? AND ?
+                  {$filtroCompras}
+                GROUP BY c.id_proveedor
+            ) cu ON cu.id_proveedor = pr.id_proveedor
+            LEFT JOIN (
+                SELECT p.id_proveedor, SUM(ds.cantidad) AS unidades,
+                       SUM(ds.cantidad * ds.precio_venta) AS ingreso,
+                       SUM(ds.cantidad * (ds.precio_venta - COALESCE(l.precio_costo, p.precio_costo))) AS margen
+                FROM salidas s
+                JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov
+                JOIN detalle_salidas ds ON ds.id_salida = s.id_salida
+                JOIN productos p ON p.id_producto = ds.id_producto
+                LEFT JOIN lotes l ON l.id_lote = ds.id_lote
+                WHERE s.status = 'Activa'
+                  AND tm.tipo_movimiento = 'Salida'
+                  AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+                  AND s.fecha_salida BETWEEN ? AND ?
+                  {$filtroVentas}
+                GROUP BY p.id_proveedor
+            ) ve ON ve.id_proveedor = pr.id_proveedor
+            LEFT JOIN (
+                SELECT p.id_proveedor, COUNT(*) AS total
+                FROM productos p
+                WHERE p.status = 'Activo'
+                  AND p.stock_actual > 0
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM detalle_salidas ds
+                      JOIN salidas s ON s.id_salida = ds.id_salida
+                      JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov
+                      WHERE ds.id_producto = p.id_producto
+                        AND s.fecha_salida BETWEEN ? AND ?
+                        AND s.status = 'Activa'
+                        AND tm.tipo_movimiento = 'Salida'
+                        AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+                  )
+                  {$filtroNoRotacion}
+                GROUP BY p.id_proveedor
+            ) nr ON nr.id_proveedor = pr.id_proveedor
+            LEFT JOIN (
+                SELECT p.id_proveedor, COUNT(*) AS total
+                FROM productos p
+                WHERE p.status = 'Activo'
+                  {$filtroAsignados}
+                GROUP BY p.id_proveedor
+            ) asig ON asig.id_proveedor = pr.id_proveedor
+            LEFT JOIN (
+                SELECT cc.id_proveedor, COUNT(DISTINCT cc.id_producto) AS total
+                FROM catalogo_costos cc
+                JOIN productos p ON p.id_producto = cc.id_producto
+                WHERE 1 = 1
+                  {$filtroCatalogo}
+                GROUP BY cc.id_proveedor
+            ) ct ON ct.id_proveedor = pr.id_proveedor
+            WHERE pr.status = 'Activo'
+              {$filtroCategoriaProv}
+              {$filtroProv}
+            ORDER BY monto_comprado DESC, pr.nombre_empresa ASC
+            LIMIT ? OFFSET ?
+        ", $parametros);
+
+        foreach ($filas as &$fila) {
+            $asignados = (int)$fila['productos_asignados'];
+            $sinRotar = (int)$fila['productos_sin_rotar'];
+            $fila['pct_no_rotacion'] = $asignados > 0 ? round($sinRotar / $asignados * 100, 1) : 0.0;
+            $fila['margen_pct'] = (float)$fila['ingreso'] > 0
+                ? round((float)$fila['margen'] / (float)$fila['ingreso'] * 100, 1)
+                : null;
+        }
+        unset($fila);
+
+        return [
+            'filas'      => $filas,
+            'total'      => $total,
+            'pagina'     => $pagina,
+            'paginas'    => $paginas,
+            'por_pagina' => $por_pagina,
+        ];
+    }
+
+    /**
+     * Productos sin ventas del periodo para un proveedor concreto.
+     *
+     * Alimenta la fila expandible del consolidado de proveedores. Solo
+     * incluye productos activos con existencia y sin ventas en la ventana.
+     *
+     * @param array $ventana      Ventana calculada con ventana().
+     * @param int   $id_proveedor Proveedor a detallar.
+     * @param int   $id_categoria Categoría del filtro global (0 = todas).
+     * @param int   $limite       Máximo de productos listados.
+     * @return array Filas con SKU, stock, valor inmovilizado y última venta.
+     */
+    public function productosSinRotacionPorProveedor(array $ventana, int $id_proveedor, int $id_categoria = 0, int $limite = 100): array
+    {
+        if ($id_proveedor <= 0) {
+            return [];
+        }
+        $limite = max(1, min(200, $limite));
+
+        $parametros = [$id_proveedor, $ventana['desde'] . ' 00:00:00', $ventana['hasta'] . ' 23:59:59'];
+        $filtro = $this->filtroCategoria('p', $id_categoria, $parametros);
+        $parametros[] = $limite;
+
+        $filas = $this->db->fetchAll("
+            SELECT p.id_producto, p.sku, p.nombre_producto, p.stock_actual,
+                   ROUND(p.stock_actual * COALESCE(p.precio_costo, 0), 2) AS valor_inmovilizado,
+                   (SELECT MAX(s2.fecha_salida)
+                    FROM detalle_salidas ds2
+                    JOIN salidas s2 ON s2.id_salida = ds2.id_salida
+                    JOIN tipos_movimientos tm2 ON tm2.id_tipo_mov = s2.id_tipo_mov
+                    WHERE ds2.id_producto = p.id_producto
+                      AND s2.status = 'Activa'
+                      AND tm2.tipo_movimiento = 'Salida'
+                      AND UPPER(TRIM(tm2.nombre)) = 'VENTA') AS ultima_venta
+            FROM productos p
+            WHERE p.id_proveedor = ?
+              AND p.status = 'Activo'
+              AND p.stock_actual > 0
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM detalle_salidas ds
+                  JOIN salidas s ON s.id_salida = ds.id_salida
+                  JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov
+                  WHERE ds.id_producto = p.id_producto
+                    AND s.fecha_salida BETWEEN ? AND ?
+                    AND s.status = 'Activa'
+                    AND tm.tipo_movimiento = 'Salida'
+                    AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+              )
+              {$filtro}
+            ORDER BY valor_inmovilizado DESC, p.nombre_producto ASC
+            LIMIT ?
+        ", $parametros);
+
+        foreach ($filas as &$fila) {
+            $fila['dias_sin_vender'] = $fila['ultima_venta'] !== null
+                ? (int)(new DateTimeImmutable('today'))->diff(new DateTimeImmutable((string)$fila['ultima_venta']))->days
+                : null;
+        }
+        unset($fila);
+
+        return $filas;
+    }
+
+    /**
      * Recolecta todo lo que necesita la vista y el endpoint AJAX de estadísticas.
      *
      * Calcula la ventana, los KPIs actuales y anteriores, sus porcentajes de

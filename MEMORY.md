@@ -64,6 +64,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Estadísticas / Fase 2 (2026-11-10): secciones "Comprar ya" (`inventarioCritico`, stock ≤ mínimo, sugerido 2× mínimo, cobertura en días), "Rotación baja" (`rotacionProductos`, sin ventas en el periodo y valor inmovilizado) y vencimientos (`vencimientosPorTramo`, tramos vencido/d30/d60/d90 con conteos y valor en riesgo). Endpoints `estadisticas/inventario` y `estadisticas/vencimientos`; enlaces por SKU a Productos (`productos&sku=`) y reposición a Compras. Sin cambios de BD.
 
+- Estadísticas / Fase 3 (2026-11-10): `proveedoresResumen()` (compras, margen real, % margen y no rotación sobre productos asignados) y `productosSinRotacionPorProveedor()`; tabla consolidada paginada con fila expandible y endpoints `estadisticas/proveedores` / `estadisticas/productosProveedor`. Con filtro de categoría solo se listan proveedores con productos activos en esa rama. Módulo Estadísticas completo (fases 1-3).
+
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.
