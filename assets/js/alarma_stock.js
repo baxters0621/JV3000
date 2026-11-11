@@ -2,14 +2,12 @@
  * Alarma de stock: modal insistente pero no bloqueante.
  *
  * Se muestra al cargar el dashboard y antes de redirigir tras confirmar una
- * venta. Permite reponer (admin/carga), posponer por producto durante 2 horas
- * y descartar el producto para venta (solo administrador).
+ * venta. Permite reponer (admin/carga) y descartar el producto para venta
+ * (solo administrador). Al cerrar con ENTENDIDO reaparece en la próxima carga.
  */
 (function () {
     'use strict';
 
-    const CLAVE_SNOOZE = 'jv_stock_snooze_v1:';
-    const DURACION_SNOOZE = 2 * 60 * 60 * 1000;
     const config = window.JV_CONFIG || {};
     let mostrado = false;
     let cerrando = false;
@@ -19,49 +17,6 @@
         const base = window.JV_BASE || config.prefijo || '';
         if (base === '') return '';
         return base.endsWith('/') ? base : base + '/';
-    }
-
-    function claveSnooze() {
-        return CLAVE_SNOOZE + (Number(config.userId) || 0);
-    }
-
-    function leerSnooze() {
-        try {
-            const crudo = localStorage.getItem(claveSnooze());
-            const mapa = crudo ? JSON.parse(crudo) : {};
-            return mapa && typeof mapa === 'object' ? mapa : {};
-        } catch (error) {
-            return {};
-        }
-    }
-
-    function guardarSnooze(mapa) {
-        try {
-            localStorage.setItem(claveSnooze(), JSON.stringify(mapa));
-        } catch (error) {
-            // Sin almacenamiento disponible la sesión actual sigue funcionando.
-        }
-    }
-
-    // Limpia expirados y devuelve el mapa vigente.
-    function snoozeVigente() {
-        const ahora = Date.now();
-        const mapa = leerSnooze();
-        let cambio = false;
-        Object.keys(mapa).forEach(id => {
-            if (!Number.isFinite(Number(mapa[id])) || Number(mapa[id]) <= ahora) {
-                delete mapa[id];
-                cambio = true;
-            }
-        });
-        if (cambio) guardarSnooze(mapa);
-        return mapa;
-    }
-
-    function posponer(id) {
-        const mapa = snoozeVigente();
-        mapa[String(id)] = Date.now() + DURACION_SNOOZE;
-        guardarSnooze(mapa);
     }
 
     function escapar(texto) {
@@ -99,8 +54,6 @@
             .jv-alarma-acciones .swal2-styled { margin: 0; font-size: .75rem; padding: .4rem .7rem; min-height: 0; box-shadow: none; }
             .jv-alarma-acciones .jv-alarma-reponer { background: #0f2a4c; border: 1px solid #0f2a4c; border-radius: 8px; color: #fff; font-weight: 750; text-decoration: none; }
             .jv-alarma-acciones .jv-alarma-reponer:hover { background: #1e3a5f; color: #fff; }
-            .jv-alarma-acciones .jv-alarma-posponer { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; color: #0f2a4c; font-weight: 750; }
-            .jv-alarma-acciones .jv-alarma-posponer:hover { border-color: #0e7490; color: #0e7490; }
             .jv-alarma-descartar { border: 0; background: transparent; padding: .2rem .1rem; font: inherit; font-size: .74rem; font-weight: 700; color: #b91c1c; text-decoration: underline; cursor: pointer; }
             .jv-alarma-descartar:hover { color: #7f1d1d; }
             .jv-alarma-error { display: block; margin-top: .35rem; font-size: .74rem; font-weight: 700; color: #b91c1c; }
@@ -119,7 +72,6 @@
         if (puedeReponer) {
             acciones.push('<a class="swal2-styled swal2-confirm jv-alarma-reponer" role="button" href="' + enlaceReponer(fila) + '">Reponer</a>');
         }
-        acciones.push('<button type="button" class="swal2-styled swal2-cancel jv-alarma-posponer" data-posponer="' + Number(fila.id) + '">Posponer 2 h</button>');
         if (puedeDescartar) {
             acciones.push('<button type="button" class="jv-alarma-descartar" data-descartar="' + Number(fila.id) + '">Ya no vender</button>');
         }
@@ -169,7 +121,7 @@
     }
 
     /**
-     * Muestra la alarma si hay productos pendientes y no se pospusieron.
+     * Muestra la alarma si hay productos críticos.
      *
      * @param {object} datos Respuesta de jv_alertas_por_rol().
      * @param {Function} [alCerrar] Acción a ejecutar al cerrar (p. ej. redirigir).
@@ -184,8 +136,7 @@
 
         if (mostrado) return false;
         const bajos = datos && Array.isArray(datos.bajos) ? datos.bajos : [];
-        const snooze = snoozeVigente();
-        const visibles = bajos.filter(fila => !snooze[String(fila.id)]);
+        const visibles = bajos.slice(0, 8);
         if (visibles.length === 0) {
             finalizar();
             return false;
@@ -215,15 +166,6 @@
                 const popup = Swal.getPopup();
                 if (!popup) return;
                 popup.addEventListener('click', evento => {
-                    const botonPosponer = evento.target.closest('[data-posponer]');
-                    if (botonPosponer) {
-                        const id = botonPosponer.dataset.posponer;
-                        posponer(id);
-                        const fila = botonPosponer.closest('.jv-alarma-item');
-                        if (fila) fila.remove();
-                        if (!popup.querySelector('.jv-alarma-item')) Swal.close();
-                        return;
-                    }
                     const botonDescartar = evento.target.closest('[data-descartar]');
                     if (botonDescartar) {
                         const fila = botonDescartar.closest('.jv-alarma-item');

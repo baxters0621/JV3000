@@ -5,7 +5,7 @@
 // ==========================================
 // Verificación estática del blindaje de stock: métodos del modelo,
 // llamadas en ventas/recepción, flags de permisos, endpoint de descarte
-// y lógica de snooze del modal. No toca la base de datos.
+// y presentación del modal (sin snooze). No toca la base de datos.
 
 $raiz = dirname(__DIR__);
 $fallos = 0;
@@ -25,6 +25,7 @@ $helpers = file_get_contents($raiz . '/includes/helpers.php');
 $salidasCtrl = file_get_contents($raiz . '/controllers/SalidasController.php');
 $productosCtrl = file_get_contents($raiz . '/controllers/ProductosController.php');
 $dashboardCtrl = file_get_contents($raiz . '/controllers/DashboardController.php');
+$dashboardIndex = file_get_contents($raiz . '/dashboard/index.php');
 $alarmaJs = file_get_contents($raiz . '/assets/js/alarma_stock.js');
 $notaJs = file_get_contents($raiz . '/assets/modules/nota_entrega/nota_entrega.js');
 $notaVista = file_get_contents($raiz . '/views/nota_entrega/nota.php');
@@ -56,18 +57,22 @@ $afirmar(str_contains($productosCtrl, "postInt('id_producto'"), 'El descarte deb
 $afirmar(str_contains($productosCtrl, 'Security::esAdmin'), 'El descarte debe exigir administrador.');
 
 // JS del modal
-$afirmar(str_contains($alarmaJs, 'jv_stock_snooze_v1'), 'El snooze debe usar localStorage versionado.');
+$afirmar(!str_contains($alarmaJs, 'jv_stock_snooze_v1'), 'El snooze debe haberse eliminado del modal.');
+$afirmar(!str_contains($alarmaJs, 'localStorage'), 'El modal no debe silenciar alertas con localStorage.');
 $afirmar(str_contains($alarmaJs, 'allowOutsideClick: true'), 'El modal no debe bloquear la navegación.');
 $afirmar(str_contains($alarmaJs, 'allowEscapeKey: true'), 'El modal debe cerrarse con Escape.');
-$afirmar(str_contains($alarmaJs, 'posponer'), 'Debe existir la acción de posponer.');
+$afirmar(!str_contains($alarmaJs, 'posponer') && !str_contains($alarmaJs, 'Posponer'), 'No debe quedar la acción de posponer.');
+$afirmar(!str_contains($alarmaJs, '[data-posponer]'), 'No debe quedar el botón de posponer.');
 $afirmar(str_contains($alarmaJs, 'productos/descartar'), 'El modal debe llamar al endpoint de descarte.');
-$afirmar(str_contains($alarmaJs, '2 * 60 * 60 * 1000'), 'El snooze debe durar 2 horas.');
 $afirmar(str_contains($alarmaJs, 'JVAlarmaStock'), 'El módulo debe exponerse globalmente.');
+$afirmar(str_contains($alarmaJs, 'swal2-styled') && str_contains($alarmaJs, 'jv-alarma-reponer'), 'El modal debe usar botones nativos de SweetAlert2.');
+$afirmar(str_contains($alarmaJs, 'ENTENDIDO'), 'El modal debe cerrar con ENTENDIDO.');
 
 // Integraciones
 $afirmar(str_contains($notaJs, 'JVAlarmaStock'), 'La nota de entrega debe mostrar la alarma al confirmar.');
 $afirmar(str_contains($notaVista, 'alarma_stock.js'), 'La nota debe cargar el script de la alarma.');
-$afirmar(str_contains($dashboardCtrl, 'alarma_stock.js'), 'El dashboard debe cargar el script de la alarma.');
+$afirmar(str_contains($dashboardCtrl, 'alarma_stock.js'), 'El controlador del dashboard declara el script de la alarma.');
+$afirmar(str_contains($dashboardIndex, 'alarma_stock.js'), 'El panel del dashboard debe cargar el script de la alarma.');
 
 if ($fallos > 0) {
     fwrite(STDERR, "Piloto de alarma de stock: {$fallos} fallo(s) de {$total}.\n");
