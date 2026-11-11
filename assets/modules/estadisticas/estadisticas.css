@@ -514,6 +514,9 @@
     .btn-filtrar:focus-visible,
     .btn-limpiar-filtros:focus-visible,
     .btn-pagina:focus-visible,
+    .venc-contador:focus-visible,
+    .btn-reponer:focus-visible,
+    .enlace-producto:focus-visible,
     .estadisticas-sin-datos-enlace:focus-visible,
     .estadisticas-error button:focus-visible {
         outline:3px solid rgba(37,99,235,.35);
@@ -595,6 +598,114 @@
         50%      { opacity:.45; }
     }
 
+    /* === INVENTARIO CRÍTICO Y VENCIMIENTOS ============ */
+    .seccion-titulo {
+        display:flex;
+        flex-wrap:wrap;
+        align-items:center;
+        gap:10px;
+        margin:10px 0 16px;
+        font-size:1.08rem;
+        font-weight:800;
+        color:var(--jv-navy);
+    }
+    .seccion-titulo i { color:var(--jv-orange); }
+    .seccion-nota {
+        font-size:.76rem;
+        font-weight:650;
+        letter-spacing:0;
+        text-transform:none;
+        color:var(--jv-text-muted);
+    }
+    .enlace-producto {
+        color:var(--jv-navy);
+        font-weight:750;
+        text-decoration:none;
+        border-bottom:1px dotted transparent;
+    }
+    .enlace-producto:hover,
+    .enlace-producto:focus-visible {
+        color:var(--jv-orange);
+        border-bottom-color:currentColor;
+    }
+    .stock-critico { color:var(--jv-danger); font-weight:800; }
+    .btn-reponer {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:30px;
+        height:30px;
+        border-radius:8px;
+        border:1px solid rgba(22,163,74,.30);
+        background:rgba(22,163,74,.08);
+        color:#15803d;
+        text-decoration:none;
+        font-size:.9rem;
+    }
+    .btn-reponer:hover {
+        background:rgba(22,163,74,.16);
+        border-color:rgba(22,163,74,.55);
+        color:#166534;
+    }
+    .venc-contadores {
+        display:grid;
+        grid-template-columns:repeat(4, minmax(0, 1fr));
+        gap:12px;
+        margin-bottom:16px;
+    }
+    .venc-contador {
+        display:flex;
+        flex-direction:column;
+        align-items:flex-start;
+        gap:3px;
+        padding:14px 16px;
+        background:var(--jv-bg-card);
+        border:1px solid var(--jv-border);
+        border-left:4px solid #94a3b8;
+        border-radius:12px;
+        cursor:pointer;
+        text-align:left;
+        transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+    .venc-contador:hover { transform:translateY(-2px); box-shadow:var(--jv-shadow-sm); }
+    .venc-contador--alerta { border-left-color:var(--jv-danger); }
+    .venc-contador.activo {
+        border-left-color:var(--jv-orange);
+        box-shadow:0 0 0 2px rgba(234,88,12,.18);
+    }
+    .venc-contador-num {
+        font-size:1.7rem;
+        font-weight:800;
+        line-height:1.1;
+        color:var(--jv-navy);
+        font-variant-numeric:tabular-nums;
+    }
+    .venc-contador-label {
+        font-size:.78rem;
+        font-weight:750;
+        text-transform:uppercase;
+        letter-spacing:.4px;
+        color:var(--jv-text-muted);
+    }
+    .venc-dias {
+        display:inline-block;
+        padding:3px 8px;
+        border-radius:99px;
+        font-size:.78rem;
+        font-weight:800;
+        background:rgba(100,116,139,.12);
+        color:#475569;
+        white-space:nowrap;
+    }
+    .venc-dias--alerta {
+        background:rgba(217,119,6,.14);
+        color:#B45309;
+    }
+    .venc-dias--negativo {
+        background:rgba(220,38,38,.14);
+        color:#B91C1C;
+    }
+
     /* === RESPONSIVE =================================== */
     @media (max-width: 1200px) {
         .chart-canvas-wrap { height:320px; }
@@ -627,6 +738,7 @@
         .celda-producto { min-width:110px; }
         .tabla-stats .col-barra { min-width:104px; }
         .tabla-stats .rank-bar { min-width:36px; }
+        .venc-contadores { grid-template-columns:repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 480px) {
         .widget-value { font-size:1.5rem; }

@@ -512,6 +512,14 @@
             var params = new URLSearchParams(window.location.search);
             var pid = params.get('producto');
             var alerta = params.get('alerta');
+            var sku = params.get('sku');
+            if (sku) {
+                var buscarSku = document.getElementById('buscar');
+                if (buscarSku) {
+                    buscarSku.value = sku.toUpperCase();
+                    aplicarFiltros();
+                }
+            }
             if (pid) {
                 destacarProducto(pid);
             } else if (alerta === 'vencidos') {

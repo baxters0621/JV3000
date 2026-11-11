@@ -6,6 +6,9 @@
 /** @var array<int, array<string, mixed>> $proveedores */
 /** @var array<string, mixed> $datos */
 /** @var string $error_fechas */
+/** @var array<string, mixed> $inventario_critico */
+/** @var array<string, mixed> $rotacion */
+/** @var array<string, mixed> $vencimientos */
 /** @var float|null $tasa_bcv Tasa BCV para mostrar los montos en Bs. */
 
 // ==========================================
@@ -29,6 +32,19 @@ foreach ($top_rows as $fila_top) {
 $folio = static fn($valor): string => number_format((float)$valor, 0, ',', '.');
 $rent_desde = $rent_rows === [] ? 0 : 1;
 $rent_hasta = $rent_rows === [] ? 0 : count($rent_rows);
+
+$criticos = is_array($inventario_critico['filas'] ?? null) ? $inventario_critico['filas'] : [];
+$rotacion_filas = is_array($rotacion['filas'] ?? null) ? $rotacion['filas'] : [];
+$venc_filas = is_array($vencimientos['filas'] ?? null) ? $vencimientos['filas'] : [];
+$venc_conteos = is_array($vencimientos['conteos'] ?? null) ? $vencimientos['conteos'] : ['vencido' => 0, 'd30' => 0, 'd60' => 0, 'd90' => 0, 'total' => 0];
+$link_producto = static fn($sku): string => APP_URL_BASE . 'index.php?url=productos&sku=' . rawurlencode((string)$sku);
+$link_reponer = static function (array $fila): string {
+    $url = APP_URL_BASE . 'index.php?url=compras&reponer_producto=' . (int)$fila['id_producto'];
+    if (!empty($fila['id_proveedor'])) {
+        $url .= '&reponer_proveedor=' . (int)$fila['id_proveedor'];
+    }
+    return $url;
+};
 ?>
 <!-- MENSAJE FLASH -->
 <?php if ($flash): ?>
@@ -326,5 +342,182 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                 </nav>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- INVENTARIO CRÍTICO -->
+<h2 class="seccion-titulo" id="inventario-critico"><i class="bi bi-box-seam" aria-hidden="true"></i>Inventario crítico</h2>
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="chart-card tabla-card h-100">
+            <h2><i class="bi bi-cart-plus me-2" aria-hidden="true"></i>Comprar ya <span class="seccion-nota">stock ≤ mínimo</span></h2>
+            <div class="tabla-scroll">
+                <table class="tabla-stats" id="tablaCriticos">
+                    <caption class="visually-hidden">Productos con stock igual o inferior al mínimo configurado</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Producto</th>
+                            <th scope="col" class="num">Stock</th>
+                            <th scope="col" class="num">Mín.</th>
+                            <th scope="col" class="num d-none d-md-table-cell">Cobertura</th>
+                            <th scope="col" class="num">Sugerido</th>
+                            <th scope="col" class="num"><span class="visually-hidden">Acciones</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCriticosCuerpo">
+                        <?php foreach ($criticos as $fila_critico): ?>
+                            <tr>
+                                <td class="celda-producto">
+                                    <a class="enlace-producto" href="<?php echo htmlspecialchars($link_producto($fila_critico['sku'])); ?>"><?php echo htmlspecialchars($fila_critico['nombre_producto']); ?></a>
+                                    <span class="prod-sku"><?php echo htmlspecialchars($fila_critico['sku']); ?></span>
+                                </td>
+                                <td class="num stock-critico"><?php echo $folio($fila_critico['stock_actual']); ?></td>
+                                <td class="num"><?php echo $folio($fila_critico['stock_minimo']); ?></td>
+                                <td class="num d-none d-md-table-cell">
+                                    <?php echo $fila_critico['cobertura_dias'] !== null ? number_format((float)$fila_critico['cobertura_dias'], 1, ',', '.') . ' d' : '—'; ?>
+                                </td>
+                                <td class="num"><?php echo $folio($fila_critico['sugerido_compra']); ?></td>
+                                <td class="num">
+                                    <a class="btn-reponer" href="<?php echo htmlspecialchars($link_reponer($fila_critico)); ?>" title="Reponer <?php echo htmlspecialchars($fila_critico['sku']); ?> en Compras">
+                                        <i class="bi bi-plus-lg" aria-hidden="true"></i><span class="visually-hidden">Reponer <?php echo htmlspecialchars($fila_critico['sku']); ?></span>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tabla-vacia <?php echo $criticos === [] ? '' : 'd-none'; ?>" id="vacio-criticos">
+                <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                <span>Todo el inventario está por encima del mínimo</span>
+            </div>
+            <div class="tabla-pie">
+                <span class="tabla-resumen" id="criticosResumen"><?php echo $criticos === [] ? '0 productos' : 'Mostrando ' . count($criticos) . ' de ' . (int)$inventario_critico['total']; ?></span>
+                <nav class="tabla-paginacion" id="paginacionCriticos" aria-label="Paginación de productos por comprar" data-vista="critico" data-pagina="<?php echo (int)$inventario_critico['pagina']; ?>" data-paginas="<?php echo (int)$inventario_critico['paginas']; ?>">
+                    <button type="button" class="btn-pagina" data-pagina="<?php echo max(1, (int)$inventario_critico['pagina'] - 1); ?>" <?php echo (int)$inventario_critico['pagina'] <= 1 ? 'disabled' : ''; ?>>Anterior</button>
+                    <span class="pagina-indicador" id="criticosIndicador"><?php echo (int)$inventario_critico['pagina']; ?> / <?php echo (int)$inventario_critico['paginas']; ?></span>
+                    <button type="button" class="btn-pagina" data-pagina="<?php echo min((int)$inventario_critico['paginas'], (int)$inventario_critico['pagina'] + 1); ?>" <?php echo (int)$inventario_critico['pagina'] >= (int)$inventario_critico['paginas'] ? 'disabled' : ''; ?>>Siguiente</button>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="chart-card tabla-card h-100">
+            <h2><i class="bi bi-hourglass-split me-2" aria-hidden="true"></i>Rotación baja <span class="seccion-nota">0 ventas en el periodo</span></h2>
+            <div class="tabla-scroll">
+                <table class="tabla-stats" id="tablaRotacion">
+                    <caption class="visually-hidden">Productos con existencias que no vendieron en el periodo filtrado</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Producto</th>
+                            <th scope="col" class="num">Stock</th>
+                            <th scope="col" class="num">Última venta</th>
+                            <th scope="col" class="num">Sin vender</th>
+                            <th scope="col" class="num d-none d-md-table-cell">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRotacionCuerpo">
+                        <?php foreach ($rotacion_filas as $fila_rotacion): ?>
+                            <tr>
+                                <td class="celda-producto">
+                                    <a class="enlace-producto" href="<?php echo htmlspecialchars($link_producto($fila_rotacion['sku'])); ?>"><?php echo htmlspecialchars($fila_rotacion['nombre_producto']); ?></a>
+                                    <span class="prod-sku"><?php echo htmlspecialchars($fila_rotacion['sku']); ?></span>
+                                </td>
+                                <td class="num"><?php echo $folio($fila_rotacion['stock_actual']); ?></td>
+                                <td class="num"><?php echo $fila_rotacion['ultima_venta'] !== null ? date('d/m/Y', strtotime((string)$fila_rotacion['ultima_venta'])) : 'Nunca'; ?></td>
+                                <td class="num"><?php echo $fila_rotacion['dias_sin_vender'] !== null ? $folio($fila_rotacion['dias_sin_vender']) . ' d' : '—'; ?></td>
+                                <td class="num d-none d-md-table-cell"><?php echo format_bs((float)$fila_rotacion['valor_inmovilizado'], $tasa_bcv ?? null); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tabla-vacia <?php echo $rotacion_filas === [] ? '' : 'd-none'; ?>" id="vacio-rotacion">
+                <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                <span>Todo el inventario rotó en este periodo</span>
+            </div>
+            <div class="tabla-pie">
+                <span class="tabla-resumen" id="rotacionResumen"><?php echo $rotacion_filas === [] ? '0 productos' : 'Mostrando ' . count($rotacion_filas) . ' de ' . (int)$rotacion['total']; ?></span>
+                <nav class="tabla-paginacion" id="paginacionRotacion" aria-label="Paginación de rotación baja" data-vista="rotacion" data-pagina="<?php echo (int)$rotacion['pagina']; ?>" data-paginas="<?php echo (int)$rotacion['paginas']; ?>">
+                    <button type="button" class="btn-pagina" data-pagina="<?php echo max(1, (int)$rotacion['pagina'] - 1); ?>" <?php echo (int)$rotacion['pagina'] <= 1 ? 'disabled' : ''; ?>>Anterior</button>
+                    <span class="pagina-indicador" id="rotacionIndicador"><?php echo (int)$rotacion['pagina']; ?> / <?php echo (int)$rotacion['paginas']; ?></span>
+                    <button type="button" class="btn-pagina" data-pagina="<?php echo min((int)$rotacion['paginas'], (int)$rotacion['pagina'] + 1); ?>" <?php echo (int)$rotacion['pagina'] >= (int)$rotacion['paginas'] ? 'disabled' : ''; ?>>Siguiente</button>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- VENCIMIENTOS -->
+<h2 class="seccion-titulo" id="vencimientos"><i class="bi bi-calendar-x" aria-hidden="true"></i>Vencimientos <span class="seccion-nota">a hoy · próximos 90 días</span></h2>
+<div class="venc-contadores" id="vencContadores" role="group" aria-label="Filtrar vencimientos por tramo">
+    <button type="button" class="venc-contador <?php echo $venc_conteos['vencido'] > 0 ? 'venc-contador--alerta' : ''; ?>" data-tramo="vencido" aria-pressed="false">
+        <span class="venc-contador-num" id="venc-vencido"><?php echo $folio($venc_conteos['vencido']); ?></span>
+        <span class="venc-contador-label">Vencidos</span>
+    </button>
+    <button type="button" class="venc-contador" data-tramo="d30" aria-pressed="false">
+        <span class="venc-contador-num" id="venc-d30"><?php echo $folio($venc_conteos['d30']); ?></span>
+        <span class="venc-contador-label">≤ 30 días</span>
+    </button>
+    <button type="button" class="venc-contador" data-tramo="d60" aria-pressed="false">
+        <span class="venc-contador-num" id="venc-d60"><?php echo $folio($venc_conteos['d60']); ?></span>
+        <span class="venc-contador-label">31–60 días</span>
+    </button>
+    <button type="button" class="venc-contador" data-tramo="d90" aria-pressed="false">
+        <span class="venc-contador-num" id="venc-d90"><?php echo $folio($venc_conteos['d90']); ?></span>
+        <span class="venc-contador-label">61–90 días</span>
+    </button>
+</div>
+
+<div class="chart-card tabla-card mb-4">
+    <h2><i class="bi bi-calendar-x me-2" aria-hidden="true"></i>Lotes por vencer <span class="seccion-nota" id="vencTramoEtiqueta">todos los tramos</span></h2>
+    <div class="tabla-scroll">
+        <table class="tabla-stats" id="tablaVencimientos">
+            <caption class="visually-hidden">Lotes con existencia que vencen en los próximos 90 días o ya vencieron</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Producto</th>
+                    <th scope="col" class="num">Lote</th>
+                    <th scope="col" class="num">Cant.</th>
+                    <th scope="col" class="num">Vence</th>
+                    <th scope="col" class="num">Días</th>
+                    <th scope="col" class="d-none d-lg-table-cell">Proveedor</th>
+                    <th scope="col" class="num">Valor</th>
+                </tr>
+            </thead>
+            <tbody id="tablaVencimientosCuerpo">
+                <?php foreach ($venc_filas as $fila_venc): ?>
+                    <tr>
+                        <td class="celda-producto">
+                            <a class="enlace-producto" href="<?php echo htmlspecialchars($link_producto($fila_venc['sku'])); ?>"><?php echo htmlspecialchars($fila_venc['nombre_producto']); ?></a>
+                            <span class="prod-sku"><?php echo htmlspecialchars($fila_venc['sku']); ?></span>
+                        </td>
+                        <td class="num">#<?php echo (int)$fila_venc['id_lote']; ?></td>
+                        <td class="num"><?php echo $folio($fila_venc['cantidad_restante']); ?></td>
+                        <td class="num"><?php echo date('d/m/Y', strtotime((string)$fila_venc['fecha_vencimiento'])); ?></td>
+                        <td class="num">
+                            <span class="venc-dias <?php echo (int)$fila_venc['dias_restantes'] < 0 ? 'venc-dias--negativo' : ((int)$fila_venc['dias_restantes'] <= 30 ? 'venc-dias--alerta' : '') ; ?>">
+                                <?php echo (int)$fila_venc['dias_restantes']; ?> d
+                            </span>
+                        </td>
+                        <td class="d-none d-lg-table-cell"><?php echo htmlspecialchars($fila_venc['proveedor'] ?? '—'); ?></td>
+                        <td class="num"><?php echo format_bs((float)$fila_venc['valor_riesgo'], $tasa_bcv ?? null); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <div class="tabla-vacia <?php echo $venc_filas === [] ? '' : 'd-none'; ?>" id="vacio-vencimientos">
+        <i class="bi bi-check2-circle" aria-hidden="true"></i>
+        <span>No hay lotes vencidos ni próximos a vencer en 90 días</span>
+    </div>
+    <div class="tabla-pie">
+        <span class="tabla-resumen" id="vencResumen"><?php echo $venc_filas === [] ? '0 lotes' : 'Mostrando ' . count($venc_filas) . ' de ' . (int)$vencimientos['total']; ?></span>
+        <nav class="tabla-paginacion" id="paginacionVencimientos" aria-label="Paginación de vencimientos" data-pagina="<?php echo (int)$vencimientos['pagina']; ?>" data-paginas="<?php echo (int)$vencimientos['paginas']; ?>" data-tramo="todas">
+            <button type="button" class="btn-pagina" data-pagina="<?php echo max(1, (int)$vencimientos['pagina'] - 1); ?>" <?php echo (int)$vencimientos['pagina'] <= 1 ? 'disabled' : ''; ?>>Anterior</button>
+            <span class="pagina-indicador" id="vencIndicador"><?php echo (int)$vencimientos['pagina']; ?> / <?php echo (int)$vencimientos['paginas']; ?></span>
+            <button type="button" class="btn-pagina" data-pagina="<?php echo min((int)$vencimientos['paginas'], (int)$vencimientos['pagina'] + 1); ?>" <?php echo (int)$vencimientos['pagina'] >= (int)$vencimientos['paginas'] ? 'disabled' : ''; ?>>Siguiente</button>
+        </nav>
     </div>
 </div>

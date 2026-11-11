@@ -46,6 +46,11 @@ class EstadisticasController extends Controller
         $categorias = (new Categoria())->listar();
         $proveedores = (new Proveedor())->listar();
 
+        $ventana_filtros = $modelo->resolverVentana($periodo, $desde, $hasta);
+        $inventario_critico = $modelo->inventarioCritico($ventana_filtros, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
+        $rotacion = $modelo->rotacionProductos($ventana_filtros, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
+        $vencimientos = $modelo->vencimientosPorTramo($filtros_periodo['categoria'], $filtros_periodo['proveedor']);
+
         // Validar que $datos tenga las keys esperadas; si no, usar valores por defecto
         $expectedKeys = ['periodo', 'etiqueta', 'mensaje', 'desde', 'hasta', 'ventas', 'compras', 'ganancia', 'unidades', 'operaciones', 'ticket', 'margen_pct', 'ventas_ant', 'compras_ant', 'ganancia_ant', 'unidades_ant', 'pct_ventas', 'pct_compras', 'pct_ganancia', 'pct_unidades', 'labels_ventas', 'data_ventas', 'labels_compras', 'data_compras', 'data_margen', 'cat_labels', 'cat_data', 'top_rows', 'top_labels', 'top_cant', 'rent_rows', 'rent_total', 'rent_pagina', 'rent_paginas'];
         $hasAllKeys = count(array_intersect($expectedKeys, array_keys($datos))) === count($expectedKeys);
@@ -68,6 +73,9 @@ class EstadisticasController extends Controller
             'categorias'    => $categorias,
             'proveedores'   => $proveedores,
             'datos'         => $datos,
+            'inventario_critico' => $inventario_critico,
+            'rotacion'      => $rotacion,
+            'vencimientos'  => $vencimientos,
             'error_fechas'  => $filtros_periodo['error'],
             'js_config'     => [
                 'periodo'     => $datos['periodo'],
@@ -198,6 +206,85 @@ class EstadisticasController extends Controller
             'paginas'     => (int)$rentabilidad['paginas'],
             'por_pagina'  => (int)$rentabilidad['por_pagina'],
             'etiqueta'    => $ventana['etiqueta'],
+        ]);
+    }
+
+    /**
+     * Endpoint AJAX del inventario crítico y de la rotación baja.
+     *
+     * @return void
+     */
+    public function inventario(): void
+    {
+        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+        if (!Security::puedeVender()) {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+
+        $filtros = $this->filtrosPeriodo();
+        if ($filtros['error'] !== '') {
+            $this->json(['success' => false, 'error' => 'rango_invalido', 'mensaje' => $filtros['error']], 422);
+        }
+
+        $vista = $this->parametroGet('vista') === 'rotacion' ? 'rotacion' : 'critico';
+        $pagina = (int)$this->parametroGet('pagina');
+        $modelo = new Estadistica();
+        $ventana = $modelo->resolverVentana($filtros['periodo'], $filtros['desde'], $filtros['hasta']);
+
+        $resultado = $vista === 'rotacion'
+            ? $modelo->rotacionProductos($ventana, $filtros['categoria'], $filtros['proveedor'], $pagina)
+            : $modelo->inventarioCritico($ventana, $filtros['categoria'], $filtros['proveedor'], $pagina);
+
+        $this->json([
+            'success'    => true,
+            'vista'      => $vista,
+            'filas'      => $resultado['filas'],
+            'total'      => (int)$resultado['total'],
+            'pagina'     => (int)$resultado['pagina'],
+            'paginas'    => (int)$resultado['paginas'],
+            'por_pagina' => (int)$resultado['por_pagina'],
+        ]);
+    }
+
+    /**
+     * Endpoint AJAX de vencimientos por tramo.
+     *
+     * @return void
+     */
+    public function vencimientos(): void
+    {
+        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+        if (!Security::puedeVender()) {
+            $this->json(['success' => false, 'error' => 'acceso_denegado']);
+        }
+
+        $filtros = $this->filtrosPeriodo();
+        if ($filtros['error'] !== '') {
+            $this->json(['success' => false, 'error' => 'rango_invalido', 'mensaje' => $filtros['error']], 422);
+        }
+
+        $tramo = $this->parametroGet('tramo');
+        $pagina = (int)$this->parametroGet('pagina');
+        $resultado = (new Estadistica())->vencimientosPorTramo(
+            $filtros['categoria'],
+            $filtros['proveedor'],
+            $tramo === '' ? 'todas' : $tramo,
+            $pagina
+        );
+
+        $this->json([
+            'success'    => true,
+            'filas'      => $resultado['filas'],
+            'total'      => (int)$resultado['total'],
+            'pagina'     => (int)$resultado['pagina'],
+            'paginas'    => (int)$resultado['paginas'],
+            'por_pagina' => (int)$resultado['por_pagina'],
+            'conteos'    => $resultado['conteos'],
+            'tramo'      => $resultado['tramo'],
         ]);
     }
 

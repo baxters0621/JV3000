@@ -425,6 +425,191 @@
         });
     }
 
+    // ---------- INVENTARIO CRÍTICO Y VENCIMIENTOS ----------
+    function urlProducto(sku) {
+        return (window.JV_BASE || '') + 'index.php?url=productos&sku=' + encodeURIComponent(sku || '');
+    }
+
+    function urlReponer(fila) {
+        let url = (window.JV_BASE || '') + 'index.php?url=compras&reponer_producto=' + encodeURIComponent(fila.id_producto);
+        if (fila.id_proveedor) url += '&reponer_proveedor=' + encodeURIComponent(fila.id_proveedor);
+        return url;
+    }
+
+    function fechaCorta(valor) {
+        if (!valor) return 'Nunca';
+        const partes = String(valor).slice(0, 10).split('-');
+        return partes.length === 3 ? partes[2] + '/' + partes[1] + '/' + partes[0] : String(valor);
+    }
+
+    function filaProducto(fila) {
+        return '<td class="celda-producto">' +
+            '<a class="enlace-producto" href="' + escaparHtml(urlProducto(fila.sku)) + '">' + escaparHtml(fila.nombre_producto) + '</a>' +
+            '<span class="prod-sku">' + escaparHtml(fila.sku) + '</span></td>';
+    }
+
+    function renderCriticos(payload) {
+        const cuerpo = document.getElementById('tablaCriticosCuerpo');
+        if (!cuerpo) return;
+        const filas = Array.isArray(payload.filas) ? payload.filas : [];
+
+        cuerpo.innerHTML = filas.map(fila => {
+            const cobertura = fila.cobertura_dias === null || fila.cobertura_dias === undefined
+                ? '—'
+                : Number(fila.cobertura_dias).toFixed(1).replace('.', ',') + ' d';
+            return '<tr>' + filaProducto(fila) +
+                '<td class="num stock-critico">' + formatearNumero(fila.stock_actual) + '</td>' +
+                '<td class="num">' + formatearNumero(fila.stock_minimo) + '</td>' +
+                '<td class="num d-none d-md-table-cell">' + cobertura + '</td>' +
+                '<td class="num">' + formatearNumero(fila.sugerido_compra) + '</td>' +
+                '<td class="num"><a class="btn-reponer" href="' + escaparHtml(urlReponer(fila)) + '" title="Reponer ' + escaparHtml(fila.sku) + ' en Compras"><i class="bi bi-plus-lg" aria-hidden="true"></i><span class="visually-hidden">Reponer ' + escaparHtml(fila.sku) + '</span></a></td>' +
+            '</tr>';
+        }).join('');
+
+        document.getElementById('vacio-criticos')?.classList.toggle('d-none', filas.length > 0);
+        actualizarPie('paginacionCriticos', 'criticosIndicador', 'criticosResumen', payload, 'productos');
+    }
+
+    function renderRotacion(payload) {
+        const cuerpo = document.getElementById('tablaRotacionCuerpo');
+        if (!cuerpo) return;
+        const filas = Array.isArray(payload.filas) ? payload.filas : [];
+        const tasa = tasaDeRespuesta(payload);
+
+        cuerpo.innerHTML = filas.map(fila => {
+            const dias = fila.dias_sin_vender === null || fila.dias_sin_vender === undefined
+                ? '—'
+                : formatearNumero(fila.dias_sin_vender) + ' d';
+            return '<tr>' + filaProducto(fila) +
+                '<td class="num">' + formatearNumero(fila.stock_actual) + '</td>' +
+                '<td class="num">' + escaparHtml(fechaCorta(fila.ultima_venta)) + '</td>' +
+                '<td class="num">' + dias + '</td>' +
+                '<td class="num d-none d-md-table-cell">' + formatBs(fila.valor_inmovilizado, tasa) + '</td>' +
+            '</tr>';
+        }).join('');
+
+        document.getElementById('vacio-rotacion')?.classList.toggle('d-none', filas.length > 0);
+        actualizarPie('paginacionRotacion', 'rotacionIndicador', 'rotacionResumen', payload, 'productos');
+    }
+
+    function renderVencimientos(payload) {
+        const cuerpo = document.getElementById('tablaVencimientosCuerpo');
+        if (!cuerpo) return;
+        const filas = Array.isArray(payload.filas) ? payload.filas : [];
+        const tasa = tasaDeRespuesta(payload);
+
+        cuerpo.innerHTML = filas.map(fila => {
+            const dias = Number(fila.dias_restantes) || 0;
+            const clase = dias < 0 ? ' venc-dias--negativo' : (dias <= 30 ? ' venc-dias--alerta' : '');
+            return '<tr>' + filaProducto(fila) +
+                '<td class="num">#' + escaparHtml(fila.id_lote) + '</td>' +
+                '<td class="num">' + formatearNumero(fila.cantidad_restante) + '</td>' +
+                '<td class="num">' + escaparHtml(fechaCorta(fila.fecha_vencimiento)) + '</td>' +
+                '<td class="num"><span class="venc-dias' + clase + '">' + dias + ' d</span></td>' +
+                '<td class="d-none d-lg-table-cell">' + escaparHtml(fila.proveedor || '—') + '</td>' +
+                '<td class="num">' + formatBs(fila.valor_riesgo, tasa) + '</td>' +
+            '</tr>';
+        }).join('');
+
+        document.getElementById('vacio-vencimientos')?.classList.toggle('d-none', filas.length > 0);
+        actualizarPie('paginacionVencimientos', 'vencIndicador', 'vencResumen', payload, 'lotes');
+
+        if (payload.conteos) {
+            Object.entries(payload.conteos).forEach(([clave, valor]) => {
+                const contador = document.getElementById('venc-' + clave);
+                if (contador) contador.textContent = formatearNumero(valor);
+            });
+        }
+    }
+
+    function actualizarPie(navId, indicadorId, resumenId, payload, sustantivo) {
+        const nav = document.getElementById(navId);
+        const indicador = document.getElementById(indicadorId);
+        const resumen = document.getElementById(resumenId);
+        const pagina = Number(payload.pagina) || 1;
+        const paginas = Number(payload.paginas) || 1;
+        const total = Number(payload.total) || 0;
+        const filas = Array.isArray(payload.filas) ? payload.filas.length : 0;
+
+        if (nav) {
+            nav.dataset.pagina = String(pagina);
+            nav.dataset.paginas = String(paginas);
+            const [anterior, siguiente] = nav.querySelectorAll('button');
+            if (anterior) {
+                anterior.dataset.pagina = String(Math.max(1, pagina - 1));
+                anterior.disabled = pagina <= 1;
+            }
+            if (siguiente) {
+                siguiente.dataset.pagina = String(Math.min(paginas, pagina + 1));
+                siguiente.disabled = pagina >= paginas;
+            }
+        }
+        if (indicador) indicador.textContent = pagina + ' / ' + paginas;
+        if (resumen) {
+            if (total === 0) {
+                resumen.textContent = '0 ' + sustantivo;
+            } else {
+                const desde = (pagina - 1) * (Number(payload.por_pagina) || 6) + 1;
+                resumen.textContent = 'Mostrando ' + desde + '–' + (desde + filas - 1) + ' de ' + total;
+            }
+        }
+    }
+
+    async function cargarInventario(vista, pagina, tramo) {
+        const parametros = parametrosFiltros();
+        parametros.set('vista', vista);
+        parametros.set('pagina', String(pagina));
+        if (tramo) parametros.set('tramo', tramo);
+        const accion = vista === 'vencimientos' ? 'estadisticas/vencimientos' : 'estadisticas/inventario';
+        try {
+            const respuesta = await jvFetchConTope((window.JV_BASE || '') + 'index.php?url=' + accion + '&' + parametros.toString(), { ms: 12000 });
+            if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+            const datos = await respuesta.json();
+            if (!datos || !datos.success) throw new Error('Respuesta inválida');
+            if (vista === 'critico') renderCriticos(datos);
+            else if (vista === 'rotacion') renderRotacion(datos);
+            else renderVencimientos(datos);
+        } catch (error) {
+            console.error('No se pudo cargar la sección de inventario:', error);
+            const alerta = document.getElementById('error-estadisticas');
+            if (alerta) alerta.classList.remove('d-none');
+        }
+    }
+
+    [['paginacionCriticos', 'critico'], ['paginacionRotacion', 'rotacion'], ['paginacionVencimientos', 'vencimientos']].forEach(([id, vista]) => {
+        const nav = document.getElementById(id);
+        if (!nav) return;
+        nav.addEventListener('click', evento => {
+            const boton = evento.target.closest('button[data-pagina]');
+            if (!boton || boton.disabled) return;
+            cargarInventario(vista, Number(boton.dataset.pagina), nav.dataset.tramo || '');
+        });
+    });
+
+    // Contadores de vencimientos: filtran la tabla y vuelven a "todas" al repetir.
+    let tramoVencimientos = 'todas';
+    const contadoresVenc = document.querySelectorAll('.venc-contador');
+    const navVenc = document.getElementById('paginacionVencimientos');
+    contadoresVenc.forEach(contador => {
+        contador.addEventListener('click', () => {
+            const tramo = contador.dataset.tramo || 'todas';
+            tramoVencimientos = tramoVencimientos === tramo ? 'todas' : tramo;
+            contadoresVenc.forEach(boton => {
+                const activo = boton.dataset.tramo === tramoVencimientos;
+                boton.classList.toggle('activo', activo);
+                boton.setAttribute('aria-pressed', activo ? 'true' : 'false');
+            });
+            if (navVenc) navVenc.dataset.tramo = tramoVencimientos;
+            const etiqueta = document.getElementById('vencTramoEtiqueta');
+            if (etiqueta) {
+                etiqueta.textContent = tramoVencimientos === 'todas'
+                    ? 'todos los tramos'
+                    : ({ vencido: 'vencidos', d30: '≤ 30 días', d60: '31–60 días', d90: '61–90 días' })[tramoVencimientos];
+            }
+            cargarInventario('vencimientos', 1, tramoVencimientos);
+        });
+    });
+
     // ---------- RENDER INICIAL DE GRÁFICOS ----------
     if (cfg.labels) {
         const hayFlujoInicial = crearChartFlujo(cfg.labels, cfg.ventas, cfg.compras, cfg.margenes, cfg.tasaBcv);

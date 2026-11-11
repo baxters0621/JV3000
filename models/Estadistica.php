@@ -548,6 +548,281 @@ class Estadistica extends Model
     }
 
     /**
+     * Productos en o por debajo del stock mínimo, con cobertura y sugerido.
+     *
+     * La cobertura en días compara el stock actual con el ritmo de venta del
+     * periodo filtrado; si el producto no vendió, la cobertura queda en null.
+     * El sugerido repone hasta el doble del stock mínimo.
+     *
+     * @param array $ventana       Ventana calculada con ventana().
+     * @param int   $id_categoria  Categoría del filtro global (0 = todas).
+     * @param int   $id_proveedor  Proveedor del filtro global (0 = todos).
+     * @param int   $pagina        Página solicitada (1-based).
+     * @param int   $por_pagina    Filas por página.
+     * @return array Filas, total, página y páginas.
+     */
+    public function inventarioCritico(array $ventana, int $id_categoria = 0, int $id_proveedor = 0, int $pagina = 1, int $por_pagina = 6): array
+    {
+        $por_pagina = max(3, min(50, $por_pagina));
+        $pagina = max(1, $pagina);
+        $dias = (int)(new DateTimeImmutable($ventana['desde']))->diff(new DateTimeImmutable($ventana['hasta']))->days + 1;
+
+        $params = [];
+        $filtro = $this->filtroCategoria('p', $id_categoria, $params)
+            . $this->filtroProveedor('p.id_proveedor', $id_proveedor, $params);
+
+        $conteo = $this->db->fetchOne("
+            SELECT COUNT(*) AS total
+            FROM productos p
+            WHERE p.status = 'Activo'
+              AND p.stock_actual <= p.stock_minimo
+              {$filtro}
+        ", $params);
+
+        $total = (int)($conteo['total'] ?? 0);
+        $paginas = max(1, (int)ceil($total / $por_pagina));
+        $pagina = min($pagina, $paginas);
+        $desplazamiento = ($pagina - 1) * $por_pagina;
+
+        $params = [$ventana['desde'] . ' 00:00:00', $ventana['hasta'] . ' 23:59:59'];
+        $filtro = $this->filtroCategoria('p', $id_categoria, $params)
+            . $this->filtroProveedor('p.id_proveedor', $id_proveedor, $params);
+        $params[] = $por_pagina;
+        $params[] = $desplazamiento;
+
+        $filas = $this->db->fetchAll("
+            SELECT p.id_producto, p.sku, p.nombre_producto, p.id_proveedor,
+                   p.stock_actual, p.stock_minimo,
+                   COALESCE(v.unidades, 0) AS unidades,
+                   p.stock_minimo - p.stock_actual AS faltante,
+                   GREATEST(p.stock_minimo * 2 - p.stock_actual, 0) AS sugerido_compra,
+                   CASE WHEN COALESCE(v.unidades, 0) > 0
+                        THEN ROUND(p.stock_actual / (v.unidades / {$dias}), 1)
+                        ELSE NULL END AS cobertura_dias
+            FROM productos p
+            LEFT JOIN (
+                SELECT ds.id_producto, SUM(ds.cantidad) AS unidades
+                FROM detalle_salidas ds
+                JOIN salidas s ON s.id_salida = ds.id_salida
+                JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov
+                WHERE s.fecha_salida BETWEEN ? AND ?
+                  AND s.status = 'Activa'
+                  AND tm.tipo_movimiento = 'Salida'
+                  AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+                GROUP BY ds.id_producto
+            ) v ON v.id_producto = p.id_producto
+            WHERE p.status = 'Activo'
+              AND p.stock_actual <= p.stock_minimo
+              {$filtro}
+            ORDER BY faltante DESC, p.stock_actual ASC, p.nombre_producto ASC
+            LIMIT ? OFFSET ?
+        ", $params);
+
+        return [
+            'filas'      => $filas,
+            'total'      => $total,
+            'pagina'     => $pagina,
+            'paginas'    => $paginas,
+            'por_pagina' => $por_pagina,
+        ];
+    }
+
+    /**
+     * Productos con stock pero sin ninguna venta en el periodo filtrado.
+     *
+     * "Hueso" acordado: stock > 0 y cero ventas en la ventana. Se acompaña de
+     * la última venta histórica y del valor inmovilizado a costo.
+     *
+     * @param array $ventana       Ventana calculada con ventana().
+     * @param int   $id_categoria  Categoría del filtro global (0 = todas).
+     * @param int   $id_proveedor  Proveedor del filtro global (0 = todos).
+     * @param int   $pagina        Página solicitada (1-based).
+     * @param int   $por_pagina    Filas por página.
+     * @return array Filas, total, página y páginas.
+     */
+    public function rotacionProductos(array $ventana, int $id_categoria = 0, int $id_proveedor = 0, int $pagina = 1, int $por_pagina = 6): array
+    {
+        $por_pagina = max(3, min(50, $por_pagina));
+        $pagina = max(1, $pagina);
+
+        $params = [$ventana['desde'] . ' 00:00:00', $ventana['hasta'] . ' 23:59:59'];
+        $filtro = $this->filtroCategoria('p', $id_categoria, $params)
+            . $this->filtroProveedor('p.id_proveedor', $id_proveedor, $params);
+        $sinVentas = "
+            NOT EXISTS (
+                SELECT 1
+                FROM detalle_salidas ds
+                JOIN salidas s ON s.id_salida = ds.id_salida
+                JOIN tipos_movimientos tm ON tm.id_tipo_mov = s.id_tipo_mov
+                WHERE ds.id_producto = p.id_producto
+                  AND s.fecha_salida BETWEEN ? AND ?
+                  AND s.status = 'Activa'
+                  AND tm.tipo_movimiento = 'Salida'
+                  AND UPPER(TRIM(tm.nombre)) = 'VENTA'
+            )";
+
+        $conteo = $this->db->fetchOne("
+            SELECT COUNT(*) AS total
+            FROM productos p
+            WHERE p.status = 'Activo'
+              AND p.stock_actual > 0
+              AND {$sinVentas}
+              {$filtro}
+        ", $params);
+
+        $total = (int)($conteo['total'] ?? 0);
+        $paginas = max(1, (int)ceil($total / $por_pagina));
+        $pagina = min($pagina, $paginas);
+        $desplazamiento = ($pagina - 1) * $por_pagina;
+
+        $params[] = $por_pagina;
+        $params[] = $desplazamiento;
+
+        $filas = $this->db->fetchAll("
+            SELECT p.id_producto, p.sku, p.nombre_producto, p.id_proveedor,
+                   p.stock_actual,
+                   ROUND(p.stock_actual * COALESCE(p.precio_costo, 0), 2) AS valor_inmovilizado,
+                   (SELECT MAX(s2.fecha_salida)
+                    FROM detalle_salidas ds2
+                    JOIN salidas s2 ON s2.id_salida = ds2.id_salida
+                    JOIN tipos_movimientos tm2 ON tm2.id_tipo_mov = s2.id_tipo_mov
+                    WHERE ds2.id_producto = p.id_producto
+                      AND s2.status = 'Activa'
+                      AND tm2.tipo_movimiento = 'Salida'
+                      AND UPPER(TRIM(tm2.nombre)) = 'VENTA') AS ultima_venta
+            FROM productos p
+            WHERE p.status = 'Activo'
+              AND p.stock_actual > 0
+              AND {$sinVentas}
+              {$filtro}
+            ORDER BY ultima_venta ASC, valor_inmovilizado DESC
+            LIMIT ? OFFSET ?
+        ", $params);
+
+        foreach ($filas as &$fila) {
+            $fila['dias_sin_vender'] = $fila['ultima_venta'] !== null
+                ? (int)(new DateTimeImmutable('today'))->diff(new DateTimeImmutable((string)$fila['ultima_venta']))->days
+                : null;
+        }
+        unset($fila);
+
+        return [
+            'filas'      => $filas,
+            'total'      => $total,
+            'pagina'     => $pagina,
+            'paginas'    => $paginas,
+            'por_pagina' => $por_pagina,
+        ];
+    }
+
+    /**
+     * Lotes con existencia que vencen en los próximos 90 días o ya vencieron.
+     *
+     * Los tramos son vencido, d30 (≤30 días), d60 (31–60) y d90 (61–90).
+     * El filtro de proveedor usa el del lote y cae al proveedor asignado al
+     * producto, tal como se acordó para esta sección.
+     *
+     * @param int    $id_categoria Categoría del filtro global (0 = todas).
+     * @param int    $id_proveedor Proveedor del filtro global (0 = todos).
+     * @param string $tramo        Tramo solicitado ('todas' o clave de tramo).
+     * @param int    $pagina       Página solicitada (1-based).
+     * @param int    $por_pagina   Filas por página.
+     * @return array Filas, total, página, páginas, por página y conteos.
+     */
+    public function vencimientosPorTramo(int $id_categoria = 0, int $id_proveedor = 0, string $tramo = 'todas', int $pagina = 1, int $por_pagina = 6): array
+    {
+        $por_pagina = max(3, min(50, $por_pagina));
+        $pagina = max(1, $pagina);
+        $tramos_validos = ['vencido', 'd30', 'd60', 'd90'];
+        $tramo = in_array($tramo, $tramos_validos, true) ? $tramo : 'todas';
+
+        $clasificacion = "CASE
+            WHEN l.fecha_vencimiento < CURDATE() THEN 'vencido'
+            WHEN l.fecha_vencimiento <= CURDATE() + INTERVAL 30 DAY THEN 'd30'
+            WHEN l.fecha_vencimiento <= CURDATE() + INTERVAL 60 DAY THEN 'd60'
+            ELSE 'd90' END";
+
+        $params = [];
+        $filtro = $this->filtroCategoria('p', $id_categoria, $params);
+        if ($id_proveedor > 0) {
+            $filtro .= ' AND COALESCE(l.id_proveedor, p.id_proveedor) = ?';
+            $params[] = $id_proveedor;
+        }
+
+        $condicionBase = "
+            l.cantidad_restante > 0
+            AND l.fecha_vencimiento IS NOT NULL
+            AND l.fecha_vencimiento <= CURDATE() + INTERVAL 90 DAY
+            AND p.status = 'Activo'
+            {$filtro}";
+
+        $conteos = ['vencido' => 0, 'd30' => 0, 'd60' => 0, 'd90' => 0, 'total' => 0];
+        $grupos = $this->db->fetchAll("
+            SELECT {$clasificacion} AS tramo, COUNT(*) AS total
+            FROM lotes l
+            JOIN productos p ON p.id_producto = l.id_producto
+            WHERE {$condicionBase}
+            GROUP BY tramo
+        ", $params);
+        foreach ($grupos as $grupo) {
+            $clave = (string)$grupo['tramo'];
+            if (isset($conteos[$clave])) {
+                $conteos[$clave] = (int)$grupo['total'];
+                $conteos['total'] += (int)$grupo['total'];
+            }
+        }
+
+        $paramsLista = $params;
+        $filtroTramo = '';
+        if ($tramo !== 'todas') {
+            $filtroTramo = " AND {$clasificacion} = ?";
+            $paramsLista[] = $tramo;
+        }
+
+        $conteo = $this->db->fetchOne("
+            SELECT COUNT(*) AS total
+            FROM lotes l
+            JOIN productos p ON p.id_producto = l.id_producto
+            WHERE {$condicionBase}
+            {$filtroTramo}
+        ", $paramsLista);
+
+        $total = (int)($conteo['total'] ?? 0);
+        $paginas = max(1, (int)ceil($total / $por_pagina));
+        $pagina = min($pagina, $paginas);
+        $desplazamiento = ($pagina - 1) * $por_pagina;
+
+        $paramsLista[] = $por_pagina;
+        $paramsLista[] = $desplazamiento;
+
+        $filas = $this->db->fetchAll("
+            SELECT l.id_lote, p.id_producto, p.sku, p.nombre_producto,
+                   pr.nombre_empresa AS proveedor,
+                   l.cantidad_restante, l.fecha_vencimiento,
+                   DATEDIFF(l.fecha_vencimiento, CURDATE()) AS dias_restantes,
+                   ROUND(l.cantidad_restante * COALESCE(l.precio_costo, p.precio_costo), 2) AS valor_riesgo,
+                   {$clasificacion} AS tramo
+            FROM lotes l
+            JOIN productos p ON p.id_producto = l.id_producto
+            LEFT JOIN proveedores pr ON pr.id_proveedor = COALESCE(l.id_proveedor, p.id_proveedor)
+            WHERE {$condicionBase}
+            {$filtroTramo}
+            ORDER BY l.fecha_vencimiento ASC, valor_riesgo DESC
+            LIMIT ? OFFSET ?
+        ", $paramsLista);
+
+        return [
+            'filas'      => $filas,
+            'total'      => $total,
+            'pagina'     => $pagina,
+            'paginas'    => $paginas,
+            'por_pagina' => $por_pagina,
+            'conteos'    => $conteos,
+            'tramo'      => $tramo,
+        ];
+    }
+
+    /**
      * Recolecta todo lo que necesita la vista y el endpoint AJAX de estadísticas.
      *
      * Calcula la ventana, los KPIs actuales y anteriores, sus porcentajes de
