@@ -1143,7 +1143,7 @@ if (!function_exists('jv_alertas_por_rol')) {
         $bajoFilas = $db->fetchAll(
             "SELECT id_producto, nombre_producto, stock_actual, stock_minimo, id_proveedor
              FROM productos
-             WHERE status = 'Activo'
+             WHERE (status = 'Activo' OR stock_actual <= 0)
                AND stock_actual <= stock_minimo
                AND NOT (
                    fecha_vencimiento IS NOT NULL
@@ -1152,6 +1152,17 @@ if (!function_exists('jv_alertas_por_rol')) {
                )
              ORDER BY stock_actual ASC, nombre_producto ASC"
         );
+
+        // Los descartes manuales del administrador no vuelven a alarmar.
+        $descartados = [];
+        $listaDescartados = json_decode(getConfig('productos_descartados', '[]'), true);
+        if (is_array($listaDescartados)) {
+            $descartados = array_map('intval', $listaDescartados);
+        }
+        $bajoFilas = array_values(array_filter(
+            $bajoFilas,
+            static fn(array $fila): bool => !in_array((int)$fila['id_producto'], $descartados, true)
+        ));
 
         $bajos = [];
         foreach ($bajoFilas as $r) {
@@ -1177,6 +1188,7 @@ if (!function_exists('jv_alertas_por_rol')) {
             'bajos' => $bajos,
             'puede_baja' => ($id_rol === 1),
             'puede_reponer' => in_array($id_rol, [1, 2], true),
+            'puede_descartar' => ($id_rol === 1),
         ];
     }
 }

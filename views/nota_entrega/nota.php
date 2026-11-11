@@ -163,6 +163,8 @@
 
     <script src="<?php echo BASE_PATH; ?>assets/js/diseno.js<?php echo jv_asset_version('js/diseno.js'); ?>"></script>
     <script src="<?php echo BASE_PATH; ?>assets/js/tooltips.js?v=5"></script>
+    <script src="<?php echo BASE_PATH; ?>assets/js/sweetalert2.all.min.js<?php echo jv_asset_version('js/sweetalert2.all.min.js'); ?>"></script>
+    <script src="<?php echo BASE_PATH; ?>assets/js/alarma_stock.js<?php echo jv_asset_version('js/alarma_stock.js'); ?>"></script>
     <script src="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.js?v=5"></script>
 </body>
 

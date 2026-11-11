@@ -197,4 +197,37 @@ class ProductosController extends Controller
             'categoria_filtro'    => $categoria_filtro,
         ]);
     }
+
+    /**
+     * Descarta un producto para venta desde la alarma de stock (solo admin).
+     *
+     * Exige POST y XHR. El producto pasa a Inactivo y se guarda su id en
+     * `configuracion.productos_descartados` para que no vuelva a alarmar ni
+     * se reactive automáticamente.
+     *
+     * @return void
+     */
+    public function descartar(): void
+    {
+        if (!Security::esAdmin()) {
+            $this->json(['success' => false, 'message' => 'SIN PERMISOS.'], 403);
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(['success' => false, 'message' => 'MÉTODO NO PERMITIDO.'], 405);
+        }
+        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
+            $this->json(['success' => false, 'message' => 'PETICIÓN NO VÁLIDA.'], 403);
+        }
+
+        $idProducto = $this->postInt('id_producto', 1);
+        if ($idProducto === null) {
+            $this->json(['success' => false, 'message' => 'PRODUCTO INVÁLIDO.'], 422);
+        }
+
+        $resultado = (new Producto())->descartar($idProducto);
+        $this->json([
+            'success' => (bool)$resultado['ok'],
+            'message' => (string)$resultado['mensaje'],
+        ], $resultado['ok'] ? 200 : 422);
+    }
 }

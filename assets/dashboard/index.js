@@ -242,6 +242,7 @@
                     html += '</div>';
                     panel.innerHTML = html;
                     if (panel.classList.contains('open')) posicionarPanelAlertas();
+                    if (window.JVAlarmaStock) window.JVAlarmaStock.mostrar(data);
                 })
                 .catch(function() {});
         }

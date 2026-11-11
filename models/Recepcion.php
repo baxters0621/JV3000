@@ -297,6 +297,7 @@ class Recepcion extends Model
                     "UPDATE productos SET stock_actual = stock_actual + ?, precio_costo = ? WHERE id_producto = ?",
                     [$recibir, $costo_promedio, (int)$f['id_producto']]
                 );
+                (new Producto())->reactivarPorStock((int)$f['id_producto']);
 
                 $this->db->insert('detalle_movimientos', [
                     'id_movimiento'   => $mov_id,

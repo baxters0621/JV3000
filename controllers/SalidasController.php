@@ -177,6 +177,7 @@ class SalidasController extends Controller
                     'success' => true,
                     'message' => $message,
                     'redirect_url' => $redirectUrl,
+                    'alertas_stock' => jv_alertas_por_rol((int)($_SESSION['id_rol'] ?? 0)),
                 ]);
             }
             header('Location: ' . $redirectUrl);

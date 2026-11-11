@@ -226,6 +226,7 @@ class Salida extends Model
 
             foreach ($detalles as $det) {
                 $this->db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
+                (new Producto())->reactivarPorStock((int)$det['id_producto']);
                 if (!empty($det['id_lote'])) devolverLote($this->db, (int)$det['id_lote'], (int)$det['cantidad']);
             }
 
@@ -355,6 +356,7 @@ class Salida extends Model
                 $ant_detalles = $this->db->fetchAll("SELECT id_producto, id_lote, cantidad FROM detalle_salidas WHERE id_salida = ?", [$id_editar]);
                 foreach ($ant_detalles as $det) {
                     $this->db->execute("UPDATE productos SET stock_actual = stock_actual + ? WHERE id_producto = ?", [(int)$det['cantidad'], (int)$det['id_producto']]);
+                (new Producto())->reactivarPorStock((int)$det['id_producto']);
                     if (!empty($det['id_lote'])) devolverLote($this->db, (int)$det['id_lote'], (int)$det['cantidad']);
                 }
             }
@@ -468,6 +470,7 @@ class Salida extends Model
                 }
 
                 $this->db->execute("UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?", [$cantidad, $id_producto]);
+                (new Producto())->sincronizarEstadoPorStock((int)$id_producto);
             }
 
             // 3. Movimiento de inventario

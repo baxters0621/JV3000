@@ -83,6 +83,145 @@ class Producto extends Model
     }
 
     /**
+     * Ids de productos descartados manualmente por el administrador.
+     *
+     * Se guardan como JSON en `configuracion.productos_descartados` para no
+     * alterar el esquema. Un producto descartado no vuelve a alarmar ni se
+     * reactiva automáticamente al recibir stock.
+     *
+     * @return int[] Identificadores descartados.
+     */
+    private function idsDescartados(): array
+    {
+        $crudo = getConfig('productos_descartados', '[]');
+        $lista = json_decode($crudo, true);
+        if (!is_array($lista)) {
+            return [];
+        }
+        return array_values(array_unique(array_map('intval', $lista)));
+    }
+
+    /**
+     * Indica si un producto fue descartado para venta.
+     *
+     * @param int $idProducto Identificador del producto.
+     * @return bool True si está en la lista de descartados.
+     */
+    public function estaDescartado(int $idProducto): bool
+    {
+        return in_array($idProducto, $this->idsDescartados(), true);
+    }
+
+    /**
+     * Descarta un producto para venta (solo administrador).
+     *
+     * Lo añade a `productos_descartados`, lo deja Inactivo y registra la
+     * auditoría. La alarma de stock deja de mostrarlo y la reactivación
+     * automática lo ignora.
+     *
+     * @param int $idProducto Identificador del producto.
+     * @return array ['ok'=>bool, 'mensaje'=>string].
+     */
+    public function descartar(int $idProducto): array
+    {
+        $producto = $this->db->fetchOne("SELECT id_producto FROM productos WHERE id_producto = ?", [$idProducto]);
+        if (!$producto) {
+            return ['ok' => false, 'mensaje' => 'PRODUCTO NO ENCONTRADO.'];
+        }
+
+        $descartados = $this->idsDescartados();
+        if (!in_array($idProducto, $descartados, true)) {
+            $descartados[] = $idProducto;
+        }
+        if (!setConfig('productos_descartados', json_encode(array_values($descartados)))) {
+            return ['ok' => false, 'mensaje' => 'NO SE PUDO GUARDAR EL DESCARTE.'];
+        }
+
+        $this->db->execute("UPDATE productos SET status = 'Inactivo' WHERE id_producto = ?", [$idProducto]);
+        registrarAuditoria('descartado', 'Producto descartado para venta');
+        return ['ok' => true, 'mensaje' => 'PRODUCTO DESCARTADO. NO VOLVERÁ A ALARMAR.'];
+    }
+
+    /**
+     * Sincroniza el estado del producto cuando su stock llega a cero.
+     *
+     * Debe llamarse dentro de la transacción de la venta. Solo desactiva:
+     * la reactivación se hace al recibir mercancía.
+     *
+     * @param int $idProducto Identificador del producto.
+     * @return void
+     */
+    public function sincronizarEstadoPorStock(int $idProducto): void
+    {
+        $fila = $this->db->fetchOne("SELECT status, stock_actual FROM productos WHERE id_producto = ?", [$idProducto]);
+        if (!$fila || $fila['status'] !== 'Activo' || (int)$fila['stock_actual'] > 0) {
+            return;
+        }
+        $this->db->execute(
+            "UPDATE productos SET status = 'Inactivo' WHERE id_producto = ? AND status = 'Activo' AND stock_actual <= 0",
+            [$idProducto]
+        );
+        if ($this->db->affectedRows() > 0) {
+            registrarAuditoria('desactivado_por_stock', 'Producto desactivado automáticamente por stock cero');
+        }
+    }
+
+    /**
+     * Reactiva un producto agotado cuando vuelve a tener stock.
+     *
+     * Se invoca tras una recepción o al devolver stock por anulación. Respeta
+     * los descartes manuales y no reactiva productos vencidos ni con
+     * categoría/proveedor inactivos.
+     *
+     * @param int $idProducto Identificador del producto.
+     * @return void
+     */
+    public function reactivarPorStock(int $idProducto): void
+    {
+        if ($this->estaDescartado($idProducto)) {
+            return;
+        }
+
+        $fila = $this->db->fetchOne(
+            "SELECT p.status, p.stock_actual,
+                    COALESCE(
+                        (SELECT MIN(l.fecha_vencimiento) FROM lotes l
+                          WHERE l.id_producto = p.id_producto
+                            AND l.cantidad_restante > 0
+                            AND l.fecha_vencimiento > '0000-00-00'),
+                        NULLIF(p.fecha_vencimiento, '0000-00-00')
+                    ) AS fecha_efectiva,
+                    c.status AS categoria_status,
+                    pr.status AS proveedor_status
+             FROM productos p
+             LEFT JOIN categorias c ON c.id_categoria = p.id_categoria
+             LEFT JOIN proveedores pr ON pr.id_proveedor = p.id_proveedor
+             WHERE p.id_producto = ?",
+            [$idProducto]
+        );
+        if (!$fila || $fila['status'] !== 'Inactivo' || (int)$fila['stock_actual'] <= 0) {
+            return;
+        }
+        if (!empty($fila['fecha_efectiva']) && (string)$fila['fecha_efectiva'] < date('Y-m-d')) {
+            return;
+        }
+        if (($fila['categoria_status'] ?? '') !== 'Activo') {
+            return;
+        }
+        if (!empty($fila['proveedor_status']) && $fila['proveedor_status'] !== 'Activo') {
+            return;
+        }
+
+        $this->db->execute(
+            "UPDATE productos SET status = 'Activo' WHERE id_producto = ? AND status = 'Inactivo' AND stock_actual > 0",
+            [$idProducto]
+        );
+        if ($this->db->affectedRows() > 0) {
+            registrarAuditoria('reactivado_por_stock', 'Producto reactivado automáticamente al recibir stock');
+        }
+    }
+
+    /**
      * Edición de un producto (solo admin).
      *
      * Valida producto, categoría, stock mínimo/máximo, precios, estado y

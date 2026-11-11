@@ -33,7 +33,12 @@
                     throw new Error(resultado.message || 'No se pudo registrar la venta.');
                 }
 
-                window.location.assign(resultado.redirect_url);
+                const irAlDestino = function () { window.location.assign(resultado.redirect_url); };
+                if (window.JVAlarmaStock) {
+                    window.JVAlarmaStock.mostrar(resultado.alertas_stock, irAlDestino);
+                } else {
+                    irAlDestino();
+                }
             }).catch(function(error) {
                 const mensaje = error.jvTope
                     ? 'La operación superó el tiempo de espera.'
