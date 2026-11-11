@@ -21,6 +21,36 @@ class Estadistica extends Model
     private array $cache_categoria_ids = [];
 
     /**
+     * Comprueba que la categoría y el proveedor del filtro existan y estén activos.
+     *
+     * @param int $id_categoria Categoría solicitada (0 = sin filtro).
+     * @param int $id_proveedor Proveedor solicitado (0 = sin filtro).
+     * @return bool True si ambos son válidos o no se filtraron.
+     */
+    public function filtrosValidos(int $id_categoria, int $id_proveedor): bool
+    {
+        if ($id_categoria > 0) {
+            $categoria = $this->db->fetchOne(
+                "SELECT id_categoria FROM categorias WHERE id_categoria = ? AND status = 'Activo'",
+                [$id_categoria]
+            );
+            if (!$categoria) {
+                return false;
+            }
+        }
+        if ($id_proveedor > 0) {
+            $proveedor = $this->db->fetchOne(
+                "SELECT id_proveedor FROM proveedores WHERE id_proveedor = ? AND status = 'Activo'",
+                [$id_proveedor]
+            );
+            if (!$proveedor) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Ids de una categoría y todas sus descendientes.
      *
      * Usa el campo `categorias.ruta` (ruta legible separada por "/") para

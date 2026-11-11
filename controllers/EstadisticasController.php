@@ -109,12 +109,7 @@ class EstadisticasController extends Controller
      */
     public function datos(): void
     {
-        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
-        if (!Security::puedeVender()) {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
+        $this->exigirAjaxVentas();
 
         $filtros_periodo = $this->filtrosPeriodo();
         if ($filtros_periodo['error'] !== '') {
@@ -179,12 +174,7 @@ class EstadisticasController extends Controller
      */
     public function rentabilidad(): void
     {
-        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
-        if (!Security::puedeVender()) {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
+        $this->exigirAjaxVentas();
 
         $filtros = $this->filtrosPeriodo();
         if ($filtros['error'] !== '') {
@@ -218,12 +208,7 @@ class EstadisticasController extends Controller
      */
     public function inventario(): void
     {
-        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
-        if (!Security::puedeVender()) {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
+        $this->exigirAjaxVentas();
 
         $filtros = $this->filtrosPeriodo();
         if ($filtros['error'] !== '') {
@@ -257,12 +242,7 @@ class EstadisticasController extends Controller
      */
     public function vencimientos(): void
     {
-        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
-        if (!Security::puedeVender()) {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
+        $this->exigirAjaxVentas();
 
         $filtros = $this->filtrosPeriodo();
         if ($filtros['error'] !== '') {
@@ -297,12 +277,7 @@ class EstadisticasController extends Controller
      */
     public function proveedores(): void
     {
-        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
-        if (!Security::puedeVender()) {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
+        $this->exigirAjaxVentas();
 
         $filtros = $this->filtrosPeriodo();
         if ($filtros['error'] !== '') {
@@ -331,12 +306,7 @@ class EstadisticasController extends Controller
      */
     public function productosProveedor(): void
     {
-        if (empty($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
-        if (!Security::puedeVender()) {
-            $this->json(['success' => false, 'error' => 'acceso_denegado']);
-        }
+        $this->exigirAjaxVentas();
 
         $filtros = $this->filtrosPeriodo();
         if ($filtros['error'] !== '') {
@@ -361,6 +331,23 @@ class EstadisticasController extends Controller
     }
 
     /**
+     * Exige una petición AJAX autenticada con permiso de ventas.
+     *
+     * Centraliza el blindaje de los seis endpoints de estadísticas: ocultar
+     * un botón en el frontend no basta, la URL también debe rechazarse.
+     *
+     * @return void
+     */
+    private function exigirAjaxVentas(): void
+    {
+        $es_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+            && strtolower((string)$_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        if (!$es_ajax || !Security::puedeVender()) {
+            $this->json(['success' => false, 'error' => 'acceso_denegado'], 403);
+        }
+    }
+
+    /**
      * Valida los filtros compartidos por la página y el refresco AJAX.
      *
      * @return array{periodo: string, desde: string, hasta: string, categoria: int, proveedor: int, error: string}
@@ -375,6 +362,10 @@ class EstadisticasController extends Controller
         $hasta = $this->parametroGet('hasta');
         $categoria = max(0, (int)$this->parametroGet('categoria'));
         $proveedor = max(0, (int)$this->parametroGet('proveedor'));
+        if (!(new Estadistica())->filtrosValidos($categoria, $proveedor)) {
+            $categoria = 0;
+            $proveedor = 0;
+        }
         $error = '';
 
         if ($periodo === 'rango') {

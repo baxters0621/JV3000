@@ -43,7 +43,7 @@ class NotaEntregaController extends Controller
         }
 
         $idUsuario = (int)($_SESSION['id_usuario'] ?? 0);
-        $resultado = (new NotaEntrega())->construirPreview($_POST, $idUsuario);
+        $resultado = (new NotaEntrega())->construirPreview($_POST, $idUsuario, Security::esAdmin());
 
         if (!$resultado['ok']) {
             $mensaje = $resultado['error'] ?? 'ERROR AL GENERAR EL PREVIEW.';

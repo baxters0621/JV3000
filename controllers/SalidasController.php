@@ -38,7 +38,11 @@ class SalidasController extends Controller
                 if (!Security::esAdmin()) {
                     $this->redirect('salidas');
                 }
-                $outgoingId = (int)$_POST['eliminar'];
+                $outgoingId = $this->postInt('eliminar', 1);
+                if ($outgoingId === null) {
+                    $this->flash('danger', 'VENTA INVÁLIDA PARA ANULAR.');
+                    $this->redirect('salidas');
+                }
                 $cancellationResult = $modelo->anular($outgoingId);
                 if ($cancellationResult['ok']) {
                     $this->flash('success', 'SALIDA ANULADA. STOCK RESTAURADO.', 'salida_anular');

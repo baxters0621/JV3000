@@ -276,7 +276,27 @@ class Salida extends Model
 
         $es_edicion = ($data['accion_salida'] ?? '') === 'editar';
         $id_editar = intval($data['id_salida'] ?? 0);
-        $grupo_data = $data['grupo'] ?? 'venta';
+        $es_admin = !empty($data['es_admin']);
+        $precio_autorizado = $es_admin && !empty($data['precio_autorizado']);
+
+        // El tipo debe existir y ser una salida real; el grupo se deriva del
+        // nombre en la BD para no confiar en el preview de sesión.
+        $tipo_fila = $this->db->fetchOne(
+            "SELECT nombre, tipo_movimiento FROM tipos_movimientos WHERE id_tipo_mov = ?",
+            [intval($data['id_tipo_mov'] ?? 0)]
+        );
+        if (!$tipo_fila || strcasecmp((string)$tipo_fila['tipo_movimiento'], 'Salida') !== 0) {
+            return ['ok' => false, 'error' => 'TIPO DE MOVIMIENTO INVÁLIDO PARA UNA SALIDA.'];
+        }
+        $nombre_tipo = mb_strtoupper(trim((string)$tipo_fila['nombre']));
+        $grupo_data = $nombre_tipo === 'VENTA' ? 'venta' : ($nombre_tipo === 'REGALIAS' ? 'regalias' : 'merma');
+
+        if ($es_edicion && !$es_admin) {
+            return ['ok' => false, 'error' => 'SOLO UN ADMINISTRADOR PUEDE EDITAR VENTAS CONFIRMADAS.'];
+        }
+        if ($es_edicion && $id_editar <= 0) {
+            return ['ok' => false, 'error' => 'NO SE INDICÓ LA VENTA A EDITAR.'];
+        }
 
         $this->db->begin();
         try {
@@ -409,6 +429,13 @@ class Salida extends Model
                 $cantidad = intval($prod['cantidad'] ?? 0);
                 $precio_venta = floatval($prod['precio'] ?? 0);
                 if ($id_producto <= 0 || $cantidad <= 0) continue;
+
+                // Precio: el vendedor no puede alterarlo; solo un administrador
+                // con autorización explícita conserva el precio manual.
+                if ($grupo_data === 'venta' && !$precio_autorizado) {
+                    $precio_bd = $this->db->fetchOne("SELECT precio_venta FROM productos WHERE id_producto = ?", [$id_producto]);
+                    $precio_venta = (float)($precio_bd['precio_venta'] ?? 0);
+                }
 
                 if ($grupo_data === 'venta' && ($precio_venta <= 0 || $precio_venta > 99999999.99)) {
                     throw new Exception("PRECIO DE VENTA INVÁLIDO PARA PRODUCTO (ID:$id_producto).");

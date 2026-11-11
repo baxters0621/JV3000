@@ -66,6 +66,7 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Estadísticas / Fase 3 (2026-11-10): `proveedoresResumen()` (compras, margen real, % margen y no rotación sobre productos asignados) y `productosSinRotacionPorProveedor()`; tabla consolidada paginada con fila expandible y endpoints `estadisticas/proveedores` / `estadisticas/productosProveedor`. Con filtro de categoría solo se listan proveedores con productos activos en esa rama. Módulo Estadísticas completo (fases 1-3).
 
+- Blindaje lógico (2026-11-10): el precio de venta sale de `productos.precio_venta`; solo admin puede fijarlo a mano con `precio_autorizado` + `motivo_precio` (va a observaciones) y `Salida::confirmar()` lo revalida. Editar ventas confirmadas exige admin. El tipo de movimiento se revalida como `Salida`. Helpers `postInt/postFloat/postTexto` rechazan arrays. Los 6 endpoints de estadísticas usan `exigirAjaxVentas()` (XHR + 403) y validan categoría/proveedor activos. Piloto: tests/blindaje_logico_piloto.php (24).
 ## Decisiones (y por qué)
 
 - Normalización Title_Case unificada con `normalizarUsuario()`; nunca `mb_strtoupper()` en nombres de persona ni de categoría.

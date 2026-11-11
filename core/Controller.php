@@ -220,6 +220,70 @@ abstract class Controller
     }
 
     /**
+     * Lee un valor POST escalar y lo devuelve como texto recortado.
+     *
+     * Rechaza arreglos y objetos (un `id[]=` malicioso no se convierte en 1)
+     * y limita la longitud para evitar entradas desmedidas.
+     *
+     * @param string $nombre Nombre del campo.
+     * @param int    $max    Longitud máxima permitida.
+     * @return string|null Texto válido o null si falta o no es escalar.
+     */
+    protected function postTexto(string $nombre, int $max = 255): ?string
+    {
+        $valor = $_POST[$nombre] ?? null;
+        if (!is_scalar($valor)) {
+            return null;
+        }
+        $texto = trim((string)$valor);
+        if ($texto === '' || mb_strlen($texto) > $max) {
+            return null;
+        }
+        return $texto;
+    }
+
+    /**
+     * Lee un entero POST estricto dentro de un rango.
+     *
+     * Usa filter_var sobre un escalar; nunca castea arreglos.
+     *
+     * @param string $nombre Nombre del campo.
+     * @param int    $min    Valor mínimo aceptado.
+     * @param int    $max    Valor máximo aceptado.
+     * @return int|null Entero válido o null.
+     */
+    protected function postInt(string $nombre, int $min = PHP_INT_MIN, int $max = PHP_INT_MAX): ?int
+    {
+        $texto = $this->postTexto($nombre, 20);
+        if ($texto === null) {
+            return null;
+        }
+        $valor = filter_var($texto, FILTER_VALIDATE_INT, ['options' => ['min_range' => $min, 'max_range' => $max]]);
+        return $valor === false ? null : (int)$valor;
+    }
+
+    /**
+     * Lee un decimal POST estricto y finito dentro de un rango.
+     *
+     * @param string $nombre Nombre del campo.
+     * @param float  $min    Valor mínimo aceptado.
+     * @param float  $max    Valor máximo aceptado.
+     * @return float|null Número válido o null.
+     */
+    protected function postFloat(string $nombre, float $min = -1.0e15, float $max = 1.0e15): ?float
+    {
+        $texto = $this->postTexto($nombre, 30);
+        if ($texto === null) {
+            return null;
+        }
+        $valor = filter_var($texto, FILTER_VALIDATE_FLOAT);
+        if ($valor === false || !is_finite($valor) || $valor < $min || $valor > $max) {
+            return null;
+        }
+        return (float)$valor;
+    }
+
+    /**
      * Límite de errores por acción: responde dentro del contexto del módulo.
      *
      * Equivalente del "Error Boundary" de React para este stack: una acción

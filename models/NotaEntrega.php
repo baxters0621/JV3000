@@ -157,7 +157,7 @@ class NotaEntrega extends Model
      * @param int   $idUsuario Usuario que genera la venta.
      * @return array ['ok'=>bool, 'data'?=>array, 'error'?=>string].
      */
-    public function construirPreview(array $input, int $idUsuario): array
+    public function construirPreview(array $input, int $idUsuario, bool $esAdmin = false): array
     {
         $productos_data = $input['productos_data'] ?? '';
         $id_tipo_mov = intval($input['id_tipo_mov'] ?? 0);
@@ -169,6 +169,13 @@ class NotaEntrega extends Model
         $tipo_nombre = $this->obtenerTipoNombre($id_tipo_mov);
         $n2 = mb_strtoupper(trim($tipo_nombre));
         $grupo = $n2 === 'VENTA' ? 'venta' : ($n2 === 'REGALIAS' ? 'regalias' : 'merma');
+
+        // El tipo debe ser una salida real: un id de entrada (compra, devolución,
+        // ajuste) descuadraría el inventario y los reportes.
+        $tipo_fila = $this->db->fetchOne("SELECT tipo_movimiento FROM tipos_movimientos WHERE id_tipo_mov = ?", [$id_tipo_mov]);
+        if (!$tipo_fila || strcasecmp((string)$tipo_fila['tipo_movimiento'], 'Salida') !== 0) {
+            return ['ok' => false, 'error' => 'TIPO DE MOVIMIENTO INVÁLIDO PARA UNA SALIDA.'];
+        }
 
         $causa_ajuste = $grupo === 'merma' ? trim($input['causa_ajuste'] ?? '') : '';
         $motivo_merma = trim($input['descripcion_motivo'] ?? '');
@@ -183,6 +190,23 @@ class NotaEntrega extends Model
 
         $accion_salida = in_array($input['accion_salida'] ?? '', ['registrar', 'editar']) ? $input['accion_salida'] : 'registrar';
         $id_salida = intval($input['id_salida'] ?? 0);
+        if ($accion_salida === 'editar' && !$esAdmin) {
+            return ['ok' => false, 'error' => 'SOLO UN ADMINISTRADOR PUEDE EDITAR VENTAS CONFIRMADAS.'];
+        }
+        if ($accion_salida !== 'editar') {
+            $id_salida = 0;
+        }
+
+        // Precio manual: solo el administrador puede apartarse del precio de
+        // catálogo y debe dejar un motivo que quede en la nota y la auditoría.
+        $precio_autorizado = $esAdmin && !empty($input['precio_autorizado']);
+        $motivo_precio = trim((string)($input['motivo_precio'] ?? ''));
+        if ($precio_autorizado && mb_strlen($motivo_precio) < 5) {
+            return ['ok' => false, 'error' => 'INDICA EL MOTIVO DEL PRECIO MANUAL (MÍNIMO 5 CARACTERES).'];
+        }
+        if ($precio_autorizado) {
+            $observaciones = trim($observaciones . ' | Precio autorizado: ' . $motivo_precio, ' |');
+        }
 
         // Parse productos: desde JSON o campos individuales
         $productos = [];
@@ -233,7 +257,7 @@ class NotaEntrega extends Model
 
         // Check de vencimiento y stock disponible (según grupo y lotes FEFO)
         $cantidades_por_producto = [];
-        foreach ($productos as $p) {
+        foreach ($productos as $indice => $p) {
             $pid = intval($p['id_producto'] ?? 0);
             $cant = normalizarCantidadUnidades($p['cantidad'] ?? null);
             if ($cant === null) {
@@ -246,16 +270,21 @@ class NotaEntrega extends Model
                 $cantidades_por_producto[$pid] = ($cantidades_por_producto[$pid] ?? 0) + $cant;
             }
             $precio_entrante = floatval($p['precio'] ?? 0);
-            if ($grupo === 'venta' && ($precio_entrante <= 0 || $precio_entrante > 99999999.99)) {
+            if ($grupo === 'venta' && $precio_autorizado && ($precio_entrante <= 0 || $precio_entrante > 99999999.99)) {
                 return ['ok' => false, 'error' => "PRECIO DE VENTA INVÁLIDO PARA PRODUCTO #$pid."];
             }
             if ($grupo === 'merma' && ($precio_entrante < 0 || $precio_entrante > 99999999.99)) {
                 return ['ok' => false, 'error' => "PRECIO DE AJUSTE INVÁLIDO PARA PRODUCTO #$pid."];
             }
             if ($pid) {
-                $pc = $this->db->fetchOne("SELECT stock_actual, fecha_vencimiento FROM productos WHERE id_producto = ?", [$pid]);
+                $pc = $this->db->fetchOne("SELECT stock_actual, fecha_vencimiento, precio_venta FROM productos WHERE id_producto = ?", [$pid]);
                 if (!$pc) {
                     return ['ok' => false, 'error' => "PRODUCTO #$pid NO EXISTE."];
+                }
+                if ($grupo === 'venta') {
+                    $productos[$indice]['precio'] = $precio_autorizado
+                        ? $precio_entrante
+                        : (float)$pc['precio_venta'];
                 }
                 $tiene_lotes = (int)$this->db->fetchOne("SELECT COUNT(*) as n FROM lotes WHERE id_producto = ?", [$pid])['n'];
                 $cantidad_solicitada = $cantidades_por_producto[$pid];
@@ -306,6 +335,9 @@ class NotaEntrega extends Model
                 'id_usuario'         => $idUsuario,
                 'accion_salida'      => $accion_salida,
                 'id_salida'          => $id_salida,
+                'es_admin'           => $esAdmin,
+                'precio_autorizado'  => $precio_autorizado,
+                'motivo_precio'      => $motivo_precio,
             ],
         ];
     }

@@ -135,16 +135,22 @@ class ComprasController extends Controller
 
             // Registro de pago parcial
             if (isset($_POST['accion_pago'])) {
+                $id_compra_pago = $this->postInt('id_compra', 1);
+                $monto_pago = $this->postFloat('monto_pago', 0.01);
+                $metodo_pago = $this->postTexto('metodo_pago', 30) ?? '';
+                if ($id_compra_pago === null || $monto_pago === null || $metodo_pago === '') {
+                    $this->flash('danger', 'DATOS DE PAGO INVÁLIDOS. VERIFICA EL MONTO Y EL MÉTODO.');
+                    $this->redirect('compras');
+                }
+                $detalle_pago = [];
+                foreach (['pago_telefono', 'pago_banco', 'pago_referencia', 'pago_descripcion'] as $campo_pago) {
+                    $detalle_pago[str_replace('pago_', '', $campo_pago)] = $this->postTexto($campo_pago, 255) ?? '';
+                }
                 $resultado = (new PagoCompra())->registrar(
-                    (int)($_POST['id_compra'] ?? 0),
-                    (float)($_POST['monto_pago'] ?? 0),
-                    $_POST['metodo_pago'] ?? 'Efectivo',
-                    [
-                        'telefono'    => $_POST['pago_telefono'] ?? '',
-                        'banco'       => $_POST['pago_banco'] ?? '',
-                        'referencia'  => $_POST['pago_referencia'] ?? '',
-                        'descripcion' => $_POST['pago_descripcion'] ?? '',
-                    ],
+                    $id_compra_pago,
+                    $monto_pago,
+                    $metodo_pago,
+                    $detalle_pago,
                     (int)($_SESSION['id_usuario'] ?? 0)
                 );
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje'], $resultado['ok'] ? 'compra_pago' : null);
@@ -194,7 +200,12 @@ class ComprasController extends Controller
                     $this->flash('danger', 'SIN PERMISOS PARA ANULAR COMPRAS.');
                     $this->redirect('compras');
                 }
-                $resultado = $modelo->anular((int)($_POST['eliminar'] ?? 0));
+                $id_compra_anular = $this->postInt('eliminar', 1);
+                if ($id_compra_anular === null) {
+                    $this->flash('danger', 'COMPRA INVÁLIDA PARA ANULAR.');
+                    $this->redirect('compras');
+                }
+                $resultado = $modelo->anular($id_compra_anular);
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje'], $resultado['ok'] ? 'compra_anular' : null);
                 $this->redirect('compras');
             }
