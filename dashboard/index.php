@@ -361,6 +361,7 @@ $agruparActividadPorFecha = static function (array $items): array {
     // ========================================== 
     ?>
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/alarma_stock.js<?php echo $jv_cache_bust(__DIR__ . '/../assets/js/alarma_stock.js'); ?>"></script>
     <script src="../assets/dashboard/index.js<?php echo $jv_cache_bust(__DIR__ . '/../assets/dashboard/index.js'); ?>"></script>
 </body>
 
