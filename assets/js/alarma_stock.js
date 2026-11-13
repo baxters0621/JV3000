@@ -11,6 +11,12 @@
     const config = window.JV_CONFIG || {};
     let mostrado = false;
     let cerrando = false;
+    // SweetAlert2 no admite dos modales abiertos: al pedir confirmación se
+    // cierra la alarma y este flag evita que ese cierre dispare la redirección.
+    let confirmandoDescarte = false;
+    let ultimosDatos = null;
+    let alCerrarPendiente = null;
+    let errorDescarte = null;
 
     // URL base del sistema, con barra final cuando corresponde.
     function baseUrl() {
@@ -80,6 +86,15 @@
         document.head.appendChild(estilos);
     }
 
+    // Ejecuta la acción de cierre una sola vez. Se ignora mientras la alarma
+    // está oculta por el diálogo de confirmación para no redirigir antes de
+    // que el usuario decida.
+    function finalizar() {
+        if (cerrando || confirmandoDescarte) return;
+        cerrando = true;
+        if (typeof alCerrarPendiente === 'function') alCerrarPendiente();
+    }
+
     function htmlFila(fila, puedeReponer, puedeDescartar) {
         const stock = Number(fila.stock) || 0;
         const minimo = Number(fila.minimo) || 0;
@@ -91,6 +106,10 @@
             acciones.push('<button type="button" class="jv-alarma-descartar" data-descartar="' + Number(fila.id) + '">Ya no vender</button>');
         }
 
+        const error = errorDescarte && Number(errorDescarte.id) === Number(fila.id)
+            ? '<span class="jv-alarma-error">' + escapar(errorDescarte.mensaje) + '</span>'
+            : '';
+
         return '<li class="jv-alarma-item" data-producto="' + Number(fila.id) + '">' +
             '<div class="jv-alarma-datos">' +
                 '<p class="jv-alarma-nombre">' + escapar(fila.nombre) + '</p>' +
@@ -98,16 +117,59 @@
                     '<span class="jv-alarma-stock">Quedan ' + stock + '</span>' +
                     '<span class="jv-alarma-sep">·</span>' +
                     '<span>mínimo ' + minimo + '</span>' +
-                '</p>' +
+                '</p>' + error +
             '</div>' +
             '<div class="jv-alarma-acciones">' + acciones.join('') + '</div>' +
         '</li>';
     }
 
-    function descartarProducto(id, contenedor) {
-        if (!window.confirm('¿Descartar este producto? Dejará de venderse y no volverá a aparecer en la alarma.')) {
+    // Vuelve a pintar la alarma con el estado guardado. El error de un descarte
+    // fallido se muestra en su fila; los demás productos siguen disponibles.
+    function reabrirAlarma() {
+        confirmandoDescarte = false;
+        mostrado = false;
+        if (!ultimosDatos) return;
+        const bajos = Array.isArray(ultimosDatos.bajos) ? ultimosDatos.bajos : [];
+        if (bajos.length === 0) {
+            finalizar();
             return;
         }
+        mostrar(ultimosDatos, alCerrarPendiente);
+    }
+
+    function quitarProducto(id) {
+        if (!ultimosDatos || !Array.isArray(ultimosDatos.bajos)) return;
+        const objetivo = Number(id);
+        ultimosDatos.bajos = ultimosDatos.bajos.filter(fila => Number(fila.id) !== objetivo);
+    }
+
+    // Confirma el descarte con el mismo Swal del resto del sistema.
+    function confirmarDescarte(id, contenedor) {
+        const nombre = contenedor.querySelector('.jv-alarma-nombre');
+        confirmandoDescarte = true;
+        Swal.fire({
+            icon: 'warning',
+            title: '¿YA NO VENDER?',
+            html: 'Dejará de venderse y no volverá a aparecer en la alarma:' +
+                '<br><strong>' + escapar(nombre ? nombre.textContent : 'este producto') + '</strong>',
+            showCancelButton: true,
+            background: '#fff',
+            color: '#212529',
+            confirmButtonColor: '#DC2626',
+            cancelButtonColor: '#CED4DA',
+            confirmButtonText: 'SÍ, DESCARTAR',
+            cancelButtonText: 'CANCELAR',
+            reverseButtons: true
+        }).then(resultado => {
+            if (!resultado.isConfirmed) {
+                reabrirAlarma();
+                return;
+            }
+            descartarProducto(id);
+        });
+    }
+
+    function descartarProducto(id) {
         const datos = new FormData();
         datos.append('id_producto', String(id));
         if (config.csrfToken) datos.append('csrf_token', config.csrfToken);
@@ -122,16 +184,17 @@
                 if (!respuesta || !respuesta.success) {
                     throw new Error((respuesta && respuesta.message) || 'No se pudo descartar.');
                 }
-                contenedor.remove();
-                if (!document.querySelector('.jv-alarma-item')) {
-                    Swal.close();
+                quitarProducto(id);
+                if (!ultimosDatos || !Array.isArray(ultimosDatos.bajos) || ultimosDatos.bajos.length === 0) {
+                    confirmandoDescarte = false;
+                    finalizar();
+                    return;
                 }
+                reabrirAlarma();
             })
             .catch(error => {
-                const aviso = document.createElement('span');
-                aviso.className = 'jv-alarma-error';
-                aviso.textContent = error.message || 'No se pudo descartar.';
-                contenedor.appendChild(aviso);
+                errorDescarte = { id: Number(id), mensaje: error.message || 'No se pudo descartar.' };
+                reabrirAlarma();
             });
     }
 
@@ -143,13 +206,9 @@
      * @returns {boolean} True si el modal se abrió.
      */
     function mostrar(datos, alCerrar) {
-        const finalizar = () => {
-            if (cerrando) return;
-            cerrando = true;
-            if (typeof alCerrar === 'function') alCerrar();
-        };
-
         if (mostrado) return false;
+        if (typeof alCerrar === 'function') alCerrarPendiente = alCerrar;
+        ultimosDatos = datos;
         const bajos = datos && Array.isArray(datos.bajos) ? datos.bajos : [];
         const visibles = bajos.slice(0, 8);
         if (visibles.length === 0) {
@@ -166,6 +225,7 @@
                 visibles.slice(0, 8).map(fila => htmlFila(fila, puedeReponer, puedeDescartar)).join('') +
             '</ul>' +
         '</div>';
+        errorDescarte = null;
 
         inyectarEstilos();
         Swal.fire({
@@ -184,7 +244,7 @@
                     const botonDescartar = evento.target.closest('[data-descartar]');
                     if (botonDescartar) {
                         const fila = botonDescartar.closest('.jv-alarma-item');
-                        if (fila) descartarProducto(botonDescartar.dataset.descartar, fila);
+                        if (fila) confirmarDescarte(botonDescartar.dataset.descartar, fila);
                     }
                 });
             }

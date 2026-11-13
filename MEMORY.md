@@ -7,6 +7,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 - Sede (2026-11-13): la dirección de la empresa es «Valencia, Edo. Carabobo» en `configuracion.empresa_direccion`, en el seed y en los fallbacks del Reporte de Inventario y la Nota de Entrega; no quedan restos de «Naguanagua».
 
+- Alarma de stock / descarte (2026-11-13): «Ya no vender» confirma con Swal («¿YA NO VENDER?», SÍ, DESCARTAR / CANCELAR) en lugar de `window.confirm`; el flag `confirmandoDescarte` evita que el cierre de la alarma dispare la redirección de la Nota de Entrega y después se reabre con los productos restantes o el error en la fila.
+
 - Presentación / Datos demo (2026-11-06): seed temporal ejecutado y autoborrado; 3 categorías, 3 proveedores, 4 clientes, 10 productos, 3 compras (2 pagadas y 1 pendiente, todas con recepción completa) y 5 ventas (2 de hoy). Ventas de hoy $282.00, ventas del mes $616.00, compras $1,969.68; stock total 120 y conciliado con lotes. El método de pago de cada venta se guarda en `observaciones` porque `salidas` no tiene columna propia.
 
 - Categorías / Inactivación (2026-11-07): ocultar una categoría con productos queda bloqueado con SweetAlert y el mensaje exacto «No puedes inactivar esta categoría porque tiene productos. Reasígnalos primero.»; una raíz vacía oculta sus hijas en cascada y deja auditoría. El select de producto solo lista activas (conserva la actual inactiva marcada para no perderla) y el modelo rechaza categorías inactivas; Inventario e Historial no filtran categorías por estado. Prueba: categorias_jerarquia (52 aserciones) y categorias_vista en verde; validar.ps1 OK.
