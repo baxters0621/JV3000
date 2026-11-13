@@ -32,6 +32,11 @@
     }
 
     function enlaceReponer(fila) {
+        // Si la reposición ya está pedida pero sin recibir, el botón lleva
+        // directo a la recepción de esa compra en lugar de a una nueva.
+        if (Number(fila.id_compra) > 0) {
+            return baseUrl() + 'index.php?url=compras&recepcion_compra=' + encodeURIComponent(fila.id_compra);
+        }
         let url = baseUrl() + 'index.php?url=compras&reponer_producto=' + encodeURIComponent(fila.id);
         if (Number(fila.id_proveedor) > 0) {
             url += '&reponer_proveedor=' + encodeURIComponent(fila.id_proveedor);
@@ -58,6 +63,7 @@
             .jv-alarma-nombre { margin: 0; font-size: .94rem; font-weight: 750; color: #0f2a4c; line-height: 1.3; }
             .jv-alarma-metricas { margin: .15rem 0 0; font-size: .78rem; color: #64748b; }
             .jv-alarma-stock { color: #b91c1c; font-weight: 800; }
+            .jv-alarma-camino { color: #047857; font-weight: 750; }
             .jv-alarma-sep { margin: 0 .22rem; color: #cbd5e1; }
             .jv-alarma-acciones { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .45rem; flex-shrink: 0; }
             .jv-alarma-acciones .swal2-styled { margin: 0; font-size: .78rem; padding: .5rem .95rem; min-height: 0; box-shadow: none; border-radius: 999px; }
@@ -98,9 +104,10 @@
     function htmlFila(fila, puedeReponer, puedeDescartar) {
         const stock = Number(fila.stock) || 0;
         const minimo = Number(fila.minimo) || 0;
+        const enCamino = Number(fila.en_camino) || 0;
         const acciones = [];
         if (puedeReponer) {
-            acciones.push('<a class="swal2-styled swal2-confirm jv-alarma-reponer" role="button" href="' + enlaceReponer(fila) + '">Reponer</a>');
+            acciones.push('<a class="swal2-styled swal2-confirm jv-alarma-reponer" role="button" href="' + enlaceReponer(fila) + '">' + (enCamino > 0 ? 'Recibir' : 'Reponer') + '</a>');
         }
         if (puedeDescartar) {
             acciones.push('<button type="button" class="jv-alarma-descartar" data-descartar="' + Number(fila.id) + '">Ya no vender</button>');
@@ -110,11 +117,18 @@
             ? '<span class="jv-alarma-error">' + escapar(errorDescarte.mensaje) + '</span>'
             : '';
 
+        // «En camino» evita que el usuario registre una segunda compra cuando
+        // la primera todavía está pendiente de recepción.
+        const camino = enCamino > 0
+            ? '<span class="jv-alarma-sep">·</span><span class="jv-alarma-camino">En camino ' + enCamino + '</span>'
+            : '';
+
         return '<li class="jv-alarma-item" data-producto="' + Number(fila.id) + '">' +
             '<div class="jv-alarma-datos">' +
                 '<p class="jv-alarma-nombre">' + escapar(fila.nombre) + '</p>' +
                 '<p class="jv-alarma-metricas">' +
                     '<span class="jv-alarma-stock">Quedan ' + stock + '</span>' +
+                    camino +
                     '<span class="jv-alarma-sep">·</span>' +
                     '<span>mínimo ' + minimo + '</span>' +
                 '</p>' + error +

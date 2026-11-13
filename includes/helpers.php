@@ -1107,6 +1107,8 @@ if (!function_exists('jv_alertas_por_rol')) {
      * La lista se limita a 8 elementos por grupo para el panel, pero los
      * conteos siempre reflejan el total real. Las alertas de stock bajo se
      * muestran a todos los roles; las acciones se habilitan según el rol.
+     * Cada producto bajo incluye `en_camino` (unidades de compras activas aún
+     * sin recibir) y `id_compra` de la más antigua, para ofrecer «Recibir».
      *
      * @param int|null $id_rol Rol de la sesión activa (1 admin, 2 carga, 3 ventas).
      * @return array{total:int,counts:array<string,int>,vencidos:array<int,array<string,mixed>>,bajos:array<int,array<string,mixed>>,puede_baja:bool,puede_reponer:bool}
@@ -1164,17 +1166,42 @@ if (!function_exists('jv_alertas_por_rol')) {
             static fn(array $fila): bool => !in_array((int)$fila['id_producto'], $descartados, true)
         ));
 
+        // Unidades ya pedidas al proveedor y todavía sin recibir. La alarma
+        // las muestra como «en camino» y enlaza a la recepción en lugar de
+        // proponer una compra nueva que duplicaría el pedido.
+        $enCamino = [];
+        $filasCamino = $db->fetchAll(
+            "SELECT dc.id_producto,
+                    SUM(dc.cantidad - dc.cantidad_recibida) AS unidades,
+                    MIN(dc.id_compra) AS id_compra
+             FROM detalle_compras dc
+             JOIN compras c ON c.id_compra = dc.id_compra
+             WHERE c.status = 'Activa'
+               AND c.estado_recepcion <> 'Completa'
+               AND (dc.cantidad - dc.cantidad_recibida) > 0
+             GROUP BY dc.id_producto"
+        );
+        foreach ($filasCamino as $fila) {
+            $enCamino[(int)$fila['id_producto']] = [
+                'unidades' => (int)$fila['unidades'],
+                'id_compra' => (int)$fila['id_compra'],
+            ];
+        }
+
         $bajos = [];
         foreach ($bajoFilas as $r) {
             if (count($bajos) >= 8) {
                 break;
             }
+            $camino = $enCamino[(int)$r['id_producto']] ?? null;
             $bajos[] = [
                 'id' => (int)$r['id_producto'],
                 'nombre' => (string)$r['nombre_producto'],
                 'stock' => (int)$r['stock_actual'],
                 'minimo' => (int)$r['stock_minimo'],
                 'id_proveedor' => (int)($r['id_proveedor'] ?? 0),
+                'en_camino' => $camino['unidades'] ?? 0,
+                'id_compra' => $camino['id_compra'] ?? 0,
             ];
         }
 

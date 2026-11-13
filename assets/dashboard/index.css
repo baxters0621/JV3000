@@ -419,6 +419,10 @@
     font-weight: 600;
     color: var(--jv-text-muted);
 }
+.dash-bell-camino {
+    font-weight: 700;
+    color: #047857;
+}
 
 .dash-bell-accion {
     flex-shrink: 0;

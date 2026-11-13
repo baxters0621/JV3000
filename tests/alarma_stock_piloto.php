@@ -29,6 +29,9 @@ $dashboardIndex = file_get_contents($raiz . '/dashboard/index.php');
 $alarmaJs = file_get_contents($raiz . '/assets/js/alarma_stock.js');
 $notaJs = file_get_contents($raiz . '/assets/modules/nota_entrega/nota_entrega.js');
 $notaVista = file_get_contents($raiz . '/views/nota_entrega/nota.php');
+$dashboardJs = file_get_contents($raiz . '/assets/dashboard/index.js');
+$campanaVista = file_get_contents($raiz . '/views/dashboard/_campana_alertas.php');
+$comprasJs = file_get_contents($raiz . '/assets/modules/compras/compras.js');
 
 // Modelo de producto
 $afirmar(str_contains($producto, 'function sincronizarEstadoPorStock'), 'Producto debe sincronizar estado por stock.');
@@ -73,6 +76,15 @@ $afirmar(str_contains($notaJs, 'JVAlarmaStock'), 'La nota de entrega debe mostra
 $afirmar(str_contains($notaVista, 'alarma_stock.js'), 'La nota debe cargar el script de la alarma.');
 $afirmar(str_contains($dashboardCtrl, 'alarma_stock.js'), 'El controlador del dashboard declara el script de la alarma.');
 $afirmar(str_contains($dashboardIndex, 'alarma_stock.js'), 'El panel del dashboard debe cargar el script de la alarma.');
+
+// Reposición en camino (compra registrada y pendiente de recepción)
+$afirmar(str_contains($helpers, "'en_camino'"), 'Las alertas deben informar las unidades en camino.');
+$afirmar(str_contains($helpers, "'id_compra'"), 'Las alertas deben indicar la compra pendiente de recepción.');
+$afirmar(str_contains($alarmaJs, 'recepcion_compra'), 'El modal debe enlazar a la recepción si la compra está pendiente.');
+$afirmar(str_contains($alarmaJs, "enCamino > 0 ? 'Recibir' : 'Reponer'"), 'El modal debe rotular Recibir cuando la reposición está en camino.');
+$afirmar(str_contains($campanaVista, 'recepcion_compra') && str_contains($campanaVista, 'dash-bell-camino'), 'La campanita debe mostrar En camino y enlazar a la recepción.');
+$afirmar(str_contains($dashboardJs, 'dash-bell-camino'), 'El refresco de la campanita debe conservar En camino.');
+$afirmar(str_contains($comprasJs, 'recepcionDesdeUrl'), 'Compras debe abrir la recepción indicada por la URL.');
 
 if ($fallos > 0) {
     fwrite(STDERR, "Piloto de alarma de stock: {$fallos} fallo(s) de {$total}.\n");

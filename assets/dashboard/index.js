@@ -184,17 +184,24 @@
                 if (tipo === 'vencidos') {
                     html += '<span class="dash-bell-item-meta dash-bell-meta-venc">Vence: ' + escapeHtml(it.fecha) + '</span>';
                 } else {
-                    html += '<span class="dash-bell-item-meta dash-bell-meta-bajo">Quedan ' + (Number(it.stock) || 0) + ' <span class="dash-bell-min">(mín ' + (Number(it.minimo) || 0) + ')</span></span>';
+                    html += '<span class="dash-bell-item-meta dash-bell-meta-bajo">Quedan ' + (Number(it.stock) || 0) + ' <span class="dash-bell-min">(mín ' + (Number(it.minimo) || 0) + ')</span>';
+                    if (Number(it.en_camino) > 0) {
+                        html += ' · <span class="dash-bell-camino">En camino ' + Number(it.en_camino) + '</span>';
+                    }
+                    html += '</span>';
                 }
                 html += '</div>';
                 if (tipo === 'vencidos' && puedeBaja) {
                     html += '<button type="button" class="dash-bell-accion dash-bell-accion-danger" data-baja-id="' + (Number(it.id) || 0) + '" data-baja-nombre="' + nombre + '">Dar de baja</button>';
                 } else if (tipo === 'bajos' && puedeReponer) {
                     var href = base + 'index.php?url=compras';
-                    if (Number(it.id_proveedor) > 0) {
+                    var idCompraPendiente = Number(it.id_compra) || 0;
+                    if (idCompraPendiente > 0) {
+                        href += '&recepcion_compra=' + idCompraPendiente;
+                    } else if (Number(it.id_proveedor) > 0) {
                         href += '&reponer_producto=' + (Number(it.id) || 0) + '&reponer_proveedor=' + Number(it.id_proveedor);
                     }
-                    html += '<a class="dash-bell-accion dash-bell-accion-warn" href="' + href + '">Reponer</a>';
+                    html += '<a class="dash-bell-accion dash-bell-accion-warn" href="' + href + '">' + (idCompraPendiente > 0 ? 'Recibir' : 'Reponer') + '</a>';
                 }
                 html += '</div>';
             });

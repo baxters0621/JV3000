@@ -1549,6 +1549,20 @@
         // ==========================================
         // INICIALIZACIÓN
         // ==========================================
+        // Abre directamente la recepción de una compra pendiente cuando se
+        // llega desde «Recibir» en la campanita o en la alarma de stock.
+        function recepcionDesdeUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const idCompra = Number(params.get('recepcion_compra') || 0);
+            if (!idCompra) return;
+            params.delete('recepcion_compra');
+            const limpia = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash;
+            window.history.replaceState({}, '', limpia);
+            setTimeout(function() {
+                abrirRecepcion(idCompra);
+            }, 250);
+        }
+
         // Precarga una reposición enviada desde Inventario (producto y proveedor).
         function prefillReponer() {
             const params = new URLSearchParams(window.location.search);
@@ -1616,6 +1630,7 @@
             const compraRecuperacion = (window.JV_CONFIG || {}).compraRecuperacion;
             const recepcionRecuperacion = (window.JV_CONFIG || {}).recepcionRecuperacion;
             const reponerPrefill = prefillReponer();
+            recepcionDesdeUrl();
             if (!reponerPrefill && compraRecuperacion) {
                 document.getElementById('selProveedor').value = String(compraRecuperacion.id_proveedor || '');
                 document.getElementById('selProveedor').dispatchEvent(new Event('change', { bubbles: true }));

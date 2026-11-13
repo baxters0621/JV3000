@@ -62,20 +62,26 @@ $base = defined('BASE_PATH') ? BASE_PATH : '/';
                 <p class="dash-bell-sec-vacio">No hay productos con stock bajo</p>
             <?php else: ?>
                 <?php foreach ($bajos as $it): ?>
+                    <?php
+                    $en_camino = (int)($it['en_camino'] ?? 0);
+                    $id_compra_pendiente = (int)($it['id_compra'] ?? 0);
+                    ?>
                     <div class="dash-bell-item">
                         <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
                         <div class="dash-bell-item-copy">
                             <a class="dash-bell-item-nombre" href="<?php echo $base; ?>index.php?url=productos&producto=<?php echo (int)$it['id']; ?>"><?php echo htmlspecialchars((string)$it['nombre']); ?></a>
-                            <span class="dash-bell-item-meta dash-bell-meta-bajo">Quedan <?php echo (int)$it['stock']; ?> <span class="dash-bell-min">(mín <?php echo (int)$it['minimo']; ?>)</span></span>
+                            <span class="dash-bell-item-meta dash-bell-meta-bajo">Quedan <?php echo (int)$it['stock']; ?> <span class="dash-bell-min">(mín <?php echo (int)$it['minimo']; ?>)</span><?php if ($en_camino > 0): ?> · <span class="dash-bell-camino">En camino <?php echo $en_camino; ?></span><?php endif; ?></span>
                         </div>
                         <?php if ($puede_reponer): ?>
                             <?php
                             $reponer_url = $base . 'index.php?url=compras';
-                            if ((int)($it['id_proveedor'] ?? 0) > 0) {
+                            if ($id_compra_pendiente > 0) {
+                                $reponer_url .= '&recepcion_compra=' . $id_compra_pendiente;
+                            } elseif ((int)($it['id_proveedor'] ?? 0) > 0) {
                                 $reponer_url .= '&reponer_producto=' . (int)$it['id'] . '&reponer_proveedor=' . (int)$it['id_proveedor'];
                             }
                             ?>
-                            <a class="dash-bell-accion dash-bell-accion-warn" href="<?php echo $reponer_url; ?>">Reponer</a>
+                            <a class="dash-bell-accion dash-bell-accion-warn" href="<?php echo $reponer_url; ?>"><?php echo $en_camino > 0 ? 'Recibir' : 'Reponer'; ?></a>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
