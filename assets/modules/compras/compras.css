@@ -228,7 +228,7 @@
         /* â”€â”€ Celda detalle: pill + nombres â”€â”€ */
         .pagina-compras .td-detalle {
             overflow: hidden;
-            text-align: left !important;
+            text-align: center !important;
             cursor: default;
         }
         .pagina-compras .detalle-resumen {
@@ -253,17 +253,6 @@
             flex-shrink: 0;
             vertical-align: middle;
             white-space: nowrap;
-        }
-        .pagina-compras .detalle-nombres {
-            display: block;
-            min-width: 0;
-            flex: 1 1 auto;
-            font-weight: 600;
-            color: var(--jv-text-primary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            vertical-align: middle;
         }
 
         /* â”€â”€ Celda total â”€â”€ */
@@ -1886,7 +1875,7 @@
         display: flex !important;
         grid-column: 1 / -1;
         flex-direction: column !important;
-        align-items: stretch !important;
+        align-items: center !important;
         gap: 8px !important;
     }
     .pagina-compras .compras-list-table .detalle-resumen {
@@ -1898,27 +1887,9 @@
     .pagina-compras .compras-list-table .detalle-resumen .cant-pill {
         flex: 0 0 auto;
     }
-    .pagina-compras .compras-list-table .detalle-resumen .detalle-nombres {
-        display: block;
-        min-width: 0;
-        flex: 1 1 auto;
-        margin: 0;
-        overflow-wrap: anywhere;
-        white-space: normal;
-        line-height: 1.45;
-    }
     .pagina-compras .compras-list-table .factura-texto,
     .pagina-compras .compras-list-table .proveedor-nombre {
         max-width: 100%;
-    }
-    .pagina-compras .compras-list-table .detalle-nombres {
-        display: block;
-        max-width: 100%;
-        margin-top: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        line-height: 1.45;
     }
     .pagina-compras .compras-list-table tbody#tablaEntradas > tr > td[data-label="Acciones"] {
         grid-column: 1 / -1;
@@ -2033,11 +2004,6 @@
 .pagina-compras .detalle-celda {
     width: 100%;
     min-width: 0;
-}
-.pagina-compras .detalle-nombres {
-    flex: 1 1 auto;
-    min-width: 0;
-    margin-top: 0;
 }
 .pagina-compras .btn-detalle-compra {
     flex-shrink: 0;

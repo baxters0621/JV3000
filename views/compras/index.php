@@ -246,9 +246,8 @@ if (!empty($tasa_bcv_fecha)) {
                                 <span class="proveedor-nombre text-truncate" data-tooltip="<?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P', ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['proveedor'] ?? 'S/P'); ?></span>
                             </td>
                             <td class="td-detalle" data-label="Detalle">
-                                <div class="detalle-celda d-flex justify-content-between align-items-center gap-2">
-                                    <span class="detalle-nombres text-truncate" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($compra['productos_list'] ?? '-'); ?></span>
-                                    <button type="button" class="btn btn-sm btn-outline-primary btn-detalle-compra flex-shrink-0" data-id-compra="<?php echo (int)$compra['id_compra']; ?>" data-tooltip="Ver detalle de la factura" aria-label="Ver detalle de la factura N° <?php echo htmlspecialchars($compra['nro_factura'] ?: '-', ENT_QUOTES, 'UTF-8'); ?>"><i class="bi bi-eye me-1" aria-hidden="true"></i>Ver Detalle</button>
+                                <div class="detalle-celda d-flex justify-content-center align-items-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary btn-detalle-compra flex-shrink-0" data-id-compra="<?php echo (int)$compra['id_compra']; ?>" data-tooltip="<?php echo htmlspecialchars($compra['productos_list'] ?? 'Ver detalle de la factura', ENT_QUOTES, 'UTF-8'); ?>" aria-label="Ver detalle de la factura N° <?php echo htmlspecialchars($compra['nro_factura'] ?: '-', ENT_QUOTES, 'UTF-8'); ?>"><i class="bi bi-eye me-1" aria-hidden="true"></i>Ver Detalle</button>
                                 </div>
                             </td>
                             <td class="td-total text-end" data-label="Total">

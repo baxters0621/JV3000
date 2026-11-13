@@ -31,7 +31,8 @@ afirmarDetalleCompra(strpos($controlador, 'public function detalle(): void') !==
 afirmarDetalleCompra(strpos($controlador, 'Security::verificarPermisoCarga();') !== false, 'La acción detalle debe exigir permiso de carga.');
 
 afirmarDetalleCompra(strpos($vista, 'btn btn-sm btn-outline-primary btn-detalle-compra') !== false && strpos($vista, 'data-id-compra=') !== false, 'La celda Detalle debe exponer un botón explícito con data-id-compra.');
-afirmarDetalleCompra(strpos($vista, 'class="detalle-celda d-flex justify-content-between align-items-center gap-2"') !== false, 'La celda Detalle debe alinear nombre y botón en una sola línea.');
+afirmarDetalleCompra(strpos($vista, 'class="detalle-celda d-flex justify-content-center align-items-center"') !== false, 'La celda Detalle debe centrar el botón en una sola línea.');
+afirmarDetalleCompra(strpos($vista, 'class="detalle-nombres') === false, 'La celda Detalle no debe mostrar los nombres de los productos; solo el botón.');
 afirmarDetalleCompra(strpos($vista, 'class="cant-pill"') === false, 'La celda Detalle no debe mostrar el badge de unidades.');
 afirmarDetalleCompra(strpos($vista, 'id="modalDetalleCompra"') !== false, 'Falta el modal #modalDetalleCompra.');
 afirmarDetalleCompra(strpos($vista, 'id="detalleCompraProveedor"') !== false, 'Falta el proveedor en la cabecera del modal.');

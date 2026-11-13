@@ -25,7 +25,8 @@ afirmarTablaCompras(strpos($tabla, 'value="Parcial"') === false, 'El filtro de p
 afirmarTablaCompras(strpos($tabla, 'class="factura-texto text-truncate"') !== false, 'La factura debe ser texto limpio truncable.');
 afirmarTablaCompras(strpos($tabla, 'class="codigo-badge" data-tooltip=') === false, 'La factura no debe usar el badge blanco.');
 afirmarTablaCompras(strpos($tabla, 'class="proveedor-nombre text-truncate" data-tooltip=') !== false, 'El proveedor debe truncarse y conservar acceso al nombre completo.');
-afirmarTablaCompras(strpos($tabla, 'class="detalle-nombres text-truncate" data-tooltip=') !== false, 'El detalle debe truncarse y conservar acceso a la lista completa.');
+afirmarTablaCompras(strpos($tabla, 'class="detalle-nombres') === false, 'La columna Detalle no debe mostrar los nombres: solo el botón.');
+afirmarTablaCompras(strpos($tabla, 'btn-detalle-compra flex-shrink-0" data-id-compra=') !== false && strpos($tabla, 'data-tooltip="') !== false, 'El botón Ver Detalle debe conservar el acceso a la lista de productos.');
 afirmarTablaCompras(preg_match_all('/<th\b/', $tabla) === 7, 'La tabla debe conservar sus siete columnas.');
 foreach (['col-factura', 'col-proveedor', 'col-detalle', 'col-total', 'col-pago', 'col-fecha', 'col-acciones'] as $columna) {
     afirmarTablaCompras(strpos($tabla, 'class="' . $columna . '"') !== false, 'Falta la columna ' . $columna . '.');
