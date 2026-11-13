@@ -1130,15 +1130,51 @@ if (!empty($tasa_bcv_fecha)) {
                                 <input type="hidden" name="id_proveedor" id="cat_id_prov">
                             </div>
                             <div class="col-12">
-                                <label class="comp-label" for="cat_producto">Producto <span class="text-danger">*</span></label>
+                                <div class="cat-producto-cabecera">
+                                    <label class="comp-label mb-0" for="cat_producto">Producto <span class="text-danger">*</span></label>
+                                    <button type="button" class="btn-cat-nuevo" id="btnCatProductoNuevo" aria-pressed="false" aria-controls="catPanelProductoNuevo"<?php echo empty($categorias_activas) ? ' disabled' : ''; ?>>
+                                        <i class="bi bi-plus-lg"></i> Producto nuevo
+                                    </button>
+                                </div>
                                 <select name="id_producto" id="cat_producto" class="input-jv comp-input" required>
                                     <option value="">&mdash; Selecciona un producto &mdash;</option>
                                     <?php foreach ($productos_activos as $prod_activo): ?>
                                         <option value="<?php echo (int)$prod_activo['id_producto']; ?>">
-                                            <?php echo htmlspecialchars($prod_activo['nombre_producto'] . ' (' . $prod_activo['sku'] . ')'); ?>
+                                            <?php echo htmlspecialchars($prod_activo['nombre_producto'] . ' (' . $prod_activo['sku'] . ')'); ?><?php echo ($prod_activo['status'] ?? 'Activo') === 'Activo' ? '' : ' &middot; Inactivo'; ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                                <?php if (empty($categorias_activas)): ?>
+                                    <div class="jv-modal-hint"><i class="bi bi-exclamation-triangle"></i>No hay categor&iacute;as activas. Crea una en Inventario para dar de alta productos.</div>
+                                <?php endif; ?>
+                                <div id="catPanelProductoNuevo" class="cat-panel-nuevo d-none">
+                                    <div class="row g-3">
+                                        <div class="col-md-7">
+                                            <label class="comp-label" for="cat_nombre">Nombre <span class="text-danger">*</span></label>
+                                            <input type="text" name="nombre_producto" id="cat_nombre" class="input-jv comp-input" maxlength="150" placeholder="Ej: Bater&iacute;a 12V 75Ah">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="comp-label" for="cat_sku">SKU <span class="text-danger">*</span></label>
+                                            <input type="text" name="sku" id="cat_sku" class="input-jv comp-input text-uppercase" maxlength="50" placeholder="Ej: BAT-012">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="comp-label" for="cat_categoria">Categor&iacute;a <span class="text-danger">*</span></label>
+                                            <select name="id_categoria" id="cat_categoria" class="input-jv comp-input">
+                                                <option value="">&mdash; Selecciona una categor&iacute;a &mdash;</option>
+                                                <?php foreach ($categorias_activas as $cat_activa): ?>
+                                                    <option value="<?php echo (int)$cat_activa['id_categoria']; ?>">
+                                                        <?php echo htmlspecialchars(str_repeat('— ', (int)($cat_activa['nivel'] ?? 0)) . $cat_activa['nombre']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="comp-label" for="cat_precio_venta">Precio de venta ($) <span class="text-danger">*</span></label>
+                                            <input type="text" name="precio_venta" id="cat_precio_venta" class="input-jv comp-input" placeholder="0.00" maxlength="12" inputmode="decimal">
+                                        </div>
+                                    </div>
+                                    <div class="jv-modal-hint mt-2"><i class="bi bi-info-circle"></i>El producto nace sin stock f&iacute;sico: entra al recibir la compra.</div>
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="comp-label" for="cat_costo">Costo de Compra ($) <span class="text-danger">*</span></label>

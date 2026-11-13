@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Compras / Alta de producto (2026-11-13): el POP-UP 3 permite crear un producto inexistente («Producto nuevo») con nombre, SKU, categoría y precio de venta; el servidor lo inserta con stock 0 y el costo del catálogo en la misma transacción que catalogo_costos. El select lista también inactivos marcados «· Inactivo» para reasociarlos. No hay otro alta de productos en la app.
+
 - Compras / Tabla principal (2026-11-13): la columna Detalle solo muestra el botón «Ver Detalle», centrado; los nombres de productos viven en el `data-tooltip` del botón y el `aria-label` conserva el número de factura. No reintroducir el span `detalle-nombres`; los pilotos `compras_detalle` y `compras_tabla_principal` lo prohíben.
 
 - Compras / Catálogo y resumen (2026-11-13): el POP-UP 3 usa `sec-catalogo` verde, subtítulo blanco (tenía `color:#065f46` inline y era ilegible), diálogo de 640 px, etiquetas cortas sin salto y proveedor como franja fija con icono (se conserva `#cat_proveedor_nombre` porque compras.js escribe ahí). En el resumen del carrito el IVA se oculta con `d-none` solo visual: se sigue calculando, sumando al total y `#totalIva` se mantiene; el IVA del detalle de factura no cambia.

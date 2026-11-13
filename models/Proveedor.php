@@ -218,29 +218,41 @@ class Proveedor extends Model
     }
 
     /**
-     * Productos activos disponibles para asociar al catálogo.
+     * Productos disponibles para asociar al catálogo del proveedor.
      *
-     * @return array Lista [id_producto, sku, nombre_producto].
+     * Incluye los inactivos (la vista los marca) para poder reasociarlos y
+     * reponerlos con una compra; los activos se listan primero.
+     *
+     * @return array Lista [id_producto, sku, nombre_producto, status].
      */
     public function productosActivos(): array
     {
         return $this->db->fetchAll(
-            "SELECT id_producto, sku, nombre_producto FROM productos WHERE status = 'Activo' ORDER BY nombre_producto ASC"
+            "SELECT id_producto, sku, nombre_producto, status
+             FROM productos
+             ORDER BY (status = 'Activo') DESC, nombre_producto ASC"
         );
     }
 
     /**
      * Registra o edita una entrada del catálogo de costos.
      *
+     * Con la acción "registrar_con_producto" da de alta el producto y su
+     * entrada de catálogo en una sola transacción (o no guarda nada).
      * Valida proveedor y producto existentes/activos, costo, existencias,
      * código interno y asociaciones usadas por compras aún no recibidas.
      *
-     * @param array $datos ['accion', 'id_catalogo', 'id_proveedor', 'id_producto', 'costo', 'stock_disponible', 'codigo_proveedor'].
+     * @param array $datos ['accion', 'id_catalogo', 'id_proveedor', 'id_producto', 'costo', 'stock_disponible', 'codigo_proveedor', 'nombre_producto', 'sku', 'id_categoria', 'precio_venta'].
      * @return array ['ok'=>bool, 'mensaje'=>string].
      */
     public function procesarCatalogo(array $datos): array
     {
-        $accion = ($datos['accion'] ?? '') === 'editar' ? 'editar' : 'registrar';
+        $accion = (string)($datos['accion'] ?? '');
+        if (!in_array($accion, ['registrar', 'editar', 'registrar_con_producto'], true)) {
+            $accion = 'registrar';
+        }
+        $es_edicion = $accion === 'editar';
+        $es_alta_producto = $accion === 'registrar_con_producto';
         $id_catalogo = (int)($datos['id_catalogo'] ?? 0);
         $id_proveedor = (int)($datos['id_proveedor'] ?? 0);
         $id_producto = (int)($datos['id_producto'] ?? 0);
@@ -263,18 +275,44 @@ class Proveedor extends Model
         if (!$this->db->fetchOne("SELECT id_proveedor FROM proveedores WHERE id_proveedor = ? AND status = 'Activo'", [$id_proveedor])) {
             return ['ok' => false, 'mensaje' => 'PROVEEDOR INVÁLIDO O INACTIVO.'];
         }
-        if (!$this->db->fetchOne("SELECT id_producto FROM productos WHERE id_producto = ? AND status = 'Activo'", [$id_producto])) {
+        // Alta conjunta: valida el producto nuevo antes de abrir la transacción.
+        $nuevo_producto = null;
+        if ($es_alta_producto) {
+            $nombre = trim((string)($datos['nombre_producto'] ?? ''));
+            $sku = strtoupper(trim((string)($datos['sku'] ?? '')));
+            $id_categoria = (int)($datos['id_categoria'] ?? 0);
+            $precio_venta_raw = str_replace(',', '', trim((string)($datos['precio_venta'] ?? '')));
+            if ($nombre === '' || mb_strlen($nombre) > 150) {
+                return ['ok' => false, 'mensaje' => 'EL NOMBRE DEL PRODUCTO ES OBLIGATORIO (MÁXIMO 150 CARACTERES).'];
+            }
+            if (!preg_match('/^[A-Z0-9][A-Z0-9._-]{0,49}$/D', $sku)) {
+                return ['ok' => false, 'mensaje' => 'SKU INVÁLIDO. USE LETRAS, NÚMEROS, PUNTO, GUION O GUION BAJO (MÁXIMO 50).'];
+            }
+            if (!preg_match('/^(?:0|[1-9]\d{0,4})(\.\d{1,2})?$/', $precio_venta_raw) || (float)$precio_venta_raw < 0.01 || (float)$precio_venta_raw > 99999.99) {
+                return ['ok' => false, 'mensaje' => 'PRECIO DE VENTA INVÁLIDO. DEBE ESTAR ENTRE 0,01 Y 99.999,99.'];
+            }
+            if (!$this->db->fetchOne("SELECT id_categoria FROM categorias WHERE id_categoria = ? AND status = 'Activo'", [$id_categoria])) {
+                return ['ok' => false, 'mensaje' => 'SELECCIONA UNA CATEGORÍA ACTIVA PARA EL PRODUCTO NUEVO.'];
+            }
+            $nuevo_producto = [
+                'nombre'        => $nombre,
+                'sku'           => $sku,
+                'id_categoria'  => $id_categoria,
+                'precio_venta'  => round((float)$precio_venta_raw, 2),
+                'precio_costo'  => $costo,
+            ];
+        } elseif (!$this->db->fetchOne("SELECT id_producto FROM productos WHERE id_producto = ? AND status = 'Activo'", [$id_producto])) {
             return ['ok' => false, 'mensaje' => 'PRODUCTO INVÁLIDO O INACTIVO.'];
         }
 
-        if ($accion === 'editar' && $id_catalogo <= 0) {
+        if ($es_edicion && $id_catalogo <= 0) {
             return ['ok' => false, 'mensaje' => 'ENTRADA DE CATÁLOGO INVÁLIDA.'];
         }
 
         try {
             $this->db->begin();
             $catalogo_original = null;
-            if ($accion === 'editar') {
+            if ($es_edicion) {
                 $catalogo_original = $this->db->fetchOne(
                     'SELECT id_catalogo, id_proveedor, id_producto FROM catalogo_costos WHERE id_catalogo = ? FOR UPDATE',
                     [$id_catalogo]
@@ -293,15 +331,37 @@ class Proveedor extends Model
             }
 
             $duplicado = $this->db->fetchOne(
-                "SELECT id_catalogo FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?" . ($accion === 'editar' ? " AND id_catalogo != ?" : ""),
-                $accion === 'editar' ? [$id_proveedor, $id_producto, $id_catalogo] : [$id_proveedor, $id_producto]
+                "SELECT id_catalogo FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?" . ($es_edicion ? " AND id_catalogo != ?" : ""),
+                $es_edicion ? [$id_proveedor, $id_producto, $id_catalogo] : [$id_proveedor, $id_producto]
             );
             if ($duplicado) {
                 $this->db->rollback();
                 return ['ok' => false, 'mensaje' => 'ESE PRODUCTO YA ESTÁ EN EL CATÁLOGO DE ESTE PROVEEDOR. EDÍTALO SI DESEAS CAMBIAR SU COSTO.'];
             }
 
-            if ($accion === 'registrar') {
+            // Alta conjunta: el producto nace sin stock físico (entra con la
+            // recepción de la compra) y sin vencimiento propio (vive en lotes).
+            if ($nuevo_producto !== null) {
+                if ($this->db->fetchOne('SELECT id_producto FROM productos WHERE sku = ?', [$nuevo_producto['sku']])) {
+                    $this->db->rollback();
+                    return ['ok' => false, 'mensaje' => 'EL SKU YA EXISTE EN EL INVENTARIO. USA OTRO.'];
+                }
+                $id_producto = $this->db->insert('productos', [
+                    'sku'                => $nuevo_producto['sku'],
+                    'nombre_producto'    => $nuevo_producto['nombre'],
+                    'precio_venta'       => $nuevo_producto['precio_venta'],
+                    'precio_costo'       => $nuevo_producto['precio_costo'],
+                    'stock_actual'       => 0,
+                    'id_categoria'       => $nuevo_producto['id_categoria'],
+                    'id_proveedor'       => $id_proveedor,
+                    'status'             => 'Activo',
+                    'requiere_vencimiento' => 0,
+                    'fecha_vencimiento'  => null,
+                ]);
+                registrarAuditoria('crear', 'Producto creado desde el catálogo de costos: ' . $nuevo_producto['nombre'] . ' (' . $nuevo_producto['sku'] . ')');
+            }
+
+            if (!$es_edicion) {
                 $this->db->insert('catalogo_costos', [
                     'id_proveedor' => $id_proveedor,
                     'id_producto' => $id_producto,
@@ -320,7 +380,12 @@ class Proveedor extends Model
                 registrarAuditoria('editar', 'Entrada de catálogo de costos modificada');
             }
             $this->db->commit();
-            return ['ok' => true, 'mensaje' => 'CATÁLOGO ACTUALIZADO CORRECTAMENTE.'];
+            return [
+                'ok' => true,
+                'mensaje' => $es_alta_producto
+                    ? 'PRODUCTO CREADO Y AGREGADO AL CATÁLOGO DEL PROVEEDOR.'
+                    : 'CATÁLOGO ACTUALIZADO CORRECTAMENTE.',
+            ];
         } catch (Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollback();

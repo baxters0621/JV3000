@@ -50,5 +50,10 @@ afirmarCatalogoCompras(strpos($modelo, 'DateTimeImmutable::createFromFormat') !=
 afirmarCatalogoCompras(strpos($modelo, "\$fecha_compra = date('Y-m-d H:i:s');") === false, 'El modelo sigue sustituyendo la fecha seleccionada por la fecha actual.');
 afirmarCatalogoCompras(strpos($esquema, '`stock_disponible` int(10) unsigned NOT NULL DEFAULT 0') !== false, 'El esquema no incluye el disponible del proveedor con valor inicial cero.');
 afirmarCatalogoCompras(strpos($esquema, '`stock_proveedor_reservado` tinyint(1) NOT NULL DEFAULT 0') !== false, 'El esquema no protege compras existentes contra devoluciones de stock no reservado.');
+afirmarCatalogoCompras(strpos($modeloProveedor, "'registrar_con_producto'") !== false, 'El catálogo no permite dar de alta un producto nuevo.');
+afirmarCatalogoCompras(strpos($vista, 'id="btnCatProductoNuevo"') !== false, 'Falta el botón para crear un producto desde el catálogo.');
+afirmarCatalogoCompras(strpos($vista, 'id="catPanelProductoNuevo"') !== false, 'Falta el panel de alta rápida de producto.');
+afirmarCatalogoCompras(strpos($javascript, 'alternarProductoNuevo') !== false, 'El JS no alterna el modo producto nuevo.');
+afirmarCatalogoCompras(strpos($modeloProveedor, "ORDER BY (status = 'Activo') DESC") !== false, 'El selector debe listar primero los productos activos y luego los inactivos.');
 
 echo "OK selector de Compras con catálogo del proveedor y estados para reponer\n";

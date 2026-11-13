@@ -978,6 +978,37 @@
             inputElement.value = valueParts.join('.');
         }
 
+        // Alterna el POP-UP 3 entre asociar un producto existente y crear uno
+        // nuevo junto con su entrada de catálogo. En edición queda desactivado.
+        function alternarProductoNuevo(activar) {
+            const panel = document.getElementById('catPanelProductoNuevo');
+            const select = document.getElementById('cat_producto');
+            const boton = document.getElementById('btnCatProductoNuevo');
+            const accion = document.getElementById('cat_accion');
+            if (!panel || !select || !boton) return;
+            const esEdicion = Boolean(accion) && accion.value === 'editar';
+            const modoNuevo = Boolean(activar) && !esEdicion;
+            panel.classList.toggle('d-none', !modoNuevo);
+            select.classList.toggle('d-none', modoNuevo);
+            select.required = !modoNuevo;
+            ['cat_nombre', 'cat_sku', 'cat_categoria', 'cat_precio_venta'].forEach(function(id) {
+                const campo = document.getElementById(id);
+                if (campo) campo.required = modoNuevo;
+            });
+            if (accion && !esEdicion) {
+                accion.value = modoNuevo ? 'registrar_con_producto' : 'registrar';
+            }
+            boton.classList.toggle('activo', modoNuevo);
+            boton.setAttribute('aria-pressed', modoNuevo ? 'true' : 'false');
+            boton.innerHTML = modoNuevo
+                ? '<i class="bi bi-arrow-left"></i> Usar uno existente'
+                : '<i class="bi bi-plus-lg"></i> Producto nuevo';
+            if (modoNuevo) {
+                const nombre = document.getElementById('cat_nombre');
+                if (nombre) nombre.focus();
+            }
+        }
+
         // Abre el pop-up de catálogo en modo registro para el proveedor indicado.
         function provAgregarCat(idProveedor, nombreProveedor) {
             document.getElementById('cat_accion').value = 'registrar';
@@ -990,6 +1021,13 @@
             document.getElementById('cat_costo').value = '';
             document.getElementById('cat_stock_disponible').value = '0';
             document.getElementById('cat_codigo_prov').value = '';
+            document.getElementById('cat_nombre').value = '';
+            document.getElementById('cat_sku').value = '';
+            document.getElementById('cat_categoria').value = '';
+            document.getElementById('cat_precio_venta').value = '';
+            const btnNuevo = document.getElementById('btnCatProductoNuevo');
+            if (btnNuevo) btnNuevo.classList.remove('d-none');
+            alternarProductoNuevo(false);
             const btnCat = document.getElementById('btn-cat-submit');
             btnCat.disabled = false;
             btnCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR EN CAT\u00c1LOGO';
@@ -1014,6 +1052,9 @@
             provFormatMoney(document.getElementById('cat_costo'));
             document.getElementById('cat_stock_disponible').value = String(entradaData.stock_disponible || 0);
             document.getElementById('cat_codigo_prov').value = entradaData.codigo_proveedor || '';
+            const btnNuevoEdicion = document.getElementById('btnCatProductoNuevo');
+            if (btnNuevoEdicion) btnNuevoEdicion.classList.add('d-none');
+            alternarProductoNuevo(false);
             const btnCat = document.getElementById('btn-cat-submit');
             btnCat.disabled = false;
             btnCat.innerHTML = '<i class="bi bi-check-lg me-2"></i>GUARDAR EN CAT\u00c1LOGO';
@@ -1375,17 +1416,66 @@
                 });
             }
 
+            // Alterna la creación de un producto nuevo desde el POP-UP 3.
+            const btnProductoNuevo = document.getElementById('btnCatProductoNuevo');
+            if (btnProductoNuevo) {
+                btnProductoNuevo.addEventListener('click', function() {
+                    const panel = document.getElementById('catPanelProductoNuevo');
+                    alternarProductoNuevo(panel ? panel.classList.contains('d-none') : false);
+                });
+            }
+            const skuNuevo = document.getElementById('cat_sku');
+            if (skuNuevo) {
+                skuNuevo.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+
             // Validación del formulario de catálogo (anti-doble-click incluido)
             const formCat = document.getElementById('formCatalogo');
             if (formCat) {
                 formCat.addEventListener('submit', function(e) {
                     limpiarErrores();
-                    const prodSel = document.getElementById('cat_producto');
-                    if (!prodSel.value) {
-                        marcarError(prodSel, 'SELECCIONA UN PRODUCTO');
-                        e.preventDefault();
-                        prodSel.focus();
-                        return;
+                    const panelNuevo = document.getElementById('catPanelProductoNuevo');
+                    const modoNuevo = Boolean(panelNuevo) && !panelNuevo.classList.contains('d-none');
+                    if (modoNuevo) {
+                        const nombre = document.getElementById('cat_nombre');
+                        if (!nombre.value.trim()) {
+                            marcarError(nombre, 'ESCRIBE EL NOMBRE DEL PRODUCTO');
+                            e.preventDefault();
+                            nombre.focus();
+                            return;
+                        }
+                        const sku = document.getElementById('cat_sku');
+                        if (!/^[A-Z0-9][A-Z0-9._-]{0,49}$/.test(sku.value.trim())) {
+                            marcarError(sku, 'SKU INVÁLIDO (LETRAS, NÚMEROS, PUNTO O GUION)');
+                            e.preventDefault();
+                            sku.focus();
+                            return;
+                        }
+                        const categoria = document.getElementById('cat_categoria');
+                        if (!categoria.value) {
+                            marcarError(categoria, 'SELECCIONA UNA CATEGORÍA');
+                            e.preventDefault();
+                            categoria.focus();
+                            return;
+                        }
+                        const precio = document.getElementById('cat_precio_venta');
+                        const precioRaw = precio.value.trim().replace(/,/g, '');
+                        if (!/^\d{1,5}(\.\d{1,2})?$/.test(precioRaw) || !(parseFloat(precioRaw) > 0) || parseFloat(precioRaw) > 99999.99) {
+                            marcarError(precio, 'PRECIO DE VENTA INVÁLIDO (0,01 A 99.999,99)');
+                            e.preventDefault();
+                            precio.focus();
+                            return;
+                        }
+                    } else {
+                        const prodSel = document.getElementById('cat_producto');
+                        if (!prodSel.value) {
+                            marcarError(prodSel, 'SELECCIONA UN PRODUCTO');
+                            e.preventDefault();
+                            prodSel.focus();
+                            return;
+                        }
                     }
                     const costoRaw = document.getElementById('cat_costo').value.replace(/,/g, '');
                     if (!(parseFloat(costoRaw) > 0)) {

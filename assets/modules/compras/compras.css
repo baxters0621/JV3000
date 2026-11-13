@@ -2309,3 +2309,42 @@
 }
 
 
+
+/* Alta rápida de producto: cabecera, botón de modo y panel de campos. */
+.pagina-compras #modalCatalogo .cat-producto-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 7px;
+}
+.pagina-compras #modalCatalogo .btn-cat-nuevo {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 999px;
+    background: #f0fdf4;
+    color: #047857;
+    font-size: .78rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.pagina-compras #modalCatalogo .btn-cat-nuevo:hover,
+.pagina-compras #modalCatalogo .btn-cat-nuevo.activo {
+    background: #047857;
+    border-color: #047857;
+    color: #fff;
+}
+.pagina-compras #modalCatalogo .btn-cat-nuevo:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+.pagina-compras #modalCatalogo .cat-panel-nuevo {
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px dashed #a7f3d0;
+    border-radius: 12px;
+    background: #f8fdfa;
+}

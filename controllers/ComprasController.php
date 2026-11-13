@@ -95,6 +95,10 @@ class ComprasController extends Controller
                     'costo'            => $_POST['costo'] ?? '',
                     'stock_disponible' => $_POST['stock_disponible'] ?? '',
                     'codigo_proveedor' => $_POST['codigo_proveedor'] ?? '',
+                    'nombre_producto'  => $_POST['nombre_producto'] ?? '',
+                    'sku'              => $_POST['sku'] ?? '',
+                    'id_categoria'     => (int)($_POST['id_categoria'] ?? 0),
+                    'precio_venta'     => $_POST['precio_venta'] ?? '',
                 ]);
                 $this->flash($resultado['ok'] ? 'success' : 'danger', $resultado['mensaje']);
                 $this->redirect('compras');
@@ -309,6 +313,10 @@ class ComprasController extends Controller
             'prov_activos'        => $provModelo->totalActivos(),
             'prov_catalogo'       => $provModelo->catalogoPorProveedor(),
             'productos_activos'   => $provModelo->productosActivos(),
+            'categorias_activas'  => array_values(array_filter(
+                (new Categoria())->listar(),
+                static fn(array $categoria): bool => ($categoria['status'] ?? '') === 'Activo'
+            )),
             'compras_pendientes'  => $rec_datos['compras_pendientes'],
             'unidades_por_recibir' => $rec_datos['unidades_por_recibir'],
             'recepciones'         => $rec_datos['recepciones'],
