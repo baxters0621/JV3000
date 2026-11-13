@@ -455,7 +455,7 @@ INSERT INTO `configuracion` (`clave`, `valor`, `descripcion`) VALUES
 ('empresa_nombre', 'JV3000 C.A.', 'Nombre de la empresa'),
 ('empresa_rif', 'J-50287309-0', 'RIF de la empresa'),
 ('empresa_telefono', '+58 0414-4014690', 'Teléfono de la empresa'),
-('empresa_direccion', 'Naguanagua, Edo. Carabobo', 'Dirección de la empresa'),
+('empresa_direccion', 'Valencia, Edo. Carabobo', 'Dirección de la empresa'),
 ('empresa_email', 'jv3000ca@gmail.com', 'Correo de la empresa'),
 ('documentos_normalizados', '1', 'Migración de formato de documento fiscal aplicada'),
 ('pin_emergencia_global', '', 'PIN único de emergencia para Operadores de Carga y Ventas');

@@ -383,7 +383,7 @@ class NotaEntrega extends Model
         $empresa = getConfig('empresa_nombre', 'JV3000');
         $rif_emp = getConfig('empresa_rif', 'J-00000000-0');
         $tel_emp = getConfig('empresa_telefono', '');
-        $dir_emp = getConfig('empresa_direccion', 'Naguanagua, Edo. Carabobo');
+        $dir_emp = getConfig('empresa_direccion', 'Valencia, Edo. Carabobo');
         $email_emp = getConfig('empresa_email', '');
 
         $direccion_cliente = $this->obtenerDireccionCliente(
