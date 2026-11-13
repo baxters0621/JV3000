@@ -576,7 +576,8 @@ if (!empty($tasa_bcv_fecha)) {
                                     <span class="comp-summary-label">Subtotal</span>
                                     <span class="comp-summary-value" id="totalSubtotal">Bs. 0.00</span>
                                 </div>
-                                <div class="comp-summary-item text-end">
+                                <!-- IVA oculto solo visualmente: compras.js sigue calculándolo y sumándolo al total. -->
+                                <div class="comp-summary-item text-end d-none">
                                     <span class="comp-summary-label">IVA (<?php echo $iva_pct; ?>%)</span>
                                     <span class="comp-summary-value" id="totalIva">Bs. 0.00</span>
                                 </div>
@@ -1106,28 +1107,31 @@ if (!empty($tasa_bcv_fecha)) {
                 <div class="modal-body p-4">
                     <div class="modal-header-jv">
                         <div>
-                            <h5 class="font-brand" style="font-size:1.1rem;"><i class="bi bi-box-seam me-2"></i><span id="catTitulo">AGREGAR PRODUCTO</span></h5>
-                            <small id="catSubtitulo" style="color:#065f46;"></small>
+                            <h5 class="font-brand"><i class="bi bi-box-seam me-2"></i><span id="catTitulo">AGREGAR PRODUCTO</span></h5>
+                            <small id="catSubtitulo">Asocia un producto a este proveedor con su costo de compra.</small>
                         </div>
                         <button type="button" class="prov-close-btn" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                     </div>
 
-                    <div class="comp-section sec-comercial mb-4">
+                    <div class="comp-section sec-catalogo mb-4">
                         <div class="comp-section-header">
-                            <span class="comp-section-chip chip-comercial"><i class="bi bi-tag"></i></span>
+                            <span class="comp-section-chip chip-catalogo"><i class="bi bi-tags"></i></span>
                             <div>
                                 <div class="comp-section-title">Datos del Producto</div>
-                                <div class="comp-section-sub">Costo con el que este proveedor te lo vende</div>
+                                <div class="comp-section-sub">Costo y disponibilidad con este proveedor</div>
                             </div>
                         </div>
                         <div class="row g-3 mb-0">
                             <div class="col-12">
-                                <label class="comp-label">Proveedor</label>
-                                <input type="text" id="cat_proveedor_nombre" class="input-jv comp-input" readonly style="background:rgba(15,26,46,0.04);">
+                                <label class="comp-label" for="cat_proveedor_nombre">Proveedor</label>
+                                <div class="cat-proveedor-fijo">
+                                    <i class="bi bi-building"></i>
+                                    <input type="text" id="cat_proveedor_nombre" class="input-jv comp-input" readonly tabindex="-1">
+                                </div>
                                 <input type="hidden" name="id_proveedor" id="cat_id_prov">
                             </div>
                             <div class="col-12">
-                                <label class="comp-label">Producto <span class="text-danger">*</span></label>
+                                <label class="comp-label" for="cat_producto">Producto <span class="text-danger">*</span></label>
                                 <select name="id_producto" id="cat_producto" class="input-jv comp-input" required>
                                     <option value="">&mdash; Selecciona un producto &mdash;</option>
                                     <?php foreach ($productos_activos as $prod_activo): ?>
@@ -1138,16 +1142,18 @@ if (!empty($tasa_bcv_fecha)) {
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="comp-label">Costo de Compra ($) <span class="text-danger">*</span></label>
+                                <label class="comp-label" for="cat_costo">Costo de Compra ($) <span class="text-danger">*</span></label>
                                 <input type="text" name="costo" id="cat_costo" class="input-jv comp-input" required placeholder="0.00" maxlength="12" inputmode="decimal">
+                                <div class="jv-modal-hint"><i class="bi bi-info-circle"></i>Precio unitario sin IVA, en d&oacute;lares.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="comp-label">Disponible en el proveedor <span class="text-danger">*</span></label>
+                                <label class="comp-label" for="cat_stock_disponible">Disponible en proveedor <span class="text-danger">*</span></label>
                                 <input type="number" name="stock_disponible" id="cat_stock_disponible" class="input-jv comp-input" min="0" max="4294967295" step="1" value="0" required>
+                                <div class="jv-modal-hint"><i class="bi bi-info-circle"></i>Unidades que puede entregar hoy.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="comp-label">C&oacute;digo Interno del Proveedor</label>
-                                <input type="text" name="codigo_proveedor" id="cat_codigo_prov" class="input-jv comp-input" placeholder="Opcional" maxlength="50">
+                                <label class="comp-label" for="cat_codigo_prov">C&oacute;digo Interno <span class="comp-label-optional">(opcional)</span></label>
+                                <input type="text" name="codigo_proveedor" id="cat_codigo_prov" class="input-jv comp-input" placeholder="Ej: BAT-001" maxlength="50">
                             </div>
                         </div>
                     </div>
@@ -1155,6 +1161,7 @@ if (!empty($tasa_bcv_fecha)) {
                     <button type="submit" id="btn-cat-submit" class="btn btn-jv-primary w-100 py-3 fw-bolder text-uppercase">
                         <i class="bi bi-check-lg me-2"></i>GUARDAR EN CAT&Aacute;LOGO
                     </button>
+                </div>
             </form>
         </div>
     </div>

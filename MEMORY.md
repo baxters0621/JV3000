@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Compras / Catálogo y resumen (2026-11-13): el POP-UP 3 usa `sec-catalogo` verde, subtítulo blanco (tenía `color:#065f46` inline y era ilegible), diálogo de 640 px, etiquetas cortas sin salto y proveedor como franja fija con icono (se conserva `#cat_proveedor_nombre` porque compras.js escribe ahí). En el resumen del carrito el IVA se oculta con `d-none` solo visual: se sigue calculando, sumando al total y `#totalIva` se mantiene; el IVA del detalle de factura no cambia.
+
 - Sede (2026-11-13): la dirección de la empresa es «Valencia, Edo. Carabobo» en `configuracion.empresa_direccion`, en el seed y en los fallbacks del Reporte de Inventario y la Nota de Entrega; no quedan restos de «Naguanagua».
 
 - Alarma de stock / descarte (2026-11-13): «Ya no vender» confirma con Swal («¿YA NO VENDER?», SÍ, DESCARTAR / CANCELAR) en lugar de `window.confirm`; el flag `confirmandoDescarte` evita que el cierre de la alarma dispare la redirección de la Nota de Entrega y después se reabre con los productos restantes o el error en la fila.

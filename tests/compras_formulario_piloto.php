@@ -39,6 +39,9 @@ foreach (['col-md-4 comp-add-product', 'col-md-1 comp-add-field', 'col-md-3 comp
 }
 afirmarComprasFormulario(strpos($vista, 'class="comp-add-btn"') !== false && strpos($estilos, 'width: 100%;' . "\n            height: 52px;") !== false, 'El botón de agregar debe ocupar su columna y medir lo mismo que los controles.');
 afirmarComprasFormulario(strpos($vista, 'comp-summary-item text-end') !== false && strpos($vista, 'comp-total-big fs-5') !== false, 'El resumen debe estar alineado a la derecha y destacar el total.');
+$iva_oculto = strpos($vista, 'comp-summary-item text-end d-none');
+$iva_nodo = strpos($vista, 'id="totalIva"');
+afirmarComprasFormulario($iva_oculto !== false && $iva_nodo !== false && $iva_nodo > $iva_oculto && ($iva_nodo - $iva_oculto) < 260, 'El IVA del resumen debe ocultarse solo visualmente y conservar #totalIva para el cálculo.');
 afirmarComprasFormulario(strpos($estilos, 'padding: 12px 16px !important;') !== false && strpos($estilos, 'padding: 1rem 16px !important;') !== false, 'El carrito debe conservar el espaciado solicitado y el estado vacío compacto.');
 
 echo "OK formulario de compras separado del pago y recuperación automática verificada\n";

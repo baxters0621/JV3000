@@ -2266,3 +2266,80 @@
     border-radius: 8px;
 }
 
+/* ============================================================
+   POP-UP 3 · CATÁLOGO DE COSTOS
+   El subtítulo va en blanco (antes tenía un verde oscuro inline que
+   lo hacía invisible), las etiquetas y los campos suben de contraste
+   y la sección usa el verde del módulo en lugar del naranja comercial.
+   ============================================================ */
+.pagina-compras #modalCatalogo .modal-dialog { max-width: 640px; }
+
+.pagina-compras #modalCatalogo .modal-header-jv {
+    padding: 20px 24px;
+    margin: 0 0 1rem;
+    align-items: center;
+}
+.pagina-compras #modalCatalogo .modal-header-jv h5 { font-size: 1.25rem; }
+.pagina-compras #modalCatalogo .modal-header-jv small {
+    margin-top: 4px;
+    font-size: .85rem;
+    color: rgba(255, 255, 255, .92);
+}
+
+.pagina-compras #modalCatalogo .comp-section {
+    background: #fff;
+    border-color: #dbe3ec;
+    padding: 18px;
+}
+.pagina-compras #modalCatalogo .comp-section.sec-catalogo { border-left: 4px solid #047857; }
+.pagina-compras #modalCatalogo .comp-section-chip.chip-catalogo { background: #047857; }
+.pagina-compras #modalCatalogo .comp-section-title { font-size: .95rem; }
+.pagina-compras #modalCatalogo .comp-section-sub { font-size: .8rem; color: #475569; }
+
+.pagina-compras #modalCatalogo .comp-label {
+    font-size: .78rem;
+    letter-spacing: .5px;
+    color: #334155;
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+.pagina-compras #modalCatalogo .comp-label-optional {
+    font-size: .72rem;
+    letter-spacing: 0;
+    color: #64748b;
+}
+.pagina-compras #modalCatalogo .jv-modal-hint {
+    margin-top: 5px;
+    font-size: .78rem;
+    color: #64748b;
+}
+
+/* Campos con borde visible aunque el fondo de la tarjeta sea blanco. */
+.pagina-compras #modalCatalogo .input-jv {
+    border: 1.5px solid #cbd5e1;
+    background: #fff;
+    color: #0f172a;
+}
+.pagina-compras #modalCatalogo .input-jv:hover { border-color: #94a3b8; }
+.pagina-compras #modalCatalogo .input-jv::placeholder { opacity: 1; color: #64748b; }
+
+/* Proveedor: dato de contexto fijo, con icono, no un campo editable. */
+.pagina-compras #modalCatalogo .cat-proveedor-fijo { position: relative; }
+.pagina-compras #modalCatalogo .cat-proveedor-fijo > .bi {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    transform: translateY(-50%);
+    color: #047857;
+    font-size: .95rem;
+    pointer-events: none;
+}
+.pagina-compras #modalCatalogo .cat-proveedor-fijo .input-jv {
+    padding-left: 38px;
+    background: #f0fdf4;
+    border-color: #a7f3d0;
+    color: #064e3b;
+    font-weight: 700;
+}
+
+
