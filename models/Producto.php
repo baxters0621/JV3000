@@ -171,7 +171,9 @@ class Producto extends Model
      *
      * Se invoca tras una recepción o al devolver stock por anulación. Respeta
      * los descartes manuales y no reactiva productos vencidos ni con
-     * categoría/proveedor inactivos.
+     * categoría inactiva. El estado del proveedor ya no influye: si el
+     * proveedor se inactivó pero queda mercancía vendible, el producto debe
+     * volver a estar disponible.
      *
      * @param int $idProducto Identificador del producto.
      * @return void
@@ -191,11 +193,9 @@ class Producto extends Model
                             AND l.fecha_vencimiento > '0000-00-00'),
                         NULLIF(p.fecha_vencimiento, '0000-00-00')
                     ) AS fecha_efectiva,
-                    c.status AS categoria_status,
-                    pr.status AS proveedor_status
+                    c.status AS categoria_status
              FROM productos p
              LEFT JOIN categorias c ON c.id_categoria = p.id_categoria
-             LEFT JOIN proveedores pr ON pr.id_proveedor = p.id_proveedor
              WHERE p.id_producto = ?",
             [$idProducto]
         );
@@ -206,9 +206,6 @@ class Producto extends Model
             return;
         }
         if (($fila['categoria_status'] ?? '') !== 'Activo') {
-            return;
-        }
-        if (!empty($fila['proveedor_status']) && $fila['proveedor_status'] !== 'Activo') {
             return;
         }
 
@@ -253,11 +250,14 @@ class Producto extends Model
             return ['ok' => false, 'mensaje' => 'EL PROVEEDOR ES OBLIGATORIO'];
         }
         $proveedor = $this->db->fetchOne(
-            "SELECT nombre_empresa FROM proveedores WHERE id_proveedor = ? AND status = 'Activo'",
+            "SELECT status FROM proveedores WHERE id_proveedor = ?",
             [$idProveedor]
         );
         if (!$proveedor) {
-            return ['ok' => false, 'mensaje' => 'EL PROVEEDOR SELECCIONADO NO EXISTE O ESTÁ INACTIVO.'];
+            return ['ok' => false, 'mensaje' => 'EL PROVEEDOR SELECCIONADO NO EXISTE.'];
+        }
+        if (($proveedor['status'] ?? '') !== 'Activo') {
+            return ['ok' => false, 'mensaje' => 'El proveedor de este producto está inactivo. Reactívalo para modificar los datos.'];
         }
         // Categoría: 0 (sin categoría) o una categoría existente y activa.
         $categoriaNueva = null;

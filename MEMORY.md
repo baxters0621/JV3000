@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Productos / Reactivación y proveedor inactivo (2026-11-13): al recibir, `reactivarPorStock()` ya no exige proveedor activo (solo stock > 0, no vencido, no descartado y categoría activa). Editar un producto cuyo proveedor está inactivo queda bloqueado con el aviso «El proveedor de este producto está inactivo. Reactívalo para modificar los datos.» (banner `#avisoProveedorInactivo` + validación en JS y servidor); se puede reasignar a un proveedor activo.
+
 - Compras / Alta de producto (2026-11-13): el POP-UP 3 permite crear un producto inexistente («Producto nuevo») con nombre, SKU, categoría y precio de venta; el servidor lo inserta con stock 0 y el costo del catálogo en la misma transacción que catalogo_costos. El select lista también inactivos marcados «· Inactivo» para reasociarlos. No hay otro alta de productos en la app.
 
 - Alarma de stock / En camino (2026-11-13): si el producto agotado ya tiene una compra pendiente de recepción, la alarma y la campanita muestran «En camino N» y el botón Recibir (compras&recepcion_compra=<id>); compras.js abre la recepción y limpia el parámetro. La alerta desaparece al confirmar la recepción, no al registrar la compra.

@@ -138,6 +138,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             var el = document.getElementById('modalEditar');
             if (el) modalEditar = new bootstrap.Modal(el);
+            var selectProveedorEdicion = document.getElementById('edit_proveedor');
+            if (selectProveedorEdicion) {
+                selectProveedorEdicion.addEventListener('change', actualizarAvisoProveedorInactivo);
+            }
         });
 
         // Convierte un precio local (1.000,00) a número para validarlo o enviarlo.
@@ -316,6 +320,11 @@
             }
             if (!proveedor.value || Number(proveedor.value) <= 0) {
                 marcar(proveedor, 'EL PROVEEDOR ES OBLIGATORIO');
+            } else {
+                const opcionProveedor = proveedor.options[proveedor.selectedIndex];
+                if (opcionProveedor && /\(inactivo\)\s*$/i.test(opcionProveedor.textContent || '')) {
+                    marcar(proveedor, 'El proveedor de este producto está inactivo. Reactívalo para modificar los datos.');
+                }
             }
             if (primerError) {
                 Swal.fire({
@@ -391,6 +400,18 @@
             return false;
         }
 
+        // Muestra el aviso solo cuando el proveedor elegido es el temporal
+        // "(inactivo)" que se agrega al abrir un producto cuyo proveedor ya
+        // no está activo. Al elegir otro proveedor activo, el aviso se oculta.
+        function actualizarAvisoProveedorInactivo() {
+            var aviso = document.getElementById('avisoProveedorInactivo');
+            var select = document.getElementById('edit_proveedor');
+            if (!aviso || !select) return;
+            var opcion = select.options[select.selectedIndex];
+            var inactivo = Boolean(opcion) && /\(inactivo\)\s*$/i.test(opcion.textContent || '');
+            aviso.classList.toggle('d-none', !inactivo);
+        }
+
         // Llena el modal de edición con los datos del producto de la fila seleccionada.
         function editarProducto(id) {
             limpiarErrores();
@@ -423,6 +444,7 @@
                 selectProveedor.appendChild(opcionProvActual);
             }
             selectProveedor.value = provId > 0 ? String(provId) : '';
+            actualizarAvisoProveedorInactivo();
             // Categoría actual del producto. Si está inactiva no figura entre
             // las opciones del select (que solo lista activas): se agrega
             // marcada como temporal para que no salte de rama en silencio.

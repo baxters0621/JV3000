@@ -32,6 +32,8 @@ $notaVista = file_get_contents($raiz . '/views/nota_entrega/nota.php');
 $dashboardJs = file_get_contents($raiz . '/assets/dashboard/index.js');
 $campanaVista = file_get_contents($raiz . '/views/dashboard/_campana_alertas.php');
 $comprasJs = file_get_contents($raiz . '/assets/modules/compras/compras.js');
+$productosVista = file_get_contents($raiz . '/views/productos/index.php');
+$productosJs = file_get_contents($raiz . '/assets/modules/productos/productos.js');
 
 // Modelo de producto
 $afirmar(str_contains($producto, 'function sincronizarEstadoPorStock'), 'Producto debe sincronizar estado por stock.');
@@ -42,6 +44,10 @@ $afirmar(str_contains($producto, 'desactivado_por_stock'), 'La desactivación au
 $afirmar(str_contains($producto, 'reactivado_por_stock'), 'La reactivación automática debe auditarse.');
 $afirmar(str_contains($producto, "status = 'Inactivo'"), 'El producto agotado debe quedar Inactivo.');
 $afirmar(str_contains($producto, "status = 'Activo'"), 'El producto con stock debe reactivarse.');
+$afirmar(!str_contains($producto, 'proveedor_status'), 'La reactivación no debe depender del estado del proveedor.');
+$afirmar(str_contains($producto, 'El proveedor de este producto está inactivo. Reactívalo para modificar los datos.'), 'La edición debe explicar que el proveedor está inactivo.');
+$afirmar(str_contains($productosVista, 'id="avisoProveedorInactivo"'), 'El modal de edición debe mostrar el aviso de proveedor inactivo.');
+$afirmar(str_contains($productosJs, 'function actualizarAvisoProveedorInactivo'), 'El JS debe alternar el aviso de proveedor inactivo.');
 
 // Ventas y recepción
 $afirmar(str_contains($salida, 'sincronizarEstadoPorStock'), 'La venta debe desactivar el producto agotado.');

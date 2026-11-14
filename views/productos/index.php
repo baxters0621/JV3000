@@ -669,6 +669,10 @@ foreach ($categorias as $raiz) {
                             </div>
                         </div>
 
+                        <div id="avisoProveedorInactivo" class="alert alert-warning d-none py-2 px-3 small mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle me-1"></i>El proveedor de este producto está inactivo. Reactívalo para modificar los datos.
+                        </div>
+
                         <div class="row g-3 mb-0">
                             <div class="col-md-6">
                                 <label class="small fw-bold text-secondary mb-1">ESTADO</label>
