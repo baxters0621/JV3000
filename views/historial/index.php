@@ -97,10 +97,10 @@
     <div class="table-responsive historial-tabla-scroll">
         <table class="historial-tabla">
             <colgroup>
-                <col style="width:14%;">
-                <col style="width:18%;">
+                <col style="width:13%;">
                 <col style="width:17%;">
-                <col style="width:14%;">
+                <col style="width:17%;">
+                <col style="width:16%;">
                 <col style="width:10%;">
                 <col style="width:17%;">
                 <col style="width:10%;">
@@ -113,7 +113,7 @@
                     <th scope="col">Registro</th>
                     <th scope="col">Estado</th>
                     <th scope="col" class="historial-th-total text-end">Total</th>
-                    <th class="historial-accion" scope="col">Acciones</th>
+                    <th class="historial-accion text-center" scope="col">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -133,7 +133,7 @@
                         $productos_texto = implode(', ', $productos_lista);
                     ?>
                     <tr class="historial-fila <?php echo $clase_tipo; ?>">
-                        <td class="historial-operacion-cell" data-label="Operación">
+                        <td class="historial-operacion-cell py-4 px-3" data-label="Operación">
                             <div class="d-flex flex-column gap-1">
                                 <span class="historial-tipo fw-bold">
                                     <i class="bi <?php echo $es_compra ? 'bi-box-arrow-in-down' : 'bi-bag-check'; ?>" aria-hidden="true"></i>
@@ -144,12 +144,12 @@
                                 </strong>
                             </div>
                         </td>
-                        <td class="historial-contraparte-cell" data-label="<?php echo $es_compra ? 'Proveedor' : 'Cliente'; ?>">
+                        <td class="historial-contraparte-cell py-4 px-3" data-label="<?php echo $es_compra ? 'Proveedor' : 'Cliente'; ?>">
                             <span class="historial-celda-principal historial-contraparte fw-bold" title="<?php echo htmlspecialchars((string)$operacion['contraparte'], ENT_QUOTES, 'UTF-8'); ?>">
                                 <?php echo htmlspecialchars((string)$operacion['contraparte'], ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </td>
-                        <td class="historial-productos-cell" data-label="Productos">
+                        <td class="historial-productos-cell py-4 px-3" data-label="Productos">
                             <div class="historial-productos-bloque">
                                 <ul class="historial-lista-productos" title="<?php echo htmlspecialchars($productos_texto, ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php foreach ($productos_lista as $producto): ?>
@@ -161,35 +161,35 @@
                                 </span>
                             </div>
                         </td>
-                        <td class="historial-registrado-cell" data-label="Registró">
+                        <td class="historial-registrado-cell py-4 px-3" data-label="Registró">
                             <div class="d-flex flex-column gap-1">
-                                <span class="historial-celda-principal historial-usuario fw-bold" title="<?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <span class="historial-celda-principal historial-usuario fw-bold text-nowrap" title="<?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php echo htmlspecialchars((string)$operacion['usuario'], ENT_QUOTES, 'UTF-8'); ?>
                                 </span>
-                                <time class="historial-fecha text-muted" datetime="<?php echo $fecha_operacion ? date('Y-m-d\TH:i:s', $fecha_operacion) : ''; ?>">
+                                <time class="historial-fecha text-muted text-nowrap" datetime="<?php echo $fecha_operacion ? date('Y-m-d\TH:i:s', $fecha_operacion) : ''; ?>">
                                     <?php echo $fecha_operacion ? date('d/m/Y, H:i', $fecha_operacion) : 'Fecha no disponible'; ?>
                                 </time>
                             </div>
                         </td>
-                        <td class="historial-estado-cell" data-label="Estado">
+                        <td class="historial-estado-cell py-4 px-3" data-label="Estado">
                             <div class="historial-estado-grupo d-flex flex-column gap-1 align-items-start me-2">
-                                <span class="historial-estado <?php echo $estado_general === 'Anulada' ? 'historial-estado-anulada' : 'historial-estado-activa'; ?>">
+                                <span class="historial-estado mb-1 <?php echo $estado_general === 'Anulada' ? 'historial-estado-anulada' : 'historial-estado-activa'; ?>">
                                     <?php echo htmlspecialchars($estado_general, ENT_QUOTES, 'UTF-8'); ?>
                                 </span>
                                 <?php if ($es_compra): ?>
-                                    <span class="historial-estado-secundario <?php echo $estado_pago === 'Pagada' ? 'historial-badge-ok' : 'historial-badge-pendiente'; ?>">
+                                    <span class="historial-estado-secundario mb-1 <?php echo $estado_pago === 'Pagada' ? 'historial-badge-ok' : 'historial-badge-pendiente'; ?>">
                                         Pago: <?php echo htmlspecialchars($estado_pago, ENT_QUOTES, 'UTF-8'); ?>
                                     </span>
-                                    <span class="historial-estado-secundario <?php echo $estado_recepcion === 'Completa' ? 'historial-badge-ok' : 'historial-badge-pendiente'; ?>">
+                                    <span class="historial-estado-secundario mb-1 <?php echo $estado_recepcion === 'Completa' ? 'historial-badge-ok' : 'historial-badge-pendiente'; ?>">
                                         Recepción: <?php echo htmlspecialchars($estado_recepcion, ENT_QUOTES, 'UTF-8'); ?>
                                     </span>
                                 <?php endif; ?>
                             </div>
                         </td>
-                        <td data-label="Total" class="historial-total fw-bold text-end text-nowrap text-dark">
+                        <td data-label="Total" class="historial-total py-4 px-3 pe-4 fw-bold text-end text-nowrap text-dark">
                             <?php echo format_bs((float)$operacion['monto_total'], $tasa_bcv ?? null); ?>
                         </td>
-                        <td data-label="Acciones" class="historial-accion-cell">
+                        <td data-label="Acciones" class="historial-accion-cell py-4 px-3 text-center">
                             <button type="button" class="btn btn-sm btn-outline-primary historial-btn-ver" data-bs-toggle="modal" data-bs-target="#modalDetalleOperacion" data-operacion="<?php echo htmlspecialchars((string)$operacion['id_operacion'], ENT_QUOTES, 'UTF-8'); ?>" title="Ver detalle" aria-label="Ver detalle de <?php echo htmlspecialchars((string)$operacion['referencia'], ENT_QUOTES, 'UTF-8'); ?>">
                                 <i class="bi bi-eye" aria-hidden="true"></i>
                             </button>

@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Historial / Tabla (2026-11-19): celdas con `py-4 px-3`, Registro al 16% con usuario/fecha en una línea, sin bordes verticales (solo `border-bottom` #e2e8f0), badges de Estado con `mb-1`, Total a la derecha y Acciones centradas. En móvil las celdas vuelven a `padding:0 !important` para conservar las tarjetas. Sin cambios de lógica.
+
 - Dashboard / Última Venta (2026-11-19): la tarjeta usa `kpi-card-rojo`/`kpi-icon-rojo` con fondo #fef2f2, borde #fecaca, acento #dc2626, etiqueta #991b1b y monto #7f1d1d; la sección `kpi-section` tiene fondo sólido #f8f9fa para ocultar los puntos. Se corrigió el `<header>` sin cerrar en `views/dashboard/index.php`, que comprimía las secciones a 46 px. Aplicado en ambos dashboards; sin cambios de lógica.
 
 - Inventario / Activación por stock (2026-11-19): un producto con stock 0 no puede volver a Activo (`toggleStatus()` y `editar()` lo rechazan). La activación manual válida retira el id de `configuracion.productos_descartados` para que la campana y «Productos Críticos» vuelvan a evaluarlo; la tabla oculta Activar y el modal deshabilita «Activo» con validación cliente. Se normalizó el producto 4 (Batería Auto 12V 60Ah) a Inactivo y sin descarte; campana y tarjeta lo muestran. Sin cambios de esquema.
