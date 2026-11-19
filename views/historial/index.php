@@ -97,12 +97,12 @@
     <div class="table-responsive historial-tabla-scroll">
         <table class="historial-tabla">
             <colgroup>
-                <col style="width:15%;">
+                <col style="width:14%;">
                 <col style="width:18%;">
-                <col style="width:22%;">
-                <col style="width:17%;">
+                <col style="width:18%;">
+                <col style="width:14%;">
                 <col style="width:10%;">
-                <col style="width:10%;">
+                <col style="width:18%;">
                 <col style="width:8%;">
             </colgroup>
             <thead>
@@ -172,7 +172,7 @@
                             </div>
                         </td>
                         <td class="historial-estado-cell" data-label="Estado">
-                            <div class="historial-estado-grupo d-flex flex-column gap-1 align-items-start">
+                            <div class="historial-estado-grupo d-flex flex-column gap-1 align-items-start me-2">
                                 <span class="historial-estado <?php echo $estado_general === 'Anulada' ? 'historial-estado-anulada' : 'historial-estado-activa'; ?>">
                                     <?php echo htmlspecialchars($estado_general, ENT_QUOTES, 'UTF-8'); ?>
                                 </span>
@@ -186,7 +186,7 @@
                                 <?php endif; ?>
                             </div>
                         </td>
-                        <td data-label="Total" class="historial-total fs-5 fw-bold text-end <?php echo $es_compra ? 'text-success' : 'text-danger'; ?>">
+                        <td data-label="Total" class="historial-total fw-bold text-end text-nowrap text-dark">
                             <?php echo format_bs((float)$operacion['monto_total'], $tasa_bcv ?? null); ?>
                         </td>
                         <td data-label="Acciones" class="historial-accion-cell">

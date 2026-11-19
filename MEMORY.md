@@ -5,6 +5,7 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Historial / Tabla (2026-11-18): el total va en `text-dark text-nowrap` a 1.05rem y la columna Total ocupa 18% del colgroup (Productos 18%, Registro 14%, Operación 14%) para que no invada el botón de acciones; el rojo/verde por tipo se retiró del monto y se conserva en el borde y la etiqueta de la fila.
 - Backup / Interfaz (2026-11-18): la pantalla usa fondo sólido #f8f9fa (override `body:has(.pagina-backup)` en backup.css), tarjetas blancas con borde #dee2e6, títulos h4 y el subtítulo «Gestión de copias de seguridad del sistema». No cambia lógica, permisos ni el flujo de exportación/restauración.
 - Backup / Restauración (2026-11-18): módulo solo admin en `?url=backup`. Exporta en PHP puro (24 tablas, estructura + datos) y restaura .sql con validación completa (extensión, MIME, 10 MB, sin etiquetas PHP, lista blanca), respaldo previo en `C:\xampp\jv3000_backups` y transacción solo para los INSERT: el DDL no se revierte en MariaDB, así que el respaldo es la recuperación real. `backups/.htaccess` bloquea la descarga de los .sql.
 - Inventario / Agotados (2026-11-18): `inventarioCritico()` y `ReporteInventario::productosActivos()` usan `(status = 'Activo' OR stock_actual <= 0)` para que un producto vendido hasta 0 (que queda «Inactivo») siga en «Comprar ya» y en el reporte imprimible. El Dashboard conserva su filtro por `Activo`; estas dos consultas no excluyen los descartados.
