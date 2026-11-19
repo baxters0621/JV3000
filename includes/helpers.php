@@ -700,14 +700,88 @@ if (!function_exists('purgarPreviewsSesion')) {
     }
 }
 
+if (!function_exists('auditar')) {
+    /**
+     * Registra un evento en la bitácora empresarial del sistema.
+     *
+     * Atajo global del método Auditoria::registrar(). Carga las clases cuando
+     * hace falta porque login/login.php no pasa por el autoloader de modelos.
+     *
+     * @param string   $accion      Acción realizada (LOGIN, CREAR, EDITAR...).
+     * @param string   $modulo      Módulo que originó el evento.
+     * @param string   $descripcion Detalle legible de la acción.
+     * @param int|null $id_usuario  Usuario responsable; null usa la sesión.
+     * @return void
+     */
+    function auditar(string $accion, string $modulo, string $descripcion, ?int $id_usuario = null): void
+    {
+        // __DIR__ es includes/: funciona también en pruebas CLI que no
+        // definen las constantes globales de la aplicación.
+        $raiz = dirname(__DIR__);
+        require_once $raiz . '/core/Model.php';
+        require_once $raiz . '/models/Auditoria.php';
+
+        Auditoria::registrar($accion, $modulo, $descripcion, $id_usuario);
+    }
+}
+
+if (!function_exists('jv_modulo_auditoria')) {
+    /**
+     * Infiere el módulo de auditoría a partir de la ruta actual.
+     *
+     * Las llamadas heredadas solo envían acción y detalle; este mapa evita
+     * modificar decenas de llamadas y mantiene los eventos clasificados.
+     *
+     * @return string Nombre del módulo.
+     */
+    function jv_modulo_auditoria(): string
+    {
+        $ruta = '';
+        if (isset($_GET['url']) && is_string($_GET['url'])) {
+            $ruta = $_GET['url'];
+        } elseif (isset($_SERVER['REQUEST_URI'])) {
+            $ruta = (string)$_SERVER['REQUEST_URI'];
+        } elseif (isset($_SERVER['PHP_SELF'])) {
+            $ruta = (string)$_SERVER['PHP_SELF'];
+        }
+        $ruta = strtolower($ruta);
+
+        $mapa = [
+            'backup'      => 'Backup',
+            'login'       => 'Seguridad',
+            'logout'      => 'Seguridad',
+            'usuarios'    => 'Seguridad',
+            'perfil'      => 'Seguridad',
+            'recuperar'   => 'Seguridad',
+            'resetear'    => 'Seguridad',
+            'compras'     => 'Compras',
+            'proveedores' => 'Compras',
+            'solicitudes' => 'Compras',
+            'pago'        => 'Compras',
+            'salidas'     => 'Ventas',
+            'clientes'    => 'Ventas',
+            'productos'   => 'Inventario',
+            'categorias'  => 'Inventario',
+        ];
+
+        foreach ($mapa as $fragmento => $modulo) {
+            if (strpos($ruta, $fragmento) !== false) {
+                return $modulo;
+            }
+        }
+
+        return 'Sistema';
+    }
+}
+
 if (!function_exists('registrarAuditoria')) {
     /**
-     * Registra una acción en la tabla de auditoría.
+     * Registra una acción en la bitácora (envoltorio compatible).
      *
-     * Inserta el registro con el usuario actual de la sesión (o 'Sistema' si
-     * no hay sesión), además de contexto útil del request actual: IP, ruta y
-     * método HTTP. Permite pasar un arreglo opcional con información extra que
-     * se adjunta al detalle del evento.
+     * Conserva la firma histórica de dos o tres argumentos, infiere el módulo
+     * y delega en la tabla nueva `logs_auditoria` mediante auditar(). Permite
+     * pasar un arreglo opcional con información extra que se adjunta al
+     * detalle del evento.
      *
      * @param string     $accion  Tipo de acción (crear, editar, eliminar, anular...).
      * @param string     $detalle Descripción de la acción realizada.
@@ -716,22 +790,12 @@ if (!function_exists('registrarAuditoria')) {
      */
     function registrarAuditoria(string $accion, string $detalle = '', ?array $meta = null): void
     {
-        $db = Database::getInstance();
-        $id_usuario = intval($_SESSION['id_usuario'] ?? 0);
-        $usuario_nombre = $_SESSION['usuario'] ?? 'Sistema';
-        $ip_origen = $_SERVER['REMOTE_ADDR'] ?? null;
-        $ruta = $_SERVER['REQUEST_URI'] ?? null;
-        $metodo = $_SERVER['REQUEST_METHOD'] ?? null;
-
         if (!empty($meta)) {
             $extra = json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
             $detalle = trim($detalle) !== '' ? $detalle . ' | ' . $extra : $extra;
         }
 
-        $db->execute(
-            "INSERT INTO auditoria (id_usuario, usuario_nombre, accion, detalle, ip_origen, ruta, metodo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [$id_usuario, $usuario_nombre, $accion, $detalle, $ip_origen, $ruta, $metodo]
-        );
+        auditar($accion, jv_modulo_auditoria(), $detalle);
     }
 }
 

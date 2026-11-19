@@ -423,7 +423,7 @@ try {
         'UPDATE catalogo_costos SET costo = ? WHERE id_proveedor = ? AND id_producto = ?',
         [2.00, $proveedorId, $productoB]
     );
-    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $datosCompraPrecioAlterado = comprasPilotoFormulario($proveedorId, [
         [$productoA, 2, 99.99],
         [$productoB, 3, 88.88],
@@ -469,7 +469,7 @@ try {
         && (int)$db->fetchOne('SELECT id_compra FROM solicitudes_compra WHERE id_solicitud = ?', [$solicitudId])['id_compra'] === $compraId,
         'No se conservó la asociación de la solicitud atendida.'
     );
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes + 1, 'El alta de compra no generó exactamente una auditoría.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntes + 1, 'El alta de compra no generó exactamente una auditoría.');
     echo "OK alta multiítem conserva la fecha seleccionada y descuenta existencias del proveedor\n";
 
     $catalogoProductoA = $db->fetchOne(
@@ -550,7 +550,7 @@ try {
     $comprasAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras');
     $detallesAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras');
     $pagosAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra');
-    $auditoriasAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntesValidacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $fechaFutura = date('Y-m-d', strtotime('+1 day'));
     $resultadoFechaFutura = comprasPilotoRegistrar(
         $proveedorId,
@@ -634,7 +634,7 @@ try {
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras') === $comprasAntesValidacion, 'La validación de líneas dejó una cabecera de compra.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras') === $detallesAntesValidacion, 'La validación de líneas dejó detalles parciales.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra') === $pagosAntesValidacion, 'La validación de líneas dejó un pago inicial.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntesValidacion, 'La validación de líneas dejó auditoría parcial.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntesValidacion, 'La validación de líneas dejó auditoría parcial.');
     echo "OK líneas inválidas y productos fuera del catálogo rechazan la compra completa\n";
 
     $productoSolicitudCarreraA = comprasPilotoProducto($db, $categoriaId, 'SOLICITUD-CARRERA-A');
@@ -654,7 +654,7 @@ try {
     $comprasAntesCarreraSolicitud = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras');
     $detallesAntesCarreraSolicitud = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras');
     $pagosAntesCarreraSolicitud = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra');
-    $auditoriasAntesCarreraSolicitud = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntesCarreraSolicitud = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $resultadosCarreraSolicitud = comprasPilotoCarrera([
         [
             'modo' => 'compra-solicitud',
@@ -682,7 +682,7 @@ try {
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras') === $comprasAntesCarreraSolicitud + 1, 'La carrera dejó persistir más de una cabecera de compra.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras') === $detallesAntesCarreraSolicitud + 1, 'La compra perdedora dejó detalles parciales.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra') === $pagosAntesCarreraSolicitud + 1, 'La compra perdedora dejó un pago inicial parcial.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntesCarreraSolicitud + 1, 'La compra perdedora dejó auditoría parcial.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntesCarreraSolicitud + 1, 'La compra perdedora dejó auditoría parcial.');
     $solicitudGanadora = $db->fetchOne(
         'SELECT estado, id_compra FROM solicitudes_compra WHERE id_solicitud = ?',
         [$solicitudCarreraId]
@@ -708,7 +708,7 @@ try {
     $comprasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras');
     $detallesAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras');
     $pagosAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra');
-    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $db->getConnection()->query(
         "CREATE TRIGGER compras_piloto_falla_solicitud BEFORE UPDATE ON solicitudes_compra
          FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo sintético de solicitud'"
@@ -728,7 +728,7 @@ try {
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras') === $comprasAntes, 'El rollback dejó la cabecera de compra.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras') === $detallesAntes, 'El rollback dejó detalles de compra.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra') === $pagosAntes, 'El rollback dejó el pago inicial.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes, 'El rollback dejó auditoría parcial.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntes, 'El rollback dejó auditoría parcial.');
     comprasPilotoAfirmar(
         $db->fetchOne('SELECT estado, id_compra FROM solicitudes_compra WHERE id_solicitud = ?', [$solicitudRollback])['estado'] === 'Pendiente'
         && $db->fetchOne('SELECT id_compra FROM solicitudes_compra WHERE id_solicitud = ?', [$solicitudRollback])['id_compra'] === null,
@@ -738,7 +738,7 @@ try {
 
     $detalleA = (int)$db->fetchOne('SELECT id_detalle FROM detalle_compras WHERE id_compra = ? AND id_producto = ?', [$compraId, $productoA])['id_detalle'];
     $detalleB = (int)$db->fetchOne('SELECT id_detalle FROM detalle_compras WHERE id_compra = ? AND id_producto = ?', [$compraId, $productoB])['id_detalle'];
-    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $recepcionParcial = comprasPilotoRecibir($compraId, [[
         'id_detalle' => $detalleA,
         'cantidad' => 2,
@@ -757,7 +757,7 @@ try {
     $movimientoParcial = $db->fetchOne("SELECT id_movimiento, status FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?", [$compraId]);
     comprasPilotoAfirmar($movimientoParcial !== null && $movimientoParcial['status'] === 'Activo', 'La recepción parcial no creó su movimiento activo.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_movimientos WHERE id_movimiento = ?', [(int)$movimientoParcial['id_movimiento']]) === 1, 'El movimiento parcial no coincide con la línea recibida.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes + 1, 'La recepción parcial no dejó exactamente una auditoría.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntes + 1, 'La recepción parcial no dejó exactamente una auditoría.');
     $pendientesTablero = (new Recepcion())->comprasPendientes();
     $compraEnTablero = array_values(array_filter(
         $pendientesTablero,
@@ -774,7 +774,7 @@ try {
     $stockAntesCero = (int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$productoB])['stock_actual'];
     $lotesAntesCero = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM lotes WHERE id_compra = ?', [$compraId]);
     $movimientosAntesCero = comprasPilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?", [$compraId]);
-    $auditoriasAntesCero = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntesCero = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $recepcionCero = comprasPilotoRecibir($compraId, [[
         'id_detalle' => $detalleB,
         'cantidad' => 0,
@@ -784,7 +784,7 @@ try {
     comprasPilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$productoB])['stock_actual'] === $stockAntesCero, 'El rechazo de cantidades cero alteró el stock.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM lotes WHERE id_compra = ?', [$compraId]) === $lotesAntesCero, 'El rechazo de cantidades cero creó un lote.');
     comprasPilotoAfirmar(comprasPilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?", [$compraId]) === $movimientosAntesCero, 'El rechazo de cantidades cero creó un movimiento.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntesCero, 'El rechazo de cantidades cero creó auditoría.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntesCero, 'El rechazo de cantidades cero creó auditoría.');
     echo "OK recepción con cantidades cero en todas las líneas se rechaza sin escrituras\n";
 
     $recepcionCompleta = comprasPilotoRecibir($compraId, [[
@@ -810,7 +810,7 @@ try {
     $detalleRollbackRecepcion = (int)$db->fetchOne('SELECT id_detalle FROM detalle_compras WHERE id_compra = ?', [$idCompraRollbackRecepcion])['id_detalle'];
     $lotesAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM lotes WHERE id_compra = ?', [$idCompraRollbackRecepcion]);
     $movimientosAntes = comprasPilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?", [$idCompraRollbackRecepcion]);
-    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $claveRollbackRecepcion = bin2hex(random_bytes(32));
     $documentoRollbackRecepcion = 'GUIA-ROLLBACK-PILOTO';
     $db->getConnection()->query(
@@ -831,7 +831,7 @@ try {
     comprasPilotoAfirmar((int)$db->fetchOne('SELECT cantidad_recibida FROM detalle_compras WHERE id_detalle = ?', [$detalleRollbackRecepcion])['cantidad_recibida'] === 0, 'El rollback no restauró la cantidad recibida.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM lotes WHERE id_compra = ?', [$idCompraRollbackRecepcion]) === $lotesAntes, 'El rollback dejó un lote parcial.');
     comprasPilotoAfirmar(comprasPilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?", [$idCompraRollbackRecepcion]) === $movimientosAntes, 'El rollback dejó un movimiento parcial.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes, 'El rollback dejó auditoría parcial de recepción.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntes, 'El rollback dejó auditoría parcial de recepción.');
     comprasPilotoAfirmar($db->fetchOne('SELECT estado_recepcion FROM compras WHERE id_compra = ?', [$idCompraRollbackRecepcion])['estado_recepcion'] === 'Pendiente', 'El rollback no restauró el estado de recepción.');
     $reintentoRollback = comprasPilotoRecibir(
         $idCompraRollbackRecepcion,
@@ -846,7 +846,7 @@ try {
     comprasPilotoAfirmar($reintentoRollback['ok'], 'La clave idempotente quedó consumida pese al rollback previo.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM lotes WHERE id_compra = ?', [$idCompraRollbackRecepcion]) === 1, 'El reintento tras rollback no creó exactamente un lote.');
     comprasPilotoAfirmar(comprasPilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?", [$idCompraRollbackRecepcion]) === 1, 'El reintento tras rollback no creó exactamente un movimiento.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes + 1, 'El reintento tras rollback no registró exactamente una auditoría.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntes + 1, 'El reintento tras rollback no registró exactamente una auditoría.');
     echo "OK rollback de recepción revierte el intento y permite reintentarlo con la misma clave\n";
 
     $productoExceso = comprasPilotoProducto($db, $categoriaId, 'SOBRERECEPCION');
@@ -873,7 +873,7 @@ try {
     $clavePrimerIntento = bin2hex(random_bytes(32));
     $claveSegundoIntento = bin2hex(random_bytes(32));
     $claveIntentoConcurrente = bin2hex(random_bytes(32));
-    $auditoriasAntesReintento = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntesReintento = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
 
     $primeraRecepcion = comprasPilotoRecibir(
         $idCompraReintento,
@@ -926,14 +926,14 @@ try {
     comprasPilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$productoReintento])['stock_actual'] === 5, 'Los reenvíos duplicaron el incremento de stock.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM lotes WHERE id_compra = ?', [$idCompraReintento]) === 3, 'Los reenvíos duplicaron lotes o impidieron operaciones distintas.');
     comprasPilotoAfirmar(comprasPilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?", [$idCompraReintento]) === 3, 'Los reenvíos duplicaron movimientos o impidieron operaciones distintas.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntesReintento + 3, 'Un replay duplicó auditoría o una recepción distinta no la registró.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntesReintento + 3, 'Un replay duplicó auditoría o una recepción distinta no la registró.');
     echo "OK replay idempotente secuencial/concurrente y claves distintas con documento repetido\n";
 
     $productoCompraCarrera = comprasPilotoProducto($db, $categoriaId, 'COMPRA-CARRERA');
     $comprasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras');
     $detallesAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras');
     $pagosAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra');
-    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $db->getConnection()->query(
         "CREATE TRIGGER compras_piloto_retardo_compra BEFORE INSERT ON compras
          FOR EACH ROW BEGIN DO SLEEP(0.5); END"
@@ -958,7 +958,7 @@ try {
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_compras') === $detallesAntes + 1, 'La carrera dejó detalle parcial o duplicado.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM pagos_compra') === $pagosAntes, 'La carrera creó pagos inesperados.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM compras') === $comprasAntes + 1, 'La carrera dejó una cantidad incorrecta de cabeceras.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes + 1, 'La carrera duplicó o dejó auditoría parcial.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntes + 1, 'La carrera duplicó o dejó auditoría parcial.');
     echo "OK concurrencia de alta con factura duplicada deja una compra íntegra\n";
 
     $productoRecepcionCarrera = comprasPilotoProducto($db, $categoriaId, 'RECEPCION-CARRERA');
@@ -966,7 +966,7 @@ try {
     comprasPilotoAfirmar($compraCarreraRecepcion['ok'], 'No se pudo crear la compra para carrera de recepción.');
     $idCompraCarreraRecepcion = (int)$db->fetchOne("SELECT id_compra FROM compras WHERE id_proveedor = ? AND nro_factura = '700006'", [$proveedorId])['id_compra'];
     $detalleCarreraRecepcion = (int)$db->fetchOne('SELECT id_detalle FROM detalle_compras WHERE id_compra = ?', [$idCompraCarreraRecepcion])['id_detalle'];
-    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntes = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $resultadosRecepcionConcurrentes = comprasPilotoCarrera(array_fill(0, 2, [
         'modo' => 'recepcion',
         'argumentos' => [
@@ -983,7 +983,7 @@ try {
     comprasPilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$productoRecepcionCarrera])['stock_actual'] === 2, 'La carrera dejó stock agregado inconsistente.');
     comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM lotes WHERE id_compra = ?', [$idCompraCarreraRecepcion]) === 1, 'La carrera duplicó o perdió lotes.');
     comprasPilotoAfirmar(comprasPilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'compra' AND id_referencia = ?", [$idCompraCarreraRecepcion]) === 1, 'La carrera duplicó movimientos.');
-    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes + 1, 'La carrera generó auditoría duplicada o parcial.');
+    comprasPilotoAfirmar(comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntes + 1, 'La carrera generó auditoría duplicada o parcial.');
     echo "OK concurrencia de recepción serializa contra el saldo pendiente\n";
 
     $productoCompraAnulacion = comprasPilotoProducto($db, $categoriaId, 'ANULACION-CARRERA');
@@ -1009,7 +1009,7 @@ try {
         'SELECT stock_actual FROM productos WHERE id_producto = ?',
         [$productoCompraAnulacion]
     )['stock_actual'];
-    $auditoriasAntesCarreraAnulacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntesCarreraAnulacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
 
     [$resultadoCarreraAnulacion, $resultadoCarreraRecepcion] = comprasPilotoCarrera([
         [
@@ -1078,7 +1078,7 @@ try {
         'La carrera dejó estado, lotes o stock incompatibles entre compra y recepción.'
     );
     comprasPilotoAfirmar(
-        comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntesCarreraAnulacion + 1,
+        comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntesCarreraAnulacion + 1,
         'La carrera no registró exactamente una auditoría para la operación aceptada.'
     );
     echo "OK concurrencia de anulación y recepción conserva estados compatibles\n";
@@ -1098,9 +1098,9 @@ try {
         'SELECT stock_disponible FROM catalogo_costos WHERE id_proveedor = ? AND id_producto = ?',
         [$proveedorId, $productoRollbackAnulacion]
     )['stock_disponible'];
-    $auditoriasAntesRollbackAnulacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria');
+    $auditoriasAntesRollbackAnulacion = comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria');
     $db->getConnection()->query(
-        "CREATE TRIGGER compras_piloto_falla_auditoria_anulacion BEFORE INSERT ON auditoria
+        "CREATE TRIGGER compras_piloto_falla_auditoria_anulacion BEFORE INSERT ON logs_auditoria
          FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo sintético de auditoría de anulación'"
     );
     try {
@@ -1121,7 +1121,7 @@ try {
         'El rollback de anulación no restauró las existencias reservadas.'
     );
     comprasPilotoAfirmar(
-        comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntesRollbackAnulacion,
+        comprasPilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntesRollbackAnulacion,
         'El rollback dejó una auditoría parcial de anulación.'
     );
     echo "OK rollback de anulación revierte el estado si falla la auditoría\n";

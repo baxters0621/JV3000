@@ -437,6 +437,25 @@ CREATE TABLE `usuarios` (
   CONSTRAINT `fk_usuarios_rol` FOREIGN KEY (`id_rol`) REFERENCES `roles` (`id_rol`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `logs_auditoria` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_usuario` int(11) DEFAULT NULL,
+  `usuario_nombre` varchar(100) NOT NULL DEFAULT 'Sistema',
+  `accion` varchar(50) NOT NULL,
+  `modulo` varchar(50) NOT NULL DEFAULT 'Sistema',
+  `descripcion` text DEFAULT NULL,
+  `ip_origen` varchar(45) DEFAULT NULL,
+  `fecha_hora` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_logs_fecha` (`fecha_hora`),
+  KEY `idx_logs_usuario` (`id_usuario`),
+  KEY `idx_logs_modulo` (`modulo`),
+  KEY `idx_logs_accion` (`accion`),
+  CONSTRAINT `fk_logs_auditoria_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 -- --------------------------------------------------------
 -- Datos de sistema

@@ -60,6 +60,7 @@ $es_op_ventas = $id_rol === 3;
         $ver_estadisticas = $es_admin || $es_op_ventas;
         $ver_usuarios   = $es_admin;
         $ver_backup     = $es_admin;
+        $ver_auditoria  = $es_admin;
         $ver_historial  = $es_admin || $es_op_carga || $es_op_ventas;
 
         // Detecta rama activa para auto-expandir
@@ -67,7 +68,7 @@ $es_op_ventas = $id_rol === 3;
         $rama_compras_activa = $mvc_activa('compras');
         $rama_salidas_activa = $mvc_activa('salidas');
         $rama_analisis_activo = $mvc_activa('estadisticas') || $mvc_activa('reporte_inventario');
-        $rama_admin_activo = $mvc_activa('historial') || $mvc_activa('usuarios') || $mvc_activa('backup');
+        $rama_admin_activo = $mvc_activa('historial') || $mvc_activa('auditoria') || $mvc_activa('usuarios') || $mvc_activa('backup');
         ?>
 
         <!-- ═══ INVENTARIO (consulta: los tres roles) ═══ -->
@@ -152,8 +153,8 @@ $es_op_ventas = $id_rol === 3;
         </div>
         <?php endif; ?>
 
-        <!-- ═══ CONTROL (historial por rol; usuarios solo admin) ═══ -->
-        <?php if ($ver_historial || $ver_usuarios): ?>
+        <!-- ═══ CONTROL (historial por rol; auditoría, usuarios y backup solo admin) ═══ -->
+        <?php if ($ver_historial || $ver_auditoria || $ver_usuarios): ?>
         <div class="nav-group nav-ram-admin <?php echo $rama_admin_activo ? 'open' : ''; ?>">
             <button type="button" class="nav-group-toggle" aria-expanded="<?php echo $rama_admin_activo ? 'true' : 'false'; ?>">
                 <i class="bi bi-clipboard-data"></i>
@@ -166,6 +167,14 @@ $es_op_ventas = $id_rol === 3;
                     <a href="<?php echo $prefijo; ?>index.php?url=historial" class="nav-link">
                         <i class="bi bi-clock-history"></i>
                         <span>Historial de operaciones</span>
+                    </a>
+                </div>
+                <?php endif; ?>
+                <?php if ($ver_auditoria): ?>
+                <div class="nav-item <?php echo $mvc_activa('auditoria') ? 'active' : ''; ?>">
+                    <a href="<?php echo $prefijo; ?>index.php?url=auditoria" class="nav-link">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Auditoría</span>
                     </a>
                 </div>
                 <?php endif; ?>

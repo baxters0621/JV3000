@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Auditoría / Logs (2026-11-19): tabla `logs_auditoria` (FK a usuarios ON DELETE SET NULL) con 52 eventos históricos migrados; `auditoria` queda intacta como archivo de solo lectura. `Auditoria::registrar()` + `auditar()` son la escritura única; `registrarAuditoria()` infiere el módulo y mantiene las llamadas existentes. La pantalla `?url=auditoria` es solo admin (403), con 3 tarjetas, filtros, badges y 50 por página; Backup audita exportar/importar. El proyecto usa mysqli preparado, no PDO. No hay alta de producto en la UI ni `VentasController` (es `SalidasController`).
+
 - Compras / Número de control (2026-11-18): el control fiscal es global y automático, formato 00-########; estadoControl() usa el MAX del sufijo de compras con formato válido (incluye anuladas), sin historial 00-00000001 y null al agotar 99999999. La consulta va por Database::fetchOne (mysqli preparado; el proyecto no usa PDO). El campo inicia readonly con «Editar número» solo admin (Swal y bloqueo con regeneración); endpoint compras/control_estado (permiso de carga) y validación servidor/cliente ^00-\d{8}$.
 
 - Compras / Modal recepción (2026-11-18): el modal «Recibir Mercadería» (en `views/compras/index.php`, no en un archivo aparte) lleva `pagina-compras` en el propio `.modal` porque está fuera del contenedor de la página y los estilos `.pagina-compras .rec-*` no le llegaban. Header Bootstrap con `btn-close btn-close-white` arriba a la derecha; tabla navy #1f2937, `table-hover align-middle`; P. Costo a 120 px con `text-end text-nowrap`; pie `modal-footer` a la derecha y botones apilados en móvil. Sin cambios de lógica.

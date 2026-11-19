@@ -73,6 +73,14 @@ class BackupController extends Controller
         $nombre = 'jv3000_' . date('Ymd_His') . '.sql';
         $tamano = filesize($temporal);
 
+        // La exportación debe quedar auditada, pero un fallo del registro no
+        // puede impedir que el administrador descargue su respaldo.
+        try {
+            auditar('BACKUP', 'Backup', 'Exportación de base de datos: ' . $nombre);
+        } catch (Throwable $e) {
+            error_log('[JV3000] No se pudo auditar la exportación: ' . $e->getMessage());
+        }
+
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
@@ -116,6 +124,15 @@ class BackupController extends Controller
         if (!$resultado['ok']) {
             $this->flash('danger', $resultado['mensaje'], 'importar');
             $this->redirect('backup');
+        }
+
+        // El respaldo restaurado puede ser anterior a este módulo. Si la tabla
+        // nueva no existe, la restauración ya fue exitosa y no debe fallar por
+        // el registro de auditoría.
+        try {
+            auditar('BACKUP', 'Backup', 'Importación de base de datos: ' . $validacion['nombre']);
+        } catch (Throwable $e) {
+            error_log('[JV3000] No se pudo auditar la importación: ' . $e->getMessage());
         }
 
         // La base restaurada puede no contener al usuario que inició sesión e

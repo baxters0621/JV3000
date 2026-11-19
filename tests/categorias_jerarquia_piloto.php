@@ -386,8 +386,8 @@ $raizApagada = array_filter(
 $afirmar(count($raizApagada) === 1, 'La raíz se desactiva cuando todos los productos de todas sus subcategorías están en cero.');
 $hay_auditoria = false;
 foreach ($db->escrituras as $escritura) {
-    if (strpos($escritura['sql'] ?? '', 'INSERT INTO auditoria') !== false) {
-        $hay_auditoria = strpos($escritura['params'][2] ?? '', 'sincronizar_stock') !== false;
+    if (strpos($escritura['sql'] ?? '', 'INSERT INTO logs_auditoria') !== false) {
+        $hay_auditoria = strpos(strtoupper((string)($escritura['params'][2] ?? '')), 'SINCRONIZAR_STOCK') !== false;
     }
 }
 $afirmar($hay_auditoria, 'La sincronización registra una sola entrada en la auditoría.');

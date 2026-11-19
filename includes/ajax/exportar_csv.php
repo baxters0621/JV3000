@@ -72,10 +72,10 @@ $queries = [
                lead_time, moneda, status
         FROM proveedores ORDER BY nombre_empresa ASC",
     'historial' => "
-        SELECT a.usuario_nombre, a.accion, a.detalle, a.fecha_hora,
-               a.ip_origen, a.ruta, a.metodo
-        FROM auditoria a
-        ORDER BY a.fecha_hora DESC LIMIT 5000",
+        SELECT a.usuario_nombre, a.accion, a.modulo, a.descripcion AS detalle,
+               a.fecha_hora, a.ip_origen
+        FROM logs_auditoria a
+        ORDER BY a.fecha_hora DESC, a.id DESC LIMIT 5000",
 ];
 
 if (!isset($queries[$tabla])) {

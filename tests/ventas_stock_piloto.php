@@ -340,7 +340,7 @@ $snapshotPreview = static function () use ($db, $idProductoFefo, $idProductoPrev
              JOIN movimientos m ON m.id_movimiento = dm.id_movimiento
              WHERE m.tipo_referencia = 'venta'"
         ),
-        'auditoria' => pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'"),
+        'auditoria' => pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'"),
         'contador_ctrl' => (int)$db->fetchOne(
             "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'"
         )['ultimo_numero'],
@@ -402,7 +402,7 @@ pilotoAfirmar(
 );
 echo "OK preview acepta productos distintos y rechaza repetidos sin escrituras\n";
 
-$auditoriasAntesVenta = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'");
+$auditoriasAntesVenta = pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'");
 $resultadoVenta = pilotoConfirmar($idProductoFefo, 4);
 pilotoAfirmar($resultadoVenta['ok'] === true, 'La venta FEFO válida no se confirmó: ' . ($resultadoVenta['error'] ?? json_encode($resultadoVenta)));
 $idSalidaFefo = (int)$resultadoVenta['id_salida'];
@@ -418,14 +418,14 @@ pilotoAfirmar(array_map(static fn(array $lote): int => (int)$lote['cantidad_rest
 pilotoAfirmar(count($detalleVenta) === 2 && (int)$detalleVenta[0]['cantidad'] === 2 && (int)$detalleVenta[1]['cantidad'] === 2, 'El detalle no refleja el consumo por lote.');
 pilotoAfirmar($movimiento !== null && $movimiento['status'] === 'Activo', 'No se creó el movimiento activo de venta.');
 pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_movimientos WHERE id_movimiento = ?', [(int)$movimiento['id_movimiento']]) === 1, 'Falta el detalle del movimiento.');
-pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'") === $auditoriasAntesVenta + 1, 'La auditoría de venta no se registró exactamente una vez.');
+pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'") === $auditoriasAntesVenta + 1, 'La auditoría de venta no se registró exactamente una vez.');
 echo "OK venta múltiple FEFO y auditoría atómica\n";
 
 $idProductoMultiA = pilotoCrearProducto($db, 'PILOT-MULTI-A-' . bin2hex(random_bytes(3)), 4, [[4, 35]]);
 $idProductoMultiB = pilotoCrearProducto($db, 'PILOT-MULTI-B-' . bin2hex(random_bytes(3)), 4, [[4, 55]]);
 $ventasAntesMulti = pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas');
 $movimientosAntesMulti = pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'");
-$auditoriasAntesMulti = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'");
+$auditoriasAntesMulti = pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'");
 $contadorNdeAntesMulti = (int)$db->fetchOne(
     "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'NDE'"
 )['ultimo_numero'];
@@ -462,7 +462,7 @@ pilotoAfirmar($movimientoMulti !== null, 'La venta multiítem no creó su movimi
 pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_movimientos WHERE id_movimiento = ?', [(int)$movimientoMulti['id_movimiento']]) === 2, 'El movimiento no conservó los dos productos distintos.');
 pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas') === $ventasAntesMulti + 1, 'La venta multiítem no creó exactamente una cabecera.');
 pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'") === $movimientosAntesMulti + 1, 'La venta multiítem no creó exactamente un movimiento.');
-pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'") === $auditoriasAntesMulti + 1, 'La venta multiítem no creó exactamente una auditoría.');
+pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'") === $auditoriasAntesMulti + 1, 'La venta multiítem no creó exactamente una auditoría.');
 echo "OK control de venta confirmada con dos productos distintos\n";
 
 $idProductoFalloNde = pilotoCrearProducto(
@@ -485,7 +485,7 @@ $snapshotFalloNde = static function () use ($db, $idProductoFalloNde): array {
         'detalles' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_salidas'),
         'movimientos' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM movimientos'),
         'detalles_movimiento' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM detalle_movimientos'),
-        'auditoria' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria'),
+        'auditoria' => pilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria'),
         'contador_nde' => (int)$db->fetchOne(
             "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'NDE'"
         )['ultimo_numero'],
@@ -522,25 +522,25 @@ echo "OK fallo del generador NDE aborta la venta sin escrituras\n";
 $idProductoInsuficiente = pilotoCrearProducto($db, 'PILOT-STOCK-' . bin2hex(random_bytes(3)), 3, [[3, 20]]);
 $salidasAntes = pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas');
 $movimientosAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'");
-$auditoriasAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'");
+$auditoriasAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'");
 $resultadoInsuficiente = pilotoConfirmar($idProductoInsuficiente, 4);
 pilotoAfirmar($resultadoInsuficiente['ok'] === false, 'Se aceptó una venta con stock insuficiente.');
 pilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoInsuficiente])['stock_actual'] === 3, 'Cambió el stock tras rechazar la venta.');
 pilotoAfirmar((int)$db->fetchOne('SELECT cantidad_restante FROM lotes WHERE id_producto = ?', [$idProductoInsuficiente])['cantidad_restante'] === 3, 'Cambió el lote tras rechazar la venta.');
 pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas') === $salidasAntes, 'Se persistió una cabecera de una venta rechazada.');
 pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'") === $movimientosAntes, 'Se persistió un movimiento de una venta rechazada.');
-pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'") === $auditoriasAntes, 'Se auditó una venta rechazada como exitosa.');
+pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'") === $auditoriasAntes, 'Se auditó una venta rechazada como exitosa.');
 echo "OK rechazo por stock insuficiente sin escrituras parciales\n";
 
 $idProductoRollback = pilotoCrearProducto($db, 'PILOT-ROLLBACK-' . bin2hex(random_bytes(3)), 5, [[5, 25]]);
 $contadorAntes = (int)$db->fetchOne("SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'NDE'")['ultimo_numero'];
 $salidasAntes = pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas');
 $movimientosAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'");
-$auditoriasAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria");
+$auditoriasAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria");
 $contadorCtrlAntesRollback = (int)$db->fetchOne(
     "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'"
 )['ultimo_numero'];
-$db->getConnection()->query("CREATE TRIGGER piloto_falla_auditoria BEFORE INSERT ON auditoria FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo sintético de auditoría'");
+$db->getConnection()->query("CREATE TRIGGER piloto_falla_auditoria BEFORE INSERT ON logs_auditoria FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo sintético de auditoría'");
 try {
     $resultadoRollback = pilotoConfirmar($idProductoRollback, 2);
 } finally {
@@ -556,26 +556,26 @@ pilotoAfirmar(
 );
 pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas') === $salidasAntes, 'El rollback dejó una cabecera de venta.');
 pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'") === $movimientosAntes, 'El rollback dejó un movimiento de venta.');
-pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM auditoria') === $auditoriasAntes, 'El rollback dejó una auditoría parcial.');
+pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM logs_auditoria') === $auditoriasAntes, 'El rollback dejó una auditoría parcial.');
 echo "OK rollback completo ante fallo tardío de auditoría\n";
 
 $idProductoConcurrente = pilotoCrearProducto($db, 'PILOT-RACE-' . bin2hex(random_bytes(3)), 1);
 $ventasAntes = pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas');
 $movimientosAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'");
-$auditoriasAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'");
+$auditoriasAntes = pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'");
 $resultadosConcurrentes = pilotoEjecutarConcurrencia('confirmar', $idProductoConcurrente);
 pilotoAfirmar(count(array_filter($resultadosConcurrentes, static fn(array $r): bool => ($r['ok'] ?? false) === true)) === 1, 'La carrera de ventas no produjo exactamente una confirmación.');
 pilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoConcurrente])['stock_actual'] === 0, 'La carrera dejó stock negativo o unidades sin descontar.');
 pilotoAfirmar(pilotoContar($db, 'SELECT COUNT(*) AS total FROM salidas') === $ventasAntes + 1, 'La carrera persistió una cantidad incorrecta de ventas.');
 pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM movimientos WHERE tipo_referencia = 'venta'") === $movimientosAntes + 1, 'La carrera persistió movimientos inconsistentes.');
-pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'") === $auditoriasAntes + 1, 'La carrera produjo auditorías duplicadas.');
+pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'") === $auditoriasAntes + 1, 'La carrera produjo auditorías duplicadas.');
 echo "OK concurrencia de ventas sin sobreventa\n";
 
 $salidaActiva = $db->fetchOne('SELECT id_salida FROM salidas WHERE id_salida = ?', [$idSalidaFefo]);
 $stockAntesAnular = (int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoFefo])['stock_actual'];
 $lotesAntesAnular = $db->fetchAll('SELECT cantidad_restante FROM lotes WHERE id_producto = ? ORDER BY fecha_vencimiento, id_lote', [$idProductoFefo]);
-$auditoriasAntesAnular = pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'anular'");
-$db->getConnection()->query("CREATE TRIGGER piloto_falla_anulacion BEFORE INSERT ON auditoria FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo sintético de auditoría'");
+$auditoriasAntesAnular = pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'ANULAR'");
+$db->getConnection()->query("CREATE TRIGGER piloto_falla_anulacion BEFORE INSERT ON logs_auditoria FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Fallo sintético de auditoría'");
 try {
     $resultadoAnulacionRollback = (new Salida())->anular($idSalidaFefo);
 } finally {
@@ -586,7 +586,7 @@ pilotoAfirmar($db->fetchOne('SELECT status FROM salidas WHERE id_salida = ?', [$
 pilotoAfirmar($db->fetchOne('SELECT status FROM movimientos WHERE id_referencia = ? AND tipo_referencia = \'venta\'', [$idSalidaFefo])['status'] === 'Activo', 'El rollback dejó anulado el movimiento.');
 pilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoFefo])['stock_actual'] === $stockAntesAnular, 'El rollback de anulación alteró el stock.');
 pilotoAfirmar($db->fetchAll('SELECT cantidad_restante FROM lotes WHERE id_producto = ? ORDER BY fecha_vencimiento, id_lote', [$idProductoFefo]) === $lotesAntesAnular, 'El rollback de anulación alteró los lotes.');
-pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'anular'") === $auditoriasAntesAnular, 'El rollback dejó una auditoría de anulación.');
+pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'ANULAR'") === $auditoriasAntesAnular, 'El rollback dejó una auditoría de anulación.');
 echo "OK rollback completo de anulación ante fallo de auditoría\n";
 
 $resultadosAnulacion = pilotoEjecutarConcurrencia('anular', $idSalidaFefo);
@@ -599,7 +599,7 @@ pilotoAfirmar($db->fetchOne('SELECT status FROM movimientos WHERE id_referencia 
 pilotoAfirmar((int)$db->fetchOne('SELECT stock_actual FROM productos WHERE id_producto = ?', [$idProductoFefo])['stock_actual'] === $stockAntesAnular + 4, 'La carrera de anulaciones restituyó stock más de una vez.');
 $lotesDespuesAnular = $db->fetchAll('SELECT cantidad_restante FROM lotes WHERE id_producto = ? ORDER BY fecha_vencimiento, id_lote', [$idProductoFefo]);
 pilotoAfirmar(array_map(static fn(array $lote): int => (int)$lote['cantidad_restante'], $lotesDespuesAnular) === [2, 3, 4], 'La carrera de anulaciones restituyó mal los lotes.');
-pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'anular'") === $auditoriasAntesAnular + 1, 'La carrera generó auditorías de anulación duplicadas.');
+pilotoAfirmar(pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'ANULAR'") === $auditoriasAntesAnular + 1, 'La carrera generó auditorías de anulación duplicadas.');
 echo "OK anulación concurrente idempotente: stock, lotes, movimiento y auditoría\n";
 
 $salidaParaPermiso = $db->fetchOne(
@@ -651,7 +651,7 @@ $snapshotDuplicado = static function () use ($db, $idProductoDuplicado): array {
              JOIN movimientos m ON m.id_movimiento = dm.id_movimiento
              WHERE m.tipo_referencia = 'venta'"
         ),
-        'auditoria' => pilotoContar($db, "SELECT COUNT(*) AS total FROM auditoria WHERE accion = 'crear'"),
+        'auditoria' => pilotoContar($db, "SELECT COUNT(*) AS total FROM logs_auditoria WHERE accion = 'CREAR'"),
         'contador_ctrl' => (int)$db->fetchOne(
             "SELECT ultimo_numero FROM sku_contadores WHERE sku_prefix = 'CTRL'"
         )['ultimo_numero'],
