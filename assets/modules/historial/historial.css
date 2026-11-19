@@ -236,13 +236,14 @@
 
 .historial-tabla th.historial-th-total {
     padding-left: 10px;
-    padding-right: 20px;
+    padding-right: 24px;
     text-align: right;
 }
 
 .historial-tabla th.historial-accion {
-    padding-left: 2px;
-    padding-right: 2px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-left: 1px solid rgba(255, 255, 255, .16);
     font-size: .78rem;
     text-align: center;
 }
@@ -420,7 +421,7 @@
 /* Total: cifra tabular a la derecha, sin !important (gana por especificidad). */
 .historial-tabla td.historial-total {
     padding-left: 10px;
-    padding-right: 20px;
+    padding-right: 24px;
     font-size: 1.05rem;
     font-weight: 700;
     text-align: right;
@@ -431,6 +432,7 @@
 /* Acciones: botón compacto de detalle. */
 .historial-tabla td.historial-accion-cell {
     padding: 8px;
+    border-left: 1px solid var(--jv-border);
     vertical-align: middle;
     text-align: center;
 }
