@@ -50,6 +50,9 @@ switch ($error_get) {
     case 'sesion_expirada':
         $error = 'SESIÓN EXPIRADA POR INACTIVIDAD (30 MIN). VUELVE A INICIAR SESIÓN.';
         break;
+    case 'restaurado':
+        $error = 'BASE DE DATOS RESTAURADA. INICIA SESIÓN CON UNA CUENTA DEL RESPALDO.';
+        break;
 }
 
 $sistema_vacio = ($db->fetchOne("SELECT COUNT(*) as total FROM usuarios")['total'] == 0);

@@ -1,0 +1,61 @@
+/* ==========================================
+   Backup y restauración — estilos del módulo
+   ========================================== */
+
+.pagina-backup .backup-header-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #0f766e, #0f1a2e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    box-shadow: 0 0 30px rgba(15, 118, 110, 0.28);
+}
+
+.pagina-backup .backup-card {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(15, 26, 46, 0.08);
+}
+
+.pagina-backup .backup-card .card-header {
+    background: #f8fafc;
+    border-bottom: 1px solid rgba(15, 26, 46, 0.08);
+    padding: 1rem 1.35rem;
+}
+
+.pagina-backup .backup-card .card-header i {
+    color: #0f766e;
+    font-size: 1.15rem;
+}
+
+.pagina-backup .backup-card .card-body {
+    padding: 1.35rem;
+}
+
+.pagina-backup .backup-aviso {
+    border-left: 4px solid #dc3545;
+    font-size: 0.92rem;
+}
+
+.pagina-backup .backup-meta {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.pagina-backup .form-text {
+    font-size: 0.82rem;
+}
+
+@media (max-width: 575.98px) {
+    .pagina-backup .backup-header-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.35rem;
+    }
+}

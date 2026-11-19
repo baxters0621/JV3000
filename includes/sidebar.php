@@ -59,6 +59,7 @@ $es_op_ventas = $id_rol === 3;
         $ver_ventas     = $es_admin || $es_op_ventas;
         $ver_estadisticas = $es_admin || $es_op_ventas;
         $ver_usuarios   = $es_admin;
+        $ver_backup     = $es_admin;
         $ver_historial  = $es_admin || $es_op_carga || $es_op_ventas;
 
         // Detecta rama activa para auto-expandir
@@ -66,7 +67,7 @@ $es_op_ventas = $id_rol === 3;
         $rama_compras_activa = $mvc_activa('compras');
         $rama_salidas_activa = $mvc_activa('salidas');
         $rama_analisis_activo = $mvc_activa('estadisticas') || $mvc_activa('reporte_inventario');
-        $rama_admin_activo = $mvc_activa('historial') || $mvc_activa('usuarios');
+        $rama_admin_activo = $mvc_activa('historial') || $mvc_activa('usuarios') || $mvc_activa('backup');
         ?>
 
         <!-- ═══ INVENTARIO (consulta: los tres roles) ═══ -->
@@ -173,6 +174,14 @@ $es_op_ventas = $id_rol === 3;
                     <a href="<?php echo $prefijo; ?>index.php?url=usuarios" class="nav-link">
                         <i class="bi bi-people"></i>
                         <span>Colaboradores</span>
+                    </a>
+                </div>
+                <?php endif; ?>
+                <?php if ($ver_backup): ?>
+                <div class="nav-item <?php echo $mvc_activa('backup') ? 'active' : ''; ?>">
+                    <a href="<?php echo $prefijo; ?>index.php?url=backup" class="nav-link">
+                        <i class="bi bi-database-lock"></i>
+                        <span>Backup y Restauración</span>
                     </a>
                 </div>
                 <?php endif; ?>
