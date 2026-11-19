@@ -143,7 +143,7 @@ class DashboardController extends Controller
         ], $compras);
 
         // Productos críticos (stock <= mínimo)
-        $crit = $db->fetchAll("SELECT nombre_producto, stock_actual, stock_minimo FROM productos WHERE (stock_actual <= stock_minimo OR stock_actual = 0) AND status = 'Activo' ORDER BY stock_actual ASC LIMIT 5");
+        $crit = $db->fetchAll("SELECT nombre_producto, stock_actual, stock_minimo FROM productos WHERE (status = 'Activo' OR stock_actual <= 0) AND stock_actual <= stock_minimo ORDER BY stock_actual ASC LIMIT 5");
         $datos['tabla_criticos'] = array_map(fn($r) => [
             'producto' => $r['nombre_producto'],
             'stock' => (int)$r['stock_actual'],

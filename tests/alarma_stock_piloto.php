@@ -101,6 +101,8 @@ $afirmar(
         && strpos($dashboardIndex, 'JV_CONFIG.csrfToken') < strpos($dashboardIndex, 'alarma_stock.js'),
     'El dashboard debe declarar el CSRF antes de cargar alarma_stock.js.'
 );
+$afirmar(str_contains($dashboardIndex, "(status = 'Activo' OR stock_actual <= 0)"), 'El panel debe incluir agotados inactivos, igual que la campanita.');
+$afirmar(str_contains($dashboardCtrl, "(status = 'Activo' OR stock_actual <= 0)"), 'El controlador del dashboard debe usar el mismo criterio de agotados.');
 
 // Reposición en camino (compra registrada y pendiente de recepción)
 $afirmar(str_contains($helpers, "'en_camino'"), 'Las alertas deben informar las unidades en camino.');
