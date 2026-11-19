@@ -580,9 +580,12 @@ class Estadistica extends Model
     /**
      * Productos en o por debajo del stock mínimo, con cobertura y sugerido.
      *
-     * La cobertura en días compara el stock actual con el ritmo de venta del
-     * periodo filtrado; si el producto no vendió, la cobertura queda en null.
-     * El sugerido repone hasta el doble del stock mínimo.
+     * Incluye los agotados (stock 0) aunque su estado almacenado sea Inactivo,
+     * porque una venta los desactiva automáticamente y deben seguir visibles
+     * en el control de existencias. La cobertura en días compara el stock
+     * actual con el ritmo de venta del periodo filtrado; si el producto no
+     * vendió, la cobertura queda en null. El sugerido repone hasta el doble
+     * del stock mínimo.
      *
      * @param array $ventana       Ventana calculada con ventana().
      * @param int   $id_categoria  Categoría del filtro global (0 = todas).
@@ -604,7 +607,7 @@ class Estadistica extends Model
         $conteo = $this->db->fetchOne("
             SELECT COUNT(*) AS total
             FROM productos p
-            WHERE p.status = 'Activo'
+            WHERE (p.status = 'Activo' OR p.stock_actual <= 0)
               AND p.stock_actual <= p.stock_minimo
               {$filtro}
         ", $params);
@@ -641,7 +644,7 @@ class Estadistica extends Model
                   AND UPPER(TRIM(tm.nombre)) = 'VENTA'
                 GROUP BY ds.id_producto
             ) v ON v.id_producto = p.id_producto
-            WHERE p.status = 'Activo'
+            WHERE (p.status = 'Activo' OR p.stock_actual <= 0)
               AND p.stock_actual <= p.stock_minimo
               {$filtro}
             ORDER BY faltante DESC, p.stock_actual ASC, p.nombre_producto ASC

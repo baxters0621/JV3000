@@ -3,7 +3,7 @@
 // ==========================================
 // MODELO: Reporte de Inventario
 // ==========================================
-// Productos activos con stock, valorizado a
+// Productos activos y agotados, valorizados a
 // costo y a venta, último proveedor (directo o
 // por compras) y capacidad efectiva.
 // Sin HTML: solo datos.
@@ -11,16 +11,18 @@
 /**
  * ReporteInventario: modelo del reporte imprimible de inventario.
  *
- * Devuelve los productos activos valorizados a costo y a venta, con el
- * último proveedor (directo o por compras) y la capacidad efectiva.
+ * Devuelve los productos activos y agotados valorizados a costo y a venta,
+ * con el último proveedor (directo o por compras) y la capacidad efectiva.
+ * Los agotados se incluyen aunque su estado sea Inactivo: una venta los
+ * desactiva al llegar a stock 0 y deben seguir apareciendo en el reporte.
  * Sin HTML: solo datos para la vista imprimible.
  */
 class ReporteInventario extends Model
 {
     /**
-     * Productos activos con valorización, proveedor y capacidad.
+     * Productos activos y agotados con valorización, proveedor y capacidad.
      *
-     * @return array Productos activos enriquecidos para el reporte.
+     * @return array Productos activos y agotados enriquecidos para el reporte.
      */
     public function productosActivos(): array
     {
@@ -32,7 +34,7 @@ class ReporteInventario extends Model
                 (p.stock_actual * p.precio_venta) as valor_venta
             FROM productos p
             LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-            WHERE p.status = 'Activo'
+            WHERE (p.status = 'Activo' OR p.stock_actual <= 0)
             ORDER BY p.nombre_producto ASC
         ");
     }
