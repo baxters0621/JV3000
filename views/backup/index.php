@@ -13,7 +13,7 @@
             </div>
             <div>
                 <h1 class="module-title">BACKUP Y RESTAURACIÓN</h1>
-                <p class="module-subtitle">Respaldo y recuperación de la base de datos</p>
+                <p class="module-subtitle">Gestión de copias de seguridad del sistema</p>
             </div>
         </div>
 
@@ -29,9 +29,9 @@
                 <div class="card backup-card h-100">
                     <div class="card-header d-flex align-items-center gap-2">
                         <i class="bi bi-download" aria-hidden="true"></i>
-                        <h2 class="h5 mb-0">Exportar</h2>
+                        <h2 class="h4 fw-bold mb-0">Exportar</h2>
                     </div>
-                    <div class="card-body d-flex flex-column">
+                    <div class="card-body d-flex flex-column p-4">
                         <p class="mb-2">
                             Descarga un archivo <code>.sql</code> con la estructura y los datos
                             de las <strong><?php echo (int)$total_tablas; ?></strong> tablas del sistema.
@@ -55,9 +55,9 @@
                 <div class="card backup-card h-100">
                     <div class="card-header d-flex align-items-center gap-2">
                         <i class="bi bi-upload" aria-hidden="true"></i>
-                        <h2 class="h5 mb-0">Importar</h2>
+                        <h2 class="h4 fw-bold mb-0">Importar</h2>
                     </div>
-                    <div class="card-body d-flex flex-column">
+                    <div class="card-body d-flex flex-column p-4">
                         <div class="alert alert-danger backup-aviso" role="alert">
                             <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>
                             Al restaurar, los datos actuales serán reemplazados. Asegúrese de tener un backup previo.

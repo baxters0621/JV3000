@@ -5,6 +5,7 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Backup / Interfaz (2026-11-18): la pantalla usa fondo sólido #f8f9fa (override `body:has(.pagina-backup)` en backup.css), tarjetas blancas con borde #dee2e6, títulos h4 y el subtítulo «Gestión de copias de seguridad del sistema». No cambia lógica, permisos ni el flujo de exportación/restauración.
 - Backup / Restauración (2026-11-18): módulo solo admin en `?url=backup`. Exporta en PHP puro (24 tablas, estructura + datos) y restaura .sql con validación completa (extensión, MIME, 10 MB, sin etiquetas PHP, lista blanca), respaldo previo en `C:\xampp\jv3000_backups` y transacción solo para los INSERT: el DDL no se revierte en MariaDB, así que el respaldo es la recuperación real. `backups/.htaccess` bloquea la descarga de los .sql.
 - Inventario / Agotados (2026-11-18): `inventarioCritico()` y `ReporteInventario::productosActivos()` usan `(status = 'Activo' OR stock_actual <= 0)` para que un producto vendido hasta 0 (que queda «Inactivo») siga en «Comprar ya» y en el reporte imprimible. El Dashboard conserva su filtro por `Activo`; estas dos consultas no excluyen los descartados.
 - Documentación / Defensa (2026-11-14): `docs/MANUAL_DEFENSA_TECNICA.md` reúne inventario, 226 fichas con decisión de diseño, 10 decisiones de arquitectura, flujos, permisos y 20 preguntas de jurado; verificado 226/226 contra Reflection, sin funciones inventadas.
