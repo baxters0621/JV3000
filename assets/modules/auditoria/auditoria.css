@@ -178,6 +178,23 @@ body:has(.pagina-auditoria) {
 
 .auditoria-select {
     min-height: 42px;
+    padding: 0.5rem 0.75rem;
+    background-color: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #111827;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auditoria-select:hover {
+    border-color: #94a3b8;
+}
+
+.auditoria-select:focus {
+    outline: none;
+    background-color: #fff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
 /* Los date inputs del sistema usan input-jv; form-control aporta la base

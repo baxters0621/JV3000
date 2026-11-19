@@ -15,6 +15,29 @@
 class AuditoriaController extends Controller
 {
     /**
+     * Traducciones visibles de las acciones técnicas.
+     *
+     * El valor enviado al SQL sigue siendo la clave; solo cambia el texto
+     * que ve el administrador en el filtro.
+     *
+     * @var array<string, string>
+     */
+    private const ETIQUETAS_ACCION = [
+        'LOGIN' => 'Inicio de sesión',
+        'LOGOUT' => 'Cierre de sesión',
+        'CREAR' => 'Creación',
+        'EDITAR' => 'Edición',
+        'ANULAR' => 'Anulación',
+        'BACKUP' => 'Copia de seguridad',
+        'DESACTIVADO' => 'Desactivado (Manual)',
+        'DESACTIVADO_POR_STOCK' => 'Desactivado (Sin stock)',
+        'REACTIVADO' => 'Reactivado',
+        'DESCARTADO' => 'Descartado',
+        'TASA BCV MANUAL' => 'Tasa BCV (Manual)',
+        'TASA BCV MANUAL RETIRADA' => 'Tasa BCV (Retirada)',
+    ];
+
+    /**
      * Lista paginada y filtrada de eventos de auditoría.
      *
      * @return void
@@ -58,6 +81,11 @@ class AuditoriaController extends Controller
             static fn(string $valor): bool => $valor !== ''
         ));
 
+        $etiquetas_acciones = [];
+        foreach ($acciones as $accion) {
+            $etiquetas_acciones[$accion] = $this->etiquetaAccion($accion);
+        }
+
         $this->view('auditoria/index', [
             'titulo' => 'Registro de Auditoría | JV3000 C.A.',
             'wrapper_class' => 'pagina-auditoria',
@@ -66,6 +94,7 @@ class AuditoriaController extends Controller
             'resumen' => $modelo->resumen(),
             'modulos_disponibles' => $modulos,
             'acciones_disponibles' => $acciones,
+            'acciones_etiquetas' => $etiquetas_acciones,
             'filtro_buscar' => $filtros['buscar'],
             'filtro_modulo' => $filtros['modulo'],
             'filtro_accion' => $filtros['accion'],
@@ -77,6 +106,29 @@ class AuditoriaController extends Controller
             'registros' => $registros,
             'query_string' => $query_string,
         ]);
+    }
+
+    /**
+     * Devuelve la etiqueta amigable de una acción técnica.
+     *
+     * Las acciones conocidas usan el mapa; las desconocidas se limpian
+     * cambiando guiones bajos por espacios y aplicando mayúscula inicial.
+     *
+     * @param string $accion Valor técnico guardado en logs_auditoria.
+     * @return string Texto visible para el filtro.
+     */
+    private function etiquetaAccion(string $accion): string
+    {
+        $accion = trim($accion);
+        if (isset(self::ETIQUETAS_ACCION[$accion])) {
+            return self::ETIQUETAS_ACCION[$accion];
+        }
+        $texto = str_replace('_', ' ', mb_strtolower($accion, 'UTF-8'));
+        if ($texto === '') {
+            return '';
+        }
+        return mb_strtoupper(mb_substr($texto, 0, 1, 'UTF-8'), 'UTF-8')
+            . mb_substr($texto, 1, null, 'UTF-8');
     }
 
     /**

@@ -4,6 +4,7 @@
 /** @var array{total: int, hoy: int, ultimo_login: array|null} $resumen */
 /** @var array<int, string> $modulos_disponibles */
 /** @var array<int, string> $acciones_disponibles */
+/** @var array<string, string> $acciones_etiquetas */
 /** @var string $filtro_buscar */
 /** @var string $filtro_modulo */
 /** @var string $filtro_accion */
@@ -123,7 +124,7 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                 <option value="">Todas las acciones</option>
                 <?php foreach ($acciones_disponibles as $accion): ?>
                     <option value="<?php echo htmlspecialchars($accion, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $filtro_accion === $accion ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($accion, ENT_QUOTES, 'UTF-8'); ?>
+                        <?php echo htmlspecialchars($acciones_etiquetas[$accion] ?? $accion, ENT_QUOTES, 'UTF-8'); ?>
                     </option>
                 <?php endforeach; ?>
             </select>

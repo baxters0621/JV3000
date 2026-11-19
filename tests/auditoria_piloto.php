@@ -90,6 +90,11 @@ afirmarAuditoria(strpos($controlador, "'accion'") !== false, 'Falta el filtro po
 afirmarAuditoria(strpos($controlador, "'fecha_desde'") !== false, 'Falta el filtro de fecha desde.');
 afirmarAuditoria(strpos($controlador, "'fecha_hasta'") !== false, 'Falta el filtro de fecha hasta.');
 afirmarAuditoria(strpos($controlador, 'private function parametroFecha(') !== false, 'Falta la validación estricta de fechas.');
+afirmarAuditoria(strpos($controlador, "'LOGIN' => 'Inicio de sesión'") !== false, 'Falta la etiqueta amigable de LOGIN.');
+afirmarAuditoria(strpos($controlador, "'DESACTIVADO_POR_STOCK' => 'Desactivado (Sin stock)'") !== false, 'Falta la etiqueta de desactivado por stock.');
+afirmarAuditoria(strpos($controlador, "'TASA BCV MANUAL RETIRADA' => 'Tasa BCV (Retirada)'") !== false, 'Falta la etiqueta de tasa BCV retirada.');
+afirmarAuditoria(strpos($controlador, 'private function etiquetaAccion(') !== false, 'Falta el fallback de etiquetas de acción.');
+afirmarAuditoria(strpos($controlador, "'acciones_etiquetas' => \$etiquetas_acciones") !== false, 'El controlador debe pasar las etiquetas a la vista.');
 
 // Vista y estilos
 afirmarAuditoria(strpos($vista, 'Registro de Auditoría') !== false, 'Falta el título de la vista.');
@@ -107,6 +112,11 @@ afirmarAuditoria(strpos($vista, 'auditoria-paginacion') !== false, 'Falta la pag
 afirmarAuditoria(strpos($vista, 'name="fecha_desde"') !== false, 'Falta el input Desde.');
 afirmarAuditoria(strpos($vista, 'name="fecha_hasta"') !== false, 'Falta el input Hasta.');
 afirmarAuditoria(strpos($vista, 'type="date"') !== false, 'Los filtros de fecha deben ser type=date.');
+afirmarAuditoria(strpos($vista, '$acciones_etiquetas[$accion] ?? $accion') !== false, 'El filtro debe mostrar la etiqueta amigable.');
+afirmarAuditoria(strpos($vista, 'value="<?php echo htmlspecialchars($accion') !== false, 'El value del filtro debe seguir siendo técnico.');
+afirmarAuditoria(strpos($css, '#cbd5e1') !== false, 'El select debe tener borde gris claro.');
+afirmarAuditoria(strpos($css, '#3b82f6') !== false, 'El foco del select debe ser azul, no naranja.');
+afirmarAuditoria(strpos($css, '.auditoria-select:focus') !== false, 'Falta la regla de foco del select.');
 afirmarAuditoria(strpos($vista, 'btn btn-dark auditoria-btn-filtrar') !== false, 'El botón Filtrar debe ser oscuro, no naranja.');
 afirmarAuditoria(strpos($css, 'auditoria-btn-filtrar') !== false, 'Falta el estilo del botón Filtrar.');
 afirmarAuditoria(strpos($css, 'auditoria-fecha') !== false, 'Falta el estilo de los inputs de fecha.');
