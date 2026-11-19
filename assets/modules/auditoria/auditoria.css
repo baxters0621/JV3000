@@ -362,18 +362,33 @@ body:has(.pagina-auditoria) {
 
 .auditoria-fecha-cell {
     white-space: nowrap;
+    vertical-align: middle;
+    padding-left: 1.15rem !important;
+    padding-right: 1rem !important;
+    text-align: left;
+}
+
+.auditoria-fecha-cell time {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    line-height: 1.25;
+    text-align: left;
 }
 
 .auditoria-fecha {
     display: block;
     font-weight: 600;
     color: #212529;
+    line-height: 1.25;
 }
 
 .auditoria-hora {
     display: block;
     font-size: 0.78rem;
     color: #6c757d;
+    line-height: 1.2;
 }
 
 .auditoria-usuario {
