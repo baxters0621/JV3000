@@ -470,8 +470,25 @@ if (!empty($tasa_bcv_fecha)) {
                                     <small id="nroFacturaAyuda" class="comp-hint" role="status" aria-live="polite">Selecciona un proveedor para generar el n&uacute;mero de factura.</small>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="comp-label">N&uacute;mero de Control <span class="text-danger">*</span></label>
-                                    <input type="text" name="nro_control" aria-label="Numero de control" class="input-jv comp-input" value="" placeholder="00-00000000" oninput="var v=this.value.replace(/[^0-9]/g,'');if(v.length>10)v=v.slice(0,10);if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);this.value=v" maxlength="11" required>
+                                    <div class="d-flex align-items-center justify-content-between gap-2">
+                                        <label class="comp-label mb-0" for="nroControl">N&uacute;mero de Control <span class="text-danger">*</span></label>
+                                        <?php if (Security::esAdmin()): ?>
+                                            <button type="button" id="btnEditarControl" class="comp-editar-factura" aria-controls="nroControl" aria-pressed="false">Editar n&uacute;mero</button>
+                                        <?php endif; ?>
+                                    </div>
+                                    <input type="text" inputmode="numeric" name="nro_control" id="nroControl" aria-label="Numero de control" aria-describedby="nroControlAyuda" class="input-jv comp-input" value="<?php echo htmlspecialchars($control_siguiente ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="00-00000000" oninput="var raw=this.value;var v=raw.replace(/[^0-9]/g,'');if(raw.indexOf('-')!==-1&&v.indexOf('00')===0)v=v.slice(2);this.value='00-'+v.slice(0,8)" maxlength="11" readonly aria-readonly="true" required>
+                                    <small id="nroControlAyuda" class="comp-hint" role="status" aria-live="polite">
+                                        <?php if (!empty($control_siguiente)): ?>
+                                            Control generado: <?php echo htmlspecialchars($control_siguiente, ENT_QUOTES, 'UTF-8'); ?>.
+                                            <?php if (!empty($control_ultimo)): ?>
+                                                &Uacute;ltimo registrado: <?php echo htmlspecialchars($control_ultimo, ENT_QUOTES, 'UTF-8'); ?>.
+                                            <?php else: ?>
+                                                Sin controles previos.
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            No hay m&aacute;s n&uacute;meros de control disponibles.
+                                        <?php endif; ?>
+                                    </small>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="comp-label">Fecha de Compra</label>

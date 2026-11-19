@@ -340,6 +340,44 @@ class Compra extends Model
     }
 
     /**
+     * Obtiene el último número de control y el siguiente consecutivo global.
+     *
+     * El número de control es fiscal y no depende del proveedor: se toma el
+     * mayor sufijo numérico de los registros con formato 00-########, incluidas
+     * las compras anuladas (un número fiscal no debe reutilizarse). La consulta
+     * se ejecuta con sentencia preparada a través de la capa Database del
+     * proyecto (mysqli), sin interpolar valores en el SQL. Si no hay registros,
+     * el consecutivo inicial es 00-00000001.
+     *
+     * @return array{ultimo:?string,siguiente:?string}
+     */
+    public function estadoControl(): array
+    {
+        $resultado = [
+            'ultimo'    => null,
+            'siguiente' => null,
+        ];
+
+        $fila = $this->db->fetchOne(
+            "SELECT MAX(CAST(SUBSTRING(nro_control, 4) AS UNSIGNED)) AS ultimo
+             FROM compras
+             WHERE nro_control REGEXP '^00-[0-9]{8}$'"
+        );
+
+        if ($fila && $fila['ultimo'] !== null) {
+            $maximo = (int)$fila['ultimo'];
+            $resultado['ultimo'] = '00-' . str_pad((string)$maximo, 8, '0', STR_PAD_LEFT);
+            if ($maximo < 99999999) {
+                $resultado['siguiente'] = '00-' . str_pad((string)($maximo + 1), 8, '0', STR_PAD_LEFT);
+            }
+        } else {
+            $resultado['siguiente'] = '00-00000001';
+        }
+
+        return $resultado;
+    }
+
+    /**
      * Registra una compra (factura del proveedor + comprobante de pago).
      *
      * Valida proveedor (activo, RIF válido), número de factura único por
@@ -394,7 +432,7 @@ class Compra extends Model
         if ($nro_control === '') {
             return ['ok' => false, 'mensaje' => 'EL NÚMERO DE CONTROL ES OBLIGATORIO.'];
         }
-        if (!preg_match('/^\d{2}-\d{8}$/', $nro_control)) {
+        if (!preg_match('/^00-\d{8}$/', $nro_control)) {
             return ['ok' => false, 'mensaje' => 'NRO. CONTROL INVÁLIDO. Formato: 00-00000000'];
         }
 

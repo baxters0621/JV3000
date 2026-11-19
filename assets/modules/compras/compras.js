@@ -649,6 +649,163 @@
         }
 
         // ==========================================
+        // NÚMERO DE CONTROL FISCAL
+        // ==========================================
+        // El control se genera solo al abrir el formulario, con el siguiente
+        // consecutivo global. El botón "Editar número" permite cambiarlo
+        // manualmente y, al bloquearlo de nuevo, vuelve a pedir el consecutivo.
+        const nroControlInput = document.getElementById('nroControl');
+        const nroControlAyuda = document.getElementById('nroControlAyuda');
+        let controlSecuencia = 0;
+
+        // URL del endpoint de solo lectura que devuelve el siguiente control.
+        function urlEstadoControl() {
+            return (window.JV_BASE || '') + 'index.php?url=compras/control_estado';
+        }
+
+        // Escribe la ayuda del control sin alterar el borde del campo.
+        function aplicarAyudaControl(texto, tono) {
+            if (!nroControlAyuda) return;
+            nroControlAyuda.textContent = texto;
+            nroControlAyuda.classList.remove('text-danger', 'text-warning', 'text-success');
+            if (tono) nroControlAyuda.classList.add(tono);
+        }
+
+        // Aplica el estado visual y accesible del campo.
+        function marcarControl(estado) {
+            if (!nroControlInput) return;
+            nroControlInput.classList.remove('input-error', 'input-ok', 'input-warn');
+            nroControlInput.removeAttribute('aria-invalid');
+            if (estado === 'error') {
+                nroControlInput.classList.add('input-error');
+                nroControlInput.setAttribute('aria-invalid', 'true');
+            } else if (estado === 'ok') {
+                nroControlInput.classList.add('input-ok');
+            }
+        }
+
+        // Pide al servidor el siguiente consecutivo y lo deja fijo en el campo.
+        function generarControlAutomatico() {
+            if (!nroControlInput) return Promise.resolve(null);
+            const secuencia = ++controlSecuencia;
+            return jvFetchConTope(urlEstadoControl(), {
+                ms: 8000,
+                init: {
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store'
+                }
+            })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (secuencia !== controlSecuencia) return null;
+                    if (!data || !data.success) {
+                        throw new Error((data && data.message) || 'No se pudo generar el número de control.');
+                    }
+                    if (!data.siguiente) {
+                        nroControlInput.value = '';
+                        marcarControl('error');
+                        aplicarAyudaControl('No hay más números de control disponibles.', 'text-danger');
+                        return data;
+                    }
+                    nroControlInput.value = data.siguiente;
+                    nroControlInput.defaultValue = data.siguiente;
+                    marcarControl('ok');
+                    aplicarAyudaControl(
+                        'Control generado: ' + data.siguiente
+                            + (data.ultimo
+                                ? '. Último registrado: ' + data.ultimo + '.'
+                                : '. Sin controles previos.'),
+                        'text-success'
+                    );
+                    return data;
+                })
+                .catch(function() {
+                    if (secuencia !== controlSecuencia) return null;
+                    const valorPrevio = nroControlInput.value.trim();
+                    if (valorPrevio) {
+                        marcarControl('neutro');
+                        aplicarAyudaControl('No se pudo actualizar el control. Se mantiene ' + valorPrevio + '.', 'text-warning');
+                    } else {
+                        marcarControl('error');
+                        aplicarAyudaControl('No se pudo generar el número de control. Revisa tu conexión e inténtalo de nuevo.', 'text-warning');
+                    }
+                    return null;
+                });
+        }
+
+        // Conecta el campo, el botón de edición y la generación inicial.
+        function inicializarControlCompra() {
+            if (!nroControlInput) return;
+
+            const btnEditarControl = document.getElementById('btnEditarControl');
+            if (btnEditarControl) {
+                btnEditarControl.addEventListener('click', function() {
+                    const bloqueado = nroControlInput.hasAttribute('readonly');
+                    if (bloqueado) {
+                        Swal.fire({
+                            title: 'EDICIÓN MANUAL',
+                            text: 'Edita el número de control solo si el comprobante fiscal no coincide con la secuencia generada.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Editar',
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#DC2626',
+                            cancelButtonColor: '#6B7280',
+                            background: '#fff',
+                            color: '#212529',
+                            reverseButtons: true
+                        }).then(function(result) {
+                            if (!result.isConfirmed) return;
+                            nroControlInput.removeAttribute('readonly');
+                            nroControlInput.setAttribute('aria-readonly', 'false');
+                            btnEditarControl.textContent = 'Bloquear';
+                            btnEditarControl.setAttribute('aria-pressed', 'true');
+                            aplicarAyudaControl('Edición manual: mantén el formato 00-########.', null);
+                            nroControlInput.focus();
+                            nroControlInput.select();
+                        });
+                        return;
+                    }
+
+                    nroControlInput.setAttribute('readonly', 'readonly');
+                    nroControlInput.setAttribute('aria-readonly', 'true');
+                    btnEditarControl.textContent = 'Editar número';
+                    btnEditarControl.setAttribute('aria-pressed', 'false');
+                    generarControlAutomatico();
+                });
+            }
+
+            nroControlInput.addEventListener('input', function() {
+                marcarControl('neutro');
+                if (!nroControlInput.hasAttribute('readonly')) {
+                    aplicarAyudaControl('Edición manual: mantén el formato 00-########.', null);
+                }
+            });
+
+            // Si la vista no pudo generar un valor (o el borrador lo dejó
+            // vacío), se pide al abrir el formulario.
+            if (!nroControlInput.value.trim()) {
+                generarControlAutomatico();
+            }
+
+            // Al abrir el modal, refresca el consecutivo solo si el campo
+            // sigue con el valor inicial y bloqueado: un borrador o una
+            // edición manual del usuario se respetan.
+            const modalCompra = document.getElementById('modalCompra');
+            if (modalCompra) {
+                modalCompra.addEventListener('shown.bs.modal', function() {
+                    setTimeout(function() {
+                        if (!nroControlInput.hasAttribute('readonly')) return;
+                        if (nroControlInput.value.trim() !== nroControlInput.defaultValue.trim()) return;
+                        generarControlAutomatico();
+                    }, 0);
+                });
+            }
+        }
+
+        // ==========================================
         // VALIDACIÓN DEL FORMULARIO
         // ==========================================
         // Valida proveedor, factura, control fiscal y líneas del carrito;
@@ -691,7 +848,7 @@
                 errores.push('EL NÚMERO DE CONTROL ES OBLIGATORIO');
                 marcarError(ctrl);
                 if (!primerError) primerError = ctrl;
-            } else if (!/^\d{2}-\d{8}$/.test(ctrlVal)) {
+            } else if (!/^00-\d{8}$/.test(ctrlVal)) {
                 errores.push('NRO. CONTROL INVÁLIDO (00-00000000)');
                 marcarError(ctrl);
                 if (!primerError) primerError = ctrl;
@@ -1702,6 +1859,7 @@
             });
 
             inicializarVerificacionFactura();
+            inicializarControlCompra();
 
             // Sidebar (mainWrapper definido en sidebar.js)
             if (typeof mainWrapper !== 'undefined' && mainWrapper) {

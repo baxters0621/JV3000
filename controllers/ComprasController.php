@@ -273,6 +273,9 @@ class ComprasController extends Controller
         // Tasa oficial BCV: los montos se guardan en USD y solo se convierten al mostrarse.
         $tasa_bcv = jv_tasa_bcv();
 
+        // Consecutivo fiscal del número de control, independiente del proveedor.
+        $control_inicial = $modelo->estadoControl();
+
         $this->view('compras/index', [
             'titulo'              => 'Compras | JV3000 C.A.',
             'wrapper_class'       => 'pagina-compras',
@@ -300,6 +303,8 @@ class ComprasController extends Controller
             'tasa_bcv_manual'     => $tasa_bcv['manual'],
             'tasa_bcv_manual_guardada' => jv_tasa_bcv_manual(),
             'tasa_bcv_referencia' => jv_tasa_bcv_referencia(),
+            'control_siguiente'   => $control_inicial['siguiente'],
+            'control_ultimo'      => $control_inicial['ultimo'],
             'es_admin'            => Security::esAdmin(),
             'flash'               => $this->consumeFlash(),
             'csrf'                => Security::generateToken(),
@@ -379,6 +384,24 @@ class ComprasController extends Controller
         $id_proveedor = (int)($_GET['id_proveedor'] ?? 0);
 
         $estado = (new Compra())->estadoFactura($nro_factura, $id_proveedor);
+
+        $this->json(array_merge(['success' => true], $estado));
+    }
+
+    /**
+     * Devuelve en JSON el último número de control y el siguiente consecutivo.
+     *
+     * Endpoint de solo lectura usado al bloquear de nuevo el campo tras una
+     * edición manual. El consecutivo es global (no depende del proveedor) y
+     * exige permisos de carga.
+     *
+     * @return void
+     */
+    public function control_estado(): void
+    {
+        Security::verificarPermisoCarga();
+
+        $estado = (new Compra())->estadoControl();
 
         $this->json(array_merge(['success' => true], $estado));
     }
