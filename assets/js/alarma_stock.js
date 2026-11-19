@@ -31,6 +31,14 @@
         })[caracter]);
     }
 
+    // Token CSRF: usa la configuración global y, si la página es autónoma
+    // (por ejemplo la Nota de Entrega), cae al input oculto del formulario.
+    function tokenCsrf() {
+        if (config.csrfToken) return String(config.csrfToken);
+        const campo = document.querySelector('input[name="csrf_token"]');
+        return campo && campo.value ? String(campo.value) : '';
+    }
+
     function enlaceReponer(fila) {
         // Si la reposición ya está pedida pero sin recibir, el botón lleva
         // directo a la recepción de esa compra en lugar de a una nueva.
@@ -52,10 +60,12 @@
         const estilos = document.createElement('style');
         estilos.id = 'jv-alarma-estilos';
         estilos.textContent = `
-            .jv-alarma-popup { width: min(600px, 94vw); border-radius: 18px; }
-            .swal2-title { color: #0f172a !important; font-weight: 800; letter-spacing: -.3px; }
-            .swal2-icon.swal2-warning { border-color: #fecaca; color: #dc2626; animation: jvAlarmaPulso 2s ease-in-out infinite; }
-            .jv-alarma-intro { margin: 0 0 .7rem; font-size: .85rem; font-weight: 600; color: #94a3b8; }
+            .jv-alarma-popup { width: min(600px, 94vw); border-radius: 18px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+            .jv-alarma-popup .swal2-title { color: #0f172a !important; font-size: 1.55rem; font-weight: 750; letter-spacing: -.2px; }
+            .jv-alarma-popup .swal2-icon { width: 4.1rem; height: 4.1rem; margin: 1rem auto .8rem; border-width: 3px; }
+            .jv-alarma-popup .swal2-icon .swal2-icon-content { font-size: 2.35rem; }
+            .jv-alarma-popup .swal2-icon.swal2-warning { border-color: #fca5a5; color: #b91c1c; background: #fef2f2; }
+            .jv-alarma-intro { margin: 0 0 .7rem; font-size: .85rem; font-weight: 600; color: #64748b; }
             .jv-alarma-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .65rem; max-height: 46vh; overflow-y: auto; }
             .jv-alarma-item { display: flex; align-items: center; justify-content: space-between; gap: .85rem; padding: .85rem .95rem; background: #fff; border: 1px solid #eef2f7; border-radius: 14px; box-shadow: 0 1px 2px rgba(15,42,76,.06); text-align: left; }
             .jv-alarma-datos { position: relative; min-width: 0; padding-left: 2.9rem; }
@@ -69,14 +79,10 @@
             .jv-alarma-acciones .swal2-styled { margin: 0; font-size: .78rem; padding: .5rem .95rem; min-height: 0; box-shadow: none; border-radius: 999px; }
             .jv-alarma-acciones .jv-alarma-reponer { background: #0f2a4c; border: 1px solid #0f2a4c; color: #fff; font-weight: 750; text-decoration: none; transition: transform .16s ease, background-color .16s ease, box-shadow .16s ease; }
             .jv-alarma-acciones .jv-alarma-reponer:hover { background: #1e3a5f; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(15,42,76,.22); }
-            .jv-alarma-descartar { margin-left: auto; border: 0; background: transparent; padding: .2rem .1rem; font: inherit; font-size: .72rem; font-weight: 650; color: #94a3b8; text-decoration: none; cursor: pointer; white-space: nowrap; }
+            .jv-alarma-descartar { margin-left: auto; border: 0; background: transparent; padding: .2rem .1rem; font: inherit; font-size: .72rem; font-weight: 650; color: #64748b; text-decoration: none; cursor: pointer; white-space: nowrap; }
             .jv-alarma-descartar::before { content: "🗑"; margin-right: .25rem; font-size: .8rem; }
             .jv-alarma-descartar:hover { color: #b91c1c; text-decoration: underline; }
             .jv-alarma-error { display: block; margin-top: .35rem; font-size: .74rem; font-weight: 700; color: #b91c1c; }
-            @keyframes jvAlarmaPulso {
-                0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,38,38,.18); }
-                50% { transform: scale(1.04); box-shadow: 0 0 0 10px rgba(220,38,38,0); }
-            }
             @media (max-width: 576px) {
                 .jv-alarma-popup { width: 94vw; }
                 .jv-alarma-item { flex-direction: column; align-items: stretch; }
@@ -84,7 +90,6 @@
                 .jv-alarma-descartar { margin-left: 0; }
             }
             @media (prefers-reduced-motion: reduce) {
-                .swal2-icon.swal2-warning { animation: none; }
                 .jv-alarma-acciones .jv-alarma-reponer { transition: none; }
                 .jv-alarma-acciones .jv-alarma-reponer:hover { transform: none; }
             }
@@ -184,14 +189,25 @@
     }
 
     function descartarProducto(id) {
+        const csrf = tokenCsrf();
+        if (!csrf) {
+            errorDescarte = {
+                id: Number(id),
+                mensaje: 'No se pudo validar la seguridad. Recargue la página e intente de nuevo.'
+            };
+            reabrirAlarma();
+            return;
+        }
+
         const datos = new FormData();
         datos.append('id_producto', String(id));
-        if (config.csrfToken) datos.append('csrf_token', config.csrfToken);
+        datos.append('csrf_token', csrf);
 
         fetch(baseUrl() + 'index.php?url=productos/descartar', {
             method: 'POST',
             body: datos,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
         })
             .then(respuesta => respuesta.json())
             .then(respuesta => {
@@ -244,7 +260,7 @@
         inyectarEstilos();
         Swal.fire({
             icon: 'warning',
-            title: 'STOCK CRÍTICO',
+            title: 'Alerta de Inventario',
             html: html,
             allowOutsideClick: true,
             allowEscapeKey: true,

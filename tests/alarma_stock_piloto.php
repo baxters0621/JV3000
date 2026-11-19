@@ -76,10 +76,21 @@ $afirmar(str_contains($alarmaJs, 'productos/descartar'), 'El modal debe llamar a
 $afirmar(str_contains($alarmaJs, 'JVAlarmaStock'), 'El módulo debe exponerse globalmente.');
 $afirmar(str_contains($alarmaJs, 'swal2-styled') && str_contains($alarmaJs, 'jv-alarma-reponer'), 'El modal debe usar botones nativos de SweetAlert2.');
 $afirmar(str_contains($alarmaJs, 'ENTENDIDO'), 'El modal debe cerrar con ENTENDIDO.');
+$afirmar(str_contains($alarmaJs, 'Alerta de Inventario'), 'El título debe ser profesional y menos alarmista.');
+$afirmar(!str_contains($alarmaJs, 'jvAlarmaPulso'), 'El icono no debe tener pulso infinito.');
+$afirmar(str_contains($alarmaJs, 'input[name="csrf_token"]'), 'El JS debe tener fallback al input CSRF oculto.');
+$afirmar(str_contains($alarmaJs, 'tokenCsrf()'), 'El descarte debe usar el resolvedor de token CSRF.');
 
 // Integraciones
 $afirmar(str_contains($notaJs, 'JVAlarmaStock'), 'La nota de entrega debe mostrar la alarma al confirmar.');
 $afirmar(str_contains($notaVista, 'alarma_stock.js'), 'La nota debe cargar el script de la alarma.');
+$afirmar(str_contains($notaVista, 'JV_CONFIG.csrfToken'), 'La nota debe exponer el token CSRF a la alarma.');
+$afirmar(
+    strpos($notaVista, 'JV_CONFIG.csrfToken') !== false
+        && strpos($notaVista, 'alarma_stock.js') !== false
+        && strpos($notaVista, 'JV_CONFIG.csrfToken') < strpos($notaVista, 'alarma_stock.js'),
+    'El token CSRF debe declararse antes de cargar alarma_stock.js.'
+);
 $afirmar(str_contains($dashboardCtrl, 'alarma_stock.js'), 'El controlador del dashboard declara el script de la alarma.');
 $afirmar(str_contains($dashboardIndex, 'alarma_stock.js'), 'El panel del dashboard debe cargar el script de la alarma.');
 

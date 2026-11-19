@@ -92,7 +92,9 @@ class NotaEntregaController extends Controller
                 return;
             }
             $outgoingDetails = $modelo->obtenerDetalles($outgoingId);
-            $this->renderRaw('nota_entrega/nota', $modelo->armarNota($outgoingData, $outgoingDetails, ''));
+            $noteData = $modelo->armarNota($outgoingData, $outgoingDetails, '');
+            $noteData['csrf'] = Security::generateToken();
+            $this->renderRaw('nota_entrega/nota', $noteData);
             return;
         }
 

@@ -164,6 +164,14 @@
     <script src="<?php echo BASE_PATH; ?>assets/js/diseno.js<?php echo jv_asset_version('js/diseno.js'); ?>"></script>
     <script src="<?php echo BASE_PATH; ?>assets/js/tooltips.js?v=5"></script>
     <script src="<?php echo BASE_PATH; ?>assets/js/sweetalert2.all.min.js<?php echo jv_asset_version('js/sweetalert2.all.min.js'); ?>"></script>
+    <script>
+        // La Nota de Entrega se renderiza sin layout: expone el CSRF y la base
+        // para que la alarma de stock pueda descartar productos sin dar 403.
+        window.JV_CONFIG = window.JV_CONFIG || {};
+        window.JV_CONFIG.csrfToken = <?php echo json_encode((string)$csrf, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        window.JV_CONFIG.prefijo = <?php echo json_encode(BASE_PATH); ?>;
+        window.JV_BASE = <?php echo json_encode(BASE_PATH); ?>;
+    </script>
     <script src="<?php echo BASE_PATH; ?>assets/js/alarma_stock.js<?php echo jv_asset_version('js/alarma_stock.js'); ?>"></script>
     <script src="<?php echo BASE_PATH; ?>assets/modules/nota_entrega/nota_entrega.js?v=5"></script>
 </body>

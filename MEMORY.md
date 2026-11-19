@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Alarma de stock / Nota de Entrega (2026-11-19): la nota autónoma inyecta `JV_CONFIG.csrfToken` antes de `alarma_stock.js`; el JS usa fallback al input `csrf_token` y `credentials: same-origin`, por lo que «Ya no vender» ya no recibe 403. El modal se suavizó: sin pulso, icono 4.1rem, título «Alerta de Inventario», rosa pastel y tipografía system-ui; «Reponer» y el descarte siguen igual. `NotaEntregaController` también entrega token en reimpresiones.
+
 - Auditoría / Logs (2026-11-19): tabla `logs_auditoria` (FK a usuarios ON DELETE SET NULL) con 52 eventos históricos migrados; `auditoria` queda intacta como archivo de solo lectura. `Auditoria::registrar()` + `auditar()` son la escritura única; `registrarAuditoria()` infiere el módulo y mantiene las llamadas existentes. La pantalla `?url=auditoria` es solo admin (403), con 3 tarjetas, filtros, badges y 50 por página; Backup audita exportar/importar. El proyecto usa mysqli preparado, no PDO. No hay alta de producto en la UI ni `VentasController` (es `SalidasController`).
 
 - Compras / Número de control (2026-11-18): el control fiscal es global y automático, formato 00-########; estadoControl() usa el MAX del sufijo de compras con formato válido (incluye anuladas), sin historial 00-00000001 y null al agotar 99999999. La consulta va por Database::fetchOne (mysqli preparado; el proyecto no usa PDO). El campo inicia readonly con «Editar número» solo admin (Swal y bloqueo con regeneración); endpoint compras/control_estado (permiso de carga) y validación servidor/cliente ^00-\d{8}$.
