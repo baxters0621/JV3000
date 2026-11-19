@@ -180,15 +180,54 @@ body:has(.pagina-auditoria) {
     min-height: 42px;
 }
 
+/* Los date inputs del sistema usan input-jv; form-control aporta la base
+   Bootstrap y esta clase iguala altura, borde y radio con los selects. */
+.auditoria-fecha {
+    min-height: 42px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+}
+
 .auditoria-acciones-filtro {
     display: flex;
     gap: 0.5rem;
     justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .auditoria-acciones-filtro .btn,
 .auditoria-acciones-filtro .btn-jv-primary {
     white-space: nowrap;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+/* Botón principal del panel: navy corporativo, sin el naranja global. */
+.auditoria-filtros .auditoria-btn-filtrar {
+    background-color: #0f1a2e;
+    border-color: #0f1a2e;
+    color: #fff;
+    font-weight: 600;
+}
+
+.auditoria-filtros .auditoria-btn-filtrar:hover,
+.auditoria-filtros .auditoria-btn-filtrar:focus-visible {
+    background-color: #1e2d4a;
+    border-color: #1e2d4a;
+    color: #fff;
+}
+
+.auditoria-filtros .auditoria-btn-limpiar {
+    font-weight: 500;
+}
+
+@media (max-width: 1199.98px) {
+    .auditoria-acciones-filtro {
+        justify-content: flex-start;
+    }
 }
 
 /* Tabla */

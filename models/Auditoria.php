@@ -193,7 +193,7 @@ class Auditoria extends Model
     /**
      * Construye el WHERE de la pantalla de Auditoría con filtros preparados.
      *
-     * @param array $filtros Claves buscar, modulo y accion.
+     * @param array $filtros Claves buscar, modulo, accion, fecha_desde y fecha_hasta.
      * @return array{0: string, 1: array} Cláusula WHERE (vacía si no hay filtros) y parámetros.
      */
     private function whereEventos(array $filtros): array
@@ -218,6 +218,18 @@ class Auditoria extends Model
         if ($accion !== '') {
             $condiciones[] = 'a.accion = ?';
             $params[] = $accion;
+        }
+
+        $desde = trim((string)($filtros['fecha_desde'] ?? ''));
+        if ($desde !== '') {
+            $condiciones[] = 'a.fecha_hora >= ?';
+            $params[] = $desde . ' 00:00:00';
+        }
+
+        $hasta = trim((string)($filtros['fecha_hasta'] ?? ''));
+        if ($hasta !== '') {
+            $condiciones[] = 'a.fecha_hora <= ?';
+            $params[] = $hasta . ' 23:59:59';
         }
 
         return [
@@ -282,7 +294,7 @@ class Auditoria extends Model
     /**
      * Cuenta los eventos que coinciden con los filtros de la pantalla.
      *
-     * @param array $filtros Claves buscar, modulo y accion.
+     * @param array $filtros Claves buscar, modulo, accion, fecha_desde y fecha_hasta.
      * @return int Total de eventos filtrados.
      */
     public function totalEventosFiltrados(array $filtros): int
@@ -298,7 +310,7 @@ class Auditoria extends Model
     /**
      * Devuelve una página de eventos, del más reciente al más antiguo.
      *
-     * @param array $filtros Claves buscar, modulo y accion.
+     * @param array $filtros Claves buscar, modulo, accion, fecha_desde y fecha_hasta.
      * @param int   $pagina  Página solicitada, desde 1.
      * @param int   $limite  Eventos por página.
      * @return array<int, array<string, mixed>> Eventos de la página.

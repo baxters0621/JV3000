@@ -35,11 +35,15 @@ class AuditoriaController extends Controller
         $buscar = mb_substr($this->parametroTexto('buscar'), 0, 100, 'UTF-8');
         $modulo_recibido = $this->parametroTexto('modulo');
         $accion_recibida = $this->parametroTexto('accion');
+        $fecha_desde = $this->parametroFecha('fecha_desde');
+        $fecha_hasta = $this->parametroFecha('fecha_hasta');
 
         $filtros = [
             'buscar' => $buscar,
             'modulo' => in_array($modulo_recibido, $modulos, true) ? $modulo_recibido : '',
             'accion' => in_array($accion_recibida, $acciones, true) ? $accion_recibida : '',
+            'fecha_desde' => $fecha_desde,
+            'fecha_hasta' => $fecha_hasta,
         ];
 
         $page = max(1, (int)$this->parametroTexto('page'));
@@ -65,6 +69,8 @@ class AuditoriaController extends Controller
             'filtro_buscar' => $filtros['buscar'],
             'filtro_modulo' => $filtros['modulo'],
             'filtro_accion' => $filtros['accion'],
+            'filtro_fecha_desde' => $filtros['fecha_desde'],
+            'filtro_fecha_hasta' => $filtros['fecha_hasta'],
             'total_registros' => $total_registros,
             'total_paginas' => $total_paginas,
             'page' => $page,
@@ -83,5 +89,24 @@ class AuditoriaController extends Controller
     {
         $valor = $_GET[$nombre] ?? '';
         return is_string($valor) ? trim($valor) : '';
+    }
+
+    /**
+     * Lee un parámetro GET de fecha en formato YYYY-MM-DD.
+     *
+     * Rechaza valores vacíos, arreglos y fechas imposibles como 2026-02-31.
+     * La fecha se usa después como parámetro preparado en el modelo.
+     *
+     * @param string $nombre Nombre del parámetro.
+     * @return string Fecha válida o cadena vacía.
+     */
+    private function parametroFecha(string $nombre): string
+    {
+        $valor = $this->parametroTexto($nombre);
+        if ($valor === '') {
+            return '';
+        }
+        $fecha = DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
+        return ($fecha !== false && $fecha->format('Y-m-d') === $valor) ? $valor : '';
     }
 }

@@ -7,6 +7,8 @@
 /** @var string $filtro_buscar */
 /** @var string $filtro_modulo */
 /** @var string $filtro_accion */
+/** @var string $filtro_fecha_desde */
+/** @var string $filtro_fecha_hasta */
 /** @var int $total_registros */
 /** @var int $total_paginas */
 /** @var int $page */
@@ -88,7 +90,7 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
 <form class="auditoria-filtros card-jv p-4" method="GET" action="<?php echo APP_URL_BASE; ?>index.php">
     <input type="hidden" name="url" value="auditoria">
     <div class="row g-3 align-items-end">
-        <div class="col-12 col-lg-5">
+        <div class="col-12 col-md-6 col-xl-6">
             <label for="auditoriaBuscar">Buscar</label>
             <div class="auditoria-busqueda">
                 <i class="bi bi-search" aria-hidden="true"></i>
@@ -104,7 +106,7 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                 >
             </div>
         </div>
-        <div class="col-12 col-md-6 col-lg-2">
+        <div class="col-6 col-md-3 col-xl-3">
             <label for="auditoriaModulo">Módulo</label>
             <select id="auditoriaModulo" name="modulo" class="input-jv auditoria-select">
                 <option value="">Todos los módulos</option>
@@ -115,7 +117,7 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-12 col-md-6 col-lg-2">
+        <div class="col-6 col-md-3 col-xl-3">
             <label for="auditoriaAccion">Acción</label>
             <select id="auditoriaAccion" name="accion" class="input-jv auditoria-select">
                 <option value="">Todas las acciones</option>
@@ -126,12 +128,34 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-12 col-lg-3">
+        <div class="col-6 col-md-3 col-xl-3">
+            <label for="auditoriaFechaDesde">Desde</label>
+            <input
+                type="date"
+                id="auditoriaFechaDesde"
+                name="fecha_desde"
+                class="form-control input-jv auditoria-fecha"
+                value="<?php echo htmlspecialchars($filtro_fecha_desde, ENT_QUOTES, 'UTF-8'); ?>"
+                autocomplete="off"
+            >
+        </div>
+        <div class="col-6 col-md-3 col-xl-3">
+            <label for="auditoriaFechaHasta">Hasta</label>
+            <input
+                type="date"
+                id="auditoriaFechaHasta"
+                name="fecha_hasta"
+                class="form-control input-jv auditoria-fecha"
+                value="<?php echo htmlspecialchars($filtro_fecha_hasta, ENT_QUOTES, 'UTF-8'); ?>"
+                autocomplete="off"
+            >
+        </div>
+        <div class="col-12 col-md-6 col-xl-6">
             <div class="auditoria-acciones-filtro">
-                <button type="submit" class="btn-jv-primary">
+                <button type="submit" class="btn btn-dark auditoria-btn-filtrar">
                     <i class="bi bi-funnel" aria-hidden="true"></i> Filtrar
                 </button>
-                <a href="<?php echo APP_URL_BASE; ?>index.php?url=auditoria" class="btn btn-outline-secondary">Limpiar</a>
+                <a href="<?php echo APP_URL_BASE; ?>index.php?url=auditoria" class="btn btn-outline-secondary auditoria-btn-limpiar">Limpiar</a>
             </div>
         </div>
     </div>

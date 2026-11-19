@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Auditoría / Filtros (2026-11-19): el panel filtra por `fecha_desde` y `fecha_hasta` con validación estricta YYYY-MM-DD y parámetros preparados (`00:00:00` a `23:59:59`); la paginación conserva las fechas. La vista usa dos filas (Buscar/Módulo/Acción y Desde/Hasta/acciones), inputs `form-control input-jv auditoria-fecha` y botón navy `btn-dark` con icono; Limpiar vuelve a `?url=auditoria`. Sin cambios de esquema.
+
 - Compras / Número de control (2026-11-19): el campo ya no se queda vacío si el navegador restaura el formulario. Tiene `autocomplete="off"` y el JS recupera `defaultValue` al inicializar y al abrir el modal; si no hay valor, consulta `compras/control_estado`. Prueba real: vaciar el campo y abrir el modal lo devuelve a 00-00345679.
 
 - Historial / Tabla (2026-11-19): celdas con `py-4 px-3`, Registro al 16% con usuario/fecha en una línea, sin bordes verticales (solo `border-bottom` #e2e8f0), badges de Estado con `mb-1`, Total a la derecha y Acciones centradas. En móvil las celdas vuelven a `padding:0 !important` para conservar las tarjetas. Sin cambios de lógica.

@@ -67,6 +67,9 @@ afirmarAuditoria(strpos($modelo, 'mb_strtoupper(trim(') !== false, 'La acción d
 afirmarAuditoria(strpos($modelo, "FROM usuarios") !== false, 'El modelo debe validar el usuario contra usuarios.');
 afirmarAuditoria(strpos($modelo, 'function resumen(): array') !== false, 'Falta el resumen de tarjetas.');
 afirmarAuditoria(strpos($modelo, 'function listarEventos(') !== false, 'Falta el listado paginado.');
+afirmarAuditoria(strpos($modelo, 'a.fecha_hora >= ?') !== false, 'El modelo debe filtrar desde fecha_hora.');
+afirmarAuditoria(strpos($modelo, 'a.fecha_hora <= ?') !== false, 'El modelo debe filtrar hasta fecha_hora.');
+afirmarAuditoria(strpos($modelo, "' 00:00:00'") !== false && strpos($modelo, "' 23:59:59'") !== false, 'Las fechas deben cubrir el día completo.');
 afirmarAuditoria(strpos($modelo, 'function modulosDisponibles(): array') !== false, 'Faltan los módulos para el filtro.');
 afirmarAuditoria(strpos($modelo, 'function accionesDisponibles(): array') !== false, 'Faltan las acciones para el filtro.');
 
@@ -84,6 +87,9 @@ afirmarAuditoria(strpos($controlador, "\$limit = 50;") !== false, 'La paginació
 afirmarAuditoria(strpos($controlador, "'buscar'") !== false, 'Falta el filtro de búsqueda.');
 afirmarAuditoria(strpos($controlador, "'modulo'") !== false, 'Falta el filtro por módulo.');
 afirmarAuditoria(strpos($controlador, "'accion'") !== false, 'Falta el filtro por acción.');
+afirmarAuditoria(strpos($controlador, "'fecha_desde'") !== false, 'Falta el filtro de fecha desde.');
+afirmarAuditoria(strpos($controlador, "'fecha_hasta'") !== false, 'Falta el filtro de fecha hasta.');
+afirmarAuditoria(strpos($controlador, 'private function parametroFecha(') !== false, 'Falta la validación estricta de fechas.');
 
 // Vista y estilos
 afirmarAuditoria(strpos($vista, 'Registro de Auditoría') !== false, 'Falta el título de la vista.');
@@ -98,6 +104,12 @@ afirmarAuditoria(strpos($vista, "'EDITAR' => 'bg-warning text-dark'") !== false,
 afirmarAuditoria(strpos($vista, "'ANULAR', 'ELIMINAR' => 'bg-danger'") !== false, 'Badge incorrecto para ANULAR/ELIMINAR.');
 afirmarAuditoria(strpos($vista, "'BACKUP' => 'bg-primary'") !== false, 'Badge incorrecto para BACKUP.');
 afirmarAuditoria(strpos($vista, 'auditoria-paginacion') !== false, 'Falta la paginación.');
+afirmarAuditoria(strpos($vista, 'name="fecha_desde"') !== false, 'Falta el input Desde.');
+afirmarAuditoria(strpos($vista, 'name="fecha_hasta"') !== false, 'Falta el input Hasta.');
+afirmarAuditoria(strpos($vista, 'type="date"') !== false, 'Los filtros de fecha deben ser type=date.');
+afirmarAuditoria(strpos($vista, 'btn btn-dark auditoria-btn-filtrar') !== false, 'El botón Filtrar debe ser oscuro, no naranja.');
+afirmarAuditoria(strpos($css, 'auditoria-btn-filtrar') !== false, 'Falta el estilo del botón Filtrar.');
+afirmarAuditoria(strpos($css, 'auditoria-fecha') !== false, 'Falta el estilo de los inputs de fecha.');
 afirmarAuditoria(strpos($vista, 'btn-editar') === false && strpos($vista, 'btn-eliminar') === false, 'La auditoría debe ser de solo lectura.');
 afirmarAuditoria(strpos($css, '#f8f9fa') !== false, 'Falta el fondo corporativo.');
 afirmarAuditoria(strpos($css, '#1f2937') !== false, 'Falta la cabecera navy de la tabla.');
