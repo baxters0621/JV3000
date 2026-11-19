@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Auditoría / Fecha y módulos (2026-11-19): la columna Fecha/Hora quedó alineada (`.auditoria-filtros .auditoria-fecha`, padding 1rem, hora #475569). Los módulos muestran nombres amigables (BACKUP→Respaldos, etc.) tanto en el filtro como en la tabla; los valores por defecto son «Todos»/«Todas» y los values técnicos se conservan. Sin cambios de lógica ni esquema.
+
 - Auditoría / Fecha y hora (2026-11-19): la primera columna usa padding-left 1.15rem y right 1rem con `!important`, nowrap y centrado vertical; el `time` es flex column align-start con gap 0.15rem. Fecha y hora quedan alineadas con el encabezado y sin desbordar.
 
 - Auditoría / Filtros y badges (2026-11-19): panel con grid flexible, borde #cbd5e1, foco azul #3b82f6 y padding 1.5rem; tabla sin bordes verticales, celdas py-3 px-3, Usuario nowrap, Acción/IP centradas. Los badges usan el mapa amigable (LOGIN→Inicio de sesión, etc.) y colores suaves verde/rojo/azul/ámbar; el value técnico del filtro se conserva. Sin cambios de lógica ni esquema.

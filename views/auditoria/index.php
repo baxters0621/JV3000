@@ -3,6 +3,7 @@
 /** @var array<string, string>|null $flash */
 /** @var array{total: int, hoy: int, ultimo_login: array|null} $resumen */
 /** @var array<int, string> $modulos_disponibles */
+/** @var array<string, string> $modulos_etiquetas */
 /** @var array<int, string> $acciones_disponibles */
 /** @var array<string, string> $acciones_etiquetas */
 /** @var string $filtro_buscar */
@@ -30,6 +31,20 @@ $etiqueta_accion = static function (string $accion) use ($acciones_etiquetas): s
         return $acciones_etiquetas[$accion];
     }
     $texto = str_replace('_', ' ', mb_strtolower($accion, 'UTF-8'));
+    if ($texto === '') {
+        return '—';
+    }
+    return mb_strtoupper(mb_substr($texto, 0, 1, 'UTF-8'), 'UTF-8')
+        . mb_substr($texto, 1, null, 'UTF-8');
+};
+
+// Traduce el módulo técnico al nombre visible. Mismo criterio que acciones.
+$etiqueta_modulo = static function (string $modulo) use ($modulos_etiquetas): string {
+    $modulo = trim($modulo);
+    if (isset($modulos_etiquetas[$modulo])) {
+        return $modulos_etiquetas[$modulo];
+    }
+    $texto = str_replace('_', ' ', mb_strtolower($modulo, 'UTF-8'));
     if ($texto === '') {
         return '—';
     }
@@ -125,10 +140,10 @@ $etiqueta_accion = static function (string $accion) use ($acciones_etiquetas): s
         <div class="auditoria-campo auditoria-campo-modulo">
             <label for="auditoriaModulo">Módulo</label>
             <select id="auditoriaModulo" name="modulo" class="input-jv auditoria-select">
-                <option value="">Todos los módulos</option>
+                <option value="">Todos</option>
                 <?php foreach ($modulos_disponibles as $modulo): ?>
                     <option value="<?php echo htmlspecialchars($modulo, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $filtro_modulo === $modulo ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($modulo, ENT_QUOTES, 'UTF-8'); ?>
+                        <?php echo htmlspecialchars($etiqueta_modulo($modulo), ENT_QUOTES, 'UTF-8'); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -136,7 +151,7 @@ $etiqueta_accion = static function (string $accion) use ($acciones_etiquetas): s
         <div class="auditoria-campo auditoria-campo-accion">
             <label for="auditoriaAccion">Acción</label>
             <select id="auditoriaAccion" name="accion" class="input-jv auditoria-select">
-                <option value="">Todas las acciones</option>
+                <option value="">Todas</option>
                 <?php foreach ($acciones_disponibles as $accion): ?>
                     <option value="<?php echo htmlspecialchars($accion, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $filtro_accion === $accion ? 'selected' : ''; ?>>
                         <?php echo htmlspecialchars($acciones_etiquetas[$accion] ?? $accion, ENT_QUOTES, 'UTF-8'); ?>
@@ -226,7 +241,7 @@ $etiqueta_accion = static function (string $accion) use ($acciones_etiquetas): s
                             </div>
                         </td>
                         <td class="py-3 px-3" data-label="Módulo">
-                            <span class="auditoria-modulo"><?php echo htmlspecialchars((string)$evento['modulo'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span class="auditoria-modulo"><?php echo htmlspecialchars($etiqueta_modulo((string)$evento['modulo']), ENT_QUOTES, 'UTF-8'); ?></span>
                         </td>
                         <td class="py-3 px-3 text-center" data-label="Acción">
                             <span class="badge <?php echo $clase_badge; ?> auditoria-badge mb-1">

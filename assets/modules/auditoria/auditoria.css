@@ -256,9 +256,9 @@ body:has(.pagina-auditoria) {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
 }
 
-/* Los date inputs del sistema usan input-jv; form-control aporta la base
-   Bootstrap y esta clase iguala altura, borde y radio con los selects. */
-.auditoria-fecha {
+/* Solo los date inputs del panel de filtros; la fecha de la tabla usa la
+   misma clase y no debe heredar padding ni altura de input. */
+.auditoria-filtros .auditoria-fecha {
     min-height: 42px;
     padding: 0.5rem 0.75rem;
     border-radius: 8px;
@@ -363,7 +363,7 @@ body:has(.pagina-auditoria) {
 .auditoria-fecha-cell {
     white-space: nowrap;
     vertical-align: middle;
-    padding-left: 1.15rem !important;
+    padding-left: 1rem !important;
     padding-right: 1rem !important;
     text-align: left;
 }
@@ -386,9 +386,11 @@ body:has(.pagina-auditoria) {
 
 .auditoria-hora {
     display: block;
-    font-size: 0.78rem;
-    color: #6c757d;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #475569;
     line-height: 1.2;
+    letter-spacing: 0.01em;
 }
 
 .auditoria-usuario {

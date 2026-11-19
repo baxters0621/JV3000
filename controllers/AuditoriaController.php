@@ -38,6 +38,23 @@ class AuditoriaController extends Controller
     ];
 
     /**
+     * Traducciones visibles de los módulos técnicos.
+     *
+     * El value enviado al SQL sigue siendo la clave; solo cambia el texto
+     * que ve el administrador en el filtro y en la tabla.
+     *
+     * @var array<string, string>
+     */
+    private const ETIQUETAS_MODULO = [
+        'BACKUP' => 'Respaldos',
+        'COMPRAS' => 'Compras',
+        'INVENTARIO' => 'Inventario',
+        'SEGURIDAD' => 'Seguridad',
+        'SISTEMA' => 'Sistema',
+        'VENTAS' => 'Ventas',
+    ];
+
+    /**
      * Lista paginada y filtrada de eventos de auditoría.
      *
      * @return void
@@ -86,6 +103,11 @@ class AuditoriaController extends Controller
             $etiquetas_acciones[$accion] = $this->etiquetaAccion($accion);
         }
 
+        $etiquetas_modulos = [];
+        foreach ($modulos as $modulo) {
+            $etiquetas_modulos[$modulo] = $this->etiquetaModulo($modulo);
+        }
+
         $this->view('auditoria/index', [
             'titulo' => 'Registro de Auditoría | JV3000 C.A.',
             'wrapper_class' => 'pagina-auditoria',
@@ -93,6 +115,7 @@ class AuditoriaController extends Controller
             'flash' => $this->consumeFlash(),
             'resumen' => $modelo->resumen(),
             'modulos_disponibles' => $modulos,
+            'modulos_etiquetas' => $etiquetas_modulos,
             'acciones_disponibles' => $acciones,
             'acciones_etiquetas' => $etiquetas_acciones,
             'filtro_buscar' => $filtros['buscar'],
@@ -124,6 +147,29 @@ class AuditoriaController extends Controller
             return self::ETIQUETAS_ACCION[$accion];
         }
         $texto = str_replace('_', ' ', mb_strtolower($accion, 'UTF-8'));
+        if ($texto === '') {
+            return '';
+        }
+        return mb_strtoupper(mb_substr($texto, 0, 1, 'UTF-8'), 'UTF-8')
+            . mb_substr($texto, 1, null, 'UTF-8');
+    }
+
+    /**
+     * Devuelve la etiqueta amigable de un módulo técnico.
+     *
+     * Los módulos conocidos usan el mapa; los desconocidos se limpian
+     * cambiando guiones bajos por espacios y aplicando mayúscula inicial.
+     *
+     * @param string $modulo Valor técnico guardado en logs_auditoria.
+     * @return string Texto visible para el filtro y la tabla.
+     */
+    private function etiquetaModulo(string $modulo): string
+    {
+        $modulo = strtoupper(trim($modulo));
+        if (isset(self::ETIQUETAS_MODULO[$modulo])) {
+            return self::ETIQUETAS_MODULO[$modulo];
+        }
+        $texto = str_replace('_', ' ', mb_strtolower($modulo, 'UTF-8'));
         if ($texto === '') {
             return '';
         }

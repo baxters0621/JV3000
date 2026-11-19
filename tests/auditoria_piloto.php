@@ -128,6 +128,13 @@ afirmarAuditoria(strpos($css, 'auditoria-fecha') !== false, 'Falta el estilo de 
 afirmarAuditoria(strpos($vista, 'btn-editar') === false && strpos($vista, 'btn-eliminar') === false, 'La auditoría debe ser de solo lectura.');
 afirmarAuditoria(strpos($css, '#f8f9fa') !== false, 'Falta el fondo corporativo.');
 afirmarAuditoria(strpos($css, '#1f2937') !== false, 'Falta la cabecera navy de la tabla.');
+afirmarAuditoria(strpos($controlador, "'BACKUP' => 'Respaldos'") !== false, 'Falta la etiqueta amigable de Backup.');
+afirmarAuditoria(strpos($controlador, 'function etiquetaModulo(') !== false, 'Falta el traductor de módulos.');
+afirmarAuditoria(strpos($controlador, "'modulos_etiquetas' => \$etiquetas_modulos") !== false, 'El controlador no pasa las etiquetas de módulo.');
+afirmarAuditoria(strpos($vista, 'value="">Todos</option>') !== false, 'El filtro de módulo debe iniciar en Todos.');
+afirmarAuditoria(strpos($vista, '$etiqueta_modulo($modulo)') !== false, 'El select de módulo debe mostrar la etiqueta amigable.');
+afirmarAuditoria(strpos($vista, '$modulo = trim($modulo);') !== false, 'El closure de módulo debe conservar las claves crudas del mapa.');
+afirmarAuditoria(strpos($vista, '$etiqueta_modulo((string)$evento[') !== false, 'La tabla debe mostrar la etiqueta amigable del módulo.');
 
 // Integración
 afirmarAuditoria(strpos($sidebar, 'url=auditoria') !== false, 'Falta el enlace en el sidebar.');
