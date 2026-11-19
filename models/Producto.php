@@ -21,7 +21,9 @@ class Producto extends Model
      *
      * Consulta el estado actual, lo invierte y actualiza el producto,
      * registrando la auditoría con la acción reactivado/desactivado. No
-     * permite reactivar un producto sin fecha de vencimiento efectiva.
+     * permite reactivar un producto sin stock ni sin fecha de vencimiento
+     * efectiva. La reactivación manual retira el descarte para que la alarma
+     * vuelva a evaluarlo.
      *
      * @param int $idProducto Identificador del producto.
      * @return array ['ok'=>bool, 'mensaje'=>string].
@@ -29,7 +31,7 @@ class Producto extends Model
     public function toggleStatus(int $idProducto): array
     {
         $producto = $this->db->fetchOne(
-            "SELECT p.status, p.updated_at,
+            "SELECT p.status, p.stock_actual, p.updated_at,
                 COALESCE((
                     SELECT MIN(l.fecha_vencimiento) FROM lotes l
                     WHERE l.id_producto = p.id_producto AND l.cantidad_restante > 0
@@ -40,6 +42,12 @@ class Producto extends Model
         );
         if (!$producto) return ['ok' => false, 'mensaje' => 'PRODUCTO NO ENCONTRADO.'];
         $nuevoStatus = $producto['status'] === 'Activo' ? 'Inactivo' : 'Activo';
+        // Un producto agotado no puede volver a Activo: primero debe entrar
+        // mercancía. Sin esta guarda quedaba Activo con stock 0 y la alarma
+        // seguía oculta si el producto estaba en productos_descartados.
+        if ($nuevoStatus === 'Activo' && (int)$producto['stock_actual'] <= 0) {
+            return ['ok' => false, 'mensaje' => 'NO SE PUEDE ACTIVAR UN PRODUCTO SIN STOCK. REGISTRE UNA COMPRA O RECEPCIÓN.'];
+        }
         // Un producto no puede volver a Activo si no tiene una fecha de
         // vencimiento real (lote FEFO con stock o fecha legacy del producto).
         if ($nuevoStatus === 'Activo' && empty($producto['fecha_efectiva'])) {
@@ -48,6 +56,12 @@ class Producto extends Model
         $this->db->execute("UPDATE productos SET status = ? WHERE id_producto = ? AND updated_at = ?", [$nuevoStatus, $idProducto, $producto['updated_at']]);
         if ($this->db->affectedRows() === 0) {
             return ['ok' => false, 'mensaje' => 'CONFLICTO: OTRO USUARIO MODIFICÓ EL PRODUCTO. RECARGUE LA PÁGINA.'];
+        }
+        // La activación manual es una decisión explícita del administrador:
+        // retira el descarte para que la campana y la tarjeta de críticos
+        // vuelvan a considerar el producto.
+        if ($nuevoStatus === 'Activo' && !$this->quitarDescarte($idProducto)) {
+            return ['ok' => false, 'mensaje' => 'PRODUCTO ACTIVADO, PERO NO SE PUDO REACTIVAR LA ALARMA. REVISE LA CONFIGURACIÓN.'];
         }
         $accion = $nuevoStatus === 'Activo' ? 'REACTIVADO' : 'DESACTIVADO';
         registrarAuditoria(strtolower($accion), "Producto $accion");
@@ -110,6 +124,29 @@ class Producto extends Model
     public function estaDescartado(int $idProducto): bool
     {
         return in_array($idProducto, $this->idsDescartados(), true);
+    }
+
+    /**
+     * Retira un producto de la lista de descartados.
+     *
+     * Se usa cuando el administrador reactiva manualmente un producto: la
+     * campana y la tarjeta de críticos deben volver a evaluarlo. Si no estaba
+     * descartado no escribe nada.
+     *
+     * @param int $idProducto Identificador del producto.
+     * @return bool True si quedó fuera de la lista o no estaba descartado.
+     */
+    private function quitarDescarte(int $idProducto): bool
+    {
+        $descartados = $this->idsDescartados();
+        if (!in_array($idProducto, $descartados, true)) {
+            return true;
+        }
+        $descartados = array_values(array_filter(
+            $descartados,
+            static fn(int $id): bool => $id !== $idProducto
+        ));
+        return setConfig('productos_descartados', json_encode($descartados));
     }
 
     /**
@@ -223,6 +260,8 @@ class Producto extends Model
      *
      * Valida producto, categoría, stock mínimo/máximo, precios, estado y
      * fecha de vencimiento (obligatoria solo cuando el estado es Activo);
+     * tampoco permite Activo con stock 0 y, al reactivar, retira el descarte
+     * para que la alarma vuelva a evaluarlo.
      * luego actualiza el registro y registra la auditoría. El costo se
      * recalcula solo en la recepción de mercancía (promedio ponderado), no
      * aquí. Cambiar de categoría puede mover el producto de rama en el
@@ -302,7 +341,20 @@ class Producto extends Model
         // para respetar el CHECK de la BD sin tocar el resto de columnas.
         $requiereVencimiento = $fechaVencimiento === null ? 0 : null;
         // Optimistic locking: verificar updated_at antes de actualizar
-        $current = $this->db->fetchOne("SELECT updated_at, id_categoria, id_proveedor FROM productos WHERE id_producto = ?", [$idProducto]);
+        $current = $this->db->fetchOne("SELECT updated_at, id_categoria, id_proveedor, stock_actual FROM productos WHERE id_producto = ?", [$idProducto]);
+        if (!$current) {
+            return ['ok' => false, 'mensaje' => 'PRODUCTO NO ENCONTRADO.'];
+        }
+        // La edición tampoco puede dejar Activo un producto agotado. Es la
+        // misma regla del toggle: primero debe entrar mercancía.
+        if ($status === 'Activo' && (int)($current['stock_actual'] ?? 0) <= 0) {
+            return ['ok' => false, 'mensaje' => 'NO SE PUEDE ACTIVAR UN PRODUCTO SIN STOCK. REGISTRE UNA COMPRA O RECEPCIÓN.'];
+        }
+        // Si el administrador lo vuelve a poner Activo, se retira el descarte
+        // para que la campana y la tarjeta de críticos lo evalúen otra vez.
+        if ($status === 'Activo' && !$this->quitarDescarte($idProducto)) {
+            return ['ok' => false, 'mensaje' => 'NO SE PUDO REACTIVAR LA ALARMA DEL PRODUCTO. REVISE LA CONFIGURACIÓN.'];
+        }
         $this->db->execute(
             "UPDATE productos SET id_categoria=?, id_proveedor=?, stock_minimo=?, stock_maximo=?, precio_venta=?, status=?, fecha_vencimiento=?, requiere_vencimiento = COALESCE(?, requiere_vencimiento) WHERE id_producto=? AND updated_at=?",
             [$idCategoria, $idProveedor, $stockMinimo, $stockMaximo, $precioVenta, $status, $fechaVencimiento, $requiereVencimiento, $idProducto, $current['updated_at'] ?? '']

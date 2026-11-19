@@ -434,9 +434,15 @@ foreach ($categorias as $raiz) {
                                                 </button>
 <?php endif; ?>
                                         <?php else: ?>
-                                            <button type="button" class="btn btn-sm p-0 btn-accion-toggle btn-accion-activar text-success" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" data-tooltip="Activar producto" aria-label="Activar producto">
-                                                <i class="bi bi-power"></i>
-                                            </button>
+                                            <?php if ($stock_actual > 0): ?>
+                                                <button type="button" class="btn btn-sm p-0 btn-accion-toggle btn-accion-activar text-success" onclick="toggleProducto(<?php echo (int)$productRecord['id_producto']; ?>, <?php echo htmlspecialchars(json_encode($productRecord['nombre_producto'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>, 'activar')" data-tooltip="Activar producto" aria-label="Activar producto">
+                                                    <i class="bi bi-power"></i>
+                                                </button>
+                                            <?php else: ?>
+                                                <span class="btn btn-sm p-0 text-muted" style="opacity:.45;cursor:not-allowed;" data-tooltip="Sin stock: no se puede activar" aria-label="Sin stock: no se puede activar" role="img">
+                                                    <i class="bi bi-power"></i>
+                                                </span>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
                                 </td>

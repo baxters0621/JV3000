@@ -46,6 +46,11 @@ $afirmar(str_contains($producto, "status = 'Inactivo'"), 'El producto agotado de
 $afirmar(str_contains($producto, "status = 'Activo'"), 'El producto con stock debe reactivarse.');
 $afirmar(!str_contains($producto, 'proveedor_status'), 'La reactivación no debe depender del estado del proveedor.');
 $afirmar(str_contains($producto, 'El proveedor de este producto está inactivo. Reactívalo para modificar los datos.'), 'La edición debe explicar que el proveedor está inactivo.');
+$afirmar(str_contains($producto, 'NO SE PUEDE ACTIVAR UN PRODUCTO SIN STOCK'), 'El modelo debe bloquear la activación sin stock.');
+$afirmar(str_contains($producto, 'quitarDescarte'), 'La activación manual debe retirar el descarte para reactivar la alarma.');
+$afirmar(str_contains($productosVista, 'Sin stock: no se puede activar'), 'La tabla no debe ofrecer activar un producto agotado.');
+$afirmar(str_contains($productosJs, 'SIN STOCK NO PUEDE ESTAR ACTIVO'), 'La edición cliente debe bloquear Activo sin stock.');
+$afirmar(str_contains($productosJs, 'opcionActivo.disabled'), 'El modal debe deshabilitar Activo cuando el stock es cero.');
 $afirmar(str_contains($productosVista, 'id="avisoProveedorInactivo"'), 'El modal de edición debe mostrar el aviso de proveedor inactivo.');
 $afirmar(str_contains($productosJs, 'function actualizarAvisoProveedorInactivo'), 'El JS debe alternar el aviso de proveedor inactivo.');
 

@@ -311,6 +311,10 @@
             }
             const fechaTexto = vencimiento.value.trim();
             const estaActivo = estado && estado.value === 'Activo';
+            const stockActual = parseInt(document.getElementById('edit_stock').value, 10) || 0;
+            if (estaActivo && stockActual <= 0) {
+                marcar(estado, 'UN PRODUCTO SIN STOCK NO PUEDE ESTAR ACTIVO');
+            }
             if (!fechaTexto || fechaTexto === '0000-00-00') {
                 if (estaActivo) {
                     marcar(vencimiento, 'UN PRODUCTO ACTIVO DEBE TENER FECHA DE VENCIMIENTO');
@@ -428,6 +432,10 @@
             formatearPrecioEdicion(document.getElementById('edit_pvp'));
             formatearPrecioEdicion(document.getElementById('edit_costo'));
             document.getElementById('edit_status').value = row.getAttribute('data-status');
+            var stockActual = parseInt(row.getAttribute('data-stock'), 10) || 0;
+            var opcionActivo = document.querySelector('#edit_status option[value="Activo"]');
+            if (opcionActivo) opcionActivo.disabled = stockActual <= 0;
+            if (stockActual <= 0) document.getElementById('edit_status').value = 'Inactivo';
             document.getElementById('edit_vencimiento').value = row.getAttribute('data-venc');
             // Proveedor actual. Si está inactivo no figura entre las opciones
             // activas: se agrega como temporal para no cambiarlo en silencio.

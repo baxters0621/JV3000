@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Inventario / Activación por stock (2026-11-19): un producto con stock 0 no puede volver a Activo (`toggleStatus()` y `editar()` lo rechazan). La activación manual válida retira el id de `configuracion.productos_descartados` para que la campana y «Productos Críticos» vuelvan a evaluarlo; la tabla oculta Activar y el modal deshabilita «Activo» con validación cliente. Se normalizó el producto 4 (Batería Auto 12V 60Ah) a Inactivo y sin descarte; campana y tarjeta lo muestran. Sin cambios de esquema.
+
 - Dashboard / Críticos (2026-11-19): la tarjeta «Productos Críticos» usa `(status = 'Activo' OR stock_actual <= 0) AND stock_actual <= stock_minimo` en `dashboard/index.php` y `controllers/DashboardController.php`, así que los agotados inactivos aparecen igual que en la campanita.
 
 - Alarma de stock / Dashboard (2026-11-19): `dashboard/index.php` inyecta `JV_CONFIG.csrfToken`, `prefijo` y `JV_BASE` antes de `alarma_stock.js`; como `BASE_PATH` es `../`, el endpoint se resuelve contra la raíz y no contra `/dashboard/index.php`. La Nota de Entrega quedó corregida en `8b0c71e`.
