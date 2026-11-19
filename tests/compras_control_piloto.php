@@ -40,6 +40,7 @@ afirmarControlCompras(strpos($controlador, 'Security::verificarPermisoCarga();')
 afirmarControlCompras(strpos($vista, 'id="nroControl"') !== false, 'El campo debe tener id nroControl.');
 afirmarControlCompras(strpos($vista, 'name="nro_control"') !== false, 'El campo debe conservar el nombre nro_control.');
 afirmarControlCompras(strpos($vista, 'readonly aria-readonly="true"') !== false, 'El campo debe iniciar en solo lectura.');
+afirmarControlCompras(strpos($vista, 'autocomplete="off"') !== false, 'El campo debe evitar la restauración vacía del navegador.');
 afirmarControlCompras(strpos($vista, 'value="<?php echo htmlspecialchars($control_siguiente ??') !== false, 'El valor inicial debe venir del consecutivo del servidor.');
 afirmarControlCompras(strpos($vista, 'id="btnEditarControl"') !== false, 'Falta el botón Editar número.');
 afirmarControlCompras(strpos($vista, 'if (Security::esAdmin()):') !== false, 'El botón de edición debe estar reservado al administrador.');
@@ -49,6 +50,7 @@ afirmarControlCompras(strpos($js, "url=compras/control_estado") !== false, 'El J
 afirmarControlCompras(strpos($js, 'function inicializarControlCompra()') !== false, 'Falta la inicialización del control en el JS.');
 afirmarControlCompras(strpos($js, 'inicializarControlCompra();') !== false, 'La inicialización del control no se está invocando.');
 afirmarControlCompras(strpos($js, "modalCompra.addEventListener('shown.bs.modal'") !== false, 'El consecutivo debe refrescarse al abrir el modal.');
+afirmarControlCompras(strpos($js, 'nroControlInput.value = nroControlInput.defaultValue') !== false, 'El JS debe recuperar el valor del servidor si el navegador deja el campo vacío.');
 afirmarControlCompras(strpos($js, '/^00-\\d{8}$/') !== false, 'El cliente debe validar el formato 00-########.');
 
 echo "OK número de control automatico de Compras verificado\n";

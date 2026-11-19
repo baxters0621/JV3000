@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Compras / Número de control (2026-11-19): el campo ya no se queda vacío si el navegador restaura el formulario. Tiene `autocomplete="off"` y el JS recupera `defaultValue` al inicializar y al abrir el modal; si no hay valor, consulta `compras/control_estado`. Prueba real: vaciar el campo y abrir el modal lo devuelve a 00-00345679.
+
 - Historial / Tabla (2026-11-19): celdas con `py-4 px-3`, Registro al 16% con usuario/fecha en una línea, sin bordes verticales (solo `border-bottom` #e2e8f0), badges de Estado con `mb-1`, Total a la derecha y Acciones centradas. En móvil las celdas vuelven a `padding:0 !important` para conservar las tarjetas. Sin cambios de lógica.
 
 - Dashboard / Última Venta (2026-11-19): la tarjeta usa `kpi-card-rojo`/`kpi-icon-rojo` con fondo #fef2f2, borde #fecaca, acento #dc2626, etiqueta #991b1b y monto #7f1d1d; la sección `kpi-section` tiene fondo sólido #f8f9fa para ocultar los puntos. Se corrigió el `<header>` sin cerrar en `views/dashboard/index.php`, que comprimía las secciones a 46 px. Aplicado en ambos dashboards; sin cambios de lógica.

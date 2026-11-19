@@ -476,7 +476,7 @@ if (!empty($tasa_bcv_fecha)) {
                                             <button type="button" id="btnEditarControl" class="comp-editar-factura" aria-controls="nroControl" aria-pressed="false">Editar n&uacute;mero</button>
                                         <?php endif; ?>
                                     </div>
-                                    <input type="text" inputmode="numeric" name="nro_control" id="nroControl" aria-label="Numero de control" aria-describedby="nroControlAyuda" class="input-jv comp-input" value="<?php echo htmlspecialchars($control_siguiente ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="00-00000000" oninput="var raw=this.value;var v=raw.replace(/[^0-9]/g,'');if(raw.indexOf('-')!==-1&&v.indexOf('00')===0)v=v.slice(2);this.value='00-'+v.slice(0,8)" maxlength="11" readonly aria-readonly="true" required>
+                                    <input type="text" inputmode="numeric" name="nro_control" id="nroControl" autocomplete="off" aria-label="Numero de control" aria-describedby="nroControlAyuda" class="input-jv comp-input" value="<?php echo htmlspecialchars($control_siguiente ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="00-00000000" oninput="var raw=this.value;var v=raw.replace(/[^0-9]/g,'');if(raw.indexOf('-')!==-1&&v.indexOf('00')===0)v=v.slice(2);this.value='00-'+v.slice(0,8)" maxlength="11" readonly aria-readonly="true" required>
                                     <small id="nroControlAyuda" class="comp-hint" role="status" aria-live="polite">
                                         <?php if (!empty($control_siguiente)): ?>
                                             Control generado: <?php echo htmlspecialchars($control_siguiente, ENT_QUOTES, 'UTF-8'); ?>.

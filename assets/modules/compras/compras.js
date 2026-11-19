@@ -739,6 +739,16 @@
         function inicializarControlCompra() {
             if (!nroControlInput) return;
 
+            // Si el navegador restauró el formulario con el campo vacío
+            // (autocompletado o recarga), recupera de inmediato el valor que
+            // el servidor dejó en defaultValue. Sin esto se veía el
+            // placeholder 00-00000000 aunque la ayuda mostrara el consecutivo.
+            if (nroControlInput.hasAttribute('readonly')
+                && !nroControlInput.value.trim()
+                && nroControlInput.defaultValue.trim()) {
+                nroControlInput.value = nroControlInput.defaultValue;
+            }
+
             const btnEditarControl = document.getElementById('btnEditarControl');
             if (btnEditarControl) {
                 btnEditarControl.addEventListener('click', function() {
@@ -798,6 +808,17 @@
                 modalCompra.addEventListener('shown.bs.modal', function() {
                     setTimeout(function() {
                         if (!nroControlInput.hasAttribute('readonly')) return;
+                        // Si el campo quedó vacío por una restauración del
+                        // navegador, vuelve a pintar el valor del servidor
+                        // antes de comparar con defaultValue.
+                        if (!nroControlInput.value.trim()) {
+                            if (nroControlInput.defaultValue.trim()) {
+                                nroControlInput.value = nroControlInput.defaultValue;
+                            } else {
+                                generarControlAutomatico();
+                                return;
+                            }
+                        }
                         if (nroControlInput.value.trim() !== nroControlInput.defaultValue.trim()) return;
                         generarControlAutomatico();
                     }, 0);
