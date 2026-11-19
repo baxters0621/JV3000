@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Auditoría / Filtros y badges (2026-11-19): panel con grid flexible, borde #cbd5e1, foco azul #3b82f6 y padding 1.5rem; tabla sin bordes verticales, celdas py-3 px-3, Usuario nowrap, Acción/IP centradas. Los badges usan el mapa amigable (LOGIN→Inicio de sesión, etc.) y colores suaves verde/rojo/azul/ámbar; el value técnico del filtro se conserva. Sin cambios de lógica ni esquema.
+
 - Auditoría / Filtro de acciones (2026-11-19): el select muestra textos amigables (`LOGIN`→Inicio de sesión, etc.) pero conserva el value técnico para el SQL; las acciones desconocidas usan fallback con guiones bajos y mayúscula inicial. `.auditoria-select` tiene fondo blanco, borde #cbd5e1 y foco azul #3b82f6, sin el naranja global. Aplica también al filtro de Módulo.
 
 - Auditoría / Filtros (2026-11-19): el panel filtra por `fecha_desde` y `fecha_hasta` con validación estricta YYYY-MM-DD y parámetros preparados (`00:00:00` a `23:59:59`); la paginación conserva las fechas. La vista usa dos filas (Buscar/Módulo/Acción y Desde/Hasta/acciones), inputs `form-control input-jv auditoria-fecha` y botón navy `btn-dark` con icono; Limpiar vuelve a `?url=auditoria`. Sin cambios de esquema.

@@ -21,6 +21,21 @@ $url_base = APP_URL_BASE . 'index.php?url=auditoria';
 $url_pagina = static function (int $numero) use ($url_base, $query_string): string {
     return $url_base . '&page=' . $numero . ($query_string !== '' ? '&' . $query_string : '');
 };
+
+// Traduce el código técnico de la acción al texto visible. Usa el mismo mapa
+// del filtro y, para acciones nuevas, limpia guiones bajos y capitaliza.
+$etiqueta_accion = static function (string $accion) use ($acciones_etiquetas): string {
+    $accion = strtoupper(trim($accion));
+    if (isset($acciones_etiquetas[$accion])) {
+        return $acciones_etiquetas[$accion];
+    }
+    $texto = str_replace('_', ' ', mb_strtolower($accion, 'UTF-8'));
+    if ($texto === '') {
+        return '—';
+    }
+    return mb_strtoupper(mb_substr($texto, 0, 1, 'UTF-8'), 'UTF-8')
+        . mb_substr($texto, 1, null, 'UTF-8');
+};
 ?>
 <?php if ($flash): ?>
     <div class="alert-jv alert-jv-<?php echo htmlspecialchars((string)$flash['tipo'], ENT_QUOTES, 'UTF-8'); ?> flash-auto mb-3" role="status" aria-live="polite">
@@ -90,8 +105,8 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
 
 <form class="auditoria-filtros card-jv p-4" method="GET" action="<?php echo APP_URL_BASE; ?>index.php">
     <input type="hidden" name="url" value="auditoria">
-    <div class="row g-3 align-items-end">
-        <div class="col-12 col-md-6 col-xl-6">
+    <div class="auditoria-filtros-grid d-flex flex-wrap gap-3 align-items-end">
+        <div class="auditoria-campo auditoria-campo-buscar">
             <label for="auditoriaBuscar">Buscar</label>
             <div class="auditoria-busqueda">
                 <i class="bi bi-search" aria-hidden="true"></i>
@@ -101,13 +116,13 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                     name="buscar"
                     class="input-jv"
                     value="<?php echo htmlspecialchars($filtro_buscar, ENT_QUOTES, 'UTF-8'); ?>"
-                    placeholder="Usuario, descripción, IP o acción…"
+                    placeholder="Usuario, descripción o IP"
                     maxlength="100"
                     autocomplete="off"
                 >
             </div>
         </div>
-        <div class="col-6 col-md-3 col-xl-3">
+        <div class="auditoria-campo auditoria-campo-modulo">
             <label for="auditoriaModulo">Módulo</label>
             <select id="auditoriaModulo" name="modulo" class="input-jv auditoria-select">
                 <option value="">Todos los módulos</option>
@@ -118,7 +133,7 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-6 col-md-3 col-xl-3">
+        <div class="auditoria-campo auditoria-campo-accion">
             <label for="auditoriaAccion">Acción</label>
             <select id="auditoriaAccion" name="accion" class="input-jv auditoria-select">
                 <option value="">Todas las acciones</option>
@@ -129,7 +144,7 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="col-6 col-md-3 col-xl-3">
+        <div class="auditoria-campo auditoria-campo-fecha">
             <label for="auditoriaFechaDesde">Desde</label>
             <input
                 type="date"
@@ -140,7 +155,7 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                 autocomplete="off"
             >
         </div>
-        <div class="col-6 col-md-3 col-xl-3">
+        <div class="auditoria-campo auditoria-campo-fecha">
             <label for="auditoriaFechaHasta">Hasta</label>
             <input
                 type="date"
@@ -151,7 +166,7 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                 autocomplete="off"
             >
         </div>
-        <div class="col-12 col-md-6 col-xl-6">
+        <div class="auditoria-campo-acciones ms-auto">
             <div class="auditoria-acciones-filtro">
                 <button type="submit" class="btn btn-dark auditoria-btn-filtrar">
                     <i class="bi bi-funnel" aria-hidden="true"></i> Filtrar
@@ -171,9 +186,9 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                     <th scope="col">Fecha / Hora</th>
                     <th scope="col">Usuario</th>
                     <th scope="col">Módulo</th>
-                    <th scope="col">Acción</th>
+                    <th scope="col" class="text-center">Acción</th>
                     <th scope="col">Descripción</th>
-                    <th scope="col">IP</th>
+                    <th scope="col" class="text-center">IP</th>
                 </tr>
             </thead>
             <tbody>
@@ -181,25 +196,25 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                     <?php
                         $accion_evento = strtoupper((string)$evento['accion']);
                         $clase_badge = match ($accion_evento) {
-                            'LOGIN', 'LOGOUT' => 'bg-info text-dark',
-                            'CREAR' => 'bg-success',
-                            'EDITAR' => 'bg-warning text-dark',
-                            'ANULAR', 'ELIMINAR' => 'bg-danger',
-                            'BACKUP' => 'bg-primary',
-                            default => 'bg-secondary',
+                            'CREAR', 'REACTIVADO' => 'auditoria-badge-verde',
+                            'ANULAR', 'ELIMINAR', 'DESCARTADO', 'DESACTIVADO', 'DESACTIVADO_POR_STOCK' => 'auditoria-badge-rojo',
+                            'LOGIN', 'LOGOUT', 'BACKUP' => 'auditoria-badge-azul',
+                            'EDITAR', 'TASA BCV MANUAL', 'TASA BCV MANUAL RETIRADA' => 'auditoria-badge-ambar',
+                            default => 'auditoria-badge-neutro',
                         };
+                        $etiqueta_evento = $etiqueta_accion($accion_evento);
                         $fecha_evento = strtotime((string)$evento['fecha_hora']);
                         $nombre_usuario = (string)$evento['usuario_nombre'];
                         $inicial_usuario = mb_strtoupper(mb_substr($nombre_usuario, 0, 1, 'UTF-8'), 'UTF-8');
                     ?>
                     <tr>
-                        <td class="auditoria-fecha-cell" data-label="Fecha / Hora">
+                        <td class="auditoria-fecha-cell py-3 px-3" data-label="Fecha / Hora">
                             <time datetime="<?php echo $fecha_evento ? date('Y-m-d\TH:i:s', $fecha_evento) : ''; ?>">
                                 <span class="auditoria-fecha"><?php echo $fecha_evento ? date('d/m/Y', $fecha_evento) : '—'; ?></span>
                                 <span class="auditoria-hora"><?php echo $fecha_evento ? date('H:i:s', $fecha_evento) : ''; ?></span>
                             </time>
                         </td>
-                        <td data-label="Usuario">
+                        <td class="py-3 px-3 text-nowrap" data-label="Usuario">
                             <div class="auditoria-usuario">
                                 <span class="auditoria-avatar" aria-hidden="true"><?php echo htmlspecialchars($inicial_usuario !== '' ? $inicial_usuario : '?', ENT_QUOTES, 'UTF-8'); ?></span>
                                 <div>
@@ -210,20 +225,20 @@ $url_pagina = static function (int $numero) use ($url_base, $query_string): stri
                                 </div>
                             </div>
                         </td>
-                        <td data-label="Módulo">
+                        <td class="py-3 px-3" data-label="Módulo">
                             <span class="auditoria-modulo"><?php echo htmlspecialchars((string)$evento['modulo'], ENT_QUOTES, 'UTF-8'); ?></span>
                         </td>
-                        <td data-label="Acción">
-                            <span class="badge <?php echo $clase_badge; ?> auditoria-badge">
-                                <?php echo htmlspecialchars($accion_evento, ENT_QUOTES, 'UTF-8'); ?>
+                        <td class="py-3 px-3 text-center" data-label="Acción">
+                            <span class="badge <?php echo $clase_badge; ?> auditoria-badge mb-1">
+                                <?php echo htmlspecialchars($etiqueta_evento, ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </td>
-                        <td class="auditoria-descripcion-cell" data-label="Descripción">
+                        <td class="auditoria-descripcion-cell py-3 px-3" data-label="Descripción">
                             <span class="auditoria-descripcion" title="<?php echo htmlspecialchars((string)$evento['descripcion'], ENT_QUOTES, 'UTF-8'); ?>">
                                 <?php echo htmlspecialchars((string)$evento['descripcion'], ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </td>
-                        <td data-label="IP">
+                        <td class="py-3 px-3 text-center" data-label="IP">
                             <?php if (!empty($evento['ip_origen'])): ?>
                                 <code class="auditoria-ip"><?php echo htmlspecialchars((string)$evento['ip_origen'], ENT_QUOTES, 'UTF-8'); ?></code>
                             <?php else: ?>

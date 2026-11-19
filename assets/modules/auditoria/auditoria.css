@@ -149,6 +149,65 @@ body:has(.pagina-auditoria) {
 /* Filtros */
 .auditoria-filtros {
     margin-bottom: 1.25rem;
+    padding: 1.5rem;
+}
+
+.auditoria-filtros-grid {
+    row-gap: 1rem;
+}
+
+.auditoria-campo {
+    flex: 1 1 160px;
+    min-width: 160px;
+}
+
+.auditoria-campo-buscar {
+    flex: 1.4 1 200px;
+    min-width: 200px;
+}
+
+.auditoria-campo-modulo {
+    flex: 1 1 160px;
+    min-width: 160px;
+}
+
+.auditoria-campo-accion {
+    flex: 1.1 1 175px;
+    min-width: 175px;
+}
+
+.auditoria-campo-fecha {
+    flex: 1 1 145px;
+    min-width: 145px;
+}
+
+.auditoria-campo-acciones {
+    flex: 0 0 auto;
+}
+
+.auditoria-filtros .input-jv {
+    min-height: 42px;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #111827;
+    box-shadow: none;
+}
+
+.auditoria-filtros .input-jv:hover {
+    border-color: #94a3b8;
+}
+
+.auditoria-filtros .input-jv:focus {
+    background: #fff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    outline: none;
+}
+
+.auditoria-filtros .auditoria-busqueda .input-jv {
+    padding-left: 2.2rem;
 }
 
 .auditoria-filtros label {
@@ -265,10 +324,17 @@ body:has(.pagina-auditoria) {
     min-width: 980px;
 }
 
+/* Solo separadores horizontales: sin rejilla vertical. */
+.auditoria-tabla th,
+.auditoria-tabla td {
+    border-left: 0;
+    border-right: 0;
+}
+
 .auditoria-tabla thead th {
     background: #1f2937;
     color: #fff;
-    border-bottom: 0;
+    border-bottom: 1px solid #e2e8f0;
     padding: 0.9rem 0.85rem;
     font-size: 0.74rem;
     font-weight: 700;
@@ -279,7 +345,7 @@ body:has(.pagina-auditoria) {
 
 .auditoria-tabla tbody td {
     padding: 0.85rem;
-    border-color: #e9ecef;
+    border-bottom: 1px solid #e2e8f0;
     color: #212529;
     font-size: 0.88rem;
 }
@@ -365,6 +431,31 @@ body:has(.pagina-auditoria) {
     letter-spacing: 0.03em;
     padding: 0.35rem 0.55rem;
     border-radius: 6px;
+}
+
+.auditoria-badge-verde {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.auditoria-badge-rojo {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.auditoria-badge-azul {
+    background-color: #e0f2fe;
+    color: #075985;
+}
+
+.auditoria-badge-ambar {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.auditoria-badge-neutro {
+    background-color: #f1f5f9;
+    color: #475569;
 }
 
 .auditoria-descripcion-cell {
@@ -458,6 +549,19 @@ body:has(.pagina-auditoria) {
 }
 
 @media (max-width: 575.98px) {
+    .auditoria-campo,
+    .auditoria-campo-buscar,
+    .auditoria-campo-modulo,
+    .auditoria-campo-accion,
+    .auditoria-campo-fecha {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .auditoria-campo-acciones {
+        width: 100%;
+    }
+
     .auditoria-header-icono {
         width: 44px;
         height: 44px;
