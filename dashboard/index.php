@@ -361,6 +361,15 @@ $agruparActividadPorFecha = static function (array $items): array {
     // ========================================== 
     ?>
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // El dashboard se sirve como página autónoma desde /dashboard; expone
+        // el CSRF y la raíz para que la alarma pueda descartar sin 403 y sin
+        // resolver el endpoint contra /dashboard/index.php.
+        window.JV_CONFIG = window.JV_CONFIG || {};
+        window.JV_CONFIG.csrfToken = <?php echo json_encode(Security::generateToken(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        window.JV_CONFIG.prefijo = <?php echo json_encode(BASE_PATH); ?>;
+        window.JV_BASE = <?php echo json_encode(BASE_PATH); ?>;
+    </script>
     <script src="../assets/js/alarma_stock.js<?php echo $jv_cache_bust(__DIR__ . '/../assets/js/alarma_stock.js'); ?>"></script>
     <script src="../assets/dashboard/index.js<?php echo $jv_cache_bust(__DIR__ . '/../assets/dashboard/index.js'); ?>"></script>
 </body>

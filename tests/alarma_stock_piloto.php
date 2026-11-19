@@ -93,6 +93,14 @@ $afirmar(
 );
 $afirmar(str_contains($dashboardCtrl, 'alarma_stock.js'), 'El controlador del dashboard declara el script de la alarma.');
 $afirmar(str_contains($dashboardIndex, 'alarma_stock.js'), 'El panel del dashboard debe cargar el script de la alarma.');
+$afirmar(str_contains($dashboardIndex, 'JV_CONFIG.csrfToken'), 'El dashboard autónomo debe exponer el token CSRF.');
+$afirmar(str_contains($dashboardIndex, 'window.JV_BASE'), 'El dashboard autónomo debe exponer la raíz para el endpoint.');
+$afirmar(
+    strpos($dashboardIndex, 'JV_CONFIG.csrfToken') !== false
+        && strpos($dashboardIndex, 'alarma_stock.js') !== false
+        && strpos($dashboardIndex, 'JV_CONFIG.csrfToken') < strpos($dashboardIndex, 'alarma_stock.js'),
+    'El dashboard debe declarar el CSRF antes de cargar alarma_stock.js.'
+);
 
 // Reposición en camino (compra registrada y pendiente de recepción)
 $afirmar(str_contains($helpers, "'en_camino'"), 'Las alertas deben informar las unidades en camino.');
