@@ -1840,7 +1840,7 @@
                     '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--jv-border);">' +
                         '<input type="date" class="input-jv rec-venc" data-id="' + pendingItem.id_detalle + '" value="' + (restoredItem ? restoredItem.fecha_vencimiento : (pendingItem.vence || '')) + '" style="width:130px;padding:8px 10px;">' +
                     '</td>' +
-                    '<td style="padding:10px 12px;text-align:right;color:var(--jv-text-primary);font-weight:600;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + formatBs(pendingItem.precio, tasaBcvActual()) + '</td>';
+                    '<td class="text-end text-nowrap" style="padding:10px 12px;text-align:right;color:var(--jv-text-primary);font-weight:600;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + formatBs(pendingItem.precio, tasaBcvActual()) + '</td>';
                 recBody.appendChild(tr);
             });
 

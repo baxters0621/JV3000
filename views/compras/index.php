@@ -1213,7 +1213,7 @@ if (!empty($tasa_bcv_fecha)) {
      Los datos de cada compra pendiente llegan vía
      window.JV_CONFIG.recepcionDatos (inyectado por el layout).
      ============================================================ -->
-<div class="modal fade" id="modalRecepcion" tabindex="-1">
+<div class="modal fade pagina-compras" id="modalRecepcion" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content modal-content-jv">
             <form method="POST" id="formRecepcion" data-borrador="compras_recepcion">
@@ -1224,20 +1224,20 @@ if (!empty($tasa_bcv_fecha)) {
                 <input type="hidden" name="items_data" id="recItemsData">
 
                 <!-- Header receptivo -->
-                <div class="rec-modal-header">
+                <div class="modal-header rec-modal-header">
                     <div class="rec-modal-icon"><i class="bi bi-box-arrow-in-down"></i></div>
-                    <div>
+                    <div class="rec-modal-texto">
                         <h5 class="rec-modal-titulo">RECIBIR MERCADERÍA</h5>
                         <p class="rec-modal-sub">Ingreso al inventario: lotes, vencimiento y costo promedio</p>
                     </div>
-                    <button type="button" class="prov-close-btn ms-auto" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
 
                 <div class="p-3">
                     <div id="recuperacionRecepcionAviso" class="alert alert-warning" role="alert" style="display:none;"></div>
                     <div class="rec-section">
                         <div class="rec-section-label"><i class="bi bi-receipt me-1"></i>Compra</div>
-                        <div class="row g-2">
+                        <div class="row g-2 mb-3">
                             <div class="col-md-3">
                                 <label class="small fw-bold text-secondary mb-1">FACTURA</label>
                                 <input type="text" class="input-jv" id="recFactura" readonly disabled style="color:var(--jv-text-muted);font-weight:700;">
@@ -1253,19 +1253,19 @@ if (!empty($tasa_bcv_fecha)) {
                         </div>
                     </div>
 
-                    <div class="rec-section" style="margin-bottom:0;">
+                    <div class="rec-section mt-4" style="margin-bottom:0;">
                         <div class="rec-section-label"><i class="bi bi-box-seam me-1"></i>Productos a recibir <span class="fw-normal text-secondary">(ajuste la cantidad, m&aacute;x. lo pendiente)</span></div>
                         <div class="table-responsive" style="border:1px solid var(--jv-border);border-radius:8px;overflow-x:auto;overflow-y:hidden;">
-                            <table style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
-                                <thead>
-                                    <tr style="background:linear-gradient(135deg,#B45309,#D97706);">
+                            <table class="table table-hover align-middle mb-0 rec-items-table" style="width:100%;border-collapse:collapse;background:var(--jv-bg-card);">
+                                <thead class="rec-items-head">
+                                    <tr>
                                         <th style="padding:10px 8px;width:28px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">#</th>
                                         <th style="padding:10px 8px;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Producto</th>
                                         <th style="padding:10px 8px;width:70px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Orden</th>
                                         <th style="padding:10px 8px;width:70px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Recibido</th>
                                         <th style="padding:10px 8px;width:100px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">A Recibir</th>
                                         <th style="padding:10px 8px;width:130px;text-align:center;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Vence</th>
-                                        <th style="padding:10px 8px;width:80px;text-align:right;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">P. Costo</th>
+                                        <th class="text-end text-nowrap" style="padding:10px 8px;width:120px;text-align:right;color:#fff;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">P. Costo</th>
                                     </tr>
                                 </thead>
                                 <tbody id="recItemsBody">
@@ -1278,7 +1278,7 @@ if (!empty($tasa_bcv_fecha)) {
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
+                <div class="modal-footer justify-content-end gap-2 p-3" style="border-top:1px solid var(--jv-border);">
                     <button type="button" class="btn btn-jv-danger" style="padding:12px 28px;font-size:1rem;" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>Cancelar</button>
                     <button type="button" class="btn btn-jv-success module-action-btn" id="btnRecibir" onclick="return confirmarRecepcion(this)"><i class="bi bi-check-lg me-1"></i> Registrar Recepci&oacute;n</button>
                 </div>

@@ -1750,10 +1750,19 @@
 .pagina-compras .rec-modal-header {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 12px;
     padding: 18px 24px;
     color: #fff;
     background: linear-gradient(135deg, #B45309 0%, #D97706 100%);
+    border-bottom: 0;
+}
+.pagina-compras .rec-modal-texto {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.pagina-compras .rec-modal-header .btn-close {
+    flex-shrink: 0;
 }
 .pagina-compras .rec-modal-icon {
     width: 46px;
@@ -1779,6 +1788,13 @@
 }
 .pagina-compras .rec-section {
     margin-bottom: 16px;
+}
+.pagina-compras .rec-items-head th {
+    background: #1f2937;
+    border-bottom: 0;
+}
+.pagina-compras .rec-items-table > :not(caption) > * > * {
+    vertical-align: middle;
 }
 .pagina-compras .rec-section-label {
     margin-bottom: 8px;
@@ -1917,6 +1933,36 @@
     }
 }
 @media (max-width: 576px) {
+    .pagina-compras .modal-dialog {
+        max-width: calc(100vw - 16px);
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .pagina-compras .rec-modal-header {
+        padding: 14px 16px;
+        gap: 10px;
+        flex-wrap: nowrap;
+    }
+    .pagina-compras .rec-modal-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    .pagina-compras .rec-modal-titulo {
+        font-size: .95rem;
+        letter-spacing: 1px;
+    }
+    .pagina-compras .rec-modal-sub {
+        font-size: .7rem;
+    }
+    .pagina-compras .modal-footer {
+        flex-wrap: wrap;
+    }
+    .pagina-compras .modal-footer .btn {
+        flex: 1 1 100%;
+        margin: 0;
+        padding: 10px 16px !important;
+    }
     .pagina-compras .compras-list-toolbar #filtroPago {
         flex-basis: 132px;
         width: 132px;
@@ -1943,9 +1989,6 @@
     .pagina-compras .comp-rec-feed-footer {
         padding: 11px 14px;
         text-align: left;
-    }
-    .pagina-compras .rec-modal-header {
-        flex-wrap: wrap;
     }
     .pagina-compras .prov-cat-item {
         display: grid;
