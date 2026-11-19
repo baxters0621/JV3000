@@ -468,6 +468,15 @@
 
 .dash-section { margin-bottom: 40px; }
 
+/* La sección de indicadores usa un fondo sólido para que la tarjeta roja
+   destaque sobre el patrón de puntos global sin alterar el resto del panel. */
+.kpi-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 18px;
+    padding: 20px 22px 22px;
+}
+
 .sec-title {
     font-family: var(--jv-font-brand);
     font-size: 1.3rem;
@@ -600,7 +609,7 @@
 
 .kpi-icon-verde { background: rgba(22, 163, 74, 0.12); color: #15803D; }
 .kpi-icon-azul  { background: rgba(37, 99, 235, 0.12); color: #1D4ED8; }
-.kpi-icon-rojo  { background: rgba(220, 38, 38, 0.12); color: #DC2626; }
+.kpi-icon-rojo  { background: #fee2e2; color: #DC2626; }
 .kpi-icon-teal  { background: rgba(14, 116, 144, 0.12); color: #0E7490; }
 
 /* Identidad de color sutil por tarjeta (misma familia que Actividad Reciente) */
@@ -612,6 +621,27 @@
 .kpi-card-teal {
     border-left: 6px solid #0E7490;
     background: linear-gradient(180deg, rgba(14,116,144,0.09), rgba(14,116,144,0.02) 140px, #fff 260px);
+}
+
+/* Última Venta: rojo de negocio, no de error. Fondo pastel, borde suave y
+   acento fuerte solo en el icono y el borde izquierdo. */
+.kpi-card-rojo {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 6px solid #dc2626;
+}
+
+.kpi-card-rojo:hover {
+    border-color: #fca5a5;
+    border-left-color: #b91c1c;
+}
+
+.kpi-card-rojo .kpi-label {
+    color: #991b1b;
+}
+
+.kpi-card-rojo .kpi-value {
+    color: #7f1d1d;
 }
 
 .kpi-label {
@@ -824,6 +854,7 @@
     /* En móvil el estado se centra y el chip azul ocupa el ancho */
     .dash-hero-status { justify-content: center; }
     .dash-here { justify-self: stretch; }
+    .kpi-section { padding: 16px; }
     .kpi-value { font-size: 2.2rem; }
     .quick-grid { grid-template-columns: 1fr; }
 }

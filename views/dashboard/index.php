@@ -86,6 +86,7 @@ $agruparActividadPorFecha = static function (array $items): array {
             <?php include __DIR__ . '/_campana_alertas.php'; ?>
         </div>
     </div>
+</header>
 
     <!-- ACCESOS RÁPIDOS -->
     <section class="dash-section">
@@ -114,11 +115,11 @@ $agruparActividadPorFecha = static function (array $items): array {
     </section>
 
     <!-- INDICADORES CLAVE -->
-    <section class="dash-section">
+    <section class="dash-section kpi-section">
         <h2 class="sec-title"><i class="bi bi-speedometer2"></i> Indicadores Clave</h2>
         <div class="kpi-grid">
-            <div class="kpi-card kpi-card-verde">
-                <div class="kpi-icon kpi-icon-verde"><i class="bi bi-cash-coin"></i></div>
+            <div class="kpi-card kpi-card-rojo">
+                <div class="kpi-icon kpi-icon-rojo"><i class="bi bi-cash-coin"></i></div>
                 <div class="kpi-label">Última Venta</div>
                 <div class="kpi-value" id="kpi-ventas-dia"><?php echo format_bs((float)$ventas_dia, $tasa_bcv ?? null); ?></div>
             </div>
