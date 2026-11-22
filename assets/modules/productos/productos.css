@@ -230,14 +230,14 @@
 
         /* Reparto exacto de columnas: la suma debe ser 100% */
         .table-jv .col-codigo    { width: 10%; }
-        .table-jv .col-producto  { width: 18%; }
-        .table-jv .col-categoria { width: 10%; }
-        .table-jv .col-proveedor { width: 9%; }
+        .table-jv .col-producto  { width: 15%; }
+        .table-jv .col-categoria { width: 12%; }
+        .table-jv .col-proveedor { width: 11%; }
         .table-jv .col-stock     { width: 8%; }
         .table-jv .col-precio    { width: 12%; }
         .table-jv .col-vence     { width: 10%; }
         .table-jv .col-estado    { width: 9%; }
-        .table-jv .col-acciones  { width: 14%; }
+        .table-jv .col-acciones  { width: 13%; }
 
         .table-jv thead {
             background: #0e7490 !important;
@@ -249,7 +249,7 @@
             font-weight: 900 !important;
             letter-spacing: 0.5px !important;
             font-size: 0.95rem !important;
-            padding: 12px 10px !important;
+            padding: 12px 14px !important;
             border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
             vertical-align: middle;
             white-space: normal;
@@ -265,7 +265,7 @@
         }
 
         .table-jv tbody td {
-            padding: 14px 10px !important;
+            padding: 14px 14px !important;
             border-bottom: 1px dashed var(--jv-border) !important;
             font-size: 1rem;
             vertical-align: middle;
@@ -282,12 +282,12 @@
 
         .table-jv thead th:first-child,
         .table-jv tbody td:first-child {
-            padding-left: 14px !important;
+            padding-left: 18px !important;
         }
 
         .table-jv thead th:last-child,
         .table-jv tbody td:last-child {
-            padding-right: 14px !important;
+            padding-right: 18px !important;
         }
 
         .table-jv tbody td:first-child {
@@ -450,14 +450,14 @@
 
         /* Padding compacto: libera espacio para badges en columnas angostas */
         .table-jv thead th {
-            padding-left: 10px !important;
-            padding-right: 10px !important;
+            padding-left: 14px !important;
+            padding-right: 14px !important;
             padding-top: 12px !important;
             padding-bottom: 12px !important;
         }
 
         .table-jv tbody td {
-            padding: 14px 10px !important;
+            padding: 14px 14px !important;
             font-size: .9rem;
         }
 
@@ -548,8 +548,8 @@
         /* ── Columna stock ── */
         .td-stock {
             min-width: 80px;
-            padding-left: 4px !important;
-            padding-right: 4px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
             text-align: center;
         }
 
@@ -738,8 +738,8 @@
 
             .pagina-productos .table-jv thead th,
             .pagina-productos .table-jv tbody td {
-                padding-left: 10px !important;
-                padding-right: 10px !important;
+                padding-left: 12px !important;
+                padding-right: 12px !important;
                 font-size: .9rem;
             }
 

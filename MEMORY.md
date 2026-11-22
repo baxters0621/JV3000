@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Inventario / Tabla (2026-11-21): padding lateral 14 px (12 px entre 769-1200), extremos 18 px y STOCK 8 px; colgroup rebalanceado a 10/15/12/11/8/12/10/9/13 (PRODUCTO 18→15, CATEGORÍA 10→12, PROVEEDOR 9→11, ACCIONES 14→13) para separar CATEGORÍA/PROVEEDOR/STOCK sin recortar VENCE ni botones. Solo CSS.
+
 - Auditoría / Fecha y módulos (2026-11-19): la columna Fecha/Hora quedó alineada (`.auditoria-filtros .auditoria-fecha`, padding 1rem, hora #475569). Los módulos muestran nombres amigables (BACKUP→Respaldos, etc.) tanto en el filtro como en la tabla; los valores por defecto son «Todos»/«Todas» y los values técnicos se conservan. Sin cambios de lógica ni esquema.
 
 - Auditoría / Fecha y hora (2026-11-19): la primera columna usa padding-left 1.15rem y right 1rem con `!important`, nowrap y centrado vertical; el `time` es flex column align-start con gap 0.15rem. Fecha y hora quedan alineadas con el encabezado y sin desbordar.
