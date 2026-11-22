@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Compras / Vencimientos (2026-11-21): registrar una compra o recibir mercancía rechaza fechas de vencimiento anteriores a hoy (modelo + cliente) para no crear lotes ya vencidos. La campana del dashboard consulta los lotes con `cantidad_restante > 0` y `fecha_vencimiento <= CURDATE()`, usa la fecha del producto solo como respaldo y excluye esos productos de STOCK BAJO. Piloto de alarma con 66 afirmaciones.
+
 - Inventario / Tabla (2026-11-21): padding lateral 14 px (12 px entre 769-1200), extremos 18 px y STOCK 8 px; colgroup rebalanceado a 10/15/12/11/8/12/10/9/13 (PRODUCTO 18→15, CATEGORÍA 10→12, PROVEEDOR 9→11, ACCIONES 14→13) para separar CATEGORÍA/PROVEEDOR/STOCK sin recortar VENCE ni botones. Solo CSS.
 
 - Auditoría / Fecha y módulos (2026-11-19): la columna Fecha/Hora quedó alineada (`.auditoria-filtros .auditoria-fecha`, padding 1rem, hora #475569). Los módulos muestran nombres amigables (BACKUP→Respaldos, etc.) tanto en el filtro como en la tabla; los valores por defecto son «Todos»/«Todas» y los values técnicos se conservan. Sin cambios de lógica ni esquema.

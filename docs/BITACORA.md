@@ -1,4 +1,4 @@
-﻿# BITÁCORA DE CAMBIOS — JV3000 C.A.
+# BITÁCORA DE CAMBIOS — JV3000 C.A.
 
 Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR una tarea y se commitea junto con el cambio (regla obligatoria en `AGENTS.md`).
 
@@ -9,6 +9,8 @@ Historial único de actividad del sistema. Cada entrada se registra AL TERMINAR 
 ```
 
 ---
+
+[2026-11-21 20:59] - Módulo: Compras / Vencimientos y alertas - Cambio: se bloquea el registro y la recepción de lotes con fecha de vencimiento anterior a hoy, en modelo y cliente, para evitar inventario muerto; la campana del Dashboard deja de depender solo de productos.fecha_vencimiento y ahora incluye cualquier lote con cantidad_restante > 0 y fecha_vencimiento <= CURDATE() (con la fecha del producto como respaldo cuando no hay lotes), excluyendo esos productos del grupo de stock bajo para no duplicarlos. - Archivos: models/Compra.php, models/Recepcion.php, includes/helpers.php, assets/modules/compras/compras.js, tests/alarma_stock_piloto.php, MEMORY.md - Prueba: php -l y node --check OK; piloto de alarma con 66 afirmaciones en verde; consulta nueva probada en transacción con un lote vencido y ROLLBACK; tools/validar.ps1 => Validacion completada; HTTP admin 200 en dashboard y compras con el asset actualizado.
 
 [2026-11-21 20:39] - Módulo: Documentación / Limpieza - Cambio: se eliminó docs/MANUAL_DEFENSA_TECNICA.md por decisión del usuario, que ya no lo considera necesario, y se retiró su referencia de MEMORY.md; la entrada histórica de la bitácora del 2026-11-14 se conserva intacta. - Archivos: docs/MANUAL_DEFENSA_TECNICA.md (eliminado), MEMORY.md - Prueba: búsqueda sin otras referencias al manual; valid_utf8=yes, BOM intacto y sin NUL; tools/validar.ps1 => Validacion completada.
 

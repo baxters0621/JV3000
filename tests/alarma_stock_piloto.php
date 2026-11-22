@@ -21,6 +21,7 @@ $afirmar = static function (bool $condicion, string $mensaje) use (&$fallos, &$t
 $producto = file_get_contents($raiz . '/models/Producto.php');
 $salida = file_get_contents($raiz . '/models/Salida.php');
 $recepcion = file_get_contents($raiz . '/models/Recepcion.php');
+$compra = file_get_contents($raiz . '/models/Compra.php');
 $helpers = file_get_contents($raiz . '/includes/helpers.php');
 $salidasCtrl = file_get_contents($raiz . '/controllers/SalidasController.php');
 $productosCtrl = file_get_contents($raiz . '/controllers/ProductosController.php');
@@ -63,7 +64,16 @@ $afirmar(str_contains($recepcion, 'reactivarPorStock'), 'La recepción debe reac
 $afirmar(str_contains($helpers, 'puede_descartar'), 'Las alertas deben exponer puede_descartar.');
 $afirmar(str_contains($helpers, "stock_actual <= 0"), 'Las alertas deben incluir agotados inactivos.');
 $afirmar(str_contains($helpers, 'productos_descartados'), 'Las alertas deben excluir descartados.');
+$afirmar(str_contains($helpers, 'FROM lotes l'), 'La campana debe consultar los lotes vencidos.');
+$afirmar(str_contains($helpers, 'l.cantidad_restante > 0'), 'La campana solo debe considerar lotes con stock.');
+$afirmar(str_contains($helpers, 'l.fecha_vencimiento <= CURDATE()'), 'La campana debe marcar vencido un lote que vence hoy o antes.');
+$afirmar(str_contains($helpers, 'ON v.id_producto = p.id_producto'), 'La campana debe agrupar los lotes por producto.');
 $afirmar(str_contains($salidasCtrl, "'alertas_stock'"), 'La confirmación de venta debe devolver alertas_stock.');
+
+// Vencimiento pasado
+$afirmar(str_contains($compra, 'Error: No se puede registrar un lote con fecha de vencimiento pasada.'), 'Compras debe rechazar un lote con fecha pasada.');
+$afirmar(str_contains($recepcion, 'Error: No se puede registrar un lote con fecha de vencimiento pasada.'), 'La recepción debe rechazar un lote con fecha pasada.');
+$afirmar(str_contains($comprasJs, 'No se puede registrar un lote con fecha de vencimiento pasada.'), 'El cliente debe avisar antes de enviar una fecha pasada.');
 
 // Endpoint de descarte
 $afirmar(str_contains($productosCtrl, 'function descartar'), 'ProductosController debe exponer descartar().');

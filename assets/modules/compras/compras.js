@@ -17,6 +17,15 @@
         const productoSelect = document.getElementById('selProductoProveedor');
         const catalogoEstado = document.getElementById('catalogoProveedorEstado');
 
+        // Devuelve la fecha local de hoy en formato ISO (YYYY-MM-DD) para
+        // comparar vencimientos sin depender de la zona horaria del servidor.
+        function hoyIso() {
+            const hoy = new Date();
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoy.getDate()).padStart(2, '0');
+            return hoy.getFullYear() + '-' + mes + '-' + dia;
+        }
+
         // Formatea un monto que YA está en bolívares con coma de miles y punto
         // decimal (estilo dólar) para que no se confunda con un decimal.
         function formatBsValor(amount, decimales) {
@@ -236,6 +245,18 @@
                 Swal.fire({
                     title: 'Fecha de vencimiento requerida',
                     text: 'Indique la fecha de vencimiento del lote para agregar el producto',
+                    icon: 'warning',
+                    background: '#fff',
+                    color: '#212529',
+                    confirmButtonColor: '#EA580C'
+                });
+                document.getElementById('inputVencimiento').focus();
+                return;
+            }
+            if (expirationDate < hoyIso()) {
+                Swal.fire({
+                    title: 'Fecha de vencimiento inválida',
+                    text: 'No se puede registrar un lote con fecha de vencimiento pasada.',
                     icon: 'warning',
                     background: '#fff',
                     color: '#212529',
@@ -1804,6 +1825,8 @@
             // (El auto-cierre de mensajes flash lo maneja diseno.js globalmente.)
             proveedorCarritoId = proveedorSelect.value;
             proveedorSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            const fechaVencimientoCompra = document.getElementById('inputVencimiento');
+            if (fechaVencimientoCompra) fechaVencimientoCompra.min = hoyIso();
 
             const compraRecuperacion = (window.JV_CONFIG || {}).compraRecuperacion;
             const recepcionRecuperacion = (window.JV_CONFIG || {}).recepcionRecuperacion;
@@ -2017,7 +2040,7 @@
                         '<input type="number" class="input-jv rec-cant" data-id="' + pendingItem.id_detalle + '" data-restante="' + pendingItem.restante + '" value="' + (recuperando ? (restoredItem ? restoredItem.cantidad : 0) : pendingItem.restante) + '" min="0" max="' + pendingItem.restante + '" style="width:86px;padding:8px 10px;text-align:center;">' +
                     '</td>' +
                     '<td style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--jv-border);">' +
-                        '<input type="date" class="input-jv rec-venc" data-id="' + pendingItem.id_detalle + '" value="' + (restoredItem ? restoredItem.fecha_vencimiento : (pendingItem.vence || '')) + '" style="width:130px;padding:8px 10px;">' +
+                        '<input type="date" class="input-jv rec-venc" data-id="' + pendingItem.id_detalle + '" value="' + (restoredItem ? restoredItem.fecha_vencimiento : (pendingItem.vence || '')) + '" min="' + hoyIso() + '" style="width:130px;padding:8px 10px;">' +
                     '</td>' +
                     '<td class="text-end text-nowrap" style="padding:10px 12px;text-align:right;color:var(--jv-text-primary);font-weight:600;font-size:.95rem;border-bottom:1px solid var(--jv-border);">' + formatBs(pendingItem.precio, tasaBcvActual()) + '</td>';
                 recBody.appendChild(tr);
@@ -2060,6 +2083,9 @@
                     if (!expirationInput || !expirationInput.value) {
                         errores.push('Indique la fecha de vencimiento de todos los productos a recibir.');
                         if (expirationInput) expirationInput.classList.add('input-error');
+                    } else if (expirationInput.value < hoyIso()) {
+                        errores.push('No se puede registrar un lote con fecha de vencimiento pasada.');
+                        expirationInput.classList.add('input-error');
                     }
                     items.push({
                         id_detalle: parseInt(quantityInput.dataset.id, 10),

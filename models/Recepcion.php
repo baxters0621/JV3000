@@ -154,6 +154,7 @@ class Recepcion extends Model
         // REGLA DE NEGOCIO: todo lote exige fecha de vencimiento (la indicada en la
         // recepción o, en su defecto, la guardada al registrar la compra). Sin ella
         // el control FEFO del inventario se rompe, así que la recepción se rechaza.
+        // Además, la fecha no puede ser anterior a hoy: un lote nace vigente.
         foreach ($filas as $f) {
             $venc_final = trim((string)($solicitado[(int)$f['id_detalle']]['fecha_vencimiento'] ?? ''));
             if ($venc_final === '') {
@@ -161,6 +162,9 @@ class Recepcion extends Model
             }
             if ($venc_final === '') {
                 return ['ok' => false, 'mensaje' => "FECHA DE VENCIMIENTO REQUERIDA PARA: {$f['nombre_producto']}."];
+            }
+            if ($venc_final < date('Y-m-d')) {
+                return ['ok' => false, 'mensaje' => 'Error: No se puede registrar un lote con fecha de vencimiento pasada.'];
             }
         }
 

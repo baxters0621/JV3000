@@ -504,6 +504,11 @@ class Compra extends Model
             if (!$lote_venc) {
                 return ['ok' => false, 'mensaje' => "FECHA DE VENCIMIENTO REQUERIDA PARA: {$prod_fila['nombre_producto']} ({$prod_fila['sku']})."];
             }
+            // Un lote no puede nacer ya vencido: la fecha de vencimiento debe ser
+            // hoy o posterior. Así se evita crear inventario muerto desde Compras.
+            if ($lote_venc < date('Y-m-d')) {
+                return ['ok' => false, 'mensaje' => 'Error: No se puede registrar un lote con fecha de vencimiento pasada.'];
+            }
             $items_validos[] = ['id' => $id_producto, 'cantidad' => $cantidad, 'precio' => $precio_costo, 'fecha_vencimiento' => $lote_venc];
             $subtotal += $cantidad * $precio_costo;
         }

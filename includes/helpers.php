@@ -1165,7 +1165,8 @@ if (!function_exists('jv_alertas_por_rol')) {
      * Alertas críticas para la campana del Panel de Inicio.
      *
      * Devuelve dos grupos sin solapamiento:
-     * - VENCIDOS: productos activos con fecha de vencimiento anterior a hoy.
+     * - VENCIDOS: productos con algún lote vencido que aún tenga unidades
+     *   (se conserva la fecha del producto como respaldo si no hay lotes).
      * - STOCK BAJO: productos activos en o bajo el mínimo que NO estén vencidos.
      *
      * La lista se limita a 8 elementos por grupo para el panel, pero los
@@ -1182,21 +1183,42 @@ if (!function_exists('jv_alertas_por_rol')) {
         $db = Database::getInstance();
         $id_rol = $id_rol ?? (int)($_SESSION['id_rol'] ?? 0);
 
-        // Query 1: productos vencidos (fecha anterior a hoy).
+        // Query 1: productos con lotes vencidos y stock disponible. La fecha
+        // del producto se mantiene como respaldo para datos sin lotes.
         $vencimientoFilas = $db->fetchAll(
-            "SELECT id_producto, nombre_producto, fecha_vencimiento
-             FROM productos
-             WHERE status = 'Activo'
-               AND fecha_vencimiento IS NOT NULL
-               AND fecha_vencimiento <> '0000-00-00'
-               AND fecha_vencimiento < CURDATE()
+            "SELECT p.id_producto, p.nombre_producto,
+                    MIN(v.fecha_vencimiento) AS fecha_vencimiento
+             FROM productos p
+             INNER JOIN (
+                 SELECT l.id_producto, l.fecha_vencimiento
+                 FROM lotes l
+                 WHERE l.cantidad_restante > 0
+                   AND l.fecha_vencimiento IS NOT NULL
+                   AND l.fecha_vencimiento <> '0000-00-00'
+                   AND l.fecha_vencimiento <= CURDATE()
+                 UNION ALL
+                 SELECT p2.id_producto, p2.fecha_vencimiento
+                 FROM productos p2
+                 WHERE p2.status = 'Activo'
+                   AND p2.fecha_vencimiento IS NOT NULL
+                   AND p2.fecha_vencimiento <> '0000-00-00'
+                   AND p2.fecha_vencimiento < CURDATE()
+                   AND NOT EXISTS (
+                       SELECT 1 FROM lotes l2
+                       WHERE l2.id_producto = p2.id_producto
+                         AND l2.cantidad_restante > 0
+                   )
+             ) v ON v.id_producto = p.id_producto
+             GROUP BY p.id_producto, p.nombre_producto
              ORDER BY fecha_vencimiento ASC"
         );
 
         $vencidos = [];
+        $idsVencidos = [];
         foreach ($vencimientoFilas as $r) {
+            $idsVencidos[(int)$r['id_producto']] = true;
             if (count($vencidos) >= 8) {
-                break;
+                continue;
             }
             $vencidos[] = [
                 'id' => (int)$r['id_producto'],
@@ -1205,17 +1227,12 @@ if (!function_exists('jv_alertas_por_rol')) {
             ];
         }
 
-        // Query 2: stock bajo, excluyendo los ya listados como vencidos.
+        // Query 2: stock bajo, excluyendo los productos ya listados como vencidos.
         $bajoFilas = $db->fetchAll(
             "SELECT id_producto, nombre_producto, stock_actual, stock_minimo, id_proveedor
              FROM productos
              WHERE (status = 'Activo' OR stock_actual <= 0)
                AND stock_actual <= stock_minimo
-               AND NOT (
-                   fecha_vencimiento IS NOT NULL
-                   AND fecha_vencimiento <> '0000-00-00'
-                   AND fecha_vencimiento < CURDATE()
-               )
              ORDER BY stock_actual ASC, nombre_producto ASC"
         );
 
@@ -1227,7 +1244,8 @@ if (!function_exists('jv_alertas_por_rol')) {
         }
         $bajoFilas = array_values(array_filter(
             $bajoFilas,
-            static fn(array $fila): bool => !in_array((int)$fila['id_producto'], $descartados, true)
+            static fn(array $fila): bool => !isset($idsVencidos[(int)$fila['id_producto']])
+                && !in_array((int)$fila['id_producto'], $descartados, true)
         ));
 
         // Unidades ya pedidas al proveedor y todavía sin recibir. La alarma
