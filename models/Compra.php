@@ -378,11 +378,32 @@ class Compra extends Model
     }
 
     /**
+     * Determina si una excepción corresponde a la restricción única del control.
+     *
+     * Con el modo estricto de mysqli la violación llega como
+     * mysqli_sql_exception con código 1062; si el modo estricto está
+     * desactivado, Database la envuelve en RuntimeException. En ambos casos
+     * se comprueba el nombre de la restricción para no confundirla con la
+     * factura duplicada del mismo proveedor.
+     *
+     * @param Throwable $e Excepción capturada al insertar la compra.
+     * @return bool True si el fallo es por `nro_control` duplicado.
+     */
+    private function esControlDuplicado(Throwable $e): bool
+    {
+        if ((int)$e->getCode() === 1062) {
+            return str_contains($e->getMessage(), 'uq_compras_nro_control');
+        }
+
+        return preg_match('/Duplicate entry .* for key .*uq_compras_nro_control/i', $e->getMessage()) === 1;
+    }
+
+    /**
      * Registra una compra (factura del proveedor + comprobante de pago).
      *
      * Valida proveedor (activo, RIF válido), número de factura único por
-     * proveedor, formato de nro. de control, ítems (cantidad, precio y
-     * vencimiento) y monto de pago. Inserta la compra con sus detalles
+     * proveedor, formato y unicidad del nro. de control, ítems (cantidad,
+     * precio y vencimiento) y monto de pago. Inserta la compra con sus detalles
      * dentro de una transacción y, si se atiende una solicitud, la marca
      * Atendida.
      * Reserva existencias del proveedor, pero no mueve el inventario propio
@@ -434,6 +455,11 @@ class Compra extends Model
         }
         if (!preg_match('/^00-\d{8}$/', $nro_control)) {
             return ['ok' => false, 'mensaje' => 'NRO. CONTROL INVÁLIDO. Formato: 00-00000000'];
+        }
+        // La restricción UNIQUE de la base es la garantía final; este
+        // prechequeo devuelve el mensaje amigable en el caso normal.
+        if ($this->db->fetchOne('SELECT id_compra FROM compras WHERE nro_control = ? LIMIT 1', [$nro_control])) {
+            return ['ok' => false, 'mensaje' => 'Error: El número de control ya existe. Por favor, recargue la página e intente de nuevo.'];
         }
 
         $observaciones = trim($purchaseFormData['observaciones'] ?? '');
@@ -691,8 +717,11 @@ class Compra extends Model
         } catch (DomainException $e) {
             $this->db->rollback();
             return ['ok' => false, 'mensaje' => $e->getMessage()];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->db->rollback();
+            if ($this->esControlDuplicado($e)) {
+                return ['ok' => false, 'mensaje' => 'Error: El número de control ya existe. Por favor, recargue la página e intente de nuevo.'];
+            }
             return ['ok' => false, 'mensaje' => 'ERROR AL REGISTRAR LA COMPRA. VERIFICA LOS DATOS E INTENTA DE NUEVO.'];
         }
     }

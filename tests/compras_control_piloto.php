@@ -12,6 +12,8 @@ $modelo = file_get_contents($raiz . '/models/Compra.php');
 $controlador = file_get_contents($raiz . '/controllers/ComprasController.php');
 $vista = file_get_contents($raiz . '/views/compras/index.php');
 $js = file_get_contents($raiz . '/assets/modules/compras/compras.js');
+$migracion = file_get_contents($raiz . '/db/migraciones/2026_11_23_compras_nro_control_unico.sql');
+$seed = file_get_contents($raiz . '/db/jv3000_portable_v6.sql');
 
 /**
  * Detiene la prueba con un mensaje claro cuando una condición no se cumple.
@@ -30,6 +32,17 @@ afirmarControlCompras(strpos($modelo, "'00-' . str_pad((string)\$maximo, 8, '0',
 afirmarControlCompras(strpos($modelo, "'00-' . str_pad((string)(\$maximo + 1), 8, '0', STR_PAD_LEFT)") !== false, 'El siguiente control debe incrementarse y formatearse.');
 afirmarControlCompras(strpos($modelo, "\$resultado['siguiente'] = '00-00000001';") !== false, 'Sin historial debe empezar en 00-00000001.');
 afirmarControlCompras(strpos($modelo, "preg_match('/^00-\\d{8}$/', \$nro_control)") !== false, 'El servidor debe rechazar controles con otro formato.');
+afirmarControlCompras(strpos($modelo, 'private function esControlDuplicado') !== false, 'Falta el manejo del duplicado de nro_control.');
+afirmarControlCompras(strpos($modelo, "(int)\$e->getCode() === 1062") !== false, 'Debe reconocer el código MySQL 1062.');
+afirmarControlCompras(strpos($modelo, 'Error: El número de control ya existe. Por favor, recargue la página e intente de nuevo.') !== false, 'Falta el mensaje amigable para el control duplicado.');
+$pos_compra = strpos($modelo, "insert('compras'");
+$pos_auditoria = strpos($modelo, "registrarAuditoria('crear', \"Compra registrada");
+afirmarControlCompras($pos_compra !== false && $pos_auditoria !== false && $pos_auditoria > $pos_compra, 'La auditoría debe registrarse después de insertar la compra.');
+
+afirmarControlCompras(strpos($migracion, 'uq_compras_nro_control') !== false, 'La migración debe crear la restricción única.');
+afirmarControlCompras(strpos($migracion, 'HAVING COUNT(*) > 1') !== false, 'La migración debe detectar controles duplicados.');
+afirmarControlCompras(strpos($migracion, 'SIGNAL SQLSTATE') !== false, 'La migración debe abortar con un mensaje claro ante duplicados.');
+afirmarControlCompras(strpos($seed, 'UNIQUE KEY `uq_compras_nro_control` (`nro_control`)') !== false, 'El seed debe incluir la restricción única.');
 
 afirmarControlCompras(strpos($controlador, '$control_inicial = $modelo->estadoControl();') !== false, 'El listado debe calcular el control inicial.');
 afirmarControlCompras(strpos($controlador, "'control_siguiente'   => \$control_inicial['siguiente']") !== false, 'La vista debe recibir el siguiente control.');

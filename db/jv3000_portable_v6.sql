@@ -133,6 +133,7 @@ CREATE TABLE `compras` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id_compra`),
   UNIQUE KEY `uq_comp_prov_factura` (`id_proveedor`,`nro_factura`),
+  UNIQUE KEY `uq_compras_nro_control` (`nro_control`),
   KEY `fk_comp_prov` (`id_proveedor`),
   KEY `fk_comp_user` (`id_usuario`),
   KEY `idx_comp_status` (`status`),
