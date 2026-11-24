@@ -48,9 +48,6 @@ $link_reponer = static function (array $fila): string {
     }
     return $url;
 };
-$link_agotados_csv = APP_URL_BASE . 'index.php?url=estadisticas/agotadosCsv'
-    . '&categoria=' . (int)($datos['filtro_categoria'] ?? 0)
-    . '&proveedor=' . (int)($datos['filtro_proveedor'] ?? 0);
 ?>
 <!-- MENSAJE FLASH -->
 <?php if ($flash): ?>
@@ -303,16 +300,17 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                             <th scope="col">Producto</th>
                             <th scope="col" class="num">Unid.</th>
                             <th scope="col" class="num col-ingreso">Ingreso</th>
-                            <th scope="col" class="num">Margen</th>
-                            <th scope="col" class="col-barra">% margen</th>
+                            <th scope="col" class="num">Ganancia (Bs.)</th>
+                            <th scope="col" class="num">Rentabilidad (%)</th>
                         </tr>
                     </thead>
                     <tbody id="tablaRentabilidadCuerpo">
                         <?php foreach ($rent_rows as $fila_rent): ?>
                             <?php
                             $margen_pct = isset($fila_rent['margen_pct']) ? (float)$fila_rent['margen_pct'] : 0;
-                            $clase_margen = $margen_pct >= 30 ? 'margen-alto' : ($margen_pct >= 15 ? 'margen-medio' : 'margen-bajo');
-                            $ancho_margen = max(2, min(100, $margen_pct));
+                            $clase_rentabilidad_prod = $margen_pct > 30
+                                ? 'rentabilidad-alta'
+                                : ($margen_pct >= 15 ? 'rentabilidad-media' : 'rentabilidad-baja');
                             ?>
                             <tr>
                                 <td class="celda-producto">
@@ -322,13 +320,8 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                                 <td class="num"><?php echo $folio($fila_rent['unidades']); ?></td>
                                 <td class="num col-ingreso"><?php echo format_bs((float)$fila_rent['ingreso'], $tasa_bcv ?? null); ?></td>
                                 <td class="num importe-margen"><?php echo format_bs((float)$fila_rent['margen'], $tasa_bcv ?? null); ?></td>
-                                <td class="col-barra">
-                                    <div class="rank-linea">
-                                        <div class="rank-bar rank-bar--margen <?php echo $clase_margen; ?>" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo (int)round($margen_pct); ?>" aria-label="Margen de <?php echo htmlspecialchars($fila_rent['nombre_producto']); ?>">
-                                            <span style="width:<?php echo $ancho_margen; ?>%"></span>
-                                        </div>
-                                        <span class="rank-pct"><?php echo number_format($margen_pct, 1, ',', '.'); ?>%</span>
-                                    </div>
+                                <td class="num">
+                                    <span class="rentabilidad-badge <?php echo $clase_rentabilidad_prod; ?>"><?php echo number_format($margen_pct, 1, ',', '.'); ?> %</span>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -458,9 +451,6 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
         <div class="chart-card tabla-card h-100">
             <div class="card-cabecera">
                 <h2><i class="bi bi-x-octagon me-2" aria-hidden="true"></i>Productos agotados <span class="seccion-nota">stock ≤ 0</span></h2>
-                <a class="btn-exportar" href="<?php echo htmlspecialchars($link_agotados_csv); ?>">
-                    <i class="bi bi-download" aria-hidden="true"></i>Exportar a CSV
-                </a>
             </div>
             <div class="tabla-scroll">
                 <table class="tabla-stats" id="tablaAgotados">

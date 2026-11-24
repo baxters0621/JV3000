@@ -5,9 +5,11 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Estadísticas / Rentabilidad por producto (2026-11-24): la tabla usa «Ganancia (Bs.)» y «Rentabilidad (%)» en badge (verde > 30 %, amarillo 15–30 %, rojo < 15 %) y ya no muestra barra de progreso; el render AJAX replica el badge con claseRentabilidad(). Se retiró la exportación CSV de Productos agotados. Solo vista, JS y CSS.
+
 - Estadísticas / Proveedores (2026-11-23): la tabla usa «Ganancia (Bs.)» y «Rentabilidad (%)» en badge (verde > 30 %, amarillo 15–30 %, rojo < 15 %), «N unidades vendidas» bajo la ganancia y «X de Y productos» en No rotan; el render AJAX replica el badge con claseRentabilidad(). Solo vista, JS y CSS; sin cambios de datos.
 
-- Estadísticas / Agotados y reporte (2026-11-23): nuevo bloque «Productos agotados» (stock ≤ 0) con filtros de categoría/proveedor y exportación CSV (BOM UTF-8, `;`, solo admin/ventas); el grupo Análisis del sidebar se muestra siempre (Estadísticas solo admin/ventas, Imprimir Reporte para los tres); el Reporte de Inventario usa el costo real por lotes vigentes (`COALESCE` con `lotes`, como el Dashboard) y separa «Valor a costo (Bs.)» de «Valor a precio de venta (Bs.)». Sin cambios de esquema.
+- Estadísticas / Agotados y reporte (2026-11-23): nuevo bloque «Productos agotados» (stock ≤ 0) con filtros de categoría/proveedor (sin exportación CSV); el grupo Análisis del sidebar se muestra siempre (Estadísticas solo admin/ventas, Imprimir Reporte para los tres); el Reporte de Inventario usa el costo real por lotes vigentes (`COALESCE` con `lotes`, como el Dashboard) y separa «Valor a costo (Bs.)» de «Valor a precio de venta (Bs.)». Sin cambios de esquema.
 
 - Compras / Vencimientos (2026-11-21): registrar una compra o recibir mercancía rechaza fechas de vencimiento anteriores a hoy (modelo + cliente) para no crear lotes ya vencidos. La campana del dashboard consulta los lotes con `cantidad_restante > 0` y `fecha_vencimiento <= CURDATE()`, usa la fecha del producto solo como respaldo y excluye esos productos de STOCK BAJO. Piloto de alarma con 66 afirmaciones.
 

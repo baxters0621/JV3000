@@ -437,9 +437,6 @@
         border-radius:99px;
         background:linear-gradient(90deg,#0f2a4c,#EA580C);
     }
-    .rank-bar--margen.margen-alto > span { background:linear-gradient(90deg,#15803d,#22c55e); }
-    .rank-bar--margen.margen-medio > span { background:linear-gradient(90deg,#b45309,#f59e0b); }
-    .rank-bar--margen.margen-bajo > span { background:linear-gradient(90deg,#991b1b,#ef4444); }
     .rank-pct {
         flex:0 0 auto;
         font-size:.78rem;
@@ -516,7 +513,6 @@
     .btn-pagina:focus-visible,
     .venc-contador:focus-visible,
     .btn-reponer:focus-visible,
-    .btn-exportar:focus-visible,
     .enlace-producto:focus-visible,
     .estadisticas-sin-datos-enlace:focus-visible,
     .estadisticas-error button:focus-visible {
@@ -662,24 +658,6 @@
         margin:0;
         padding:0;
         border-bottom:none;
-    }
-    .btn-exportar {
-        display:inline-flex;
-        align-items:center;
-        gap:6px;
-        padding:7px 12px;
-        border:1px solid rgba(15,42,76,.20);
-        border-radius:9px;
-        background:transparent;
-        color:var(--jv-navy);
-        font-size:.82rem;
-        font-weight:750;
-        text-decoration:none;
-        white-space:nowrap;
-    }
-    .btn-exportar:hover {
-        border-color:var(--jv-orange);
-        color:var(--jv-orange);
     }
     .venc-contadores {
         display:grid;

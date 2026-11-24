@@ -208,12 +208,6 @@
         if (vacio) vacio.classList.toggle('d-none', filas.length > 0);
     }
 
-    function claseMargen(porcentaje) {
-        if (porcentaje >= 30) return 'margen-alto';
-        if (porcentaje >= 15) return 'margen-medio';
-        return 'margen-bajo';
-    }
-
     function renderRentabilidad(payload) {
         const cuerpo = document.getElementById('tablaRentabilidadCuerpo');
         const vacio = document.getElementById('vacio-rentabilidad');
@@ -227,16 +221,13 @@
 
         cuerpo.innerHTML = filas.map(fila => {
             const margenPct = Number(fila.margen_pct) || 0;
-            const ancho = Math.max(2, Math.min(100, margenPct));
             return '<tr>' +
                 '<td class="celda-producto"><span class="prod-nombre">' + escaparHtml(fila.nombre_producto) + '</span><span class="prod-sku">' + escaparHtml(fila.sku) + '</span></td>' +
                 '<td class="num">' + formatearNumero(fila.unidades) + '</td>' +
                 '<td class="num col-ingreso">' + formatBs(fila.ingreso, tasa) + '</td>' +
                 '<td class="num importe-margen">' + formatBs(fila.margen, tasa) + '</td>' +
-                '<td class="col-barra"><div class="rank-linea">' +
-                    '<div class="rank-bar rank-bar--margen ' + claseMargen(margenPct) + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(margenPct) + '"><span style="width:' + ancho + '%"></span></div>' +
-                    '<span class="rank-pct">' + margenPct.toFixed(1).replace('.', ',') + '%</span>' +
-                '</div></td>' +
+                '<td class="num"><span class="rentabilidad-badge ' + claseRentabilidad(margenPct) + '">' +
+                    margenPct.toFixed(1).replace('.', ',') + ' %</span></td>' +
             '</tr>';
         }).join('');
 
