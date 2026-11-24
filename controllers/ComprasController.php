@@ -280,11 +280,11 @@ class ComprasController extends Controller
             'titulo'              => 'Compras | JV3000 C.A.',
             'wrapper_class'       => 'pagina-compras',
             'css_extra'           => [
-                'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css',
+                'lib/intl-tel-input/build/css/intlTelInput.min.css',
                 'modules/compras/compras.css',
             ],
             'js_extra'            => [
-                'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js',
+                'lib/intl-tel-input/build/js/intlTelInput.min.js',
                 'modules/compras/compras.js',
             ],
             'compras'             => $comprasData,

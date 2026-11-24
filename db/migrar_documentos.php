@@ -37,7 +37,10 @@ if (!function_exists('migrar_documentos')) {
         }
         $backupFile = __DIR__ . '/../backups/jv3000_db_antes_documentos_' . date('Y-m-d_His') . '.sql';
         if ($mysqlDump !== '' && is_file($mysqlDump)) {
-            $cmd = '"' . $mysqlDump . '" -u' . DB_USER . (DB_PASS !== '' ? ' -p' . DB_PASS : '') . ' ' . escapeshellarg($db_name);
+            $cmd = escapeshellarg($mysqlDump)
+                . ' --user=' . escapeshellarg(DB_USER)
+                . (DB_PASS !== '' ? ' --password=' . escapeshellarg(DB_PASS) : '')
+                . ' ' . escapeshellarg($db_name);
             $out = [];
             exec($cmd . ' 2>&1', $out, $code);
             if ($code === 0) {

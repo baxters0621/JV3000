@@ -1460,7 +1460,7 @@
                         initialCountry: 've',
                         preferredCountries: ['ve', 'us', 'co', 'es', 'mx', 'pa'],
                         separateDialCode: true,
-                        utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js'
+                        utilsScript: (window.JV_BASE || '') + 'assets/lib/intl-tel-input/build/js/utils.js'
                     });
                     telInputProv.addEventListener('countrychange', function() {
                         telRecortar();

@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Seguridad / Dependencias (2026-11-23): tests/ bloqueado por .htaccess (403); intl-tel-input 18.2.1 vendorizado en assets/lib y Compras sin CDN; db/migrar_documentos.php usa escapeshellarg; Bootstrap 5.3.0 queda pendiente de actualización por falta de regresión visual (assets ignorados por git).
+
 - Compras / Número de control único (2026-11-23): `compras.nro_control` tiene UNIQUE `uq_compras_nro_control` (migración + seed v6). `Compra::registrar()` prechequea y captura MySQL 1062 con mensaje amigable; la auditoría va después del INSERT, así que un duplicado no audita. Sin `FOR UPDATE`: el consecutivo se genera al abrir el formulario; la unicidad la garantiza la BD.
 
 - Estadísticas / Top 10 (2026-11-24): «Participación (%)» muestra solo el porcentaje del total con «del total» debajo, sin barra ni degradado; el render AJAX replica el formato. Se eliminaron las variables y el CSS de las barras (rank-bar, rank-linea, rank-pct, col-barra).
