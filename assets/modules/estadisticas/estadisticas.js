@@ -617,6 +617,13 @@
         return 'margen-alto';
     }
 
+    // Rentabilidad del proveedor: >30 % alta, 15–30 % media, <15 % baja.
+    function claseRentabilidad(porcentaje) {
+        if (porcentaje > 30) return 'rentabilidad-alta';
+        if (porcentaje >= 15) return 'rentabilidad-media';
+        return 'rentabilidad-baja';
+    }
+
     function renderProveedores(payload) {
         const cuerpo = document.getElementById('tablaProveedoresCuerpo');
         if (!cuerpo) return;
@@ -625,9 +632,13 @@
 
         cuerpo.innerHTML = filas.map(fila => {
             const pctNoRotacion = Number(fila.pct_no_rotacion) || 0;
-            const margenPct = fila.margen_pct === null || fila.margen_pct === undefined
+            const margenPctNum = fila.margen_pct === null || fila.margen_pct === undefined || !Number.isFinite(Number(fila.margen_pct))
+                ? null
+                : Number(fila.margen_pct);
+            const margenPctHtml = margenPctNum === null
                 ? '—'
-                : Number(fila.margen_pct).toFixed(1).replace('.', ',') + ' %';
+                : '<span class="rentabilidad-badge ' + claseRentabilidad(margenPctNum) + '">' +
+                    margenPctNum.toFixed(1).replace('.', ',') + ' %</span>';
             const id = Number(fila.id_proveedor);
             return '<tr data-proveedor="' + id + '">' +
                 '<td class="celda-producto"><span class="prod-nombre">' + escaparHtml(fila.nombre_empresa) + '</span>' +
@@ -636,10 +647,10 @@
                 '<td class="num">' + formatBs(fila.monto_comprado, tasa) +
                     '<span class="prod-sku">' + formatearNumero(fila.unidades_compradas) + ' uds</span></td>' +
                 '<td class="num importe-margen">' + formatBs(fila.margen, tasa) +
-                    '<span class="prod-sku">' + formatearNumero(fila.unidades_vendidas) + ' uds vendidas</span></td>' +
-                '<td class="num d-none d-md-table-cell">' + margenPct + '</td>' +
+                    '<span class="prod-sku">' + formatearNumero(fila.unidades_vendidas) + ' unidades vendidas</span></td>' +
+                '<td class="num d-none d-md-table-cell">' + margenPctHtml + '</td>' +
                 '<td class="num"><span class="no-rotacion ' + claseNoRotacion(pctNoRotacion) + '">' + pctNoRotacion.toFixed(1).replace('.', ',') + ' %</span>' +
-                    '<span class="prod-sku">' + formatearNumero(fila.productos_sin_rotar) + ' de ' + formatearNumero(fila.productos_asignados) + '</span></td>' +
+                    '<span class="prod-sku">' + formatearNumero(fila.productos_sin_rotar) + ' de ' + formatearNumero(fila.productos_asignados) + ' productos</span></td>' +
                 '<td class="num"><button type="button" class="btn-detalle-prov" data-proveedor="' + id + '" aria-expanded="false" aria-controls="detalleProv-' + id + '" title="Ver productos sin ventas">' +
                     '<i class="bi bi-chevron-down" aria-hidden="true"></i><span class="visually-hidden">Ver productos sin ventas</span></button></td>' +
             '</tr>' +

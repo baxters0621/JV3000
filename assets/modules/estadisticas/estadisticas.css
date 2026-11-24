@@ -750,6 +750,18 @@
     .no-rotacion.margen-alto { background:rgba(22,163,74,.14); color:#15803D; }
     .no-rotacion.margen-medio { background:rgba(217,119,6,.14); color:#B45309; }
     .no-rotacion.margen-bajo { background:rgba(220,38,38,.14); color:#B91C1C; }
+    .rentabilidad-badge {
+        display:inline-block;
+        padding:3px 9px;
+        border-radius:99px;
+        font-size:.78rem;
+        font-weight:800;
+        white-space:nowrap;
+        font-variant-numeric:tabular-nums;
+    }
+    .rentabilidad-badge.rentabilidad-alta { background:rgba(22,163,74,.14); color:#15803D; }
+    .rentabilidad-badge.rentabilidad-media { background:rgba(217,119,6,.14); color:#B45309; }
+    .rentabilidad-badge.rentabilidad-baja { background:rgba(220,38,38,.14); color:#B91C1C; }
     .btn-detalle-prov {
         display:inline-flex;
         align-items:center;

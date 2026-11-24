@@ -584,8 +584,8 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                 <tr>
                     <th scope="col">Proveedor</th>
                     <th scope="col" class="num">Comprado</th>
-                    <th scope="col" class="num">Margen</th>
-                    <th scope="col" class="num d-none d-md-table-cell">% margen</th>
+                    <th scope="col" class="num">Ganancia (Bs.)</th>
+                    <th scope="col" class="num d-none d-md-table-cell">Rentabilidad (%)</th>
                     <th scope="col" class="num">No rotan</th>
                     <th scope="col" class="num"><span class="visually-hidden">Detalle</span></th>
                 </tr>
@@ -596,6 +596,13 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                     $pct_no_rotacion = (float)$fila_prov['pct_no_rotacion'];
                     $clase_no_rotacion = $pct_no_rotacion >= 50 ? 'margen-bajo' : ($pct_no_rotacion >= 20 ? 'margen-medio' : 'margen-alto');
                     $margen_pct_prov = $fila_prov['margen_pct'];
+                    $clase_rentabilidad_prov = '';
+                    if ($margen_pct_prov !== null) {
+                        $margen_pct_prov = (float)$margen_pct_prov;
+                        $clase_rentabilidad_prov = $margen_pct_prov > 30
+                            ? 'rentabilidad-alta'
+                            : ($margen_pct_prov >= 15 ? 'rentabilidad-media' : 'rentabilidad-baja');
+                    }
                     ?>
                     <tr data-proveedor="<?php echo (int)$fila_prov['id_proveedor']; ?>">
                         <td class="celda-producto">
@@ -611,14 +618,18 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                         </td>
                         <td class="num importe-margen">
                             <?php echo format_bs((float)$fila_prov['margen'], $tasa_bcv ?? null); ?>
-                            <span class="prod-sku"><?php echo $folio($fila_prov['unidades_vendidas']); ?> uds vendidas</span>
+                            <span class="prod-sku"><?php echo $folio($fila_prov['unidades_vendidas']); ?> unidades vendidas</span>
                         </td>
                         <td class="num d-none d-md-table-cell">
-                            <?php echo $margen_pct_prov !== null ? number_format((float)$margen_pct_prov, 1, ',', '.') . ' %' : '—'; ?>
+                            <?php if ($margen_pct_prov !== null): ?>
+                                <span class="rentabilidad-badge <?php echo $clase_rentabilidad_prov; ?>"><?php echo number_format((float)$margen_pct_prov, 1, ',', '.'); ?> %</span>
+                            <?php else: ?>
+                                —
+                            <?php endif; ?>
                         </td>
                         <td class="num">
                             <span class="no-rotacion <?php echo $clase_no_rotacion; ?>"><?php echo number_format($pct_no_rotacion, 1, ',', '.'); ?> %</span>
-                            <span class="prod-sku"><?php echo (int)$fila_prov['productos_sin_rotar']; ?> de <?php echo (int)$fila_prov['productos_asignados']; ?></span>
+                            <span class="prod-sku"><?php echo (int)$fila_prov['productos_sin_rotar']; ?> de <?php echo (int)$fila_prov['productos_asignados']; ?> productos</span>
                         </td>
                         <td class="num">
                             <button type="button" class="btn-detalle-prov" data-proveedor="<?php echo (int)$fila_prov['id_proveedor']; ?>" aria-expanded="false" aria-controls="detalleProv-<?php echo (int)$fila_prov['id_proveedor']; ?>" title="Ver productos sin ventas de <?php echo htmlspecialchars($fila_prov['nombre_empresa']); ?>">
