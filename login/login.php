@@ -26,8 +26,9 @@ if (isset($_SESSION['id_usuario'])) {
 $error = "";
 $exito = "";
 $intentos_actuales = 0;
-$max_intentos = 3;
-$tiempo_bloqueo = 300; // 5 minutos base
+$max_intentos = 5;
+$tiempo_bloqueo = 900; // 15 minutos
+$mensaje_bloqueo = 'Demasiados intentos fallidos. Intente de nuevo en 15 minutos.';
 
 // ==========================================
 // MENSAJES DE ERROR DESDE URL
@@ -78,7 +79,7 @@ if ($user_check !== '') {
 }
 if ($row_rest && $row_rest['restante'] > 0) {
     $segundos_restantes = (int)$row_rest['restante'];
-    $error = "ACCESO BLOQUEADO - Espere $segundos_restantes segundos";
+    $error = $mensaje_bloqueo;
 }
 
 // ==========================================
@@ -152,81 +153,70 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['btn_login'])) {
     $blocked = $db->fetchOne("SELECT intentos, $tiempo_bloqueo - TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) as restante FROM login_intentos WHERE (ip_address = ? OR usuario = ?) AND intentos >= ? AND TIMESTAMPDIFF(SECOND, ultimo_intento, NOW()) < ? ORDER BY restante DESC LIMIT 1", [$ip_usuario, $user_login, $max_intentos, $tiempo_bloqueo]);
     if ($blocked) {
         $segundos_restantes = max(1, (int)$blocked['restante']);
-        $error = "ACCESO BLOQUEADO - Espere $segundos_restantes segundos";
+        $error = $mensaje_bloqueo;
     } else {
-        $pass = $_POST['password'];
+        $pass = trim((string)($_POST['password'] ?? ''));
+        $usuario_valido = validarNombreUsuario($user_login)
+            && mb_strlen($user_login, 'UTF-8') <= 20;
 
-        if (mb_strlen($user_login, 'UTF-8') > 20) {
-            $error = "USUARIO DEMASIADO LARGO (MAX 20 CARACTERES)";
-        } else {
-            $login_exitoso = false;
-            $clave_correcta = false;
+        $login_exitoso = false;
+        $clave_correcta = false;
+        $row = null;
+
+        // Si el formato no es válido no se consulta la base; el intento
+        // igualmente se cuenta para evitar enumeración de usuarios.
+        if ($usuario_valido) {
             $row = $db->fetchOne("SELECT * FROM usuarios WHERE LOWER(usuario) = LOWER(?) LIMIT 1", [$user_login]);
-            if ($row) {
-                if (password_verify($pass, $row['password'])) {
-                    $clave_correcta = true;
-                    // Limpiar intentos por IP Y por usuario
-                    $db->execute("DELETE FROM login_intentos WHERE ip_address = ? OR usuario = ?", [$ip_usuario, $user_login]);
-                    $aprobado = $row['aprobado'] ?? 0;
-                    if ($aprobado == 0) {
-                        $error = "TU CUENTA ESTA PENDIENTE DE APROBACION. CONTACTA AL ADMINISTRADOR.";
-                    } elseif ($row['status'] === 'Inactivo') {
-                        $error = "TU CUENTA ESTA DESACTIVADA. CONTACTA AL ADMINISTRADOR.";
-                    } else {
-                        $login_exitoso = true;
-                        session_regenerate_id(true);
-                        $_SESSION['id_usuario']   = $row['id_usuario'];
-    $_SESSION['usuario'] = $row['usuario'];
-    $_SESSION['id_rol']       = (int)$row['id_rol'];
-    $_SESSION['ip_addr']      = $_SERVER['REMOTE_ADDR'];
-    registrarAuditoria('login', "Inicio de sesión");
-    header("Location: ../dashboard/index.php");
-    exit();
-                    }
-                }
-            }
+        }
 
-            // Registrar intento fallido si NO hubo login exitoso (incluye cuentas inactivas/pendientes)
-            if (!$login_exitoso) {
-                // Registrar por IP
+        if ($row && password_verify($pass, $row['password'])) {
+            $clave_correcta = true;
+            // Limpiar intentos por IP Y por usuario
+            $db->execute("DELETE FROM login_intentos WHERE ip_address = ? OR usuario = ?", [$ip_usuario, $user_login]);
+            $aprobado = $row['aprobado'] ?? 0;
+            if ($aprobado == 0) {
+                $error = "TU CUENTA ESTA PENDIENTE DE APROBACION. CONTACTA AL ADMINISTRADOR.";
+            } elseif ($row['status'] === 'Inactivo') {
+                $error = "TU CUENTA ESTA DESACTIVADA. CONTACTA AL ADMINISTRADOR.";
+            } else {
+                $login_exitoso = true;
+                session_regenerate_id(true);
+                $_SESSION['id_usuario']   = $row['id_usuario'];
+                $_SESSION['usuario'] = $row['usuario'];
+                $_SESSION['id_rol']       = (int)$row['id_rol'];
+                $_SESSION['ip_addr']      = $_SERVER['REMOTE_ADDR'];
+                registrarAuditoria('login', "Inicio de sesión");
+                header("Location: ../dashboard/index.php");
+                exit();
+            }
+        }
+
+        // Registrar intento fallido si NO hubo login exitoso (incluye cuentas inactivas/pendientes)
+        if (!$login_exitoso) {
+            // Registrar por IP
+            $db->execute(
+                "INSERT INTO login_intentos (ip_address, usuario, intentos, ultimo_intento) VALUES (?, NULL, 1, NOW())
+                 ON DUPLICATE KEY UPDATE intentos = intentos + 1, ultimo_intento = NOW()",
+                [$ip_usuario]
+            );
+            // Registrar por usuario si existe
+            if ($user_login !== '') {
                 $db->execute(
-                    "INSERT INTO login_intentos (ip_address, usuario, intentos, ultimo_intento) VALUES (?, NULL, 1, NOW())
+                    "INSERT INTO login_intentos (ip_address, usuario, intentos, ultimo_intento) VALUES ('0.0.0.0', ?, 1, NOW())
                      ON DUPLICATE KEY UPDATE intentos = intentos + 1, ultimo_intento = NOW()",
-                    [$ip_usuario]
+                    [$user_login]
                 );
-                // Registrar por usuario si existe
-                if ($user_login !== '') {
-                    $db->execute(
-                        "INSERT INTO login_intentos (ip_address, usuario, intentos, ultimo_intento) VALUES ('0.0.0.0', ?, 1, NOW())
-                         ON DUPLICATE KEY UPDATE intentos = intentos + 1, ultimo_intento = NOW()",
-                        [$user_login]
-                    );
-                }
-                // Obtener intentos (el mayor entre IP y usuario)
-                $row_ip = $db->fetchOne("SELECT intentos FROM login_intentos WHERE ip_address = ? LIMIT 1", [$ip_usuario]);
-                $row_user = $user_login !== '' ? $db->fetchOne("SELECT intentos FROM login_intentos WHERE usuario = ? LIMIT 1", [$user_login]) : null;
-                $intentos_actuales = max((int)($row_ip['intentos'] ?? 0), (int)($row_user['intentos'] ?? 0));
-                $restantes = $max_intentos - $intentos_actuales;
-                if ($restantes <= 0) {
-                    // Backoff exponencial: 5min → 15min → 30min
-                    $bloqueosRecientes = $db->fetchOne(
-                        "SELECT COUNT(*) as n FROM login_intentos
-                         WHERE (ip_address = ? OR usuario = ?)
-                           AND ultimo_intento > DATE_SUB(NOW(), INTERVAL 24 HOUR)",
-                        [$ip_usuario, $user_login ?: '']
-                    );
-                    $numBloqueos = (int)($bloqueosRecientes['n'] ?? 0);
-                    if ($numBloqueos >= 6) {
-                        $tiempo_bloqueo = 1800; // 30 min
-                    } elseif ($numBloqueos >= 3) {
-                        $tiempo_bloqueo = 900; // 15 min
-                    }
-                    $segundos_restantes = $tiempo_bloqueo;
-                    $minutos = intval($tiempo_bloqueo / 60);
-                    $error = "ACCESO BLOQUEADO POR $minutos MINUTOS (demasiados intentos fallidos)";
-                } else {
-                    $error = "CREDENCIALES INVÁLIDAS (intento $intentos_actuales de $max_intentos)";
-                }
+            }
+            // Obtener intentos (el mayor entre IP y usuario)
+            $row_ip = $db->fetchOne("SELECT intentos FROM login_intentos WHERE ip_address = ? LIMIT 1", [$ip_usuario]);
+            $row_user = $user_login !== '' ? $db->fetchOne("SELECT intentos FROM login_intentos WHERE usuario = ? LIMIT 1", [$user_login]) : null;
+            $intentos_actuales = max((int)($row_ip['intentos'] ?? 0), (int)($row_user['intentos'] ?? 0));
+            $restantes = $max_intentos - $intentos_actuales;
+            if ($restantes <= 0) {
+                $segundos_restantes = $tiempo_bloqueo;
+                $error = $mensaje_bloqueo;
+            } else {
+                $error = 'Credenciales inválidas.';
             }
         }
     }

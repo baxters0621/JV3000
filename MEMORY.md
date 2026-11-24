@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Seguridad / Login (2026-11-24): 5 intentos fallidos y bloqueo fijo de 15 minutos con mensaje exacto; error genérico «Credenciales inválidas.», trim() de contraseña y validación de formato de usuario antes de consultar. Se retiró el backoff 5/15/30. Sin cambios de esquema, CSRF ni SQL preparado.
+
 - Seguridad / Dependencias (2026-11-23): tests/ bloqueado por .htaccess (403); intl-tel-input 18.2.1 vendorizado en assets/lib y Compras sin CDN; db/migrar_documentos.php usa escapeshellarg; Bootstrap 5.3.0 queda pendiente de actualización por falta de regresión visual (assets ignorados por git).
 
 - Compras / Número de control único (2026-11-23): `compras.nro_control` tiene UNIQUE `uq_compras_nro_control` (migración + seed v6). `Compra::registrar()` prechequea y captura MySQL 1062 con mensaje amigable; la auditoría va después del INSERT, así que un duplicado no audita. Sin `FOR UPDATE`: el consecutivo se genera al abrir el formulario; la unicidad la garantiza la BD.
