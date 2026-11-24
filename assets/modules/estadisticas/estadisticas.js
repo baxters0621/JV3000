@@ -189,19 +189,15 @@
 
         const filas = Array.isArray(rows) ? rows : [];
         const totalUnidades = filas.reduce((suma, fila) => suma + (Number(fila.unidades) || 0), 0);
-        const maxUnidades = filas.reduce((maximo, fila) => Math.max(maximo, Number(fila.unidades) || 0), 0);
         cuerpo.innerHTML = filas.map((fila, indice) => {
             const unidades = Number(fila.unidades) || 0;
             const parte = totalUnidades > 0 ? (unidades / totalUnidades) * 100 : 0;
-            const ancho = maxUnidades > 0 ? Math.max(2, Math.min(100, (unidades / maxUnidades) * 100)) : 0;
             return '<tr>' +
                 '<td class="col-puesto">' + (indice + 1) + '</td>' +
                 '<td class="celda-producto"><span class="prod-nombre">' + escaparHtml(fila.nombre_producto) + '</span><span class="prod-sku">' + escaparHtml(fila.sku) + '</span></td>' +
                 '<td class="num">' + formatearNumero(unidades) + '</td>' +
-                '<td class="col-barra"><div class="rank-linea">' +
-                    '<div class="rank-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(parte) + '"><span style="width:' + ancho + '%"></span></div>' +
-                    '<span class="rank-pct">' + parte.toFixed(1).replace('.', ',') + '%</span>' +
-                '</div></td>' +
+                '<td class="num">' + parte.toFixed(1).replace('.', ',') + ' %' +
+                    '<span class="prod-sku">del total</span></td>' +
             '</tr>';
         }).join('');
 

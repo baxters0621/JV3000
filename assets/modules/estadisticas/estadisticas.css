@@ -403,8 +403,6 @@
         color:var(--jv-text-muted);
         font-weight:800;
     }
-    .tabla-stats .col-barra { min-width:150px; }
-    .tabla-stats .rank-bar { min-width:56px; }
     .celda-producto { min-width:150px; }
     .prod-nombre {
         display:block;
@@ -418,31 +416,6 @@
         font-size:.72rem;
         font-weight:600;
         color:var(--jv-text-muted);
-    }
-    .rank-linea {
-        display:flex;
-        align-items:center;
-        gap:8px;
-    }
-    .rank-bar {
-        flex:1 1 auto;
-        height:8px;
-        border-radius:99px;
-        background:rgba(15,42,76,.10);
-        overflow:hidden;
-    }
-    .rank-bar > span {
-        display:block;
-        height:100%;
-        border-radius:99px;
-        background:linear-gradient(90deg,#0f2a4c,#EA580C);
-    }
-    .rank-pct {
-        flex:0 0 auto;
-        font-size:.78rem;
-        font-weight:800;
-        color:var(--jv-text-muted);
-        font-variant-numeric:tabular-nums;
     }
     .importe-margen { color:#0e7490; font-weight:800; }
     .tabla-vacia {
@@ -830,8 +803,6 @@
         .tabla-stats { font-size:.85rem; }
         .tabla-stats th, .tabla-stats td { padding:8px 6px; }
         .celda-producto { min-width:110px; }
-        .tabla-stats .col-barra { min-width:104px; }
-        .tabla-stats .rank-bar { min-width:36px; }
         .venc-contadores { grid-template-columns:repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 480px) {

@@ -26,10 +26,8 @@
 $top_rows = is_array($datos['top_rows'] ?? null) ? $datos['top_rows'] : [];
 $rent_rows = is_array($datos['rent_rows'] ?? null) ? $datos['rent_rows'] : [];
 $top_total = 0.0;
-$top_max = 0.0;
 foreach ($top_rows as $fila_top) {
     $top_total += (float)$fila_top['unidades'];
-    $top_max = max($top_max, (float)$fila_top['unidades']);
 }
 $folio = static fn($valor): string => number_format((float)$valor, 0, ',', '.');
 $rent_desde = $rent_rows === [] ? 0 : 1;
@@ -252,7 +250,7 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                             <th scope="col" class="col-puesto">#</th>
                             <th scope="col">Producto</th>
                             <th scope="col" class="num">Unid.</th>
-                            <th scope="col" class="col-barra">Participación</th>
+                            <th scope="col" class="num">Participación (%)</th>
                         </tr>
                     </thead>
                     <tbody id="tablaTopCuerpo">
@@ -260,7 +258,6 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                             <?php
                             $unidades_top = (float)$fila_top['unidades'];
                             $share_top = $top_total > 0 ? ($unidades_top / $top_total) * 100 : 0;
-                            $ancho_top = $top_max > 0 ? ($unidades_top / $top_max) * 100 : 0;
                             ?>
                             <tr>
                                 <td class="col-puesto"><?php echo $indice + 1; ?></td>
@@ -269,13 +266,9 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                                     <span class="prod-sku"><?php echo htmlspecialchars($fila_top['sku']); ?></span>
                                 </td>
                                 <td class="num"><?php echo $folio($unidades_top); ?></td>
-                                <td class="col-barra">
-                                    <div class="rank-linea">
-                                        <div class="rank-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo (int)round($share_top); ?>" aria-label="Participación de <?php echo htmlspecialchars($fila_top['nombre_producto']); ?>">
-                                            <span style="width:<?php echo max(2, min(100, $ancho_top)); ?>%"></span>
-                                        </div>
-                                        <span class="rank-pct"><?php echo number_format($share_top, 1, ',', '.'); ?>%</span>
-                                    </div>
+                                <td class="num">
+                                    <?php echo number_format($share_top, 1, ',', '.'); ?> %
+                                    <span class="prod-sku">del total</span>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
