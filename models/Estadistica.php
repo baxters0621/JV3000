@@ -661,6 +661,45 @@ class Estadistica extends Model
     }
 
     /**
+     * Productos agotados (stock igual o inferior a cero).
+     *
+     * A diferencia de inventarioCritico, este listado es exclusivo de los
+     * agotados: no depende del stock mínimo ni de la ventana de ventas.
+     * Incluye productos inactivos porque una venta los desactiva al llegar
+     * a stock 0. Muestra la categoría y la última venta histórica para
+     * priorizar la reposición.
+     *
+     * @param int $id_categoria Categoría del filtro global (0 = todas).
+     * @param int $id_proveedor Proveedor del filtro global (0 = todos).
+     * @return array Filas ordenadas por nombre.
+     */
+    public function productosAgotados(int $id_categoria = 0, int $id_proveedor = 0): array
+    {
+        $params = [];
+        $filtro = $this->filtroCategoria('p', $id_categoria, $params)
+            . $this->filtroProveedor('p.id_proveedor', $id_proveedor, $params);
+
+        return $this->db->fetchAll("
+            SELECT p.id_producto, p.sku, p.nombre_producto, p.id_proveedor,
+                   p.stock_actual, p.stock_minimo,
+                   c.nombre AS nombre_categoria,
+                   (SELECT MAX(s2.fecha_salida)
+                    FROM detalle_salidas ds2
+                    JOIN salidas s2 ON s2.id_salida = ds2.id_salida
+                    JOIN tipos_movimientos tm2 ON tm2.id_tipo_mov = s2.id_tipo_mov
+                    WHERE ds2.id_producto = p.id_producto
+                      AND s2.status = 'Activa'
+                      AND tm2.tipo_movimiento = 'Salida'
+                      AND UPPER(TRIM(tm2.nombre)) = 'VENTA') AS ultima_venta
+            FROM productos p
+            LEFT JOIN categorias c ON c.id_categoria = p.id_categoria
+            WHERE p.stock_actual <= 0
+              {$filtro}
+            ORDER BY p.nombre_producto ASC
+        ", $params);
+    }
+
+    /**
      * Productos con stock pero sin ninguna venta en el periodo filtrado.
      *
      * "Hueso" acordado: stock > 0 y cero ventas en la ventana. Se acompaña de

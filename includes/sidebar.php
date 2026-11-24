@@ -128,8 +128,7 @@ $es_op_ventas = $id_rol === 3;
         </div>
         <?php endif; ?>
 
-        <!-- ═══ ANÁLISIS (admin + ventas) ═══ -->
-        <?php if ($ver_estadisticas): ?>
+        <!-- ═══ ANÁLISIS (los tres roles; Estadísticas solo admin + ventas) ═══ -->
         <div class="nav-group nav-ram-anal <?php echo $rama_analisis_activo ? 'open' : ''; ?>">
             <button type="button" class="nav-group-toggle" aria-expanded="<?php echo $rama_analisis_activo ? 'true' : 'false'; ?>">
                 <i class="bi bi-graph-up"></i>
@@ -137,12 +136,14 @@ $es_op_ventas = $id_rol === 3;
                 <i class="bi bi-chevron-down nav-chevron"></i>
             </button>
             <div class="nav-group-items">
+                <?php if ($ver_estadisticas): ?>
                 <div class="nav-item <?php echo $mvc_activa('estadisticas') ? 'active' : ''; ?>">
                     <a href="<?php echo $prefijo; ?>index.php?url=estadisticas" class="nav-link">
                         <i class="bi bi-bar-chart-line"></i>
                         <span>Estadísticas</span>
                     </a>
                 </div>
+                <?php endif; ?>
                 <div class="nav-item">
                     <a href="#" class="nav-link" onclick="imprimirReporte(event)">
                         <i class="bi bi-printer"></i>
@@ -151,7 +152,6 @@ $es_op_ventas = $id_rol === 3;
                 </div>
             </div>
         </div>
-        <?php endif; ?>
 
         <!-- ═══ CONTROL (historial por rol; auditoría, usuarios y backup solo admin) ═══ -->
         <?php if ($ver_historial || $ver_auditoria || $ver_usuarios): ?>

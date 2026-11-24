@@ -49,6 +49,7 @@ class EstadisticasController extends Controller
         $ventana_filtros = $modelo->resolverVentana($periodo, $desde, $hasta);
         $inventario_critico = $modelo->inventarioCritico($ventana_filtros, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
         $rotacion = $modelo->rotacionProductos($ventana_filtros, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
+        $agotados = $modelo->productosAgotados($filtros_periodo['categoria'], $filtros_periodo['proveedor']);
         $vencimientos = $modelo->vencimientosPorTramo($filtros_periodo['categoria'], $filtros_periodo['proveedor']);
         $proveedores_tabla = $modelo->proveedoresResumen($ventana_filtros, $filtros_periodo['categoria'], $filtros_periodo['proveedor']);
 
@@ -76,6 +77,7 @@ class EstadisticasController extends Controller
             'datos'         => $datos,
             'inventario_critico' => $inventario_critico,
             'rotacion'      => $rotacion,
+            'agotados'      => $agotados,
             'vencimientos'  => $vencimientos,
             'proveedores_tabla' => $proveedores_tabla,
             'error_fechas'  => $filtros_periodo['error'],
@@ -96,6 +98,53 @@ class EstadisticasController extends Controller
                 'rentPaginas' => $datos['rent_paginas'],
             ],
         ]);
+    }
+
+    /**
+     * Descarga en CSV el listado de productos agotados.
+     *
+     * Reutiliza los filtros globales de categoría y proveedor. La respuesta
+     * lleva BOM UTF-8 y separador punto y coma para que Excel respete los
+     * acentos sin pasos adicionales.
+     *
+     * @return void
+     */
+    public function agotadosCsv(): void
+    {
+        if (!Security::puedeVender()) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'acceso_denegado']);
+            exit;
+        }
+
+        $filtros = $this->filtrosPeriodo();
+        $filas = (new Estadistica())->productosAgotados($filtros['categoria'], $filtros['proveedor']);
+
+        $nombre = 'jv3000_agotados_' . date('Y-m-d_His') . '.csv';
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $nombre . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        $salida = fopen('php://output', 'w');
+        fwrite($salida, "\xEF\xBB\xBF");
+        fputcsv($salida, ['SKU', 'Producto', 'Categoría', 'Stock mínimo', 'Última venta'], ';');
+
+        foreach ($filas as $fila) {
+            fputcsv($salida, [
+                (string)$fila['sku'],
+                (string)$fila['nombre_producto'],
+                (string)($fila['nombre_categoria'] ?? ''),
+                (int)$fila['stock_minimo'],
+                $fila['ultima_venta'] !== null
+                    ? date('d/m/Y', strtotime((string)$fila['ultima_venta']))
+                    : 'Nunca',
+            ], ';');
+        }
+
+        fclose($salida);
+        exit;
     }
 
     /**

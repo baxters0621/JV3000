@@ -5,6 +5,8 @@ Sin datos sensibles (claves, tokens, PIN).
 
 ## Estado actual
 
+- Estadísticas / Agotados y reporte (2026-11-23): nuevo bloque «Productos agotados» (stock ≤ 0) con filtros de categoría/proveedor y exportación CSV (BOM UTF-8, `;`, solo admin/ventas); el grupo Análisis del sidebar se muestra siempre (Estadísticas solo admin/ventas, Imprimir Reporte para los tres); el Reporte de Inventario usa el costo real por lotes vigentes (`COALESCE` con `lotes`, como el Dashboard) y separa «Valor a costo (Bs.)» de «Valor a precio de venta (Bs.)». Sin cambios de esquema.
+
 - Compras / Vencimientos (2026-11-21): registrar una compra o recibir mercancía rechaza fechas de vencimiento anteriores a hoy (modelo + cliente) para no crear lotes ya vencidos. La campana del dashboard consulta los lotes con `cantidad_restante > 0` y `fecha_vencimiento <= CURDATE()`, usa la fecha del producto solo como respaldo y excluye esos productos de STOCK BAJO. Piloto de alarma con 66 afirmaciones.
 
 - Inventario / Tabla (2026-11-21): padding lateral 14 px (12 px entre 769-1200), extremos 18 px y STOCK 8 px; colgroup rebalanceado a 10/15/12/11/8/12/10/9/13 (PRODUCTO 18→15, CATEGORÍA 10→12, PROVEEDOR 9→11, ACCIONES 14→13) para separar CATEGORÍA/PROVEEDOR/STOCK sin recortar VENCE ni botones. Solo CSS.

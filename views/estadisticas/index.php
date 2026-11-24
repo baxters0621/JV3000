@@ -8,6 +8,7 @@
 /** @var string $error_fechas */
 /** @var array<string, mixed> $inventario_critico */
 /** @var array<string, mixed> $rotacion */
+/** @var array<int, array<string, mixed>> $agotados */
 /** @var array<string, mixed> $vencimientos */
 /** @var array<string, mixed> $proveedores_tabla */
 /** @var float|null $tasa_bcv Tasa BCV para mostrar los montos en Bs. */
@@ -36,6 +37,7 @@ $rent_hasta = $rent_rows === [] ? 0 : count($rent_rows);
 
 $criticos = is_array($inventario_critico['filas'] ?? null) ? $inventario_critico['filas'] : [];
 $rotacion_filas = is_array($rotacion['filas'] ?? null) ? $rotacion['filas'] : [];
+$agotados_filas = is_array($agotados ?? null) ? $agotados : [];
 $venc_filas = is_array($vencimientos['filas'] ?? null) ? $vencimientos['filas'] : [];
 $venc_conteos = is_array($vencimientos['conteos'] ?? null) ? $vencimientos['conteos'] : ['vencido' => 0, 'd30' => 0, 'd60' => 0, 'd90' => 0, 'total' => 0];
 $link_producto = static fn($sku): string => APP_URL_BASE . 'index.php?url=productos&sku=' . rawurlencode((string)$sku);
@@ -46,6 +48,9 @@ $link_reponer = static function (array $fila): string {
     }
     return $url;
 };
+$link_agotados_csv = APP_URL_BASE . 'index.php?url=estadisticas/agotadosCsv'
+    . '&categoria=' . (int)($datos['filtro_categoria'] ?? 0)
+    . '&proveedor=' . (int)($datos['filtro_proveedor'] ?? 0);
 ?>
 <!-- MENSAJE FLASH -->
 <?php if ($flash): ?>
@@ -445,6 +450,51 @@ $compras_anteriores = (float)($datos['compras_ant'] ?? 0); ?>
                     <span class="pagina-indicador" id="rotacionIndicador"><?php echo (int)$rotacion['pagina']; ?> / <?php echo (int)$rotacion['paginas']; ?></span>
                     <button type="button" class="btn-pagina" data-pagina="<?php echo min((int)$rotacion['paginas'], (int)$rotacion['pagina'] + 1); ?>" <?php echo (int)$rotacion['pagina'] >= (int)$rotacion['paginas'] ? 'disabled' : ''; ?>>Siguiente</button>
                 </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="chart-card tabla-card h-100">
+            <div class="card-cabecera">
+                <h2><i class="bi bi-x-octagon me-2" aria-hidden="true"></i>Productos agotados <span class="seccion-nota">stock ≤ 0</span></h2>
+                <a class="btn-exportar" href="<?php echo htmlspecialchars($link_agotados_csv); ?>">
+                    <i class="bi bi-download" aria-hidden="true"></i>Exportar a CSV
+                </a>
+            </div>
+            <div class="tabla-scroll">
+                <table class="tabla-stats" id="tablaAgotados">
+                    <caption class="visually-hidden">Productos con existencias en cero o negativas</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">SKU</th>
+                            <th scope="col">Producto</th>
+                            <th scope="col">Categoría</th>
+                            <th scope="col" class="num">Stock mínimo</th>
+                            <th scope="col" class="num">Última venta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($agotados_filas as $fila_agotado): ?>
+                            <tr>
+                                <td><span class="prod-sku"><?php echo htmlspecialchars($fila_agotado['sku']); ?></span></td>
+                                <td class="celda-producto">
+                                    <a class="enlace-producto" href="<?php echo htmlspecialchars($link_producto($fila_agotado['sku'])); ?>"><?php echo htmlspecialchars($fila_agotado['nombre_producto']); ?></a>
+                                </td>
+                                <td><?php echo htmlspecialchars($fila_agotado['nombre_categoria'] ?? '—'); ?></td>
+                                <td class="num"><?php echo $folio($fila_agotado['stock_minimo']); ?></td>
+                                <td class="num"><?php echo $fila_agotado['ultima_venta'] !== null ? date('d/m/Y', strtotime((string)$fila_agotado['ultima_venta'])) : 'Nunca'; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tabla-vacia <?php echo $agotados_filas === [] ? '' : 'd-none'; ?>" id="vacio-agotados">
+                <i class="bi bi-check2-circle" aria-hidden="true"></i>
+                <span>No hay productos agotados</span>
+            </div>
+            <div class="tabla-pie">
+                <span class="tabla-resumen" id="agotadosResumen"><?php echo $agotados_filas === [] ? 'Sin agotados' : count($agotados_filas) . ' en total'; ?></span>
             </div>
         </div>
     </div>
